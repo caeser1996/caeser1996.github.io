@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Wisp — describe an app, run it on your own cluster</title>
+<meta name="description" content="Open-source, self-hostable AI platform. Describe an app and run it on infrastructure you own — a native iOS + Android build on your phone, web apps, APIs, jobs, and your existing containers, all in one console. No vendor lock-in." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..600&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#0a0a0c; --bg2:#0e0e11; --surface:#141418; --surface2:#1b1b20; --raised:#212127;
+    --border:rgba(255,255,255,.08); --border2:rgba(255,255,255,.15);
+    --text:#f4f4f7; --text2:#adadb8; --text3:#797984;
+    --accent:#5b8cff; --accent2:#83a4ff; --accent-soft:rgba(91,140,255,.13);
+    --ok:#38c98a;
+    --maxw:1160px; --r:12px; --r-lg:20px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--bg); color:var(--text);
+    font-family:"Hanken Grotesk",-apple-system,sans-serif; font-size:16.5px; line-height:1.6;
+    -webkit-font-smoothing:antialiased; overflow-x:hidden;
+    /* faint engineered dot-grid — texture without glow-slop */
+    background-image:radial-gradient(rgba(255,255,255,.025) 1px,transparent 1px);
+    background-size:26px 26px;
+  }
+  a{color:inherit;text-decoration:none}
+  ::selection{background:var(--accent);color:#fff}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 26px}
+  .kicker{font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--text3);margin-bottom:16px}
+  h1,h2,h3{font-family:"Fraunces",serif;font-weight:500;letter-spacing:-.018em}
+  .sec-lede{color:var(--text2);font-size:17.5px;max-width:56ch;margin-top:14px;line-height:1.6}
+
+  /* buttons */
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--text);color:#0a0a0c;font-weight:600;font-family:"Hanken Grotesk";
+    font-size:15px;padding:11px 19px;border-radius:9px;border:none;cursor:pointer;transition:.16s}
+  .btn:hover{background:#fff;transform:translateY(-1px)}
+  .btn.sm{padding:9px 15px;font-size:14px}
+  .btn.ghost{background:transparent;color:var(--text);border:1px solid var(--border2)}
+  .btn.ghost:hover{background:var(--surface);border-color:var(--text2)}
+  .btn.accent{background:var(--accent);color:#fff}
+  .btn.accent:hover{background:var(--accent2)}
+  .lnk{color:var(--accent);font-weight:600;display:inline-flex;align-items:center;gap:6px;transition:gap .16s}
+  .lnk:hover{gap:9px}
+
+  /* nav */
+  nav{position:sticky;top:0;z-index:50;background:rgba(10,10,12,.72);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+  .nav-in{max-width:var(--maxw);margin:0 auto;padding:14px 26px;display:flex;align-items:center;gap:24px}
+  .brand{display:flex;align-items:center;gap:10px;font-family:"Hanken Grotesk";font-weight:700;font-size:19px;letter-spacing:-.01em}
+  .brand svg{width:26px;height:26px}
+  .nav-links{display:flex;gap:24px;margin-left:12px;font-size:14.5px;color:var(--text2);font-weight:500}
+  .nav-links a:hover{color:var(--text)}
+  .sp{flex:1}
+  .ghlink{display:flex;align-items:center;gap:8px;color:var(--text2);font-size:14px;font-weight:500;transition:.16s}
+  .ghlink:hover{color:var(--text)} .ghlink svg{width:17px;height:17px}
+  @media(max-width:800px){.nav-links{display:none}}
+
+  /* hero */
+  .hero{padding:72px 0 34px;display:grid;grid-template-columns:1.06fr .94fr;gap:44px;align-items:center}
+  .badge-row{display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap}
+  .chip{display:inline-flex;align-items:center;gap:7px;font-family:"JetBrains Mono",monospace;font-size:11.5px;letter-spacing:.06em;
+    color:var(--text2);border:1px solid var(--border);border-radius:100px;padding:5px 11px;background:var(--surface)}
+  .chip .live{width:6px;height:6px;border-radius:50%;background:var(--ok)}
+  h1.hero-h{font-size:clamp(42px,6vw,72px);line-height:1.0;margin-bottom:20px}
+  h1.hero-h .g{color:var(--text2)}
+  .lede{font-size:18.5px;color:var(--text2);max-width:40ch;margin-bottom:28px;line-height:1.55}
+  .lede b{color:var(--text);font-weight:600}
+  .cta-row{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+  .microtrust{font-family:"JetBrains Mono",monospace;font-size:12.5px;color:var(--text3);letter-spacing:.02em}
+  .microtrust b{color:var(--text2);font-weight:400}
+
+  /* hero visual: phone + qr, restrained */
+  .stage{position:relative;display:flex;justify-content:center;align-items:center;min-height:540px}
+  .qr-card{position:absolute;left:0;top:16%;z-index:3;background:var(--surface);border:1px solid var(--border2);border-radius:16px;padding:14px;width:172px;box-shadow:0 24px 50px -24px #000}
+  .qr-card .qr{width:144px;height:144px;border-radius:9px;background:#fff;padding:9px;position:relative;overflow:hidden}
+  .qr-card .qr svg{width:100%;height:100%;display:block}
+  .qr-card .scan{position:absolute;left:9px;right:9px;top:9px;height:2px;background:var(--accent);box-shadow:0 0 8px var(--accent);animation:scan 2.6s ease-in-out infinite}
+  @keyframes scan{0%,100%{top:9px}50%{top:132px}}
+  .qr-card .lab{display:flex;align-items:center;gap:7px;margin-top:11px;font-size:12px;font-weight:600;color:var(--text)}
+  .qr-card .lab .live{margin-left:auto;font-family:"JetBrains Mono",monospace;font-size:10px;color:var(--ok);text-transform:uppercase;letter-spacing:.08em;display:flex;align-items:center;gap:5px}
+  .qr-card .lab .live::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--ok)}
+
+  .phone{position:relative;z-index:2;width:258px;height:528px;border-radius:44px;padding:10px;
+    background:linear-gradient(155deg,#2a2a30,#141418 45%,#0b0b0d);
+    box-shadow:inset 0 1px 1px rgba(255,255,255,.1),0 0 0 1px #000,0 40px 80px -30px rgba(0,0,0,.8)}
+  .phone .screen{width:100%;height:100%;border-radius:35px;overflow:hidden;background:#0d1013;position:relative}
+  .phone .island{position:absolute;top:11px;left:50%;transform:translateX(-50%);width:29%;height:24px;background:#000;border-radius:14px;z-index:5}
+  .app{position:absolute;inset:0;display:flex;flex-direction:column;color:#eef1f6;background:linear-gradient(180deg,#141821,#0d1013)}
+  .app .top{padding:50px 20px 12px}
+  .app .greet{font-family:"Fraunces",serif;font-size:22px;font-weight:500}
+  .app .sub{font-size:12px;color:#8a93a6;margin-top:3px}
+  .ring{width:92px;height:92px;margin:10px auto 8px;border-radius:50%;background:conic-gradient(var(--accent) 68%,rgba(255,255,255,.07) 0);display:grid;place-items:center;position:relative}
+  .ring::before{content:"";position:absolute;inset:9px;border-radius:50%;background:#0f131a}
+  .ring span{position:relative;font-family:"Fraunces",serif;font-size:21px;font-weight:500}
+  .app .cards{padding:6px 15px;display:flex;flex-direction:column;gap:8px}
+  .hc{background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.06);border-radius:13px;padding:10px 12px;display:flex;align-items:center;gap:10px}
+  .hc .ic{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;font-size:15px;background:rgba(255,255,255,.06)}
+  .hc .nm{font-size:13px;font-weight:600}.hc .st{font-size:10.5px;color:#8a93a6;margin-top:1px}
+  .hc .chk{margin-left:auto;width:22px;height:22px;border-radius:50%;border:2px solid rgba(255,255,255,.2)}
+  .hc.done .chk{background:var(--accent);border-color:var(--accent)}
+  .hc.done .nm{text-decoration:line-through;opacity:.55}
+
+  /* hero console — the platform running every kind of workload */
+  .console{width:100%;max-width:436px;background:var(--surface);border:1px solid var(--border2);border-radius:16px;overflow:hidden;box-shadow:0 40px 90px -40px #000;position:relative;z-index:2}
+  .cbar{display:flex;align-items:center;gap:7px;padding:12px 15px;border-bottom:1px solid var(--border);background:var(--bg2)}
+  .cbar i{width:10px;height:10px;border-radius:50%;background:#33333b;display:block}
+  .cbar .ct{margin-left:8px;font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--text3)}
+  .cbar .cl{margin-left:auto;font-family:"JetBrains Mono",monospace;font-size:10px;color:var(--ok);text-transform:uppercase;letter-spacing:.08em;display:flex;align-items:center;gap:5px}
+  .cbar .cl::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--ok)}
+  .wl{display:flex;align-items:center;gap:12px;padding:11px 15px;border-bottom:1px solid var(--border)}
+  .wl:last-child{border-bottom:none}
+  .wl .wi{width:32px;height:32px;border-radius:9px;background:var(--surface2);border:1px solid var(--border);display:grid;place-items:center;font-size:15px;flex:none}
+  .wl .wm{flex:1;min-width:0}
+  .wl .wm b{font-family:"Hanken Grotesk";font-size:13.5px;font-weight:600;display:block}
+  .wl .wm span{font-size:11px;color:var(--text3);font-family:"JetBrains Mono",monospace}
+  .st{font-family:"JetBrains Mono",monospace;font-size:10px;padding:4px 9px;border-radius:100px;display:flex;align-items:center;gap:6px;flex:none}
+  .st::before{content:"";width:6px;height:6px;border-radius:50%}
+  .st.ok{color:var(--ok);background:rgba(56,201,138,.1)}.st.ok::before{background:var(--ok)}
+  .st.sc{color:var(--text2);background:var(--surface2)}.st.sc::before{background:var(--text3)}
+  .wl.imp{background:var(--accent-soft)} .wl.imp .st{color:var(--accent);background:rgba(91,140,255,.14)}.wl.imp .st::before{background:var(--accent)}
+  .pmini{position:absolute;left:-14px;bottom:-22px;z-index:4;width:118px;height:242px;border-radius:24px;padding:6px;background:linear-gradient(155deg,#2b2b31,#0b0b0d);box-shadow:0 24px 44px -18px #000}
+  .pmini .ps{width:100%;height:100%;border-radius:19px;overflow:hidden;background:linear-gradient(180deg,#141821,#0d1013);position:relative;color:#eef1f6}
+  .pmini .pi{position:absolute;top:6px;left:50%;transform:translateX(-50%);width:32%;height:13px;background:#000;border-radius:8px}
+  .pmini .pt{padding:24px 11px 4px;font-family:"Fraunces",serif;font-size:13px;line-height:1.15}
+  .pmini .pr{width:48px;height:48px;margin:7px auto;border-radius:50%;background:conic-gradient(var(--accent) 68%,rgba(255,255,255,.08) 0);display:grid;place-items:center;position:relative}
+  .pmini .pr::before{content:"";position:absolute;inset:5px;border-radius:50%;background:#0f131a}
+  .pmini .pr span{position:relative;font-family:"Fraunces",serif;font-size:11px}
+  .pmini .pw{margin:4px 9px;height:20px;border-radius:6px;background:rgba(255,255,255,.05)}
+  .scantag{position:absolute;left:6px;bottom:-13px;background:var(--raised);border:1px solid var(--border2);border-radius:100px;padding:5px 9px;font-size:9.5px;font-family:"JetBrains Mono",monospace;color:var(--text2);display:flex;align-items:center;gap:6px;white-space:nowrap}
+  .scantag::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--ok)}
+  @media(max-width:880px){.pmini{display:none}}
+
+  /* logo strip */
+  .strip{border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:22px 0;margin-top:14px}
+  .strip .wrap{display:flex;align-items:center;gap:36px;flex-wrap:wrap;justify-content:center}
+  .strip .cap{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--text3)}
+  .lg{display:flex;align-items:center;gap:8px;color:var(--text2);font-weight:600;font-size:14.5px}
+  .lg svg{width:19px;height:19px;opacity:.85}
+
+  /* sections */
+  section{padding:88px 0;position:relative}
+  h2{font-size:clamp(30px,4.2vw,46px);line-height:1.05;max-width:17ch}
+  .sec-head{margin-bottom:48px;max-width:640px}
+
+  /* steps */
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden}
+  .step{background:var(--bg2);padding:30px 28px}
+  .step .num{font-family:"JetBrains Mono",monospace;font-size:13px;color:var(--accent);margin-bottom:18px}
+  .step h3{font-family:"Hanken Grotesk";font-size:19px;font-weight:700;margin-bottom:8px}
+  .step p{color:var(--text2);font-size:15px}
+  .step .mono{font-family:"JetBrains Mono",monospace;font-size:12.5px;color:var(--text);margin-top:15px;background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:7px 10px;display:inline-block}
+
+  /* platform grid */
+  .grid8{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden}
+  .tile{background:var(--bg2);padding:24px 22px;transition:background .18s}
+  .tile:hover{background:var(--surface)}
+  .tile .ti{width:38px;height:38px;border-radius:10px;background:var(--surface2);border:1px solid var(--border);color:var(--accent);display:grid;place-items:center;margin-bottom:15px}
+  .tile .ti svg{width:19px;height:19px}
+  .tile h4{font-family:"Hanken Grotesk";font-size:16px;font-weight:700;margin-bottom:6px}
+  .tile p{font-size:13.5px;color:var(--text2);line-height:1.5}
+
+  /* why / lock-in */
+  .lock{display:grid;grid-template-columns:1fr 1fr;gap:44px;align-items:center}
+  .lock .compare{display:flex;flex-direction:column;gap:12px}
+  .cmp{display:flex;gap:13px;align-items:flex-start;padding:16px 18px;border:1px solid var(--border);border-radius:var(--r);background:var(--bg2)}
+  .cmp.no{opacity:.72}
+  .cmp .mk{flex:none;width:22px;height:22px;border-radius:6px;display:grid;place-items:center;margin-top:1px}
+  .cmp.no .mk{background:rgba(255,255,255,.06);color:var(--text3)}
+  .cmp.yes .mk{background:var(--accent-soft);color:var(--accent)}
+  .cmp.yes{border-color:var(--border2)}
+  .cmp b{font-weight:600;font-size:15px}.cmp p{color:var(--text2);font-size:14px;margin-top:2px}
+
+  /* gallery */
+  .gallery{display:flex;gap:22px;justify-content:center;flex-wrap:wrap}
+  .mp{width:172px;height:362px;border-radius:30px;padding:7px;background:linear-gradient(155deg,#26262c,#0b0b0d);box-shadow:0 30px 60px -30px #000;flex:none}
+  .mp .scr{width:100%;height:100%;border-radius:24px;overflow:hidden;position:relative;background:#12141b}
+  .mp .h{padding:36px 15px 10px;font-family:"Fraunces",serif;font-size:18px;font-weight:500;color:#fff}
+  .mp .s{font-size:11px;color:#8a93a6;padding:0 15px}
+  .mp .row{margin:8px 13px;height:34px;border-radius:9px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.05)}
+  .mp .pill{display:inline-block;margin:4px 3px 0;padding:5px 10px;border-radius:100px;font-size:10.5px;background:rgba(255,255,255,.07)}
+  .cap{text-align:center;margin-top:14px;font-family:"JetBrains Mono",monospace;font-size:11.5px;color:var(--text3)}
+  /* real product screenshots in a browser frame */
+  .shots{display:flex;flex-direction:column;gap:40px;max-width:980px;margin:0 auto}
+  .shot{border:1px solid var(--border2);border-radius:14px;overflow:hidden;background:var(--surface);box-shadow:0 44px 100px -54px #000;margin:0}
+  .shot .sb{display:flex;align-items:center;gap:7px;padding:11px 14px;border-bottom:1px solid var(--border);background:var(--bg2)}
+  .shot .sb i{width:11px;height:11px;border-radius:50%;background:#33333b;display:block}
+  .shot .sb span{margin-left:10px;font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--text3)}
+  .shot img{width:100%;display:block;border-bottom:1px solid var(--border)}
+  .shot figcaption{padding:16px 20px;color:var(--text2);font-size:14.5px}
+  .shot figcaption b{color:var(--text);font-weight:600}
+
+  /* self-host / control */
+  .host{display:grid;grid-template-columns:1fr 1fr;gap:44px;align-items:center}
+  .host ul{list-style:none;margin-top:22px;display:flex;flex-direction:column;gap:15px}
+  .host li{display:flex;gap:12px;align-items:flex-start;color:var(--text2);font-size:15.5px}
+  .host li svg{flex:none;margin-top:3px;color:var(--accent)}
+  .host li b{color:var(--text);font-weight:600}
+  .terminal{background:#070709;border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:0 30px 70px -34px #000}
+  .tbar{display:flex;align-items:center;gap:7px;padding:12px 15px;border-bottom:1px solid var(--border);background:var(--surface)}
+  .tbar i{width:11px;height:11px;border-radius:50%;background:#33333b;display:block}
+  .tbar .t{margin-left:9px;font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--text3)}
+  .tbody{padding:19px;font-family:"JetBrains Mono",monospace;font-size:13px;line-height:2;color:var(--text)}
+  .tbody .p{color:var(--accent)} .tbody .c{color:var(--text3)} .tbody .o{color:var(--text2)}
+
+  /* pricing */
+  .price{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;align-items:stretch}
+  .tier{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-lg);padding:30px 26px;display:flex;flex-direction:column;position:relative}
+  .tier.hot{border-color:var(--border2);background:var(--surface)}
+  .tier .pt{font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:14px}
+  .tier .pp{font-family:"Fraunces",serif;font-size:33px;font-weight:500;line-height:1}
+  .tier .pp small{font-size:14px;color:var(--text3);font-family:"Hanken Grotesk";font-weight:400}
+  .tier .pd{color:var(--text2);font-size:14px;margin:12px 0 20px;line-height:1.5;min-height:42px}
+  .tier ul{list-style:none;display:flex;flex-direction:column;gap:11px;margin-bottom:24px;flex:1}
+  .tier li{display:flex;gap:10px;font-size:14px;color:var(--text);align-items:flex-start}
+  .tier li svg{color:var(--accent);flex:none;margin-top:3px}
+  .tier .badge{position:absolute;top:24px;right:24px;font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--bg);background:var(--text);border-radius:100px;padding:4px 9px;font-weight:700}
+  .tier .full{width:100%;justify-content:center}
+
+  /* final */
+  .final{text-align:center;padding:104px 0}
+  .final .box{border:1px solid var(--border2);border-radius:24px;padding:66px 40px;background:var(--bg2)}
+  .final h2{margin:0 auto 16px;max-width:22ch}
+  .final p{color:var(--text2);max-width:46ch;margin:0 auto 30px;font-size:17.5px}
+  .final .cta-row{justify-content:center}
+
+  footer{border-top:1px solid var(--border);padding:38px 0}
+  footer .wrap{display:flex;align-items:center;gap:18px;flex-wrap:wrap;color:var(--text3);font-size:14px}
+  footer a{color:var(--text2)}footer a:hover{color:var(--text)}
+  footer .sp{flex:1}
+
+  .js .rise{opacity:0;transform:translateY(22px);transition:opacity .7s cubic-bezier(.2,.7,.2,1),transform .7s cubic-bezier(.2,.7,.2,1)}
+  .js .rise.in{opacity:1;transform:none}
+  .d1{transition-delay:.05s}.d2{transition-delay:.12s}.d3{transition-delay:.19s}.d4{transition-delay:.26s}
+
+  @media(max-width:880px){
+    .hero{grid-template-columns:1fr;padding-top:40px}.stage{min-height:500px;margin-top:20px}
+    .steps,.grid8{grid-template-columns:1fr 1fr}
+    .lock,.host{grid-template-columns:1fr;gap:26px}
+    .price{grid-template-columns:1fr}
+  }
+  @media(max-width:560px){.grid8,.steps{grid-template-columns:1fr}}
+</style>
+<script>document.documentElement.classList.add('js');</script>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute"><symbol id="mark" viewBox="0 0 32 32">
+  <!-- Wisp mark: a rising wisp/curl of light -->
+  <path d="M7 25c0-6 5-7 8-9s4-4 4-7c0-2.4-1.9-4-4.2-3.4" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M13 27c4.5 0 7-3 7-6.2 0-2.4-1.6-4-3.6-4" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity=".55"/>
+  <circle cx="23.5" cy="9" r="2.4" fill="var(--accent)"/>
+</symbol></svg>
+
+<nav>
+  <div class="nav-in">
+    <a class="brand" href="#"><svg style="color:var(--text)"><use href="#mark"/></svg>Wisp</a>
+    <div class="nav-links">
+      <a href="#platform">Platform</a><a href="#control">The difference</a><a href="#showcase">See it live</a><a href="#pricing">Pricing</a>
+    </div>
+    <div class="sp"></div>
+    <a class="ghlink" href="#"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .3a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.3-1.8-1.3-1.8-1.1-.7 0-.7 0-.7 1.2 0 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.4-1.3-5.4-6 0-1.3.5-2.3 1.2-3.2 0-.3-.5-1.5.2-3 0 0 1-.4 3.3 1.2a11.4 11.4 0 0 1 6 0c2.3-1.6 3.3-1.2 3.3-1.2.7 1.5.2 2.7.1 3 .8.9 1.2 2 1.2 3.2 0 4.7-2.8 5.7-5.5 6 .5.3.9 1 .9 2.2v3c0 .3.2.7.8.6A12 12 0 0 0 12 .3Z"/></svg>GitHub</a>
+    <a class="btn sm" href="#pricing">Get started</a>
+  </div>
+</nav>
+
+<header class="wrap hero">
+  <div>
+    <div class="badge-row">
+      <span class="chip"><span class="live"></span> AI-native platform</span>
+      <span class="chip">Runs on your Kubernetes</span>
+      <span class="chip">No lock-in</span>
+    </div>
+    <h1 class="hero-h">From prompt<br/>to production.</h1>
+    <p class="lede">Describe an app, an API, a job. Wisp builds it, ships it to <b>your own cloud</b>, and keeps it running — deploy, scale, monitor. Not a sandbox on someone else’s servers. <b>Real production, and it’s yours.</b></p>
+    <div class="cta-row">
+      <a class="btn" href="#pricing">Get started <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0a0a0c" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      <a class="lnk" href="#showcase">See it running →</a>
+    </div>
+    <p class="microtrust">One prompt → built, deployed &amp; operated on infrastructure you own</p>
+  </div>
+
+  <div class="stage">
+    <div class="console rise d1">
+      <div class="cbar"><i></i><i></i><i></i><span class="ct">wisp · workloads</span><span class="cl">live</span></div>
+      <div class="wl"><span class="wi">📱</span><div class="wm"><b>taskflow</b><span>React Native · iOS + Android</span></div><span class="st ok">running</span></div>
+      <div class="wl"><span class="wi">🌐</span><div class="wm"><b>marketing-site</b><span>Next.js · web</span></div><span class="st ok">running</span></div>
+      <div class="wl"><span class="wi">⚡</span><div class="wm"><b>orders-api</b><span>Go · REST</span></div><span class="st ok">running</span></div>
+      <div class="wl"><span class="wi">⏱️</span><div class="wm"><b>nightly-report</b><span>cron · 0 9 * * *</span></div><span class="st sc">scheduled</span></div>
+      <div class="wl"><span class="wi">🗄️</span><div class="wm"><b>postgres</b><span>database · HA</span></div><span class="st ok">healthy</span></div>
+      <div class="wl imp"><span class="wi">🔌</span><div class="wm"><b>legacy-billing</b><span>imported · your cluster</span></div><span class="st ok">running</span></div>
+    </div>
+    <div class="pmini rise d2">
+      <div class="ps"><div class="pi"></div><div class="pt">Good evening</div><div class="pr"><span>68%</span></div><div class="pw"></div><div class="pw"></div><div class="pw"></div></div>
+      <div class="scantag">scan → on your phone</div>
+    </div>
+  </div>
+</header>
+
+<div class="strip rise">
+  <div class="wrap">
+    <span class="cap">Works with your stack</span>
+    <span class="lg"><img src="https://cdn.simpleicons.org/expo/9aa0b0" width="17" height="17" alt="" onerror="this.style.display='none'"/>Expo</span>
+    <span class="lg"><img src="https://cdn.simpleicons.org/react/9aa0b0" width="17" height="17" alt="" onerror="this.style.display='none'"/>React Native</span>
+    <span class="lg"><img src="https://cdn.simpleicons.org/apple/9aa0b0" width="17" height="17" alt="" onerror="this.style.display='none'"/>iOS</span>
+    <span class="lg"><img src="https://cdn.simpleicons.org/android/9aa0b0" width="17" height="17" alt="" onerror="this.style.display='none'"/>Android</span>
+    <span class="lg"><img src="https://cdn.simpleicons.org/kubernetes/9aa0b0" width="17" height="17" alt="" onerror="this.style.display='none'"/>Kubernetes</span>
+    <span class="lg"><img src="https://cdn.simpleicons.org/docker/9aa0b0" width="17" height="17" alt="" onerror="this.style.display='none'"/>Docker</span>
+    <span class="lg"><img src="https://cdn.simpleicons.org/postgresql/9aa0b0" width="17" height="17" alt="" onerror="this.style.display='none'"/>Postgres</span>
+    <span class="lg"><img src="https://cdn.simpleicons.org/anthropic/9aa0b0" width="17" height="17" alt="" onerror="this.style.display='none'"/>MCP</span>
+  </div>
+</div>
+
+<section id="platform">
+  <div class="wrap">
+    <div class="sec-head rise">
+      <div class="kicker">Any workload</div>
+      <h2>Not just apps. Your whole stack.</h2>
+      <p class="sec-lede">Prompt-to-production works for anything you run — and Wisp keeps operating it, next to the services you already have.</p>
+    </div>
+    <div class="grid8">
+      <div class="tile rise d1"><div class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="7" y="2" width="10" height="20" rx="2.5"/><path d="M11 18h2"/></svg></div><h4>Mobile apps</h4><p>Native iOS + Android, live on your phone.</p></div>
+      <div class="tile rise d1"><div class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></svg></div><h4>Web &amp; APIs</h4><p>Any language — Node, Python, Go, Rust.</p></div>
+      <div class="tile rise d2"><div class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4M5 5l3 3M16 16l3 3M19 5l-3 3M8 16l-3 3"/></svg></div><h4>Jobs &amp; workflows</h4><p>Cron, workers, and DAG pipelines.</p></div>
+      <div class="tile rise d2"><div class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m21 8-9-5-9 5v8l9 5 9-5V8Z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg></div><h4>Operate it all</h4><p>Deploy, scale, shell in, logs, metrics.</p></div>
+      <div class="tile rise d3"><div class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 3v4M16 3v4M6 7h12l-1 13a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L6 7Z"/></svg></div><h4>Pull existing services</h4><p>Manage the containers you already run.</p></div>
+      <div class="tile rise d3"><div class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17.5 19a4.5 4.5 0 0 0 .5-9 6 6 0 0 0-11.6-1.5A4 4 0 0 0 6 19h11.5Z"/></svg></div><h4>Connect your cloud</h4><p>Wire in AWS &amp; Azure, auto-provisioned.</p></div>
+      <div class="tile rise d4"><div class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 3v6l-5 9a2 2 0 0 0 2 3h12a2 2 0 0 0 2-3l-5-9V3M9 3h6M8 15h8"/></svg></div><h4>Playgrounds</h4><p>Throwaway sandboxes with a terminal.</p></div>
+      <div class="tile rise d4"><div class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M12 8V4M9 2h6M9 14h.01M15 14h.01"/></svg></div><h4>Agent-operable</h4><p>Drive all of it with AI agents, over MCP.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="control">
+  <div class="wrap lock">
+    <div class="rise">
+      <div class="kicker">The difference</div>
+      <h2>A sandbox, or production?</h2>
+      <p class="sec-lede">Most AI builders stop at a preview on their cloud. Wisp ships real workloads to production — on infrastructure you own — and keeps operating them. Managed here, or moved to your own Kubernetes with one command. Never locked in.</p>
+      <a class="lnk" href="#selfhost" style="margin-top:22px">How self-host works →</a>
+    </div>
+    <div class="compare rise d2">
+      <div class="cmp no"><span class="mk"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M18 6 6 18M6 6l12 12"/></svg></span><div><b>Hosted AI builders</b><p>A preview on their servers, web-only. Export is theoretical — you’re stuck.</p></div></div>
+      <div class="cmp yes"><span class="mk"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="m5 12 4 4L19 6"/></svg></span><div><b>Real production</b><p>Actual deploys on real Kubernetes — scaled, monitored, operated. Not a demo.</p></div></div>
+      <div class="cmp yes"><span class="mk"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="m5 12 4 4L19 6"/></svg></span><div><b>On your cloud</b><p>Managed here, or one command to your own cluster. Your data, your keys.</p></div></div>
+      <div class="cmp yes"><span class="mk"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="m5 12 4 4L19 6"/></svg></span><div><b>Your whole fleet</b><p>Pull in and operate the services you already run, too.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<section id="showcase">
+  <div class="wrap">
+    <div class="sec-head rise" style="max-width:none;text-align:center">
+      <div class="kicker">The real thing</div>
+      <h2 style="margin:0 auto">Not mockups. The actual Studio.</h2>
+      <p class="sec-lede" style="margin:14px auto 0">Every screenshot below is the running app — the same cluster that built this page.</p>
+    </div>
+    <div class="shots">
+      <figure class="shot rise d1">
+        <div class="sb"><i></i><i></i><i></i><span>studio · build &amp; preview</span></div>
+        <img src="shots/builder.png" alt="Wisp Studio building a mobile app with a live iPhone preview" loading="lazy"/>
+        <figcaption><b>Describe → live phone preview.</b> A real React Native app rendering in an iPhone frame, with “Test on phone” to scan it onto your device.</figcaption>
+      </figure>
+      <figure class="shot rise d2">
+        <div class="sb"><i></i><i></i><i></i><span>studio · workloads</span></div>
+        <img src="shots/workloads.png" alt="Wisp Studio workloads console with mobile, web, APIs, jobs and storage" loading="lazy"/>
+        <figcaption><b>One console, every workload.</b> 12 live — mobile, web, Go &amp; Python APIs, a background worker, a cron job, plus Postgres &amp; Redis.</figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<section id="selfhost">
+  <div class="wrap host">
+    <div class="rise">
+      <div class="kicker">Runs on your machine</div>
+      <h2>One command to start.</h2>
+      <ul>
+        <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m5 12 4 4L19 6"/></svg><span><b>Nothing to install</b> but Docker — cluster, builds and dev servers all run in containers.</span></li>
+        <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m5 12 4 4L19 6"/></svg><span><b>Bring your own model</b> — any Claude or OpenAI-compatible key, or none and use templates.</span></li>
+        <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m5 12 4 4L19 6"/></svg><span><b>k3s, Argo, Postgres</b> and the whole control plane come up ready — no wiring.</span></li>
+      </ul>
+      <a class="btn ghost" style="margin-top:28px" href="#">Read the docs</a>
+    </div>
+    <div class="terminal rise d2">
+      <div class="tbar"><i></i><i></i><i></i><span class="t">~/wisp</span></div>
+      <div class="tbody">
+        <div><span class="p">$</span> git clone wisp.dev/wisp &amp;&amp; cd wisp</div>
+        <div><span class="p">$</span> make up <span class="c"># cluster + gateway + studio</span></div>
+        <div class="o">&nbsp;&nbsp;▸ k3s ready · argo · postgres</div>
+        <div class="o">&nbsp;&nbsp;▸ studio → localhost:3002</div>
+        <div><span class="p">$</span> open <span style="color:var(--accent)">localhost:3002</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="pricing">
+  <div class="wrap">
+    <div class="sec-head rise" style="max-width:none;text-align:center">
+      <div class="kicker">Open core</div>
+      <h2 style="margin:0 auto">Free to run yourself. Paid when it scales.</h2>
+      <p class="sec-lede" style="margin:14px auto 0">Open source and free on your own machine, forever. We earn by running it for you — and giving teams the control and security they need.</p>
+    </div>
+    <div class="price">
+      <div class="tier rise d1">
+        <div class="pt">Self-host</div>
+        <div class="pp">$0 <small>/ forever</small></div>
+        <div class="pd">The whole platform, open source, on your own Kubernetes.</div>
+        <ul>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m5 12 4 4L19 6"/></svg>Every capability, unlimited</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m5 12 4 4L19 6"/></svg>Your cluster, data &amp; keys — nothing leaves</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m5 12 4 4L19 6"/></svg>Pull in &amp; manage existing services</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m5 12 4 4L19 6"/></svg>Community support</li>
+        </ul>
+        <a class="btn ghost full" href="#selfhost">Clone &amp; run</a>
+      </div>
+      <div class="tier hot rise d2">
+        <span class="badge">Most popular</span>
+        <div class="pt">Cloud</div>
+        <div class="pp">Managed <small>· usage-based</small></div>
+        <div class="pd">We host, scale and back it up. Zero ops — just describe and ship.</div>
+        <ul>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m5 12 4 4L19 6"/></svg>Fully managed cluster &amp; builds</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m5 12 4 4L19 6"/></svg>Autoscaling &amp; backups</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m5 12 4 4L19 6"/></svg>One-click deploys, no k8s to run</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m5 12 4 4L19 6"/></svg>Standard support</li>
+        </ul>
+        <a class="btn accent full" href="#">Join the waitlist</a>
+      </div>
+      <div class="tier rise d3">
+        <div class="pt">Team &amp; Enterprise</div>
+        <div class="pp">Custom</div>
+        <div class="pd">For orgs taking control of their whole fleet — with the guardrails to match.</div>
+        <ul>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m5 12 4 4L19 6"/></svg>SSO / SAML &amp; SCIM</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m5 12 4 4L19 6"/></svg>RBAC, audit logs, multi-tenancy</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m5 12 4 4L19 6"/></svg>Self-host or dedicated cloud</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m5 12 4 4L19 6"/></svg>Priority support &amp; SLA</li>
+        </ul>
+        <a class="btn ghost full" href="#">Talk to us</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="final">
+  <div class="wrap">
+    <div class="box rise">
+      <h2>From prompt to production.</h2>
+      <p>Spin up Wisp on your own machine, describe your first workload, and watch it ship — no sandbox, no lock-in.</p>
+      <div class="cta-row">
+        <a class="btn" href="#pricing">Get started</a>
+        <a class="btn ghost" href="#"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .3a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.3-1.8-1.3-1.8-1.1-.7 0-.7 0-.7 1.2 0 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.4-1.3-5.4-6 0-1.3.5-2.3 1.2-3.2 0-.3-.5-1.5.2-3 0 0 1-.4 3.3 1.2a11.4 11.4 0 0 1 6 0c2.3-1.6 3.3-1.2 3.3-1.2.7 1.5.2 2.7.1 3 .8.9 1.2 2 1.2 3.2 0 4.7-2.8 5.7-5.5 6 .5.3.9 1 .9 2.2v3c0 .3.2.7.8.6A12 12 0 0 0 12 .3Z"/></svg>Star on GitHub</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <a class="brand" href="#" style="font-size:17px"><svg style="width:22px;height:22px;color:var(--text)"><use href="#mark"/></svg>Wisp</a>
+    <span class="sp"></span>
+    <a href="#platform">Platform</a><a href="#pricing">Pricing</a><a href="#control">Own your stack</a><a href="#">GitHub</a>
+    <span style="color:var(--text3)">© 2026 Wisp · open source</span>
+  </div>
+</footer>
+
+<script>
+  (function(){var s=document.getElementById('qr');if(!s)return;var n=21,seed=9,rnd=function(){seed=(seed*1103515245+12345)&0x7fffffff;return seed/0x7fffffff;},c='';
+    var fnd=function(x,y){c+="<rect x='"+x+"' y='"+y+"' width='7' height='7' fill='%23111'/><rect x='"+(x+1)+"' y='"+(y+1)+"' width='5' height='5' fill='%23fff'/><rect x='"+(x+2)+"' y='"+(y+2)+"' width='3' height='3' fill='%23111'/>";};
+    for(var y=0;y<n;y++)for(var x=0;x<n;x++){if((x<8&&y<8)||(x>12&&y<8)||(x<8&&y>12))continue;if(rnd()>.55)c+="<rect x='"+x+"' y='"+y+"' width='1' height='1' fill='%23111'/>";}
+    fnd(0,0);fnd(14,0);fnd(0,14);s.innerHTML=c.replace(/%23/g,'#');})();
+  var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{threshold:.12});
+  document.querySelectorAll('.rise').forEach(function(el){io.observe(el);});
+  setTimeout(function(){document.querySelectorAll('.hero .rise,.stage .rise,.strip').forEach(function(e){e.classList.add('in');});},60);
+</script>
+</body>
+</html>
