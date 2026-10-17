@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>From RAG Demo to Production: A Practical Checklist</title>
+<meta name="description" content="A practitioner&#x27;s checklist for taking RAG from demo to production: retrieval quality, evaluation, guardrails, permissions, cost per query and rollout." />
+<meta name="keywords" content="RAG in production, retrieval augmented generation, production RAG checklist, LLM evaluation, GraphRAG, hybrid search, LangGraph, LangChain in production, LLM guardrails, Model Context Protocol, MCP tools, LLM cost per query, AI agents in production, AI architect" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://caeser1996.github.io/insights/rag-to-production-checklist/" />
+<meta name="theme-color" content="#111214" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="From RAG Demo to Production: A Practical Checklist" />
+<meta property="og:description" content="A practitioner&#x27;s checklist for taking RAG from demo to production: retrieval quality, evaluation, guardrails, permissions, cost per query and rollout." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://caeser1996.github.io/insights/rag-to-production-checklist/" />
+<meta property="og:image" content="https://caeser1996.github.io/assets/og/rag-to-production-checklist.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="From RAG Demo to Production: A Practical Checklist" />
+<meta name="twitter:description" content="A practitioner&#x27;s checklist for taking RAG from demo to production: retrieval quality, evaluation, guardrails, permissions, cost per query and rollout." />
+<meta name="twitter:image" content="https://caeser1996.github.io/assets/og/rag-to-production-checklist.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "Article", "headline": "From RAG demo to production: a checklist", "description": "A practitioner's checklist for taking RAG from demo to production: retrieval quality, evaluation, guardrails, permissions, cost per query and rollout.", "datePublished": "2026-10-17", "dateModified": "2026-10-17", "author": {"@type": "Person", "@id": "https://caeser1996.github.io/#person", "name": "Sumanta Mukhopadhyay", "url": "https://caeser1996.github.io/"}, "publisher": {"@type": "Person", "@id": "https://caeser1996.github.io/#person", "name": "Sumanta Mukhopadhyay", "url": "https://caeser1996.github.io/"}, "mainEntityOfPage": "https://caeser1996.github.io/insights/rag-to-production-checklist/", "image": "https://caeser1996.github.io/assets/og/rag-to-production-checklist.png", "keywords": "RAG in production, retrieval augmented generation, production RAG checklist, LLM evaluation, GraphRAG, hybrid search, LangGraph, LangChain in production, LLM guardrails, Model Context Protocol, MCP tools, LLM cost per query, AI agents in production, AI architect", "wordCount": 1500}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://caeser1996.github.io/"}, {"@type": "ListItem", "position": 2, "name": "Insights", "item": "https://caeser1996.github.io/insights/"}, {"@type": "ListItem", "position": 3, "name": "From RAG demo to production: a checklist", "item": "https://caeser1996.github.io/insights/rag-to-production-checklist/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Why do RAG demos fail in production?", "acceptedAnswer": {"@type": "Answer", "text": "Demos are tested on friendly questions and clean documents. Production brings ambiguous questions, messy data, permissions and scale, and without an evaluation set nobody can tell whether answers are getting better or worse."}}, {"@type": "Question", "name": "What is the most important part of a production RAG system?", "acceptedAnswer": {"@type": "Answer", "text": "Retrieval quality and evaluation. If the right context is not retrieved, no prompt or model will fix the answer, and without an evaluation set you cannot measure retrieval at all."}}, {"@type": "Question", "name": "When should I use LangGraph instead of a simple chain?", "acceptedAnswer": {"@type": "Answer", "text": "When the workflow has branches, loops, tool calls or human approval steps. LangGraph makes the state and transitions explicit, which makes multi-step agents easier to test and debug."}}, {"@type": "Question", "name": "How do you control LLM costs in production?", "acceptedAnswer": {"@type": "Answer", "text": "Measure cost per query and per use case, cache where possible, keep context windows tight, and route simple requests to smaller or local models."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..600;1,9..144,400&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+</script>
+</head>
+<body class="sub is-post">
+<div class="progress" id="progress"></div>
+<nav>
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links">
+      <a href="/#practice">Services</a>
+      <a href="/#work">Case studies</a>
+      <a href="/insights/">Insights</a>
+      <a href="/#assess">Analyse</a>
+      <a href="/#connect">Connect</a>
+    </div>
+    <div class="nav-r">
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/insights/">Insights</a> <span>/</span> <em>From RAG demo to production: a checklist</em></div>
+    <div class="kicker">AI architecture</div>
+    <h1>From RAG demo to production: a checklist</h1>
+    <p class="sub-lede">The demo took a week. Production is a different job. This is the checklist I work through before an LLM system goes in front of real users.</p>
+    <div class="ameta"><span>Sumanta Mukhopadhyay</span><span>17 October 2026</span><span>10 min read</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <article class="prose article">
+    <p>Retrieval-augmented generation is the most common pattern in enterprise AI, and the most common place for AI projects to stall. Building a demo that answers ten hand-picked questions from a folder of PDFs takes days. Building a system that answers thousands of unpredictable questions, correctly, within budget, without leaking data, takes deliberate engineering.</p>
+<p>I have built production RAG systems with LangChain and LangGraph, and agent tooling over MCP in Wisp, the open-source AI platform I built. This is the checklist I use. It is not exhaustive, but if you can tick every item, you are in better shape than most.</p>
+
+<section class="block">
+<h2>1. Define the job before the architecture</h2>
+<ul>
+<li>Which decisions does the system support, and who makes them?</li>
+<li>What does a wrong answer cost? Annoyance, a bad customer experience, a compliance breach?</li>
+<li>Must every answer be cited? Can the system say "I don't know"?</li>
+<li>What is the acceptable latency and cost per query?</li>
+</ul>
+<p>The answers decide almost everything else. An internal search helper and a clinical decision aid are both "RAG", and they share very little beyond the name.</p>
+</section>
+
+<section class="block">
+<h2>2. Build an evaluation set first</h2>
+<p>This is the item teams skip most, and the one I insist on. Before tuning anything, collect a set of real questions with known good answers and the source passages that support them. A few hundred is a good start; even fifty is far better than none.</p>
+<ul>
+<li>Use real user questions where possible, including the awkward ones.</li>
+<li>Include questions the system <em>should refuse</em> or answer with "not enough information".</li>
+<li>Measure retrieval separately from generation: did the right passages come back, and was the answer faithful to them?</li>
+<li>Run the set on every change to prompts, models, chunking or indexes. Treat a drop in scores like a failing test.</li>
+</ul>
+<div class="callout"><p>If you cannot say whether last week's change made answers better or worse, you do not have a production system. You have a demo with users.</p></div>
+</section>
+
+<section class="block">
+<h2>3. Get retrieval right</h2>
+<p>Most bad answers are retrieval failures, not model failures. If the right context is not in the prompt, no model will save you.</p>
+<h3>Chunking</h3>
+<ul>
+<li>Chunk on document structure (sections, headings, table rows), not fixed character counts.</li>
+<li>Keep metadata with every chunk: source, date, owner, access level, document type.</li>
+<li>Test a few chunk sizes against your evaluation set rather than guessing.</li>
+</ul>
+<h3>Hybrid search</h3>
+<ul>
+<li>Combine vector similarity with keyword search. Product codes, names and acronyms are often missed by embeddings alone.</li>
+<li>Add a reranking step on the top candidates; it is usually the cheapest quality gain available.</li>
+<li>Filter by metadata before ranking: date ranges, document types, and above all permissions.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>4. Ground answers in a knowledge graph where it matters</h2>
+<p>Similarity search is good at "find me passages about X". It is poor at precise questions that depend on relationships: "which of my contracts renew this quarter?" or "which patients on this drug had this lab result?"</p>
+<p>For those, I ground retrieval in a knowledge graph built on a domain ontology, an approach often called GraphRAG. The graph resolves entities, traverses relationships exactly, and enforces permissions, then documents are retrieved only for the entities that matter. I explain the building blocks in <a href="/insights/ontology-vs-knowledge-graph-vs-semantic-layer/">Ontology vs knowledge graph vs semantic layer</a>.</p>
+<p>You do not need a graph for every use case. You need one when wrong facts are expensive.</p>
+</section>
+
+<section class="block">
+<h2>5. Orchestrate explicitly</h2>
+<p>Simple question-answering is a pipeline. Anything with branches, tools, retries or approvals is a workflow, and should be modelled as one. This is where LangGraph earns its place: state is explicit, transitions are explicit, and each step can be tested on its own.</p>
+<ul>
+<li>Keep each node small: classify the question, retrieve, check sufficiency, answer, verify.</li>
+<li>Expose tools through a consistent interface. The Model Context Protocol (MCP) is now a sensible default for giving agents access to systems, with clear schemas and permission boundaries.</li>
+<li>Put human approval steps where actions have consequences: sending an email, updating a record, placing an order.</li>
+<li>Cap loops and tool calls. An agent without limits will eventually find an expensive way to fail.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>6. Guardrails and permissions</h2>
+<ul>
+<li><strong>Access control at retrieval time.</strong> Filter by the user's permissions before anything reaches the model. Never rely on the prompt to hide data.</li>
+<li><strong>PII handling.</strong> Redact or mask sensitive fields where they are not needed, and log what was sent to which model.</li>
+<li><strong>Input checks.</strong> Detect prompt injection patterns, especially in retrieved documents and tool outputs, not just user input.</li>
+<li><strong>Output checks.</strong> Verify citations point to retrieved sources, and block answers that fail policy.</li>
+<li><strong>Data residency.</strong> Know which model endpoints process which data, and where. For highly sensitive data, consider <a href="/insights/private-llm-on-prem/">running models on your own hardware</a>.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>7. Observability, cost and latency</h2>
+<p>Treat the LLM system like any other production service, with a few extra measurements.</p>
+<table class="tbl">
+<thead><tr><th>Measure</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Full trace per request (retrieval, prompts, tool calls, outputs)</td><td>Debugging a bad answer is impossible without it</td></tr>
+<tr><td>Cost per query and per use case</td><td>Surprise invoices kill AI programmes faster than bad answers</td></tr>
+<tr><td>Latency by step</td><td>Usually retrieval or reranking, not generation, is the slow part you can fix</td></tr>
+<tr><td>User feedback and escalation rate</td><td>The cheapest source of new evaluation cases</td></tr>
+<tr><td>Evaluation scores over time</td><td>Catches silent regressions after model or data changes</td></tr>
+</tbody>
+</table>
+<p>To control cost: cache stable answers and embeddings, keep context windows tight, and route simple requests to smaller models. Not every question needs your largest model.</p>
+</section>
+
+<section class="block">
+<h2>8. Roll out like a product, not a launch</h2>
+<ol>
+<li>Start with one workflow and one group of users who will give honest feedback.</li>
+<li>Ship behind a feature flag, with a clear way for users to report bad answers.</li>
+<li>Review traces and failures weekly; turn each failure into an evaluation case.</li>
+<li>Expand to more users and use cases only when evaluation scores are stable.</li>
+<li>Write down the operating model: who owns quality, who approves model changes, who is on call.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2>The checklist, condensed</h2>
+<ul>
+<li>Job, cost of error and success criteria written down</li>
+<li>Evaluation set built and run on every change</li>
+<li>Structure-aware chunking with metadata</li>
+<li>Hybrid search plus reranking</li>
+<li>Knowledge graph grounding where facts and relationships matter</li>
+<li>Explicit orchestration, tools over MCP, capped loops</li>
+<li>Permissions enforced at retrieval, PII controls, injection checks</li>
+<li>Tracing, cost per query, latency by step</li>
+<li>Staged rollout with a feedback loop and a named owner</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>The failure modes I see most</h2>
+<p>When a RAG system disappoints, the cause is usually one of a short list. Recognising the pattern saves weeks.</p>
+<h3>The right document is never retrieved</h3>
+<p>Symptoms: confident answers that ignore an obvious source. Causes: the document was never indexed, chunking split the key passage, or the user's wording does not resemble the document's. Fixes: index coverage checks, structure-aware chunking, hybrid search and query rewriting.</p>
+<h3>Retrieved, but drowned out</h3>
+<p>The right passage is in the context, but surrounded by twenty near-misses, and the model picks the wrong one. Fixes: rerank and cut the context down. More context is not better context.</p>
+<h3>Stale or conflicting sources</h3>
+<p>Last year's policy and this year's policy both exist, and the system quotes the old one. Fixes: dates and status in metadata, filters for current documents, and an owner for each content source. This is a content governance problem dressed up as an AI problem.</p>
+<h3>Answers that are right for someone else</h3>
+<p>The system answers using data the user should not see, or data about the wrong customer. Fixes: permission filtering at retrieval time, and entity resolution through a knowledge graph so "my account" means the right thing.</p>
+<h3>Agents that wander</h3>
+<p>Multi-step agents loop, call tools repeatedly or take actions nobody intended. Fixes: explicit state machines, capped iterations, narrow tools with clear schemas, and approval steps before side effects.</p>
+</section>
+
+<section class="block">
+<h2>Who owns it after launch</h2>
+<p>The last item on any checklist should be ownership. An LLM system degrades if nobody tends it: documents change, models are updated, users find new ways to ask questions. Someone needs to own the evaluation set, review failures, approve model changes and decide when a use case is ready to expand. In smaller organisations that is often a product owner paired with an engineer; in larger ones, a small AI platform team. Write the names down before launch, not after the first incident.</p>
+</section>
+
+<section class="block">
+<h2>A note on frameworks</h2>
+<p>LangChain, LangGraph and similar libraries save a lot of time, and I use them. They do not replace design. Keep your retrieval logic, prompts and evaluation in code you own and understand, wrap framework components behind small interfaces, and resist adding layers you cannot explain. When something breaks at two in the morning, you want to be reading your own code, not a stack trace through five abstractions. Frameworks also change quickly, so keeping them at the edges makes upgrades a routine job rather than a rewrite.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>As an <a href="/ai-architect/">AI architect</a>, I take LLM systems from pilot to production: retrieval, evaluation, LangGraph orchestration, guardrails and cost control, grounded in a <a href="/ontology-knowledge-graph/">knowledge graph</a> where accuracy matters.</p>
+<p>If your pilot has stalled, run the <a href="/#assess">challenge analyser</a> for a quick diagnosis, or look at the case studies in <a href="/#work">my work</a>.</p>
+</section>
+  </article>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>Why do RAG demos fail in production?</summary><p>Demos are tested on friendly questions and clean documents. Production brings ambiguous questions, messy data, permissions and scale, and without an evaluation set nobody can tell whether answers are getting better or worse.</p></details><details class="rise"><summary>What is the most important part of a production RAG system?</summary><p>Retrieval quality and evaluation. If the right context is not retrieved, no prompt or model will fix the answer, and without an evaluation set you cannot measure retrieval at all.</p></details><details class="rise"><summary>When should I use LangGraph instead of a simple chain?</summary><p>When the workflow has branches, loops, tool calls or human approval steps. LangGraph makes the state and transitions explicit, which makes multi-step agents easier to test and debug.</p></details><details class="rise"><summary>How do you control LLM costs in production?</summary><p>Measure cost per query and per use case, cache where possible, keep context windows tight, and route simple requests to smaller or local models.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/ai-architect/"><small>Service</small><b>AI &amp; LLM architecture</b><span>I design and build AI systems that leadership can trust: grounded in your data, measured by evaluations, governed by your rules and priced so they make sense at scale.</span><i>→</i></a><a class="rcard rise" href="/ontology-knowledge-graph/"><small>Service</small><b>Ontology &amp; knowledge graphs</b><span>I help organisations agree what their data means, write it down as an ontology and put it to work in a knowledge graph that analytics, APIs and AI agents can all rely on.</span><i>→</i></a><a class="rcard rise" href="/insights/when-do-you-need-a-fractional-cto/"><small>Insight</small><b>When do you need a fractional CTO? (And when you don&#x27;t)</b><span>A fractional CTO is a good answer to a specific set of problems, and a poor answer to others. Here is how I tell the difference, and what the work looks like once it starts.</span><i>→</i></a><a class="rcard rise" href="/insights/private-llm-on-prem/"><small>Insight</small><b>Running private LLMs on your own hardware: notes from the bench</b><span>I have been running open-weight models on an NVIDIA DGX Spark to understand what local AI can really do for organisations that cannot send data to a public API. These are my working notes.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: From RAG demo to production: a checklist">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, healthcare data and cloud infrastructure, from strategy to production.</p>
+        <p class="floc">United States &amp; UAE · working globally</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/uae/">Fractional CTO in the UAE</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/when-do-you-need-a-fractional-cto/">When do you need a fractional CTO? (And when you don&#x27;t)</a></li><li><a href="/insights/private-llm-on-prem/">Running private LLMs on your own hardware: notes from the bench</a></li><li><a href="/insights/ontology-vs-knowledge-graph-vs-semantic-layer/">Ontology vs knowledge graph vs semantic layer: what&#x27;s the difference, and which do you need?</a></li><li><a href="/insights/rag-to-production-checklist/">From RAG demo to production: a checklist</a></li><li><a href="/insights/fhir-to-omop-architecture/">FHIR to OMOP: a practical architecture for healthcare data</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>

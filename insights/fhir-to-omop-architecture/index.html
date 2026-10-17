@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FHIR to OMOP: A Practical Architecture for Healthcare Data</title>
+<meta name="description" content="How FHIR and OMOP CDM fit together: a reference pipeline from clinical sources through terminology mapping to OHDSI cohorts, with de-identification and HIPAA." />
+<meta name="keywords" content="FHIR to OMOP, OMOP CDM, HL7 FHIR, OHDSI ATLAS, healthcare data architecture, clinical data platform, SNOMED CT, LOINC, RxNorm, terminology mapping, real-world evidence, HIPAA compliant data platform, healthcare interoperability, de-identification" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://caeser1996.github.io/insights/fhir-to-omop-architecture/" />
+<meta name="theme-color" content="#111214" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="FHIR to OMOP: A Practical Architecture for Healthcare Data" />
+<meta property="og:description" content="How FHIR and OMOP CDM fit together: a reference pipeline from clinical sources through terminology mapping to OHDSI cohorts, with de-identification and HIPAA." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://caeser1996.github.io/insights/fhir-to-omop-architecture/" />
+<meta property="og:image" content="https://caeser1996.github.io/assets/og/fhir-to-omop-architecture.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="FHIR to OMOP: A Practical Architecture for Healthcare Data" />
+<meta name="twitter:description" content="How FHIR and OMOP CDM fit together: a reference pipeline from clinical sources through terminology mapping to OHDSI cohorts, with de-identification and HIPAA." />
+<meta name="twitter:image" content="https://caeser1996.github.io/assets/og/fhir-to-omop-architecture.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "Article", "headline": "FHIR to OMOP: a practical architecture for healthcare data", "description": "How FHIR and OMOP CDM fit together: a reference pipeline from clinical sources through terminology mapping to OHDSI cohorts, with de-identification and HIPAA.", "datePublished": "2026-10-17", "dateModified": "2026-10-17", "author": {"@type": "Person", "@id": "https://caeser1996.github.io/#person", "name": "Sumanta Mukhopadhyay", "url": "https://caeser1996.github.io/"}, "publisher": {"@type": "Person", "@id": "https://caeser1996.github.io/#person", "name": "Sumanta Mukhopadhyay", "url": "https://caeser1996.github.io/"}, "mainEntityOfPage": "https://caeser1996.github.io/insights/fhir-to-omop-architecture/", "image": "https://caeser1996.github.io/assets/og/fhir-to-omop-architecture.png", "keywords": "FHIR to OMOP, OMOP CDM, HL7 FHIR, OHDSI ATLAS, healthcare data architecture, clinical data platform, SNOMED CT, LOINC, RxNorm, terminology mapping, real-world evidence, HIPAA compliant data platform, healthcare interoperability, de-identification", "wordCount": 1572}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://caeser1996.github.io/"}, {"@type": "ListItem", "position": 2, "name": "Insights", "item": "https://caeser1996.github.io/insights/"}, {"@type": "ListItem", "position": 3, "name": "FHIR to OMOP: a practical architecture for healthcare data", "item": "https://caeser1996.github.io/insights/fhir-to-omop-architecture/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What is the difference between FHIR and OMOP?", "acceptedAnswer": {"@type": "Answer", "text": "FHIR is a standard for exchanging healthcare data between systems through APIs. OMOP CDM is a standard data model designed for analytics and observational research across many sources."}}, {"@type": "Question", "name": "Should I convert FHIR to OMOP?", "acceptedAnswer": {"@type": "Answer", "text": "If you need reproducible analytics, cohort building or research across sources, yes. FHIR is a good intake format, and OMOP is a good analytical store, so many architectures use both."}}, {"@type": "Question", "name": "Which vocabularies does OMOP use?", "acceptedAnswer": {"@type": "Answer", "text": "OMOP maps source codes to standard concepts, mainly SNOMED CT for conditions and procedures, LOINC for measurements and labs, and RxNorm for drugs."}}, {"@type": "Question", "name": "Is OMOP data automatically HIPAA compliant?", "acceptedAnswer": {"@type": "Answer", "text": "No. Compliance depends on how data is de-identified, accessed, logged and governed. The data model helps with consistency, not privacy."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..600;1,9..144,400&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+</script>
+</head>
+<body class="sub is-post">
+<div class="progress" id="progress"></div>
+<nav>
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links">
+      <a href="/#practice">Services</a>
+      <a href="/#work">Case studies</a>
+      <a href="/insights/">Insights</a>
+      <a href="/#assess">Analyse</a>
+      <a href="/#connect">Connect</a>
+    </div>
+    <div class="nav-r">
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/insights/">Insights</a> <span>/</span> <em>FHIR to OMOP: a practical architecture for healthcare data</em></div>
+    <div class="kicker">Healthcare data</div>
+    <h1>FHIR to OMOP: a practical architecture for healthcare data</h1>
+    <p class="sub-lede">FHIR and OMOP are often presented as competitors. They are not. One is for moving data, the other is for analysing it. Here is how I connect them.</p>
+    <div class="ameta"><span>Sumanta Mukhopadhyay</span><span>17 October 2026</span><span>10 min read</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <article class="prose article">
+    <p>If you work with clinical data for long enough, you will hear someone ask whether the organisation should "go FHIR or go OMOP". It is the wrong question. HL7 FHIR and the OMOP Common Data Model solve different problems, and most serious healthcare data platforms need both.</p>
+<p>I have worked hands-on with OMOP and the OHDSI tool stack (ATLAS, WebAPI and Broadsea), and that work fed into peer-reviewed research published in Science Immunology. This is the architecture I would sketch on a whiteboard for a hospital group, a research organisation or a health-tech company starting today.</p>
+
+<section class="block">
+<h2>What each standard is for</h2>
+<table class="tbl">
+<thead><tr><th></th><th>HL7 FHIR</th><th>OMOP CDM</th></tr></thead>
+<tbody>
+<tr><td>Primary purpose</td><td>Exchanging data between systems</td><td>Analysing data across sources</td></tr>
+<tr><td>Shape</td><td>Resources (Patient, Observation, MedicationRequest...) over REST APIs</td><td>Relational tables (person, condition_occurrence, drug_exposure, measurement...)</td></tr>
+<tr><td>Codes</td><td>Carries source codes as received</td><td>Maps everything to standard concepts</td></tr>
+<tr><td>Best at</td><td>Real-time integration, apps, patient access</td><td>Cohorts, population analytics, reproducible studies</td></tr>
+<tr><td>Ecosystem</td><td>EHR vendors, app developers, regulators</td><td>OHDSI community: ATLAS, HADES, network studies</td></tr>
+</tbody>
+</table>
+<p>The short version: FHIR is the shipping container, OMOP is the warehouse with everything sorted onto standard shelves.</p>
+</section>
+
+<section class="block">
+<h2>The reference pipeline</h2>
+<pre><code>Sources            Intake          Terminology         Analytics         Use
+-------            ------          -----------         ---------         ---
+EHR (HL7 v2)  -->                                                     --> ATLAS cohorts
+Labs          -->  FHIR      -->   map to SNOMED  -->  OMOP CDM  ---- --> Research studies
+Claims        -->  server /        LOINC, RxNorm       (+ era         --> Dashboards
+Devices       -->  bulk export     concept mapping     tables)        --> Clinical AI
+
+      de-identification, consent, access control and audit at every hop</code></pre>
+<p>Each stage has one job. Keeping them separate is what makes the platform maintainable.</p>
+</section>
+
+<section class="block">
+<h2>Stage 1: intake through FHIR</h2>
+<p>Normalise everything you can into FHIR resources at the edge. Modern EHRs expose FHIR APIs and bulk export; for legacy HL7 v2 feeds, flat files and claims, write adapters that produce FHIR. The benefits are practical:</p>
+<ul>
+<li>One intake format means one set of validation rules, not one per source.</li>
+<li>Provenance is easier to keep: each resource can record where it came from and when.</li>
+<li>The same intake layer serves operational use cases, such as apps and patient access, not just analytics.</li>
+</ul>
+<p>Do not try to fix every code at this stage. Keep the source codes faithfully. Mapping comes next.</p>
+</section>
+
+<section class="block">
+<h2>Stage 2: terminology mapping</h2>
+<p>This is where most of the intellectual work lives. Source systems use local codes, ICD-10, CPT, proprietary lab codes and free text. OMOP requires mapping these to standard concepts, chiefly:</p>
+<ul>
+<li><strong>SNOMED CT</strong> for conditions, procedures and observations</li>
+<li><strong>LOINC</strong> for laboratory tests and measurements</li>
+<li><strong>RxNorm</strong> for drugs</li>
+</ul>
+<p>The OHDSI standardised vocabularies provide most of the mappings for common code systems. The hard part is local codes. Build a terminology service that holds your mappings, records who approved each one, and versions them. Track mapping coverage as a metric: the percentage of records, and of distinct codes, that map to a standard concept. Unmapped high-volume codes are your backlog.</p>
+<div class="callout"><p>The vocabularies are, in effect, a shared ontology for medicine. That is why OMOP works across institutions: everyone agrees what the concepts mean. I discuss the general idea in <a href="/insights/ontology-vs-knowledge-graph-vs-semantic-layer/">Ontology vs knowledge graph vs semantic layer</a>.</p></div>
+</section>
+
+<section class="block">
+<h2>Stage 3: load into OMOP CDM</h2>
+<p>With codes mapped, transform FHIR resources into OMOP tables. A rough correspondence:</p>
+<ul>
+<li>Patient to <code>person</code>, with location and demographics</li>
+<li>Encounter to <code>visit_occurrence</code></li>
+<li>Condition to <code>condition_occurrence</code></li>
+<li>MedicationRequest and MedicationAdministration to <code>drug_exposure</code></li>
+<li>Observation (labs and vitals) to <code>measurement</code> or <code>observation</code>, depending on the concept domain</li>
+<li>Procedure to <code>procedure_occurrence</code></li>
+</ul>
+<p>Note that the target table is decided by the domain of the <em>mapped concept</em>, not by the FHIR resource type. This catches many teams out. Then build the derived era tables (condition and drug eras), which make cohort logic far simpler.</p>
+<p>Keep the ETL in code, under version control, with tests. Every change to mapping logic changes research results, so you need to know exactly which version produced which dataset.</p>
+</section>
+
+<section class="block">
+<h2>Stage 4: cohorts and research with OHDSI</h2>
+<p>Once data is in OMOP, the OHDSI tools become available. ATLAS lets analysts define cohorts ("adults with type 2 diabetes started on drug X with an HbA1c above Y") visually, and those definitions are portable. The same cohort definition can run at another OMOP site without rewriting. Broadsea packages the stack in containers, which makes it much easier to stand up consistent environments.</p>
+<p>This portability is the real prize. Studies become reproducible, and network research across institutions becomes possible without moving patient data.</p>
+</section>
+
+<section class="block">
+<h2>De-identification and HIPAA</h2>
+<p>The data model does nothing for privacy on its own. Privacy has to be designed in at every hop:</p>
+<ul>
+<li><strong>Separate identified and research zones.</strong> Identified data stays in the intake zone; the research OMOP instance holds de-identified or limited datasets.</li>
+<li><strong>De-identification pipeline.</strong> Remove or transform direct identifiers, shift dates consistently per person, generalise rare values, and document the method (Safe Harbor or expert determination under HIPAA).</li>
+<li><strong>Consent and purpose.</strong> Record what each dataset may be used for, and enforce it in access control.</li>
+<li><strong>Least privilege and audit.</strong> Role-based access, encryption at rest and in transit, and immutable audit logs of who queried what.</li>
+<li><strong>Residency.</strong> Know where each dataset physically lives; this matters for US and Gulf deployments alike.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>Data quality and common pitfalls</h2>
+<p>Run data quality checks on every load. The OHDSI Data Quality Dashboard is a good start, alongside your own checks on volumes, mapping coverage and plausibility (birth dates in the future, lab values in impossible ranges). Pitfalls I see repeatedly:</p>
+<ol>
+<li><strong>Mapping by hand in spreadsheets</strong> with no versioning or approval trail.</li>
+<li><strong>Losing source values.</strong> Always keep the original code and value alongside the standard concept.</li>
+<li><strong>Treating OMOP as the operational store.</strong> It is an analytical model; serve apps from FHIR.</li>
+<li><strong>Underestimating units.</strong> Lab results in mixed units silently ruin measurement analyses.</li>
+<li><strong>Adding AI before the data is governed.</strong> Clinical AI is only as trustworthy as the provenance and quality underneath it.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2>Where FHIR and OMOP disagree, and how to handle it</h2>
+<p>The two standards were designed by different communities for different jobs, so the mapping is never perfectly clean. A few places where I spend time on every project:</p>
+<h3>Time</h3>
+<p>FHIR records rich timing: effective periods, issued times, recorded dates, and status changes over time. OMOP wants a start date, an end date and sometimes a datetime. You have to decide, and document, which FHIR timestamp becomes the OMOP event date. For a lab result, is it when the sample was taken or when the result was issued? For research the collection time is usually right, but write the rule down, because analysts will ask.</p>
+<h3>Status and corrections</h3>
+<p>FHIR resources change. A medication request can be cancelled, an observation can be amended, a condition can be marked as entered in error. OMOP is closer to a record of what happened. Your ETL needs a clear policy for each status: load it, exclude it, or replace the earlier record. Getting this wrong quietly inflates counts.</p>
+<h3>Free text</h3>
+<p>Much of the clinically useful detail lives in notes, not codes. OMOP has a note table and an NLP table for extracted concepts. If you plan to extract concepts from text, whether with classic NLP or an LLM, keep the extraction method and version with every derived record, so researchers can filter by how confident they should be.</p>
+<h3>Episodes and context</h3>
+<p>FHIR links many resources to an Encounter. OMOP links events to visits, but the visit model is simpler. Decide early how you will represent things like an emergency visit that becomes an inpatient stay, because it affects every length-of-stay analysis later.</p>
+</section>
+
+<section class="block">
+<h2>Sizing the team and the timeline</h2>
+<p>People often ask how long this takes. It depends far more on the sources than on the technology. One modern EHR with good FHIR support and a clean lab feed is a very different project from a dozen legacy systems with local codes. What I can say with confidence is how the effort usually splits:</p>
+<ul>
+<li><strong>Intake and adapters</strong> are predictable engineering work, once you have access to the sources.</li>
+<li><strong>Terminology mapping</strong> is the long tail. The common codes map quickly; the local codes take clinical input and patience.</li>
+<li><strong>Data quality and validation</strong> never finish. Budget for them as an ongoing activity, not a phase.</li>
+<li><strong>Governance</strong>, meaning agreements on access, consent and use, often takes longer than the build. Start those conversations on day one.</li>
+</ul>
+<p>The team that does this well pairs data engineers with someone who understands clinical coding. Neither group can do it alone. A good first milestone is one source, fully mapped and validated in OMOP, with a single real cohort defined in ATLAS and checked by a clinician. That proves the pipeline end to end and gives everyone something concrete to critique.</p>
+</section>
+
+<section class="block">
+<h2>Layering AI on top</h2>
+<p>Once data is standardised and governed, AI becomes much safer to add. Standard concepts give models a consistent vocabulary; provenance lets you trace any answer back to source records; access controls already exist. I would still keep clinical AI behind human review, ground it in the governed data rather than raw notes alone, and evaluate it against cases reviewed by clinicians. For sensitive workloads, <a href="/insights/private-llm-on-prem/">running models on your own hardware</a> keeps patient data inside your environment.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I design <a href="/healthcare-data-architecture/">healthcare data platforms</a> that take fragmented clinical feeds through FHIR and standard vocabularies into OMOP, with privacy built in, and then layer <a href="/ai-architect/">clinical AI</a> on top of governed data.</p>
+<p>For a quick read on your situation, try the <a href="/#assess">challenge analyser</a> and choose "Healthcare interoperability", or see the healthcare case study in <a href="/#work">my work</a>.</p>
+</section>
+  </article>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>What is the difference between FHIR and OMOP?</summary><p>FHIR is a standard for exchanging healthcare data between systems through APIs. OMOP CDM is a standard data model designed for analytics and observational research across many sources.</p></details><details class="rise"><summary>Should I convert FHIR to OMOP?</summary><p>If you need reproducible analytics, cohort building or research across sources, yes. FHIR is a good intake format, and OMOP is a good analytical store, so many architectures use both.</p></details><details class="rise"><summary>Which vocabularies does OMOP use?</summary><p>OMOP maps source codes to standard concepts, mainly SNOMED CT for conditions and procedures, LOINC for measurements and labs, and RxNorm for drugs.</p></details><details class="rise"><summary>Is OMOP data automatically HIPAA compliant?</summary><p>No. Compliance depends on how data is de-identified, accessed, logged and governed. The data model helps with consistency, not privacy.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/healthcare-data-architecture/"><small>Service</small><b>Healthcare data architecture</b><span>I help healthcare and life-sciences organisations turn fragmented clinical data into governed platforms for care, research and AI, using the standards the industry already agrees on.</span><i>→</i></a><a class="rcard rise" href="/ontology-knowledge-graph/"><small>Service</small><b>Ontology &amp; knowledge graphs</b><span>I help organisations agree what their data means, write it down as an ontology and put it to work in a knowledge graph that analytics, APIs and AI agents can all rely on.</span><i>→</i></a><a class="rcard rise" href="/ai-architect/"><small>Service</small><b>AI &amp; LLM architecture</b><span>I design and build AI systems that leadership can trust: grounded in your data, measured by evaluations, governed by your rules and priced so they make sense at scale.</span><i>→</i></a><a class="rcard rise" href="/insights/when-do-you-need-a-fractional-cto/"><small>Insight</small><b>When do you need a fractional CTO? (And when you don&#x27;t)</b><span>A fractional CTO is a good answer to a specific set of problems, and a poor answer to others. Here is how I tell the difference, and what the work looks like once it starts.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: FHIR to OMOP: a practical architecture for healthcare data">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, healthcare data and cloud infrastructure, from strategy to production.</p>
+        <p class="floc">United States &amp; UAE · working globally</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/uae/">Fractional CTO in the UAE</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/when-do-you-need-a-fractional-cto/">When do you need a fractional CTO? (And when you don&#x27;t)</a></li><li><a href="/insights/private-llm-on-prem/">Running private LLMs on your own hardware: notes from the bench</a></li><li><a href="/insights/ontology-vs-knowledge-graph-vs-semantic-layer/">Ontology vs knowledge graph vs semantic layer: what&#x27;s the difference, and which do you need?</a></li><li><a href="/insights/rag-to-production-checklist/">From RAG demo to production: a checklist</a></li><li><a href="/insights/fhir-to-omop-architecture/">FHIR to OMOP: a practical architecture for healthcare data</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,135 @@
+<!--{"title":"FHIR to OMOP: A Practical Architecture for Healthcare Data","description":"How FHIR and OMOP CDM fit together: a reference pipeline from clinical sources through terminology mapping to OHDSI cohorts, with de-identification and HIPAA.","h1":"FHIR to OMOP: a practical architecture for healthcare data","kicker":"Healthcare data","lede":"FHIR and OMOP are often presented as competitors. They are not. One is for moving data, the other is for analysing it. Here is how I connect them.","date":"2026-10-17","readtime":"10 min read","keywords":["FHIR to OMOP","OMOP CDM","HL7 FHIR","OHDSI ATLAS","healthcare data architecture","clinical data platform","SNOMED CT","LOINC","RxNorm","terminology mapping","real-world evidence","HIPAA compliant data platform","healthcare interoperability","de-identification"],"faq":[["What is the difference between FHIR and OMOP?","FHIR is a standard for exchanging healthcare data between systems through APIs. OMOP CDM is a standard data model designed for analytics and observational research across many sources."],["Should I convert FHIR to OMOP?","If you need reproducible analytics, cohort building or research across sources, yes. FHIR is a good intake format, and OMOP is a good analytical store, so many architectures use both."],["Which vocabularies does OMOP use?","OMOP maps source codes to standard concepts, mainly SNOMED CT for conditions and procedures, LOINC for measurements and labs, and RxNorm for drugs."],["Is OMOP data automatically HIPAA compliant?","No. Compliance depends on how data is de-identified, accessed, logged and governed. The data model helps with consistency, not privacy."]],"related":["/healthcare-data-architecture/","/ontology-knowledge-graph/","/ai-architect/"]}-->
+<p>If you work with clinical data for long enough, you will hear someone ask whether the organisation should "go FHIR or go OMOP". It is the wrong question. HL7 FHIR and the OMOP Common Data Model solve different problems, and most serious healthcare data platforms need both.</p>
+<p>I have worked hands-on with OMOP and the OHDSI tool stack (ATLAS, WebAPI and Broadsea), and that work fed into peer-reviewed research published in Science Immunology. This is the architecture I would sketch on a whiteboard for a hospital group, a research organisation or a health-tech company starting today.</p>
+
+<section class="block">
+<h2>What each standard is for</h2>
+<table class="tbl">
+<thead><tr><th></th><th>HL7 FHIR</th><th>OMOP CDM</th></tr></thead>
+<tbody>
+<tr><td>Primary purpose</td><td>Exchanging data between systems</td><td>Analysing data across sources</td></tr>
+<tr><td>Shape</td><td>Resources (Patient, Observation, MedicationRequest...) over REST APIs</td><td>Relational tables (person, condition_occurrence, drug_exposure, measurement...)</td></tr>
+<tr><td>Codes</td><td>Carries source codes as received</td><td>Maps everything to standard concepts</td></tr>
+<tr><td>Best at</td><td>Real-time integration, apps, patient access</td><td>Cohorts, population analytics, reproducible studies</td></tr>
+<tr><td>Ecosystem</td><td>EHR vendors, app developers, regulators</td><td>OHDSI community: ATLAS, HADES, network studies</td></tr>
+</tbody>
+</table>
+<p>The short version: FHIR is the shipping container, OMOP is the warehouse with everything sorted onto standard shelves.</p>
+</section>
+
+<section class="block">
+<h2>The reference pipeline</h2>
+<pre><code>Sources            Intake          Terminology         Analytics         Use
+-------            ------          -----------         ---------         ---
+EHR (HL7 v2)  -->                                                     --> ATLAS cohorts
+Labs          -->  FHIR      -->   map to SNOMED  -->  OMOP CDM  ---- --> Research studies
+Claims        -->  server /        LOINC, RxNorm       (+ era         --> Dashboards
+Devices       -->  bulk export     concept mapping     tables)        --> Clinical AI
+
+      de-identification, consent, access control and audit at every hop</code></pre>
+<p>Each stage has one job. Keeping them separate is what makes the platform maintainable.</p>
+</section>
+
+<section class="block">
+<h2>Stage 1: intake through FHIR</h2>
+<p>Normalise everything you can into FHIR resources at the edge. Modern EHRs expose FHIR APIs and bulk export; for legacy HL7 v2 feeds, flat files and claims, write adapters that produce FHIR. The benefits are practical:</p>
+<ul>
+<li>One intake format means one set of validation rules, not one per source.</li>
+<li>Provenance is easier to keep: each resource can record where it came from and when.</li>
+<li>The same intake layer serves operational use cases, such as apps and patient access, not just analytics.</li>
+</ul>
+<p>Do not try to fix every code at this stage. Keep the source codes faithfully. Mapping comes next.</p>
+</section>
+
+<section class="block">
+<h2>Stage 2: terminology mapping</h2>
+<p>This is where most of the intellectual work lives. Source systems use local codes, ICD-10, CPT, proprietary lab codes and free text. OMOP requires mapping these to standard concepts, chiefly:</p>
+<ul>
+<li><strong>SNOMED CT</strong> for conditions, procedures and observations</li>
+<li><strong>LOINC</strong> for laboratory tests and measurements</li>
+<li><strong>RxNorm</strong> for drugs</li>
+</ul>
+<p>The OHDSI standardised vocabularies provide most of the mappings for common code systems. The hard part is local codes. Build a terminology service that holds your mappings, records who approved each one, and versions them. Track mapping coverage as a metric: the percentage of records, and of distinct codes, that map to a standard concept. Unmapped high-volume codes are your backlog.</p>
+<div class="callout"><p>The vocabularies are, in effect, a shared ontology for medicine. That is why OMOP works across institutions: everyone agrees what the concepts mean. I discuss the general idea in <a href="/insights/ontology-vs-knowledge-graph-vs-semantic-layer/">Ontology vs knowledge graph vs semantic layer</a>.</p></div>
+</section>
+
+<section class="block">
+<h2>Stage 3: load into OMOP CDM</h2>
+<p>With codes mapped, transform FHIR resources into OMOP tables. A rough correspondence:</p>
+<ul>
+<li>Patient to <code>person</code>, with location and demographics</li>
+<li>Encounter to <code>visit_occurrence</code></li>
+<li>Condition to <code>condition_occurrence</code></li>
+<li>MedicationRequest and MedicationAdministration to <code>drug_exposure</code></li>
+<li>Observation (labs and vitals) to <code>measurement</code> or <code>observation</code>, depending on the concept domain</li>
+<li>Procedure to <code>procedure_occurrence</code></li>
+</ul>
+<p>Note that the target table is decided by the domain of the <em>mapped concept</em>, not by the FHIR resource type. This catches many teams out. Then build the derived era tables (condition and drug eras), which make cohort logic far simpler.</p>
+<p>Keep the ETL in code, under version control, with tests. Every change to mapping logic changes research results, so you need to know exactly which version produced which dataset.</p>
+</section>
+
+<section class="block">
+<h2>Stage 4: cohorts and research with OHDSI</h2>
+<p>Once data is in OMOP, the OHDSI tools become available. ATLAS lets analysts define cohorts ("adults with type 2 diabetes started on drug X with an HbA1c above Y") visually, and those definitions are portable. The same cohort definition can run at another OMOP site without rewriting. Broadsea packages the stack in containers, which makes it much easier to stand up consistent environments.</p>
+<p>This portability is the real prize. Studies become reproducible, and network research across institutions becomes possible without moving patient data.</p>
+</section>
+
+<section class="block">
+<h2>De-identification and HIPAA</h2>
+<p>The data model does nothing for privacy on its own. Privacy has to be designed in at every hop:</p>
+<ul>
+<li><strong>Separate identified and research zones.</strong> Identified data stays in the intake zone; the research OMOP instance holds de-identified or limited datasets.</li>
+<li><strong>De-identification pipeline.</strong> Remove or transform direct identifiers, shift dates consistently per person, generalise rare values, and document the method (Safe Harbor or expert determination under HIPAA).</li>
+<li><strong>Consent and purpose.</strong> Record what each dataset may be used for, and enforce it in access control.</li>
+<li><strong>Least privilege and audit.</strong> Role-based access, encryption at rest and in transit, and immutable audit logs of who queried what.</li>
+<li><strong>Residency.</strong> Know where each dataset physically lives; this matters for US and Gulf deployments alike.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>Data quality and common pitfalls</h2>
+<p>Run data quality checks on every load. The OHDSI Data Quality Dashboard is a good start, alongside your own checks on volumes, mapping coverage and plausibility (birth dates in the future, lab values in impossible ranges). Pitfalls I see repeatedly:</p>
+<ol>
+<li><strong>Mapping by hand in spreadsheets</strong> with no versioning or approval trail.</li>
+<li><strong>Losing source values.</strong> Always keep the original code and value alongside the standard concept.</li>
+<li><strong>Treating OMOP as the operational store.</strong> It is an analytical model; serve apps from FHIR.</li>
+<li><strong>Underestimating units.</strong> Lab results in mixed units silently ruin measurement analyses.</li>
+<li><strong>Adding AI before the data is governed.</strong> Clinical AI is only as trustworthy as the provenance and quality underneath it.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2>Where FHIR and OMOP disagree, and how to handle it</h2>
+<p>The two standards were designed by different communities for different jobs, so the mapping is never perfectly clean. A few places where I spend time on every project:</p>
+<h3>Time</h3>
+<p>FHIR records rich timing: effective periods, issued times, recorded dates, and status changes over time. OMOP wants a start date, an end date and sometimes a datetime. You have to decide, and document, which FHIR timestamp becomes the OMOP event date. For a lab result, is it when the sample was taken or when the result was issued? For research the collection time is usually right, but write the rule down, because analysts will ask.</p>
+<h3>Status and corrections</h3>
+<p>FHIR resources change. A medication request can be cancelled, an observation can be amended, a condition can be marked as entered in error. OMOP is closer to a record of what happened. Your ETL needs a clear policy for each status: load it, exclude it, or replace the earlier record. Getting this wrong quietly inflates counts.</p>
+<h3>Free text</h3>
+<p>Much of the clinically useful detail lives in notes, not codes. OMOP has a note table and an NLP table for extracted concepts. If you plan to extract concepts from text, whether with classic NLP or an LLM, keep the extraction method and version with every derived record, so researchers can filter by how confident they should be.</p>
+<h3>Episodes and context</h3>
+<p>FHIR links many resources to an Encounter. OMOP links events to visits, but the visit model is simpler. Decide early how you will represent things like an emergency visit that becomes an inpatient stay, because it affects every length-of-stay analysis later.</p>
+</section>
+
+<section class="block">
+<h2>Sizing the team and the timeline</h2>
+<p>People often ask how long this takes. It depends far more on the sources than on the technology. One modern EHR with good FHIR support and a clean lab feed is a very different project from a dozen legacy systems with local codes. What I can say with confidence is how the effort usually splits:</p>
+<ul>
+<li><strong>Intake and adapters</strong> are predictable engineering work, once you have access to the sources.</li>
+<li><strong>Terminology mapping</strong> is the long tail. The common codes map quickly; the local codes take clinical input and patience.</li>
+<li><strong>Data quality and validation</strong> never finish. Budget for them as an ongoing activity, not a phase.</li>
+<li><strong>Governance</strong>, meaning agreements on access, consent and use, often takes longer than the build. Start those conversations on day one.</li>
+</ul>
+<p>The team that does this well pairs data engineers with someone who understands clinical coding. Neither group can do it alone. A good first milestone is one source, fully mapped and validated in OMOP, with a single real cohort defined in ATLAS and checked by a clinician. That proves the pipeline end to end and gives everyone something concrete to critique.</p>
+</section>
+
+<section class="block">
+<h2>Layering AI on top</h2>
+<p>Once data is standardised and governed, AI becomes much safer to add. Standard concepts give models a consistent vocabulary; provenance lets you trace any answer back to source records; access controls already exist. I would still keep clinical AI behind human review, ground it in the governed data rather than raw notes alone, and evaluate it against cases reviewed by clinicians. For sensitive workloads, <a href="/insights/private-llm-on-prem/">running models on your own hardware</a> keeps patient data inside your environment.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I design <a href="/healthcare-data-architecture/">healthcare data platforms</a> that take fragmented clinical feeds through FHIR and standard vocabularies into OMOP, with privacy built in, and then layer <a href="/ai-architect/">clinical AI</a> on top of governed data.</p>
+<p>For a quick read on your situation, try the <a href="/#assess">challenge analyser</a> and choose "Healthcare interoperability", or see the healthcare case study in <a href="/#work">my work</a>.</p>
+</section>

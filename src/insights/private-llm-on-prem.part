@@ -1,0 +1,129 @@
+<!--{"title": "Running Private LLMs on Your Own Hardware: Notes from the Bench", "description": "Notes on private, on-prem LLMs for regulated data: model sizing, quantisation, LoRA fine-tuning, routing between local and hosted models, and an AI gateway.", "h1": "Running private LLMs on your own hardware: notes from the bench", "kicker": "Private AI", "lede": "I have been running open-weight models on an NVIDIA DGX Spark to understand what local AI can really do for organisations that cannot send data to a public API. These are my working notes.", "date": "2026-10-17", "readtime": "9 min read", "keywords": ["private LLM", "on-prem LLM", "local LLM inference", "NVIDIA DGX Spark", "open-weight models", "LLM quantisation", "LoRA fine-tuning", "AI gateway", "PII redaction", "LLM routing", "private AI for healthcare", "sovereign AI", "AI data residency", "self-hosted LLM"], "faq": [["Why run an LLM on your own hardware?", "To keep sensitive data inside your own infrastructure, to meet residency or regulatory requirements, and to get predictable cost for steady workloads. It also removes dependence on a single vendor."], ["Are local models as good as hosted frontier models?", "Not for every task. Open-weight models are often strong enough for focused tasks like extraction, classification and grounded question answering, while hosted frontier models still lead on the hardest open-ended reasoning."], ["What does quantisation do?", "Quantisation stores model weights at lower precision so the model needs less memory and runs faster. The trade-off is some loss of quality, which you should measure on your own evaluation set."], ["Do I need to fine-tune a local model?", "Usually not first. Good retrieval and prompting solve most problems. LoRA fine-tuning is worth it when you need a consistent format, domain vocabulary or style that prompting cannot reliably achieve."]], "related": ["/ai-architect/", "/healthcare-data-architecture/", "/uae/"]}-->
+<p>A recurring conversation with clients goes like this. Leadership wants generative AI. Legal and security say the data cannot leave the building. The project stops at "we can't". Sometimes that answer is correct. Often it just means nobody has looked seriously at running models privately.</p>
+<p>So I have been doing exactly that on my own bench: running open-weight models on an NVIDIA DGX Spark, a compact GB10-based machine with 128 GB of unified memory. These are working notes rather than a benchmark report. I am deliberately not publishing numbers here, because they depend heavily on the model, the quantisation and the workload, and I would rather you measure your own.</p>
+
+<section class="block">
+<h2>Why private LLMs at all?</h2>
+<ul>
+<li><strong>Data never leaves your infrastructure.</strong> For patient records, financial data or legal documents, this can be the difference between a project and no project.</li>
+<li><strong>Residency and sovereignty.</strong> Regulators in the US and the Gulf increasingly ask where data is processed, not just where it is stored.</li>
+<li><strong>Predictable cost.</strong> Steady, high-volume workloads can be cheaper on owned hardware than per-token pricing.</li>
+<li><strong>Control.</strong> You choose when models change. No silent upgrades that shift behaviour overnight.</li>
+</ul>
+<p>The costs are real too: hardware, operations, security patching, and the engineering time to evaluate and maintain models. Private AI is a platform decision, not a download.</p>
+</section>
+
+<section class="block">
+<h2>What the bench is teaching me</h2>
+<p>A few qualitative observations so far:</p>
+<ul>
+<li><strong>Memory is the constraint that matters most.</strong> Unified memory changes what fits on a single box. Model size, quantisation and context length all compete for the same pool, and long contexts eat more than people expect.</li>
+<li><strong>Focused tasks are where local models shine.</strong> Extraction, classification, summarisation of known document types and grounded question answering work well with good retrieval. Open-ended reasoning across messy inputs is where hosted frontier models still pull ahead.</li>
+<li><strong>Retrieval quality matters more than model size.</strong> A mid-sized model with excellent context often beats a larger model with poor context. Everything in <a href="/insights/rag-to-production-checklist/">my RAG production checklist</a> applies doubly here.</li>
+<li><strong>Throughput and latency are different problems.</strong> One user chatting and fifty concurrent agents calling the model are very different loads. Test the one you will actually have.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>Sizing the model to the job</h2>
+<p>The instinct is to run the biggest model that fits. I now start the other way round: pick the smallest model that passes your evaluation set, then scale up only where it fails.</p>
+<table class="tbl">
+<thead><tr><th>Task</th><th>Starting point</th></tr></thead>
+<tbody>
+<tr><td>Classification, routing, PII detection</td><td>Small models; often fast enough to run on every request</td></tr>
+<tr><td>Extraction into structured fields</td><td>Small to mid-sized models with strict output schemas</td></tr>
+<tr><td>Grounded Q&amp;A over your documents</td><td>Mid-sized models plus strong retrieval</td></tr>
+<tr><td>Complex multi-step reasoning, agents</td><td>Larger local models, or route to hosted models when data allows</td></tr>
+</tbody>
+</table>
+<p>A mix of models, each sized to its task, is usually cheaper and faster than one large model doing everything.</p>
+</section>
+
+<section class="block">
+<h2>Quantisation: the main trade-off</h2>
+<p>Quantisation stores weights at lower precision, which cuts memory and speeds up inference. It is what makes larger models practical on a single machine. The cost is some loss of quality, and that loss is uneven: it can be invisible on simple tasks and noticeable on precise ones, such as arithmetic, code or strict formats.</p>
+<ul>
+<li>Never trust a general leaderboard for this. Run your own evaluation set at each precision you are considering.</li>
+<li>Watch structured output closely. A model that occasionally breaks a JSON schema is a production incident waiting to happen.</li>
+<li>Remember the context window also needs memory. A more aggressive quantisation might be the price of the context length you need.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>Fine-tuning with LoRA, carefully</h2>
+<p>Fine-tuning is often reached for too early. My order of operations is: better retrieval, better prompts and examples, then fine-tuning. LoRA adapters are a practical way to fine-tune on modest hardware, because you train a small set of additional weights rather than the whole model.</p>
+<p>Where LoRA has been worth it in my experiments:</p>
+<ul>
+<li>Teaching a consistent output format or house style.</li>
+<li>Domain vocabulary, for example terms and abbreviations from a specific ontology.</li>
+<li>Making a smaller model reliable on one narrow task, so you can avoid a larger one.</li>
+</ul>
+<p>Where it has not: injecting facts. Facts change; keep them in retrieval and the knowledge graph, not in model weights. I cover why in <a href="/insights/ontology-vs-knowledge-graph-vs-semantic-layer/">Ontology vs knowledge graph vs semantic layer</a>.</p>
+</section>
+
+<section class="block">
+<h2>Routing: local where it must be, hosted where it can be</h2>
+<p>Very few organisations need everything local. The practical architecture is a router that decides per request:</p>
+<ol>
+<li>Classify the request and its data: does it contain regulated or confidential information?</li>
+<li>Sensitive requests go to local models, always.</li>
+<li>Non-sensitive requests that need maximum capability can go to hosted models, under contract and with logging.</li>
+<li>Everything is evaluated with the same suite, so you know what quality you are getting on each path.</li>
+</ol>
+<p>This gives you the safety of local inference without giving up the strengths of frontier models for the work that is allowed to use them.</p>
+</section>
+
+<section class="block">
+<h2>The AI gateway</h2>
+<p>Whether models are local or hosted, I put a gateway in front of them. It is the single place to enforce policy:</p>
+<ul>
+<li><strong>Authentication and quotas</strong> per user, team and application.</li>
+<li><strong>PII detection and redaction</strong> before anything reaches a model that does not need it.</li>
+<li><strong>Routing rules</strong> by data sensitivity, cost and task.</li>
+<li><strong>Logging and audit</strong> of every prompt and response, with retention rules that match your regulations.</li>
+<li><strong>Cost tracking</strong> per use case, so the business can see what each workflow costs.</li>
+</ul>
+<p>The gateway also makes models swappable. When a better open-weight model appears, you change a route, not every application. In Wisp, the self-hosted AI platform I built on Kubernetes, the same principle applies to agents calling tools over MCP: one governed entry point.</p>
+</section>
+
+<section class="block">
+<h2>Evaluation is not optional</h2>
+<p>Every decision above, model size, quantisation, fine-tuning, routing, depends on measurement. Keep an evaluation set of real tasks with known good outputs, run it against every model and configuration, and track quality, latency and cost together. Without it, private AI becomes a debate about opinions; with it, the trade-offs are visible and the decisions are easy to defend to a risk committee.</p>
+</section>
+
+<section class="block">
+<h2>Operating it like production</h2>
+<p>A model running on a desk is an experiment. A model serving a hospital or a bank is infrastructure, and needs the same care as any other critical service.</p>
+<ul>
+<li><strong>Packaging.</strong> Containerise the serving stack and pin versions of the model weights, runtime and drivers. "It worked last week" is not a release process.</li>
+<li><strong>Scheduling.</strong> For more than one box, run inference on Kubernetes with GPU-aware scheduling, so capacity is shared between teams and workloads.</li>
+<li><strong>Health and capacity.</strong> Monitor queue depth, time to first token, tokens per second and memory headroom. Alert before users notice.</li>
+<li><strong>Model lifecycle.</strong> Treat a model change like a schema migration: evaluate, stage, roll out gradually, keep the previous version ready to roll back.</li>
+<li><strong>Security.</strong> Model weights are artefacts; scan, sign and store them like any other dependency. Isolate the inference network and log access.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>A sensible first project</h2>
+<p>If you are considering private AI, I would not start with a general chat assistant for the whole organisation. I would start with one narrow, high-value workflow on sensitive data that is currently done by hand. Document triage, extracting fields from referral letters, or summarising case files for a reviewer are good examples. They have clear inputs and outputs, an obvious way to measure quality, and a human already in the loop.</p>
+<p>Run it on a single machine, build the evaluation set from real examples, put the gateway in front from day one, and measure quality, latency and cost honestly against the manual process. If it works, you have a business case and a reusable platform. If it does not, you have learned that cheaply, with no data having left the building.</p>
+</section>
+
+<section class="block">
+<h2>Questions to settle before buying hardware</h2>
+<p>Hardware is the easy part to buy and the hard part to justify later. Before ordering anything, I would want clear answers to these:</p>
+<ul>
+<li>Which specific workflows will run locally, and what data do they touch?</li>
+<li>What quality bar must they meet, measured on which evaluation set?</li>
+<li>What are peak and average loads: one analyst, a department, or automated agents running all night?</li>
+<li>Who will operate the platform, patch it and respond when it fails?</li>
+<li>What is the exit plan if a hosted option later becomes acceptable to your regulators?</li>
+</ul>
+<p>A desk-side machine like the DGX Spark is a good way to answer most of these cheaply. It lets a small team prove quality and workflow on real data before committing to a larger cluster. That is how I am using mine: as a place to learn quickly, not as the end state. The lessons transfer directly to larger deployments, because the questions about quality, routing and governance stay the same at any scale.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I help organisations design <a href="/ai-architect/">private and hybrid AI architectures</a>: model selection, gateways, routing and evaluation, particularly for regulated data in <a href="/healthcare-data-architecture/">healthcare</a> and finance, across the US and the <a href="/uae/">UAE</a>.</p>
+<p>If your AI plans are stuck at "the data can't leave", run the <a href="/#assess">challenge analyser</a> or read the private AI case study in <a href="/#work">my work</a>.</p>
+</section>

@@ -1,0 +1,145 @@
+<!--{"title": "From RAG Demo to Production: A Practical Checklist", "description": "A practitioner's checklist for taking RAG from demo to production: retrieval quality, evaluation, guardrails, permissions, cost per query and rollout.", "h1": "From RAG demo to production: a checklist", "kicker": "AI architecture", "lede": "The demo took a week. Production is a different job. This is the checklist I work through before an LLM system goes in front of real users.", "date": "2026-10-17", "readtime": "10 min read", "keywords": ["RAG in production", "retrieval augmented generation", "production RAG checklist", "LLM evaluation", "GraphRAG", "hybrid search", "LangGraph", "LangChain in production", "LLM guardrails", "Model Context Protocol", "MCP tools", "LLM cost per query", "AI agents in production", "AI architect"], "faq": [["Why do RAG demos fail in production?", "Demos are tested on friendly questions and clean documents. Production brings ambiguous questions, messy data, permissions and scale, and without an evaluation set nobody can tell whether answers are getting better or worse."], ["What is the most important part of a production RAG system?", "Retrieval quality and evaluation. If the right context is not retrieved, no prompt or model will fix the answer, and without an evaluation set you cannot measure retrieval at all."], ["When should I use LangGraph instead of a simple chain?", "When the workflow has branches, loops, tool calls or human approval steps. LangGraph makes the state and transitions explicit, which makes multi-step agents easier to test and debug."], ["How do you control LLM costs in production?", "Measure cost per query and per use case, cache where possible, keep context windows tight, and route simple requests to smaller or local models."]], "related": ["/ai-architect/", "/ontology-knowledge-graph/"]}-->
+<p>Retrieval-augmented generation is the most common pattern in enterprise AI, and the most common place for AI projects to stall. Building a demo that answers ten hand-picked questions from a folder of PDFs takes days. Building a system that answers thousands of unpredictable questions, correctly, within budget, without leaking data, takes deliberate engineering.</p>
+<p>I have built production RAG systems with LangChain and LangGraph, and agent tooling over MCP in Wisp, the open-source AI platform I built. This is the checklist I use. It is not exhaustive, but if you can tick every item, you are in better shape than most.</p>
+
+<section class="block">
+<h2>1. Define the job before the architecture</h2>
+<ul>
+<li>Which decisions does the system support, and who makes them?</li>
+<li>What does a wrong answer cost? Annoyance, a bad customer experience, a compliance breach?</li>
+<li>Must every answer be cited? Can the system say "I don't know"?</li>
+<li>What is the acceptable latency and cost per query?</li>
+</ul>
+<p>The answers decide almost everything else. An internal search helper and a clinical decision aid are both "RAG", and they share very little beyond the name.</p>
+</section>
+
+<section class="block">
+<h2>2. Build an evaluation set first</h2>
+<p>This is the item teams skip most, and the one I insist on. Before tuning anything, collect a set of real questions with known good answers and the source passages that support them. A few hundred is a good start; even fifty is far better than none.</p>
+<ul>
+<li>Use real user questions where possible, including the awkward ones.</li>
+<li>Include questions the system <em>should refuse</em> or answer with "not enough information".</li>
+<li>Measure retrieval separately from generation: did the right passages come back, and was the answer faithful to them?</li>
+<li>Run the set on every change to prompts, models, chunking or indexes. Treat a drop in scores like a failing test.</li>
+</ul>
+<div class="callout"><p>If you cannot say whether last week's change made answers better or worse, you do not have a production system. You have a demo with users.</p></div>
+</section>
+
+<section class="block">
+<h2>3. Get retrieval right</h2>
+<p>Most bad answers are retrieval failures, not model failures. If the right context is not in the prompt, no model will save you.</p>
+<h3>Chunking</h3>
+<ul>
+<li>Chunk on document structure (sections, headings, table rows), not fixed character counts.</li>
+<li>Keep metadata with every chunk: source, date, owner, access level, document type.</li>
+<li>Test a few chunk sizes against your evaluation set rather than guessing.</li>
+</ul>
+<h3>Hybrid search</h3>
+<ul>
+<li>Combine vector similarity with keyword search. Product codes, names and acronyms are often missed by embeddings alone.</li>
+<li>Add a reranking step on the top candidates; it is usually the cheapest quality gain available.</li>
+<li>Filter by metadata before ranking: date ranges, document types, and above all permissions.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>4. Ground answers in a knowledge graph where it matters</h2>
+<p>Similarity search is good at "find me passages about X". It is poor at precise questions that depend on relationships: "which of my contracts renew this quarter?" or "which patients on this drug had this lab result?"</p>
+<p>For those, I ground retrieval in a knowledge graph built on a domain ontology, an approach often called GraphRAG. The graph resolves entities, traverses relationships exactly, and enforces permissions, then documents are retrieved only for the entities that matter. I explain the building blocks in <a href="/insights/ontology-vs-knowledge-graph-vs-semantic-layer/">Ontology vs knowledge graph vs semantic layer</a>.</p>
+<p>You do not need a graph for every use case. You need one when wrong facts are expensive.</p>
+</section>
+
+<section class="block">
+<h2>5. Orchestrate explicitly</h2>
+<p>Simple question-answering is a pipeline. Anything with branches, tools, retries or approvals is a workflow, and should be modelled as one. This is where LangGraph earns its place: state is explicit, transitions are explicit, and each step can be tested on its own.</p>
+<ul>
+<li>Keep each node small: classify the question, retrieve, check sufficiency, answer, verify.</li>
+<li>Expose tools through a consistent interface. The Model Context Protocol (MCP) is now a sensible default for giving agents access to systems, with clear schemas and permission boundaries.</li>
+<li>Put human approval steps where actions have consequences: sending an email, updating a record, placing an order.</li>
+<li>Cap loops and tool calls. An agent without limits will eventually find an expensive way to fail.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>6. Guardrails and permissions</h2>
+<ul>
+<li><strong>Access control at retrieval time.</strong> Filter by the user's permissions before anything reaches the model. Never rely on the prompt to hide data.</li>
+<li><strong>PII handling.</strong> Redact or mask sensitive fields where they are not needed, and log what was sent to which model.</li>
+<li><strong>Input checks.</strong> Detect prompt injection patterns, especially in retrieved documents and tool outputs, not just user input.</li>
+<li><strong>Output checks.</strong> Verify citations point to retrieved sources, and block answers that fail policy.</li>
+<li><strong>Data residency.</strong> Know which model endpoints process which data, and where. For highly sensitive data, consider <a href="/insights/private-llm-on-prem/">running models on your own hardware</a>.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>7. Observability, cost and latency</h2>
+<p>Treat the LLM system like any other production service, with a few extra measurements.</p>
+<table class="tbl">
+<thead><tr><th>Measure</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Full trace per request (retrieval, prompts, tool calls, outputs)</td><td>Debugging a bad answer is impossible without it</td></tr>
+<tr><td>Cost per query and per use case</td><td>Surprise invoices kill AI programmes faster than bad answers</td></tr>
+<tr><td>Latency by step</td><td>Usually retrieval or reranking, not generation, is the slow part you can fix</td></tr>
+<tr><td>User feedback and escalation rate</td><td>The cheapest source of new evaluation cases</td></tr>
+<tr><td>Evaluation scores over time</td><td>Catches silent regressions after model or data changes</td></tr>
+</tbody>
+</table>
+<p>To control cost: cache stable answers and embeddings, keep context windows tight, and route simple requests to smaller models. Not every question needs your largest model.</p>
+</section>
+
+<section class="block">
+<h2>8. Roll out like a product, not a launch</h2>
+<ol>
+<li>Start with one workflow and one group of users who will give honest feedback.</li>
+<li>Ship behind a feature flag, with a clear way for users to report bad answers.</li>
+<li>Review traces and failures weekly; turn each failure into an evaluation case.</li>
+<li>Expand to more users and use cases only when evaluation scores are stable.</li>
+<li>Write down the operating model: who owns quality, who approves model changes, who is on call.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2>The checklist, condensed</h2>
+<ul>
+<li>Job, cost of error and success criteria written down</li>
+<li>Evaluation set built and run on every change</li>
+<li>Structure-aware chunking with metadata</li>
+<li>Hybrid search plus reranking</li>
+<li>Knowledge graph grounding where facts and relationships matter</li>
+<li>Explicit orchestration, tools over MCP, capped loops</li>
+<li>Permissions enforced at retrieval, PII controls, injection checks</li>
+<li>Tracing, cost per query, latency by step</li>
+<li>Staged rollout with a feedback loop and a named owner</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>The failure modes I see most</h2>
+<p>When a RAG system disappoints, the cause is usually one of a short list. Recognising the pattern saves weeks.</p>
+<h3>The right document is never retrieved</h3>
+<p>Symptoms: confident answers that ignore an obvious source. Causes: the document was never indexed, chunking split the key passage, or the user's wording does not resemble the document's. Fixes: index coverage checks, structure-aware chunking, hybrid search and query rewriting.</p>
+<h3>Retrieved, but drowned out</h3>
+<p>The right passage is in the context, but surrounded by twenty near-misses, and the model picks the wrong one. Fixes: rerank and cut the context down. More context is not better context.</p>
+<h3>Stale or conflicting sources</h3>
+<p>Last year's policy and this year's policy both exist, and the system quotes the old one. Fixes: dates and status in metadata, filters for current documents, and an owner for each content source. This is a content governance problem dressed up as an AI problem.</p>
+<h3>Answers that are right for someone else</h3>
+<p>The system answers using data the user should not see, or data about the wrong customer. Fixes: permission filtering at retrieval time, and entity resolution through a knowledge graph so "my account" means the right thing.</p>
+<h3>Agents that wander</h3>
+<p>Multi-step agents loop, call tools repeatedly or take actions nobody intended. Fixes: explicit state machines, capped iterations, narrow tools with clear schemas, and approval steps before side effects.</p>
+</section>
+
+<section class="block">
+<h2>Who owns it after launch</h2>
+<p>The last item on any checklist should be ownership. An LLM system degrades if nobody tends it: documents change, models are updated, users find new ways to ask questions. Someone needs to own the evaluation set, review failures, approve model changes and decide when a use case is ready to expand. In smaller organisations that is often a product owner paired with an engineer; in larger ones, a small AI platform team. Write the names down before launch, not after the first incident.</p>
+</section>
+
+<section class="block">
+<h2>A note on frameworks</h2>
+<p>LangChain, LangGraph and similar libraries save a lot of time, and I use them. They do not replace design. Keep your retrieval logic, prompts and evaluation in code you own and understand, wrap framework components behind small interfaces, and resist adding layers you cannot explain. When something breaks at two in the morning, you want to be reading your own code, not a stack trace through five abstractions. Frameworks also change quickly, so keeping them at the edges makes upgrades a routine job rather than a rewrite.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>As an <a href="/ai-architect/">AI architect</a>, I take LLM systems from pilot to production: retrieval, evaluation, LangGraph orchestration, guardrails and cost control, grounded in a <a href="/ontology-knowledge-graph/">knowledge graph</a> where accuracy matters.</p>
+<p>If your pilot has stalled, run the <a href="/#assess">challenge analyser</a> for a quick diagnosis, or look at the case studies in <a href="/#work">my work</a>.</p>
+</section>

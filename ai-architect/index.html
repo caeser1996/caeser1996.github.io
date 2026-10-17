@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI &amp; LLM Architect: RAG, Agents, Private AI | Sumanta M.</title>
+<meta name="description" content="AI and LLM architecture that ships: production RAG and GraphRAG, LangGraph agents, MCP, LLM evaluation and private on-prem models. Strategy to production." />
+<meta name="keywords" content="AI architect, LLM architect, AI consultant, RAG consultant, GraphRAG, LangChain consultant, LangGraph, agentic AI, multi-agent systems, Model Context Protocol, MCP, LLM evaluation, private LLM, on-prem LLM, NVIDIA DGX Spark, AI strategy" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://caeser1996.github.io/ai-architect/" />
+<meta name="theme-color" content="#111214" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="AI &amp; LLM Architect: RAG, Agents, Private AI | Sumanta M." />
+<meta property="og:description" content="AI and LLM architecture that ships: production RAG and GraphRAG, LangGraph agents, MCP, LLM evaluation and private on-prem models. Strategy to production." />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://caeser1996.github.io/ai-architect/" />
+<meta property="og:image" content="https://caeser1996.github.io/assets/og/ai-architect.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="AI &amp; LLM Architect: RAG, Agents, Private AI | Sumanta M." />
+<meta name="twitter:description" content="AI and LLM architecture that ships: production RAG and GraphRAG, LangGraph agents, MCP, LLM evaluation and private on-prem models. Strategy to production." />
+<meta name="twitter:image" content="https://caeser1996.github.io/assets/og/ai-architect.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "Service", "name": "AI & LLM architecture", "description": "AI and LLM architecture that ships: production RAG and GraphRAG, LangGraph agents, MCP, LLM evaluation and private on-prem models. Strategy to production.", "provider": {"@type": "Person", "@id": "https://caeser1996.github.io/#person", "name": "Sumanta Mukhopadhyay", "url": "https://caeser1996.github.io/"}, "url": "https://caeser1996.github.io/ai-architect/", "areaServed": ["United States", "United Arab Emirates", "Worldwide"]}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://caeser1996.github.io/"}, {"@type": "ListItem", "position": 2, "name": "AI & LLM architecture", "item": "https://caeser1996.github.io/ai-architect/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Why do most LLM pilots fail to reach production?", "acceptedAnswer": {"@type": "Answer", "text": "Usually not because of the model. Retrieval is ungrounded, there is no evaluation set, costs are unknown and nobody owns quality. Fixing those four things gets most pilots moving."}}, {"@type": "Question", "name": "What is GraphRAG and when should I use it?", "acceptedAnswer": {"@type": "Answer", "text": "GraphRAG grounds retrieval in a knowledge graph rather than only in text chunks. It helps when answers depend on relationships between entities, such as customers, contracts and products, and when you need citations and permission-aware access."}}, {"@type": "Question", "name": "Can we run LLMs without sending data to a public API?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Open-weight models can run on your own GPU hardware or private cloud. I route sensitive workloads to local models and send only non-sensitive work to hosted APIs, behind a gateway that redacts and logs."}}, {"@type": "Question", "name": "Which frameworks do you use?", "acceptedAnswer": {"@type": "Answer", "text": "Mostly LangChain and LangGraph for orchestration, the Model Context Protocol for tool access, and Claude or OpenAI-compatible APIs alongside open-weight models. I choose per problem, not by habit."}}, {"@type": "Question", "name": "How do you measure whether an AI system is good enough?", "acceptedAnswer": {"@type": "Answer", "text": "With an evaluation suite built from real questions and expected answers, tracked on every release, plus tracing in production. Quality, latency and cost per query all get explicit targets."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..600;1,9..144,400&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+</script>
+</head>
+<body class="sub is-service">
+<div class="progress" id="progress"></div>
+<nav>
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links">
+      <a href="/#practice">Services</a>
+      <a href="/#work">Case studies</a>
+      <a href="/insights/">Insights</a>
+      <a href="/#assess">Analyse</a>
+      <a href="/#connect">Connect</a>
+    </div>
+    <div class="nav-r">
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <em>AI &amp; LLM architecture</em></div>
+    <div class="kicker">AI &amp; LLM architect</div>
+    <h1>AI &amp; LLM architecture that survives contact with production</h1>
+    <p class="sub-lede">I design and build AI systems that leadership can trust: grounded in your data, measured by evaluations, governed by your rules and priced so they make sense at scale.</p>
+    
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <article class="prose">
+    <section class="block">
+<h2>Who this is for</h2>
+<p>You have seen the demos. Perhaps your team built one. It answered the easy questions well and then, in front of a real user, confidently said something wrong. Now legal is nervous, finance wants to know the cost per query and nobody can say whether the next release is better or worse than the last.</p>
+<p>I work with leadership teams and engineering leads who are in that position, or who want to avoid it. Typical starting points:</p>
+<ul>
+<li>An LLM pilot that never made it past the steering committee.</li>
+<li>A knowledge assistant over internal documents that users stopped trusting.</li>
+<li>A plan to add agents to a workflow, with no clear view of risk or failure modes.</li>
+<li>Sensitive data that cannot be sent to a public API, and a mandate to use AI anyway.</li>
+</ul>
+</section>
+<section class="block">
+<h2>The problems I solve</h2>
+<h3>Ungrounded retrieval</h3>
+<p>Chunking documents into a vector store is a starting point, not an architecture. I combine vector search with structured data and, where relationships matter, a knowledge graph (GraphRAG), so answers cite their sources and respect permissions. The <a href="/ontology-knowledge-graph/">ontology and knowledge graph</a> page explains why the semantic layer matters so much.</p>
+<h3>No way to tell good from bad</h3>
+<p>Without evaluations, every change is a guess. I build an evaluation harness from real questions early, and gate releases on it. My <a href="/insights/rag-to-production-checklist/">RAG to production checklist</a> sets out what I check before anything goes live.</p>
+<h3>Agents without guardrails</h3>
+<p>Multi-step agents are powerful and easy to get wrong. I use LangGraph to make state and control flow explicit, expose tools through the Model Context Protocol, and put human checkpoints where a wrong action would be expensive.</p>
+<h3>Data that cannot leave the building</h3>
+<p>Private, on-prem inference is now practical. I design AI gateways that classify requests by sensitivity, send regulated data to local open-weight models and route the rest to hosted APIs. More on this in <a href="/insights/private-llm-on-prem/">running private LLMs on-prem</a>.</p>
+</section>
+<section class="block">
+<h2>My approach</h2>
+<ol>
+<li><strong>Start from the decision.</strong> What will the system help someone decide or do, and what does a wrong answer cost? That sets the quality bar.</li>
+<li><strong>Model the domain.</strong> Capture the key entities and relationships so retrieval and agents work from the same meaning as the business.</li>
+<li><strong>Build the evaluation set before the features.</strong> Real questions, expected answers and edge cases, versioned with the code.</li>
+<li><strong>Ship one thin workflow to production.</strong> With tracing, cost tracking and guardrails, behind a feature flag.</li>
+<li><strong>Expand on evidence.</strong> Add sources, tools and agents only when evaluations show they help.</li>
+<li><strong>Hand over the platform.</strong> Your team owns the pipelines, prompts, evaluations and runbooks.</li>
+</ol>
+</section>
+<section class="block">
+<h2>What you get</h2>
+<ul>
+<li>An AI use-case portfolio ranked by value, risk and feasibility.</li>
+<li>A reference architecture covering retrieval, orchestration, model routing, security and observability.</li>
+<li>A working production slice: RAG or GraphRAG, LangGraph agents and MCP tools as needed.</li>
+<li>An evaluation harness with quality, latency and cost targets.</li>
+<li>An AI gateway pattern for authentication, PII redaction, logging and spend control.</li>
+<li>Clear guidance on which workloads run on local models and which use hosted APIs.</li>
+</ul>
+</section>
+<section class="block">
+<h2>How an engagement runs</h2>
+<table class="tbl">
+<thead><tr><th>Phase</th><th>Typical length</th><th>Outcome</th></tr></thead>
+<tbody>
+<tr><td>AI readiness review</td><td>2 to 4 weeks</td><td>Use-case ranking, architecture, risks and a roadmap</td></tr>
+<tr><td>Production pilot</td><td>6 to 10 weeks</td><td>One workflow live, measured and governed</td></tr>
+<tr><td>Scale-out</td><td>Ongoing</td><td>More use cases on a shared platform, team trained</td></tr>
+</tbody>
+</table>
+<p>Every engagement starts with a free 30-minute call. If you want to frame the problem first, try the <a href="/#assess">challenge analyser</a>.</p>
+</section>
+<section class="block">
+<h2>Common mistakes I see</h2>
+<h3>Choosing the model before the problem</h3>
+<p>Teams often spend weeks comparing models and almost no time defining what a correct answer looks like. The model choice matters far less than the retrieval, the data and the evaluation set. With those in place, swapping models is a configuration change.</p>
+<h3>Treating prompts as the product</h3>
+<p>A clever prompt is easy to copy and hard to maintain. The durable value sits in your data, your domain model and the workflow around the AI: who reviews what, which actions need approval, how errors are caught.</p>
+<h3>Ignoring cost until the invoice arrives</h3>
+<p>Token costs scale with usage, context length and retries. I set a cost budget per query from the start, cache what can be cached, and route simple requests to smaller or local models. A system that is accurate but unaffordable at scale is not finished.</p>
+<h3>Letting agents act without limits</h3>
+<p>An agent that can send email, change records or call payment APIs needs the same controls as a new employee: narrow permissions, logging and approval for anything irreversible. I design those limits into the graph rather than hoping the prompt holds.</p>
+<h3>No owner for quality</h3>
+<p>Someone has to own the evaluation set, review failures each week and decide when a release is good enough. Without that role, quality drifts quietly. I help you define it and train the person who will hold it.</p>
+</section>
+<section class="block">
+<h2>Relevant experience</h2>
+<ul>
+<li>Production RAG pipelines built with LangChain and LangGraph. My open-source <strong>langchain-rag-production</strong> repository shows some of the patterns.</li>
+<li>Founder and builder of <strong>Wisp</strong>, a self-hostable AI platform where agents drive deployments over MCP on Kubernetes.</li>
+<li>Hands-on experiments with local LLM inference on an <strong>NVIDIA DGX Spark</strong>: open-weight models, LoRA fine-tuning and quantisation, compared against hosted APIs for quality, latency and cost.</li>
+<li>Co-author of peer-reviewed research in Science Immunology, which shapes how I think about evaluation: baselines, honest metrics, reproducibility.</li>
+<li>Data platforms behind the AI: event-driven systems at more than a million transactions a day.</li>
+</ul>
+<p>For regulated settings, see <a href="/healthcare-data-architecture/">healthcare data architecture</a>. If you need someone to own the AI agenda at leadership level, that is the <a href="/fractional-cto/">fractional CTO</a> role. You can also browse <a href="/#work">case studies</a>, including private on-prem LLMs.</p>
+</section>
+  </article>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>Why do most LLM pilots fail to reach production?</summary><p>Usually not because of the model. Retrieval is ungrounded, there is no evaluation set, costs are unknown and nobody owns quality. Fixing those four things gets most pilots moving.</p></details><details class="rise"><summary>What is GraphRAG and when should I use it?</summary><p>GraphRAG grounds retrieval in a knowledge graph rather than only in text chunks. It helps when answers depend on relationships between entities, such as customers, contracts and products, and when you need citations and permission-aware access.</p></details><details class="rise"><summary>Can we run LLMs without sending data to a public API?</summary><p>Yes. Open-weight models can run on your own GPU hardware or private cloud. I route sensitive workloads to local models and send only non-sensitive work to hosted APIs, behind a gateway that redacts and logs.</p></details><details class="rise"><summary>Which frameworks do you use?</summary><p>Mostly LangChain and LangGraph for orchestration, the Model Context Protocol for tool access, and Claude or OpenAI-compatible APIs alongside open-weight models. I choose per problem, not by habit.</p></details><details class="rise"><summary>How do you measure whether an AI system is good enough?</summary><p>With an evaluation suite built from real questions and expected answers, tracked on every release, plus tracing in production. Quality, latency and cost per query all get explicit targets.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/ontology-knowledge-graph/"><small>Service</small><b>Ontology &amp; knowledge graphs</b><span>I help organisations agree what their data means, write it down as an ontology and put it to work in a knowledge graph that analytics, APIs and AI agents can all rely on.</span><i>→</i></a><a class="rcard rise" href="/fractional-cto/"><small>Service</small><b>Fractional CTO</b><span>I work as a part-time CTO for founders, CEOs and boards who need experienced technical judgement now, and a team that can carry it on after I step back.</span><i>→</i></a><a class="rcard rise" href="/healthcare-data-architecture/"><small>Service</small><b>Healthcare data architecture</b><span>I help healthcare and life-sciences organisations turn fragmented clinical data into governed platforms for care, research and AI, using the standards the industry already agrees on.</span><i>→</i></a><a class="rcard rise" href="/insights/when-do-you-need-a-fractional-cto/"><small>Insight</small><b>When do you need a fractional CTO? (And when you don&#x27;t)</b><span>A fractional CTO is a good answer to a specific set of problems, and a poor answer to others. Here is how I tell the difference, and what the work looks like once it starts.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="AI &amp; LLM architecture">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, healthcare data and cloud infrastructure, from strategy to production.</p>
+        <p class="floc">United States &amp; UAE · working globally</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/uae/">Fractional CTO in the UAE</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/when-do-you-need-a-fractional-cto/">When do you need a fractional CTO? (And when you don&#x27;t)</a></li><li><a href="/insights/private-llm-on-prem/">Running private LLMs on your own hardware: notes from the bench</a></li><li><a href="/insights/ontology-vs-knowledge-graph-vs-semantic-layer/">Ontology vs knowledge graph vs semantic layer: what&#x27;s the difference, and which do you need?</a></li><li><a href="/insights/rag-to-production-checklist/">From RAG demo to production: a checklist</a></li><li><a href="/insights/fhir-to-omop-architecture/">FHIR to OMOP: a practical architecture for healthcare data</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,128 @@
+<!--{"title":"Ontology vs Knowledge Graph vs Semantic Layer: A Practical Guide","description":"Clear definitions of ontologies, knowledge graphs and semantic layers, how they fit together, when to use each, and how they make LLMs and RAG more accurate.","h1":"Ontology vs knowledge graph vs semantic layer: what's the difference, and which do you need?","kicker":"Knowledge architecture","lede":"Three terms that get used interchangeably and shouldn't be. Here is how I explain them to leadership teams, with a worked example and the mistakes I see most often.","date":"2026-10-17","readtime":"10 min read","keywords":["ontology vs knowledge graph","semantic layer","what is an ontology","knowledge graph for AI","GraphRAG","ontology engineering","enterprise knowledge graph","semantic layer for LLM","RDF OWL","Neo4j knowledge graph","entity resolution","data modelling for AI","knowledge graph consultant"],"faq":[["What is the difference between an ontology and a knowledge graph?","An ontology defines the types of things in a domain and how they relate, like a schema with meaning. A knowledge graph is the actual data, real customers, orders and contracts, organised according to that ontology."],["Do I need a knowledge graph to use RAG?","No, plain vector search works for many document question-and-answer use cases. A knowledge graph helps when answers depend on relationships, permissions or precise facts that similarity search alone gets wrong."],["Is a semantic layer the same as a knowledge graph?","No. A semantic layer exposes consistent business definitions, such as metrics and dimensions, to tools like BI and APIs. It can be built on top of a knowledge graph or a warehouse."],["Should I use RDF/OWL or a property graph like Neo4j?","RDF and OWL suit formal reasoning, standards and data exchange. Property graphs are often quicker for application teams. Many organisations model the ontology formally and serve it from whichever store fits the workload."]],"related":["/ontology-knowledge-graph/","/ai-architect/"]}-->
+<p>I get asked some version of this question in almost every AI or data engagement: "Do we need an ontology, a knowledge graph or a semantic layer?" The honest answer is that they are three different things that work best together, and most organisations need a little of each before they need a lot of any one.</p>
+<p>This is the explanation I give to leadership teams. It is deliberately practical. If you want the formal logic, there are good textbooks. If you want to decide what to build next quarter, read on.</p>
+
+<section class="block">
+<h2>The short version</h2>
+<ul>
+<li><strong>An ontology</strong> is the model of meaning: what kinds of things exist in your business and how they relate. "A Customer places an Order. An Order is governed by a Contract."</li>
+<li><strong>A knowledge graph</strong> is the data organised by that model: this specific customer, these orders, that contract, connected.</li>
+<li><strong>A semantic layer</strong> is how that meaning is served to the people and tools that use it: consistent metrics, definitions and access rules for BI, APIs and AI agents.</li>
+</ul>
+<p>One way to remember it: the ontology is the grammar, the knowledge graph is the sentences, and the semantic layer is the dictionary everyone looks things up in.</p>
+</section>
+
+<section class="block">
+<h2>Ontology: the model of meaning</h2>
+<p>An ontology names the concepts in a domain, their properties and the relationships between them, along with rules. It sounds academic, but the problem it solves is very ordinary. In most organisations, "customer" means something different in sales, billing and support. "Active" means three different things depending on which dashboard you open. Reports never reconcile, and nobody can say which number is right.</p>
+<p>A good ontology settles those questions once, in writing, in a form both people and machines can read. Formally it is often written in OWL or RDF Schema, but the format matters less than the discipline:</p>
+<ul>
+<li>Concepts have one definition, agreed with the business owner.</li>
+<li>Relationships are explicit: a Contract <em>covers</em> one or more Products; an Order <em>is placed by</em> exactly one Customer.</li>
+<li>It is versioned and reviewed like code, because the business changes.</li>
+</ul>
+<p>The ontology is small. A useful first version for a mid-sized business often fits on one whiteboard.</p>
+</section>
+
+<section class="block">
+<h2>Knowledge graph: the connected facts</h2>
+<p>A knowledge graph is your actual data, organised according to the ontology, as nodes and edges. Customer <code>C-1042</code> placed Order <code>O-88</code>, which is governed by Contract <code>K-7</code>, which expires next March and was signed by a named account owner.</p>
+<p>Building one is mostly a data engineering problem:</p>
+<ul>
+<li><strong>Mapping</strong> source systems (CRM, ERP, documents, tickets) onto ontology concepts.</li>
+<li><strong>Entity resolution</strong>: working out that "ACME Ltd", "Acme Limited" and customer ID 1042 are the same organisation. This is where most of the effort goes, and where most of the value is.</li>
+<li><strong>Storage</strong>: a triple store if you use RDF and SPARQL, or a property graph such as Neo4j with Cypher. I choose based on the workload and the team, not on ideology.</li>
+</ul>
+<p>The graph earns its keep on questions that cross systems: "Which customers on contracts expiring this quarter have open high-priority support tickets?" That query is painful across four databases and natural in a graph.</p>
+</section>
+
+<section class="block">
+<h2>Semantic layer: meaning, served</h2>
+<p>A semantic layer is the interface that exposes consistent definitions to consumers. In analytics, that means metrics like revenue, churn and active users defined once and used by every dashboard. In applications, it means APIs that return business concepts rather than raw tables. For AI, it means agents query "contracts expiring this quarter" through a governed interface rather than writing their own SQL against production.</p>
+<p>A semantic layer can sit on a warehouse without any graph at all, and many good ones do. It becomes more powerful when it is driven by the ontology, because then the definitions in your dashboards, APIs and AI tools come from the same source.</p>
+</section>
+
+<section class="block">
+<h2>A worked example: Customer, Order, Contract</h2>
+<p>Here is a deliberately small slice of an ontology, written informally:</p>
+<pre><code>Customer   --places-->       Order
+Order      --governedBy-->   Contract
+Contract   --covers-->       Product
+Contract   --ownedBy-->      AccountManager
+Customer   --hasStatus-->    {Prospect, Active, Lapsed}
+
+Rule: a Customer is Active if they hold at least one
+      Contract whose end date is in the future.</code></pre>
+<p>Notice the rule. Before this existed, sales counted a customer as active if they had a meeting in the last 90 days, and finance counted anyone who had paid in the last year. Neither was wrong. They were answering different questions with the same word. The ontology forces the organisation to name both concepts separately, perhaps "Engaged prospect" and "Active customer", and the arguments about whose number is right largely stop.</p>
+<p>The knowledge graph then holds the real customers, orders and contracts. The semantic layer exposes "Active customers" as a metric used by the board pack, the CRM and the AI assistant alike.</p>
+</section>
+
+<section class="block">
+<h2>Why this matters for LLMs and RAG</h2>
+<p>Most retrieval-augmented generation starts with vector search: split documents into chunks, embed them, and retrieve the most similar chunks for each question. That works well for "what does our travel policy say about hotels?" It works badly for questions that depend on relationships, exact facts or permissions.</p>
+<p>Ask a plain RAG system "which of my accounts renew this quarter?" and it will retrieve paragraphs that sound similar, then the model will guess. Ground the same question in a knowledge graph, an approach often called GraphRAG, and the system can:</p>
+<ul>
+<li>Resolve "my accounts" to the current user's AccountManager node.</li>
+<li>Traverse to Contracts with end dates in the quarter, as a precise query rather than a similarity match.</li>
+<li>Pull supporting documents only for those contracts, and cite them.</li>
+<li>Apply permissions from the graph, so the assistant never shows a contract the user cannot see.</li>
+</ul>
+<p>In my experience this is the single biggest lever for moving an LLM assistant from impressive to trustworthy. I cover the rest of that journey in <a href="/insights/rag-to-production-checklist/">From RAG demo to production: a checklist</a>.</p>
+</section>
+
+<section class="block">
+<h2>Which do you need first?</h2>
+<table class="tbl">
+<thead><tr><th>If your main problem is...</th><th>Start with</th></tr></thead>
+<tbody>
+<tr><td>Reports that don't reconcile; arguments about definitions</td><td>A small ontology plus a semantic layer over your warehouse</td></tr>
+<tr><td>Questions that cross many systems; customer 360 views</td><td>Ontology plus knowledge graph with entity resolution</td></tr>
+<tr><td>An AI assistant that gets facts or permissions wrong</td><td>Ontology plus knowledge graph, used to ground retrieval</td></tr>
+<tr><td>Exchanging data with partners or regulators</td><td>A formal ontology aligned to industry standards</td></tr>
+</tbody>
+</table>
+<p>In healthcare the standards do much of the ontology work for you. SNOMED CT, LOINC and RxNorm, and the OMOP common data model, are effectively shared ontologies. I wrote about that in <a href="/insights/fhir-to-omop-architecture/">FHIR to OMOP: a practical architecture</a>.</p>
+</section>
+
+<section class="block">
+<h2>Common mistakes</h2>
+<ol>
+<li><strong>Modelling the whole world.</strong> Ontology projects die when they try to define everything before delivering anything. Model the concepts one valuable use case needs, ship it, then extend.</li>
+<li><strong>Letting engineers define business terms alone.</strong> The business owner must agree the definition of "active customer". Otherwise you have encoded one team's opinion.</li>
+<li><strong>Treating it as a one-off.</strong> The ontology needs an owner, versioning and a change process, or it drifts back into chaos within a year.</li>
+<li><strong>Skipping entity resolution.</strong> A graph full of duplicate customers is worse than no graph, because it looks authoritative.</li>
+<li><strong>Choosing the database first.</strong> The store should follow the model and the workload, not the other way round.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2>How I run an ontology project</h2>
+<p>The method matters more than the tooling. This is the sequence I follow, and it keeps projects small enough to deliver value within weeks rather than quarters.</p>
+<ol>
+<li><strong>Pick one use case with a visible payoff.</strong> A board metric that never reconciles, or an AI assistant that keeps getting a specific type of question wrong.</li>
+<li><strong>Run short domain workshops.</strong> Two or three sessions with the people who own the concepts. I bring a draft; they correct it. Sticky notes beat software at this stage.</li>
+<li><strong>Write it down formally.</strong> Concepts, definitions, relationships and rules, in a format that can be versioned. For teams new to this, a well-structured YAML or JSON definition reviewed in pull requests is a fine start before moving to OWL.</li>
+<li><strong>Map two sources, not ten.</strong> Prove the mapping and entity resolution on the systems that matter most for the use case.</li>
+<li><strong>Serve it.</strong> Expose the result through the semantic layer, an API or an agent tool, so real users touch it.</li>
+<li><strong>Assign an owner.</strong> Someone in the business, not only in IT, who approves changes to definitions.</li>
+</ol>
+<p>After the first use case, each new one gets cheaper, because most concepts already exist. That compounding effect is the real business case for an ontology.</p>
+</section>
+
+<section class="block">
+<h2>Tooling choices, briefly</h2>
+<p>People want a product recommendation. Here is my general guidance instead:</p>
+<ul>
+<li><strong>For the model itself</strong>, OWL and RDF give you formal semantics, reasoning and standards alignment. Even if you serve data from something else, keeping the ontology in a formal language pays off when you exchange data with partners or regulators.</li>
+<li><strong>For the graph</strong>, a property graph such as Neo4j is often the fastest route for application teams, with Cypher being approachable. Triple stores with SPARQL suit linked data and standards-heavy domains.</li>
+<li><strong>For entity resolution</strong>, start with deterministic rules you can explain, then add probabilistic matching for the hard cases, with human review of uncertain matches.</li>
+<li><strong>For AI</strong>, expose the graph to agents as tools with clear schemas, for example over MCP, rather than letting a model generate arbitrary queries against it.</li>
+</ul>
+<p>Whatever you pick, keep the ontology independent of the store. Databases get replaced; meaning should outlive them.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I design <a href="/ontology-knowledge-graph/">ontologies, knowledge graphs and semantic layers</a> that business teams, analytics and AI agents can all rely on, and I use them to ground <a href="/ai-architect/">production AI systems</a>. Start small, prove value on one use case, then grow.</p>
+<p>If you are not sure which of these you need, the <a href="/#assess">challenge analyser</a> will suggest a starting point in two minutes, or see the ontology case study in <a href="/#work">my work</a>.</p>
+</section>
