@@ -1,0 +1,75 @@
+<!--{"title": "July 2026 briefing: stateless MCP ships, AI Act delay, UAE chips", "description": "July 2026 for architects: the stateless MCP 2026-07-28 spec goes GA, the EU AI Act Omnibus takes effect, the US eases AI chip exports to the UAE, and etcd 3.7.", "h1": "July 2026 briefing: MCP goes stateless, the AI Act moves its deadlines, and the UAE gets easier access to AI chips", "kicker": "Monthly briefing", "lede": "July was dense. The biggest MCP revision since launch shipped, the EU pushed back its high-risk AI deadlines, US export rules opened up for approved UAE entities, and observability got simpler to switch on.", "date": "2026-10-17", "datetime": "2026-10-17T19:40:00+04:00", "readtime": "9 min read", "format": "news-analysis", "period": "July 2026", "series": "Monthly briefing", "tags": ["mcp", "agents", "regulation", "opentelemetry", "kubernetes", "platform"], "keywords": ["July 2026 tech briefing", "MCP 2026-07-28 specification", "stateless MCP", "Multi Round-Trip Requests MRTR", "EU AI Act Digital Omnibus", "Regulation 2026/1744", "BIS UAE AI chips export rule", "UAE Country Group A:5", "OpenTelemetry graduated", "Go compile-time instrumentation", "etcd 3.7 RangeStream", "Kubernetes v1.37"], "faq": [["What changed in the MCP 2026-07-28 specification?", "The protocol became stateless: the initialize handshake and protocol-level sessions were retired, every request is self-describing, and server-to-client interactions moved to Multi Round-Trip Requests. It also added routing headers, cacheable list results, authorisation hardening and a formal deprecation policy."], ["When did the EU AI Act Digital Omnibus take effect?", "It was reported as published in the Official Journal on 24 July 2026 and in force from 27 July 2026, moving Annex III high-risk obligations to 2 December 2027 and Annex I to 2 August 2028."], ["What did the July 2026 BIS rule change for the UAE?", "Effective 10 July 2026, the US moved the UAE into a closer export control group and allowed approved UAE government bodies and listed companies to receive certain advanced AI chips without individual export licences, subject to conditions. Other parties still need a licence."]], "related": ["/ai-architect/", "/uae/", "/technical-due-diligence/"], "citations": [{"title": "The 2026-07-28 Specification", "url": "https://blog.modelcontextprotocol.io/posts/2026-07-28/", "publisher": "Model Context Protocol Blog", "date": "28 Jul 2026"}, {"title": "The Official Ruby SDK for MCP Reaches 1.0", "url": "https://blog.modelcontextprotocol.io/posts/ruby-sdk-1-0/", "publisher": "Model Context Protocol Blog", "date": "27 Jul 2026"}, {"title": "AI Act: obligations in force and delays under omnibus 2026/1744", "url": "https://www.actuia.com/en/news/ai-act-obligations-in-force-and-delays-under-omnibus-2026-1744/", "publisher": "ActuIA"}, {"title": "U.S.-UAE Cooperation Deepens, as BIS Eases Export Control Restrictions on UAE", "url": "https://www.mofo.com/resources/insights/260720-u-s-uae-cooperation-deepens-as-bis-eases", "publisher": "Morrison Foerster", "date": "20 Jul 2026"}, {"title": "BIS Eases US Export Controls for UAE: Key Opportunities and Compliance Considerations", "url": "https://www.gtlaw.com/en/insights/2026/7/bis-eases-us-export-controls-for-uae-key-opportunities-and-compliance-considerations", "publisher": "Greenberg Traurig", "date": "Jul 2026"}, {"title": "OpenTelemetry Has Graduated… Now what?", "url": "https://opentelemetry.io/blog/2026/otel-grad-now-what/", "publisher": "OpenTelemetry Blog", "date": "15 Jul 2026"}, {"title": "Announcing v1 of OpenTelemetry Go Compile-Time Instrumentation", "url": "https://opentelemetry.io/blog/2026/go-compile-time-instrumentation-v1/", "publisher": "OpenTelemetry Blog", "date": "16 Jul 2026"}, {"title": "One-command OpenTelemetry setup on Linux hosts", "url": "https://opentelemetry.io/blog/2026/packaging-first-repo/", "publisher": "OpenTelemetry Blog", "date": "23 Jul 2026"}, {"title": "Announcing etcd v3.7.0", "url": "https://kubernetes.io/blog/2026/07/08/announcing-etcd-3.7/", "publisher": "Kubernetes Blog", "date": "8 Jul 2026"}, {"title": "Kubernetes v1.37 Sneak Peek", "url": "https://kubernetes.io/blog/2026/07/31/kubernetes-v1-37-sneak-peek/", "publisher": "Kubernetes Blog", "date": "31 Jul 2026"}]}-->
+<p>If I had to pick one month from this year to explain where enterprise AI infrastructure is heading, it would be July 2026. Agent tooling got a protocol built for horizontal scale, regulators in Europe gave teams more time, and the Gulf's access to AI compute changed materially.</p>
+<p>As usual I've worked from primary sources where I can: the projects' own announcements, plus law-firm analyses for the regulatory items. My take on each follows.</p>
+
+<section class="block">
+<h2>The month in one paragraph</h2>
+<p>MCP shipped its 2026-07-28 specification, turning a stateful bidirectional protocol into a stateless request and response one<sup class="cite"><a href="#ref-1">1</a></sup>, a day after the Ruby SDK reached 1.0<sup class="cite"><a href="#ref-2">2</a></sup>. The EU AI Act Digital Omnibus was reported published and in force, deferring high-risk obligations<sup class="cite"><a href="#ref-3">3</a></sup>. A US Commerce rule effective 10 July let approved UAE entities receive advanced AI chips without individual licences<sup class="cite"><a href="#ref-4">4</a></sup><sup class="cite"><a href="#ref-5">5</a></sup>. OpenTelemetry reflected on graduating from the CNCF and shipped zero-code instrumentation for Go and a one-command Linux install<sup class="cite"><a href="#ref-6">6</a></sup><sup class="cite"><a href="#ref-7">7</a></sup><sup class="cite"><a href="#ref-8">8</a></sup>. And in the Kubernetes world, etcd 3.7 landed and the v1.37 sneak peek set out what to prepare for<sup class="cite"><a href="#ref-9">9</a></sup><sup class="cite"><a href="#ref-10">10</a></sup>.</p>
+<table class="tbl">
+<thead><tr><th>Item</th><th>What changed</th><th>Why it matters</th></tr></thead>
+<tbody>
+<tr><td>MCP 2026-07-28 spec</td><td>Stateless core, MRTR, routing headers, cacheable lists</td><td>Agent tool servers scale like ordinary web services</td></tr>
+<tr><td>EU AI Act Omnibus</td><td>Annex III to Dec 2027, Annex I to Aug 2028</td><td>More time, same requirements</td></tr>
+<tr><td>BIS rule for the UAE</td><td>Licence-free AI chips for approved entities</td><td>Gulf AI capacity plans become more realistic</td></tr>
+<tr><td>OTel Go compile-time v1</td><td>Zero-code instrumentation for Go binaries</td><td>Fleet-wide tracing without touching code</td></tr>
+<tr><td>etcd 3.7</td><td>RangeStream, lower CPU, v2store removed</td><td>Steadier control planes on large clusters</td></tr>
+</tbody>
+</table>
+</section>
+
+<section class="block">
+<h2>MCP goes stateless</h2>
+<p>The 2026-07-28 release retired the <code>initialize</code> exchange and the <code>Mcp-Session-Id</code> header. Each request now carries its protocol version, client identity and capabilities, so any request can land on any server instance behind a round-robin load balancer without shared storage<sup class="cite"><a href="#ref-1">1</a></sup>. The maintainers also reported close to half a billion SDK downloads a month across Tier 1 SDKs<sup class="cite"><a href="#ref-1">1</a></sup>, which tells you how much infrastructure depends on getting this right.</p>
+<p>The other changes are just as relevant to anyone operating agents:</p>
+<ul>
+<li><strong>Multi Round-Trip Requests</strong> replace server-initiated requests that needed a held-open stream. A tool that needs a confirmation returns an "input required" result and the client retries with the answers<sup class="cite"><a href="#ref-1">1</a></sup>.</li>
+<li><strong>Header-based routing.</strong> <code>Mcp-Method</code> and <code>Mcp-Name</code> headers let gateways, rate limiters and WAFs act without parsing JSON bodies<sup class="cite"><a href="#ref-1">1</a></sup>.</li>
+<li><strong>Cacheable list results</strong> with TTLs, so clients can cache tool catalogues and keep prompt caches stable<sup class="cite"><a href="#ref-1">1</a></sup>.</li>
+<li><strong>Authorisation hardening</strong>, including issuer validation and a move away from Dynamic Client Registration towards client metadata documents<sup class="cite"><a href="#ref-1">1</a></sup>.</li>
+<li><strong>A deprecation policy</strong> with a twelve-month minimum window<sup class="cite"><a href="#ref-1">1</a></sup>.</li>
+</ul>
+<p>One line in the announcement deserves attention: if your server needs state across calls, mint an explicit handle from a tool and have the model pass it back, rather than hiding state in the transport<sup class="cite"><a href="#ref-1">1</a></sup>. I agree. Hidden session state is what usually makes horizontal scaling painful, and explicit handles are also far easier to log and audit.</p>
+</section>
+
+<section class="block">
+<h2>The EU AI Act moves its deadlines</h2>
+<p>The Digital Omnibus on AI, Regulation (EU) 2026/1744, was reported published in the Official Journal on 24 July and in force from 27 July<sup class="cite"><a href="#ref-3">3</a></sup>. Annex III high-risk obligations moved from 2 August 2026 to 2 December 2027, and Annex I systems in regulated products, such as medical devices, to 2 August 2028<sup class="cite"><a href="#ref-3">3</a></sup>. Article 50 transparency duties kept their August 2026 date.</p>
+<p>I wrote a full analysis in <a href="/insights/eu-ai-act-digital-omnibus-roadmap/">the EU AI Act after the Digital Omnibus</a>. The short version: deferred is not cancelled. Use the time to build logging, evaluation and documentation into the platform once.</p>
+</section>
+
+<section class="block">
+<h2>The UAE and AI compute</h2>
+<p>For anyone building in the Gulf, this was the most consequential item of the month. A Bureau of Industry and Security rule, effective 10 July 2026, moved the UAE into a closer export control group and allowed approved UAE government bodies and listed companies to receive certain advanced AI chips and systems without individual export licences<sup class="cite"><a href="#ref-4">4</a></sup><sup class="cite"><a href="#ref-5">5</a></sup>. The analyses I read stress the limits: approval applies to named entities, everyone else still needs a licence, and end-use restrictions still apply<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<div class="callout"><p>The architecture consequence is about planning, not hardware. If you build on UAE capacity, know which approved operator your compute comes from, keep data residency documented, and design so sensitive workloads can stay in-country under the UAE PDPL and the DIFC and ADGM regimes.</p></div>
+<p>I cover the regional angle in more depth on my <a href="/uae/">UAE page</a>.</p>
+</section>
+
+<section class="block">
+<h2>Observability gets easier to switch on</h2>
+<p>OpenTelemetry's graduation within the CNCF was announced in May, and in July the project looked back at how it got there, from the merger of OpenTracing and OpenCensus in 2019 to becoming the default standard for telemetry<sup class="cite"><a href="#ref-6">6</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/briefings/otel-timeline.webp" alt="Timeline of OpenTelemetry's history, from OpenTracing and OpenCensus merging in 2019 through to CNCF graduation" width="1400" height="551" loading="lazy"></div><figcaption>The OpenTelemetry project timeline, published as the project reflected on its CNCF graduation. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2026/otel-grad-now-what/" target="_blank" rel="noopener">OpenTelemetry Blog, OpenTelemetry Has Graduated… Now what?</a> · CC BY 4.0</span></figcaption></figure>
+<p>Two practical releases followed. OpenTelemetry Go Compile-Time Instrumentation reached v1: change one line in how you build a Go binary and get traces and metrics for the application and its dependencies, with no code changes<sup class="cite"><a href="#ref-7">7</a></sup>. And an <code>opentelemetry</code> system package for Debian and Red Hat family hosts now installs an injector plus auto-instrumentation for Java, .NET, Node.js and Python<sup class="cite"><a href="#ref-8">8</a></sup>.</p>
+<p>Both lower the cost of the "instrument everything" step that most platform roadmaps keep postponing. For AI systems in particular, tracing every model and tool call is the foundation for evaluation and audit.</p>
+</section>
+
+<section class="block">
+<h2>Kubernetes and etcd</h2>
+<p>etcd 3.7 shipped RangeStream, which streams large result sets in chunks instead of buffering them, along with keys-only range optimisations and removal of the legacy v2 store<sup class="cite"><a href="#ref-9">9</a></sup>. The etcd team says Kubernetes users should see a significant drop in etcd CPU usage compared with 3.6<sup class="cite"><a href="#ref-9">9</a></sup>.</p>
+<p>The v1.37 sneak peek flagged changes worth acting on early: kube-proxy's <code>ipvs</code> mode is being deprecated, static Pods can no longer reference Secrets or ConfigMaps, and cgroup v1 support continues towards removal<sup class="cite"><a href="#ref-10">10</a></sup>. If any of your nodes still run cgroup v1, that is the item to fix first.</p>
+</section>
+
+<section class="block">
+<h2>What I'd do with this</h2>
+<ol>
+<li><strong>Plan the move to stateless MCP.</strong> Replace session state with explicit handles and update gateway rules to use the new routing headers.</li>
+<li><strong>Re-plan AI Act work</strong> against the new dates, but ship Article 50 transparency changes now.</li>
+<li><strong>For Gulf deployments, document your compute supply chain</strong> and data residency alongside your architecture.</li>
+<li><strong>Turn on zero-code instrumentation</strong> for Go services and Linux hosts, then trace model and tool calls end to end.</li>
+<li><strong>Check node cgroup versions and kube-proxy mode</strong> before upgrading to v1.37.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I design agent platforms, observability and governance for teams in the US, Europe and the Gulf. See my <a href="/ai-architect/">AI architecture</a> work and my <a href="/uae/">UAE practice</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call. For investors, the same checks are part of my <a href="/technical-due-diligence/">technical due diligence</a>.</p>
+</section>

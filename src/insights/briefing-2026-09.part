@@ -1,0 +1,72 @@
+<!--{"title": "September 2026 briefing: GPU scheduling, scale to zero, OTel", "description": "September 2026 for AI and platform teams: Kubernetes v1.37 scale to zero, DRA and gang scheduling for GPUs, OpenTelemetry gains and FHIR API deadlines.", "h1": "September 2026 briefing: GPUs get smarter scheduling, idle workloads scale to zero, and observability grows up", "kicker": "Monthly briefing", "lede": "The Kubernetes v1.37 deep dives landed this month, and most of them were about running AI and batch workloads more cheaply. OpenTelemetry published evidence that its Prometheus story is improving. Here is what it means in practice.", "date": "2026-10-17", "datetime": "2026-10-17T20:00:00+04:00", "readtime": "8 min read", "format": "news-analysis", "period": "September 2026", "series": "Monthly briefing", "tags": ["kubernetes", "ai", "observability", "opentelemetry", "healthcare", "platform"], "keywords": ["Kubernetes v1.37 scale to zero", "HorizontalPodAutoscaler minReplicas 0", "Dynamic Resource Allocation GA", "DRA GPU scheduling", "gang scheduling Kubernetes", "workload-aware scheduling", "rootless Kubernetes", "node lifecycle conditions", "OpenTelemetry Prometheus interoperability", "Kubernetes attributes processor v1", "semantic conventions", "CMS-0057-F FHIR API"], "faq": [["Can Kubernetes scale a deployment to zero in v1.37?", "Yes. HorizontalPodAutoscaler scale to zero is Beta and enabled by default in v1.37 for workloads that scale on object or external metrics, such as queue length. It does not work with CPU or memory metrics, and HTTP workloads need a separate buffering layer."], ["What does DRA Extended Resource support GA mean for GPU clusters?", "Pods that request a traditional extended resource such as a GPU can now be served by a Dynamic Resource Allocation driver without a separate device plugin, so clusters can move to DRA gradually without changing existing workloads."], ["Are OpenTelemetry and Prometheus easier to use together now?", "According to the project's 2026 survey, the average ease-of-use rating rose from 3.1 in 2024 to 3.6, and the share of respondents finding them hard to use together fell from 29% to 10%."]], "related": ["/ai-architect/", "/healthcare-data-architecture/", "/technical-due-diligence/"], "citations": [{"title": "Kubernetes v1.37: Scale Workloads to Zero with HorizontalPodAutoscaler", "url": "https://kubernetes.io/blog/2026/09/02/kubernetes-v1-37-hpa-scale-to-zero-beta/", "publisher": "Kubernetes blog", "date": "2 Sep 2026"}, {"title": "Kubernetes v1.37: DRA Updates", "url": "https://kubernetes.io/blog/2026/09/03/kubernetes-v1-37-dra-updates/", "publisher": "Kubernetes blog", "date": "3 Sep 2026"}, {"title": "Kubernetes v1.37: Advancing Workload-Aware Scheduling", "url": "https://kubernetes.io/blog/2026/09/08/kubernetes-v1-37-advancing-workload-aware-scheduling/", "publisher": "Kubernetes blog", "date": "8 Sep 2026"}, {"title": "Kubernetes v1.37: KubeletInUserNamespace (aka Rootless mode) Graduates to Beta", "url": "https://kubernetes.io/blog/2026/09/04/kubernetes-v1-37-rootless-beta/", "publisher": "Kubernetes blog", "date": "4 Sep 2026"}, {"title": "Kubernetes v1.37: Introducing Node Lifecycle Conditions", "url": "https://kubernetes.io/blog/2026/09/09/kubernetes-v1-37-node-lifecycle-conditions/", "publisher": "Kubernetes blog", "date": "9 Sep 2026"}, {"title": "Prometheus and OpenTelemetry interoperability in 2026: Survey results", "url": "https://opentelemetry.io/blog/2026/otel-prometheus-interoperability/", "publisher": "OpenTelemetry blog", "date": "22 Sep 2026"}, {"title": "Kubernetes attributes processor reaches v1.0.0 milestone", "url": "https://opentelemetry.io/blog/2026/k8s-attributes-processor-v1/", "publisher": "OpenTelemetry blog", "date": "16 Sep 2026"}, {"title": "Exploring the OpenTelemetry Instrumentation Ecosystem", "url": "https://opentelemetry.io/blog/2026/exploring-instrumentation-ecosystem/", "publisher": "OpenTelemetry blog", "date": "25 Sep 2026"}, {"title": "CMS Interoperability and Prior Authorization Requirements (provider bulletin)", "url": "https://www.amerihealthcaritasnext.com/content/dam/amerihealth-caritas/acnext/pdf/fl/provider/news-updates/2026/cms-interoperability-prior-authorization-requirements.pdf.coredownload.inline.pdf", "publisher": "AmeriHealth Caritas Next", "date": "14 Sep 2026"}]}-->
+<p>September is when the Kubernetes project publishes the detailed write-ups behind a release, and the v1.37 series read like a guide to running AI infrastructure for less money. Idle workers can scale to zero, GPUs can be scheduled as groups, and devices can be taken offline one at a time.</p>
+<p>OpenTelemetry, meanwhile, published survey data showing its Prometheus interoperability work is paying off. As usual, everything here comes from the projects' own posts, cited inline.</p>
+
+<section class="block">
+<h2>The month in one paragraph</h2>
+<p>HorizontalPodAutoscaler scale to zero is now Beta and on by default<sup class="cite"><a href="#ref-1">1</a></sup>. Dynamic Resource Allocation (DRA) Extended Resource support reached GA, along with device taints and tolerations<sup class="cite"><a href="#ref-2">2</a></sup>. The Workload and PodGroup APIs that enable gang scheduling went to Beta<sup class="cite"><a href="#ref-3">3</a></sup>. Rootless node components went to Beta<sup class="cite"><a href="#ref-4">4</a></sup>, and nodes gained standard conditions for drains and maintenance<sup class="cite"><a href="#ref-5">5</a></sup>. In observability, OpenTelemetry reported better Prometheus interoperability<sup class="cite"><a href="#ref-6">6</a></sup> and a v1.0.0 Kubernetes attributes processor<sup class="cite"><a href="#ref-7">7</a></sup>.</p>
+<table class="tbl">
+<thead><tr><th>Release</th><th>What changed</th><th>Why it matters</th></tr></thead>
+<tbody>
+<tr><td>HPA scale to zero</td><td>Beta, enabled by default</td><td>No idle pods holding expensive CPUs or GPUs</td></tr>
+<tr><td>DRA Extended Resources</td><td>GA</td><td>Move GPU allocation to DRA without changing workloads</td></tr>
+<tr><td>Workload-aware scheduling</td><td>Gang scheduling APIs to Beta</td><td>Distributed training jobs start together or not at all</td></tr>
+<tr><td>Node lifecycle conditions</td><td>Five new standard conditions</td><td>A shared signal for drains and maintenance</td></tr>
+<tr><td>OTel k8s attributes processor</td><td>v1.0.0</td><td>Stable Kubernetes metadata on every signal</td></tr>
+</tbody>
+</table>
+</section>
+
+<section class="block">
+<h2>Scale to zero, finally in core</h2>
+<p>Before v1.37 you needed an add-on, or an alpha feature gate, to scale a workload from zero. Now an HPA using an object or external metric, such as queue length, can take a workload to zero replicas and bring it back when work arrives<sup class="cite"><a href="#ref-1">1</a></sup>. The post is honest about the limits: CPU and memory metrics cannot drive it because there are no pods left to measure, cold starts are real, and Kubernetes Services do not buffer requests while nothing is ready, so HTTP workloads need their own buffering layer<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<div class="callout"><p>This suits the AI workloads I see most often: embedding jobs, document ingestion and batch inference behind a durable queue. It does not suit a chat endpoint a user is waiting on.</p></div>
+</section>
+
+<section class="block">
+<h2>GPUs: DRA and gang scheduling grow up</h2>
+<p>DRA Extended Resource support went GA. In plain terms, a pod that asks for something like <code>example.com/gpu</code> can now be served by a DRA driver without a separate device plugin, so existing workloads keep working while allocation moves to DRA underneath<sup class="cite"><a href="#ref-2">2</a></sup>. Device taints and tolerations are also stable, which lets an operator take a single faulty accelerator out of service without draining the whole node<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<p>On scheduling, the Workload and PodGroup APIs that enable gang scheduling moved to Beta, together with workload-aware preemption, and a new CompositePodGroup API arrived for multi-level topology constraints<sup class="cite"><a href="#ref-3">3</a></sup>. For distributed training, gang scheduling is the difference between a job that starts cleanly and one that holds half its GPUs while waiting for the rest.</p>
+</section>
+
+<section class="block">
+<h2>Safer, more operable nodes</h2>
+<p>Rootless mode, where the kubelet, container runtimes, CNI plugins and kube-proxy run as a non-root user inside a Linux user namespace, graduated to Beta<sup class="cite"><a href="#ref-4">4</a></sup>. The motivation is simple: node components have had container-breakout vulnerabilities in the past, and running them without full root limits the damage.</p>
+<p>Kubernetes also introduced five standard node conditions, including <code>DrainInProgress</code>, <code>MaintenancePlanned</code> and <code>GracefulNodeShutdownInProgress</code><sup class="cite"><a href="#ref-5">5</a></sup>. Until now every tool had its own way to say a node was going away. A shared signal makes it far easier for schedulers, autoscalers and long-running jobs to react sensibly.</p>
+</section>
+
+<section class="block">
+<h2>Observability: the Prometheus gap is closing</h2>
+<figure class="fig"><div class="im"><img src="/assets/img/briefings/otel-prom-ease-of-use.webp" alt="Bar chart of the average ease-of-use rating for using OpenTelemetry and Prometheus together: 3.1 in 2024 and 3.6 in 2026 on a five-point scale" width="557" height="342" loading="lazy"></div><figcaption>Average ease-of-use rating for running OpenTelemetry and Prometheus together, 2024 versus 2026. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2026/otel-prometheus-interoperability/" target="_blank" rel="noopener">OpenTelemetry blog, Prometheus and OpenTelemetry interoperability in 2026</a> · CC BY 4.0</span></figcaption></figure>
+<p>The OpenTelemetry End-User SIG surveyed users of both projects. The average ease-of-use rating rose from 3.1 to 3.6, and the share finding the two hard to use together fell from 29% to 10%<sup class="cite"><a href="#ref-6">6</a></sup>. Nearly half of respondents run Prometheus exporters and OTel receivers side by side rather than migrating, and 65% run a "vanilla" pipeline with no vendor transformation<sup class="cite"><a href="#ref-6">6</a></sup>. The sample is small (81 screened respondents), so I read it as direction rather than precise measurement.</p>
+<p>The Kubernetes attributes processor reached v1.0.0, built on Kubernetes semantic conventions that became stable in June<sup class="cite"><a href="#ref-7">7</a></sup>. The move to stable attribute names does break existing users, so check the migration guide before upgrading.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/briefings/otel-semconv-timeline.webp" alt="Timeline: HTTP semantic conventions enter the specification in June 2019 and reach stable in November 2023; database conventions enter in May 2019 and reach stable in May 2025" width="1400" height="548" loading="lazy"></div><figcaption>How long it took HTTP and database semantic conventions to go from specification to stable. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2026/exploring-instrumentation-ecosystem/" target="_blank" rel="noopener">OpenTelemetry blog, Exploring the OpenTelemetry Instrumentation Ecosystem</a> · CC BY 4.0</span></figcaption></figure>
+<p>That timeline is the useful reminder from the month's last OTel post: conventions take years to stabilise, and instrumentation libraries then have to catch up<sup class="cite"><a href="#ref-8">8</a></sup>. A stable convention is a starting point, not proof your telemetry follows it.</p>
+</section>
+
+<section class="block">
+<h2>Healthcare: the FHIR API clock is ticking</h2>
+<p>In US healthcare, payers spent September reminding providers that the FHIR-based APIs required under the CMS interoperability and prior authorisation rule are due from 1 January 2027<sup class="cite"><a href="#ref-9">9</a></sup>. If you run a clinical data platform, that deadline is now one planning cycle away. I explain how I structure FHIR exchange alongside an analytical layer in <a href="/insights/fhir-to-omop-architecture/">FHIR to OMOP: a practical architecture</a>.</p>
+</section>
+
+<section class="block">
+<h2>What I'm watching next</h2>
+<p>Three threads from September will matter over the next quarter. First, how quickly the managed Kubernetes services pick up v1.37, because scale to zero and the DRA changes are only useful once your provider ships them. Second, whether GPU vendors' DRA drivers support device taints well enough to make single-accelerator maintenance routine. Third, how the semantic conventions conformance work in OpenTelemetry turns into something teams can check in CI.</p>
+<p>None of these needs action today. They are the questions I would put on a platform team's agenda so the next upgrade is a plan rather than a surprise.</p>
+</section>
+
+<section class="block">
+<h2>What I'd do with this</h2>
+<ol>
+<li><strong>Move queue-driven AI jobs to scale to zero</strong> on external metrics, and leave user-facing inference alone.</li>
+<li><strong>Plan the DRA migration now</strong> for GPU clusters. Extended Resource support makes it gradual, so there is little reason to wait.</li>
+<li><strong>Use gang scheduling for multi-node training</strong> so jobs do not hold partial GPU allocations.</li>
+<li><strong>Wire node lifecycle conditions into your tooling</strong> so long-running jobs checkpoint before a planned drain.</li>
+<li><strong>Test the k8s attributes processor upgrade</strong> in staging, because attribute names change.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I design AI and data platforms that keep GPU costs under control and stay observable as they grow. See my <a href="/ai-architect/">AI architecture work</a>, my <a href="/healthcare-data-architecture/">healthcare data architecture</a> practice for the FHIR deadline, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
