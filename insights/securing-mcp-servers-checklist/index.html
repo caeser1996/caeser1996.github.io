@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Securing MCP servers for enterprise AI agents: a checklist</title>
+<meta name="description" content="A practical checklist for running Model Context Protocol servers in production: token audience, confused deputy, least privilege, gateways, logging and prompt injection." />
+<meta name="keywords" content="Model Context Protocol security, MCP server security, MCP authorization, AI agent security, confused deputy MCP, token passthrough, OAuth resource indicators RFC 8707, prompt injection agents, enterprise AI agents, AI gateway, LLM security checklist" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://caeser1996.github.io/insights/securing-mcp-servers-checklist/" />
+<meta name="theme-color" content="#111214" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="Securing MCP servers for enterprise AI agents: a checklist" />
+<meta property="og:description" content="A practical checklist for running Model Context Protocol servers in production: token audience, confused deputy, least privilege, gateways, logging and prompt injection." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://caeser1996.github.io/insights/securing-mcp-servers-checklist/" />
+<meta property="og:image" content="https://caeser1996.github.io/assets/og/securing-mcp-servers-checklist.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Securing MCP servers for enterprise AI agents: a checklist" />
+<meta name="twitter:description" content="A practical checklist for running Model Context Protocol servers in production: token audience, confused deputy, least privilege, gateways, logging and prompt injection." />
+<meta name="twitter:image" content="https://caeser1996.github.io/assets/og/securing-mcp-servers-checklist.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "BlogPosting", "headline": "Securing MCP servers for enterprise AI agents: an architect's checklist", "description": "A practical checklist for running Model Context Protocol servers in production: token audience, confused deputy, least privilege, gateways, logging and prompt injection.", "datePublished": "2026-10-17T18:55:00+04:00", "dateModified": "2026-10-17T18:55:00+04:00", "articleSection": "AI architecture", "genre": "Checklist", "citation": [{"@type": "CreativeWork", "name": "Security Best Practices", "url": "https://modelcontextprotocol.io/docs/2026-07-28/tutorials/security/security_best_practices"}, {"@type": "CreativeWork", "name": "Authorization: Security Considerations", "url": "https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization/security-considerations"}, {"@type": "CreativeWork", "name": "RFC 8707: Resource Indicators for OAuth 2.0", "url": "https://www.rfc-editor.org/rfc/rfc8707"}, {"@type": "CreativeWork", "name": "RFC 8693: OAuth 2.0 Token Exchange", "url": "https://www.rfc-editor.org/rfc/rfc8693"}, {"@type": "CreativeWork", "name": "OWASP Top 10 for LLM Applications", "url": "https://genai.owasp.org/llm-top-10/"}, {"@type": "CreativeWork", "name": "Best practices for remote MCP bearer token authentication (Discussion #1247)", "url": "https://github.com/modelcontextprotocol/modelcontextprotocol/discussions/1247"}], "author": {"@type": "Person", "@id": "https://caeser1996.github.io/#person", "name": "Sumanta Mukhopadhyay", "url": "https://caeser1996.github.io/"}, "publisher": {"@type": "Person", "@id": "https://caeser1996.github.io/#person", "name": "Sumanta Mukhopadhyay", "url": "https://caeser1996.github.io/"}, "mainEntityOfPage": "https://caeser1996.github.io/insights/securing-mcp-servers-checklist/", "image": "https://caeser1996.github.io/assets/og/securing-mcp-servers-checklist.png", "keywords": "Model Context Protocol security, MCP server security, MCP authorization, AI agent security, confused deputy MCP, token passthrough, OAuth resource indicators RFC 8707, prompt injection agents, enterprise AI agents, AI gateway, LLM security checklist", "wordCount": 1057}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://caeser1996.github.io/"}, {"@type": "ListItem", "position": 2, "name": "Insights", "item": "https://caeser1996.github.io/insights/"}, {"@type": "ListItem", "position": 3, "name": "Securing MCP servers for enterprise AI agents: an architect's checklist", "item": "https://caeser1996.github.io/insights/securing-mcp-servers-checklist/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What is token passthrough in MCP and why is it banned?", "acceptedAnswer": {"@type": "Answer", "text": "Token passthrough is when an MCP server accepts a token from a client and forwards it to a downstream API without checking it was issued for the MCP server. The MCP security guidance says servers must not accept tokens that were not explicitly issued for them, because it breaks audience checks and audit trails."}}, {"@type": "Question", "name": "What is the confused deputy problem with MCP proxies?", "acceptedAnswer": {"@type": "Answer", "text": "It happens when an MCP proxy uses one static client ID with a third-party authorisation server that remembers consent per client rather than per user, so a malicious client can obtain authorisation codes without the user's real consent. The fix is per-client consent at the proxy and strict redirect URI validation."}}, {"@type": "Question", "name": "Do I need an AI gateway in front of MCP servers?", "acceptedAnswer": {"@type": "Answer", "text": "For enterprise use I recommend one. A single governed entry point gives you authentication, least-privilege scopes, rate limits, PII redaction and a complete audit log of every tool call an agent makes."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..600;1,9..144,400&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+</script>
+</head>
+<body class="sub is-post">
+<div class="progress" id="progress"></div>
+<nav>
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links">
+      <a href="/#practice">Services</a>
+      <a href="/#work">Case studies</a>
+      <a href="/insights/">Insights</a>
+      <a href="/#assess">Analyse</a>
+      <a href="/#connect">Connect</a>
+    </div>
+    <div class="nav-r">
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/insights/">Insights</a> <span>/</span> <em>Securing MCP servers for enterprise AI agents: an architect&#x27;s checklist</em></div>
+    <div class="kicker">AI architecture</div>
+    <h1>Securing MCP servers for enterprise AI agents: an architect&#x27;s checklist</h1>
+    <p class="sub-lede">MCP makes it easy to give agents real tools. That is exactly why the security model needs as much attention as the prompts. This is the checklist I work through before an MCP server touches production data.</p>
+    <div class="ameta"><span class="fmt">Checklist</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-10-17T18:55:00+04:00">17 Oct 2026 · 18:55 GST</time><span>9 min read</span><span>6 sources</span></div><div class="atags"><span class="tagp">#ai</span><span class="tagp">#agents</span><span class="tagp">#mcp</span><span class="tagp">#security</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Checklist cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><circle cx="560" cy="61" r="8" class="cv-dot hl"/><rect x="590" y="50" width="522" height="22" class="cv-bar hl"/><circle cx="560" cy="109" r="8" class="cv-dot"/><rect x="590" y="98" width="260" height="22" class="cv-bar"/><circle cx="560" cy="157" r="8" class="cv-dot"/><rect x="590" y="146" width="242" height="22" class="cv-bar"/><circle cx="560" cy="205" r="8" class="cv-dot hl"/><rect x="590" y="194" width="305" height="22" class="cv-bar hl"/><circle cx="560" cy="253" r="8" class="cv-dot"/><rect x="590" y="242" width="547" height="22" class="cv-bar"/><circle cx="560" cy="301" r="8" class="cv-dot"/><rect x="590" y="290" width="308" height="22" class="cv-bar"/><circle cx="560" cy="349" r="8" class="cv-dot hl"/><rect x="590" y="338" width="355" height="22" class="cv-bar hl"/><text x="60" y="90" class="cv-k">CHECKLIST · AI ARCHITECTURE</text><text x="60" y="350" class="cv-n">17 Oct 2026 · 18:55 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <p>When I built agent tooling over MCP into Wisp, the self-hosted AI platform I work on, getting a tool to work was the easy part. Making it safe to point at real systems was the real work, and it's the part most MCP demos skip.</p>
+<p>The Model Context Protocol has become the default way to connect agents to tools and data. The protocol now carries serious security guidance of its own<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. Below is the checklist I use, grouped the way I review a design: identity, authorisation, the tools themselves, the model's inputs, and operations.</p>
+
+<section class="block">
+<h2 id="why-mcp-changes-the-threat-model">Why MCP changes the threat model</h2>
+<p>A chatbot that can only talk has a limited blast radius. An agent with MCP tools can read files, query databases, open tickets and call internal APIs, and it decides when to do so based on text it has read. That text can come from a user, a document or a web page, and any of them can contain instructions.</p>
+<p>So the question shifts from "what can the model say?" to "what can the model do, on whose authority, and how would we know?". OWASP's list of LLM risks reflects this, with prompt injection and excessive agency near the top<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+</section>
+
+<section class="block">
+<h2 id="1-tokens-audience-is-everything">1. Tokens: audience is everything</h2>
+<p>The most important rule in the MCP guidance is short. MCP servers must not accept tokens that were not explicitly issued for them<sup class="cite"><a href="#ref-1">1</a></sup>, and must validate that a presented token was issued for their use<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<ul>
+<li><strong>Validate the audience on every request.</strong> A token minted for your CRM API is not a token for your MCP server, even if both trust the same identity provider.</li>
+<li><strong>Clients request audience-bound tokens.</strong> MCP clients include the resource parameter defined in RFC 8707 so each token is bound to one server<sup class="cite"><a href="#ref-2">2</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>.</li>
+<li><strong>Never pass tokens through.</strong> If the MCP server must call a downstream API, exchange the token for a new one scoped to that API (RFC 8693 token exchange) rather than forwarding the client's token<sup class="cite"><a href="#ref-4">4</a></sup><sup class="cite"><a href="#ref-6">6</a></sup>.</li>
+</ul>
+<div class="callout"><p>Token passthrough looks convenient and breaks three things at once: audience checks, rate limiting per client, and your audit trail. I treat it as a design-review blocker.</p></div>
+</section>
+
+<section class="block">
+<h2 id="2-proxies-and-the-confused-deputy">2. Proxies and the confused deputy</h2>
+<p>Many MCP servers are proxies in front of a third-party API. The guidance describes a confused deputy attack that appears when the proxy uses one static client ID with the third party, and that third party remembers consent per client ID rather than per user<sup class="cite"><a href="#ref-1">1</a></sup>. A malicious client can then ride on consent the user gave to someone else.</p>
+<ul>
+<li>Obtain the user's consent at the proxy for each dynamically registered client, before forwarding to the third-party authorisation flow.</li>
+<li>Validate redirect URIs exactly. No wildcards, no "starts with".</li>
+<li>Use state and PKCE properly, and expire authorisation codes quickly.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2 id="3-least-privilege-per-tool">3. Least privilege, per tool</h2>
+<p>Scopes should describe what a tool can do, not which server it lives on. An MCP server that exposes "search tickets" and "close ticket" should not grant both with one scope.</p>
+<table class="tbl">
+<thead><tr><th>Tool type</th><th>Default policy</th><th>Extra control</th></tr></thead>
+<tbody>
+<tr><td>Read, non-sensitive</td><td>Allowed for the user's own data</td><td>Rate limits, logging</td></tr>
+<tr><td>Read, sensitive (PII, PHI, financials)</td><td>Allowed only if the user could see it directly</td><td>Field-level redaction, purpose logging</td></tr>
+<tr><td>Write, reversible</td><td>Allowed with narrow scopes</td><td>Idempotency keys, undo path</td></tr>
+<tr><td>Write, irreversible or external</td><td>Human approval required</td><td>Preview of the exact action, second factor</td></tr>
+</tbody>
+</table>
+<p>The principle I hold to is simple: an agent should never be able to do something the human behind it couldn't do through the normal application. Permission-aware retrieval matters for the same reason, which I cover in the <a href="/insights/rag-to-production-checklist/">RAG production checklist</a>.</p>
+</section>
+
+<section class="block">
+<h2 id="4-treat-every-input-as-untrusted">4. Treat every input as untrusted</h2>
+<p>Prompt injection has no complete fix today, so design for containment<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<ul>
+<li><strong>Separate instructions from data.</strong> Tool results and retrieved documents are data. Mark them as such in the context and never let them change the agent's permissions.</li>
+<li><strong>Constrain tool arguments.</strong> Validate against strict schemas server-side. An agent asking to email a thousand external addresses should fail validation, not reach your mail server.</li>
+<li><strong>Watch tool descriptions.</strong> Descriptions from third-party MCP servers are text the model reads. Review and pin them, and alert when they change.</li>
+<li><strong>Limit chaining.</strong> Cap how many tool calls an agent can make per task, and require approval when a read from an untrusted source is followed by a sensitive write.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2 id="5-put-a-gateway-in-front">5. Put a gateway in front</h2>
+<p>For enterprise use I put MCP servers behind a single AI gateway rather than letting agents connect to each server directly. One governed entry point gives you:</p>
+<ol>
+<li>Central authentication and token exchange.</li>
+<li>Per-user, per-tool authorisation policies written as code.</li>
+<li>PII redaction before data reaches a hosted model.</li>
+<li>Rate limits and cost controls per user and per agent.</li>
+<li>A complete, tamper-evident log of every tool call, its arguments and its result.</li>
+</ol>
+<p>It is the same pattern I use for routing between local and hosted models, described in my <a href="/insights/private-llm-on-prem/">notes on private LLMs</a>.</p>
+</section>
+
+<section class="block">
+<h2 id="6-operate-it-like-production">6. Operate it like production</h2>
+<ul>
+<li><strong>Inventory.</strong> Know every MCP server in use, who owns it, which data it touches and which agents can call it.</li>
+<li><strong>Pin versions.</strong> Treat third-party MCP servers like any other dependency: pinned, scanned, reviewed on upgrade.</li>
+<li><strong>Session hygiene.</strong> Session IDs are not authentication. Bind sessions to the authenticated user and rotate them<sup class="cite"><a href="#ref-1">1</a></sup>.</li>
+<li><strong>Red-team regularly.</strong> Keep a set of injection and misuse tests in the release pipeline, alongside quality evaluations.</li>
+<li><strong>Plan the kill switch.</strong> You should be able to revoke a tool, a server or an agent's access in minutes.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2 id="the-short-version">The short version</h2>
+<p>If you only do five things: validate token audience, never pass tokens through, scope per tool, require human approval for irreversible actions, and log every tool call through a gateway. That covers most of the incidents I would expect to see.</p>
+<p>Regulation is heading the same way. Logging, oversight and robustness are central to the EU AI Act's requirements for high-risk systems, which I discuss in <a href="/insights/eu-ai-act-digital-omnibus-roadmap/">the EU AI Act after the Digital Omnibus</a>.</p>
+</section>
+
+<section class="block">
+<h2 id="how-i-can-help">How I can help</h2>
+<p>I design and review agent platforms, from MCP server security to gateway architecture and evaluation. See my <a href="/ai-architect/">AI architecture work</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call. If you are an investor looking at an agent company, this checklist is part of my <a href="/technical-due-diligence/">technical due diligence</a>.</p>
+</section>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://modelcontextprotocol.io/docs/2026-07-28/tutorials/security/security_best_practices" target="_blank" rel="noopener">Security Best Practices</a><small>Model Context Protocol documentation</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization/security-considerations" target="_blank" rel="noopener">Authorization: Security Considerations</a><small>Model Context Protocol specification</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://www.rfc-editor.org/rfc/rfc8707" target="_blank" rel="noopener">RFC 8707: Resource Indicators for OAuth 2.0</a><small>IETF</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://www.rfc-editor.org/rfc/rfc8693" target="_blank" rel="noopener">RFC 8693: OAuth 2.0 Token Exchange</a><small>IETF</small></div></li><li id="ref-5"><span class="rn">5</span><div><a href="https://genai.owasp.org/llm-top-10/" target="_blank" rel="noopener">OWASP Top 10 for LLM Applications</a><small>OWASP GenAI Security Project</small></div></li><li id="ref-6"><span class="rn">6</span><div><a href="https://github.com/modelcontextprotocol/modelcontextprotocol/discussions/1247" target="_blank" rel="noopener">Best practices for remote MCP bearer token authentication (Discussion #1247)</a><small>GitHub, modelcontextprotocol</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fcaeser1996.github.io%2Finsights%2Fsecuring-mcp-servers-checklist%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fcaeser1996.github.io%2Finsights%2Fsecuring-mcp-servers-checklist%2F&amp;text=Securing%20MCP%20servers%20for%20enterprise%20AI%20agents%3A%20an%20architect%27s%20checklist" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=Securing%20MCP%20servers%20for%20enterprise%20AI%20agents%3A%20an%20architect%27s%20checklist%20https%3A%2F%2Fcaeser1996.github.io%2Finsights%2Fsecuring-mcp-servers-checklist%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://caeser1996.github.io/insights/securing-mcp-servers-checklist/">Copy link</button></div>
+      <div class="pnav"><a class="pn prev" href="/insights/eu-ai-act-digital-omnibus-roadmap/"><small>← Previous</small><b>The EU AI Act after the Digital Omnibus: what actually changes for your AI roadmap</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#why-mcp-changes-the-threat-model">Why MCP changes the threat model</a></li><li><a href="#1-tokens-audience-is-everything">1. Tokens: audience is everything</a></li><li><a href="#2-proxies-and-the-confused-deputy">2. Proxies and the confused deputy</a></li><li><a href="#3-least-privilege-per-tool">3. Least privilege, per tool</a></li><li><a href="#4-treat-every-input-as-untrusted">4. Treat every input as untrusted</a></li><li><a href="#5-put-a-gateway-in-front">5. Put a gateway in front</a></li><li><a href="#6-operate-it-like-production">6. Operate it like production</a></li><li><a href="#the-short-version">The short version</a></li><li><a href="#how-i-can-help">How I can help</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>What is token passthrough in MCP and why is it banned?</summary><p>Token passthrough is when an MCP server accepts a token from a client and forwards it to a downstream API without checking it was issued for the MCP server. The MCP security guidance says servers must not accept tokens that were not explicitly issued for them, because it breaks audience checks and audit trails.</p></details><details class="rise"><summary>What is the confused deputy problem with MCP proxies?</summary><p>It happens when an MCP proxy uses one static client ID with a third-party authorisation server that remembers consent per client rather than per user, so a malicious client can obtain authorisation codes without the user&#x27;s real consent. The fix is per-client consent at the proxy and strict redirect URI validation.</p></details><details class="rise"><summary>Do I need an AI gateway in front of MCP servers?</summary><p>For enterprise use I recommend one. A single governed entry point gives you authentication, least-privilege scopes, rate limits, PII redaction and a complete audit log of every tool call an agent makes.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/ai-architect/"><small>Service</small><b>AI &amp; LLM architecture</b><span>I design and build AI systems that leadership can trust: grounded in your data, measured by evaluations, governed by your rules and priced so they make sense at scale.</span><i>→</i></a><a class="rcard rise" href="/technical-due-diligence/"><small>Service</small><b>Technical due diligence</b><span>I give investors an independent, plain-language view of a company&#x27;s technology, team and AI claims, so the risks are priced in before the deal closes, not discovered after.</span><i>→</i></a><a class="rcard rise" href="/uae/"><small>Service</small><b>Fractional CTO in the UAE</b><span>I work with founders, enterprises and investors across the UAE and the Gulf on AI, data and technology leadership, with an eye on local data-protection rules and residency from day one.</span><i>→</i></a><a class="rcard rise" href="/insights/eu-ai-act-digital-omnibus-roadmap/"><small>Insight</small><b>The EU AI Act after the Digital Omnibus: what actually changes for your AI roadmap</b><span>High-risk deadlines moved, transparency duties did not. Here is how I read the change as an architect, and what I would and wouldn&#x27;t put on hold.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: Securing MCP servers for enterprise AI agents: an architect&#x27;s checklist">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, healthcare data and cloud infrastructure, from strategy to production.</p>
+        <p class="floc">United States &amp; UAE · working globally</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/uae/">Fractional CTO in the UAE</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/securing-mcp-servers-checklist/">Securing MCP servers for enterprise AI agents: an architect&#x27;s checklist</a></li><li><a href="/insights/eu-ai-act-digital-omnibus-roadmap/">The EU AI Act after the Digital Omnibus: what actually changes for your AI roadmap</a></li><li><a href="/insights/private-llm-on-prem/">Running private LLMs on your own hardware: notes from the bench</a></li><li><a href="/insights/fhir-to-omop-architecture/">FHIR to OMOP: a practical architecture for healthcare data</a></li><li><a href="/insights/rag-to-production-checklist/">From RAG demo to production: a checklist</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,64 @@
+<!--{"title": "EU AI Act after the Digital Omnibus: what changes for AI roadmaps", "description": "The Digital Omnibus pushed EU AI Act high-risk deadlines to December 2027 and August 2028. What moved, what didn't, and how I'd adjust an AI roadmap now.", "h1": "The EU AI Act after the Digital Omnibus: what actually changes for your AI roadmap", "kicker": "AI regulation", "lede": "High-risk deadlines moved, transparency duties did not. Here is how I read the change as an architect, and what I would and wouldn't put on hold.", "date": "2026-10-17", "datetime": "2026-10-17T18:40:00+04:00", "readtime": "8 min read", "format": "news-analysis", "tags": ["regulation", "ai", "eu-ai-act", "governance"], "keywords": ["EU AI Act", "Digital Omnibus AI", "Regulation 2026/1744", "high-risk AI systems", "Annex III deadline 2027", "Article 50 transparency", "AI compliance roadmap", "AI governance", "AI Act medical devices 2028", "fractional CTO AI regulation"], "faq": [["When do EU AI Act high-risk obligations apply now?", "As reported after the Digital Omnibus on AI, stand-alone Annex III high-risk systems move to 2 December 2027 and high-risk systems in products covered by Annex I, such as medical devices, move to 2 August 2028."], ["Did the Omnibus delay the Article 50 transparency rules?", "No. The transparency obligations in Article 50 still applied from 2 August 2026, with a short grace period for machine-readable marking on systems already on the market."], ["Should we pause AI governance work until 2027?", "No. The obligations were deferred, not removed, and the evidence they require (data governance, logging, human oversight, technical documentation) takes a long time to build into systems."]], "related": ["/ai-architect/", "/technical-due-diligence/", "/healthcare-data-architecture/"], "citations": [{"title": "Regulation (EU) 2024/1689 (Artificial Intelligence Act)", "url": "https://eur-lex.europa.eu/eli/reg/2024/1689/oj", "publisher": "EUR-Lex, Official Journal of the European Union"}, {"title": "AI Act: obligations in force and delays under omnibus 2026/1744", "url": "https://www.actuia.com/en/news/ai-act-obligations-in-force-and-delays-under-omnibus-2026-1744/", "publisher": "ActuIA"}, {"title": "AI Omnibus enters into force: high-risk deadlines move to December 2027 and August 2028", "url": "https://acompli.ie/news/ai-omnibus-enters-into-force-july-2026/", "publisher": "Acompli"}, {"title": "Yes, August 2 still matters: the EU approved a high-risk AI delay, but most transparency obligations remain", "url": "https://www.joneswalker.com/en/insights/blogs/ai-law-blog/yes-august-2-still-matters-the-eu-approved-a-high-risk-ai-delay-but-most-trans.html", "publisher": "Jones Walker LLP"}, {"title": "EU AI Act omnibus agreement: postponed high-risk deadlines and other key changes", "url": "https://www.gibsondunn.com/eu-ai-act-omnibus-agreement-postponed-high-risk-deadlines-and-other-key-changes/", "publisher": "Gibson Dunn"}, {"title": "Digital AI Omnibus delays key deadlines, introduces new rules", "url": "https://cdp.cooley.com/digital-ai-omnibus-delays-key-deadlines-introduces-new-rules/", "publisher": "Cooley"}]}-->
+<p>Most of the AI roadmaps I review this year had a line on them that read "EU AI Act, August 2026". That line has now moved. The Digital Omnibus on AI, published as Regulation (EU) 2026/1744, pushed the main high-risk deadlines back by well over a year<sup class="cite"><a href="#ref-2">2</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>. I've already had two conversations where someone read that as "we can park governance until 2027". I think that is the wrong lesson, and this piece explains why.</p>
+<p>A quick caveat before the detail. I'm an architect, not a lawyer. What follows is how I translate the regulation into engineering work. Your legal team should confirm how it applies to you.</p>
+
+<section class="block">
+<h2>What moved</h2>
+<p>The AI Act itself, Regulation (EU) 2024/1689, set a staged timetable, with most obligations for high-risk systems due on 2 August 2026<sup class="cite"><a href="#ref-1">1</a></sup>. As reported by several firms tracking the Omnibus, the amending regulation was published in the Official Journal on 24 July 2026 and entered into force on 27 July, just days before those obligations would have applied<sup class="cite"><a href="#ref-2">2</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+<table class="tbl">
+<thead><tr><th>Obligation</th><th>Original date</th><th>After the Omnibus</th></tr></thead>
+<tbody>
+<tr><td>Stand-alone high-risk systems (Annex III: hiring, education, credit, essential services)</td><td>2 Aug 2026</td><td>2 Dec 2027</td></tr>
+<tr><td>High-risk systems inside regulated products (Annex I: medical devices, machinery)</td><td>2 Aug 2027</td><td>2 Aug 2028</td></tr>
+<tr><td>Transparency duties (Article 50)</td><td>2 Aug 2026</td><td>Unchanged</td></tr>
+</tbody>
+</table>
+<p>Some commentators also report a short grace period, to 2 December 2026, for machine-readable marking of AI-generated content on systems already on the market before August, and two new prohibitions phasing in that same December<sup class="cite"><a href="#ref-4">4</a></sup><sup class="cite"><a href="#ref-6">6</a></sup>.</p>
+</section>
+
+<section class="block">
+<h2>What didn't move</h2>
+<p>This is the part that gets lost in the headlines. Transparency obligations under Article 50 kept their date<sup class="cite"><a href="#ref-4">4</a></sup>. If your product has a chatbot that talks to the public, generates synthetic images, audio or text, or uses emotion recognition, those duties are live now.</p>
+<p>In engineering terms that means three things that are easy to underestimate:</p>
+<ul>
+<li><strong>Disclosure in the interface.</strong> Users need to know they are dealing with an AI system. That is a product and design change, not a policy document.</li>
+<li><strong>Marking generated content.</strong> Machine-readable marking has to be built into your generation pipeline, which touches every model call that produces media.</li>
+<li><strong>Knowing where AI is used.</strong> You can't disclose what you haven't inventoried. Many companies still lack a register of where models sit in their products.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>Deferred is not cancelled</h2>
+<p>The Omnibus changes dates. It does not remove the requirements for high-risk systems or make them lighter<sup class="cite"><a href="#ref-5">5</a></sup>. When I map those requirements onto systems, almost all of them are architecture work: risk management, data governance for training and evaluation data, automatic logging, technical documentation, human oversight, and accuracy and robustness testing<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<div class="callout"><p>None of that can be bolted on in the six months before a deadline. Logging and data lineage, in particular, only become useful once they have been collecting history for a while.</p></div>
+<p>The extra time is a gift if you use it to build these capabilities properly, into the platform, once. It is a trap if it becomes another reason to postpone them.</p>
+</section>
+
+<section class="block">
+<h2>How I would adjust a roadmap now</h2>
+<ol>
+<li><strong>Build the AI inventory this quarter.</strong> Every model, every vendor API, every place a model's output reaches a user or a decision. Classify each one against the Act's risk categories with legal input.</li>
+<li><strong>Ship the Article 50 work first.</strong> It already applies, and it is usually small: interface disclosure and content marking.</li>
+<li><strong>Put logging and lineage into the platform, not each product.</strong> An AI gateway that every model call passes through gives you traceability, cost control and PII redaction in one place. I describe the pattern in my <a href="/insights/private-llm-on-prem/">notes on private LLMs</a>.</li>
+<li><strong>Make evaluation a release gate.</strong> Accuracy and robustness evidence is much easier to produce if every release already runs an evaluation suite. My <a href="/insights/rag-to-production-checklist/">RAG production checklist</a> covers how.</li>
+<li><strong>Write documentation as you build.</strong> Architecture decision records and model cards written at the time are worth far more than documents reconstructed for an auditor.</li>
+<li><strong>Re-plan the high-risk work against the new dates</strong>, with a buffer. Dates have moved once already; build so that you are ready early.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2>Healthcare and medical devices</h2>
+<p>For teams building AI into medical devices, the move of Annex I systems to August 2028 is the biggest change<sup class="cite"><a href="#ref-3">3</a></sup>. These teams already work under medical device regulation, so the AI Act adds a layer on top of an existing quality system rather than starting from nothing.</p>
+<p>My advice here is to align the AI Act evidence with what your quality system already produces: design history, risk files, clinical evaluation. Then the extra obligations become additional sections in documents you already maintain. The data side matters just as much. Clinical AI needs provenance back to standardised, governed data, which is why I keep coming back to architectures like <a href="/insights/fhir-to-omop-architecture/">FHIR to OMOP</a> for the analytical layer.</p>
+</section>
+
+<section class="block">
+<h2>For teams outside the EU</h2>
+<p>I work with teams in the United States and the UAE, and the question I hear most is whether this applies to them. The Act applies to providers placing systems on the EU market and to deployers in the EU, regardless of where the provider is based<sup class="cite"><a href="#ref-1">1</a></sup>. If you have EU customers, assume it matters.</p>
+<p>Even if you have none, the engineering controls it asks for are the same ones that make AI systems safe to run anywhere: inventory, logging, evaluation, oversight. In the UAE, data protection rules such as the federal PDPL and the regimes in DIFC and ADGM push in the same direction. Building those controls once into a shared platform is far cheaper than meeting each regime separately.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>If your AI roadmap still has an August 2026 line on it, it's a good moment to re-plan. I run short <a href="/ai-architect/">AI architecture reviews</a> that produce an inventory, a risk-ranked roadmap and a platform design for logging, evaluation and governance. For investors assessing AI companies, the same lens is part of my <a href="/technical-due-diligence/">technical due diligence</a>. Or <a href="/#assess">analyse your challenge</a> first and bring the result to a call.</p>
+</section>

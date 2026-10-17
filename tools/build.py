@@ -16,8 +16,10 @@ Run: python3 tools/build.py
 import datetime
 import html
 import json
+import math
 import pathlib
 import re
+from urllib.parse import quote
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 SITE = "https://caeser1996.github.io"
@@ -110,7 +112,7 @@ def modal():
 
 def footer(pages, posts):
     svc = "".join(f'<li><a href="/{p["slug"]}/">{e(SERVICE_LABELS.get(p["slug"], p["h1"]))}</a></li>' for p in pages)
-    ins = "".join(f'<li><a href="/insights/{p["slug"]}/">{e(p["h1"])}</a></li>' for p in posts)
+    ins = "".join(f'<li><a href="/insights/{p["slug"]}/">{e(p["h1"])}</a></li>' for p in posts[:5])
     return f"""<footer class="site-foot">
   <div class="wrap">
     <div class="fcols">
@@ -234,6 +236,117 @@ def faq_ld(faq):
         {"@type": "Question", "name": q, "acceptedAnswer": {"@type": "Answer", "text": a}} for q, a in faq]}
 
 
+FORMAT_LABELS = {"essay": "Essay", "explainer": "Explainer", "checklist": "Checklist", "field-note": "Field note",
+                 "comparison": "Comparison", "playbook": "Playbook", "news-analysis": "Analysis"}
+TZ_NAMES = {"+0400": "GST", "-0400": "EDT", "-0500": "EST", "+0000": "UTC"}
+
+
+def when(meta):
+    """(iso, human) publish time for a post; falls back to the date alone."""
+    dt = meta.get("datetime")
+    if dt:
+        d = datetime.datetime.fromisoformat(dt)
+        tz = TZ_NAMES.get(d.strftime("%z"), "")
+        return dt, d.strftime("%-d %b %Y · %H:%M") + (f" {tz}" if tz else "")
+    d = meta.get("date", TODAY)
+    return d, datetime.date.fromisoformat(d).strftime("%-d %b %Y")
+
+
+def sort_key(meta):
+    return meta.get("datetime") or (meta.get("date", TODAY) + "T00:00:00")
+
+
+def _rng(seed):
+    x = [sum(ord(c) * (i + 1) for i, c in enumerate(seed)) % 233280 or 7]
+
+    def r():
+        x[0] = (x[0] * 9301 + 49297) % 233280
+        return x[0] / 233280
+    return r
+
+
+def cover_svg(meta, small=False):
+    """Deterministic generative cover art; the motif varies with the post format."""
+    r = _rng(meta["slug"])
+    fmt = meta.get("format", "essay")
+    W, H = 1200, 420
+    out = [f'<line x1="{i * 100}" y1="0" x2="{i * 100}" y2="{H}" class="cv-grid"/>' for i in range(1, 12)]
+    out += [f'<line x1="0" y1="{i * 84}" x2="{W}" y2="{i * 84}" class="cv-grid"/>' for i in range(1, 5)]
+    if fmt in ("checklist", "playbook"):
+        for i in range(7):
+            y, hl = 50 + i * 48, " hl" if i % 3 == 0 else ""
+            out.append(f'<circle cx="560" cy="{y + 11}" r="8" class="cv-dot{hl}"/>')
+            out.append(f'<rect x="590" y="{y}" width="{160 + r() * 420:.0f}" height="22" class="cv-bar{hl}"/>')
+    elif fmt in ("comparison", "news-analysis"):
+        for k in range(3):
+            pts = " ".join(f"{540 + i * 56},{H / 2 + (r() - .5) * 260 * (k + 1) / 3:.0f}" for i in range(12))
+            out.append(f'<polyline points="{pts}" class="cv-line{" hl" if k == 2 else ""}"/>')
+    elif fmt == "field-note":
+        cx, cy = 880, 210
+        out += [f'<circle cx="{cx}" cy="{cy}" r="{40 + i * 30}" class="cv-ring{" hl" if i == 2 else ""}"/>' for i in range(6)]
+        for i in range(12):
+            a, rad = r() * 6.283, 40 + int(r() * 6) * 30
+            out.append(f'<circle cx="{cx + rad * math.cos(a):.0f}" cy="{cy + rad * math.sin(a):.0f}" '
+                       f'r="{6 if i % 3 == 0 else 3}" class="cv-dot{" hl" if i % 3 == 0 else ""}"/>')
+    else:
+        pts = [(520 + r() * 640, 30 + r() * 360, r() < .25) for _ in range(26)]
+        for i, a in enumerate(pts):
+            for b in pts[i + 1:]:
+                d = math.dist(a[:2], b[:2])
+                if d < 150:
+                    out.append(f'<line x1="{a[0]:.0f}" y1="{a[1]:.0f}" x2="{b[0]:.0f}" y2="{b[1]:.0f}" '
+                               f'class="cv-edge{" hl" if a[2] or b[2] else ""}" opacity="{1 - d / 150:.2f}"/>')
+        out += [f'<circle cx="{a[0]:.0f}" cy="{a[1]:.0f}" r="{6 if a[2] else 3}" class="cv-dot{" hl" if a[2] else ""}"/>'
+                for a in pts]
+    label = FORMAT_LABELS.get(fmt, fmt.title())
+    if not small:
+        out.append(f'<text x="60" y="90" class="cv-k">{e(label.upper())} · {e(meta["kicker"].upper())}</text>')
+        out.append(f'<text x="60" y="350" class="cv-n">{e(when(meta)[1])}</text>')
+    return f'<svg class="cover-svg" viewBox="0 0 {W} {H}" role="img" aria-label="{e(label)} cover art">{"".join(out)}</svg>'
+
+
+def add_heading_ids(body):
+    toc, used = [], set()
+
+    def sub(m):
+        text = re.sub(r"<[^>]+>", "", m.group(1))
+        sid = re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")[:60] or "s"
+        while sid in used:
+            sid += "-x"
+        used.add(sid)
+        toc.append((sid, text))
+        return f'<h2 id="{sid}">{m.group(1)}</h2>'
+    return re.sub(r"<h2>(.*?)</h2>", sub, body), toc
+
+
+def refs_html(cites):
+    if not cites:
+        return ""
+    items = "".join(
+        f'<li id="ref-{i}"><span class="rn">{i}</span><div><a href="{e(c["url"])}" target="_blank" rel="noopener">'
+        f'{e(c["title"])}</a><small>{e(c.get("publisher", ""))}{" · " + e(c["date"]) if c.get("date") else ""}</small></div></li>'
+        for i, c in enumerate(cites, 1))
+    return f'<section class="refs" id="references"><div class="kicker">References</div><ol>{items}</ol></section>'
+
+
+def share_html(url, title):
+    u, t = quote(url, safe=""), quote(title, safe="")
+    return (f'<div class="share"><span>Share</span>'
+            f'<a href="https://www.linkedin.com/sharing/share-offsite/?url={u}" target="_blank" rel="noopener">LinkedIn</a>'
+            f'<a href="https://x.com/intent/post?url={u}&amp;text={t}" target="_blank" rel="noopener">X</a>'
+            f'<a href="https://wa.me/?text={t}%20{u}" target="_blank" rel="noopener">WhatsApp</a>'
+            f'<button type="button" class="copy-link" data-url="{e(url)}">Copy link</button></div>')
+
+
+def post_card(p, tag="h2"):
+    iso, human = when(p)
+    return (f'<a class="post rise" href="/insights/{p["slug"]}/" data-tags="{e(" ".join(p.get("tags", [])))}">'
+            f'<div class="pcover">{cover_svg(p, small=True)}</div>'
+            f'<small><b>{e(FORMAT_LABELS.get(p.get("format", "essay"), "Essay"))}</b> · {e(p["kicker"])}</small>'
+            f'<{tag}>{e(p["h1"])}</{tag}><p>{e(p["lede"])}</p>'
+            f'<span class="pmeta"><time datetime="{iso}">{e(human)}</time> · {e(p.get("readtime", ""))}</span></a>')
+
+
 def page(meta, kind, pages, posts, pages_by_slug):
     slug = meta["slug"]
     if kind == "service":
@@ -247,14 +360,22 @@ def page(meta, kind, pages, posts, pages_by_slug):
     else:
         url = f"{SITE}/insights/{slug}/"
         crumb = [("Home", f"{SITE}/"), ("Insights", f"{SITE}/insights/"), (meta["h1"], url)]
-        main_ld = {"@type": "Article", "headline": meta["h1"], "description": meta["description"],
-                   "datePublished": meta.get("date", TODAY), "dateModified": meta.get("date", TODAY),
+        iso, human = when(meta)
+        main_ld = {"@type": "BlogPosting", "headline": meta["h1"], "description": meta["description"],
+                   "datePublished": iso, "dateModified": meta.get("updated", iso),
+                   "articleSection": meta["kicker"], "genre": FORMAT_LABELS.get(meta.get("format", "essay"), "Essay"),
+                   "citation": [{"@type": "CreativeWork", "name": c["title"], "url": c["url"]}
+                                for c in meta.get("citations", [])],
                    "author": person_ref(), "publisher": person_ref(), "mainEntityOfPage": url,
                    "image": f"{SITE}/assets/og/{slug}.png", "keywords": ", ".join(meta["keywords"]),
                    "wordCount": words(meta["body"])}
         og_type = "article"
-        d = datetime.date.fromisoformat(meta.get("date", TODAY)).strftime("%-d %B %Y")
-        meta_line = f'<div class="ameta"><span>{NAME}</span><span>{d}</span><span>{e(meta.get("readtime", ""))}</span></div>'
+        fmt = FORMAT_LABELS.get(meta.get("format", "essay"), "Essay")
+        tags = "".join(f'<span class="tagp">#{e(t)}</span>' for t in meta.get("tags", []))
+        meta_line = (f'<div class="ameta"><span class="fmt">{e(fmt)}</span><span>{NAME}</span>'
+                     f'<time datetime="{iso}">{e(human)}</time><span>{e(meta.get("readtime", ""))}</span>'
+                     f'{"<span>" + str(len(meta.get("citations", []))) + " sources</span>" if meta.get("citations") else ""}</div>'
+                     f'<div class="atags">{tags}</div>')
     graph = [main_ld, crumbs(crumb)]
     if meta.get("faq"):
         graph.append(faq_ld(meta["faq"]))
@@ -264,7 +385,28 @@ def page(meta, kind, pages, posts, pages_by_slug):
         (f'<a href="{u.replace(SITE, "") or "/"}">{e(n)}</a>' if i < len(crumb) - 1 else f"<em>{e(n)}</em>")
         for i, (n, u) in enumerate(crumb))
     subject = SERVICE_LABELS.get(slug, meta["h1"]) if kind == "service" else f"Re: {meta['h1']}"
-    article_cls = "prose article" if kind == "post" else "prose"
+    if kind == "post":
+        body, toc = add_heading_ids(meta["body"])
+        idx = next((i for i, p in enumerate(posts) if p["slug"] == slug), 0)
+        nxt = posts[idx - 1] if idx > 0 else None
+        prv = posts[idx + 1] if idx + 1 < len(posts) else None
+        pn = "".join(
+            f'<a class="pn {c}" href="/insights/{p["slug"]}/"><small>{lab}</small><b>{e(p["h1"])}</b></a>'
+            for p, lab, c in ((prv, "← Previous", "prev"), (nxt, "Next →", "next")) if p)
+        toc_html = "".join(f'<li><a href="#{i}">{e(t)}</a></li>' for i, t in toc)
+        body_html = f"""<figure class="cover rise">{cover_svg(meta)}</figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      {body}
+      {refs_html(meta.get("citations"))}
+      {share_html(url, meta["h1"])}
+      <div class="pnav">{pn}</div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol>{toc_html}</ol>
+      <a class="toc-cta" href="{CAL}" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>"""
+    else:
+        body_html = f'<article class="prose">\n    {meta["body"]}\n  </article>'
     return f"""{head(meta['title'], meta['description'], meta['keywords'], url, og, og_type, ld)}
 <body class="sub {'is-post' if kind == 'post' else 'is-service'}">
 {nav()}
@@ -283,9 +425,7 @@ def page(meta, kind, pages, posts, pages_by_slug):
     </div>
   </header>
 
-  <article class="{article_cls}">
-    {meta['body']}
-  </article>
+  {body_html}
 
   {faq_html(meta.get('faq'))}
   {related_html(meta.get('related', []), pages_by_slug, [p for p in posts if p['slug'] != slug])}
@@ -308,11 +448,13 @@ def insights_index(pages, posts):
     ld = {"@context": "https://schema.org", "@graph": [
         {"@type": "Blog", "name": "Insights", "url": url, "author": person_ref(),
          "blogPost": [{"@type": "BlogPosting", "headline": p["h1"], "url": f"{SITE}/insights/{p['slug']}/",
-                       "datePublished": p.get("date", TODAY)} for p in posts]},
+                       "datePublished": when(p)[0]} for p in posts]},
         crumbs([("Home", f"{SITE}/"), ("Insights", url)])]}
-    cards = "".join(
-        f'<a class="post rise" href="/insights/{p["slug"]}/"><small>{e(p["kicker"])} · {e(p.get("readtime", ""))}</small>'
-        f'<h2>{e(p["h1"])}</h2><p>{e(p["lede"])}</p><i>Read article →</i></a>' for p in posts)
+    cards = "".join(post_card(p) for p in posts)
+    tagset = sorted({t for p in posts for t in p.get("tags", [])})
+    filt = ('<div class="filters" role="group" aria-label="Filter by topic"><button type="button" class="fchip" aria-pressed="true" data-tag="">All</button>'
+            + "".join(f'<button type="button" class="fchip" aria-pressed="false" data-tag="{e(t)}">#{e(t)}</button>' for t in tagset)
+            + f'<span class="fcount">{len(posts)} articles</span></div>')
     kw = sorted({k for p in posts for k in p["keywords"]})[:30]
     return f"""{head(title + ' | Sumanta', desc, kw, url, f'{SITE}/assets/og/insights.png', 'website', ld)}
 <body class="sub">
@@ -325,6 +467,7 @@ def insights_index(pages, posts):
     <h1>Notes from the work: AI, ontology, healthcare data and technical leadership.</h1>
     <p class="sub-lede">Practical writing from real architecture problems. No hype, just what I've seen work, what doesn't, and why.</p>
   </header>
+  {filt}
   <div class="posts">{cards}</div>
   {cta_html('Re: Insights')}
 </main>
@@ -368,9 +511,7 @@ def not_found(pages, posts):
 def update_home(pages, posts):
     p = ROOT / "index.html"
     s = p.read_text()
-    cards = "".join(
-        f'<a class="post rise" href="/insights/{q["slug"]}/"><small>{e(q["kicker"])} · {e(q.get("readtime", ""))}</small>'
-        f'<h3>{e(q["h1"])}</h3><p>{e(q["lede"])}</p><i>Read article →</i></a>' for q in posts)
+    cards = "".join(post_card(q, "h3") for q in posts[:4])
     svc = "".join(
         f'<a class="svc rise" href="/{q["slug"]}/"><b>{e(SERVICE_LABELS.get(q["slug"], q["h1"]))}</b><i>→</i></a>'
         for q in pages)
@@ -389,7 +530,7 @@ def main():
     order = list(SERVICE_LABELS)
     pages.sort(key=lambda m: order.index(m["slug"]) if m["slug"] in order else 99)
     posts = [load(f) for f in sorted((ROOT / "src/insights").glob("*.part"))]
-    posts.sort(key=lambda m: (m.get("date", ""), m["h1"]), reverse=True)
+    posts.sort(key=sort_key, reverse=True)
     by_slug = {m["slug"]: m for m in pages}
 
     for m in pages:

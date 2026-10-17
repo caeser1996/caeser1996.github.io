@@ -1,0 +1,91 @@
+<!--{"title": "Securing MCP servers for enterprise AI agents: a checklist", "description": "A practical checklist for running Model Context Protocol servers in production: token audience, confused deputy, least privilege, gateways, logging and prompt injection.", "h1": "Securing MCP servers for enterprise AI agents: an architect's checklist", "kicker": "AI architecture", "lede": "MCP makes it easy to give agents real tools. That is exactly why the security model needs as much attention as the prompts. This is the checklist I work through before an MCP server touches production data.", "date": "2026-10-17", "datetime": "2026-10-17T18:55:00+04:00", "readtime": "9 min read", "format": "checklist", "tags": ["ai", "agents", "mcp", "security"], "keywords": ["Model Context Protocol security", "MCP server security", "MCP authorization", "AI agent security", "confused deputy MCP", "token passthrough", "OAuth resource indicators RFC 8707", "prompt injection agents", "enterprise AI agents", "AI gateway", "LLM security checklist"], "faq": [["What is token passthrough in MCP and why is it banned?", "Token passthrough is when an MCP server accepts a token from a client and forwards it to a downstream API without checking it was issued for the MCP server. The MCP security guidance says servers must not accept tokens that were not explicitly issued for them, because it breaks audience checks and audit trails."], ["What is the confused deputy problem with MCP proxies?", "It happens when an MCP proxy uses one static client ID with a third-party authorisation server that remembers consent per client rather than per user, so a malicious client can obtain authorisation codes without the user's real consent. The fix is per-client consent at the proxy and strict redirect URI validation."], ["Do I need an AI gateway in front of MCP servers?", "For enterprise use I recommend one. A single governed entry point gives you authentication, least-privilege scopes, rate limits, PII redaction and a complete audit log of every tool call an agent makes."]], "related": ["/ai-architect/", "/technical-due-diligence/", "/uae/"], "citations": [{"title": "Security Best Practices", "url": "https://modelcontextprotocol.io/docs/2026-07-28/tutorials/security/security_best_practices", "publisher": "Model Context Protocol documentation"}, {"title": "Authorization: Security Considerations", "url": "https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization/security-considerations", "publisher": "Model Context Protocol specification"}, {"title": "RFC 8707: Resource Indicators for OAuth 2.0", "url": "https://www.rfc-editor.org/rfc/rfc8707", "publisher": "IETF"}, {"title": "RFC 8693: OAuth 2.0 Token Exchange", "url": "https://www.rfc-editor.org/rfc/rfc8693", "publisher": "IETF"}, {"title": "OWASP Top 10 for LLM Applications", "url": "https://genai.owasp.org/llm-top-10/", "publisher": "OWASP GenAI Security Project"}, {"title": "Best practices for remote MCP bearer token authentication (Discussion #1247)", "url": "https://github.com/modelcontextprotocol/modelcontextprotocol/discussions/1247", "publisher": "GitHub, modelcontextprotocol"}]}-->
+<p>When I built agent tooling over MCP into Wisp, the self-hosted AI platform I work on, getting a tool to work was the easy part. Making it safe to point at real systems was the real work, and it's the part most MCP demos skip.</p>
+<p>The Model Context Protocol has become the default way to connect agents to tools and data. The protocol now carries serious security guidance of its own<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. Below is the checklist I use, grouped the way I review a design: identity, authorisation, the tools themselves, the model's inputs, and operations.</p>
+
+<section class="block">
+<h2>Why MCP changes the threat model</h2>
+<p>A chatbot that can only talk has a limited blast radius. An agent with MCP tools can read files, query databases, open tickets and call internal APIs, and it decides when to do so based on text it has read. That text can come from a user, a document or a web page, and any of them can contain instructions.</p>
+<p>So the question shifts from "what can the model say?" to "what can the model do, on whose authority, and how would we know?". OWASP's list of LLM risks reflects this, with prompt injection and excessive agency near the top<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+</section>
+
+<section class="block">
+<h2>1. Tokens: audience is everything</h2>
+<p>The most important rule in the MCP guidance is short. MCP servers must not accept tokens that were not explicitly issued for them<sup class="cite"><a href="#ref-1">1</a></sup>, and must validate that a presented token was issued for their use<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<ul>
+<li><strong>Validate the audience on every request.</strong> A token minted for your CRM API is not a token for your MCP server, even if both trust the same identity provider.</li>
+<li><strong>Clients request audience-bound tokens.</strong> MCP clients include the resource parameter defined in RFC 8707 so each token is bound to one server<sup class="cite"><a href="#ref-2">2</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>.</li>
+<li><strong>Never pass tokens through.</strong> If the MCP server must call a downstream API, exchange the token for a new one scoped to that API (RFC 8693 token exchange) rather than forwarding the client's token<sup class="cite"><a href="#ref-4">4</a></sup><sup class="cite"><a href="#ref-6">6</a></sup>.</li>
+</ul>
+<div class="callout"><p>Token passthrough looks convenient and breaks three things at once: audience checks, rate limiting per client, and your audit trail. I treat it as a design-review blocker.</p></div>
+</section>
+
+<section class="block">
+<h2>2. Proxies and the confused deputy</h2>
+<p>Many MCP servers are proxies in front of a third-party API. The guidance describes a confused deputy attack that appears when the proxy uses one static client ID with the third party, and that third party remembers consent per client ID rather than per user<sup class="cite"><a href="#ref-1">1</a></sup>. A malicious client can then ride on consent the user gave to someone else.</p>
+<ul>
+<li>Obtain the user's consent at the proxy for each dynamically registered client, before forwarding to the third-party authorisation flow.</li>
+<li>Validate redirect URIs exactly. No wildcards, no "starts with".</li>
+<li>Use state and PKCE properly, and expire authorisation codes quickly.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>3. Least privilege, per tool</h2>
+<p>Scopes should describe what a tool can do, not which server it lives on. An MCP server that exposes "search tickets" and "close ticket" should not grant both with one scope.</p>
+<table class="tbl">
+<thead><tr><th>Tool type</th><th>Default policy</th><th>Extra control</th></tr></thead>
+<tbody>
+<tr><td>Read, non-sensitive</td><td>Allowed for the user's own data</td><td>Rate limits, logging</td></tr>
+<tr><td>Read, sensitive (PII, PHI, financials)</td><td>Allowed only if the user could see it directly</td><td>Field-level redaction, purpose logging</td></tr>
+<tr><td>Write, reversible</td><td>Allowed with narrow scopes</td><td>Idempotency keys, undo path</td></tr>
+<tr><td>Write, irreversible or external</td><td>Human approval required</td><td>Preview of the exact action, second factor</td></tr>
+</tbody>
+</table>
+<p>The principle I hold to is simple: an agent should never be able to do something the human behind it couldn't do through the normal application. Permission-aware retrieval matters for the same reason, which I cover in the <a href="/insights/rag-to-production-checklist/">RAG production checklist</a>.</p>
+</section>
+
+<section class="block">
+<h2>4. Treat every input as untrusted</h2>
+<p>Prompt injection has no complete fix today, so design for containment<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<ul>
+<li><strong>Separate instructions from data.</strong> Tool results and retrieved documents are data. Mark them as such in the context and never let them change the agent's permissions.</li>
+<li><strong>Constrain tool arguments.</strong> Validate against strict schemas server-side. An agent asking to email a thousand external addresses should fail validation, not reach your mail server.</li>
+<li><strong>Watch tool descriptions.</strong> Descriptions from third-party MCP servers are text the model reads. Review and pin them, and alert when they change.</li>
+<li><strong>Limit chaining.</strong> Cap how many tool calls an agent can make per task, and require approval when a read from an untrusted source is followed by a sensitive write.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>5. Put a gateway in front</h2>
+<p>For enterprise use I put MCP servers behind a single AI gateway rather than letting agents connect to each server directly. One governed entry point gives you:</p>
+<ol>
+<li>Central authentication and token exchange.</li>
+<li>Per-user, per-tool authorisation policies written as code.</li>
+<li>PII redaction before data reaches a hosted model.</li>
+<li>Rate limits and cost controls per user and per agent.</li>
+<li>A complete, tamper-evident log of every tool call, its arguments and its result.</li>
+</ol>
+<p>It is the same pattern I use for routing between local and hosted models, described in my <a href="/insights/private-llm-on-prem/">notes on private LLMs</a>.</p>
+</section>
+
+<section class="block">
+<h2>6. Operate it like production</h2>
+<ul>
+<li><strong>Inventory.</strong> Know every MCP server in use, who owns it, which data it touches and which agents can call it.</li>
+<li><strong>Pin versions.</strong> Treat third-party MCP servers like any other dependency: pinned, scanned, reviewed on upgrade.</li>
+<li><strong>Session hygiene.</strong> Session IDs are not authentication. Bind sessions to the authenticated user and rotate them<sup class="cite"><a href="#ref-1">1</a></sup>.</li>
+<li><strong>Red-team regularly.</strong> Keep a set of injection and misuse tests in the release pipeline, alongside quality evaluations.</li>
+<li><strong>Plan the kill switch.</strong> You should be able to revoke a tool, a server or an agent's access in minutes.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>The short version</h2>
+<p>If you only do five things: validate token audience, never pass tokens through, scope per tool, require human approval for irreversible actions, and log every tool call through a gateway. That covers most of the incidents I would expect to see.</p>
+<p>Regulation is heading the same way. Logging, oversight and robustness are central to the EU AI Act's requirements for high-risk systems, which I discuss in <a href="/insights/eu-ai-act-digital-omnibus-roadmap/">the EU AI Act after the Digital Omnibus</a>.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I design and review agent platforms, from MCP server security to gateway architecture and evaluation. See my <a href="/ai-architect/">AI architecture work</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call. If you are an investor looking at an agent company, this checklist is part of my <a href="/technical-due-diligence/">technical due diligence</a>.</p>
+</section>
