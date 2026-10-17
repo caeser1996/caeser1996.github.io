@@ -301,7 +301,7 @@ def cover_svg(meta, small=False):
     label = FORMAT_LABELS.get(fmt, fmt.title())
     if not small:
         out.append(f'<text x="60" y="90" class="cv-k">{e(label.upper())} · {e(meta["kicker"].upper())}</text>')
-        out.append(f'<text x="60" y="350" class="cv-n">{e(when(meta)[1])}</text>')
+        out.append(f'<text x="60" y="350" class="cv-n">{e(("COVERS " + meta["period"].upper()) if meta.get("period") else when(meta)[1])}</text>')
     return f'<svg class="cover-svg" viewBox="0 0 {W} {H}" role="img" aria-label="{e(label)} cover art">{"".join(out)}</svg>'
 
 
@@ -342,7 +342,7 @@ def post_card(p, tag="h2"):
     iso, human = when(p)
     return (f'<a class="post rise" href="/insights/{p["slug"]}/" data-tags="{e(" ".join(p.get("tags", [])))}">'
             f'<div class="pcover">{cover_svg(p, small=True)}</div>'
-            f'<small><b>{e(FORMAT_LABELS.get(p.get("format", "essay"), "Essay"))}</b> · {e(p["kicker"])}</small>'
+            f'<small><b>{e(FORMAT_LABELS.get(p.get("format", "essay"), "Essay"))}</b> · {e(p.get("period") or p["kicker"])}</small>'
             f'<{tag}>{e(p["h1"])}</{tag}><p>{e(p["lede"])}</p>'
             f'<span class="pmeta"><time datetime="{iso}">{e(human)}</time> · {e(p.get("readtime", ""))}</span></a>')
 
@@ -372,7 +372,8 @@ def page(meta, kind, pages, posts, pages_by_slug):
         og_type = "article"
         fmt = FORMAT_LABELS.get(meta.get("format", "essay"), "Essay")
         tags = "".join(f'<span class="tagp">#{e(t)}</span>' for t in meta.get("tags", []))
-        meta_line = (f'<div class="ameta"><span class="fmt">{e(fmt)}</span><span>{NAME}</span>'
+        period = f'<span class="period">Covers {e(meta["period"])}</span>' if meta.get("period") else ""
+        meta_line = (f'<div class="ameta"><span class="fmt">{e(fmt)}</span>{period}<span>{NAME}</span>'
                      f'<time datetime="{iso}">{e(human)}</time><span>{e(meta.get("readtime", ""))}</span>'
                      f'{"<span>" + str(len(meta.get("citations", []))) + " sources</span>" if meta.get("citations") else ""}</div>'
                      f'<div class="atags">{tags}</div>')
@@ -440,6 +441,17 @@ def page(meta, kind, pages, posts, pages_by_slug):
 """
 
 
+def series_html(posts):
+    items = sorted((p for p in posts if p.get("series") == "Monthly briefing"), key=lambda p: p["slug"])
+    if not items:
+        return ""
+    cells = "".join(
+        f'<a class="tl-i rise" href="/insights/{p["slug"]}/"><span class="tl-dot"></span><small>{e(p["period"])}</small>'
+        f'<b>{e(p["h1"].split(":", 1)[-1].strip() if ":" in p["h1"] else p["h1"])}</b></a>' for p in items)
+    return (f'<section class="series"><div class="kicker">Monthly briefings</div>'
+            f'<h2>Six months of AI, platform and data, in one place.</h2><div class="tl">{cells}</div></section>')
+
+
 def insights_index(pages, posts):
     url = f"{SITE}/insights/"
     title = "Insights on AI, ontology, healthcare data & CTO leadership"
@@ -467,6 +479,7 @@ def insights_index(pages, posts):
     <h1>Notes from the work: AI, ontology, healthcare data and technical leadership.</h1>
     <p class="sub-lede">Practical writing from real architecture problems. No hype, just what I've seen work, what doesn't, and why.</p>
   </header>
+  {series_html(posts)}
   {filt}
   <div class="posts">{cards}</div>
   {cta_html('Re: Insights')}
