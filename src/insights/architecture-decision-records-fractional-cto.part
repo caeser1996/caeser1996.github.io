@@ -1,0 +1,83 @@
+<!--{"title": "Architecture decision records: how I run technical decisions", "description": "Architecture decision records turn tribal knowledge into a searchable history. How I use ADRs as a fractional CTO to speed up decisions and hand over cleanly.", "h1": "Architecture decision records: the habit I bring to every engagement", "kicker": "Technical leadership", "lede": "The most expensive question in any engineering team is \"why did we do it this way?\". Architecture decision records answer it in two minutes instead of two meetings. Here is how I use them.", "date": "2026-10-19", "datetime": "2026-10-19T00:30:00+04:00", "readtime": "7 min read", "format": "essay", "tags": ["leadership", "fractional-cto", "strategy", "governance"], "keywords": ["architecture decision records", "ADR", "ADR template", "technical decision making", "fractional CTO", "engineering leadership", "architecture governance", "documentation as code", "technical handover", "lightweight ADR"], "faq": [["What is an architecture decision record?", "An ADR is a short document that records one significant technical decision: the context, the decision itself, its status and its consequences. The format was popularised by Michael Nygard in 2011."], ["Where should ADRs live?", "In source control next to the code, in plain text or Markdown, so they are reviewed like code and stay close to what they describe. Thoughtworks recommended this over keeping them in a wiki."], ["What happens when a decision changes?", "You don't edit the old record. You write a new ADR that supersedes it and link the two, so the history of why things changed stays readable."]], "related": ["/fractional-cto/", "/technical-due-diligence/", "/ai-architect/"], "citations": [{"title": "Documenting Architecture Decisions", "url": "https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions", "publisher": "Michael Nygard, Cognitect blog", "date": "15 Nov 2011"}, {"title": "Architecture Decision Record", "url": "https://www.martinfowler.com/bliki/ArchitectureDecisionRecord.html", "publisher": "martinfowler.com"}, {"title": "Lightweight Architecture Decision Records", "url": "https://www.thoughtworks.com/radar/techniques/lightweight-architecture-decision-records", "publisher": "Thoughtworks Technology Radar"}, {"title": "Architecture decision records", "url": "https://redhat.com/en/blog/architecture-decision-records", "publisher": "Red Hat"}, {"title": "How to document architecture decisions (arc42 FAQ C-9-3)", "url": "https://faq.arc42.org/questions/C-9-3/", "publisher": "arc42"}]}-->
+<p>In almost every team I have worked with, I hit the same wall early on. Someone asks why the system uses a particular database, queue or cloud service, and the honest answer is "the person who decided left". The decision might have been right. Nobody can tell, because the reasons left with them.</p>
+<p>Architecture decision records, or ADRs, are the cheapest fix I know for this. They are also the habit that makes my own exit clean.</p>
+
+<section class="block">
+<h2>What an ADR is</h2>
+<p>The idea comes from a short 2011 post by Michael Nygard. Record each architecturally significant decision in a small document with a title, the context, the decision, its status and its consequences<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-5">5</a></sup>. Consequences include the downsides, not just the benefits<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<p>Two rules make the format work. First, records are short: one decision, one page. Second, they are immutable. When a decision changes, you write a new record that supersedes the old one and link them, rather than editing history<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<p>The practice spread widely. Thoughtworks put lightweight ADRs in the Adopt ring of its Technology Radar, recommending they live in source control as simple markup rather than in a wiki<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+</section>
+
+<section class="block">
+<h2>The template I use</h2>
+<pre><code># ADR-014: Use an event-driven core for order processing
+
+Status: Accepted (supersedes ADR-006)
+Date: 2026-10-19
+Deciders: CTO, platform lead, payments lead
+
+## Context
+Synchronous calls between order, payment and inventory
+services cause timeouts at peak and cascading failures.
+
+## Decision
+Move order state changes to events via a transactional
+outbox. Consumers are idempotent.
+
+## Consequences
++ Peak load absorbed by queues; services fail independently
++ Clear audit trail of state changes
+- Eventual consistency; UI must handle "processing" states
+- New operational skills needed for the broker
+
+## Options considered
+1. Scale the synchronous services (rejected: cost, still coupled)
+2. Event-driven core (chosen)</code></pre>
+<p>I add two sections to Nygard's original. <strong>Options considered</strong> shows the decision wasn't a default. <strong>Deciders</strong> makes ownership explicit. The example comes from the pattern in my post on <a href="/insights/idempotent-payments-order-pipelines/">idempotent payment and order pipelines</a>.</p>
+</section>
+
+<section class="block">
+<h2>Why I insist on them as a fractional CTO</h2>
+<ul>
+<li><strong>Decisions get faster.</strong> Writing the context and options forces clarity. Half the debates end when someone writes down what the options actually are.</li>
+<li><strong>Disagreement becomes productive.</strong> People argue with a document, not with each other. Review comments on an ADR pull request are calmer than meetings.</li>
+<li><strong>New hires ramp up faster.</strong> Reading twenty ADRs explains a system better than any onboarding deck.</li>
+<li><strong>Handover is built in.</strong> When I step back, the reasoning stays. That matters more for a part-time leader than for anyone.</li>
+<li><strong>Due diligence gets easier.</strong> Investors and acquirers can see that decisions were deliberate. I look for ADRs in every <a href="/technical-due-diligence/">technical due diligence</a> I run.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>What counts as "architecturally significant"</h2>
+<p>Not every choice needs a record. My rule of thumb is to write one when a decision is expensive to reverse, affects more than one team, or will make someone ask "why?" in a year. In practice:</p>
+<ul>
+<li>Choosing a database, queue, cloud provider or core framework.</li>
+<li>Adopting a pattern across services: events, multi-tenancy, an AI gateway.</li>
+<li>Security, compliance and data-residency choices.</li>
+<li>Choosing an AI model provider, or deciding to run models locally.</li>
+<li>Deliberately accepting technical debt, with the conditions for paying it back.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>Making the habit stick</h2>
+<ol>
+<li><strong>Keep them in the repository</strong>, in a <code>docs/adr</code> folder, numbered.</li>
+<li><strong>Review them like code.</strong> An ADR is a pull request with reviewers.</li>
+<li><strong>Write them at decision time</strong>, not afterwards. A reconstructed ADR loses the alternatives that were rejected.</li>
+<li><strong>Link from code.</strong> A comment pointing to ADR-014 above a surprising piece of code saves an hour of archaeology.</li>
+<li><strong>Revisit quarterly.</strong> Mark superseded records, and check whether accepted debt has been repaid.</li>
+</ol>
+<p>Red Hat's guidance makes a similar case for treating ADRs as a lightweight, continuous practice rather than a documentation project<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+</section>
+
+<section class="block">
+<h2>ADRs for AI decisions</h2>
+<p>AI systems make this even more important. Which model, which retrieval approach, which guardrails, which data may be sent to a hosted provider: these choices change often and carry real risk. An ADR trail gives you the documentation that regulations increasingly expect, such as the EU AI Act's emphasis on technical documentation, which I cover in <a href="/insights/eu-ai-act-digital-omnibus-roadmap/">the EU AI Act after the Digital Omnibus</a>.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>As a <a href="/fractional-cto/">fractional CTO</a> I set up decision records and architecture governance in the first month, and leave a team that owns its decisions. Or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>

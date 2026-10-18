@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>LLM observability with OpenTelemetry: what to trace and why</title>
+<meta name="description" content="OpenTelemetry&#x27;s GenAI conventions give a standard way to trace LLM calls, tokens and tool use. What to capture, what to keep out, and how I set it up." />
+<meta name="keywords" content="LLM observability, OpenTelemetry GenAI, gen_ai semantic conventions, AI agent tracing, token usage monitoring, LLM cost monitoring, AI observability, OTLP, prompt logging privacy, production AI monitoring" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://asksumanta.com/insights/llm-observability-opentelemetry-genai/" />
+<meta name="theme-color" content="#111214" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="LLM observability with OpenTelemetry: what to trace and why" />
+<meta property="og:description" content="OpenTelemetry&#x27;s GenAI conventions give a standard way to trace LLM calls, tokens and tool use. What to capture, what to keep out, and how I set it up." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://asksumanta.com/insights/llm-observability-opentelemetry-genai/" />
+<meta property="og:image" content="https://asksumanta.com/assets/og/llm-observability-opentelemetry-genai.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="LLM observability with OpenTelemetry: what to trace and why" />
+<meta name="twitter:description" content="OpenTelemetry&#x27;s GenAI conventions give a standard way to trace LLM calls, tokens and tool use. What to capture, what to keep out, and how I set it up." />
+<meta name="twitter:image" content="https://asksumanta.com/assets/og/llm-observability-opentelemetry-genai.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "BlogPosting", "headline": "LLM observability with OpenTelemetry: what to trace, what to leave out, and why it matters", "description": "OpenTelemetry's GenAI conventions give a standard way to trace LLM calls, tokens and tool use. What to capture, what to keep out, and how I set it up.", "datePublished": "2026-10-19T00:15:00+04:00", "dateModified": "2026-10-19T00:15:00+04:00", "articleSection": "AI architecture", "genre": "Explainer", "citation": [{"@type": "CreativeWork", "name": "Inside the LLM Call: GenAI Observability with OpenTelemetry", "url": "https://opentelemetry.io/blog/2026/genai-observability/"}, {"@type": "CreativeWork", "name": "Semantic conventions for generative client AI spans", "url": "https://opentelemetry.io/docs/specs/semconv/gen-ai/gen-ai-spans/"}, {"@type": "CreativeWork", "name": "Semantic conventions for generative AI metrics", "url": "https://opentelemetry.io/docs/specs/semconv/gen-ai/gen-ai-metrics/"}, {"@type": "CreativeWork", "name": "Semantic Conventions for GenAI agent and framework spans", "url": "https://opentelemetry.io/docs/specs/semconv/gen-ai/gen-ai-agent-spans/"}, {"@type": "CreativeWork", "name": "OpenTelemetry GenAI semantic conventions", "url": "https://greptime.com/blogs/2026-05-09-opentelemetry-genai-semantic-conventions"}], "author": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "publisher": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "mainEntityOfPage": "https://asksumanta.com/insights/llm-observability-opentelemetry-genai/", "image": "https://asksumanta.com/assets/og/llm-observability-opentelemetry-genai.png", "keywords": "LLM observability, OpenTelemetry GenAI, gen_ai semantic conventions, AI agent tracing, token usage monitoring, LLM cost monitoring, AI observability, OTLP, prompt logging privacy, production AI monitoring", "wordCount": 719}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://asksumanta.com/"}, {"@type": "ListItem", "position": 2, "name": "Insights", "item": "https://asksumanta.com/insights/"}, {"@type": "ListItem", "position": 3, "name": "LLM observability with OpenTelemetry: what to trace, what to leave out, and why it matters", "item": "https://asksumanta.com/insights/llm-observability-opentelemetry-genai/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What are the OpenTelemetry GenAI semantic conventions?", "acceptedAnswer": {"@type": "Answer", "text": "They are a standard set of span, metric and event names and attributes for generative AI operations, covering things like the model called, input and output token counts, finish reasons and tool calls. Using them means any OpenTelemetry-compatible backend can read your AI telemetry."}}, {"@type": "Question", "name": "Are the GenAI conventions stable?", "acceptedAnswer": {"@type": "Answer", "text": "Not yet. The official pages mark them as in development, and existing instrumentations can opt in to the latest experimental version with an environment variable. Expect attribute names to change and pin the version you use."}}, {"@type": "Question", "name": "Should I log full prompts and completions?", "acceptedAnswer": {"@type": "Answer", "text": "Not by default. Prompts and outputs can contain personal or confidential data. Capture metadata such as model, tokens and latency everywhere, and enable content capture only in controlled environments or with redaction."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+</script>
+</head>
+<body class="sub is-post">
+<div class="progress" id="progress"></div>
+<nav>
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="/#practice">Services</a>
+      <a href="/#work">Case studies</a>
+      <a href="/insights/">Insights</a>
+      <a href="/#assess">Analyse</a>
+      <a href="/#connect">Connect</a>
+    </div>
+    <div class="nav-r">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/insights/">Insights</a> <span>/</span> <em>LLM observability with OpenTelemetry: what to trace, what to leave out, and why it matters</em></div>
+    <div class="kicker">AI architecture</div>
+    <h1>LLM observability with OpenTelemetry: what to trace, what to leave out, and why it matters</h1>
+    <p class="sub-lede">You can&#x27;t manage cost, latency or quality in an LLM system you can&#x27;t see. OpenTelemetry now has conventions for exactly this. Here is how I use them without leaking sensitive data into your logs.</p>
+    <div class="ameta"><span class="fmt">Explainer</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-10-19T00:15:00+04:00">19 Oct 2026 · 00:15 GST</time><span>7 min read</span><span>5 sources</span></div><div class="atags"><span class="tagp">#ai</span><span class="tagp">#observability</span><span class="tagp">#opentelemetry</span><span class="tagp">#llm</span><span class="tagp">#agents</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Explainer cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><line x1="1063" y1="345" x2="968" y2="280" class="cv-edge hl" opacity="0.23"/><line x1="1063" y1="345" x2="1057" y2="219" class="cv-edge hl" opacity="0.16"/><line x1="1063" y1="345" x2="1126" y2="339" class="cv-edge hl" opacity="0.58"/><line x1="1063" y1="345" x2="1091" y2="205" class="cv-edge hl" opacity="0.05"/><line x1="1063" y1="345" x2="1075" y2="366" class="cv-edge hl" opacity="0.84"/><line x1="784" y1="134" x2="663" y2="182" class="cv-edge" opacity="0.13"/><line x1="784" y1="134" x2="684" y2="217" class="cv-edge hl" opacity="0.13"/><line x1="784" y1="134" x2="719" y2="143" class="cv-edge" opacity="0.56"/><line x1="784" y1="134" x2="699" y2="208" class="cv-edge" opacity="0.25"/><line x1="784" y1="134" x2="891" y2="202" class="cv-edge" opacity="0.15"/><line x1="784" y1="134" x2="924" y2="180" class="cv-edge" opacity="0.01"/><line x1="784" y1="134" x2="808" y2="90" class="cv-edge" opacity="0.66"/><line x1="784" y1="134" x2="773" y2="199" class="cv-edge" opacity="0.56"/><line x1="784" y1="134" x2="892" y2="228" class="cv-edge" opacity="0.04"/><line x1="663" y1="182" x2="684" y2="217" class="cv-edge hl" opacity="0.73"/><line x1="663" y1="182" x2="719" y2="143" class="cv-edge" opacity="0.54"/><line x1="663" y1="182" x2="699" y2="208" class="cv-edge" opacity="0.71"/><line x1="663" y1="182" x2="773" y2="199" class="cv-edge" opacity="0.26"/><line x1="968" y1="280" x2="891" y2="202" class="cv-edge hl" opacity="0.27"/><line x1="968" y1="280" x2="921" y2="276" class="cv-edge hl" opacity="0.69"/><line x1="968" y1="280" x2="1057" y2="219" class="cv-edge hl" opacity="0.28"/><line x1="968" y1="280" x2="924" y2="180" class="cv-edge hl" opacity="0.28"/><line x1="968" y1="280" x2="944" y2="241" class="cv-edge hl" opacity="0.70"/><line x1="968" y1="280" x2="1091" y2="205" class="cv-edge hl" opacity="0.04"/><line x1="968" y1="280" x2="945" y2="250" class="cv-edge hl" opacity="0.75"/><line x1="968" y1="280" x2="1075" y2="366" class="cv-edge hl" opacity="0.08"/><line x1="968" y1="280" x2="892" y2="228" class="cv-edge hl" opacity="0.39"/><line x1="684" y1="217" x2="719" y2="143" class="cv-edge hl" opacity="0.45"/><line x1="684" y1="217" x2="699" y2="208" class="cv-edge hl" opacity="0.88"/><line x1="684" y1="217" x2="790" y2="311" class="cv-edge hl" opacity="0.05"/><line x1="684" y1="217" x2="773" y2="199" class="cv-edge hl" opacity="0.39"/><line x1="719" y1="143" x2="699" y2="208" class="cv-edge" opacity="0.55"/><line x1="719" y1="143" x2="808" y2="90" class="cv-edge" opacity="0.31"/><line x1="719" y1="143" x2="773" y2="199" class="cv-edge" opacity="0.48"/><line x1="699" y1="208" x2="790" y2="311" class="cv-edge" opacity="0.08"/><line x1="699" y1="208" x2="773" y2="199" class="cv-edge" opacity="0.50"/><line x1="891" y1="202" x2="921" y2="276" class="cv-edge hl" opacity="0.47"/><line x1="891" y1="202" x2="924" y2="180" class="cv-edge" opacity="0.73"/><line x1="891" y1="202" x2="790" y2="311" class="cv-edge" opacity="0.01"/><line x1="891" y1="202" x2="944" y2="241" class="cv-edge" opacity="0.56"/><line x1="891" y1="202" x2="808" y2="90" class="cv-edge" opacity="0.07"/><line x1="891" y1="202" x2="945" y2="250" class="cv-edge" opacity="0.52"/><line x1="891" y1="202" x2="773" y2="199" class="cv-edge" opacity="0.22"/><line x1="891" y1="202" x2="892" y2="228" class="cv-edge" opacity="0.83"/><line x1="921" y1="276" x2="1057" y2="219" class="cv-edge hl" opacity="0.02"/><line x1="921" y1="276" x2="924" y2="180" class="cv-edge hl" opacity="0.36"/><line x1="921" y1="276" x2="790" y2="311" class="cv-edge hl" opacity="0.10"/><line x1="921" y1="276" x2="944" y2="241" class="cv-edge hl" opacity="0.72"/><line x1="921" y1="276" x2="945" y2="250" class="cv-edge hl" opacity="0.76"/><line x1="921" y1="276" x2="892" y2="228" class="cv-edge hl" opacity="0.63"/><line x1="1057" y1="219" x2="924" y2="180" class="cv-edge" opacity="0.08"/><line x1="1057" y1="219" x2="944" y2="241" class="cv-edge" opacity="0.24"/><line x1="1057" y1="219" x2="1126" y2="339" class="cv-edge" opacity="0.07"/><line x1="1057" y1="219" x2="1093" y2="127" class="cv-edge" opacity="0.34"/><line x1="1057" y1="219" x2="1111" y2="114" class="cv-edge" opacity="0.21"/><line x1="1057" y1="219" x2="1091" y2="205" class="cv-edge hl" opacity="0.76"/><line x1="1057" y1="219" x2="945" y2="250" class="cv-edge" opacity="0.23"/><line x1="1057" y1="219" x2="1075" y2="366" class="cv-edge" opacity="0.01"/><line x1="924" y1="180" x2="921" y2="42" class="cv-edge" opacity="0.07"/><line x1="924" y1="180" x2="944" y2="241" class="cv-edge" opacity="0.57"/><line x1="924" y1="180" x2="808" y2="90" class="cv-edge" opacity="0.02"/><line x1="924" y1="180" x2="945" y2="250" class="cv-edge" opacity="0.52"/><line x1="924" y1="180" x2="892" y2="228" class="cv-edge" opacity="0.62"/><line x1="790" y1="311" x2="773" y2="199" class="cv-edge" opacity="0.24"/><line x1="790" y1="311" x2="892" y2="228" class="cv-edge" opacity="0.12"/><line x1="921" y1="42" x2="808" y2="90" class="cv-edge" opacity="0.18"/><line x1="944" y1="241" x2="945" y2="250" class="cv-edge" opacity="0.94"/><line x1="944" y1="241" x2="892" y2="228" class="cv-edge" opacity="0.64"/><line x1="1126" y1="339" x2="1091" y2="205" class="cv-edge hl" opacity="0.07"/><line x1="1126" y1="339" x2="1075" y2="366" class="cv-edge" opacity="0.62"/><line x1="1093" y1="127" x2="1111" y2="114" class="cv-edge" opacity="0.85"/><line x1="1093" y1="127" x2="1091" y2="205" class="cv-edge hl" opacity="0.48"/><line x1="1111" y1="114" x2="1091" y2="205" class="cv-edge hl" opacity="0.38"/><line x1="808" y1="90" x2="773" y2="199" class="cv-edge" opacity="0.24"/><line x1="945" y1="250" x2="892" y2="228" class="cv-edge" opacity="0.62"/><line x1="637" y1="373" x2="605" y2="378" class="cv-edge hl" opacity="0.78"/><line x1="637" y1="373" x2="566" y2="339" class="cv-edge hl" opacity="0.47"/><line x1="605" y1="378" x2="566" y2="339" class="cv-edge hl" opacity="0.64"/><line x1="773" y1="199" x2="892" y2="228" class="cv-edge" opacity="0.19"/><circle cx="1063" cy="345" r="6" class="cv-dot hl"/><circle cx="784" cy="134" r="3" class="cv-dot"/><circle cx="663" cy="182" r="3" class="cv-dot"/><circle cx="968" cy="280" r="6" class="cv-dot hl"/><circle cx="684" cy="217" r="6" class="cv-dot hl"/><circle cx="719" cy="143" r="3" class="cv-dot"/><circle cx="699" cy="208" r="3" class="cv-dot"/><circle cx="891" cy="202" r="3" class="cv-dot"/><circle cx="921" cy="276" r="6" class="cv-dot hl"/><circle cx="1057" cy="219" r="3" class="cv-dot"/><circle cx="924" cy="180" r="3" class="cv-dot"/><circle cx="790" cy="311" r="3" class="cv-dot"/><circle cx="921" cy="42" r="3" class="cv-dot"/><circle cx="944" cy="241" r="3" class="cv-dot"/><circle cx="1126" cy="339" r="3" class="cv-dot"/><circle cx="1093" cy="127" r="3" class="cv-dot"/><circle cx="1111" cy="114" r="3" class="cv-dot"/><circle cx="808" cy="90" r="3" class="cv-dot"/><circle cx="1091" cy="205" r="6" class="cv-dot hl"/><circle cx="945" cy="250" r="3" class="cv-dot"/><circle cx="637" cy="373" r="3" class="cv-dot"/><circle cx="1075" cy="366" r="3" class="cv-dot"/><circle cx="605" cy="378" r="6" class="cv-dot hl"/><circle cx="773" cy="199" r="3" class="cv-dot"/><circle cx="566" cy="339" r="6" class="cv-dot hl"/><circle cx="892" cy="228" r="3" class="cv-dot"/><text x="60" y="90" class="cv-k">EXPLAINER · AI ARCHITECTURE</text><text x="60" y="350" class="cv-n">19 Oct 2026 · 00:15 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <p>The first question I ask about any AI system in production is simple: for yesterday's traffic, what did each answer cost, how long did it take, and which ones went wrong? Most teams can't answer it. They have application logs and a monthly invoice from a model provider, and nothing in between.</p>
+<p>That gap is closing. OpenTelemetry, the open standard most teams already use for traces and metrics, has semantic conventions for generative AI. They define how to record a model call, its token usage and the tools an agent invokes, so any compatible backend can show it<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+
+<section class="block">
+<h2 id="what-the-conventions-give-you">What the conventions give you</h2>
+<p>The OpenTelemetry blog walks through a real example. A trace from an agent shows a top-level <code>invoke_agent</code> span, child <code>chat</code> spans for each model call, and <code>execute_tool</code> spans for each tool invocation<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/briefings/otel-genai-spans.webp" alt="Dashboard showing a GenAI trace with an agent span, model call spans and tool execution spans" width="1400" height="938" loading="lazy"></div><figcaption>A GenAI trace: one agent invocation broken into model calls and tool executions, each with its own timing. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2026/genai-observability/" target="_blank" rel="noopener">OpenTelemetry authors, Inside the LLM Call: GenAI Observability with OpenTelemetry</a> · CC BY 4.0</span></figcaption></figure>
+<p>Each span carries standard attributes, including the model requested, input and output token counts, and the reasons the model stopped generating<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. There are matching metrics conventions, so you can chart usage and latency without parsing logs<sup class="cite"><a href="#ref-3">3</a></sup>, and separate conventions for agent and framework spans<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+</section>
+
+<section class="block">
+<h2 id="why-this-matters-more-than-it-sounds">Why this matters more than it sounds</h2>
+<table class="tbl">
+<thead><tr><th>Question</th><th>What answers it</th></tr></thead>
+<tbody>
+<tr><td>Which feature is driving the bill?</td><td>Token counts per span, grouped by service and route</td></tr>
+<tr><td>Why is this answer slow?</td><td>The span tree: model time versus tool time versus retrieval</td></tr>
+<tr><td>Why did the agent loop?</td><td>Repeated tool spans and finish reasons inside one trace</td></tr>
+<tr><td>Did the new model make things worse?</td><td>Latency and error metrics split by model, before and after</td></tr>
+</tbody>
+</table>
+<p>Because it is the same OpenTelemetry you use elsewhere, an AI call shows up inside the request that triggered it. You see the database query, the retrieval step and the model call on one timeline, instead of three tools that never agree.</p>
+</section>
+
+<section class="block">
+<h2 id="privacy-metadata-yes-content-by-exception">Privacy: metadata yes, content by exception</h2>
+<p>This is the part I am strict about. Prompts and completions can contain personal data, health information or confidential documents. The OpenTelemetry walkthrough notes that by default no prompt content or tool arguments are captured, only metadata such as model names, token counts and durations. Content capture is an explicit opt-in<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<div class="callout"><p>Keep it that way in production. Turn on content capture only in development, in a sandbox with synthetic data, or behind redaction at an AI gateway. A trace store full of raw prompts is a data breach waiting for a misconfigured dashboard.</p></div>
+<p>This lines up with how I design governed AI platforms generally, which I describe in <a href="/insights/securing-mcp-servers-checklist/">securing MCP servers</a> and <a href="/insights/uae-pdpl-ai-architecture-2026/">UAE PDPL and AI</a>.</p>
+</section>
+
+<section class="block">
+<h2 id="a-caution-on-stability">A caution on stability</h2>
+<p>The GenAI conventions are still marked as in development on the official pages, and existing instrumentations can opt in to the newest experimental version with an environment variable<sup class="cite"><a href="#ref-2">2</a></sup>. Attribute names have already changed between versions; one commentary notes, for example, a move from <code>gen_ai.system</code> to <code>gen_ai.provider.name</code><sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<p>That is not a reason to wait. It is a reason to pin the version you emit, keep dashboards tolerant of renamed attributes, and plan a small migration when the conventions settle.</p>
+</section>
+
+<section class="block">
+<h2 id="how-i-set-it-up">How I set it up</h2>
+<ol>
+<li><strong>Instrument at the gateway.</strong> If every model call passes through one AI gateway, instrument it once and every product inherits the telemetry.</li>
+<li><strong>Add agent and tool spans</strong> in the orchestration layer, so a multi-step task appears as one trace rather than a pile of unrelated calls.</li>
+<li><strong>Tag with business context:</strong> tenant, feature and use case. Cost per feature is the number leadership actually asks for.</li>
+<li><strong>Metadata only in production.</strong> Content capture off, redaction on, retention short.</li>
+<li><strong>Build three views:</strong> cost per feature per day, latency by step, and failures by finish reason and tool.</li>
+<li><strong>Connect to evaluation.</strong> Link trace IDs to your evaluation runs so a quality regression can be traced to a specific prompt or model change. The <a href="/insights/rag-to-production-checklist/">RAG production checklist</a> covers the evaluation side.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2 id="how-i-can-help">How I can help</h2>
+<p>I design AI platforms where cost, latency and quality are visible from day one: gateways, tracing, evaluation and governance. See my <a href="/ai-architect/">AI architecture work</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://opentelemetry.io/blog/2026/genai-observability/" target="_blank" rel="noopener">Inside the LLM Call: GenAI Observability with OpenTelemetry</a><small>OpenTelemetry blog · 14 May 2026</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://opentelemetry.io/docs/specs/semconv/gen-ai/gen-ai-spans/" target="_blank" rel="noopener">Semantic conventions for generative client AI spans</a><small>OpenTelemetry</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://opentelemetry.io/docs/specs/semconv/gen-ai/gen-ai-metrics/" target="_blank" rel="noopener">Semantic conventions for generative AI metrics</a><small>OpenTelemetry</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://opentelemetry.io/docs/specs/semconv/gen-ai/gen-ai-agent-spans/" target="_blank" rel="noopener">Semantic Conventions for GenAI agent and framework spans</a><small>OpenTelemetry</small></div></li><li id="ref-5"><span class="rn">5</span><div><a href="https://greptime.com/blogs/2026-05-09-opentelemetry-genai-semantic-conventions" target="_blank" rel="noopener">OpenTelemetry GenAI semantic conventions</a><small>Greptime · May 2026</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fllm-observability-opentelemetry-genai%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fllm-observability-opentelemetry-genai%2F&amp;text=LLM%20observability%20with%20OpenTelemetry%3A%20what%20to%20trace%2C%20what%20to%20leave%20out%2C%20and%20why%20it%20matters" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=LLM%20observability%20with%20OpenTelemetry%3A%20what%20to%20trace%2C%20what%20to%20leave%20out%2C%20and%20why%20it%20matters%20https%3A%2F%2Fasksumanta.com%2Finsights%2Fllm-observability-opentelemetry-genai%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://asksumanta.com/insights/llm-observability-opentelemetry-genai/">Copy link</button></div>
+      <div class="pnav"><a class="pn prev" href="/insights/idempotent-payments-order-pipelines/"><small>← Previous</small><b>Idempotency for payments and orders: how to never charge a customer twice</b></a><a class="pn next" href="/insights/architecture-decision-records-fractional-cto/"><small>Next →</small><b>Architecture decision records: the habit I bring to every engagement</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#what-the-conventions-give-you">What the conventions give you</a></li><li><a href="#why-this-matters-more-than-it-sounds">Why this matters more than it sounds</a></li><li><a href="#privacy-metadata-yes-content-by-exception">Privacy: metadata yes, content by exception</a></li><li><a href="#a-caution-on-stability">A caution on stability</a></li><li><a href="#how-i-set-it-up">How I set it up</a></li><li><a href="#how-i-can-help">How I can help</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>What are the OpenTelemetry GenAI semantic conventions?</summary><p>They are a standard set of span, metric and event names and attributes for generative AI operations, covering things like the model called, input and output token counts, finish reasons and tool calls. Using them means any OpenTelemetry-compatible backend can read your AI telemetry.</p></details><details class="rise"><summary>Are the GenAI conventions stable?</summary><p>Not yet. The official pages mark them as in development, and existing instrumentations can opt in to the latest experimental version with an environment variable. Expect attribute names to change and pin the version you use.</p></details><details class="rise"><summary>Should I log full prompts and completions?</summary><p>Not by default. Prompts and outputs can contain personal or confidential data. Capture metadata such as model, tokens and latency everywhere, and enable content capture only in controlled environments or with redaction.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/ai-architect/"><small>Service</small><b>AI &amp; LLM architecture</b><span>I design and build AI systems that leadership can trust: grounded in your data, measured by evaluations, governed by your rules and priced so they make sense at scale.</span><i>→</i></a><a class="rcard rise" href="/fractional-cto/"><small>Service</small><b>Fractional CTO</b><span>I work as a part-time CTO for founders, CEOs and boards who need experienced technical judgement now, and a team that can carry it on after I step back.</span><i>→</i></a><a class="rcard rise" href="/technical-due-diligence/"><small>Service</small><b>Technical due diligence</b><span>I give investors an independent, plain-language view of a company&#x27;s technology, team and AI claims, so the risks are priced in before the deal closes, not discovered after.</span><i>→</i></a><a class="rcard rise" href="/insights/architecture-decision-records-fractional-cto/"><small>Insight</small><b>Architecture decision records: the habit I bring to every engagement</b><span>The most expensive question in any engineering team is &quot;why did we do it this way?&quot;. Architecture decision records answer it in two minutes instead of two meetings. Here is how I use them.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: LLM observability with OpenTelemetry: what to trace, what to leave out, and why it matters">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
+        <p class="floc">United States &amp; UAE · working globally</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/uae/">Fractional CTO in the UAE</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/architecture-decision-records-fractional-cto/">Architecture decision records: the habit I bring to every engagement</a></li><li><a href="/insights/llm-observability-opentelemetry-genai/">LLM observability with OpenTelemetry: what to trace, what to leave out, and why it matters</a></li><li><a href="/insights/idempotent-payments-order-pipelines/">Idempotency for payments and orders: how to never charge a customer twice</a></li><li><a href="/insights/kubernetes-finops-scale-to-zero/">Kubernetes FinOps in 2026: scale to zero, resize in place, and know who pays</a></li><li><a href="/insights/mongodb-hybrid-search-rag/">Hybrid search for RAG in MongoDB: when to use $rankFusion, and when $scoreFusion</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>

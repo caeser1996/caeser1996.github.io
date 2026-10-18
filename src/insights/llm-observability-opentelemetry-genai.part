@@ -1,0 +1,54 @@
+<!--{"title": "LLM observability with OpenTelemetry: what to trace and why", "description": "OpenTelemetry's GenAI conventions give a standard way to trace LLM calls, tokens and tool use. What to capture, what to keep out, and how I set it up.", "h1": "LLM observability with OpenTelemetry: what to trace, what to leave out, and why it matters", "kicker": "AI architecture", "lede": "You can't manage cost, latency or quality in an LLM system you can't see. OpenTelemetry now has conventions for exactly this. Here is how I use them without leaking sensitive data into your logs.", "date": "2026-10-19", "datetime": "2026-10-19T00:15:00+04:00", "readtime": "7 min read", "format": "explainer", "tags": ["ai", "observability", "opentelemetry", "llm", "agents"], "keywords": ["LLM observability", "OpenTelemetry GenAI", "gen_ai semantic conventions", "AI agent tracing", "token usage monitoring", "LLM cost monitoring", "AI observability", "OTLP", "prompt logging privacy", "production AI monitoring"], "faq": [["What are the OpenTelemetry GenAI semantic conventions?", "They are a standard set of span, metric and event names and attributes for generative AI operations, covering things like the model called, input and output token counts, finish reasons and tool calls. Using them means any OpenTelemetry-compatible backend can read your AI telemetry."], ["Are the GenAI conventions stable?", "Not yet. The official pages mark them as in development, and existing instrumentations can opt in to the latest experimental version with an environment variable. Expect attribute names to change and pin the version you use."], ["Should I log full prompts and completions?", "Not by default. Prompts and outputs can contain personal or confidential data. Capture metadata such as model, tokens and latency everywhere, and enable content capture only in controlled environments or with redaction."]], "related": ["/ai-architect/", "/fractional-cto/", "/technical-due-diligence/"], "citations": [{"title": "Inside the LLM Call: GenAI Observability with OpenTelemetry", "url": "https://opentelemetry.io/blog/2026/genai-observability/", "publisher": "OpenTelemetry blog", "date": "14 May 2026"}, {"title": "Semantic conventions for generative client AI spans", "url": "https://opentelemetry.io/docs/specs/semconv/gen-ai/gen-ai-spans/", "publisher": "OpenTelemetry"}, {"title": "Semantic conventions for generative AI metrics", "url": "https://opentelemetry.io/docs/specs/semconv/gen-ai/gen-ai-metrics/", "publisher": "OpenTelemetry"}, {"title": "Semantic Conventions for GenAI agent and framework spans", "url": "https://opentelemetry.io/docs/specs/semconv/gen-ai/gen-ai-agent-spans/", "publisher": "OpenTelemetry"}, {"title": "OpenTelemetry GenAI semantic conventions", "url": "https://greptime.com/blogs/2026-05-09-opentelemetry-genai-semantic-conventions", "publisher": "Greptime", "date": "May 2026"}]}-->
+<p>The first question I ask about any AI system in production is simple: for yesterday's traffic, what did each answer cost, how long did it take, and which ones went wrong? Most teams can't answer it. They have application logs and a monthly invoice from a model provider, and nothing in between.</p>
+<p>That gap is closing. OpenTelemetry, the open standard most teams already use for traces and metrics, has semantic conventions for generative AI. They define how to record a model call, its token usage and the tools an agent invokes, so any compatible backend can show it<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+
+<section class="block">
+<h2>What the conventions give you</h2>
+<p>The OpenTelemetry blog walks through a real example. A trace from an agent shows a top-level <code>invoke_agent</code> span, child <code>chat</code> spans for each model call, and <code>execute_tool</code> spans for each tool invocation<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/briefings/otel-genai-spans.webp" alt="Dashboard showing a GenAI trace with an agent span, model call spans and tool execution spans" width="1400" height="938" loading="lazy"></div><figcaption>A GenAI trace: one agent invocation broken into model calls and tool executions, each with its own timing. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2026/genai-observability/" target="_blank" rel="noopener">OpenTelemetry authors, Inside the LLM Call: GenAI Observability with OpenTelemetry</a> · CC BY 4.0</span></figcaption></figure>
+<p>Each span carries standard attributes, including the model requested, input and output token counts, and the reasons the model stopped generating<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. There are matching metrics conventions, so you can chart usage and latency without parsing logs<sup class="cite"><a href="#ref-3">3</a></sup>, and separate conventions for agent and framework spans<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+</section>
+
+<section class="block">
+<h2>Why this matters more than it sounds</h2>
+<table class="tbl">
+<thead><tr><th>Question</th><th>What answers it</th></tr></thead>
+<tbody>
+<tr><td>Which feature is driving the bill?</td><td>Token counts per span, grouped by service and route</td></tr>
+<tr><td>Why is this answer slow?</td><td>The span tree: model time versus tool time versus retrieval</td></tr>
+<tr><td>Why did the agent loop?</td><td>Repeated tool spans and finish reasons inside one trace</td></tr>
+<tr><td>Did the new model make things worse?</td><td>Latency and error metrics split by model, before and after</td></tr>
+</tbody>
+</table>
+<p>Because it is the same OpenTelemetry you use elsewhere, an AI call shows up inside the request that triggered it. You see the database query, the retrieval step and the model call on one timeline, instead of three tools that never agree.</p>
+</section>
+
+<section class="block">
+<h2>Privacy: metadata yes, content by exception</h2>
+<p>This is the part I am strict about. Prompts and completions can contain personal data, health information or confidential documents. The OpenTelemetry walkthrough notes that by default no prompt content or tool arguments are captured, only metadata such as model names, token counts and durations. Content capture is an explicit opt-in<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<div class="callout"><p>Keep it that way in production. Turn on content capture only in development, in a sandbox with synthetic data, or behind redaction at an AI gateway. A trace store full of raw prompts is a data breach waiting for a misconfigured dashboard.</p></div>
+<p>This lines up with how I design governed AI platforms generally, which I describe in <a href="/insights/securing-mcp-servers-checklist/">securing MCP servers</a> and <a href="/insights/uae-pdpl-ai-architecture-2026/">UAE PDPL and AI</a>.</p>
+</section>
+
+<section class="block">
+<h2>A caution on stability</h2>
+<p>The GenAI conventions are still marked as in development on the official pages, and existing instrumentations can opt in to the newest experimental version with an environment variable<sup class="cite"><a href="#ref-2">2</a></sup>. Attribute names have already changed between versions; one commentary notes, for example, a move from <code>gen_ai.system</code> to <code>gen_ai.provider.name</code><sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<p>That is not a reason to wait. It is a reason to pin the version you emit, keep dashboards tolerant of renamed attributes, and plan a small migration when the conventions settle.</p>
+</section>
+
+<section class="block">
+<h2>How I set it up</h2>
+<ol>
+<li><strong>Instrument at the gateway.</strong> If every model call passes through one AI gateway, instrument it once and every product inherits the telemetry.</li>
+<li><strong>Add agent and tool spans</strong> in the orchestration layer, so a multi-step task appears as one trace rather than a pile of unrelated calls.</li>
+<li><strong>Tag with business context:</strong> tenant, feature and use case. Cost per feature is the number leadership actually asks for.</li>
+<li><strong>Metadata only in production.</strong> Content capture off, redaction on, retention short.</li>
+<li><strong>Build three views:</strong> cost per feature per day, latency by step, and failures by finish reason and tool.</li>
+<li><strong>Connect to evaluation.</strong> Link trace IDs to your evaluation runs so a quality regression can be traced to a specific prompt or model change. The <a href="/insights/rag-to-production-checklist/">RAG production checklist</a> covers the evaluation side.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I design AI platforms where cost, latency and quality are visible from day one: gateways, tracing, evaluation and governance. See my <a href="/ai-architect/">AI architecture work</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
