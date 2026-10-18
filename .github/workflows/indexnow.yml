@@ -1,0 +1,30 @@
+name: Notify search engines (IndexNow)
+
+on:
+  push:
+    branches: [main]
+    paths: ["sitemap.xml"]
+  workflow_dispatch:
+
+jobs:
+  indexnow:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wait for GitHub Pages to publish
+        run: sleep 90
+      - name: Submit sitemap URLs to IndexNow
+        run: |
+          python3 - <<'PY'
+          import json, re, urllib.request
+          key = "764e2bdfefc164d1ff60d8b86ca2bd92"
+          host = "caeser1996.github.io"
+          urls = re.findall(r"<loc>([^<]+)</loc>", open("sitemap.xml").read())
+          body = json.dumps({"host": host, "key": key,
+                             "keyLocation": f"https://{host}/{key}.txt",
+                             "urlList": urls}).encode()
+          req = urllib.request.Request("https://api.indexnow.org/indexnow", data=body,
+                                       headers={"Content-Type": "application/json; charset=utf-8"})
+          with urllib.request.urlopen(req) as r:
+              print("IndexNow", r.status, "for", len(urls), "URLs")
+          PY
