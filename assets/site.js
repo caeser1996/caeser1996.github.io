@@ -113,3 +113,13 @@
     var o=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){links.forEach(function(a){a.classList.remove('on');});var a=map[e.target.id];if(a)a.classList.add('on');}});},{rootMargin:'-20% 0px -70% 0px'});
     Object.keys(map).forEach(function(id){var h=document.getElementById(id);if(h)o.observe(h);});
   })();
+
+  // mobile menu
+  (function(){
+    var b=document.getElementById('menuBtn'),n=b&&b.closest('nav');if(!b)return;
+    function set(o){n.classList.toggle('open',o);b.setAttribute('aria-expanded',o);b.setAttribute('aria-label',o?'Close menu':'Open menu');}
+    b.addEventListener('click',function(){set(!n.classList.contains('open'));});
+    n.querySelectorAll('.nav-links a').forEach(function(a){a.addEventListener('click',function(){set(false);});});
+    document.addEventListener('keydown',function(e){if(e.key==='Escape')set(false);});
+    document.addEventListener('click',function(e){if(!n.contains(e.target))set(false);});
+  })();

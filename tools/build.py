@@ -79,7 +79,7 @@ def nav():
 <nav>
   <div class="nav-in">
     <a href="/" class="brand">Sumanta<span>.</span></a>
-    <div class="nav-links">
+    <div class="nav-links" id="navLinks">
       <a href="/#practice">Services</a>
       <a href="/#work">Case studies</a>
       <a href="/insights/">Insights</a>
@@ -87,6 +87,7 @@ def nav():
       <a href="/#connect">Connect</a>
     </div>
     <div class="nav-r">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
       <button class="theme" id="themeBtn" aria-label="Toggle colour theme">{MOON}</button>
       <a href="{CAL}" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
     </div>
