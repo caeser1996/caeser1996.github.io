@@ -1,0 +1,27 @@
+name: DNS check (temporary)
+on:
+  push:
+    branches: [dnscheck]
+permissions:
+  contents: write
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect DNS and HTTP for asksumanta.com
+        run: |
+          {
+            echo "## dig A";      dig +short A asksumanta.com
+            echo "## dig AAAA";   dig +short AAAA asksumanta.com
+            echo "## dig www";    dig +short www.asksumanta.com
+            echo "## dig NS";     dig +short NS asksumanta.com
+            echo "## dig TXT challenge"; dig +short TXT _github-pages-challenge-caeser1996.asksumanta.com
+            echo "## curl http://asksumanta.com"; curl -sI --max-time 15 http://asksumanta.com | head -8
+            echo "## curl http://www.asksumanta.com"; curl -sI --max-time 15 http://www.asksumanta.com | head -8
+            echo "## body"; curl -s --max-time 15 http://asksumanta.com | head -c 600
+          } > dns-report.txt 2>&1
+          cat dns-report.txt
+          git config user.name "dns-check"; git config user.email "dns-check@users.noreply.github.com"
+          git checkout -b dnscheck-result
+          git add dns-report.txt && git commit -m "DNS report" && git push -f origin dnscheck-result
