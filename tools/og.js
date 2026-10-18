@@ -16,13 +16,13 @@ for (const dir of ['src/pages', 'src/insights']) {
 }
 const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
 const tpl = it => `<!doctype html><html><head><meta charset="utf-8">
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,450&family=JetBrains+Mono&display=swap" rel="stylesheet">
-<style>*{margin:0;box-sizing:border-box}body{width:1200px;height:630px;background:#111214;color:#f0ede6;font-family:Fraunces,Georgia,serif;position:relative;overflow:hidden}
-.k{position:absolute;left:80px;top:84px;font:500 20px "JetBrains Mono",monospace;letter-spacing:.16em;text-transform:uppercase;color:#e08a63;display:flex;gap:16px;align-items:center}
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500&family=IBM+Plex+Mono&display=swap" rel="stylesheet">
+<style>*{margin:0;box-sizing:border-box}body{width:1200px;height:630px;background:#111214;color:#f0ede6;font-family:Newsreader,Georgia,serif;position:relative;overflow:hidden}
+.k{position:absolute;left:80px;top:84px;font:500 20px "IBM Plex Mono",monospace;letter-spacing:.16em;text-transform:uppercase;color:#e08a63;display:flex;gap:16px;align-items:center}
 .k:before{content:"";width:44px;height:2px;background:#e08a63}
 h1{position:absolute;left:80px;right:300px;top:150px;font-weight:450;font-size:${it.h1.length > 60 ? 62 : 74}px;line-height:1.04;letter-spacing:-.02em}
-.f{position:absolute;left:80px;right:80px;bottom:64px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid rgba(240,237,230,.18);padding-top:26px;font:22px "JetBrains Mono",monospace;color:#b4b1aa}
-.f b{font:500 30px Fraunces,serif;color:#f0ede6}.f b span{color:#e08a63}
+.f{position:absolute;left:80px;right:80px;bottom:64px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid rgba(240,237,230,.18);padding-top:26px;font:22px "IBM Plex Mono",monospace;color:#b4b1aa}
+.f b{font:500 30px Newsreader,serif;color:#f0ede6}.f b span{color:#e08a63}
 svg{position:absolute;right:-40px;top:40px;opacity:.9}</style></head><body>
 <svg width="420" height="420" viewBox="0 0 420 420">${(() => { let s = '', pts = []; let seed = it.slug.length * 7 + 3; const r = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
   for (let i = 0; i < 18; i++) pts.push([40 + r() * 340, 40 + r() * 340, r() < .3]);
