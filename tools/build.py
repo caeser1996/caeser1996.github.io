@@ -119,7 +119,7 @@ def footer(pages, posts):
     <div class="fcols">
       <div class="fc fbrand">
         <a href="/" class="brand">Sumanta<span>.</span></a>
-        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, healthcare data and cloud infrastructure, from strategy to production.</p>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
         <p class="floc">United States &amp; UAE · working globally</p>
       </div>
       <div class="fc"><h4>Services</h4><ul>{svc}</ul></div>
