@@ -29,7 +29,7 @@ svg{position:absolute;right:-40px;top:40px;opacity:.9}</style></head><body>
   pts.forEach((a, i) => pts.forEach((b, j) => { if (j > i) { const d = Math.hypot(a[0] - b[0], a[1] - b[1]); if (d < 120) s += `<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="${a[2] || b[2] ? '#e08a63' : '#f0ede6'}" stroke-opacity="${(1 - d / 120) * .45}"/>`; } }));
   pts.forEach(a => s += `<circle cx="${a[0]}" cy="${a[1]}" r="${a[2] ? 5 : 2.6}" fill="${a[2] ? '#e08a63' : '#f0ede6'}" fill-opacity="${a[2] ? 1 : .6}"/>`); return s; })()}</svg>
 <div class="k">${esc(it.kicker)}</div><h1>${esc(it.h1)}</h1>
-<div class="f"><b>Sumanta<span>.</span></b><span>caeser1996.github.io</span></div></body></html>`;
+<div class="f"><b>Sumanta<span>.</span></b><span>asksumanta.com</span></div></body></html>`;
 (async () => {
   const b = await pw.chromium.launch(); const p = await b.newPage({ viewport: { width: 1200, height: 630 } });
   for (const it of items) { await p.setContent(tpl(it), { waitUntil: 'networkidle' }).catch(() => {}); await p.waitForTimeout(150);

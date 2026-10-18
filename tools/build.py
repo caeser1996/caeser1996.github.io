@@ -22,7 +22,7 @@ import re
 from urllib.parse import quote
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-SITE = "https://caeser1996.github.io"
+SITE = "https://asksumanta.com"
 EMAIL = "sumantamukhopadhyaywork@gmail.com"
 CAL = "https://calendar.app.google/fpARv4QHsYCLMo3a8"
 NAME = "Sumanta Mukhopadhyay"
