@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Hybrid search for RAG in MongoDB: $rankFusion vs $scoreFusion</title>
+<meta name="description" content="Vector search alone misses exact terms. How I use MongoDB&#x27;s $rankFusion and $scoreFusion to combine vector and full-text retrieval for RAG, and how to tune them." />
+<meta name="keywords" content="MongoDB hybrid search, $rankFusion, $scoreFusion, MongoDB Atlas Vector Search, reciprocal rank fusion, RAG retrieval quality, hybrid search RAG, vector search and full-text search, MongoDB for AI, MongoDB consultant" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://caeser1996.github.io/insights/mongodb-hybrid-search-rag/" />
+<meta name="theme-color" content="#111214" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="Hybrid search for RAG in MongoDB: $rankFusion vs $scoreFusion" />
+<meta property="og:description" content="Vector search alone misses exact terms. How I use MongoDB&#x27;s $rankFusion and $scoreFusion to combine vector and full-text retrieval for RAG, and how to tune them." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://caeser1996.github.io/insights/mongodb-hybrid-search-rag/" />
+<meta property="og:image" content="https://caeser1996.github.io/assets/og/mongodb-hybrid-search-rag.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Hybrid search for RAG in MongoDB: $rankFusion vs $scoreFusion" />
+<meta name="twitter:description" content="Vector search alone misses exact terms. How I use MongoDB&#x27;s $rankFusion and $scoreFusion to combine vector and full-text retrieval for RAG, and how to tune them." />
+<meta name="twitter:image" content="https://caeser1996.github.io/assets/og/mongodb-hybrid-search-rag.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "BlogPosting", "headline": "Hybrid search for RAG in MongoDB: when to use $rankFusion, and when $scoreFusion", "description": "Vector search alone misses exact terms. How I use MongoDB's $rankFusion and $scoreFusion to combine vector and full-text retrieval for RAG, and how to tune them.", "datePublished": "2026-10-18T19:35:00+04:00", "dateModified": "2026-10-18T19:35:00+04:00", "articleSection": "Data platforms", "genre": "Explainer", "citation": [{"@type": "CreativeWork", "name": "Now GA: Hybrid Search with $rankFusion and $scoreFusion", "url": "https://www.mongodb.com/products/updates/now-ga-hybrid-search-with-rankfusion-and-scorefusion/"}, {"@type": "CreativeWork", "name": "Perform hybrid search with MongoDB Vector Search and MongoDB Search", "url": "https://mongodb.com/docs/atlas/atlas-vector-search/hybrid-search/"}, {"@type": "CreativeWork", "name": "Boost search relevance with MongoDB Atlas native hybrid search", "url": "https://mongodb.com/blog/post/product-release-announcements/boost-search-relevance-mongodb-atlas-native-hybrid-search"}, {"@type": "CreativeWork", "name": "Harness the power of Atlas Search and Vector Search with $rankFusion", "url": "https://mongodb.com/company/blog/technical/harness-power-atlas-search-vector-search-with-rankfusion"}, {"@type": "CreativeWork", "name": "Beyond keywords: hybrid search with Atlas and Vector Search (part 3)", "url": "https://dev.to/mongodb/beyond-keywords-hybrid-search-with-atlas-and-vector-search-part-3-5fp3"}], "author": {"@type": "Person", "@id": "https://caeser1996.github.io/#person", "name": "Sumanta Mukhopadhyay", "url": "https://caeser1996.github.io/"}, "publisher": {"@type": "Person", "@id": "https://caeser1996.github.io/#person", "name": "Sumanta Mukhopadhyay", "url": "https://caeser1996.github.io/"}, "mainEntityOfPage": "https://caeser1996.github.io/insights/mongodb-hybrid-search-rag/", "image": "https://caeser1996.github.io/assets/og/mongodb-hybrid-search-rag.png", "keywords": "MongoDB hybrid search, $rankFusion, $scoreFusion, MongoDB Atlas Vector Search, reciprocal rank fusion, RAG retrieval quality, hybrid search RAG, vector search and full-text search, MongoDB for AI, MongoDB consultant", "wordCount": 867}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://caeser1996.github.io/"}, {"@type": "ListItem", "position": 2, "name": "Insights", "item": "https://caeser1996.github.io/insights/"}, {"@type": "ListItem", "position": 3, "name": "Hybrid search for RAG in MongoDB: when to use $rankFusion, and when $scoreFusion", "item": "https://caeser1996.github.io/insights/mongodb-hybrid-search-rag/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What is hybrid search?", "acceptedAnswer": {"@type": "Answer", "text": "Hybrid search runs a semantic (vector) query and a lexical (full-text) query and merges the results into one ranked list, so you get documents that match the meaning of a question and documents that contain its exact terms."}}, {"@type": "Question", "name": "What is the difference between $rankFusion and $scoreFusion?", "acceptedAnswer": {"@type": "Answer", "text": "$rankFusion merges results by their positions in each sub-pipeline using reciprocal rank fusion, so raw scores don't need to be comparable. $scoreFusion merges normalised scores with weights, which gives finer control but needs more tuning."}}, {"@type": "Question", "name": "Is MongoDB hybrid search generally available?", "acceptedAnswer": {"@type": "Answer", "text": "MongoDB announced general availability of native hybrid search with $rankFusion and $scoreFusion in mid-2026, after a public preview in 2025. Check the current documentation for version requirements."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..600;1,9..144,400&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+</script>
+</head>
+<body class="sub is-post">
+<div class="progress" id="progress"></div>
+<nav>
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links">
+      <a href="/#practice">Services</a>
+      <a href="/#work">Case studies</a>
+      <a href="/insights/">Insights</a>
+      <a href="/#assess">Analyse</a>
+      <a href="/#connect">Connect</a>
+    </div>
+    <div class="nav-r">
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/insights/">Insights</a> <span>/</span> <em>Hybrid search for RAG in MongoDB: when to use $rankFusion, and when $scoreFusion</em></div>
+    <div class="kicker">Data platforms</div>
+    <h1>Hybrid search for RAG in MongoDB: when to use $rankFusion, and when $scoreFusion</h1>
+    <p class="sub-lede">Pure vector search is great at meaning and poor at exact terms like product codes and drug names. Hybrid search fixes that, and MongoDB now does it natively. Here is how I set it up for retrieval-augmented generation.</p>
+    <div class="ameta"><span class="fmt">Explainer</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-10-18T19:35:00+04:00">18 Oct 2026 · 19:35 GST</time><span>8 min read</span><span>5 sources</span></div><div class="atags"><span class="tagp">#data</span><span class="tagp">#rag</span><span class="tagp">#ai</span><span class="tagp">#mongodb</span><span class="tagp">#llm</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Explainer cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><line x1="712" y1="178" x2="604" y2="80" class="cv-edge hl" opacity="0.03"/><line x1="712" y1="178" x2="757" y2="243" class="cv-edge hl" opacity="0.47"/><line x1="712" y1="178" x2="803" y2="254" class="cv-edge hl" opacity="0.21"/><line x1="712" y1="178" x2="813" y2="212" class="cv-edge hl" opacity="0.29"/><line x1="712" y1="178" x2="596" y2="186" class="cv-edge hl" opacity="0.23"/><line x1="712" y1="178" x2="728" y2="196" class="cv-edge hl" opacity="0.83"/><line x1="712" y1="178" x2="589" y2="113" class="cv-edge hl" opacity="0.08"/><line x1="712" y1="178" x2="825" y2="162" class="cv-edge hl" opacity="0.23"/><line x1="712" y1="178" x2="701" y2="125" class="cv-edge hl" opacity="0.64"/><line x1="712" y1="178" x2="771" y2="248" class="cv-edge hl" opacity="0.39"/><line x1="604" y1="80" x2="526" y2="154" class="cv-edge" opacity="0.29"/><line x1="604" y1="80" x2="596" y2="186" class="cv-edge" opacity="0.30"/><line x1="604" y1="80" x2="589" y2="113" class="cv-edge" opacity="0.76"/><line x1="604" y1="80" x2="701" y2="125" class="cv-edge" opacity="0.28"/><line x1="957" y1="292" x2="1046" y2="322" class="cv-edge hl" opacity="0.37"/><line x1="957" y1="292" x2="968" y2="350" class="cv-edge hl" opacity="0.61"/><line x1="957" y1="292" x2="1026" y2="179" class="cv-edge hl" opacity="0.11"/><line x1="957" y1="292" x2="952" y2="365" class="cv-edge hl" opacity="0.51"/><line x1="957" y1="292" x2="877" y2="208" class="cv-edge hl" opacity="0.23"/><line x1="757" y1="243" x2="803" y2="254" class="cv-edge hl" opacity="0.68"/><line x1="757" y1="243" x2="813" y2="212" class="cv-edge hl" opacity="0.57"/><line x1="757" y1="243" x2="728" y2="196" class="cv-edge hl" opacity="0.64"/><line x1="757" y1="243" x2="784" y2="364" class="cv-edge hl" opacity="0.17"/><line x1="757" y1="243" x2="877" y2="208" class="cv-edge hl" opacity="0.17"/><line x1="757" y1="243" x2="825" y2="162" class="cv-edge hl" opacity="0.30"/><line x1="757" y1="243" x2="701" y2="125" class="cv-edge hl" opacity="0.13"/><line x1="757" y1="243" x2="771" y2="248" class="cv-edge hl" opacity="0.90"/><line x1="911" y1="83" x2="1046" y2="77" class="cv-edge hl" opacity="0.10"/><line x1="911" y1="83" x2="1026" y2="179" class="cv-edge" opacity="0.00"/><line x1="911" y1="83" x2="794" y2="44" class="cv-edge hl" opacity="0.18"/><line x1="911" y1="83" x2="975" y2="88" class="cv-edge" opacity="0.57"/><line x1="911" y1="83" x2="877" y2="208" class="cv-edge" opacity="0.13"/><line x1="911" y1="83" x2="825" y2="162" class="cv-edge" opacity="0.22"/><line x1="1046" y1="322" x2="968" y2="350" class="cv-edge hl" opacity="0.44"/><line x1="1046" y1="322" x2="1026" y2="179" class="cv-edge hl" opacity="0.04"/><line x1="1046" y1="322" x2="952" y2="365" class="cv-edge hl" opacity="0.31"/><line x1="1046" y1="322" x2="1129" y2="341" class="cv-edge hl" opacity="0.43"/><line x1="789" y1="390" x2="803" y2="254" class="cv-edge" opacity="0.09"/><line x1="789" y1="390" x2="784" y2="364" class="cv-edge" opacity="0.82"/><line x1="789" y1="390" x2="771" y2="248" class="cv-edge" opacity="0.05"/><line x1="1046" y1="77" x2="1026" y2="179" class="cv-edge hl" opacity="0.31"/><line x1="1046" y1="77" x2="1125" y2="66" class="cv-edge hl" opacity="0.47"/><line x1="1046" y1="77" x2="975" y2="88" class="cv-edge hl" opacity="0.53"/><line x1="803" y1="254" x2="813" y2="212" class="cv-edge" opacity="0.71"/><line x1="803" y1="254" x2="728" y2="196" class="cv-edge" opacity="0.37"/><line x1="803" y1="254" x2="784" y2="364" class="cv-edge" opacity="0.26"/><line x1="803" y1="254" x2="877" y2="208" class="cv-edge" opacity="0.42"/><line x1="803" y1="254" x2="825" y2="162" class="cv-edge" opacity="0.37"/><line x1="803" y1="254" x2="771" y2="248" class="cv-edge" opacity="0.78"/><line x1="968" y1="350" x2="952" y2="365" class="cv-edge hl" opacity="0.85"/><line x1="526" y1="154" x2="596" y2="186" class="cv-edge" opacity="0.49"/><line x1="526" y1="154" x2="589" y2="113" class="cv-edge" opacity="0.50"/><line x1="1026" y1="179" x2="1125" y2="66" class="cv-edge" opacity="0.00"/><line x1="1026" y1="179" x2="975" y2="88" class="cv-edge" opacity="0.31"/><line x1="813" y1="212" x2="728" y2="196" class="cv-edge" opacity="0.43"/><line x1="813" y1="212" x2="877" y2="208" class="cv-edge" opacity="0.57"/><line x1="813" y1="212" x2="825" y2="162" class="cv-edge" opacity="0.66"/><line x1="813" y1="212" x2="701" y2="125" class="cv-edge" opacity="0.06"/><line x1="813" y1="212" x2="771" y2="248" class="cv-edge" opacity="0.63"/><line x1="794" y1="44" x2="825" y2="162" class="cv-edge hl" opacity="0.19"/><line x1="794" y1="44" x2="701" y2="125" class="cv-edge hl" opacity="0.18"/><line x1="596" y1="186" x2="728" y2="196" class="cv-edge" opacity="0.11"/><line x1="596" y1="186" x2="589" y2="113" class="cv-edge" opacity="0.52"/><line x1="596" y1="186" x2="701" y2="125" class="cv-edge" opacity="0.19"/><line x1="728" y1="196" x2="877" y2="208" class="cv-edge" opacity="0.01"/><line x1="728" y1="196" x2="825" y2="162" class="cv-edge" opacity="0.31"/><line x1="728" y1="196" x2="701" y2="125" class="cv-edge" opacity="0.49"/><line x1="728" y1="196" x2="771" y2="248" class="cv-edge" opacity="0.55"/><line x1="784" y1="364" x2="771" y2="248" class="cv-edge" opacity="0.22"/><line x1="589" y1="113" x2="701" y2="125" class="cv-edge" opacity="0.25"/><line x1="877" y1="208" x2="825" y2="162" class="cv-edge" opacity="0.54"/><line x1="877" y1="208" x2="771" y2="248" class="cv-edge" opacity="0.25"/><line x1="825" y1="162" x2="701" y2="125" class="cv-edge" opacity="0.14"/><line x1="825" y1="162" x2="771" y2="248" class="cv-edge" opacity="0.32"/><line x1="701" y1="125" x2="771" y2="248" class="cv-edge" opacity="0.06"/><circle cx="712" cy="178" r="6" class="cv-dot hl"/><circle cx="604" cy="80" r="3" class="cv-dot"/><circle cx="957" cy="292" r="6" class="cv-dot hl"/><circle cx="757" cy="243" r="6" class="cv-dot hl"/><circle cx="911" cy="83" r="3" class="cv-dot"/><circle cx="1046" cy="322" r="6" class="cv-dot hl"/><circle cx="789" cy="390" r="3" class="cv-dot"/><circle cx="1046" cy="77" r="6" class="cv-dot hl"/><circle cx="803" cy="254" r="3" class="cv-dot"/><circle cx="968" cy="350" r="6" class="cv-dot hl"/><circle cx="526" cy="154" r="3" class="cv-dot"/><circle cx="1026" cy="179" r="3" class="cv-dot"/><circle cx="813" cy="212" r="3" class="cv-dot"/><circle cx="794" cy="44" r="6" class="cv-dot hl"/><circle cx="596" cy="186" r="3" class="cv-dot"/><circle cx="1125" cy="66" r="3" class="cv-dot"/><circle cx="728" cy="196" r="3" class="cv-dot"/><circle cx="952" cy="365" r="3" class="cv-dot"/><circle cx="784" cy="364" r="3" class="cv-dot"/><circle cx="1129" cy="341" r="3" class="cv-dot"/><circle cx="975" cy="88" r="3" class="cv-dot"/><circle cx="589" cy="113" r="3" class="cv-dot"/><circle cx="877" cy="208" r="3" class="cv-dot"/><circle cx="825" cy="162" r="3" class="cv-dot"/><circle cx="701" cy="125" r="3" class="cv-dot"/><circle cx="771" cy="248" r="3" class="cv-dot"/><text x="60" y="90" class="cv-k">EXPLAINER · DATA PLATFORMS</text><text x="60" y="350" class="cv-n">18 Oct 2026 · 19:35 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <p>The most common RAG failure I see is not the model. It is retrieval returning the wrong passages. Ask a vector-only system about "ICD-10 J45.40" or a specific contract clause number, and it will happily return text that is semantically similar and factually useless.</p>
+<p>The fix has a name, hybrid search, and MongoDB announced general availability of native support for it this year, through two aggregation stages: <code>$rankFusion</code> and <code>$scoreFusion</code><sup class="cite"><a href="#ref-1">1</a></sup>. As a MongoDB Community Leader I get asked about this a lot, so here is how I think about it.</p>
+
+<section class="block">
+<h2 id="why-vector-search-alone-isn-t-enough">Why vector search alone isn't enough</h2>
+<p>Embeddings capture meaning. That is their strength and their weakness. They are good at "how do I cancel my subscription" matching "terminating your plan". They are poor at exact identifiers, rare names, codes and numbers, where a single character changes the answer.</p>
+<p>Full-text search has the opposite profile: precise on terms, blind to paraphrase. Hybrid search runs both and merges the results into a single ranked list<sup class="cite"><a href="#ref-2">2</a></sup>. In domains full of codes, like healthcare, finance and legal, I now treat it as the default rather than an optimisation.</p>
+</section>
+
+<section class="block">
+<h2 id="two-ways-to-merge">Two ways to merge</h2>
+<table class="tbl">
+<thead><tr><th>Stage</th><th>How it merges</th><th>When I use it</th></tr></thead>
+<tbody>
+<tr><td><code>$rankFusion</code></td><td>By each document's position in each sub-pipeline, using reciprocal rank fusion</td><td>The default. Scores from vector and text search aren't comparable, and rank fusion doesn't need them to be</td></tr>
+<tr><td><code>$scoreFusion</code></td><td>By normalised scores, combined with weights</td><td>When you have an evaluation set and want finer control over how much each signal counts</td></tr>
+</tbody>
+</table>
+<p>Reciprocal rank fusion gives each document a score based on the reciprocal of its rank in each list, offset by a constant, and sums across lists<sup class="cite"><a href="#ref-2">2</a></sup>. A document that ranks well in both lists rises to the top. It is simple, hard to break, and needs almost no tuning, which is why I start there.</p>
+</section>
+
+<section class="block">
+<h2 id="what-a-hybrid-query-looks-like">What a hybrid query looks like</h2>
+<p>Each retrieval method is a named sub-pipeline. You can weight them, and the stage combines the results<sup class="cite"><a href="#ref-2">2</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>. In outline:</p>
+<pre><code>db.chunks.aggregate([
+  { $rankFusion: {
+      input: { pipelines: {
+        semantic: [
+          { $vectorSearch: { index: "chunks_vec", path: "embedding",
+                             queryVector: qv, numCandidates: 200, limit: 20 } }
+        ],
+        lexical: [
+          { $search: { index: "chunks_text",
+                       text: { query: q, path: ["title", "body"] } } },
+          { $limit: 20 }
+        ]
+      } },
+      combination: { weights: { semantic: 1, lexical: 1 } }
+  } },
+  { $match: { tenant_id: tenantId, acl: { $in: userGroups } } },
+  { $limit: 8 }
+])</code></pre>
+<p>Treat this as a sketch and check the documentation for exact options and version requirements. Two details matter more than the syntax. First, keep candidate counts generous in each sub-pipeline so fusion has something to work with. Second, apply permission filters inside the retrieval stages where your indexes support it, not only after, so users never retrieve what they couldn't open. The final <code>$match</code> above is a belt-and-braces check, not the main control.</p>
+</section>
+
+<section class="block">
+<h2 id="tuning-without-guessing">Tuning without guessing</h2>
+<p>Hybrid search makes retrieval better on average. It does not tell you whether it made <em>your</em> retrieval better. That needs an evaluation set.</p>
+<ol>
+<li><strong>Build 100 to 300 real questions</strong> with the passages that should answer them. Include exact-term questions on purpose.</li>
+<li><strong>Measure recall at k</strong> for vector-only, text-only and hybrid. You want to see hybrid beat both, especially on the exact-term questions.</li>
+<li><strong>Adjust weights only with evidence.</strong> If lexical matches dominate in a code-heavy domain, weight them up and re-measure.</li>
+<li><strong>Consider a reranker after fusion.</strong> MongoDB's documentation describes reordering fused results by relevance as a further step<sup class="cite"><a href="#ref-2">2</a></sup>. It costs latency, so earn it with numbers.</li>
+</ol>
+<p>This is the same discipline I describe in the <a href="/insights/rag-to-production-checklist/">RAG production checklist</a>: no retrieval change ships without an evaluation run.</p>
+</section>
+
+<section class="block">
+<h2 id="data-modelling-still-decides-the-outcome">Data modelling still decides the outcome</h2>
+<p>Fusion can't rescue badly shaped data. A few modelling choices make the biggest difference in my experience:</p>
+<ul>
+<li><strong>Chunk by structure, not by character count.</strong> Sections, clauses and table rows make better retrieval units than arbitrary windows.</li>
+<li><strong>Store identifiers as fields as well as text.</strong> Codes, SKUs and clause numbers in their own fields can be matched exactly and filtered on.</li>
+<li><strong>Keep provenance on every chunk.</strong> Source document, version, owner and access list travel with the chunk so answers can cite and permissions can be enforced.</li>
+<li><strong>Link chunks to entities.</strong> When chunks reference concepts in a domain model, you can combine hybrid search with graph-style traversal. That is the bridge to the ideas in <a href="/insights/ontology-vs-knowledge-graph-vs-semantic-layer/">ontology, knowledge graph and semantic layer</a>.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2 id="one-database-or-two">One database or two?</h2>
+<p>Running vector search, full-text search and operational data in one place removes a synchronisation problem that bites many RAG systems: the vector store lagging behind the source of truth. MongoDB has been pushing this single-platform approach for a while<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-5">5</a></sup>. It is not always the right call. At very large scale or with specialised retrieval needs a dedicated engine can still win. For most teams I work with, fewer moving parts beats a marginal relevance gain.</p>
+</section>
+
+<section class="block">
+<h2 id="how-i-can-help">How I can help</h2>
+<p>I design retrieval and data models for production RAG, from MongoDB schema and indexes to evaluation harnesses. See my <a href="/ai-architect/">AI architecture work</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://www.mongodb.com/products/updates/now-ga-hybrid-search-with-rankfusion-and-scorefusion/" target="_blank" rel="noopener">Now GA: Hybrid Search with $rankFusion and $scoreFusion</a><small>MongoDB · Jun 2026</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://mongodb.com/docs/atlas/atlas-vector-search/hybrid-search/" target="_blank" rel="noopener">Perform hybrid search with MongoDB Vector Search and MongoDB Search</a><small>MongoDB documentation</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://mongodb.com/blog/post/product-release-announcements/boost-search-relevance-mongodb-atlas-native-hybrid-search" target="_blank" rel="noopener">Boost search relevance with MongoDB Atlas native hybrid search</a><small>MongoDB blog · 2025</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://mongodb.com/company/blog/technical/harness-power-atlas-search-vector-search-with-rankfusion" target="_blank" rel="noopener">Harness the power of Atlas Search and Vector Search with $rankFusion</a><small>MongoDB blog</small></div></li><li id="ref-5"><span class="rn">5</span><div><a href="https://dev.to/mongodb/beyond-keywords-hybrid-search-with-atlas-and-vector-search-part-3-5fp3" target="_blank" rel="noopener">Beyond keywords: hybrid search with Atlas and Vector Search (part 3)</a><small>DEV Community, MongoDB</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fcaeser1996.github.io%2Finsights%2Fmongodb-hybrid-search-rag%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fcaeser1996.github.io%2Finsights%2Fmongodb-hybrid-search-rag%2F&amp;text=Hybrid%20search%20for%20RAG%20in%20MongoDB%3A%20when%20to%20use%20%24rankFusion%2C%20and%20when%20%24scoreFusion" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=Hybrid%20search%20for%20RAG%20in%20MongoDB%3A%20when%20to%20use%20%24rankFusion%2C%20and%20when%20%24scoreFusion%20https%3A%2F%2Fcaeser1996.github.io%2Finsights%2Fmongodb-hybrid-search-rag%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://caeser1996.github.io/insights/mongodb-hybrid-search-rag/">Copy link</button></div>
+      <div class="pnav"><a class="pn prev" href="/insights/uae-pdpl-ai-architecture-2026/"><small>← Previous</small><b>UAE PDPL and AI in 2026: designing for a law whose detailed rules aren&#x27;t written yet</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#why-vector-search-alone-isn-t-enough">Why vector search alone isn&#x27;t enough</a></li><li><a href="#two-ways-to-merge">Two ways to merge</a></li><li><a href="#what-a-hybrid-query-looks-like">What a hybrid query looks like</a></li><li><a href="#tuning-without-guessing">Tuning without guessing</a></li><li><a href="#data-modelling-still-decides-the-outcome">Data modelling still decides the outcome</a></li><li><a href="#one-database-or-two">One database or two?</a></li><li><a href="#how-i-can-help">How I can help</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>What is hybrid search?</summary><p>Hybrid search runs a semantic (vector) query and a lexical (full-text) query and merges the results into one ranked list, so you get documents that match the meaning of a question and documents that contain its exact terms.</p></details><details class="rise"><summary>What is the difference between $rankFusion and $scoreFusion?</summary><p>$rankFusion merges results by their positions in each sub-pipeline using reciprocal rank fusion, so raw scores don&#x27;t need to be comparable. $scoreFusion merges normalised scores with weights, which gives finer control but needs more tuning.</p></details><details class="rise"><summary>Is MongoDB hybrid search generally available?</summary><p>MongoDB announced general availability of native hybrid search with $rankFusion and $scoreFusion in mid-2026, after a public preview in 2025. Check the current documentation for version requirements.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/ai-architect/"><small>Service</small><b>AI &amp; LLM architecture</b><span>I design and build AI systems that leadership can trust: grounded in your data, measured by evaluations, governed by your rules and priced so they make sense at scale.</span><i>→</i></a><a class="rcard rise" href="/ontology-knowledge-graph/"><small>Service</small><b>Ontology &amp; knowledge graphs</b><span>I help organisations agree what their data means, write it down as an ontology and put it to work in a knowledge graph that analytics, APIs and AI agents can all rely on.</span><i>→</i></a><a class="rcard rise" href="/fractional-cto/"><small>Service</small><b>Fractional CTO</b><span>I work as a part-time CTO for founders, CEOs and boards who need experienced technical judgement now, and a team that can carry it on after I step back.</span><i>→</i></a><a class="rcard rise" href="/insights/uae-pdpl-ai-architecture-2026/"><small>Insight</small><b>UAE PDPL and AI in 2026: designing for a law whose detailed rules aren&#x27;t written yet</b><span>The federal data protection law has applied since 2022, the free zones run their own regimes, and DIFC already has rules aimed at AI systems. Here is how I turn that patchwork into one platform design.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: Hybrid search for RAG in MongoDB: when to use $rankFusion, and when $scoreFusion">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, healthcare data and cloud infrastructure, from strategy to production.</p>
+        <p class="floc">United States &amp; UAE · working globally</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/uae/">Fractional CTO in the UAE</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/mongodb-hybrid-search-rag/">Hybrid search for RAG in MongoDB: when to use $rankFusion, and when $scoreFusion</a></li><li><a href="/insights/uae-pdpl-ai-architecture-2026/">UAE PDPL and AI in 2026: designing for a law whose detailed rules aren&#x27;t written yet</a></li><li><a href="/insights/briefing-2026-09/">September 2026 briefing: GPUs get smarter scheduling, idle workloads scale to zero, and observability grows up</a></li><li><a href="/insights/briefing-2026-08/">August 2026 briefing: Kubernetes 1.37, the new MCP roadmap and AI transparency rules go live</a></li><li><a href="/insights/briefing-2026-07/">July 2026 briefing: MCP goes stateless, the AI Act moves its deadlines, and the UAE gets easier access to AI chips</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>

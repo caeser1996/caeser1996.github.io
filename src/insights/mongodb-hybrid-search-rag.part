@@ -1,0 +1,78 @@
+<!--{"title": "Hybrid search for RAG in MongoDB: $rankFusion vs $scoreFusion", "description": "Vector search alone misses exact terms. How I use MongoDB's $rankFusion and $scoreFusion to combine vector and full-text retrieval for RAG, and how to tune them.", "h1": "Hybrid search for RAG in MongoDB: when to use $rankFusion, and when $scoreFusion", "kicker": "Data platforms", "lede": "Pure vector search is great at meaning and poor at exact terms like product codes and drug names. Hybrid search fixes that, and MongoDB now does it natively. Here is how I set it up for retrieval-augmented generation.", "date": "2026-10-18", "datetime": "2026-10-18T19:35:00+04:00", "readtime": "8 min read", "format": "explainer", "tags": ["data", "rag", "ai", "mongodb", "llm"], "keywords": ["MongoDB hybrid search", "$rankFusion", "$scoreFusion", "MongoDB Atlas Vector Search", "reciprocal rank fusion", "RAG retrieval quality", "hybrid search RAG", "vector search and full-text search", "MongoDB for AI", "MongoDB consultant"], "faq": [["What is hybrid search?", "Hybrid search runs a semantic (vector) query and a lexical (full-text) query and merges the results into one ranked list, so you get documents that match the meaning of a question and documents that contain its exact terms."], ["What is the difference between $rankFusion and $scoreFusion?", "$rankFusion merges results by their positions in each sub-pipeline using reciprocal rank fusion, so raw scores don't need to be comparable. $scoreFusion merges normalised scores with weights, which gives finer control but needs more tuning."], ["Is MongoDB hybrid search generally available?", "MongoDB announced general availability of native hybrid search with $rankFusion and $scoreFusion in mid-2026, after a public preview in 2025. Check the current documentation for version requirements."]], "related": ["/ai-architect/", "/ontology-knowledge-graph/", "/fractional-cto/"], "citations": [{"title": "Now GA: Hybrid Search with $rankFusion and $scoreFusion", "url": "https://www.mongodb.com/products/updates/now-ga-hybrid-search-with-rankfusion-and-scorefusion/", "publisher": "MongoDB", "date": "Jun 2026"}, {"title": "Perform hybrid search with MongoDB Vector Search and MongoDB Search", "url": "https://mongodb.com/docs/atlas/atlas-vector-search/hybrid-search/", "publisher": "MongoDB documentation"}, {"title": "Boost search relevance with MongoDB Atlas native hybrid search", "url": "https://mongodb.com/blog/post/product-release-announcements/boost-search-relevance-mongodb-atlas-native-hybrid-search", "publisher": "MongoDB blog", "date": "2025"}, {"title": "Harness the power of Atlas Search and Vector Search with $rankFusion", "url": "https://mongodb.com/company/blog/technical/harness-power-atlas-search-vector-search-with-rankfusion", "publisher": "MongoDB blog"}, {"title": "Beyond keywords: hybrid search with Atlas and Vector Search (part 3)", "url": "https://dev.to/mongodb/beyond-keywords-hybrid-search-with-atlas-and-vector-search-part-3-5fp3", "publisher": "DEV Community, MongoDB"}]}-->
+<p>The most common RAG failure I see is not the model. It is retrieval returning the wrong passages. Ask a vector-only system about "ICD-10 J45.40" or a specific contract clause number, and it will happily return text that is semantically similar and factually useless.</p>
+<p>The fix has a name, hybrid search, and MongoDB announced general availability of native support for it this year, through two aggregation stages: <code>$rankFusion</code> and <code>$scoreFusion</code><sup class="cite"><a href="#ref-1">1</a></sup>. As a MongoDB Community Leader I get asked about this a lot, so here is how I think about it.</p>
+
+<section class="block">
+<h2>Why vector search alone isn't enough</h2>
+<p>Embeddings capture meaning. That is their strength and their weakness. They are good at "how do I cancel my subscription" matching "terminating your plan". They are poor at exact identifiers, rare names, codes and numbers, where a single character changes the answer.</p>
+<p>Full-text search has the opposite profile: precise on terms, blind to paraphrase. Hybrid search runs both and merges the results into a single ranked list<sup class="cite"><a href="#ref-2">2</a></sup>. In domains full of codes, like healthcare, finance and legal, I now treat it as the default rather than an optimisation.</p>
+</section>
+
+<section class="block">
+<h2>Two ways to merge</h2>
+<table class="tbl">
+<thead><tr><th>Stage</th><th>How it merges</th><th>When I use it</th></tr></thead>
+<tbody>
+<tr><td><code>$rankFusion</code></td><td>By each document's position in each sub-pipeline, using reciprocal rank fusion</td><td>The default. Scores from vector and text search aren't comparable, and rank fusion doesn't need them to be</td></tr>
+<tr><td><code>$scoreFusion</code></td><td>By normalised scores, combined with weights</td><td>When you have an evaluation set and want finer control over how much each signal counts</td></tr>
+</tbody>
+</table>
+<p>Reciprocal rank fusion gives each document a score based on the reciprocal of its rank in each list, offset by a constant, and sums across lists<sup class="cite"><a href="#ref-2">2</a></sup>. A document that ranks well in both lists rises to the top. It is simple, hard to break, and needs almost no tuning, which is why I start there.</p>
+</section>
+
+<section class="block">
+<h2>What a hybrid query looks like</h2>
+<p>Each retrieval method is a named sub-pipeline. You can weight them, and the stage combines the results<sup class="cite"><a href="#ref-2">2</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>. In outline:</p>
+<pre><code>db.chunks.aggregate([
+  { $rankFusion: {
+      input: { pipelines: {
+        semantic: [
+          { $vectorSearch: { index: "chunks_vec", path: "embedding",
+                             queryVector: qv, numCandidates: 200, limit: 20 } }
+        ],
+        lexical: [
+          { $search: { index: "chunks_text",
+                       text: { query: q, path: ["title", "body"] } } },
+          { $limit: 20 }
+        ]
+      } },
+      combination: { weights: { semantic: 1, lexical: 1 } }
+  } },
+  { $match: { tenant_id: tenantId, acl: { $in: userGroups } } },
+  { $limit: 8 }
+])</code></pre>
+<p>Treat this as a sketch and check the documentation for exact options and version requirements. Two details matter more than the syntax. First, keep candidate counts generous in each sub-pipeline so fusion has something to work with. Second, apply permission filters inside the retrieval stages where your indexes support it, not only after, so users never retrieve what they couldn't open. The final <code>$match</code> above is a belt-and-braces check, not the main control.</p>
+</section>
+
+<section class="block">
+<h2>Tuning without guessing</h2>
+<p>Hybrid search makes retrieval better on average. It does not tell you whether it made <em>your</em> retrieval better. That needs an evaluation set.</p>
+<ol>
+<li><strong>Build 100 to 300 real questions</strong> with the passages that should answer them. Include exact-term questions on purpose.</li>
+<li><strong>Measure recall at k</strong> for vector-only, text-only and hybrid. You want to see hybrid beat both, especially on the exact-term questions.</li>
+<li><strong>Adjust weights only with evidence.</strong> If lexical matches dominate in a code-heavy domain, weight them up and re-measure.</li>
+<li><strong>Consider a reranker after fusion.</strong> MongoDB's documentation describes reordering fused results by relevance as a further step<sup class="cite"><a href="#ref-2">2</a></sup>. It costs latency, so earn it with numbers.</li>
+</ol>
+<p>This is the same discipline I describe in the <a href="/insights/rag-to-production-checklist/">RAG production checklist</a>: no retrieval change ships without an evaluation run.</p>
+</section>
+
+<section class="block">
+<h2>Data modelling still decides the outcome</h2>
+<p>Fusion can't rescue badly shaped data. A few modelling choices make the biggest difference in my experience:</p>
+<ul>
+<li><strong>Chunk by structure, not by character count.</strong> Sections, clauses and table rows make better retrieval units than arbitrary windows.</li>
+<li><strong>Store identifiers as fields as well as text.</strong> Codes, SKUs and clause numbers in their own fields can be matched exactly and filtered on.</li>
+<li><strong>Keep provenance on every chunk.</strong> Source document, version, owner and access list travel with the chunk so answers can cite and permissions can be enforced.</li>
+<li><strong>Link chunks to entities.</strong> When chunks reference concepts in a domain model, you can combine hybrid search with graph-style traversal. That is the bridge to the ideas in <a href="/insights/ontology-vs-knowledge-graph-vs-semantic-layer/">ontology, knowledge graph and semantic layer</a>.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>One database or two?</h2>
+<p>Running vector search, full-text search and operational data in one place removes a synchronisation problem that bites many RAG systems: the vector store lagging behind the source of truth. MongoDB has been pushing this single-platform approach for a while<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-5">5</a></sup>. It is not always the right call. At very large scale or with specialised retrieval needs a dedicated engine can still win. For most teams I work with, fewer moving parts beats a marginal relevance gain.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I design retrieval and data models for production RAG, from MongoDB schema and indexes to evaluation harnesses. See my <a href="/ai-architect/">AI architecture work</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
