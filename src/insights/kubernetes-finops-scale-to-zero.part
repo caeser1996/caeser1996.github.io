@@ -1,0 +1,58 @@
+<!--{"title": "Kubernetes FinOps in 2026: scale to zero, resize in place, allocate", "description": "Kubernetes 1.36 and 1.37 added in-place pod resize and HPA scale-to-zero. A practical FinOps playbook for cutting cluster cost without hurting reliability.", "h1": "Kubernetes FinOps in 2026: scale to zero, resize in place, and know who pays", "kicker": "Cloud & platform", "lede": "Two recent Kubernetes releases quietly changed the cost conversation. Here is the playbook I use to turn them into a lower bill, without trading away reliability.", "date": "2026-10-18", "datetime": "2026-10-18T20:15:00+04:00", "readtime": "8 min read", "format": "playbook", "tags": ["kubernetes", "platform", "finops", "cloud"], "keywords": ["Kubernetes FinOps", "Kubernetes cost optimisation", "HPA scale to zero", "Kubernetes 1.37", "in-place pod resize", "pod-level resources", "OpenCost", "FinOps Framework", "cloud cost allocation", "GPU cost Kubernetes", "platform engineering"], "faq": [["Can Kubernetes scale a deployment to zero without add-ons?", "Since Kubernetes v1.37, the HorizontalPodAutoscaler can scale a workload to zero and back when it uses a suitable object or external metric, such as queue length. CPU and memory metrics don't work for this because they come from running pods."], ["What is in-place pod resize?", "It lets you change a running pod's CPU and memory without recreating it, where the container's resize policy allows. Kubernetes v1.36 extended this to pod-level resources, which suits pods with sidecars that share a resource pool."], ["Where should a Kubernetes FinOps programme start?", "With cost allocation. Until each namespace, team and product has a visible cost, optimisation work has no owner and no way to measure success. Tools such as OpenCost provide this allocation for Kubernetes."]], "related": ["/fractional-cto/", "/ai-architect/", "/technical-due-diligence/"], "citations": [{"title": "Kubernetes v1.37: Scale Workloads to Zero with HorizontalPodAutoscaler", "url": "https://kubernetes.io/blog/2026/09/02/kubernetes-v1-37-hpa-scale-to-zero-beta/", "publisher": "Kubernetes blog", "date": "2 Sep 2026"}, {"title": "Kubernetes v1.36: In-Place Vertical Scaling for Pod-Level Resources Graduates to Beta", "url": "https://kubernetes.io/blog/2026/04/30/kubernetes-v1-36-inplace-pod-level-resources-beta/", "publisher": "Kubernetes blog", "date": "30 Apr 2026"}, {"title": "OpenCost FAQ", "url": "https://opencost.io/docs/FAQ", "publisher": "OpenCost project"}, {"title": "OpenCost moves to CNCF incubation", "url": "https://www.opencost.io/blog/cncf-incubation", "publisher": "OpenCost blog"}, {"title": "2025 FinOps Framework updates", "url": "https://www.opsnow.com/en/post/2025-finops-framework-updates", "publisher": "OpsNow"}]}-->
+<p>Most Kubernetes bills I review have the same shape: a lot of capacity reserved for peaks that rarely come, workers idling overnight, and nobody quite sure which team owns which share. Two features from this year's releases make two of those problems much easier to fix. The third, ownership, is still a people problem.</p>
+
+<section class="block">
+<h2>What changed this year</h2>
+<figure class="fig"><div class="im"><img src="/assets/img/briefings/k8s-v1-37.webp" alt="Kubernetes v1.37 release logo" width="1200" height="1156" loading="lazy"></div><figcaption>Kubernetes v1.37 brought HorizontalPodAutoscaler scale-to-zero into core Kubernetes as a beta feature. <span class="credit">Source: <a href="https://kubernetes.io/blog/2026/08/26/kubernetes-v1-37-release/" target="_blank" rel="noopener">Kubernetes project, Kubernetes v1.37 release</a> · CC BY 4.0</span></figcaption></figure>
+<table class="tbl">
+<thead><tr><th>Feature</th><th>Release</th><th>Why it matters for cost</th></tr></thead>
+<tbody>
+<tr><td>In-place resize for pod-level resources (beta)</td><td>v1.36</td><td>Grow or shrink a pod's shared CPU and memory pool without recreating it<sup class="cite"><a href="#ref-2">2</a></sup></td></tr>
+<tr><td>HPA scale to zero (beta)</td><td>v1.37</td><td>Remove the last idle pod for queue consumers and batch workers, without an add-on<sup class="cite"><a href="#ref-1">1</a></sup></td></tr>
+</tbody>
+</table>
+</section>
+
+<section class="block">
+<h2>Scale to zero: where it pays, and where it bites</h2>
+<p>The Kubernetes post is clear about the mechanics. CPU and memory metrics come from running pods, so once you reach zero there is nothing left to measure. Scaling from zero therefore needs an object or external metric, such as a queue length, that exists independently of the workers<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<p>It is just as clear about the trade-off: cold starts. The autoscaler has to see the metric, schedule a pod and start the application. And Services do not buffer requests while no pods are ready, so request-driven HTTP workloads need a separate buffering layer<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<div class="callout"><p>My rule: scale to zero where work can wait in a durable queue. Queue consumers, report generators, document processors and nightly jobs are ideal. User-facing APIs are not, unless you add buffering and accept the latency.</p></div>
+<p>The savings are largest where each pod reserves expensive capacity, such as dedicated CPUs or GPUs<sup class="cite"><a href="#ref-1">1</a></sup>. That makes this especially relevant for AI workloads: embedding pipelines and batch inference workers that sit idle between jobs.</p>
+</section>
+
+<section class="block">
+<h2>Resize in place instead of over-provisioning</h2>
+<p>Teams over-provision because changing resources used to mean restarting pods. In-place resize weakens that excuse. With pod-level resources, containers without their own limits share a pool, and from v1.36 you can resize that pool on a running pod. The kubelet applies it without a restart where the container's resize policy allows, and reports a pending condition if the node cannot fit the change<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<p>In practice I use this to set requests closer to real usage and resize during known peaks, rather than reserving the peak all day. Treat it as a tool for planned changes first. Automating it well needs good metrics and conservative policies.</p>
+</section>
+
+<section class="block">
+<h2>Allocation first, optimisation second</h2>
+<p>None of this sticks without ownership. The FinOps Framework organises the work into inform, optimise and operate phases, and starts with making costs visible and attributable<sup class="cite"><a href="#ref-5">5</a></sup>. On Kubernetes that means allocating cluster cost to namespaces, workloads and labels, including the cost of idle capacity.</p>
+<p>OpenCost is the open-source option I reach for. It pairs a cost allocation engine with a community specification for Kubernetes cost monitoring, and it is a CNCF incubating project<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>. Once every team sees its own number each week, optimisation stops being a platform-team crusade.</p>
+</section>
+
+<section class="block">
+<h2>The playbook</h2>
+<ol>
+<li><strong>Label everything</strong> with team, product and environment. Enforce it at admission so unlabelled workloads can't be deployed.</li>
+<li><strong>Turn on allocation</strong> and publish a weekly cost per team, including their share of idle capacity.</li>
+<li><strong>Find the idle workers.</strong> Queue consumers and batch jobs that run around the clock are your first scale-to-zero candidates.</li>
+<li><strong>Move them to queue-based scaling</strong> on an external metric, then let them scale to zero. Measure cold-start impact before and after.</li>
+<li><strong>Right-size requests</strong> using real usage, and use in-place resize for planned peaks instead of permanent headroom.</li>
+<li><strong>Put GPUs on a short leash.</strong> Dedicated GPU pools with scale-to-zero for batch inference, and a clear owner for every GPU node.</li>
+<li><strong>Track unit cost</strong>: cost per transaction, per tenant or per thousand AI requests. A falling unit cost is the only number that proves the work.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2>What not to cut</h2>
+<p>Cost work goes wrong when it eats into reliability. I protect three things: headroom for the critical user path, redundancy across zones for anything customer-facing, and the observability needed to see what the changes did. Saving money and causing an outage is not a win.</p>
+<p>Unit cost is also a useful lens in due diligence. A company that can tell you its cost per customer and how it falls with scale is usually in control of its platform. I cover more of this in my <a href="/technical-due-diligence/">technical due diligence</a> work.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I run short platform and cost reviews that end with an allocation model, a list of safe savings and a plan to keep them. As a <a href="/fractional-cto/">fractional CTO</a> I also help teams build the habits that stop the bill creeping back. Or <a href="/#assess">analyse your challenge</a> first and bring the result to a call.</p>
+</section>

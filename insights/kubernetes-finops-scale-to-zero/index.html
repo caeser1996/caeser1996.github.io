@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Kubernetes FinOps in 2026: scale to zero, resize in place, allocate</title>
+<meta name="description" content="Kubernetes 1.36 and 1.37 added in-place pod resize and HPA scale-to-zero. A practical FinOps playbook for cutting cluster cost without hurting reliability." />
+<meta name="keywords" content="Kubernetes FinOps, Kubernetes cost optimisation, HPA scale to zero, Kubernetes 1.37, in-place pod resize, pod-level resources, OpenCost, FinOps Framework, cloud cost allocation, GPU cost Kubernetes, platform engineering" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://caeser1996.github.io/insights/kubernetes-finops-scale-to-zero/" />
+<meta name="theme-color" content="#111214" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="Kubernetes FinOps in 2026: scale to zero, resize in place, allocate" />
+<meta property="og:description" content="Kubernetes 1.36 and 1.37 added in-place pod resize and HPA scale-to-zero. A practical FinOps playbook for cutting cluster cost without hurting reliability." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://caeser1996.github.io/insights/kubernetes-finops-scale-to-zero/" />
+<meta property="og:image" content="https://caeser1996.github.io/assets/og/kubernetes-finops-scale-to-zero.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Kubernetes FinOps in 2026: scale to zero, resize in place, allocate" />
+<meta name="twitter:description" content="Kubernetes 1.36 and 1.37 added in-place pod resize and HPA scale-to-zero. A practical FinOps playbook for cutting cluster cost without hurting reliability." />
+<meta name="twitter:image" content="https://caeser1996.github.io/assets/og/kubernetes-finops-scale-to-zero.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "BlogPosting", "headline": "Kubernetes FinOps in 2026: scale to zero, resize in place, and know who pays", "description": "Kubernetes 1.36 and 1.37 added in-place pod resize and HPA scale-to-zero. A practical FinOps playbook for cutting cluster cost without hurting reliability.", "datePublished": "2026-10-18T20:15:00+04:00", "dateModified": "2026-10-18T20:15:00+04:00", "articleSection": "Cloud & platform", "genre": "Playbook", "citation": [{"@type": "CreativeWork", "name": "Kubernetes v1.37: Scale Workloads to Zero with HorizontalPodAutoscaler", "url": "https://kubernetes.io/blog/2026/09/02/kubernetes-v1-37-hpa-scale-to-zero-beta/"}, {"@type": "CreativeWork", "name": "Kubernetes v1.36: In-Place Vertical Scaling for Pod-Level Resources Graduates to Beta", "url": "https://kubernetes.io/blog/2026/04/30/kubernetes-v1-36-inplace-pod-level-resources-beta/"}, {"@type": "CreativeWork", "name": "OpenCost FAQ", "url": "https://opencost.io/docs/FAQ"}, {"@type": "CreativeWork", "name": "OpenCost moves to CNCF incubation", "url": "https://www.opencost.io/blog/cncf-incubation"}, {"@type": "CreativeWork", "name": "2025 FinOps Framework updates", "url": "https://www.opsnow.com/en/post/2025-finops-framework-updates"}], "author": {"@type": "Person", "@id": "https://caeser1996.github.io/#person", "name": "Sumanta Mukhopadhyay", "url": "https://caeser1996.github.io/"}, "publisher": {"@type": "Person", "@id": "https://caeser1996.github.io/#person", "name": "Sumanta Mukhopadhyay", "url": "https://caeser1996.github.io/"}, "mainEntityOfPage": "https://caeser1996.github.io/insights/kubernetes-finops-scale-to-zero/", "image": "https://caeser1996.github.io/assets/og/kubernetes-finops-scale-to-zero.png", "keywords": "Kubernetes FinOps, Kubernetes cost optimisation, HPA scale to zero, Kubernetes 1.37, in-place pod resize, pod-level resources, OpenCost, FinOps Framework, cloud cost allocation, GPU cost Kubernetes, platform engineering", "wordCount": 807}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://caeser1996.github.io/"}, {"@type": "ListItem", "position": 2, "name": "Insights", "item": "https://caeser1996.github.io/insights/"}, {"@type": "ListItem", "position": 3, "name": "Kubernetes FinOps in 2026: scale to zero, resize in place, and know who pays", "item": "https://caeser1996.github.io/insights/kubernetes-finops-scale-to-zero/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Can Kubernetes scale a deployment to zero without add-ons?", "acceptedAnswer": {"@type": "Answer", "text": "Since Kubernetes v1.37, the HorizontalPodAutoscaler can scale a workload to zero and back when it uses a suitable object or external metric, such as queue length. CPU and memory metrics don't work for this because they come from running pods."}}, {"@type": "Question", "name": "What is in-place pod resize?", "acceptedAnswer": {"@type": "Answer", "text": "It lets you change a running pod's CPU and memory without recreating it, where the container's resize policy allows. Kubernetes v1.36 extended this to pod-level resources, which suits pods with sidecars that share a resource pool."}}, {"@type": "Question", "name": "Where should a Kubernetes FinOps programme start?", "acceptedAnswer": {"@type": "Answer", "text": "With cost allocation. Until each namespace, team and product has a visible cost, optimisation work has no owner and no way to measure success. Tools such as OpenCost provide this allocation for Kubernetes."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+</script>
+</head>
+<body class="sub is-post">
+<div class="progress" id="progress"></div>
+<nav>
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="/#practice">Services</a>
+      <a href="/#work">Case studies</a>
+      <a href="/insights/">Insights</a>
+      <a href="/#assess">Analyse</a>
+      <a href="/#connect">Connect</a>
+    </div>
+    <div class="nav-r">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/insights/">Insights</a> <span>/</span> <em>Kubernetes FinOps in 2026: scale to zero, resize in place, and know who pays</em></div>
+    <div class="kicker">Cloud &amp; platform</div>
+    <h1>Kubernetes FinOps in 2026: scale to zero, resize in place, and know who pays</h1>
+    <p class="sub-lede">Two recent Kubernetes releases quietly changed the cost conversation. Here is the playbook I use to turn them into a lower bill, without trading away reliability.</p>
+    <div class="ameta"><span class="fmt">Playbook</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-10-18T20:15:00+04:00">18 Oct 2026 · 20:15 GST</time><span>8 min read</span><span>5 sources</span></div><div class="atags"><span class="tagp">#kubernetes</span><span class="tagp">#platform</span><span class="tagp">#finops</span><span class="tagp">#cloud</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Playbook cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><circle cx="560" cy="61" r="8" class="cv-dot hl"/><rect x="590" y="50" width="474" height="22" class="cv-bar hl"/><circle cx="560" cy="109" r="8" class="cv-dot"/><rect x="590" y="98" width="485" height="22" class="cv-bar"/><circle cx="560" cy="157" r="8" class="cv-dot"/><rect x="590" y="146" width="194" height="22" class="cv-bar"/><circle cx="560" cy="205" r="8" class="cv-dot hl"/><rect x="590" y="194" width="291" height="22" class="cv-bar hl"/><circle cx="560" cy="253" r="8" class="cv-dot"/><rect x="590" y="242" width="239" height="22" class="cv-bar"/><circle cx="560" cy="301" r="8" class="cv-dot"/><rect x="590" y="290" width="325" height="22" class="cv-bar"/><circle cx="560" cy="349" r="8" class="cv-dot hl"/><rect x="590" y="338" width="212" height="22" class="cv-bar hl"/><text x="60" y="90" class="cv-k">PLAYBOOK · CLOUD &amp; PLATFORM</text><text x="60" y="350" class="cv-n">18 Oct 2026 · 20:15 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <p>Most Kubernetes bills I review have the same shape: a lot of capacity reserved for peaks that rarely come, workers idling overnight, and nobody quite sure which team owns which share. Two features from this year's releases make two of those problems much easier to fix. The third, ownership, is still a people problem.</p>
+
+<section class="block">
+<h2 id="what-changed-this-year">What changed this year</h2>
+<figure class="fig"><div class="im"><img src="/assets/img/briefings/k8s-v1-37.webp" alt="Kubernetes v1.37 release logo" width="1200" height="1156" loading="lazy"></div><figcaption>Kubernetes v1.37 brought HorizontalPodAutoscaler scale-to-zero into core Kubernetes as a beta feature. <span class="credit">Source: <a href="https://kubernetes.io/blog/2026/08/26/kubernetes-v1-37-release/" target="_blank" rel="noopener">Kubernetes project, Kubernetes v1.37 release</a> · CC BY 4.0</span></figcaption></figure>
+<table class="tbl">
+<thead><tr><th>Feature</th><th>Release</th><th>Why it matters for cost</th></tr></thead>
+<tbody>
+<tr><td>In-place resize for pod-level resources (beta)</td><td>v1.36</td><td>Grow or shrink a pod's shared CPU and memory pool without recreating it<sup class="cite"><a href="#ref-2">2</a></sup></td></tr>
+<tr><td>HPA scale to zero (beta)</td><td>v1.37</td><td>Remove the last idle pod for queue consumers and batch workers, without an add-on<sup class="cite"><a href="#ref-1">1</a></sup></td></tr>
+</tbody>
+</table>
+</section>
+
+<section class="block">
+<h2 id="scale-to-zero-where-it-pays-and-where-it-bites">Scale to zero: where it pays, and where it bites</h2>
+<p>The Kubernetes post is clear about the mechanics. CPU and memory metrics come from running pods, so once you reach zero there is nothing left to measure. Scaling from zero therefore needs an object or external metric, such as a queue length, that exists independently of the workers<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<p>It is just as clear about the trade-off: cold starts. The autoscaler has to see the metric, schedule a pod and start the application. And Services do not buffer requests while no pods are ready, so request-driven HTTP workloads need a separate buffering layer<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<div class="callout"><p>My rule: scale to zero where work can wait in a durable queue. Queue consumers, report generators, document processors and nightly jobs are ideal. User-facing APIs are not, unless you add buffering and accept the latency.</p></div>
+<p>The savings are largest where each pod reserves expensive capacity, such as dedicated CPUs or GPUs<sup class="cite"><a href="#ref-1">1</a></sup>. That makes this especially relevant for AI workloads: embedding pipelines and batch inference workers that sit idle between jobs.</p>
+</section>
+
+<section class="block">
+<h2 id="resize-in-place-instead-of-over-provisioning">Resize in place instead of over-provisioning</h2>
+<p>Teams over-provision because changing resources used to mean restarting pods. In-place resize weakens that excuse. With pod-level resources, containers without their own limits share a pool, and from v1.36 you can resize that pool on a running pod. The kubelet applies it without a restart where the container's resize policy allows, and reports a pending condition if the node cannot fit the change<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<p>In practice I use this to set requests closer to real usage and resize during known peaks, rather than reserving the peak all day. Treat it as a tool for planned changes first. Automating it well needs good metrics and conservative policies.</p>
+</section>
+
+<section class="block">
+<h2 id="allocation-first-optimisation-second">Allocation first, optimisation second</h2>
+<p>None of this sticks without ownership. The FinOps Framework organises the work into inform, optimise and operate phases, and starts with making costs visible and attributable<sup class="cite"><a href="#ref-5">5</a></sup>. On Kubernetes that means allocating cluster cost to namespaces, workloads and labels, including the cost of idle capacity.</p>
+<p>OpenCost is the open-source option I reach for. It pairs a cost allocation engine with a community specification for Kubernetes cost monitoring, and it is a CNCF incubating project<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>. Once every team sees its own number each week, optimisation stops being a platform-team crusade.</p>
+</section>
+
+<section class="block">
+<h2 id="the-playbook">The playbook</h2>
+<ol>
+<li><strong>Label everything</strong> with team, product and environment. Enforce it at admission so unlabelled workloads can't be deployed.</li>
+<li><strong>Turn on allocation</strong> and publish a weekly cost per team, including their share of idle capacity.</li>
+<li><strong>Find the idle workers.</strong> Queue consumers and batch jobs that run around the clock are your first scale-to-zero candidates.</li>
+<li><strong>Move them to queue-based scaling</strong> on an external metric, then let them scale to zero. Measure cold-start impact before and after.</li>
+<li><strong>Right-size requests</strong> using real usage, and use in-place resize for planned peaks instead of permanent headroom.</li>
+<li><strong>Put GPUs on a short leash.</strong> Dedicated GPU pools with scale-to-zero for batch inference, and a clear owner for every GPU node.</li>
+<li><strong>Track unit cost</strong>: cost per transaction, per tenant or per thousand AI requests. A falling unit cost is the only number that proves the work.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2 id="what-not-to-cut">What not to cut</h2>
+<p>Cost work goes wrong when it eats into reliability. I protect three things: headroom for the critical user path, redundancy across zones for anything customer-facing, and the observability needed to see what the changes did. Saving money and causing an outage is not a win.</p>
+<p>Unit cost is also a useful lens in due diligence. A company that can tell you its cost per customer and how it falls with scale is usually in control of its platform. I cover more of this in my <a href="/technical-due-diligence/">technical due diligence</a> work.</p>
+</section>
+
+<section class="block">
+<h2 id="how-i-can-help">How I can help</h2>
+<p>I run short platform and cost reviews that end with an allocation model, a list of safe savings and a plan to keep them. As a <a href="/fractional-cto/">fractional CTO</a> I also help teams build the habits that stop the bill creeping back. Or <a href="/#assess">analyse your challenge</a> first and bring the result to a call.</p>
+</section>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://kubernetes.io/blog/2026/09/02/kubernetes-v1-37-hpa-scale-to-zero-beta/" target="_blank" rel="noopener">Kubernetes v1.37: Scale Workloads to Zero with HorizontalPodAutoscaler</a><small>Kubernetes blog · 2 Sep 2026</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://kubernetes.io/blog/2026/04/30/kubernetes-v1-36-inplace-pod-level-resources-beta/" target="_blank" rel="noopener">Kubernetes v1.36: In-Place Vertical Scaling for Pod-Level Resources Graduates to Beta</a><small>Kubernetes blog · 30 Apr 2026</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://opencost.io/docs/FAQ" target="_blank" rel="noopener">OpenCost FAQ</a><small>OpenCost project</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://www.opencost.io/blog/cncf-incubation" target="_blank" rel="noopener">OpenCost moves to CNCF incubation</a><small>OpenCost blog</small></div></li><li id="ref-5"><span class="rn">5</span><div><a href="https://www.opsnow.com/en/post/2025-finops-framework-updates" target="_blank" rel="noopener">2025 FinOps Framework updates</a><small>OpsNow</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fcaeser1996.github.io%2Finsights%2Fkubernetes-finops-scale-to-zero%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fcaeser1996.github.io%2Finsights%2Fkubernetes-finops-scale-to-zero%2F&amp;text=Kubernetes%20FinOps%20in%202026%3A%20scale%20to%20zero%2C%20resize%20in%20place%2C%20and%20know%20who%20pays" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=Kubernetes%20FinOps%20in%202026%3A%20scale%20to%20zero%2C%20resize%20in%20place%2C%20and%20know%20who%20pays%20https%3A%2F%2Fcaeser1996.github.io%2Finsights%2Fkubernetes-finops-scale-to-zero%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://caeser1996.github.io/insights/kubernetes-finops-scale-to-zero/">Copy link</button></div>
+      <div class="pnav"><a class="pn prev" href="/insights/mongodb-hybrid-search-rag/"><small>← Previous</small><b>Hybrid search for RAG in MongoDB: when to use $rankFusion, and when $scoreFusion</b></a><a class="pn next" href="/insights/idempotent-payments-order-pipelines/"><small>Next →</small><b>Idempotency for payments and orders: how to never charge a customer twice</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#what-changed-this-year">What changed this year</a></li><li><a href="#scale-to-zero-where-it-pays-and-where-it-bites">Scale to zero: where it pays, and where it bites</a></li><li><a href="#resize-in-place-instead-of-over-provisioning">Resize in place instead of over-provisioning</a></li><li><a href="#allocation-first-optimisation-second">Allocation first, optimisation second</a></li><li><a href="#the-playbook">The playbook</a></li><li><a href="#what-not-to-cut">What not to cut</a></li><li><a href="#how-i-can-help">How I can help</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>Can Kubernetes scale a deployment to zero without add-ons?</summary><p>Since Kubernetes v1.37, the HorizontalPodAutoscaler can scale a workload to zero and back when it uses a suitable object or external metric, such as queue length. CPU and memory metrics don&#x27;t work for this because they come from running pods.</p></details><details class="rise"><summary>What is in-place pod resize?</summary><p>It lets you change a running pod&#x27;s CPU and memory without recreating it, where the container&#x27;s resize policy allows. Kubernetes v1.36 extended this to pod-level resources, which suits pods with sidecars that share a resource pool.</p></details><details class="rise"><summary>Where should a Kubernetes FinOps programme start?</summary><p>With cost allocation. Until each namespace, team and product has a visible cost, optimisation work has no owner and no way to measure success. Tools such as OpenCost provide this allocation for Kubernetes.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/fractional-cto/"><small>Service</small><b>Fractional CTO</b><span>I work as a part-time CTO for founders, CEOs and boards who need experienced technical judgement now, and a team that can carry it on after I step back.</span><i>→</i></a><a class="rcard rise" href="/ai-architect/"><small>Service</small><b>AI &amp; LLM architecture</b><span>I design and build AI systems that leadership can trust: grounded in your data, measured by evaluations, governed by your rules and priced so they make sense at scale.</span><i>→</i></a><a class="rcard rise" href="/technical-due-diligence/"><small>Service</small><b>Technical due diligence</b><span>I give investors an independent, plain-language view of a company&#x27;s technology, team and AI claims, so the risks are priced in before the deal closes, not discovered after.</span><i>→</i></a><a class="rcard rise" href="/insights/idempotent-payments-order-pipelines/"><small>Insight</small><b>Idempotency for payments and orders: how to never charge a customer twice</b><span>Networks fail, clients retry and messages arrive twice. In payments and order systems that is not an edge case, it is Tuesday. This is the pattern set I use to make retries safe.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: Kubernetes FinOps in 2026: scale to zero, resize in place, and know who pays">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
+        <p class="floc">United States &amp; UAE · working globally</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/uae/">Fractional CTO in the UAE</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/idempotent-payments-order-pipelines/">Idempotency for payments and orders: how to never charge a customer twice</a></li><li><a href="/insights/kubernetes-finops-scale-to-zero/">Kubernetes FinOps in 2026: scale to zero, resize in place, and know who pays</a></li><li><a href="/insights/mongodb-hybrid-search-rag/">Hybrid search for RAG in MongoDB: when to use $rankFusion, and when $scoreFusion</a></li><li><a href="/insights/uae-pdpl-ai-architecture-2026/">UAE PDPL and AI in 2026: designing for a law whose detailed rules aren&#x27;t written yet</a></li><li><a href="/insights/briefing-2026-09/">September 2026 briefing: GPUs get smarter scheduling, idle workloads scale to zero, and observability grows up</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>

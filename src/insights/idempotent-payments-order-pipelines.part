@@ -1,0 +1,67 @@
+<!--{"title": "Idempotency for payments and orders: never charge twice", "description": "Retries are inevitable, double charges are not. How I design idempotent payment and order pipelines with idempotency keys, the outbox pattern and safe consumers.", "h1": "Idempotency for payments and orders: how to never charge a customer twice", "kicker": "Fintech · E-commerce", "lede": "Networks fail, clients retry and messages arrive twice. In payments and order systems that is not an edge case, it is Tuesday. This is the pattern set I use to make retries safe.", "date": "2026-10-18", "datetime": "2026-10-18T20:30:00+04:00", "readtime": "8 min read", "format": "explainer", "tags": ["data", "fintech", "ecommerce", "platform"], "keywords": ["idempotency", "idempotency key", "Idempotency-Key header", "duplicate payments", "payment system design", "order pipeline", "transactional outbox", "event-driven architecture", "exactly-once processing", "fintech architecture", "e-commerce architecture"], "faq": [["What is an idempotency key?", "A unique value the client sends with a request so the server can recognise retries of the same operation. The server stores the first result for that key and returns it for repeats, instead of performing the operation again."], ["Is there a standard Idempotency-Key header?", "The IETF HTTPAPI working group has a draft, The Idempotency-Key HTTP Header Field, for making non-idempotent methods such as POST and PATCH fault-tolerant. It is still an Internet-Draft, so details can change."], ["Does exactly-once delivery solve duplicates?", "Not end to end. Relays and brokers can redeliver after failures, so consumers still need to be idempotent, for example by recording which message IDs they have already processed."]], "related": ["/technical-due-diligence/", "/fractional-cto/", "/ai-architect/"], "citations": [{"title": "The Idempotency-Key HTTP Header Field (draft-ietf-httpapi-idempotency-key-header-07)", "url": "https://datatracker.ietf.org/doc/html/draft-ietf-httpapi-idempotency-key-header", "publisher": "IETF HTTPAPI Working Group", "date": "Oct 2025"}, {"title": "Idempotent requests", "url": "https://docs.stripe.com/api/idempotent_requests", "publisher": "Stripe API documentation"}, {"title": "Pattern: Transactional outbox", "url": "https://microservices.io/patterns/data/transactional-outbox", "publisher": "microservices.io, Chris Richardson"}, {"title": "Implementing the outbox pattern", "url": "https://dzone.com/articles/implementing-the-outbox-pattern", "publisher": "DZone"}]}-->
+<p>I have spent a lot of time on high-volume transactional systems, including ones processing more than a million transactions a day. At that volume, every failure mode you think is rare happens daily. The one that hurts most is the duplicate: the customer charged twice, the order shipped twice, the refund issued twice.</p>
+<p>Duplicates come from retries, and retries are correct behaviour. A client that times out cannot know whether the server finished. So the job is not to stop retries. It is to make them safe.</p>
+
+<section class="block">
+<h2>Three places duplicates come from</h2>
+<table class="tbl">
+<thead><tr><th>Where</th><th>What happens</th><th>The fix</th></tr></thead>
+<tbody>
+<tr><td>Client to API</td><td>A timeout hides a success; the client retries</td><td>Idempotency keys on every state-changing request</td></tr>
+<tr><td>Database to events</td><td>The write commits but the event is lost, or the event goes out and the write rolls back</td><td>Transactional outbox</td></tr>
+<tr><td>Events to consumers</td><td>The broker or relay redelivers after a failure</td><td>Idempotent consumers that track processed message IDs</td></tr>
+</tbody>
+</table>
+</section>
+
+<section class="block">
+<h2>1. Idempotency keys at the edge</h2>
+<p>The client generates a unique key for each logical operation and sends it with the request. The server records the first outcome for that key and returns it for any retry. There is an IETF draft standardising this as an <code>Idempotency-Key</code> HTTP header, aimed at making non-idempotent methods like POST and PATCH fault-tolerant<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<p>Stripe's implementation is a good reference. It saves the status code and body of the first request for a key, including failures, and returns the saved result on retries. It also compares the parameters of a retry with the original and returns an error if they differ, which catches clients that reuse keys by mistake. Keys can be pruned once they are at least 24 hours old<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<p>Details I insist on:</p>
+<ul>
+<li><strong>Keys are per operation, not per request.</strong> A retry reuses the key; a new purchase gets a new one.</li>
+<li><strong>Store the key and the result in the same transaction</strong> as the business change, so they can't disagree.</li>
+<li><strong>Handle concurrent duplicates.</strong> Two identical requests arriving together should not both proceed. A unique constraint on the key, or a short lock, settles it.</li>
+<li><strong>Define the retention window</strong> and make clients aware of it.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>2. The transactional outbox</h2>
+<p>A classic bug: the service writes the order to its database, then publishes an "order created" event. If it crashes between the two, the order exists but nothing downstream knows. Reverse the order and you can announce an order that was never saved.</p>
+<p>The outbox pattern fixes this by writing the event into an outbox table in the same database transaction as the business data. A separate relay then publishes it, either by polling the table or by tailing the database log<sup class="cite"><a href="#ref-3">3</a></sup>. Change data capture tools are a common way to build the log-tailing relay<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+<div class="callout"><p>The outbox makes publishing reliable, not unique. A relay that restarts can publish the same event again, which is why the next step exists<sup class="cite"><a href="#ref-3">3</a></sup>.</p></div>
+</section>
+
+<section class="block">
+<h2>3. Idempotent consumers</h2>
+<p>Every consumer should be safe to run twice on the same message. The simplest robust approach is to record processed message IDs in the consumer's own store, in the same transaction as its side effects, and skip any ID it has seen<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+<p>Where you can, also make the operation naturally idempotent. "Set order status to shipped" is safe to repeat. "Add one to the shipped count" is not. Designing operations as state transitions rather than increments removes a whole class of bugs.</p>
+</section>
+
+<section class="block">
+<h2>Data modelling that helps</h2>
+<ul>
+<li><strong>Unique constraints are your friend.</strong> One payment per idempotency key, one ledger entry per external transaction ID. Let the database refuse duplicates.</li>
+<li><strong>Append-only ledgers.</strong> Record money movements as immutable entries and derive balances. Corrections are new entries, never edits.</li>
+<li><strong>Explicit state machines</strong> for orders and payments, with allowed transitions. A retry that tries an invalid transition fails loudly.</li>
+<li><strong>Reconciliation jobs</strong> that compare your records with the payment provider's every day. Something will drift eventually, and you want to find it before the customer does.</li>
+</ul>
+<p>These choices work the same way in a relational database or in MongoDB with transactions and unique indexes. The discipline matters more than the engine.</p>
+</section>
+
+<section class="block">
+<h2>A quick test for your system</h2>
+<ol>
+<li>Kill the API process mid-request and retry. Does the customer get charged once?</li>
+<li>Kill the service between the database write and the event publish. Does downstream eventually see the event exactly once in effect?</li>
+<li>Redeliver yesterday's events to every consumer. Does anything change?</li>
+</ol>
+<p>If any answer is "not sure", that is where I would start. In a <a href="/technical-due-diligence/">technical due diligence</a> I run exactly these questions, because they predict incidents better than any architecture diagram.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I design and review payment, order and event-driven platforms for fintech and e-commerce teams, from idempotency and ledgers to scaling. As a <a href="/fractional-cto/">fractional CTO</a> I can also own the reliability roadmap. Or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
