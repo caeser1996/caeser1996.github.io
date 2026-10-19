@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>GPUs on Kubernetes: Dynamic Resource Allocation explained</title>
+<meta name="description" content="Kubernetes Dynamic Resource Allocation replaces &#x27;give me one GPU&#x27; with real device requests: fallbacks, partitions and taints. What changed in 1.36 and 1.37, and how to adopt it." />
+<meta name="keywords" content="Kubernetes DRA, Dynamic Resource Allocation, GPU scheduling Kubernetes, Kubernetes 1.37, Kubernetes 1.36, multi-instance GPU, AI infrastructure, GPU sharing, ResourceClaim, platform engineering AI" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://asksumanta.com/insights/kubernetes-dra-gpu-scheduling/" />
+<meta name="theme-color" content="#111214" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="GPUs on Kubernetes: Dynamic Resource Allocation explained" />
+<meta property="og:description" content="Kubernetes Dynamic Resource Allocation replaces &#x27;give me one GPU&#x27; with real device requests: fallbacks, partitions and taints. What changed in 1.36 and 1.37, and how to adopt it." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://asksumanta.com/insights/kubernetes-dra-gpu-scheduling/" />
+<meta property="og:image" content="https://asksumanta.com/assets/og/kubernetes-dra-gpu-scheduling.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="GPUs on Kubernetes: Dynamic Resource Allocation explained" />
+<meta name="twitter:description" content="Kubernetes Dynamic Resource Allocation replaces &#x27;give me one GPU&#x27; with real device requests: fallbacks, partitions and taints. What changed in 1.36 and 1.37, and how to adopt it." />
+<meta name="twitter:image" content="https://asksumanta.com/assets/og/kubernetes-dra-gpu-scheduling.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "BlogPosting", "headline": "GPUs on Kubernetes: what Dynamic Resource Allocation changes for AI platforms", "description": "Kubernetes Dynamic Resource Allocation replaces 'give me one GPU' with real device requests: fallbacks, partitions and taints. What changed in 1.36 and 1.37, and how to adopt it.", "datePublished": "2026-10-19T20:15:00+04:00", "dateModified": "2026-10-19T20:15:00+04:00", "articleSection": "Cloud & platform · AI", "genre": "Explainer", "citation": [{"@type": "CreativeWork", "name": "Kubernetes v1.36: More Drivers, New Features, and the Next Era of DRA", "url": "https://kubernetes.io/blog/2026/05/07/kubernetes-v1-36-dra-136-updates/"}, {"@type": "CreativeWork", "name": "Kubernetes v1.37: DRA Updates", "url": "https://kubernetes.io/blog/2026/09/03/kubernetes-v1-37-dra-updates/"}, {"@type": "CreativeWork", "name": "Kubernetes v1.37: Scale Workloads to Zero with HorizontalPodAutoscaler", "url": "https://kubernetes.io/blog/2026/09/02/kubernetes-v1-37-hpa-scale-to-zero-beta/"}, {"@type": "CreativeWork", "name": "Kubernetes v1.37 release", "url": "https://kubernetes.io/blog/2026/08/26/kubernetes-v1-37-release/"}], "author": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "publisher": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "mainEntityOfPage": "https://asksumanta.com/insights/kubernetes-dra-gpu-scheduling/", "image": "https://asksumanta.com/assets/og/kubernetes-dra-gpu-scheduling.png", "keywords": "Kubernetes DRA, Dynamic Resource Allocation, GPU scheduling Kubernetes, Kubernetes 1.37, Kubernetes 1.36, multi-instance GPU, AI infrastructure, GPU sharing, ResourceClaim, platform engineering AI", "wordCount": 632}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://asksumanta.com/"}, {"@type": "ListItem", "position": 2, "name": "Insights", "item": "https://asksumanta.com/insights/"}, {"@type": "ListItem", "position": 3, "name": "GPUs on Kubernetes: what Dynamic Resource Allocation changes for AI platforms", "item": "https://asksumanta.com/insights/kubernetes-dra-gpu-scheduling/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What is Dynamic Resource Allocation in Kubernetes?", "acceptedAnswer": {"@type": "Answer", "text": "DRA is a Kubernetes API for requesting and allocating specialised devices such as GPUs through ResourceClaims, with richer selection than the older extended-resource counters. Drivers describe devices and their attributes, and the scheduler allocates devices that match each claim."}}, {"@type": "Question", "name": "Can I adopt DRA without rewriting existing workloads?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. DRA extended resource support, which graduated to stable in Kubernetes v1.37, lets DRA drivers satisfy requests made through the traditional extended resource API, so operators can move clusters to DRA while application teams migrate gradually."}}, {"@type": "Question", "name": "How does DRA help reduce GPU cost?", "acceptedAnswer": {"@type": "Answer", "text": "Prioritised lists let workloads fall back to other device types instead of waiting, partitionable devices let several pods share one physical accelerator, and device taints keep faulty or reserved devices out of general use."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+</script>
+</head>
+<body class="sub is-post">
+<div class="progress" id="progress"></div>
+<nav>
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="/#practice">Services</a>
+      <a href="/#work">Case studies</a>
+      <a href="/insights/">Insights</a>
+      <a href="/#assess">Analyse</a>
+      <a href="/#connect">Connect</a>
+    </div>
+    <div class="nav-r">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/insights/">Insights</a> <span>/</span> <em>GPUs on Kubernetes: what Dynamic Resource Allocation changes for AI platforms</em></div>
+    <div class="kicker">Cloud &amp; platform · AI</div>
+    <h1>GPUs on Kubernetes: what Dynamic Resource Allocation changes for AI platforms</h1>
+    <p class="sub-lede">For years Kubernetes treated a GPU as a number. Dynamic Resource Allocation treats it as a device with properties, partitions and health. For anyone running AI workloads, that changes how you share expensive hardware.</p>
+    <div class="ameta"><span class="fmt">Explainer</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-10-19T20:15:00+04:00">19 Oct 2026 · 20:15 GST</time><span>7 min read</span><span>4 sources</span></div><div class="atags"><span class="tagp">#kubernetes</span><span class="tagp">#ai</span><span class="tagp">#platform</span><span class="tagp">#finops</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Explainer cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><line x1="1155" y1="86" x2="1081" y2="65" class="cv-edge" opacity="0.49"/><line x1="962" y1="144" x2="998" y2="287" class="cv-edge" opacity="0.02"/><line x1="962" y1="144" x2="916" y2="265" class="cv-edge hl" opacity="0.13"/><line x1="962" y1="144" x2="1081" y2="65" class="cv-edge" opacity="0.05"/><line x1="962" y1="144" x2="874" y2="231" class="cv-edge hl" opacity="0.17"/><line x1="962" y1="144" x2="1035" y2="178" class="cv-edge" opacity="0.47"/><line x1="962" y1="144" x2="874" y2="114" class="cv-edge hl" opacity="0.38"/><line x1="962" y1="144" x2="1070" y2="229" class="cv-edge hl" opacity="0.08"/><line x1="962" y1="144" x2="988" y2="82" class="cv-edge" opacity="0.56"/><line x1="821" y1="41" x2="765" y2="123" class="cv-edge" opacity="0.34"/><line x1="821" y1="41" x2="874" y2="114" class="cv-edge hl" opacity="0.40"/><line x1="821" y1="41" x2="801" y2="40" class="cv-edge" opacity="0.87"/><line x1="998" y1="287" x2="1120" y2="312" class="cv-edge" opacity="0.17"/><line x1="998" y1="287" x2="987" y2="300" class="cv-edge" opacity="0.89"/><line x1="998" y1="287" x2="916" y2="265" class="cv-edge hl" opacity="0.44"/><line x1="998" y1="287" x2="874" y2="231" class="cv-edge hl" opacity="0.09"/><line x1="998" y1="287" x2="1035" y2="178" class="cv-edge" opacity="0.23"/><line x1="998" y1="287" x2="1130" y2="277" class="cv-edge" opacity="0.12"/><line x1="998" y1="287" x2="1070" y2="229" class="cv-edge hl" opacity="0.39"/><line x1="998" y1="287" x2="1052" y2="342" class="cv-edge" opacity="0.48"/><line x1="1120" y1="312" x2="987" y2="300" class="cv-edge" opacity="0.11"/><line x1="1120" y1="312" x2="1130" y2="277" class="cv-edge" opacity="0.76"/><line x1="1120" y1="312" x2="1070" y2="229" class="cv-edge hl" opacity="0.36"/><line x1="1120" y1="312" x2="1052" y2="342" class="cv-edge" opacity="0.50"/><line x1="814" y1="266" x2="916" y2="265" class="cv-edge hl" opacity="0.32"/><line x1="814" y1="266" x2="874" y2="231" class="cv-edge hl" opacity="0.54"/><line x1="814" y1="266" x2="742" y2="201" class="cv-edge hl" opacity="0.35"/><line x1="814" y1="266" x2="815" y2="292" class="cv-edge hl" opacity="0.83"/><line x1="987" y1="300" x2="916" y2="265" class="cv-edge hl" opacity="0.47"/><line x1="987" y1="300" x2="874" y2="231" class="cv-edge hl" opacity="0.12"/><line x1="987" y1="300" x2="1035" y2="178" class="cv-edge" opacity="0.13"/><line x1="987" y1="300" x2="1130" y2="277" class="cv-edge" opacity="0.04"/><line x1="987" y1="300" x2="1070" y2="229" class="cv-edge hl" opacity="0.28"/><line x1="987" y1="300" x2="1052" y2="342" class="cv-edge" opacity="0.48"/><line x1="625" y1="202" x2="634" y2="124" class="cv-edge hl" opacity="0.47"/><line x1="625" y1="202" x2="642" y2="215" class="cv-edge hl" opacity="0.85"/><line x1="625" y1="202" x2="658" y2="189" class="cv-edge hl" opacity="0.76"/><line x1="625" y1="202" x2="655" y2="193" class="cv-edge hl" opacity="0.79"/><line x1="625" y1="202" x2="742" y2="201" class="cv-edge hl" opacity="0.22"/><line x1="625" y1="202" x2="572" y2="198" class="cv-edge hl" opacity="0.65"/><line x1="634" y1="124" x2="642" y2="215" class="cv-edge" opacity="0.39"/><line x1="634" y1="124" x2="765" y2="123" class="cv-edge" opacity="0.13"/><line x1="634" y1="124" x2="658" y2="189" class="cv-edge" opacity="0.54"/><line x1="634" y1="124" x2="655" y2="193" class="cv-edge" opacity="0.52"/><line x1="634" y1="124" x2="742" y2="201" class="cv-edge" opacity="0.12"/><line x1="634" y1="124" x2="572" y2="198" class="cv-edge" opacity="0.36"/><line x1="642" y1="215" x2="658" y2="189" class="cv-edge" opacity="0.79"/><line x1="642" y1="215" x2="655" y2="193" class="cv-edge" opacity="0.83"/><line x1="642" y1="215" x2="742" y2="201" class="cv-edge" opacity="0.33"/><line x1="642" y1="215" x2="572" y2="198" class="cv-edge" opacity="0.52"/><line x1="916" y1="265" x2="874" y2="231" class="cv-edge hl" opacity="0.64"/><line x1="916" y1="265" x2="1035" y2="178" class="cv-edge hl" opacity="0.02"/><line x1="916" y1="265" x2="815" y2="292" class="cv-edge hl" opacity="0.31"/><line x1="1081" y1="65" x2="1035" y2="178" class="cv-edge" opacity="0.19"/><line x1="1081" y1="65" x2="988" y2="82" class="cv-edge" opacity="0.37"/><line x1="765" y1="123" x2="874" y2="114" class="cv-edge hl" opacity="0.27"/><line x1="765" y1="123" x2="658" y2="189" class="cv-edge" opacity="0.17"/><line x1="765" y1="123" x2="655" y2="193" class="cv-edge" opacity="0.13"/><line x1="765" y1="123" x2="742" y2="201" class="cv-edge" opacity="0.46"/><line x1="765" y1="123" x2="801" y2="40" class="cv-edge" opacity="0.40"/><line x1="874" y1="231" x2="874" y2="114" class="cv-edge hl" opacity="0.22"/><line x1="874" y1="231" x2="742" y2="201" class="cv-edge hl" opacity="0.10"/><line x1="874" y1="231" x2="815" y2="292" class="cv-edge hl" opacity="0.44"/><line x1="1035" y1="178" x2="1130" y2="277" class="cv-edge" opacity="0.08"/><line x1="1035" y1="178" x2="1070" y2="229" class="cv-edge hl" opacity="0.58"/><line x1="1035" y1="178" x2="988" y2="82" class="cv-edge" opacity="0.29"/><line x1="874" y1="114" x2="988" y2="82" class="cv-edge hl" opacity="0.21"/><line x1="874" y1="114" x2="801" y2="40" class="cv-edge hl" opacity="0.31"/><line x1="658" y1="189" x2="655" y2="193" class="cv-edge" opacity="0.96"/><line x1="658" y1="189" x2="742" y2="201" class="cv-edge" opacity="0.44"/><line x1="658" y1="189" x2="572" y2="198" class="cv-edge" opacity="0.42"/><line x1="655" y1="193" x2="742" y2="201" class="cv-edge" opacity="0.42"/><line x1="655" y1="193" x2="572" y2="198" class="cv-edge" opacity="0.45"/><line x1="1130" y1="277" x2="1070" y2="229" class="cv-edge hl" opacity="0.49"/><line x1="1130" y1="277" x2="1052" y2="342" class="cv-edge" opacity="0.32"/><line x1="1070" y1="229" x2="1052" y2="342" class="cv-edge hl" opacity="0.24"/><line x1="742" y1="201" x2="815" y2="292" class="cv-edge" opacity="0.22"/><circle cx="1155" cy="86" r="3" class="cv-dot"/><circle cx="962" cy="144" r="3" class="cv-dot"/><circle cx="821" cy="41" r="3" class="cv-dot"/><circle cx="998" cy="287" r="3" class="cv-dot"/><circle cx="1120" cy="312" r="3" class="cv-dot"/><circle cx="814" cy="266" r="6" class="cv-dot hl"/><circle cx="987" cy="300" r="3" class="cv-dot"/><circle cx="625" cy="202" r="6" class="cv-dot hl"/><circle cx="634" cy="124" r="3" class="cv-dot"/><circle cx="642" cy="215" r="3" class="cv-dot"/><circle cx="916" cy="265" r="6" class="cv-dot hl"/><circle cx="1081" cy="65" r="3" class="cv-dot"/><circle cx="765" cy="123" r="3" class="cv-dot"/><circle cx="874" cy="231" r="6" class="cv-dot hl"/><circle cx="1035" cy="178" r="3" class="cv-dot"/><circle cx="874" cy="114" r="6" class="cv-dot hl"/><circle cx="658" cy="189" r="3" class="cv-dot"/><circle cx="655" cy="193" r="3" class="cv-dot"/><circle cx="1130" cy="277" r="3" class="cv-dot"/><circle cx="1070" cy="229" r="6" class="cv-dot hl"/><circle cx="742" cy="201" r="3" class="cv-dot"/><circle cx="1052" cy="342" r="3" class="cv-dot"/><circle cx="988" cy="82" r="3" class="cv-dot"/><circle cx="815" cy="292" r="3" class="cv-dot"/><circle cx="801" cy="40" r="3" class="cv-dot"/><circle cx="572" cy="198" r="3" class="cv-dot"/><text x="60" y="90" class="cv-k">EXPLAINER · CLOUD &amp; PLATFORM · AI</text><text x="60" y="350" class="cv-n">19 Oct 2026 · 20:15 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <p>GPUs are usually the most expensive line on an AI platform's bill, and for a long time Kubernetes managed them crudely. A pod asked for one GPU, got a whole one, and nobody could easily say "an H100 if you have one, otherwise an A100" or "a slice of a GPU is enough". Dynamic Resource Allocation, or DRA, fixes that, and the last two Kubernetes releases moved it from interesting to usable.</p>
+
+<section class="block">
+<h2 id="from-counters-to-devices">From counters to devices</h2>
+<p>The old model exposed accelerators as extended resources: a count per node. DRA replaces that with ResourceClaims. Drivers publish devices with attributes, and workloads request devices that match criteria. The Kubernetes project describes DRA as fundamentally changing how administrators handle accelerators and specialised resources<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+</section>
+
+<section class="block">
+<h2 id="the-features-that-matter-for-ai-platforms">The features that matter for AI platforms</h2>
+<table class="tbl">
+<thead><tr><th>Feature</th><th>Status</th><th>Why it matters</th></tr></thead>
+<tbody>
+<tr><td>Prioritised list</td><td>Stable in v1.36</td><td>Request a preferred GPU with fallbacks, so jobs run on what is available instead of queueing<sup class="cite"><a href="#ref-1">1</a></sup></td></tr>
+<tr><td>Partitionable devices</td><td>Beta in v1.36</td><td>Carve one physical accelerator into smaller logical instances, such as multi-instance GPUs, and share it safely<sup class="cite"><a href="#ref-1">1</a></sup></td></tr>
+<tr><td>Device taints and tolerations</td><td>Stable in v1.37</td><td>Keep faulty devices out of use, or reserve hardware for specific teams<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup></td></tr>
+<tr><td>Extended resource support</td><td>Stable in v1.37</td><td>Existing workloads keep working while the cluster moves to DRA<sup class="cite"><a href="#ref-2">2</a></sup></td></tr>
+<tr><td>ResourceClaims for workloads</td><td>Beta in v1.37, off by default</td><td>One claim shared across a whole group of pods, useful for distributed training<sup class="cite"><a href="#ref-2">2</a></sup></td></tr>
+</tbody>
+</table>
+<p>Version 1.37 also brings a standard NUMA node attribute and, in alpha, derived attributes using CEL expressions, which help pair devices from different vendors, such as a GPU and a network card on the same NUMA node<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+</section>
+
+<section class="block">
+<h2 id="what-this-means-for-cost">What this means for cost</h2>
+<p>Three of these features translate directly into money:</p>
+<ul>
+<li><strong>Fallbacks raise utilisation.</strong> Jobs that can run on an older GPU don't sit idle waiting for the newest one.</li>
+<li><strong>Partitioning stops over-allocation.</strong> An inference service that needs a fraction of a GPU no longer reserves a whole device.</li>
+<li><strong>Taints make reservation explicit.</strong> Expensive hardware set aside for training or experiments is visible and enforced, not tribal knowledge.</li>
+</ul>
+<p>Combined with HPA scale-to-zero for queue-driven GPU workers, which also arrived in v1.37<sup class="cite"><a href="#ref-3">3</a></sup>, this is the toolkit I'd use to bring a GPU bill under control. The broader approach is in my <a href="/insights/kubernetes-finops-scale-to-zero/">Kubernetes FinOps playbook</a>.</p>
+<div class="callout"><p>Measure before and after. GPU utilisation per team and cost per thousand inference requests are the two numbers that show whether the change worked.</p></div>
+</section>
+
+<section class="block">
+<h2 id="a-gradual-adoption-path">A gradual adoption path</h2>
+<ol>
+<li><strong>Upgrade and install a DRA driver</strong> for your accelerators, and confirm which features your driver supports.</li>
+<li><strong>Turn on extended resource support</strong> so existing pod specs keep working unchanged<sup class="cite"><a href="#ref-2">2</a></sup>.</li>
+<li><strong>Move one workload class to ResourceClaims</strong>, ideally batch inference, and add a prioritised list of acceptable devices.</li>
+<li><strong>Introduce partitioning</strong> for small inference services, with load tests to confirm latency holds.</li>
+<li><strong>Taint reserved and suspect hardware</strong>, and give the owning teams tolerations.</li>
+<li><strong>Treat beta and alpha features with care.</strong> Some are off by default, and their behaviour can change between releases.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2 id="where-this-fits-in-an-ai-platform">Where this fits in an AI platform</h2>
+<p>DRA is the scheduling layer. Above it you still need an AI gateway for routing and governance, evaluation to decide which model size is good enough, and observability to see cost per request. In practice the biggest savings often come from realising a smaller model on a partitioned GPU does the job, which is a question for your <a href="/insights/llm-evaluation-sets-that-predict-production/">evaluation set</a>, not your scheduler. I've been exploring the same trade-offs on local hardware, as described in my <a href="/insights/private-llm-on-prem/">notes on private LLMs</a>.</p>
+</section>
+
+<section class="block">
+<h2 id="how-i-can-help">How I can help</h2>
+<p>I design AI platforms on Kubernetes, from GPU scheduling and cost controls to gateways and evaluation. See my <a href="/ai-architect/">AI architecture work</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://kubernetes.io/blog/2026/05/07/kubernetes-v1-36-dra-136-updates/" target="_blank" rel="noopener">Kubernetes v1.36: More Drivers, New Features, and the Next Era of DRA</a><small>Kubernetes blog · 7 May 2026</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://kubernetes.io/blog/2026/09/03/kubernetes-v1-37-dra-updates/" target="_blank" rel="noopener">Kubernetes v1.37: DRA Updates</a><small>Kubernetes blog · 3 Sep 2026</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://kubernetes.io/blog/2026/09/02/kubernetes-v1-37-hpa-scale-to-zero-beta/" target="_blank" rel="noopener">Kubernetes v1.37: Scale Workloads to Zero with HorizontalPodAutoscaler</a><small>Kubernetes blog · 2 Sep 2026</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://kubernetes.io/blog/2026/08/26/kubernetes-v1-37-release/" target="_blank" rel="noopener">Kubernetes v1.37 release</a><small>Kubernetes blog · 26 Aug 2026</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fkubernetes-dra-gpu-scheduling%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fkubernetes-dra-gpu-scheduling%2F&amp;text=GPUs%20on%20Kubernetes%3A%20what%20Dynamic%20Resource%20Allocation%20changes%20for%20AI%20platforms" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=GPUs%20on%20Kubernetes%3A%20what%20Dynamic%20Resource%20Allocation%20changes%20for%20AI%20platforms%20https%3A%2F%2Fasksumanta.com%2Finsights%2Fkubernetes-dra-gpu-scheduling%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://asksumanta.com/insights/kubernetes-dra-gpu-scheduling/">Copy link</button></div>
+      <div class="pnav"><a class="pn prev" href="/insights/change-data-capture-event-streams/"><small>← Previous</small><b>Change data capture: turning your database into a reliable event stream</b></a><a class="pn next" href="/insights/build-vs-buy-ai-capabilities/"><small>Next →</small><b>Build vs buy for AI: a decision framework for leadership teams</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#from-counters-to-devices">From counters to devices</a></li><li><a href="#the-features-that-matter-for-ai-platforms">The features that matter for AI platforms</a></li><li><a href="#what-this-means-for-cost">What this means for cost</a></li><li><a href="#a-gradual-adoption-path">A gradual adoption path</a></li><li><a href="#where-this-fits-in-an-ai-platform">Where this fits in an AI platform</a></li><li><a href="#how-i-can-help">How I can help</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>What is Dynamic Resource Allocation in Kubernetes?</summary><p>DRA is a Kubernetes API for requesting and allocating specialised devices such as GPUs through ResourceClaims, with richer selection than the older extended-resource counters. Drivers describe devices and their attributes, and the scheduler allocates devices that match each claim.</p></details><details class="rise"><summary>Can I adopt DRA without rewriting existing workloads?</summary><p>Yes. DRA extended resource support, which graduated to stable in Kubernetes v1.37, lets DRA drivers satisfy requests made through the traditional extended resource API, so operators can move clusters to DRA while application teams migrate gradually.</p></details><details class="rise"><summary>How does DRA help reduce GPU cost?</summary><p>Prioritised lists let workloads fall back to other device types instead of waiting, partitionable devices let several pods share one physical accelerator, and device taints keep faulty or reserved devices out of general use.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/ai-architect/"><small>Service</small><b>AI &amp; LLM architecture</b><span>I design and build AI systems that leadership can trust: grounded in your data, measured by evaluations, governed by your rules and priced so they make sense at scale.</span><i>→</i></a><a class="rcard rise" href="/fractional-cto/"><small>Service</small><b>Fractional CTO</b><span>I work as a part-time CTO for founders, CEOs and boards who need experienced technical judgement now, and a team that can carry it on after I step back.</span><i>→</i></a><a class="rcard rise" href="/technical-due-diligence/"><small>Service</small><b>Technical due diligence</b><span>I give investors an independent, plain-language view of a company&#x27;s technology, team and AI claims, so the risks are priced in before the deal closes, not discovered after.</span><i>→</i></a><a class="rcard rise" href="/insights/build-vs-buy-ai-capabilities/"><small>Insight</small><b>Build vs buy for AI: a decision framework for leadership teams</b><span>Leadership teams keep asking the same question about AI: build it ourselves or buy it? The answer is almost never all of one. Here is how I break the decision down.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: GPUs on Kubernetes: what Dynamic Resource Allocation changes for AI platforms">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
+        <p class="floc">United States &amp; UAE · working globally</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/uae/">Fractional CTO in the UAE</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/build-vs-buy-ai-capabilities/">Build vs buy for AI: a decision framework for leadership teams</a></li><li><a href="/insights/kubernetes-dra-gpu-scheduling/">GPUs on Kubernetes: what Dynamic Resource Allocation changes for AI platforms</a></li><li><a href="/insights/change-data-capture-event-streams/">Change data capture: turning your database into a reliable event stream</a></li><li><a href="/insights/uae-ai-infrastructure-where-to-run-models/">Building AI in the UAE: where should your models actually run?</a></li><li><a href="/insights/terraform-multi-cloud-module-design/">Multi-cloud Terraform: what to abstract, and what to leave alone</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>

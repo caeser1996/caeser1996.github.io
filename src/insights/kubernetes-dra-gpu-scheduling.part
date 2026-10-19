@@ -1,0 +1,56 @@
+<!--{"title": "GPUs on Kubernetes: Dynamic Resource Allocation explained", "description": "Kubernetes Dynamic Resource Allocation replaces 'give me one GPU' with real device requests: fallbacks, partitions and taints. What changed in 1.36 and 1.37, and how to adopt it.", "h1": "GPUs on Kubernetes: what Dynamic Resource Allocation changes for AI platforms", "kicker": "Cloud & platform · AI", "lede": "For years Kubernetes treated a GPU as a number. Dynamic Resource Allocation treats it as a device with properties, partitions and health. For anyone running AI workloads, that changes how you share expensive hardware.", "date": "2026-10-19", "datetime": "2026-10-19T20:15:00+04:00", "readtime": "7 min read", "format": "explainer", "tags": ["kubernetes", "ai", "platform", "finops"], "keywords": ["Kubernetes DRA", "Dynamic Resource Allocation", "GPU scheduling Kubernetes", "Kubernetes 1.37", "Kubernetes 1.36", "multi-instance GPU", "AI infrastructure", "GPU sharing", "ResourceClaim", "platform engineering AI"], "faq": [["What is Dynamic Resource Allocation in Kubernetes?", "DRA is a Kubernetes API for requesting and allocating specialised devices such as GPUs through ResourceClaims, with richer selection than the older extended-resource counters. Drivers describe devices and their attributes, and the scheduler allocates devices that match each claim."], ["Can I adopt DRA without rewriting existing workloads?", "Yes. DRA extended resource support, which graduated to stable in Kubernetes v1.37, lets DRA drivers satisfy requests made through the traditional extended resource API, so operators can move clusters to DRA while application teams migrate gradually."], ["How does DRA help reduce GPU cost?", "Prioritised lists let workloads fall back to other device types instead of waiting, partitionable devices let several pods share one physical accelerator, and device taints keep faulty or reserved devices out of general use."]], "related": ["/ai-architect/", "/fractional-cto/", "/technical-due-diligence/"], "citations": [{"title": "Kubernetes v1.36: More Drivers, New Features, and the Next Era of DRA", "url": "https://kubernetes.io/blog/2026/05/07/kubernetes-v1-36-dra-136-updates/", "publisher": "Kubernetes blog", "date": "7 May 2026"}, {"title": "Kubernetes v1.37: DRA Updates", "url": "https://kubernetes.io/blog/2026/09/03/kubernetes-v1-37-dra-updates/", "publisher": "Kubernetes blog", "date": "3 Sep 2026"}, {"title": "Kubernetes v1.37: Scale Workloads to Zero with HorizontalPodAutoscaler", "url": "https://kubernetes.io/blog/2026/09/02/kubernetes-v1-37-hpa-scale-to-zero-beta/", "publisher": "Kubernetes blog", "date": "2 Sep 2026"}, {"title": "Kubernetes v1.37 release", "url": "https://kubernetes.io/blog/2026/08/26/kubernetes-v1-37-release/", "publisher": "Kubernetes blog", "date": "26 Aug 2026"}]}-->
+<p>GPUs are usually the most expensive line on an AI platform's bill, and for a long time Kubernetes managed them crudely. A pod asked for one GPU, got a whole one, and nobody could easily say "an H100 if you have one, otherwise an A100" or "a slice of a GPU is enough". Dynamic Resource Allocation, or DRA, fixes that, and the last two Kubernetes releases moved it from interesting to usable.</p>
+
+<section class="block">
+<h2>From counters to devices</h2>
+<p>The old model exposed accelerators as extended resources: a count per node. DRA replaces that with ResourceClaims. Drivers publish devices with attributes, and workloads request devices that match criteria. The Kubernetes project describes DRA as fundamentally changing how administrators handle accelerators and specialised resources<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+</section>
+
+<section class="block">
+<h2>The features that matter for AI platforms</h2>
+<table class="tbl">
+<thead><tr><th>Feature</th><th>Status</th><th>Why it matters</th></tr></thead>
+<tbody>
+<tr><td>Prioritised list</td><td>Stable in v1.36</td><td>Request a preferred GPU with fallbacks, so jobs run on what is available instead of queueing<sup class="cite"><a href="#ref-1">1</a></sup></td></tr>
+<tr><td>Partitionable devices</td><td>Beta in v1.36</td><td>Carve one physical accelerator into smaller logical instances, such as multi-instance GPUs, and share it safely<sup class="cite"><a href="#ref-1">1</a></sup></td></tr>
+<tr><td>Device taints and tolerations</td><td>Stable in v1.37</td><td>Keep faulty devices out of use, or reserve hardware for specific teams<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup></td></tr>
+<tr><td>Extended resource support</td><td>Stable in v1.37</td><td>Existing workloads keep working while the cluster moves to DRA<sup class="cite"><a href="#ref-2">2</a></sup></td></tr>
+<tr><td>ResourceClaims for workloads</td><td>Beta in v1.37, off by default</td><td>One claim shared across a whole group of pods, useful for distributed training<sup class="cite"><a href="#ref-2">2</a></sup></td></tr>
+</tbody>
+</table>
+<p>Version 1.37 also brings a standard NUMA node attribute and, in alpha, derived attributes using CEL expressions, which help pair devices from different vendors, such as a GPU and a network card on the same NUMA node<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+</section>
+
+<section class="block">
+<h2>What this means for cost</h2>
+<p>Three of these features translate directly into money:</p>
+<ul>
+<li><strong>Fallbacks raise utilisation.</strong> Jobs that can run on an older GPU don't sit idle waiting for the newest one.</li>
+<li><strong>Partitioning stops over-allocation.</strong> An inference service that needs a fraction of a GPU no longer reserves a whole device.</li>
+<li><strong>Taints make reservation explicit.</strong> Expensive hardware set aside for training or experiments is visible and enforced, not tribal knowledge.</li>
+</ul>
+<p>Combined with HPA scale-to-zero for queue-driven GPU workers, which also arrived in v1.37<sup class="cite"><a href="#ref-3">3</a></sup>, this is the toolkit I'd use to bring a GPU bill under control. The broader approach is in my <a href="/insights/kubernetes-finops-scale-to-zero/">Kubernetes FinOps playbook</a>.</p>
+<div class="callout"><p>Measure before and after. GPU utilisation per team and cost per thousand inference requests are the two numbers that show whether the change worked.</p></div>
+</section>
+
+<section class="block">
+<h2>A gradual adoption path</h2>
+<ol>
+<li><strong>Upgrade and install a DRA driver</strong> for your accelerators, and confirm which features your driver supports.</li>
+<li><strong>Turn on extended resource support</strong> so existing pod specs keep working unchanged<sup class="cite"><a href="#ref-2">2</a></sup>.</li>
+<li><strong>Move one workload class to ResourceClaims</strong>, ideally batch inference, and add a prioritised list of acceptable devices.</li>
+<li><strong>Introduce partitioning</strong> for small inference services, with load tests to confirm latency holds.</li>
+<li><strong>Taint reserved and suspect hardware</strong>, and give the owning teams tolerations.</li>
+<li><strong>Treat beta and alpha features with care.</strong> Some are off by default, and their behaviour can change between releases.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2>Where this fits in an AI platform</h2>
+<p>DRA is the scheduling layer. Above it you still need an AI gateway for routing and governance, evaluation to decide which model size is good enough, and observability to see cost per request. In practice the biggest savings often come from realising a smaller model on a partitioned GPU does the job, which is a question for your <a href="/insights/llm-evaluation-sets-that-predict-production/">evaluation set</a>, not your scheduler. I've been exploring the same trade-offs on local hardware, as described in my <a href="/insights/private-llm-on-prem/">notes on private LLMs</a>.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I design AI platforms on Kubernetes, from GPU scheduling and cost controls to gateways and evaluation. See my <a href="/ai-architect/">AI architecture work</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
