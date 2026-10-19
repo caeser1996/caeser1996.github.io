@@ -1,0 +1,55 @@
+<!--{"title": "FDA change control plans for AI medical devices, explained", "description": "The FDA's PCCP guidance lets AI-enabled medical devices change within pre-agreed limits. What it means for ML engineering, data pipelines and MLOps on the device team.", "h1": "FDA change control plans for AI medical devices: what engineering teams need to build", "kicker": "Healthcare · Regulation", "lede": "AI models improve by changing; medical device rules were built for products that don't. The FDA's predetermined change control plans bridge that gap, and they turn regulatory language into an MLOps specification.", "date": "2026-10-19", "datetime": "2026-10-19T12:15:00+04:00", "readtime": "7 min read", "format": "explainer", "tags": ["healthcare", "regulation", "ai", "governance"], "keywords": ["FDA PCCP", "predetermined change control plan", "AI-enabled device software functions", "AI medical device regulation", "SaMD machine learning", "MLOps for medical devices", "clinical AI governance", "FDA AI guidance", "total product lifecycle AI", "healthcare AI architecture"], "faq": [["What is a predetermined change control plan?", "A PCCP is part of a medical device marketing submission that describes planned modifications to an AI-enabled device, how they will be developed and validated, and how their impact will be assessed. If authorised, the manufacturer can make those changes without a new submission for each one."], ["When did the FDA finalise its PCCP guidance?", "The FDA finalised its guidance on marketing submission recommendations for PCCPs for AI-enabled device software functions in December 2024. Commentators note it broadened the scope from machine learning devices to AI-enabled device software functions generally."], ["Is the guidance binding?", "No. FDA guidance documents set out the agency's current thinking and are non-binding, but in practice they shape what reviewers expect to see in a submission."]], "related": ["/healthcare-data-architecture/", "/ai-architect/", "/technical-due-diligence/"], "citations": [{"title": "AI-enabled device software functions: FDA's final guidance for predetermined change control plans", "url": "https://www.foley.com/insights/publications/2025/01/fda-final-guidance-ai-device-software-predetermined-change-control-plan/", "publisher": "Foley & Lardner", "date": "Jan 2025"}, {"title": "FDA finalizes guidance on predetermined change control plans for AI-enabled devices", "url": "https://ropesgray.com/en/insights/alerts/2024/12/fda-finalizes-guidance-on-predetermined-change-control-plans-for-ai-enabled-device", "publisher": "Ropes & Gray", "date": "Dec 2024"}, {"title": "Artificial Intelligence-Enabled Device Software Functions: Lifecycle Management and Marketing Submission Recommendations (draft guidance)", "url": "https://fda.gov/regulatory-information/search-fda-guidance-documents/artificial-intelligence-enabled-device-software-functions-lifecycle-management-and-marketing", "publisher": "US FDA"}, {"title": "Federal Register notice: AI-enabled device software functions draft guidance", "url": "https://www.govinfo.gov/content/pkg/FR-2025-01-07/html/2024-31543.htm", "publisher": "Federal Register", "date": "7 Jan 2025"}, {"title": "FDA issues artificial intelligence-enabled device software functions guidance", "url": "https://www.dlapiper.com/en/insights/publications/2025/01/fda-issues-artificial-intelligence-enabled-device-software-functions-guidance", "publisher": "DLA Piper", "date": "Jan 2025"}]}-->
+<p>Machine learning models get better by changing: new data, retraining, tuned thresholds. Medical device regulation was designed for products that stay the same once cleared. For years that mismatch meant AI device teams either froze their models or faced a fresh submission for every significant change.</p>
+<p>The FDA's predetermined change control plans, or PCCPs, are the bridge. I'm not a regulatory lawyer, but as an architect I find PCCPs useful for a different reason: they read like a specification for the MLOps platform a device team needs anyway.</p>
+
+<section class="block">
+<h2>What the FDA finalised</h2>
+<p>In December 2024 the FDA finalised its guidance on marketing submission recommendations for PCCPs for AI-enabled device software functions<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. The idea is simple: describe the changes you plan to make in your original submission, and if the plan is authorised, you can make those changes within its bounds without a new submission each time<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<p>Commentators note two points. The final guidance broadened scope from machine-learning devices to AI-enabled device software functions generally, while staying most relevant to ML. And it stayed close to the 2023 draft in structure<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. Like all FDA guidance, it is non-binding, but it signals what reviewers expect.</p>
+<p>In January 2025 the FDA also published a broader draft guidance on lifecycle management and marketing submissions for AI-enabled devices, covering the total product life cycle<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>. Law-firm analyses highlight its focus on transparency, bias, data quality, human factors, change management and cybersecurity<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+</section>
+
+<section class="block">
+<h2>The three parts, as engineering work</h2>
+<table class="tbl">
+<thead><tr><th>PCCP component</th><th>What it asks for</th><th>What you actually build</th></tr></thead>
+<tbody>
+<tr><td>Description of modifications</td><td>Which changes you plan to make</td><td>A bounded change catalogue: retraining on new data, threshold tuning, new input sources</td></tr>
+<tr><td>Modification protocol</td><td>How changes are developed, validated and implemented</td><td>Versioned data pipelines, reproducible training, locked test sets, acceptance criteria</td></tr>
+<tr><td>Impact assessment</td><td>Benefits, risks and how they're managed</td><td>Subgroup performance analysis, risk files linked to each change, rollback plans</td></tr>
+</tbody>
+</table>
+<div class="callout"><p>If you can't reproduce a training run exactly, you can't credibly promise a regulator how future runs will behave. Reproducibility is the foundation of the whole plan.</p></div>
+</section>
+
+<section class="block">
+<h2>The platform a PCCP assumes</h2>
+<ol>
+<li><strong>Data lineage end to end.</strong> Every training example traceable to its source, version and consent basis. In clinical settings that usually means a governed data layer, often OMOP-based for retrospective data, with the quality controls in my <a href="/insights/omop-data-quality-checks/">OMOP data quality</a> post.</li>
+<li><strong>Locked, representative test sets</strong> that are never trained on, stratified by the subgroups you committed to monitor.</li>
+<li><strong>Reproducible pipelines.</strong> Code, data snapshot, environment and random seeds versioned together, so any model can be rebuilt.</li>
+<li><strong>Automated acceptance gates</strong> that encode the protocol's criteria. A candidate model that misses a threshold on any committed subgroup does not ship. This is the same discipline as <a href="/insights/llm-evaluation-sets-that-predict-production/">evaluation sets that predict production</a>, with higher stakes.</li>
+<li><strong>Controlled rollout and rollback</strong>, with real-world performance monitoring after release.</li>
+<li><strong>An audit trail</strong> linking each deployed model to its data, tests, results and approvals.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2>Common mistakes I'd avoid</h2>
+<ul>
+<li><strong>Writing the plan before the platform exists.</strong> A PCCP describing a pipeline you don't have is a promise you can't keep.</li>
+<li><strong>Scoping too broadly.</strong> Narrow, well-tested change types are easier to authorise and to execute than open-ended ones.</li>
+<li><strong>Ignoring subgroup performance.</strong> Average accuracy can improve while a subgroup gets worse. Commit to the subgroups that matter clinically and monitor them.</li>
+<li><strong>Treating it as a regulatory document only.</strong> The best plans are written jointly by regulatory, clinical and engineering leads, and the engineering team owns the protocol.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>Beyond the US</h2>
+<p>Teams selling into Europe face the EU AI Act alongside medical device regulation, with high-risk obligations for AI in regulated products now pushed to August 2028 under the Digital Omnibus, as I cover in <a href="/insights/eu-ai-act-digital-omnibus-roadmap/">the EU AI Act after the Digital Omnibus</a>. The good news is that the same platform, with lineage, locked tests, gates and audit trails, serves both.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I design clinical data and ML platforms that can support a change control plan: governed data, reproducible training, evaluation gates and audit trails. See <a href="/healthcare-data-architecture/">healthcare data architecture</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>

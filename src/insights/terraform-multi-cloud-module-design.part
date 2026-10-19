@@ -1,0 +1,57 @@
+<!--{"title": "Multi-cloud Terraform: what to abstract and what to leave alone", "description": "Multi-cloud Terraform fails when teams abstract too much. How I compose small modules across AWS, Azure and GCP, and where OpenTofu fits after the licence change.", "h1": "Multi-cloud Terraform: what to abstract, and what to leave alone", "kicker": "Cloud & platform", "lede": "The tempting design is one module that deploys a database on any cloud. It almost never ends well. Here is the composition approach I use instead, across AWS, Azure and GCP.", "date": "2026-10-19", "datetime": "2026-10-19T12:30:00+04:00", "readtime": "7 min read", "format": "comparison", "tags": ["platform", "cloud", "terraform", "governance"], "keywords": ["Terraform multi-cloud", "Terraform module design", "Terraform module composition", "OpenTofu", "infrastructure as code", "AWS Azure GCP Terraform", "platform engineering", "Terraform best practices", "IaC governance", "cloud architecture"], "faq": [["Should I write one Terraform module that works on every cloud?", "Usually not. Terraform deliberately doesn't abstract over providers, and a lowest-common-denominator module hides the features that make each service worth using. Compose small provider-specific modules behind a shared interface instead."], ["What is module composition in Terraform?", "It is a style where a root module assembles small building-block modules and passes dependencies between them as inputs and outputs, rather than each module creating everything it needs. HashiCorp's documentation recommends it."], ["Should I use Terraform or OpenTofu?", "Both remain viable. OpenTofu is an MPL-licensed fork under the Linux Foundation, created after HashiCorp moved Terraform to the Business Source License in 2023. Choose based on licensing needs, ecosystem and the features you rely on."]], "related": ["/fractional-cto/", "/technical-due-diligence/", "/uae/"], "citations": [{"title": "Module composition", "url": "https://developer.hashicorp.com/terraform/language/modules/develop/composition", "publisher": "HashiCorp Developer"}, {"title": "Modules overview", "url": "https://developer.hashicorp.com/terraform/tutorials/modules/module", "publisher": "HashiCorp Developer"}, {"title": "Linux Foundation joins OpenTF to fork Terraform into OpenTofu", "url": "https://thenewstack.io/linux-foundation-joins-opentf-to-fork-for-terraform-into-opentofu/", "publisher": "The New Stack", "date": "Sep 2023"}, {"title": "OpenTofu: the open-source Terraform alternative", "url": "https://www.env0.com/blog/opentofu-the-open-source-terraform-alternative", "publisher": "env0"}]}-->
+<p>I have written a lot of Terraform across AWS, Azure and GCP, including an open-source Python helper for generating it across all three. The most expensive lesson in that work is about abstraction. The instinct is to write one "database" module that works on any cloud. It is almost always a mistake.</p>
+
+<section class="block">
+<h2>Why the universal module fails</h2>
+<p>Managed services differ in ways that matter: networking models, identity, backup semantics, failover, pricing. A module that hides all of that has two options. It exposes only what every cloud supports, so you lose the features you're paying for. Or it grows a flag for every provider difference, until it is harder to use than the raw resources.</p>
+<p>HashiCorp's own documentation makes the point that Terraform deliberately doesn't abstract over vendors, and suggests building lightweight multi-cloud abstractions through composition instead<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+</section>
+
+<section class="block">
+<h2>Composition instead</h2>
+<p>The composition pattern keeps modules small and lets a root module wire them together. Child modules receive what they depend on, such as network and subnet IDs, as inputs rather than creating them, so the same blocks can be assembled differently per environment<sup class="cite"><a href="#ref-1">1</a></sup>. Real configurations should almost always be built from modules like this<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<table class="tbl">
+<thead><tr><th>Layer</th><th>Abstract it?</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Naming, tagging, labels</td><td>Yes, fully</td><td>Same rules everywhere; drives cost allocation and ownership</td></tr>
+<tr><td>Policy: encryption, logging, regions</td><td>Yes, as shared inputs and checks</td><td>Compliance should not depend on which cloud a team picked</td></tr>
+<tr><td>Kubernetes clusters</td><td>Partly: shared interface, provider modules underneath</td><td>Workloads target Kubernetes, not the cloud</td></tr>
+<tr><td>Networking</td><td>No, provider-specific</td><td>Models differ too much to hide safely</td></tr>
+<tr><td>Managed databases and AI services</td><td>No, provider-specific</td><td>Their differences are the reason to use them</td></tr>
+</tbody>
+</table>
+<div class="callout"><p>Abstract the things that should be the same everywhere: names, tags, policy, and the contract your applications see. Leave the cloud-specific parts cloud-specific.</p></div>
+</section>
+
+<section class="block">
+<h2>The shape I use</h2>
+<ol>
+<li><strong>A conventions module</strong> that only computes names and tags from a few inputs. Every other module consumes it.</li>
+<li><strong>Provider-specific building blocks</strong> for network, cluster, database and secrets, each small and documented.</li>
+<li><strong>Thin "product" root modules</strong> per environment that compose the blocks and nothing else.</li>
+<li><strong>Policy checks in CI</strong> that fail a plan which, for example, creates an unencrypted bucket or deploys outside approved regions. This matters for data residency, which I discuss in <a href="/insights/uae-pdpl-ai-architecture-2026/">UAE PDPL and AI</a>.</li>
+<li><strong>Kubernetes as the portability layer.</strong> If applications need to move between clouds, make them depend on Kubernetes interfaces, not on cloud APIs. Cost controls such as scale-to-zero then work the same everywhere, as in my <a href="/insights/kubernetes-finops-scale-to-zero/">Kubernetes FinOps playbook</a>.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2>Terraform or OpenTofu?</h2>
+<p>In August 2023 HashiCorp moved Terraform from the Mozilla Public License to the Business Source License. The community fork, OpenTofu, was accepted by the Linux Foundation that September and remains MPL-licensed<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+<p>For most companies using Terraform internally, either works. The decision usually comes down to licence policy, whether you build a product that competes with HashiCorp, and which newer features each tool offers. My practical advice is to keep modules free of features specific to one tool unless you need them, so switching later stays cheap. I'd record the choice in an <a href="/insights/architecture-decision-records-fractional-cto/">architecture decision record</a> either way.</p>
+</section>
+
+<section class="block">
+<h2>Signs your IaC needs work</h2>
+<ul>
+<li>Changes are made in the console "just this once" and never reach code.</li>
+<li>Each environment has its own copy of the configuration instead of composing shared modules.</li>
+<li>Nobody can say which team owns a resource, because tags are inconsistent.</li>
+<li>A plan for a small change touches hundreds of resources.</li>
+</ul>
+<p>These show up in almost every <a href="/technical-due-diligence/">technical due diligence</a>, and they predict how expensive the next year of operations will be.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I design infrastructure-as-code foundations across AWS, Azure and GCP that teams can actually maintain. As a <a href="/fractional-cto/">fractional CTO</a> I can also own the platform roadmap. Or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
