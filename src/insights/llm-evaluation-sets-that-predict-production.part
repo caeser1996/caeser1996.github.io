@@ -1,0 +1,68 @@
+<!--{"title": "LLM evaluation sets that predict production: a checklist", "description": "Most LLM evals pass in testing and miss real failures. A checklist for building evaluation sets, using LLM judges carefully and gating releases on evidence.", "h1": "Building LLM evaluation sets that actually predict production", "kicker": "AI architecture", "lede": "An evaluation set is only useful if a pass means the system will behave in production. Here is the checklist I use to build ones that do, and to use LLM judges without fooling yourself.", "date": "2026-10-19", "datetime": "2026-10-19T04:30:00+04:00", "readtime": "7 min read", "format": "checklist", "tags": ["ai", "llm", "rag", "governance"], "keywords": ["LLM evaluation", "LLM evals", "evaluation dataset", "LLM-as-a-judge", "RAG evaluation", "AI quality gates", "NIST AI 600-1", "generative AI risk", "model regression testing", "AI testing in production"], "faq": [["How big should an LLM evaluation set be?", "Start with a few hundred real, labelled examples covering your main tasks and known failure modes. Coverage of the cases that matter is more important than size, and the set should grow every time production reveals a new failure."], ["Can I use an LLM as the judge?", "Yes, with care. Research on LLM-as-a-judge found strong models can agree with human preferences at levels comparable to agreement between humans, but also documented biases such as position, verbosity and self-enhancement bias. Calibrate any judge against human labels before trusting it."], ["How do evaluations relate to AI risk frameworks?", "Frameworks such as NIST's Generative AI Profile emphasise measurement and pre-deployment testing. A versioned evaluation suite that gates releases is the practical way to produce that evidence."]], "related": ["/ai-architect/", "/technical-due-diligence/", "/fractional-cto/"], "citations": [{"title": "Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena", "url": "https://arxiv.org/abs/2306.05685", "publisher": "Zheng et al., NeurIPS 2023", "date": "2023"}, {"title": "Artificial Intelligence Risk Management Framework: Generative Artificial Intelligence Profile (NIST AI 600-1)", "url": "https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.600-1.pdf", "publisher": "NIST", "date": "Jul 2024"}, {"title": "Semantic conventions for generative client AI spans", "url": "https://opentelemetry.io/docs/specs/semconv/gen-ai/gen-ai-spans/", "publisher": "OpenTelemetry"}, {"title": "Judging LLM-as-a-Judge (NeurIPS 2023 poster)", "url": "https://neurips.cc/virtual/2023/poster/73434", "publisher": "NeurIPS"}]}-->
+<p>A common pattern in AI projects: the evaluation score looks excellent, and production still breaks in ways nobody tested. The score usually isn't wrong. The set is measuring the wrong things: clean questions, easy documents, the happy path.</p>
+<p>An evaluation set has one job: a pass should predict that the system will behave well for real users. This is the checklist I work through to make that true.</p>
+
+<section class="block">
+<h2>1. Source the questions from reality</h2>
+<ul>
+<li><strong>Use real traffic</strong>, anonymised, wherever you can. Users ask things no one on the team would think of.</li>
+<li><strong>Weight by importance, not frequency.</strong> A rare question about a refund policy or a drug interaction can matter more than a hundred greetings.</li>
+<li><strong>Include the hard cases on purpose</strong>: exact identifiers, ambiguous questions, questions the system should refuse, and questions whose answer is "I don't know".</li>
+<li><strong>Add every production failure</strong> to the set once it is fixed, so it can never quietly come back.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>2. Label what "good" means</h2>
+<p>A reference answer alone is rarely enough. For each example I record the expected answer, the sources it should come from, and the behaviour that matters most, such as citing a source, refusing, or asking a clarifying question. For RAG systems I evaluate retrieval and generation separately, because a right answer from the wrong document is luck, not quality. The <a href="/insights/rag-to-production-checklist/">RAG production checklist</a> goes deeper on the retrieval side.</p>
+</section>
+
+<section class="block">
+<h2>3. Choose metrics that match decisions</h2>
+<table class="tbl">
+<thead><tr><th>What you need to know</th><th>Metric</th></tr></thead>
+<tbody>
+<tr><td>Is the right evidence being found?</td><td>Retrieval recall and precision at k</td></tr>
+<tr><td>Is the answer supported by that evidence?</td><td>Faithfulness or groundedness rate</td></tr>
+<tr><td>Is the answer correct and complete?</td><td>Correctness against labelled answers</td></tr>
+<tr><td>Does it refuse when it should?</td><td>Refusal precision and recall on a held-out set</td></tr>
+<tr><td>Can we afford it?</td><td>Tokens, latency and cost per example</td></tr>
+</tbody>
+</table>
+<p>Track cost and latency in the same run. A prompt change that lifts quality by two points and doubles cost is a business decision, not an automatic win.</p>
+</section>
+
+<section class="block">
+<h2>4. Use LLM judges, but calibrate them</h2>
+<p>Grading thousands of answers by hand doesn't scale, so most teams use a strong model as a judge. The research supports this with caveats. Zheng and colleagues found strong LLM judges can match human preferences at levels comparable to agreement between humans, and also documented position, verbosity and self-enhancement biases<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+<p>What that means in practice:</p>
+<ul>
+<li><strong>Calibrate first.</strong> Have humans label a sample, run the judge on it, and measure agreement before trusting the judge on the rest.</li>
+<li><strong>Swap positions</strong> when comparing two answers, and count a win only if it holds both ways.</li>
+<li><strong>Don't reward length.</strong> Tell the judge explicitly that longer is not better, and check that it listens.</li>
+<li><strong>Avoid self-grading</strong> where you can: use a different model family as judge from the one being evaluated.</li>
+<li><strong>Grade against rubrics</strong>, with specific criteria, rather than asking "is this good?".</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>5. Make evaluation a release gate</h2>
+<ol>
+<li>Version the evaluation set alongside the prompts, retrieval config and model choice.</li>
+<li>Run the full suite on every change to any of them.</li>
+<li>Set thresholds per metric, including a maximum regression on critical subsets.</li>
+<li>Block the release automatically if a threshold fails, the same way a failing unit test would.</li>
+<li>Record the results with the release, so you can show what was tested and when.</li>
+</ol>
+<p>That last point matters beyond engineering. NIST's Generative AI Profile, a companion to its AI Risk Management Framework, emphasises measurement and pre-deployment testing as part of managing generative AI risk<sup class="cite"><a href="#ref-2">2</a></sup>. A versioned, gated evaluation suite is the practical evidence for that.</p>
+</section>
+
+<section class="block">
+<h2>6. Close the loop with production</h2>
+<p>Offline evaluation predicts production only if you keep checking the prediction. I sample live traffic, run the same judges and metrics on it, and compare against the offline scores. When they drift apart, the evaluation set needs new examples. Linking evaluation results to production traces, using standard telemetry such as the OpenTelemetry GenAI conventions<sup class="cite"><a href="#ref-3">3</a></sup>, makes that comparison much easier. I cover the tracing side in <a href="/insights/llm-observability-opentelemetry-genai/">LLM observability with OpenTelemetry</a>.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I design evaluation harnesses and release gates for RAG and agent systems, and review existing ones. See my <a href="/ai-architect/">AI architecture work</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>

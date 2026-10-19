@@ -1,0 +1,58 @@
+<!--{"title": "OMOP data quality: conformance, completeness, plausibility", "description": "Converting to OMOP is half the job; trusting the data is the other half. How I use the Kahn framework, ACHILLES, the Data Quality Dashboard and ETL unit tests.", "h1": "OMOP data quality in practice: conformance, completeness and plausibility", "kicker": "Healthcare data", "lede": "Most clinical data was never collected for research. Before anyone builds a cohort or trains a model on it, you need evidence it's fit for purpose. These are the checks I put in place.", "date": "2026-10-19", "datetime": "2026-10-19T04:15:00+04:00", "readtime": "7 min read", "format": "field-note", "tags": ["healthcare", "omop", "data", "governance"], "keywords": ["OMOP data quality", "OHDSI Data Quality Dashboard", "ACHILLES", "Kahn data quality framework", "conformance completeness plausibility", "ETL unit tests OMOP", "EHR data quality", "real-world data quality", "clinical data validation", "healthcare data architecture"], "faq": [["What is the Kahn data quality framework?", "A harmonised terminology for assessing EHR data quality, published by Kahn and colleagues in 2016. It groups checks into conformance, completeness and plausibility, each assessed by verification against internal expectations or validation against external benchmarks."], ["What do ACHILLES and the Data Quality Dashboard do?", "Both are OHDSI tools that run against an OMOP CDM. ACHILLES pre-computes characterisation analyses to visualise the data, while the Data Quality Dashboard runs rule-based checks organised by the Kahn categories and reports pass or fail against thresholds."], ["Are data quality dashboards enough on their own?", "No. They find problems after conversion. ETL unit tests catch mapping errors in the conversion itself, and study-specific checks confirm the data is fit for a particular question."]], "related": ["/healthcare-data-architecture/", "/ontology-knowledge-graph/", "/technical-due-diligence/"], "citations": [{"title": "The Book of OHDSI: Data Quality", "url": "https://ohdsi.github.io/TheBookOfOhdsi/DataQuality.html", "publisher": "OHDSI"}, {"title": "A Harmonized Data Quality Assessment Terminology and Framework for the Secondary Use of Electronic Health Record Data", "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC5051581", "publisher": "Kahn et al., eGEMs", "date": "2016"}, {"title": "Data Quality Dashboard", "url": "https://github.com/OHDSI/DataQualityDashboard", "publisher": "OHDSI, GitHub"}, {"title": "OMOP data quality (OHDSI Symposium plenary)", "url": "https://www.ohdsi.org/wp-content/uploads/2019/09/2-Plenary-1-OMOP-DQ-Clair-Andrew.pdf", "publisher": "OHDSI", "date": "2019"}]}-->
+<p>A successful OMOP conversion feels like the finish line. The ETL ran, the tables are populated, ATLAS loads. In my experience with OMOP and the OHDSI tools, it is closer to the halfway point. The question that matters next is whether anyone should trust the data.</p>
+<p>The Book of OHDSI frames it well: most observational data was not collected for research. EHRs exist to support patient care and claims exist to get paid, so the real question is whether the data is good enough for <em>your</em> purpose<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+
+<section class="block">
+<h2>A shared vocabulary for "quality"</h2>
+<p>The framework I use comes from Kahn and colleagues, who published a harmonised terminology for EHR data quality in 2016<sup class="cite"><a href="#ref-2">2</a></sup>. It has three categories:</p>
+<table class="tbl">
+<thead><tr><th>Category</th><th>Question</th><th>Example check</th></tr></thead>
+<tbody>
+<tr><td>Conformance</td><td>Do values follow the expected formats, relationships and computations?</td><td>Every provider referenced in a drug exposure exists in the provider table</td></tr>
+<tr><td>Completeness</td><td>Are the values we need actually present?</td><td>Do all persons have a recorded gender?</td></tr>
+<tr><td>Plausibility</td><td>Are the values believable?</td><td>No patients aged 141; diabetes prevalence close to known rates</td></tr>
+</tbody>
+</table>
+<p>Each category can be checked by <strong>verification</strong>, against internal rules and expectations, or <strong>validation</strong>, against an external benchmark such as other sites or published rates<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. The value of the framework is less in the categories than in the shared language: clinicians, analysts and engineers stop arguing about what "bad data" means.</p>
+</section>
+
+<section class="block">
+<h2>Layer 1: characterise the data with ACHILLES</h2>
+<p>ACHILLES pre-computes a large set of characterisation analyses over an OMOP CDM, such as distributions of drug supply days by concept, and presents them visually<sup class="cite"><a href="#ref-1">1</a></sup>. I use it first because it shows the shape of the data before anyone writes a rule.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/omop-data-quality-checks/achilles.webp" alt="ACHILLES data density plot showing record counts over time by domain" width="960" height="385" loading="lazy"></div><figcaption>A data density plot in the ACHILLES viewer. Sudden drops or spikes over time often reveal source-system changes or ETL gaps. <span class="credit">Source: <a href="https://ohdsi.github.io/TheBookOfOhdsi/DataQuality.html" target="_blank" rel="noopener">OHDSI, The Book of OHDSI, Data Quality</a> · CC0 1.0</span></figcaption></figure>
+</section>
+
+<section class="block">
+<h2>Layer 2: rule-based checks with the Data Quality Dashboard</h2>
+<p>The Data Quality Dashboard runs rule-based checks against the CDM and reports, for each one, the fraction of rows that violate it, a threshold and a pass or fail status. Checks are organised by the Kahn categories and by table, field and concept level<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/omop-data-quality-checks/dqd.webp" alt="Data Quality Dashboard overview table showing checks by Kahn category with pass and fail counts" width="1400" height="775" loading="lazy"></div><figcaption>The Dashboard overview groups checks by Kahn category and context, so you can see at a glance where a dataset is weak. <span class="credit">Source: <a href="https://ohdsi.github.io/TheBookOfOhdsi/DataQuality.html" target="_blank" rel="noopener">OHDSI, The Book of OHDSI, Data Quality</a> · CC0 1.0</span></figcaption></figure>
+<p>Two practical notes. Thresholds are a decision, not a default, so agree them with the people who will use the data. And a failed check can come from the conversion or from the source system itself; the Book of OHDSI is explicit that dashboard findings need that diagnosis before anyone fixes anything<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+</section>
+
+<section class="block">
+<h2>Layer 3: unit tests for the ETL</h2>
+<p>Dashboards find problems after the fact. ETL unit tests stop them getting in. The Book of OHDSI recommends a suite of small tests, each creating a fake source record and asserting what the CDM should contain, typically hundreds of them, re-run whenever the ETL changes<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<p>This is ordinary software engineering applied to clinical data, and it is the layer most often skipped. In my view it is the most valuable, because mapping mistakes are the ones you can actually prevent.</p>
+</section>
+
+<section class="block">
+<h2>Layer 4: study-specific checks</h2>
+<p>General checks say the data is broadly usable. A specific study needs more: confirm the concepts in your cohort definitions appear at plausible rates over time, check that the key exposure fields are populated, and compare cohort prevalence with clinical expectations<sup class="cite"><a href="#ref-1">1</a></sup>. The same logic applies before training a clinical model: check the data for the question you are asking, not just in general.</p>
+</section>
+
+<section class="block">
+<h2>Making it operational</h2>
+<ol>
+<li><strong>Run ACHILLES and the Dashboard on every refresh</strong>, not once at go-live, and keep the history so trends are visible.</li>
+<li><strong>Gate releases on agreed thresholds.</strong> A refresh that fails critical checks doesn't reach analysts.</li>
+<li><strong>Keep ETL unit tests in CI</strong> alongside the conversion code.</li>
+<li><strong>Publish a data quality report</strong> with each release, so users know the known limitations.</li>
+<li><strong>Track mapping coverage</strong>: how many source codes map to standard concepts, and which unmapped codes matter most.</li>
+</ol>
+<p>This is the quality layer on top of the pipeline I describe in <a href="/insights/fhir-to-omop-architecture/">FHIR to OMOP: a practical architecture</a>.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I design healthcare data platforms where quality is measured, gated and reported, from ETL tests to dashboards. See <a href="/healthcare-data-architecture/">healthcare data architecture</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>

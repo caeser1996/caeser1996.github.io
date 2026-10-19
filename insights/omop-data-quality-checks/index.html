@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>OMOP data quality: conformance, completeness, plausibility</title>
+<meta name="description" content="Converting to OMOP is half the job; trusting the data is the other half. How I use the Kahn framework, ACHILLES, the Data Quality Dashboard and ETL unit tests." />
+<meta name="keywords" content="OMOP data quality, OHDSI Data Quality Dashboard, ACHILLES, Kahn data quality framework, conformance completeness plausibility, ETL unit tests OMOP, EHR data quality, real-world data quality, clinical data validation, healthcare data architecture" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://asksumanta.com/insights/omop-data-quality-checks/" />
+<meta name="theme-color" content="#111214" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="OMOP data quality: conformance, completeness, plausibility" />
+<meta property="og:description" content="Converting to OMOP is half the job; trusting the data is the other half. How I use the Kahn framework, ACHILLES, the Data Quality Dashboard and ETL unit tests." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://asksumanta.com/insights/omop-data-quality-checks/" />
+<meta property="og:image" content="https://asksumanta.com/assets/og/omop-data-quality-checks.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="OMOP data quality: conformance, completeness, plausibility" />
+<meta name="twitter:description" content="Converting to OMOP is half the job; trusting the data is the other half. How I use the Kahn framework, ACHILLES, the Data Quality Dashboard and ETL unit tests." />
+<meta name="twitter:image" content="https://asksumanta.com/assets/og/omop-data-quality-checks.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "BlogPosting", "headline": "OMOP data quality in practice: conformance, completeness and plausibility", "description": "Converting to OMOP is half the job; trusting the data is the other half. How I use the Kahn framework, ACHILLES, the Data Quality Dashboard and ETL unit tests.", "datePublished": "2026-10-19T04:15:00+04:00", "dateModified": "2026-10-19T04:15:00+04:00", "articleSection": "Healthcare data", "genre": "Field note", "citation": [{"@type": "CreativeWork", "name": "The Book of OHDSI: Data Quality", "url": "https://ohdsi.github.io/TheBookOfOhdsi/DataQuality.html"}, {"@type": "CreativeWork", "name": "A Harmonized Data Quality Assessment Terminology and Framework for the Secondary Use of Electronic Health Record Data", "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC5051581"}, {"@type": "CreativeWork", "name": "Data Quality Dashboard", "url": "https://github.com/OHDSI/DataQualityDashboard"}, {"@type": "CreativeWork", "name": "OMOP data quality (OHDSI Symposium plenary)", "url": "https://www.ohdsi.org/wp-content/uploads/2019/09/2-Plenary-1-OMOP-DQ-Clair-Andrew.pdf"}], "author": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "publisher": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "mainEntityOfPage": "https://asksumanta.com/insights/omop-data-quality-checks/", "image": "https://asksumanta.com/assets/og/omop-data-quality-checks.png", "keywords": "OMOP data quality, OHDSI Data Quality Dashboard, ACHILLES, Kahn data quality framework, conformance completeness plausibility, ETL unit tests OMOP, EHR data quality, real-world data quality, clinical data validation, healthcare data architecture", "wordCount": 753}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://asksumanta.com/"}, {"@type": "ListItem", "position": 2, "name": "Insights", "item": "https://asksumanta.com/insights/"}, {"@type": "ListItem", "position": 3, "name": "OMOP data quality in practice: conformance, completeness and plausibility", "item": "https://asksumanta.com/insights/omop-data-quality-checks/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What is the Kahn data quality framework?", "acceptedAnswer": {"@type": "Answer", "text": "A harmonised terminology for assessing EHR data quality, published by Kahn and colleagues in 2016. It groups checks into conformance, completeness and plausibility, each assessed by verification against internal expectations or validation against external benchmarks."}}, {"@type": "Question", "name": "What do ACHILLES and the Data Quality Dashboard do?", "acceptedAnswer": {"@type": "Answer", "text": "Both are OHDSI tools that run against an OMOP CDM. ACHILLES pre-computes characterisation analyses to visualise the data, while the Data Quality Dashboard runs rule-based checks organised by the Kahn categories and reports pass or fail against thresholds."}}, {"@type": "Question", "name": "Are data quality dashboards enough on their own?", "acceptedAnswer": {"@type": "Answer", "text": "No. They find problems after conversion. ETL unit tests catch mapping errors in the conversion itself, and study-specific checks confirm the data is fit for a particular question."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+</script>
+</head>
+<body class="sub is-post">
+<div class="progress" id="progress"></div>
+<nav>
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="/#practice">Services</a>
+      <a href="/#work">Case studies</a>
+      <a href="/insights/">Insights</a>
+      <a href="/#assess">Analyse</a>
+      <a href="/#connect">Connect</a>
+    </div>
+    <div class="nav-r">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/insights/">Insights</a> <span>/</span> <em>OMOP data quality in practice: conformance, completeness and plausibility</em></div>
+    <div class="kicker">Healthcare data</div>
+    <h1>OMOP data quality in practice: conformance, completeness and plausibility</h1>
+    <p class="sub-lede">Most clinical data was never collected for research. Before anyone builds a cohort or trains a model on it, you need evidence it&#x27;s fit for purpose. These are the checks I put in place.</p>
+    <div class="ameta"><span class="fmt">Field note</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-10-19T04:15:00+04:00">19 Oct 2026 · 04:15 GST</time><span>7 min read</span><span>4 sources</span></div><div class="atags"><span class="tagp">#healthcare</span><span class="tagp">#omop</span><span class="tagp">#data</span><span class="tagp">#governance</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Field note cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><circle cx="880" cy="210" r="40" class="cv-ring"/><circle cx="880" cy="210" r="70" class="cv-ring"/><circle cx="880" cy="210" r="100" class="cv-ring hl"/><circle cx="880" cy="210" r="130" class="cv-ring"/><circle cx="880" cy="210" r="160" class="cv-ring"/><circle cx="880" cy="210" r="190" class="cv-ring"/><circle cx="953" cy="141" r="6" class="cv-dot hl"/><circle cx="846" cy="271" r="3" class="cv-dot"/><circle cx="941" cy="130" r="3" class="cv-dot"/><circle cx="863" cy="308" r="6" class="cv-dot hl"/><circle cx="864" cy="111" r="3" class="cv-dot"/><circle cx="754" cy="309" r="3" class="cv-dot"/><circle cx="980" cy="210" r="6" class="cv-dot hl"/><circle cx="980" cy="126" r="3" class="cv-dot"/><circle cx="931" cy="90" r="3" class="cv-dot"/><circle cx="851" cy="237" r="6" class="cv-dot hl"/><circle cx="987" cy="367" r="3" class="cv-dot"/><circle cx="842" cy="223" r="3" class="cv-dot"/><text x="60" y="90" class="cv-k">FIELD NOTE · HEALTHCARE DATA</text><text x="60" y="350" class="cv-n">19 Oct 2026 · 04:15 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <p>A successful OMOP conversion feels like the finish line. The ETL ran, the tables are populated, ATLAS loads. In my experience with OMOP and the OHDSI tools, it is closer to the halfway point. The question that matters next is whether anyone should trust the data.</p>
+<p>The Book of OHDSI frames it well: most observational data was not collected for research. EHRs exist to support patient care and claims exist to get paid, so the real question is whether the data is good enough for <em>your</em> purpose<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+
+<section class="block">
+<h2 id="a-shared-vocabulary-for-quality">A shared vocabulary for "quality"</h2>
+<p>The framework I use comes from Kahn and colleagues, who published a harmonised terminology for EHR data quality in 2016<sup class="cite"><a href="#ref-2">2</a></sup>. It has three categories:</p>
+<table class="tbl">
+<thead><tr><th>Category</th><th>Question</th><th>Example check</th></tr></thead>
+<tbody>
+<tr><td>Conformance</td><td>Do values follow the expected formats, relationships and computations?</td><td>Every provider referenced in a drug exposure exists in the provider table</td></tr>
+<tr><td>Completeness</td><td>Are the values we need actually present?</td><td>Do all persons have a recorded gender?</td></tr>
+<tr><td>Plausibility</td><td>Are the values believable?</td><td>No patients aged 141; diabetes prevalence close to known rates</td></tr>
+</tbody>
+</table>
+<p>Each category can be checked by <strong>verification</strong>, against internal rules and expectations, or <strong>validation</strong>, against an external benchmark such as other sites or published rates<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. The value of the framework is less in the categories than in the shared language: clinicians, analysts and engineers stop arguing about what "bad data" means.</p>
+</section>
+
+<section class="block">
+<h2 id="layer-1-characterise-the-data-with-achilles">Layer 1: characterise the data with ACHILLES</h2>
+<p>ACHILLES pre-computes a large set of characterisation analyses over an OMOP CDM, such as distributions of drug supply days by concept, and presents them visually<sup class="cite"><a href="#ref-1">1</a></sup>. I use it first because it shows the shape of the data before anyone writes a rule.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/omop-data-quality-checks/achilles.webp" alt="ACHILLES data density plot showing record counts over time by domain" width="960" height="385" loading="lazy"></div><figcaption>A data density plot in the ACHILLES viewer. Sudden drops or spikes over time often reveal source-system changes or ETL gaps. <span class="credit">Source: <a href="https://ohdsi.github.io/TheBookOfOhdsi/DataQuality.html" target="_blank" rel="noopener">OHDSI, The Book of OHDSI, Data Quality</a> · CC0 1.0</span></figcaption></figure>
+</section>
+
+<section class="block">
+<h2 id="layer-2-rule-based-checks-with-the-data-quality-dashboard">Layer 2: rule-based checks with the Data Quality Dashboard</h2>
+<p>The Data Quality Dashboard runs rule-based checks against the CDM and reports, for each one, the fraction of rows that violate it, a threshold and a pass or fail status. Checks are organised by the Kahn categories and by table, field and concept level<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/omop-data-quality-checks/dqd.webp" alt="Data Quality Dashboard overview table showing checks by Kahn category with pass and fail counts" width="1400" height="775" loading="lazy"></div><figcaption>The Dashboard overview groups checks by Kahn category and context, so you can see at a glance where a dataset is weak. <span class="credit">Source: <a href="https://ohdsi.github.io/TheBookOfOhdsi/DataQuality.html" target="_blank" rel="noopener">OHDSI, The Book of OHDSI, Data Quality</a> · CC0 1.0</span></figcaption></figure>
+<p>Two practical notes. Thresholds are a decision, not a default, so agree them with the people who will use the data. And a failed check can come from the conversion or from the source system itself; the Book of OHDSI is explicit that dashboard findings need that diagnosis before anyone fixes anything<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+</section>
+
+<section class="block">
+<h2 id="layer-3-unit-tests-for-the-etl">Layer 3: unit tests for the ETL</h2>
+<p>Dashboards find problems after the fact. ETL unit tests stop them getting in. The Book of OHDSI recommends a suite of small tests, each creating a fake source record and asserting what the CDM should contain, typically hundreds of them, re-run whenever the ETL changes<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<p>This is ordinary software engineering applied to clinical data, and it is the layer most often skipped. In my view it is the most valuable, because mapping mistakes are the ones you can actually prevent.</p>
+</section>
+
+<section class="block">
+<h2 id="layer-4-study-specific-checks">Layer 4: study-specific checks</h2>
+<p>General checks say the data is broadly usable. A specific study needs more: confirm the concepts in your cohort definitions appear at plausible rates over time, check that the key exposure fields are populated, and compare cohort prevalence with clinical expectations<sup class="cite"><a href="#ref-1">1</a></sup>. The same logic applies before training a clinical model: check the data for the question you are asking, not just in general.</p>
+</section>
+
+<section class="block">
+<h2 id="making-it-operational">Making it operational</h2>
+<ol>
+<li><strong>Run ACHILLES and the Dashboard on every refresh</strong>, not once at go-live, and keep the history so trends are visible.</li>
+<li><strong>Gate releases on agreed thresholds.</strong> A refresh that fails critical checks doesn't reach analysts.</li>
+<li><strong>Keep ETL unit tests in CI</strong> alongside the conversion code.</li>
+<li><strong>Publish a data quality report</strong> with each release, so users know the known limitations.</li>
+<li><strong>Track mapping coverage</strong>: how many source codes map to standard concepts, and which unmapped codes matter most.</li>
+</ol>
+<p>This is the quality layer on top of the pipeline I describe in <a href="/insights/fhir-to-omop-architecture/">FHIR to OMOP: a practical architecture</a>.</p>
+</section>
+
+<section class="block">
+<h2 id="how-i-can-help">How I can help</h2>
+<p>I design healthcare data platforms where quality is measured, gated and reported, from ETL tests to dashboards. See <a href="/healthcare-data-architecture/">healthcare data architecture</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://ohdsi.github.io/TheBookOfOhdsi/DataQuality.html" target="_blank" rel="noopener">The Book of OHDSI: Data Quality</a><small>OHDSI</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5051581" target="_blank" rel="noopener">A Harmonized Data Quality Assessment Terminology and Framework for the Secondary Use of Electronic Health Record Data</a><small>Kahn et al., eGEMs · 2016</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://github.com/OHDSI/DataQualityDashboard" target="_blank" rel="noopener">Data Quality Dashboard</a><small>OHDSI, GitHub</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://www.ohdsi.org/wp-content/uploads/2019/09/2-Plenary-1-OMOP-DQ-Clair-Andrew.pdf" target="_blank" rel="noopener">OMOP data quality (OHDSI Symposium plenary)</a><small>OHDSI · 2019</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fomop-data-quality-checks%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fomop-data-quality-checks%2F&amp;text=OMOP%20data%20quality%20in%20practice%3A%20conformance%2C%20completeness%20and%20plausibility" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=OMOP%20data%20quality%20in%20practice%3A%20conformance%2C%20completeness%20and%20plausibility%20https%3A%2F%2Fasksumanta.com%2Finsights%2Fomop-data-quality-checks%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://asksumanta.com/insights/omop-data-quality-checks/">Copy link</button></div>
+      <div class="pnav"><a class="pn prev" href="/insights/architecture-decision-records-fractional-cto/"><small>← Previous</small><b>Architecture decision records: the habit I bring to every engagement</b></a><a class="pn next" href="/insights/llm-evaluation-sets-that-predict-production/"><small>Next →</small><b>Building LLM evaluation sets that actually predict production</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#a-shared-vocabulary-for-quality">A shared vocabulary for &quot;quality&quot;</a></li><li><a href="#layer-1-characterise-the-data-with-achilles">Layer 1: characterise the data with ACHILLES</a></li><li><a href="#layer-2-rule-based-checks-with-the-data-quality-dashboard">Layer 2: rule-based checks with the Data Quality Dashboard</a></li><li><a href="#layer-3-unit-tests-for-the-etl">Layer 3: unit tests for the ETL</a></li><li><a href="#layer-4-study-specific-checks">Layer 4: study-specific checks</a></li><li><a href="#making-it-operational">Making it operational</a></li><li><a href="#how-i-can-help">How I can help</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>What is the Kahn data quality framework?</summary><p>A harmonised terminology for assessing EHR data quality, published by Kahn and colleagues in 2016. It groups checks into conformance, completeness and plausibility, each assessed by verification against internal expectations or validation against external benchmarks.</p></details><details class="rise"><summary>What do ACHILLES and the Data Quality Dashboard do?</summary><p>Both are OHDSI tools that run against an OMOP CDM. ACHILLES pre-computes characterisation analyses to visualise the data, while the Data Quality Dashboard runs rule-based checks organised by the Kahn categories and reports pass or fail against thresholds.</p></details><details class="rise"><summary>Are data quality dashboards enough on their own?</summary><p>No. They find problems after conversion. ETL unit tests catch mapping errors in the conversion itself, and study-specific checks confirm the data is fit for a particular question.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/healthcare-data-architecture/"><small>Service</small><b>Healthcare data architecture</b><span>I help healthcare and life-sciences organisations turn fragmented clinical data into governed platforms for care, research and AI, using the standards the industry already agrees on.</span><i>→</i></a><a class="rcard rise" href="/ontology-knowledge-graph/"><small>Service</small><b>Ontology &amp; knowledge graphs</b><span>I help organisations agree what their data means, write it down as an ontology and put it to work in a knowledge graph that analytics, APIs and AI agents can all rely on.</span><i>→</i></a><a class="rcard rise" href="/technical-due-diligence/"><small>Service</small><b>Technical due diligence</b><span>I give investors an independent, plain-language view of a company&#x27;s technology, team and AI claims, so the risks are priced in before the deal closes, not discovered after.</span><i>→</i></a><a class="rcard rise" href="/insights/llm-evaluation-sets-that-predict-production/"><small>Insight</small><b>Building LLM evaluation sets that actually predict production</b><span>An evaluation set is only useful if a pass means the system will behave in production. Here is the checklist I use to build ones that do, and to use LLM judges without fooling yourself.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: OMOP data quality in practice: conformance, completeness and plausibility">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
+        <p class="floc">United States &amp; UAE · working globally</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/uae/">Fractional CTO in the UAE</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/llm-evaluation-sets-that-predict-production/">Building LLM evaluation sets that actually predict production</a></li><li><a href="/insights/omop-data-quality-checks/">OMOP data quality in practice: conformance, completeness and plausibility</a></li><li><a href="/insights/architecture-decision-records-fractional-cto/">Architecture decision records: the habit I bring to every engagement</a></li><li><a href="/insights/llm-observability-opentelemetry-genai/">LLM observability with OpenTelemetry: what to trace, what to leave out, and why it matters</a></li><li><a href="/insights/idempotent-payments-order-pipelines/">Idempotency for payments and orders: how to never charge a customer twice</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>
