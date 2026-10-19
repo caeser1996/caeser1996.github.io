@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Change data capture: turn your database into an event stream</title>
+<meta name="description" content="Change data capture streams every insert, update and delete as events. How I use Debezium, MongoDB change streams and Postgres logical decoding, and the pitfalls." />
+<meta name="keywords" content="change data capture, CDC, Debezium, MongoDB change streams, PostgreSQL logical decoding, event-driven architecture, transactional outbox, real-time data pipelines, data platform architecture, streaming ETL" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://asksumanta.com/insights/change-data-capture-event-streams/" />
+<meta name="theme-color" content="#111214" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="Change data capture: turn your database into an event stream" />
+<meta property="og:description" content="Change data capture streams every insert, update and delete as events. How I use Debezium, MongoDB change streams and Postgres logical decoding, and the pitfalls." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://asksumanta.com/insights/change-data-capture-event-streams/" />
+<meta property="og:image" content="https://asksumanta.com/assets/og/change-data-capture-event-streams.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Change data capture: turn your database into an event stream" />
+<meta name="twitter:description" content="Change data capture streams every insert, update and delete as events. How I use Debezium, MongoDB change streams and Postgres logical decoding, and the pitfalls." />
+<meta name="twitter:image" content="https://asksumanta.com/assets/og/change-data-capture-event-streams.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "BlogPosting", "headline": "Change data capture: turning your database into a reliable event stream", "description": "Change data capture streams every insert, update and delete as events. How I use Debezium, MongoDB change streams and Postgres logical decoding, and the pitfalls.", "datePublished": "2026-10-19T16:30:00+04:00", "dateModified": "2026-10-19T16:30:00+04:00", "articleSection": "Data platforms", "genre": "Explainer", "citation": [{"@type": "CreativeWork", "name": "Debezium documentation", "url": "https://debezium.io/documentation/reference/stable"}, {"@type": "CreativeWork", "name": "Debezium features", "url": "https://debezium.io/documentation/reference/features.html"}, {"@type": "CreativeWork", "name": "Change Streams", "url": "https://www.mongodb.com/docs/manual/changeStreams/"}, {"@type": "CreativeWork", "name": "Logical Decoding", "url": "https://www.postgresql.org/docs/current/logicaldecoding.html"}, {"@type": "CreativeWork", "name": "Pattern: Transactional outbox", "url": "https://microservices.io/patterns/data/transactional-outbox"}], "author": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "publisher": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "mainEntityOfPage": "https://asksumanta.com/insights/change-data-capture-event-streams/", "image": "https://asksumanta.com/assets/og/change-data-capture-event-streams.png", "keywords": "change data capture, CDC, Debezium, MongoDB change streams, PostgreSQL logical decoding, event-driven architecture, transactional outbox, real-time data pipelines, data platform architecture, streaming ETL", "wordCount": 619}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://asksumanta.com/"}, {"@type": "ListItem", "position": 2, "name": "Insights", "item": "https://asksumanta.com/insights/"}, {"@type": "ListItem", "position": 3, "name": "Change data capture: turning your database into a reliable event stream", "item": "https://asksumanta.com/insights/change-data-capture-event-streams/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What is change data capture?", "acceptedAnswer": {"@type": "Answer", "text": "CDC captures row-level inserts, updates and deletes from a database, usually by reading its transaction log, and publishes them as an ordered stream of events that other systems can consume."}}, {"@type": "Question", "name": "Is log-based CDC better than polling?", "acceptedAnswer": {"@type": "Answer", "text": "Usually. Log-based CDC captures every change, including deletes, with low latency and without repeatedly querying the database. Debezium's documentation notes millisecond-range delays for databases such as MySQL and PostgreSQL."}}, {"@type": "Question", "name": "Should I stream my tables directly or use an outbox?", "acceptedAnswer": {"@type": "Answer", "text": "Streaming raw tables is quick but couples consumers to your internal schema. For events other teams depend on, combine CDC with the transactional outbox pattern so you publish deliberate, versioned events."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+</script>
+</head>
+<body class="sub is-post">
+<div class="progress" id="progress"></div>
+<nav>
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="/#practice">Services</a>
+      <a href="/#work">Case studies</a>
+      <a href="/insights/">Insights</a>
+      <a href="/#assess">Analyse</a>
+      <a href="/#connect">Connect</a>
+    </div>
+    <div class="nav-r">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/insights/">Insights</a> <span>/</span> <em>Change data capture: turning your database into a reliable event stream</em></div>
+    <div class="kicker">Data platforms</div>
+    <h1>Change data capture: turning your database into a reliable event stream</h1>
+    <p class="sub-lede">Most companies already have their most valuable event stream. It is sitting inside the database&#x27;s transaction log. Change data capture lets you use it without rewriting every application.</p>
+    <div class="ameta"><span class="fmt">Explainer</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-10-19T16:30:00+04:00">19 Oct 2026 · 16:30 GST</time><span>7 min read</span><span>5 sources</span></div><div class="atags"><span class="tagp">#data</span><span class="tagp">#platform</span><span class="tagp">#mongodb</span><span class="tagp">#fintech</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Explainer cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><line x1="669" y1="178" x2="653" y2="32" class="cv-edge" opacity="0.02"/><line x1="669" y1="178" x2="565" y2="255" class="cv-edge hl" opacity="0.13"/><line x1="669" y1="178" x2="670" y2="278" class="cv-edge" opacity="0.34"/><line x1="669" y1="178" x2="596" y2="249" class="cv-edge" opacity="0.32"/><line x1="669" y1="178" x2="686" y2="279" class="cv-edge" opacity="0.32"/><line x1="669" y1="178" x2="642" y2="107" class="cv-edge" opacity="0.49"/><line x1="669" y1="178" x2="666" y2="136" class="cv-edge" opacity="0.72"/><line x1="669" y1="178" x2="666" y2="289" class="cv-edge" opacity="0.26"/><line x1="669" y1="178" x2="637" y2="81" class="cv-edge" opacity="0.32"/><line x1="669" y1="178" x2="556" y2="178" class="cv-edge hl" opacity="0.24"/><line x1="669" y1="178" x2="615" y2="45" class="cv-edge" opacity="0.04"/><line x1="653" y1="32" x2="642" y2="107" class="cv-edge" opacity="0.49"/><line x1="653" y1="32" x2="666" y2="136" class="cv-edge" opacity="0.30"/><line x1="653" y1="32" x2="795" y2="34" class="cv-edge hl" opacity="0.06"/><line x1="653" y1="32" x2="637" y2="81" class="cv-edge" opacity="0.66"/><line x1="653" y1="32" x2="615" y2="45" class="cv-edge" opacity="0.73"/><line x1="565" y1="255" x2="670" y2="278" class="cv-edge hl" opacity="0.28"/><line x1="565" y1="255" x2="596" y2="249" class="cv-edge hl" opacity="0.78"/><line x1="565" y1="255" x2="610" y2="320" class="cv-edge hl" opacity="0.47"/><line x1="565" y1="255" x2="686" y2="279" class="cv-edge hl" opacity="0.17"/><line x1="565" y1="255" x2="593" y2="352" class="cv-edge hl" opacity="0.33"/><line x1="565" y1="255" x2="666" y2="289" class="cv-edge hl" opacity="0.29"/><line x1="565" y1="255" x2="592" y2="323" class="cv-edge hl" opacity="0.52"/><line x1="565" y1="255" x2="556" y2="178" class="cv-edge hl" opacity="0.48"/><line x1="670" y1="278" x2="596" y2="249" class="cv-edge" opacity="0.47"/><line x1="670" y1="278" x2="610" y2="320" class="cv-edge hl" opacity="0.51"/><line x1="670" y1="278" x2="686" y2="279" class="cv-edge" opacity="0.89"/><line x1="670" y1="278" x2="593" y2="352" class="cv-edge" opacity="0.29"/><line x1="670" y1="278" x2="666" y2="136" class="cv-edge" opacity="0.05"/><line x1="670" y1="278" x2="666" y2="289" class="cv-edge" opacity="0.92"/><line x1="670" y1="278" x2="592" y2="323" class="cv-edge" opacity="0.40"/><line x1="596" y1="249" x2="610" y2="320" class="cv-edge hl" opacity="0.52"/><line x1="596" y1="249" x2="686" y2="279" class="cv-edge" opacity="0.37"/><line x1="596" y1="249" x2="642" y2="107" class="cv-edge" opacity="0.01"/><line x1="596" y1="249" x2="593" y2="352" class="cv-edge" opacity="0.32"/><line x1="596" y1="249" x2="666" y2="136" class="cv-edge" opacity="0.11"/><line x1="596" y1="249" x2="666" y2="289" class="cv-edge" opacity="0.46"/><line x1="596" y1="249" x2="592" y2="323" class="cv-edge" opacity="0.51"/><line x1="596" y1="249" x2="556" y2="178" class="cv-edge hl" opacity="0.45"/><line x1="610" y1="320" x2="686" y2="279" class="cv-edge hl" opacity="0.42"/><line x1="610" y1="320" x2="593" y2="352" class="cv-edge hl" opacity="0.76"/><line x1="610" y1="320" x2="666" y2="289" class="cv-edge hl" opacity="0.57"/><line x1="610" y1="320" x2="592" y2="323" class="cv-edge hl" opacity="0.88"/><line x1="978" y1="280" x2="1112" y2="275" class="cv-edge hl" opacity="0.10"/><line x1="978" y1="280" x2="1083" y2="211" class="cv-edge hl" opacity="0.16"/><line x1="978" y1="280" x2="860" y2="241" class="cv-edge hl" opacity="0.18"/><line x1="978" y1="280" x2="978" y2="144" class="cv-edge hl" opacity="0.09"/><line x1="978" y1="280" x2="1082" y2="191" class="cv-edge hl" opacity="0.08"/><line x1="686" y1="279" x2="593" y2="352" class="cv-edge" opacity="0.21"/><line x1="686" y1="279" x2="666" y2="136" class="cv-edge" opacity="0.04"/><line x1="686" y1="279" x2="666" y2="289" class="cv-edge" opacity="0.85"/><line x1="686" y1="279" x2="592" y2="323" class="cv-edge" opacity="0.31"/><line x1="642" y1="107" x2="666" y2="136" class="cv-edge" opacity="0.75"/><line x1="642" y1="107" x2="637" y2="81" class="cv-edge" opacity="0.82"/><line x1="642" y1="107" x2="556" y2="178" class="cv-edge hl" opacity="0.25"/><line x1="642" y1="107" x2="615" y2="45" class="cv-edge" opacity="0.55"/><line x1="1112" y1="275" x2="1083" y2="211" class="cv-edge" opacity="0.53"/><line x1="1112" y1="275" x2="1082" y2="191" class="cv-edge" opacity="0.41"/><line x1="1083" y1="211" x2="978" y2="144" class="cv-edge" opacity="0.17"/><line x1="1083" y1="211" x2="1082" y2="191" class="cv-edge" opacity="0.86"/><line x1="1083" y1="211" x2="1105" y2="120" class="cv-edge hl" opacity="0.37"/><line x1="821" y1="67" x2="876" y2="143" class="cv-edge hl" opacity="0.37"/><line x1="821" y1="67" x2="795" y2="34" class="cv-edge hl" opacity="0.72"/><line x1="821" y1="67" x2="943" y2="45" class="cv-edge hl" opacity="0.17"/><line x1="593" y1="352" x2="666" y2="289" class="cv-edge" opacity="0.36"/><line x1="593" y1="352" x2="592" y2="323" class="cv-edge" opacity="0.81"/><line x1="666" y1="136" x2="637" y2="81" class="cv-edge" opacity="0.59"/><line x1="666" y1="136" x2="556" y2="178" class="cv-edge hl" opacity="0.21"/><line x1="666" y1="136" x2="615" y2="45" class="cv-edge" opacity="0.31"/><line x1="666" y1="289" x2="592" y2="323" class="cv-edge" opacity="0.46"/><line x1="860" y1="241" x2="876" y2="143" class="cv-edge hl" opacity="0.34"/><line x1="876" y1="143" x2="978" y2="144" class="cv-edge hl" opacity="0.32"/><line x1="876" y1="143" x2="795" y2="34" class="cv-edge hl" opacity="0.09"/><line x1="876" y1="143" x2="943" y2="45" class="cv-edge hl" opacity="0.21"/><line x1="978" y1="144" x2="1082" y2="191" class="cv-edge" opacity="0.24"/><line x1="978" y1="144" x2="943" y2="45" class="cv-edge" opacity="0.30"/><line x1="978" y1="144" x2="1105" y2="120" class="cv-edge hl" opacity="0.14"/><line x1="795" y1="34" x2="943" y2="45" class="cv-edge hl" opacity="0.01"/><line x1="592" y1="323" x2="556" y2="178" class="cv-edge hl" opacity="0.01"/><line x1="637" y1="81" x2="556" y2="178" class="cv-edge hl" opacity="0.15"/><line x1="637" y1="81" x2="615" y2="45" class="cv-edge" opacity="0.72"/><line x1="556" y1="178" x2="615" y2="45" class="cv-edge hl" opacity="0.03"/><line x1="1082" y1="191" x2="1105" y2="120" class="cv-edge hl" opacity="0.50"/><circle cx="669" cy="178" r="3" class="cv-dot"/><circle cx="653" cy="32" r="3" class="cv-dot"/><circle cx="565" cy="255" r="6" class="cv-dot hl"/><circle cx="670" cy="278" r="3" class="cv-dot"/><circle cx="596" cy="249" r="3" class="cv-dot"/><circle cx="610" cy="320" r="6" class="cv-dot hl"/><circle cx="978" cy="280" r="6" class="cv-dot hl"/><circle cx="686" cy="279" r="3" class="cv-dot"/><circle cx="642" cy="107" r="3" class="cv-dot"/><circle cx="1112" cy="275" r="3" class="cv-dot"/><circle cx="1083" cy="211" r="3" class="cv-dot"/><circle cx="821" cy="67" r="6" class="cv-dot hl"/><circle cx="593" cy="352" r="3" class="cv-dot"/><circle cx="666" cy="136" r="3" class="cv-dot"/><circle cx="666" cy="289" r="3" class="cv-dot"/><circle cx="860" cy="241" r="3" class="cv-dot"/><circle cx="876" cy="143" r="6" class="cv-dot hl"/><circle cx="978" cy="144" r="3" class="cv-dot"/><circle cx="795" cy="34" r="6" class="cv-dot hl"/><circle cx="592" cy="323" r="3" class="cv-dot"/><circle cx="637" cy="81" r="3" class="cv-dot"/><circle cx="556" cy="178" r="6" class="cv-dot hl"/><circle cx="615" cy="45" r="3" class="cv-dot"/><circle cx="1082" cy="191" r="3" class="cv-dot"/><circle cx="943" cy="45" r="3" class="cv-dot"/><circle cx="1105" cy="120" r="6" class="cv-dot hl"/><text x="60" y="90" class="cv-k">EXPLAINER · DATA PLATFORMS</text><text x="60" y="350" class="cv-n">19 Oct 2026 · 16:30 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <p>When I re-architect a system around events, the first question is usually "do we have to change every service to publish events?". Often the answer is no. Every write already goes through the database, and the database already keeps an ordered log of every change. Change data capture reads that log and turns it into a stream.</p>
+
+<section class="block">
+<h2 id="polling-versus-the-log">Polling versus the log</h2>
+<p>The simple approach is polling: query for rows with a newer <code>updated_at</code> every few seconds. It misses deletes, adds load to the database, and struggles with ordering. Log-based CDC reads the database's own change log instead. Debezium's documentation describes it as capturing all data changes with very low delay, in the millisecond range for databases such as MySQL and PostgreSQL, without the CPU cost of frequent polling<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<table class="tbl">
+<thead><tr><th>Source</th><th>Native mechanism</th><th>Common tooling</th></tr></thead>
+<tbody>
+<tr><td>PostgreSQL</td><td>Logical decoding of the write-ahead log<sup class="cite"><a href="#ref-4">4</a></sup></td><td>Debezium connector</td></tr>
+<tr><td>MongoDB</td><td>Change streams over the oplog<sup class="cite"><a href="#ref-3">3</a></sup></td><td>Change streams directly, or Debezium</td></tr>
+<tr><td>MySQL and others</td><td>Binary log</td><td>Debezium connectors for Kafka Connect<sup class="cite"><a href="#ref-1">1</a></sup></td></tr>
+</tbody>
+</table>
+</section>
+
+<section class="block">
+<h2 id="where-cdc-earns-its-keep">Where CDC earns its keep</h2>
+<ul>
+<li><strong>Feeding analytics and search</strong> without nightly batch jobs: the warehouse, search index and vector index stay seconds behind the source.</li>
+<li><strong>Keeping RAG indexes fresh.</strong> When a document or record changes, the change event triggers re-embedding, so retrieval never serves stale content. This pairs naturally with <a href="/insights/mongodb-hybrid-search-rag/">hybrid search in MongoDB</a>.</li>
+<li><strong>Strangling a monolith.</strong> New services subscribe to changes in the legacy database while it keeps running.</li>
+<li><strong>Audit and lineage</strong>, because every change becomes an immutable event with a position in the log.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2 id="raw-tables-or-deliberate-events">Raw tables or deliberate events?</h2>
+<p>The fastest way to start is to stream tables as they are. The cost is coupling: every consumer now depends on your internal schema, and renaming a column becomes a breaking change across teams.</p>
+<p>For events other teams depend on, I combine CDC with the transactional outbox pattern. The service writes a deliberate, versioned event into an outbox table in the same transaction as its business data, and CDC publishes the outbox<sup class="cite"><a href="#ref-5">5</a></sup>. You get the reliability of the log with a contract you control. I cover the pattern for payments and orders in <a href="/insights/idempotent-payments-order-pipelines/">idempotent payment and order pipelines</a>.</p>
+<div class="callout"><p>Raw table streams for internal replication and analytics; outbox events for anything another team builds on. Mixing the two up is a common CDC design mistake.</p></div>
+</section>
+
+<section class="block">
+<h2 id="pitfalls-to-plan-for">Pitfalls to plan for</h2>
+<ol>
+<li><strong>Initial snapshots.</strong> Connectors usually begin by snapshotting current state before streaming changes. Debezium supports initial and incremental snapshots<sup class="cite"><a href="#ref-2">2</a></sup>; plan for the load and the time on large tables.</li>
+<li><strong>Log retention.</strong> If a connector is down longer than the database keeps its log, you lose your place and need a new snapshot. Monitor connector lag, and size retention for your worst outage.</li>
+<li><strong>Schema changes.</strong> Decide how consumers handle new and removed fields before the first migration, not during it.</li>
+<li><strong>Sensitive data.</strong> Change events carry whatever the row carries. Filter columns and mask values at the connector, which Debezium supports<sup class="cite"><a href="#ref-2">2</a></sup>, rather than trusting every consumer.</li>
+<li><strong>Duplicates.</strong> After restarts, events can be redelivered. Consumers must be idempotent.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2 id="a-sensible-first-step">A sensible first step</h2>
+<p>Pick one high-value flow, such as orders into the warehouse or documents into a search index. Stream it with CDC, measure end-to-end lag, and run it alongside the existing batch job until the numbers match. Then retire the batch job. It is the lowest-risk path from nightly ETL to real time, and it is a pattern I have used on high-volume systems.</p>
+</section>
+
+<section class="block">
+<h2 id="how-i-can-help">How I can help</h2>
+<p>I design event-driven data platforms, from CDC and outbox patterns to streaming into warehouses, search and AI retrieval. As a <a href="/fractional-cto/">fractional CTO</a> I can own the migration plan. Or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://debezium.io/documentation/reference/stable" target="_blank" rel="noopener">Debezium documentation</a><small>Debezium</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://debezium.io/documentation/reference/features.html" target="_blank" rel="noopener">Debezium features</a><small>Debezium</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://www.mongodb.com/docs/manual/changeStreams/" target="_blank" rel="noopener">Change Streams</a><small>MongoDB documentation</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://www.postgresql.org/docs/current/logicaldecoding.html" target="_blank" rel="noopener">Logical Decoding</a><small>PostgreSQL documentation</small></div></li><li id="ref-5"><span class="rn">5</span><div><a href="https://microservices.io/patterns/data/transactional-outbox" target="_blank" rel="noopener">Pattern: Transactional outbox</a><small>microservices.io, Chris Richardson</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fchange-data-capture-event-streams%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fchange-data-capture-event-streams%2F&amp;text=Change%20data%20capture%3A%20turning%20your%20database%20into%20a%20reliable%20event%20stream" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=Change%20data%20capture%3A%20turning%20your%20database%20into%20a%20reliable%20event%20stream%20https%3A%2F%2Fasksumanta.com%2Finsights%2Fchange-data-capture-event-streams%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://asksumanta.com/insights/change-data-capture-event-streams/">Copy link</button></div>
+      <div class="pnav"><a class="pn prev" href="/insights/uae-ai-infrastructure-where-to-run-models/"><small>← Previous</small><b>Building AI in the UAE: where should your models actually run?</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#polling-versus-the-log">Polling versus the log</a></li><li><a href="#where-cdc-earns-its-keep">Where CDC earns its keep</a></li><li><a href="#raw-tables-or-deliberate-events">Raw tables or deliberate events?</a></li><li><a href="#pitfalls-to-plan-for">Pitfalls to plan for</a></li><li><a href="#a-sensible-first-step">A sensible first step</a></li><li><a href="#how-i-can-help">How I can help</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>What is change data capture?</summary><p>CDC captures row-level inserts, updates and deletes from a database, usually by reading its transaction log, and publishes them as an ordered stream of events that other systems can consume.</p></details><details class="rise"><summary>Is log-based CDC better than polling?</summary><p>Usually. Log-based CDC captures every change, including deletes, with low latency and without repeatedly querying the database. Debezium&#x27;s documentation notes millisecond-range delays for databases such as MySQL and PostgreSQL.</p></details><details class="rise"><summary>Should I stream my tables directly or use an outbox?</summary><p>Streaming raw tables is quick but couples consumers to your internal schema. For events other teams depend on, combine CDC with the transactional outbox pattern so you publish deliberate, versioned events.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/technical-due-diligence/"><small>Service</small><b>Technical due diligence</b><span>I give investors an independent, plain-language view of a company&#x27;s technology, team and AI claims, so the risks are priced in before the deal closes, not discovered after.</span><i>→</i></a><a class="rcard rise" href="/fractional-cto/"><small>Service</small><b>Fractional CTO</b><span>I work as a part-time CTO for founders, CEOs and boards who need experienced technical judgement now, and a team that can carry it on after I step back.</span><i>→</i></a><a class="rcard rise" href="/ai-architect/"><small>Service</small><b>AI &amp; LLM architecture</b><span>I design and build AI systems that leadership can trust: grounded in your data, measured by evaluations, governed by your rules and priced so they make sense at scale.</span><i>→</i></a><a class="rcard rise" href="/insights/uae-ai-infrastructure-where-to-run-models/"><small>Insight</small><b>Building AI in the UAE: where should your models actually run?</b><span>The UAE is investing heavily in AI compute, and in-country cloud has matured. For teams building AI here, the hosting question is now less about availability and more about matching each workload to the right place.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: Change data capture: turning your database into a reliable event stream">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
+        <p class="floc">United States &amp; UAE · working globally</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/uae/">Fractional CTO in the UAE</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/change-data-capture-event-streams/">Change data capture: turning your database into a reliable event stream</a></li><li><a href="/insights/uae-ai-infrastructure-where-to-run-models/">Building AI in the UAE: where should your models actually run?</a></li><li><a href="/insights/terraform-multi-cloud-module-design/">Multi-cloud Terraform: what to abstract, and what to leave alone</a></li><li><a href="/insights/fda-pccp-ai-medical-devices/">FDA change control plans for AI medical devices: what engineering teams need to build</a></li><li><a href="/insights/entity-resolution-knowledge-graphs/">Entity resolution for knowledge graphs: block, match, cluster</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,53 @@
+<!--{"title": "Building AI in the UAE: where to run your models in 2026", "description": "In-country cloud regions, Stargate UAE and data protection rules change where UAE AI workloads should run. A practical framework for choosing hosting by data sensitivity.", "h1": "Building AI in the UAE: where should your models actually run?", "kicker": "UAE · AI infrastructure", "lede": "The UAE is investing heavily in AI compute, and in-country cloud has matured. For teams building AI here, the hosting question is now less about availability and more about matching each workload to the right place.", "date": "2026-10-19", "datetime": "2026-10-19T16:15:00+04:00", "readtime": "7 min read", "format": "news-analysis", "tags": ["uae", "ai", "cloud", "regulation", "private-ai"], "keywords": ["AI in the UAE", "UAE data residency", "Stargate UAE", "UAE cloud region", "sovereign AI UAE", "AI hosting UAE", "UAE PDPL AI", "private LLM UAE", "AI consultant Dubai", "fractional CTO UAE", "GCC AI infrastructure"], "faq": [["What is Stargate UAE?", "A 1GW AI compute cluster in Abu Dhabi announced in May 2025, developed by G42's Khazna Data Centers with partners including OpenAI, Oracle and Nvidia. Reports in late 2025 and 2026 put its first 200MW phase on track for the third quarter of 2026."], ["Can I keep AI workloads inside the UAE?", "Increasingly, yes. Major cloud providers operate UAE regions, and private deployments of open-weight models are viable for sensitive data. Which option fits depends on the data's sensitivity, the regime that applies and the model capability you need."], ["Does using a hosted model API count as a data transfer?", "It can, if prompts containing personal data are processed outside the UAE. Classify what reaches the model, and route sensitive workloads to in-country or private deployments. Confirm the legal position with UAE counsel."]], "related": ["/uae/", "/ai-architect/", "/fractional-cto/"], "citations": [{"title": "Stargate UAE progress: Abu Dhabi's huge AI campus begins to take shape", "url": "https://www.thenationalnews.com/business/2025/10/16/g42-unit-khazna-targets-full-build-out-of-1gw-stargate-uae-project-in-three-years/", "publisher": "The National", "date": "16 Oct 2025"}, {"title": "Stargate UAE's first phase to be completed in third quarter of 2026", "url": "https://www.thenationalnews.com/business/2025/12/05/stargate-uaes-first-phase-to-be-completed-in-third-quarter-of-2026/", "publisher": "The National", "date": "5 Dec 2025"}, {"title": "Stargate UAE: first phase of 200MW to complete by 2026", "url": "https://gulfnews.com/business/markets/stargate-uae-first-phase-of-200mw-to-complete-by-2026-1.500310364", "publisher": "Gulf News"}, {"title": "Now open: AWS Region in the United Arab Emirates (UAE)", "url": "https://aws.amazon.com/blogs/aws/now-open-aws-region-in-the-united-arab-emirates-uae/", "publisher": "AWS News Blog", "date": "2022"}, {"title": "AWS and Azure expand in the Middle East", "url": "https://www.infoq.com/news/2022/09/aws-azure-middle-east/", "publisher": "InfoQ", "date": "Sep 2022"}]}-->
+<p>I work with teams in both the US and the UAE, and the AI hosting conversation here has changed quickly. A few years ago the honest answer to "can we keep this in the country?" was often "only for basic infrastructure". Today in-country cloud is established, very large AI compute is being built in Abu Dhabi, and private deployments of open models are practical. The question has shifted from <em>can we</em> to <em>which workload goes where</em>.</p>
+<p>As usual, I'm an architect rather than a lawyer. Treat this as an engineering framework and confirm the legal position with UAE counsel.</p>
+
+<section class="block">
+<h2>What's changed on the ground</h2>
+<ul>
+<li><strong>In-country cloud regions.</strong> Hyperscalers operate in the UAE. AWS, for example, opened its Middle East (UAE) region in 2022 with three Availability Zones<sup class="cite"><a href="#ref-4">4</a></sup><sup class="cite"><a href="#ref-5">5</a></sup>. Check each provider's current service list, since AI services don't always launch everywhere at once.</li>
+<li><strong>Large-scale AI compute.</strong> Stargate UAE, a 1GW AI cluster in Abu Dhabi announced in May 2025 and developed by G42's Khazna with partners including OpenAI, Oracle and Nvidia, is under construction. Reports put the first 200MW phase on track for the third quarter of 2026, while timelines for the rest are not yet confirmed<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>.</li>
+<li><strong>Regulation still settling.</strong> The federal PDPL applies, the free zones run their own regimes, and DIFC already has rules aimed at AI systems, as I set out in <a href="/insights/uae-pdpl-ai-architecture-2026/">UAE PDPL and AI in 2026</a>.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>A placement framework by data sensitivity</h2>
+<table class="tbl">
+<thead><tr><th>Workload</th><th>Example</th><th>Where I'd run it</th></tr></thead>
+<tbody>
+<tr><td>Public or non-sensitive</td><td>Marketing copy, public documentation search</td><td>Any capable hosted model, chosen on quality and cost</td></tr>
+<tr><td>Internal, low sensitivity</td><td>Engineering assistants, internal knowledge search</td><td>Hosted models with enterprise terms, no training on your data, region-pinned where offered</td></tr>
+<tr><td>Personal data</td><td>Customer support over account data, HR</td><td>In-country cloud deployment, PII redaction at the gateway, logged and access-controlled</td></tr>
+<tr><td>Highly sensitive or regulated</td><td>Health records, financial investigations, government-adjacent data</td><td>Private deployment of open-weight models in-country, on dedicated infrastructure</td></tr>
+</tbody>
+</table>
+<div class="callout"><p>A common mistake is one hosting decision for every use case. A single gateway that routes by sensitivity lets you use the best model where it's allowed and the safest deployment where it isn't.</p></div>
+</section>
+
+<section class="block">
+<h2>The gateway does the heavy lifting</h2>
+<p>Everything above depends on one control point. Every model call goes through an AI gateway that authenticates the caller, classifies or tags the data, redacts what shouldn't leave, routes to the right deployment and logs the decision. I describe the pattern in more detail in my <a href="/insights/private-llm-on-prem/">notes on private LLMs</a>, and the agent side in <a href="/insights/securing-mcp-servers-checklist/">securing MCP servers</a>.</p>
+<p>With that in place, adding capacity from new UAE compute becomes a routing change rather than a rebuild. Hosting is configuration, not architecture.</p>
+</section>
+
+<section class="block">
+<h2>Private models: smaller than you think</h2>
+<p>For the most sensitive tier, teams often assume they need frontier-scale models. In practice, many enterprise tasks such as extraction, classification, summarisation and grounded question answering work well with mid-sized open-weight models, especially when retrieval is good. My own experiments on an NVIDIA DGX Spark are about exactly this question: what can run privately, and how well. Measure on your own evaluation set before buying hardware or committing to a provider; the <a href="/insights/llm-evaluation-sets-that-predict-production/">evaluation checklist</a> covers how.</p>
+</section>
+
+<section class="block">
+<h2>What I'd do this quarter</h2>
+<ol>
+<li>Inventory AI use cases and classify each by data sensitivity and the regime that applies.</li>
+<li>Stand up a gateway with routing, redaction and audit before adding more use cases.</li>
+<li>Pick an in-country cloud region for personal-data workloads and confirm the AI services you need are available there.</li>
+<li>Pilot one private open-weight deployment for your most sensitive use case, and measure it against a hosted baseline.</li>
+<li>Record the placement decisions as <a href="/insights/architecture-decision-records-fractional-cto/">architecture decision records</a>, so they can be revisited as the rules and the compute evolve.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I help UAE and GCC teams design AI platforms that put each workload in the right place, with the governance to prove it. See <a href="/uae/">fractional CTO and AI advisory in the UAE</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>

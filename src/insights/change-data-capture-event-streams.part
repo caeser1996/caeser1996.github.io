@@ -1,0 +1,53 @@
+<!--{"title": "Change data capture: turn your database into an event stream", "description": "Change data capture streams every insert, update and delete as events. How I use Debezium, MongoDB change streams and Postgres logical decoding, and the pitfalls.", "h1": "Change data capture: turning your database into a reliable event stream", "kicker": "Data platforms", "lede": "Most companies already have their most valuable event stream. It is sitting inside the database's transaction log. Change data capture lets you use it without rewriting every application.", "date": "2026-10-19", "datetime": "2026-10-19T16:30:00+04:00", "readtime": "7 min read", "format": "explainer", "tags": ["data", "platform", "mongodb", "fintech"], "keywords": ["change data capture", "CDC", "Debezium", "MongoDB change streams", "PostgreSQL logical decoding", "event-driven architecture", "transactional outbox", "real-time data pipelines", "data platform architecture", "streaming ETL"], "faq": [["What is change data capture?", "CDC captures row-level inserts, updates and deletes from a database, usually by reading its transaction log, and publishes them as an ordered stream of events that other systems can consume."], ["Is log-based CDC better than polling?", "Usually. Log-based CDC captures every change, including deletes, with low latency and without repeatedly querying the database. Debezium's documentation notes millisecond-range delays for databases such as MySQL and PostgreSQL."], ["Should I stream my tables directly or use an outbox?", "Streaming raw tables is quick but couples consumers to your internal schema. For events other teams depend on, combine CDC with the transactional outbox pattern so you publish deliberate, versioned events."]], "related": ["/technical-due-diligence/", "/fractional-cto/", "/ai-architect/"], "citations": [{"title": "Debezium documentation", "url": "https://debezium.io/documentation/reference/stable", "publisher": "Debezium"}, {"title": "Debezium features", "url": "https://debezium.io/documentation/reference/features.html", "publisher": "Debezium"}, {"title": "Change Streams", "url": "https://www.mongodb.com/docs/manual/changeStreams/", "publisher": "MongoDB documentation"}, {"title": "Logical Decoding", "url": "https://www.postgresql.org/docs/current/logicaldecoding.html", "publisher": "PostgreSQL documentation"}, {"title": "Pattern: Transactional outbox", "url": "https://microservices.io/patterns/data/transactional-outbox", "publisher": "microservices.io, Chris Richardson"}]}-->
+<p>When I re-architect a system around events, the first question is usually "do we have to change every service to publish events?". Often the answer is no. Every write already goes through the database, and the database already keeps an ordered log of every change. Change data capture reads that log and turns it into a stream.</p>
+
+<section class="block">
+<h2>Polling versus the log</h2>
+<p>The simple approach is polling: query for rows with a newer <code>updated_at</code> every few seconds. It misses deletes, adds load to the database, and struggles with ordering. Log-based CDC reads the database's own change log instead. Debezium's documentation describes it as capturing all data changes with very low delay, in the millisecond range for databases such as MySQL and PostgreSQL, without the CPU cost of frequent polling<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<table class="tbl">
+<thead><tr><th>Source</th><th>Native mechanism</th><th>Common tooling</th></tr></thead>
+<tbody>
+<tr><td>PostgreSQL</td><td>Logical decoding of the write-ahead log<sup class="cite"><a href="#ref-4">4</a></sup></td><td>Debezium connector</td></tr>
+<tr><td>MongoDB</td><td>Change streams over the oplog<sup class="cite"><a href="#ref-3">3</a></sup></td><td>Change streams directly, or Debezium</td></tr>
+<tr><td>MySQL and others</td><td>Binary log</td><td>Debezium connectors for Kafka Connect<sup class="cite"><a href="#ref-1">1</a></sup></td></tr>
+</tbody>
+</table>
+</section>
+
+<section class="block">
+<h2>Where CDC earns its keep</h2>
+<ul>
+<li><strong>Feeding analytics and search</strong> without nightly batch jobs: the warehouse, search index and vector index stay seconds behind the source.</li>
+<li><strong>Keeping RAG indexes fresh.</strong> When a document or record changes, the change event triggers re-embedding, so retrieval never serves stale content. This pairs naturally with <a href="/insights/mongodb-hybrid-search-rag/">hybrid search in MongoDB</a>.</li>
+<li><strong>Strangling a monolith.</strong> New services subscribe to changes in the legacy database while it keeps running.</li>
+<li><strong>Audit and lineage</strong>, because every change becomes an immutable event with a position in the log.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>Raw tables or deliberate events?</h2>
+<p>The fastest way to start is to stream tables as they are. The cost is coupling: every consumer now depends on your internal schema, and renaming a column becomes a breaking change across teams.</p>
+<p>For events other teams depend on, I combine CDC with the transactional outbox pattern. The service writes a deliberate, versioned event into an outbox table in the same transaction as its business data, and CDC publishes the outbox<sup class="cite"><a href="#ref-5">5</a></sup>. You get the reliability of the log with a contract you control. I cover the pattern for payments and orders in <a href="/insights/idempotent-payments-order-pipelines/">idempotent payment and order pipelines</a>.</p>
+<div class="callout"><p>Raw table streams for internal replication and analytics; outbox events for anything another team builds on. Mixing the two up is a common CDC design mistake.</p></div>
+</section>
+
+<section class="block">
+<h2>Pitfalls to plan for</h2>
+<ol>
+<li><strong>Initial snapshots.</strong> Connectors usually begin by snapshotting current state before streaming changes. Debezium supports initial and incremental snapshots<sup class="cite"><a href="#ref-2">2</a></sup>; plan for the load and the time on large tables.</li>
+<li><strong>Log retention.</strong> If a connector is down longer than the database keeps its log, you lose your place and need a new snapshot. Monitor connector lag, and size retention for your worst outage.</li>
+<li><strong>Schema changes.</strong> Decide how consumers handle new and removed fields before the first migration, not during it.</li>
+<li><strong>Sensitive data.</strong> Change events carry whatever the row carries. Filter columns and mask values at the connector, which Debezium supports<sup class="cite"><a href="#ref-2">2</a></sup>, rather than trusting every consumer.</li>
+<li><strong>Duplicates.</strong> After restarts, events can be redelivered. Consumers must be idempotent.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2>A sensible first step</h2>
+<p>Pick one high-value flow, such as orders into the warehouse or documents into a search index. Stream it with CDC, measure end-to-end lag, and run it alongside the existing batch job until the numbers match. Then retire the batch job. It is the lowest-risk path from nightly ETL to real time, and it is a pattern I have used on high-volume systems.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I design event-driven data platforms, from CDC and outbox patterns to streaming into warehouses, search and AI retrieval. As a <a href="/fractional-cto/">fractional CTO</a> I can own the migration plan. Or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
