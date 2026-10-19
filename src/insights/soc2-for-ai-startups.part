@@ -1,0 +1,66 @@
+<!--{"title": "SOC 2 for AI and SaaS startups: an engineering-first plan", "description": "Enterprise buyers ask for SOC 2 early. What Type 1 and Type 2 mean, which Trust Services Criteria to pick, and how to build controls into the platform, not a binder.", "h1": "SOC 2 for AI and SaaS startups: an engineering-first plan", "kicker": "Regulation · Security", "lede": "The first enterprise deal usually comes with a security questionnaire and a request for a SOC 2 report. Treated as paperwork it is painful. Treated as platform engineering it mostly builds itself.", "date": "2026-10-19", "datetime": "2026-10-19T08:15:00+04:00", "readtime": "7 min read", "format": "playbook", "tags": ["security", "governance", "regulation", "platform", "ai"], "keywords": ["SOC 2", "SOC 2 Type 1", "SOC 2 Type 2", "Trust Services Criteria", "SOC 2 for startups", "SOC 2 for AI companies", "ISO 42001", "compliance as code", "enterprise security questionnaire", "fractional CTO security"], "faq": [["What is the difference between SOC 2 Type 1 and Type 2?", "A Type 1 report assesses whether controls are suitably designed at a point in time. A Type 2 report assesses whether they operated effectively over a period, commonly several months to a year. Enterprise buyers usually want Type 2."], ["Which Trust Services Criteria do I need?", "Security is always in scope. Availability, confidentiality, processing integrity and privacy are added based on what you commit to customers. Many startups begin with security, plus availability or confidentiality if their contracts promise them."], ["Is SOC 2 a certification?", "No. It is an attestation report: an independent CPA firm examines your controls and gives an opinion against the AICPA Trust Services Criteria."]], "related": ["/fractional-cto/", "/technical-due-diligence/", "/ai-architect/"], "citations": [{"title": "SOC 2: SOC for Service Organizations, Trust Services Criteria", "url": "https://www.aicpa-cima.com/topic/audit-assurance/audit-and-assurance-greater-than-soc-2", "publisher": "AICPA & CIMA"}, {"title": "Providing assurance through SOC reports", "url": "https://www2.deloitte.com/content/dam/Deloitte/us/Documents/risk/us-rfa-providing-assurance-through-soc-reports.pdf", "publisher": "Deloitte"}, {"title": "SOC 2 (System and Organization Controls 2)", "url": "https://www.techtarget.com/searchsecurity/definition/Soc-2-Service-Organization-Control-2", "publisher": "TechTarget"}, {"title": "ISO/IEC 42001:2023 Information technology: Artificial intelligence: Management system", "url": "https://www.iso.org/standard/81230.html", "publisher": "ISO"}]}-->
+<p>For many AI and SaaS startups, the first serious enterprise deal arrives with two attachments: a security questionnaire and a line in the procurement checklist that reads "SOC 2 Type 2 report". It is tempting to treat this as a documentation project and buy a template. The better approach is to build the controls into the platform, so the evidence is a by-product of how you already work.</p>
+
+<section class="block">
+<h2>What SOC 2 actually is</h2>
+<p>SOC 2 is an attestation, not a certification. An independent CPA firm examines your controls and reports whether they meet the AICPA's Trust Services Criteria<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. There are two report types:</p>
+<table class="tbl">
+<thead><tr><th>Report</th><th>What it says</th><th>When it helps</th></tr></thead>
+<tbody>
+<tr><td>Type 1</td><td>Controls are suitably designed at a point in time</td><td>Early deals, to show you've started properly</td></tr>
+<tr><td>Type 2</td><td>Controls operated effectively over a period</td><td>What most enterprise buyers ultimately ask for</td></tr>
+</tbody>
+</table>
+<p>The Type 2 observation period is commonly several months to a year<sup class="cite"><a href="#ref-3">3</a></sup>, which is why starting early matters: the clock only runs once the controls do.</p>
+</section>
+
+<section class="block">
+<h2>Pick the criteria you actually promise</h2>
+<p>The criteria cover security, availability, processing integrity, confidentiality and privacy. Security is always in scope; the others are added according to what you commit to customers<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>. My advice is to scope to your contracts. If you promise uptime, include availability. If you handle customer documents for an AI product, confidentiality is usually worth it. Adding criteria you don't need adds evidence you have to keep producing.</p>
+</section>
+
+<section class="block">
+<h2>Controls as platform features</h2>
+<p>Most SOC 2 controls map cleanly onto engineering work a good platform should have anyway:</p>
+<table class="tbl">
+<thead><tr><th>Control area</th><th>Build it as</th><th>Evidence you get for free</th></tr></thead>
+<tbody>
+<tr><td>Access control</td><td>SSO for every tool, role-based access, no shared accounts</td><td>Identity provider logs and access reviews</td></tr>
+<tr><td>Change management</td><td>Protected branches, required reviews, CI/CD-only deploys</td><td>Pull request and pipeline history</td></tr>
+<tr><td>Infrastructure</td><td>Infrastructure as code with Terraform, reviewed like application code</td><td>Every change in version control</td></tr>
+<tr><td>Monitoring</td><td>Central logging, alerting and on-call</td><td>Alert and incident records</td></tr>
+<tr><td>Data protection</td><td>Encryption at rest and in transit, key management, backups tested</td><td>Configuration as code, restore test logs</td></tr>
+<tr><td>Vendor risk</td><td>An inventory of providers, including AI model providers</td><td>The inventory and its reviews</td></tr>
+</tbody>
+</table>
+<div class="callout"><p>The rule I use: if a control needs someone to remember to do something, automate it or make the platform enforce it. Auditors trust systems more than intentions, and so should you.</p></div>
+</section>
+
+<section class="block">
+<h2>The AI-specific gaps</h2>
+<p>SOC 2 predates the current wave of AI products, so the criteria don't mention models specifically, but auditors and buyers increasingly ask. The questions I prepare teams for:</p>
+<ul>
+<li><strong>Where does customer data go?</strong> Which model providers see it, under which terms, and whether it is used for training.</li>
+<li><strong>Who can see prompts and outputs?</strong> Logging policy, retention and redaction. My <a href="/insights/llm-observability-opentelemetry-genai/">LLM observability</a> post covers capturing metadata without content.</li>
+<li><strong>How are model changes controlled?</strong> Prompt and model updates going through the same change management as code, with <a href="/insights/llm-evaluation-sets-that-predict-production/">evaluation gates</a>.</li>
+<li><strong>What can agents do?</strong> Tool permissions and audit logs, as in <a href="/insights/securing-mcp-servers-checklist/">securing MCP servers</a>.</li>
+</ul>
+<p>For companies whose product is AI, ISO/IEC 42001, the international standard for AI management systems, is worth knowing about as a complement to SOC 2<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+</section>
+
+<section class="block">
+<h2>A realistic sequence</h2>
+<ol>
+<li><strong>Month 1:</strong> scope the criteria against your contracts, inventory systems and vendors, and switch on SSO everywhere.</li>
+<li><strong>Months 1 to 3:</strong> move infrastructure to code, enforce reviewed deploys, centralise logging, write the handful of policies you will really follow.</li>
+<li><strong>Month 3:</strong> a Type 1 report if a deal needs one, and start the Type 2 observation window.</li>
+<li><strong>Through the window:</strong> run access reviews, restore tests and incident drills on a calendar, and keep the evidence where an auditor can find it.</li>
+<li><strong>End of the window:</strong> Type 2 report, then keep it running. Year two is far cheaper than year one if the controls live in the platform.</li>
+</ol>
+<p>Treat these timings as typical rather than fixed; your auditor and your starting point drive the real schedule.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>As a <a href="/fractional-cto/">fractional CTO</a> I build SOC 2 readiness into the platform: identity, infrastructure as code, change management and AI governance, so the audit becomes a check rather than a project. Or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>

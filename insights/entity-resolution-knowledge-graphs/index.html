@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Entity resolution for knowledge graphs: block, match, cluster</title>
+<meta name="description" content="A knowledge graph is only as good as its entities. How I resolve duplicate customers, patients and products with blocking, probabilistic matching and clustering." />
+<meta name="keywords" content="entity resolution, record linkage, knowledge graph, deduplication, Fellegi-Sunter, blocking, probabilistic matching, Splink, master data management, GraphRAG data quality" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://asksumanta.com/insights/entity-resolution-knowledge-graphs/" />
+<meta name="theme-color" content="#111214" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="Entity resolution for knowledge graphs: block, match, cluster" />
+<meta property="og:description" content="A knowledge graph is only as good as its entities. How I resolve duplicate customers, patients and products with blocking, probabilistic matching and clustering." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://asksumanta.com/insights/entity-resolution-knowledge-graphs/" />
+<meta property="og:image" content="https://asksumanta.com/assets/og/entity-resolution-knowledge-graphs.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Entity resolution for knowledge graphs: block, match, cluster" />
+<meta name="twitter:description" content="A knowledge graph is only as good as its entities. How I resolve duplicate customers, patients and products with blocking, probabilistic matching and clustering." />
+<meta name="twitter:image" content="https://asksumanta.com/assets/og/entity-resolution-knowledge-graphs.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "BlogPosting", "headline": "Entity resolution for knowledge graphs: block, match, cluster", "description": "A knowledge graph is only as good as its entities. How I resolve duplicate customers, patients and products with blocking, probabilistic matching and clustering.", "datePublished": "2026-10-19T08:30:00+04:00", "dateModified": "2026-10-19T08:30:00+04:00", "articleSection": "Ontology & knowledge graphs", "genre": "Explainer", "citation": [{"@type": "CreativeWork", "name": "A Survey of Blocking and Filtering Techniques for Entity Resolution", "url": "https://arxiv.org/abs/1905.06167"}, {"@type": "CreativeWork", "name": "An overview of end-to-end entity resolution for big data", "url": "https://blog.acolyer.org/2020/12/14/entity-resolution/"}, {"@type": "CreativeWork", "name": "The State of Record Linkage and Current Research Problems", "url": "https://www.census.gov/library/working-papers/1999/adrm/rr99-04.html"}, {"@type": "CreativeWork", "name": "Splink: free software for probabilistic record linkage at scale", "url": "https://ijpds.org/article/view/1794"}, {"@type": "CreativeWork", "name": "Splink: MoJ's open source library for probabilistic record linkage at scale", "url": "https://www.gov.uk/government/publications/joined-up-data-in-government-the-future-of-data-linking-methods/splink-mojs-open-source-library-for-probabilistic-record-linkage-at-scale"}], "author": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "publisher": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "mainEntityOfPage": "https://asksumanta.com/insights/entity-resolution-knowledge-graphs/", "image": "https://asksumanta.com/assets/og/entity-resolution-knowledge-graphs.png", "keywords": "entity resolution, record linkage, knowledge graph, deduplication, Fellegi-Sunter, blocking, probabilistic matching, Splink, master data management, GraphRAG data quality", "wordCount": 649}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://asksumanta.com/"}, {"@type": "ListItem", "position": 2, "name": "Insights", "item": "https://asksumanta.com/insights/"}, {"@type": "ListItem", "position": 3, "name": "Entity resolution for knowledge graphs: block, match, cluster", "item": "https://asksumanta.com/insights/entity-resolution-knowledge-graphs/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What is entity resolution?", "acceptedAnswer": {"@type": "Answer", "text": "It is the process of working out which records, often from different systems, refer to the same real-world entity, such as a person, company or product, so they can be linked or merged."}}, {"@type": "Question", "name": "What are the main steps?", "acceptedAnswer": {"@type": "Answer", "text": "Typically blocking, to limit which pairs are compared; matching, to score candidate pairs; and clustering, to group matches into entities, which can also infer indirect matches."}}, {"@type": "Question", "name": "Do I need machine learning for entity resolution?", "acceptedAnswer": {"@type": "Answer", "text": "Not always. Probabilistic methods based on the Fellegi-Sunter model, available in open-source tools such as Splink, work well at scale and are explainable. Machine learning helps when records are messy and labelled examples exist."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+</script>
+</head>
+<body class="sub is-post">
+<div class="progress" id="progress"></div>
+<nav>
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="/#practice">Services</a>
+      <a href="/#work">Case studies</a>
+      <a href="/insights/">Insights</a>
+      <a href="/#assess">Analyse</a>
+      <a href="/#connect">Connect</a>
+    </div>
+    <div class="nav-r">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/insights/">Insights</a> <span>/</span> <em>Entity resolution for knowledge graphs: block, match, cluster</em></div>
+    <div class="kicker">Ontology &amp; knowledge graphs</div>
+    <h1>Entity resolution for knowledge graphs: block, match, cluster</h1>
+    <p class="sub-lede">Three records for the same customer, spelled three ways, is the most common reason a knowledge graph gives wrong answers. Entity resolution is the unglamorous step that fixes it.</p>
+    <div class="ameta"><span class="fmt">Explainer</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-10-19T08:30:00+04:00">19 Oct 2026 · 08:30 GST</time><span>7 min read</span><span>5 sources</span></div><div class="atags"><span class="tagp">#ontology</span><span class="tagp">#knowledge-graph</span><span class="tagp">#data</span><span class="tagp">#ai</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Explainer cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><line x1="570" y1="132" x2="587" y2="171" class="cv-edge hl" opacity="0.72"/><line x1="570" y1="132" x2="658" y2="59" class="cv-edge hl" opacity="0.24"/><line x1="570" y1="132" x2="661" y2="89" class="cv-edge hl" opacity="0.33"/><line x1="570" y1="132" x2="523" y2="71" class="cv-edge hl" opacity="0.49"/><line x1="570" y1="132" x2="633" y2="253" class="cv-edge hl" opacity="0.09"/><line x1="570" y1="132" x2="611" y2="90" class="cv-edge hl" opacity="0.61"/><line x1="570" y1="132" x2="646" y2="258" class="cv-edge hl" opacity="0.02"/><line x1="897" y1="276" x2="902" y2="316" class="cv-edge hl" opacity="0.73"/><line x1="897" y1="276" x2="879" y2="243" class="cv-edge hl" opacity="0.75"/><line x1="897" y1="276" x2="935" y2="293" class="cv-edge" opacity="0.73"/><line x1="897" y1="276" x2="883" y2="183" class="cv-edge" opacity="0.37"/><line x1="897" y1="276" x2="975" y2="233" class="cv-edge" opacity="0.41"/><line x1="601" y1="359" x2="556" y2="303" class="cv-edge hl" opacity="0.52"/><line x1="601" y1="359" x2="633" y2="253" class="cv-edge hl" opacity="0.26"/><line x1="601" y1="359" x2="646" y2="258" class="cv-edge hl" opacity="0.27"/><line x1="587" y1="171" x2="556" y2="303" class="cv-edge hl" opacity="0.10"/><line x1="587" y1="171" x2="658" y2="59" class="cv-edge hl" opacity="0.12"/><line x1="587" y1="171" x2="661" y2="89" class="cv-edge" opacity="0.27"/><line x1="587" y1="171" x2="523" y2="71" class="cv-edge" opacity="0.21"/><line x1="587" y1="171" x2="633" y2="253" class="cv-edge" opacity="0.37"/><line x1="587" y1="171" x2="611" y2="90" class="cv-edge" opacity="0.43"/><line x1="587" y1="171" x2="731" y2="157" class="cv-edge" opacity="0.04"/><line x1="587" y1="171" x2="646" y2="258" class="cv-edge" opacity="0.30"/><line x1="1123" y1="222" x2="1071" y2="202" class="cv-edge" opacity="0.63"/><line x1="1123" y1="222" x2="1082" y2="196" class="cv-edge hl" opacity="0.67"/><line x1="1123" y1="222" x2="1094" y2="292" class="cv-edge" opacity="0.50"/><line x1="1123" y1="222" x2="1080" y2="283" class="cv-edge" opacity="0.50"/><line x1="1123" y1="222" x2="975" y2="233" class="cv-edge" opacity="0.00"/><line x1="556" y1="303" x2="633" y2="253" class="cv-edge hl" opacity="0.38"/><line x1="556" y1="303" x2="646" y2="258" class="cv-edge hl" opacity="0.33"/><line x1="1071" y1="202" x2="1016" y2="71" class="cv-edge" opacity="0.05"/><line x1="1071" y1="202" x2="1066" y2="78" class="cv-edge hl" opacity="0.17"/><line x1="1071" y1="202" x2="1082" y2="196" class="cv-edge hl" opacity="0.92"/><line x1="1071" y1="202" x2="1094" y2="292" class="cv-edge" opacity="0.39"/><line x1="1071" y1="202" x2="1080" y2="283" class="cv-edge" opacity="0.46"/><line x1="1071" y1="202" x2="975" y2="233" class="cv-edge" opacity="0.32"/><line x1="1016" y1="71" x2="1066" y2="78" class="cv-edge hl" opacity="0.67"/><line x1="1016" y1="71" x2="1082" y2="196" class="cv-edge hl" opacity="0.06"/><line x1="658" y1="59" x2="661" y2="89" class="cv-edge hl" opacity="0.80"/><line x1="658" y1="59" x2="523" y2="71" class="cv-edge hl" opacity="0.10"/><line x1="658" y1="59" x2="611" y2="90" class="cv-edge hl" opacity="0.63"/><line x1="658" y1="59" x2="731" y2="157" class="cv-edge hl" opacity="0.19"/><line x1="902" y1="316" x2="879" y2="243" class="cv-edge hl" opacity="0.49"/><line x1="902" y1="316" x2="935" y2="293" class="cv-edge hl" opacity="0.73"/><line x1="902" y1="316" x2="883" y2="183" class="cv-edge hl" opacity="0.10"/><line x1="902" y1="316" x2="975" y2="233" class="cv-edge hl" opacity="0.26"/><line x1="736" y1="273" x2="879" y2="243" class="cv-edge hl" opacity="0.02"/><line x1="736" y1="273" x2="633" y2="253" class="cv-edge" opacity="0.31"/><line x1="736" y1="273" x2="731" y2="157" class="cv-edge" opacity="0.23"/><line x1="736" y1="273" x2="646" y2="258" class="cv-edge" opacity="0.39"/><line x1="1066" y1="78" x2="1082" y2="196" class="cv-edge hl" opacity="0.20"/><line x1="879" y1="243" x2="935" y2="293" class="cv-edge hl" opacity="0.50"/><line x1="879" y1="243" x2="883" y2="183" class="cv-edge hl" opacity="0.60"/><line x1="879" y1="243" x2="975" y2="233" class="cv-edge hl" opacity="0.36"/><line x1="1082" y1="196" x2="1094" y2="292" class="cv-edge hl" opacity="0.36"/><line x1="1082" y1="196" x2="1080" y2="283" class="cv-edge hl" opacity="0.42"/><line x1="1082" y1="196" x2="975" y2="233" class="cv-edge hl" opacity="0.24"/><line x1="661" y1="89" x2="523" y2="71" class="cv-edge" opacity="0.07"/><line x1="661" y1="89" x2="611" y2="90" class="cv-edge" opacity="0.67"/><line x1="661" y1="89" x2="731" y2="157" class="cv-edge" opacity="0.35"/><line x1="523" y1="71" x2="611" y2="90" class="cv-edge" opacity="0.40"/><line x1="935" y1="293" x2="883" y2="183" class="cv-edge" opacity="0.19"/><line x1="935" y1="293" x2="1080" y2="283" class="cv-edge" opacity="0.03"/><line x1="935" y1="293" x2="975" y2="233" class="cv-edge" opacity="0.52"/><line x1="935" y1="293" x2="1053" y2="357" class="cv-edge" opacity="0.10"/><line x1="883" y1="183" x2="975" y2="233" class="cv-edge" opacity="0.30"/><line x1="633" y1="253" x2="731" y2="157" class="cv-edge" opacity="0.09"/><line x1="633" y1="253" x2="646" y2="258" class="cv-edge" opacity="0.91"/><line x1="1094" y1="292" x2="1080" y2="283" class="cv-edge" opacity="0.89"/><line x1="1094" y1="292" x2="975" y2="233" class="cv-edge" opacity="0.11"/><line x1="1094" y1="292" x2="1053" y2="357" class="cv-edge" opacity="0.49"/><line x1="611" y1="90" x2="731" y2="157" class="cv-edge" opacity="0.08"/><line x1="731" y1="157" x2="646" y2="258" class="cv-edge" opacity="0.12"/><line x1="1080" y1="283" x2="975" y2="233" class="cv-edge" opacity="0.22"/><line x1="1080" y1="283" x2="1053" y2="357" class="cv-edge" opacity="0.48"/><line x1="975" y1="233" x2="1053" y2="357" class="cv-edge" opacity="0.02"/><circle cx="570" cy="132" r="6" class="cv-dot hl"/><circle cx="897" cy="276" r="3" class="cv-dot"/><circle cx="601" cy="359" r="6" class="cv-dot hl"/><circle cx="587" cy="171" r="3" class="cv-dot"/><circle cx="1123" cy="222" r="3" class="cv-dot"/><circle cx="556" cy="303" r="6" class="cv-dot hl"/><circle cx="1071" cy="202" r="3" class="cv-dot"/><circle cx="1016" cy="71" r="3" class="cv-dot"/><circle cx="658" cy="59" r="6" class="cv-dot hl"/><circle cx="902" cy="316" r="6" class="cv-dot hl"/><circle cx="736" cy="273" r="3" class="cv-dot"/><circle cx="1066" cy="78" r="6" class="cv-dot hl"/><circle cx="879" cy="243" r="6" class="cv-dot hl"/><circle cx="1082" cy="196" r="6" class="cv-dot hl"/><circle cx="661" cy="89" r="3" class="cv-dot"/><circle cx="523" cy="71" r="3" class="cv-dot"/><circle cx="935" cy="293" r="3" class="cv-dot"/><circle cx="883" cy="183" r="3" class="cv-dot"/><circle cx="633" cy="253" r="3" class="cv-dot"/><circle cx="1094" cy="292" r="3" class="cv-dot"/><circle cx="611" cy="90" r="3" class="cv-dot"/><circle cx="731" cy="157" r="3" class="cv-dot"/><circle cx="1080" cy="283" r="3" class="cv-dot"/><circle cx="646" cy="258" r="3" class="cv-dot"/><circle cx="975" cy="233" r="3" class="cv-dot"/><circle cx="1053" cy="357" r="3" class="cv-dot"/><text x="60" y="90" class="cv-k">EXPLAINER · ONTOLOGY &amp; KNOWLEDGE GRAPHS</text><text x="60" y="350" class="cv-n">19 Oct 2026 · 08:30 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <p>Knowledge graph projects tend to hit the same problem early. The ontology is clean, the sources are mapped, and then the graph has four nodes for one customer: "ACME Ltd", "Acme Limited", "ACME LTD." and a typo. Every query that touches that customer is now wrong, and an AI agent reading the graph will be confidently wrong.</p>
+<p>Entity resolution is how you fix that. It is less glamorous than ontology design and just as important.</p>
+
+<section class="block">
+<h2 id="the-three-stages">The three stages</h2>
+<p>End-to-end entity resolution is usually described as three stages: blocking, matching and clustering<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<table class="tbl">
+<thead><tr><th>Stage</th><th>What it does</th><th>Why it matters</th></tr></thead>
+<tbody>
+<tr><td>Blocking</td><td>Chooses which pairs of records are worth comparing</td><td>Comparing every pair is impossible at scale</td></tr>
+<tr><td>Matching</td><td>Scores how likely each candidate pair is the same entity</td><td>Where accuracy is won or lost</td></tr>
+<tr><td>Clustering</td><td>Groups matched pairs into entities</td><td>Turns pairwise decisions into consistent entities, and can infer indirect matches</td></tr>
+</tbody>
+</table>
+</section>
+
+<section class="block">
+<h2 id="blocking-don-t-compare-everything">Blocking: don't compare everything</h2>
+<p>A million records means roughly half a trillion possible pairs. Blocking narrows that to plausible candidates, for example records sharing a postcode, the first letters of a surname, or a normalised company name. A survey of the field describes candidate selection as the main lever for making entity resolution scale<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<p>The trade-off is recall. Block too tightly and true matches never get compared. I use several blocking rules in combination, then measure how many known matches each rule would miss.</p>
+</section>
+
+<section class="block">
+<h2 id="matching-probabilistic-and-explainable">Matching: probabilistic and explainable</h2>
+<p>The classic approach is the Fellegi-Sunter model. Each field comparison, such as name, date of birth or address, contributes evidence for or against a match, weighted by how informative agreement on that field is. Modern record linkage is still largely built on it<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+<p>I like it for two reasons. It works without much labelled data, because parameters can be estimated from the data itself. And it is explainable: you can show exactly which fields drove a match, which matters in healthcare, finance and anywhere an auditor might ask.</p>
+<p>Splink, an open-source library developed at the UK Ministry of Justice, implements this approach at scale and is used to link people across courts, prisons and probation datasets<sup class="cite"><a href="#ref-4">4</a></sup><sup class="cite"><a href="#ref-5">5</a></sup>. It is usually the first tool I evaluate.</p>
+<div class="callout"><p>Machine-learned matchers can beat probabilistic ones on very messy data, but they need labelled pairs and are harder to explain. Start probabilistic, measure, and only add complexity where the numbers justify it.</p></div>
+</section>
+
+<section class="block">
+<h2 id="clustering-make-decisions-consistent">Clustering: make decisions consistent</h2>
+<p>Pairwise matching can produce contradictions: A matches B, B matches C, but A doesn't match C. Clustering resolves these into consistent groups and can infer matches that were never directly compared<sup class="cite"><a href="#ref-2">2</a></sup>. In a graph, each cluster becomes one entity node with links back to every source record, so you never lose provenance.</p>
+</section>
+
+<section class="block">
+<h2 id="how-it-fits-the-knowledge-graph">How it fits the knowledge graph</h2>
+<ol>
+<li><strong>Resolve before you load.</strong> Run resolution in the pipeline and load resolved entities, keeping source records as linked nodes.</li>
+<li><strong>Keep the evidence.</strong> Store match scores and contributing fields on the links, so a wrong merge can be explained and reversed.</li>
+<li><strong>Use the ontology to guide matching.</strong> Entity types define which fields matter: date of birth for people, registration numbers for companies, product codes for items.</li>
+<li><strong>Human review for the grey zone.</strong> Auto-accept high scores, auto-reject low ones, and route the middle band to a reviewer.</li>
+<li><strong>Re-run incrementally.</strong> New records are matched against existing entities rather than reprocessing everything.</li>
+</ol>
+<p>This is the step that makes the ideas in <a href="/insights/ontology-vs-knowledge-graph-vs-semantic-layer/">ontology vs knowledge graph vs semantic layer</a> work on real data, and it is why GraphRAG answers can be trusted. The same discipline applies to patient matching in healthcare platforms, which I touch on in <a href="/insights/omop-data-quality-checks/">OMOP data quality</a>.</p>
+</section>
+
+<section class="block">
+<h2 id="how-i-can-help">How I can help</h2>
+<p>I design knowledge graphs and the resolution pipelines that feed them, from blocking strategy to review workflows. See <a href="/ontology-knowledge-graph/">ontology and knowledge graphs</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://arxiv.org/abs/1905.06167" target="_blank" rel="noopener">A Survey of Blocking and Filtering Techniques for Entity Resolution</a><small>Papadakis et al., arXiv · 2019</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://blog.acolyer.org/2020/12/14/entity-resolution/" target="_blank" rel="noopener">An overview of end-to-end entity resolution for big data</a><small>The Morning Paper · Dec 2020</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://www.census.gov/library/working-papers/1999/adrm/rr99-04.html" target="_blank" rel="noopener">The State of Record Linkage and Current Research Problems</a><small>William Winkler, US Census Bureau · 1999</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://ijpds.org/article/view/1794" target="_blank" rel="noopener">Splink: free software for probabilistic record linkage at scale</a><small>Linacre et al., International Journal of Population Data Science · 2022</small></div></li><li id="ref-5"><span class="rn">5</span><div><a href="https://www.gov.uk/government/publications/joined-up-data-in-government-the-future-of-data-linking-methods/splink-mojs-open-source-library-for-probabilistic-record-linkage-at-scale" target="_blank" rel="noopener">Splink: MoJ&#x27;s open source library for probabilistic record linkage at scale</a><small>GOV.UK</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fentity-resolution-knowledge-graphs%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fentity-resolution-knowledge-graphs%2F&amp;text=Entity%20resolution%20for%20knowledge%20graphs%3A%20block%2C%20match%2C%20cluster" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=Entity%20resolution%20for%20knowledge%20graphs%3A%20block%2C%20match%2C%20cluster%20https%3A%2F%2Fasksumanta.com%2Finsights%2Fentity-resolution-knowledge-graphs%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://asksumanta.com/insights/entity-resolution-knowledge-graphs/">Copy link</button></div>
+      <div class="pnav"><a class="pn prev" href="/insights/soc2-for-ai-startups/"><small>← Previous</small><b>SOC 2 for AI and SaaS startups: an engineering-first plan</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#the-three-stages">The three stages</a></li><li><a href="#blocking-don-t-compare-everything">Blocking: don&#x27;t compare everything</a></li><li><a href="#matching-probabilistic-and-explainable">Matching: probabilistic and explainable</a></li><li><a href="#clustering-make-decisions-consistent">Clustering: make decisions consistent</a></li><li><a href="#how-it-fits-the-knowledge-graph">How it fits the knowledge graph</a></li><li><a href="#how-i-can-help">How I can help</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>What is entity resolution?</summary><p>It is the process of working out which records, often from different systems, refer to the same real-world entity, such as a person, company or product, so they can be linked or merged.</p></details><details class="rise"><summary>What are the main steps?</summary><p>Typically blocking, to limit which pairs are compared; matching, to score candidate pairs; and clustering, to group matches into entities, which can also infer indirect matches.</p></details><details class="rise"><summary>Do I need machine learning for entity resolution?</summary><p>Not always. Probabilistic methods based on the Fellegi-Sunter model, available in open-source tools such as Splink, work well at scale and are explainable. Machine learning helps when records are messy and labelled examples exist.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/ontology-knowledge-graph/"><small>Service</small><b>Ontology &amp; knowledge graphs</b><span>I help organisations agree what their data means, write it down as an ontology and put it to work in a knowledge graph that analytics, APIs and AI agents can all rely on.</span><i>→</i></a><a class="rcard rise" href="/healthcare-data-architecture/"><small>Service</small><b>Healthcare data architecture</b><span>I help healthcare and life-sciences organisations turn fragmented clinical data into governed platforms for care, research and AI, using the standards the industry already agrees on.</span><i>→</i></a><a class="rcard rise" href="/ai-architect/"><small>Service</small><b>AI &amp; LLM architecture</b><span>I design and build AI systems that leadership can trust: grounded in your data, measured by evaluations, governed by your rules and priced so they make sense at scale.</span><i>→</i></a><a class="rcard rise" href="/insights/soc2-for-ai-startups/"><small>Insight</small><b>SOC 2 for AI and SaaS startups: an engineering-first plan</b><span>The first enterprise deal usually comes with a security questionnaire and a request for a SOC 2 report. Treated as paperwork it is painful. Treated as platform engineering it mostly builds itself.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: Entity resolution for knowledge graphs: block, match, cluster">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
+        <p class="floc">United States &amp; UAE · working globally</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/uae/">Fractional CTO in the UAE</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/entity-resolution-knowledge-graphs/">Entity resolution for knowledge graphs: block, match, cluster</a></li><li><a href="/insights/soc2-for-ai-startups/">SOC 2 for AI and SaaS startups: an engineering-first plan</a></li><li><a href="/insights/llm-evaluation-sets-that-predict-production/">Building LLM evaluation sets that actually predict production</a></li><li><a href="/insights/omop-data-quality-checks/">OMOP data quality in practice: conformance, completeness and plausibility</a></li><li><a href="/insights/architecture-decision-records-fractional-cto/">Architecture decision records: the habit I bring to every engagement</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>

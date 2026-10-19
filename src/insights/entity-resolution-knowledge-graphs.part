@@ -1,0 +1,52 @@
+<!--{"title": "Entity resolution for knowledge graphs: block, match, cluster", "description": "A knowledge graph is only as good as its entities. How I resolve duplicate customers, patients and products with blocking, probabilistic matching and clustering.", "h1": "Entity resolution for knowledge graphs: block, match, cluster", "kicker": "Ontology & knowledge graphs", "lede": "Three records for the same customer, spelled three ways, is the most common reason a knowledge graph gives wrong answers. Entity resolution is the unglamorous step that fixes it.", "date": "2026-10-19", "datetime": "2026-10-19T08:30:00+04:00", "readtime": "7 min read", "format": "explainer", "tags": ["ontology", "knowledge-graph", "data", "ai"], "keywords": ["entity resolution", "record linkage", "knowledge graph", "deduplication", "Fellegi-Sunter", "blocking", "probabilistic matching", "Splink", "master data management", "GraphRAG data quality"], "faq": [["What is entity resolution?", "It is the process of working out which records, often from different systems, refer to the same real-world entity, such as a person, company or product, so they can be linked or merged."], ["What are the main steps?", "Typically blocking, to limit which pairs are compared; matching, to score candidate pairs; and clustering, to group matches into entities, which can also infer indirect matches."], ["Do I need machine learning for entity resolution?", "Not always. Probabilistic methods based on the Fellegi-Sunter model, available in open-source tools such as Splink, work well at scale and are explainable. Machine learning helps when records are messy and labelled examples exist."]], "related": ["/ontology-knowledge-graph/", "/healthcare-data-architecture/", "/ai-architect/"], "citations": [{"title": "A Survey of Blocking and Filtering Techniques for Entity Resolution", "url": "https://arxiv.org/abs/1905.06167", "publisher": "Papadakis et al., arXiv", "date": "2019"}, {"title": "An overview of end-to-end entity resolution for big data", "url": "https://blog.acolyer.org/2020/12/14/entity-resolution/", "publisher": "The Morning Paper", "date": "Dec 2020"}, {"title": "The State of Record Linkage and Current Research Problems", "url": "https://www.census.gov/library/working-papers/1999/adrm/rr99-04.html", "publisher": "William Winkler, US Census Bureau", "date": "1999"}, {"title": "Splink: free software for probabilistic record linkage at scale", "url": "https://ijpds.org/article/view/1794", "publisher": "Linacre et al., International Journal of Population Data Science", "date": "2022"}, {"title": "Splink: MoJ's open source library for probabilistic record linkage at scale", "url": "https://www.gov.uk/government/publications/joined-up-data-in-government-the-future-of-data-linking-methods/splink-mojs-open-source-library-for-probabilistic-record-linkage-at-scale", "publisher": "GOV.UK"}]}-->
+<p>Knowledge graph projects tend to hit the same problem early. The ontology is clean, the sources are mapped, and then the graph has four nodes for one customer: "ACME Ltd", "Acme Limited", "ACME LTD." and a typo. Every query that touches that customer is now wrong, and an AI agent reading the graph will be confidently wrong.</p>
+<p>Entity resolution is how you fix that. It is less glamorous than ontology design and just as important.</p>
+
+<section class="block">
+<h2>The three stages</h2>
+<p>End-to-end entity resolution is usually described as three stages: blocking, matching and clustering<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<table class="tbl">
+<thead><tr><th>Stage</th><th>What it does</th><th>Why it matters</th></tr></thead>
+<tbody>
+<tr><td>Blocking</td><td>Chooses which pairs of records are worth comparing</td><td>Comparing every pair is impossible at scale</td></tr>
+<tr><td>Matching</td><td>Scores how likely each candidate pair is the same entity</td><td>Where accuracy is won or lost</td></tr>
+<tr><td>Clustering</td><td>Groups matched pairs into entities</td><td>Turns pairwise decisions into consistent entities, and can infer indirect matches</td></tr>
+</tbody>
+</table>
+</section>
+
+<section class="block">
+<h2>Blocking: don't compare everything</h2>
+<p>A million records means roughly half a trillion possible pairs. Blocking narrows that to plausible candidates, for example records sharing a postcode, the first letters of a surname, or a normalised company name. A survey of the field describes candidate selection as the main lever for making entity resolution scale<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<p>The trade-off is recall. Block too tightly and true matches never get compared. I use several blocking rules in combination, then measure how many known matches each rule would miss.</p>
+</section>
+
+<section class="block">
+<h2>Matching: probabilistic and explainable</h2>
+<p>The classic approach is the Fellegi-Sunter model. Each field comparison, such as name, date of birth or address, contributes evidence for or against a match, weighted by how informative agreement on that field is. Modern record linkage is still largely built on it<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+<p>I like it for two reasons. It works without much labelled data, because parameters can be estimated from the data itself. And it is explainable: you can show exactly which fields drove a match, which matters in healthcare, finance and anywhere an auditor might ask.</p>
+<p>Splink, an open-source library developed at the UK Ministry of Justice, implements this approach at scale and is used to link people across courts, prisons and probation datasets<sup class="cite"><a href="#ref-4">4</a></sup><sup class="cite"><a href="#ref-5">5</a></sup>. It is usually the first tool I evaluate.</p>
+<div class="callout"><p>Machine-learned matchers can beat probabilistic ones on very messy data, but they need labelled pairs and are harder to explain. Start probabilistic, measure, and only add complexity where the numbers justify it.</p></div>
+</section>
+
+<section class="block">
+<h2>Clustering: make decisions consistent</h2>
+<p>Pairwise matching can produce contradictions: A matches B, B matches C, but A doesn't match C. Clustering resolves these into consistent groups and can infer matches that were never directly compared<sup class="cite"><a href="#ref-2">2</a></sup>. In a graph, each cluster becomes one entity node with links back to every source record, so you never lose provenance.</p>
+</section>
+
+<section class="block">
+<h2>How it fits the knowledge graph</h2>
+<ol>
+<li><strong>Resolve before you load.</strong> Run resolution in the pipeline and load resolved entities, keeping source records as linked nodes.</li>
+<li><strong>Keep the evidence.</strong> Store match scores and contributing fields on the links, so a wrong merge can be explained and reversed.</li>
+<li><strong>Use the ontology to guide matching.</strong> Entity types define which fields matter: date of birth for people, registration numbers for companies, product codes for items.</li>
+<li><strong>Human review for the grey zone.</strong> Auto-accept high scores, auto-reject low ones, and route the middle band to a reviewer.</li>
+<li><strong>Re-run incrementally.</strong> New records are matched against existing entities rather than reprocessing everything.</li>
+</ol>
+<p>This is the step that makes the ideas in <a href="/insights/ontology-vs-knowledge-graph-vs-semantic-layer/">ontology vs knowledge graph vs semantic layer</a> work on real data, and it is why GraphRAG answers can be trusted. The same discipline applies to patient matching in healthcare platforms, which I touch on in <a href="/insights/omop-data-quality-checks/">OMOP data quality</a>.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I design knowledge graphs and the resolution pipelines that feed them, from blocking strategy to review workflows. See <a href="/ontology-knowledge-graph/">ontology and knowledge graphs</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
