@@ -1,0 +1,54 @@
+<!--{"title": "The proposed HIPAA Security Rule update: what AI teams should do", "description": "HHS proposed a major HIPAA Security Rule overhaul in 2025: encryption, MFA, asset inventories. It isn't final, but here is what healthcare AI teams should build now.", "h1": "The proposed HIPAA Security Rule overhaul: what healthcare AI teams should build now", "kicker": "Healthcare · Regulation", "lede": "The biggest proposed change to the HIPAA Security Rule in years is still not final. That is not a reason to wait. Most of what it asks for is what a well-run healthcare AI platform should already have.", "date": "2026-10-20", "datetime": "2026-10-20T00:30:00+04:00", "readtime": "7 min read", "format": "news-analysis", "tags": ["healthcare", "regulation", "security", "ai"], "keywords": ["HIPAA Security Rule 2025 proposed rule", "HIPAA NPRM", "ePHI encryption", "HIPAA MFA", "HIPAA asset inventory", "healthcare AI security", "HIPAA compliance AI", "health data platform", "HHS OCR", "healthcare cybersecurity"], "faq": [["Is the new HIPAA Security Rule final?", "Not as of this writing. HHS published the proposed rule in January 2025 and the comment period closed in March 2025. Commentators report the final action has slipped, with regulatory agenda targets moving into 2027. Check the Federal Register for the current status."], ["What would the proposed rule change?", "Among other things, it would make encryption of ePHI and multi-factor authentication required rather than addressable in most cases, require a written technology asset inventory and network map, and add expectations around testing, vulnerability scanning and recovery."], ["Should healthcare AI teams act before it is final?", "Yes, for the engineering basics. Encryption, MFA, an accurate inventory of where ePHI flows, and tested recovery reduce risk now and would ease compliance if the rule is finalised in a similar form."]], "related": ["/healthcare-data-architecture/", "/ai-architect/", "/technical-due-diligence/"], "citations": [{"title": "HIPAA Security Rule To Strengthen the Cybersecurity of Electronic Protected Health Information (proposed rule)", "url": "https://www.federalregister.gov/documents/2025/01/06/2024-30983/hipaa-security-rule-to-strengthen-the-cybersecurity-of-electronic-protected-health-information", "publisher": "Federal Register", "date": "6 Jan 2025"}, {"title": "HIPAA Security Rule NPRM fact sheet", "url": "https://www.hhs.gov/hipaa/for-professionals/security/hipaa-security-rule-nprm/factsheet/index.html", "publisher": "US Department of Health and Human Services"}, {"title": "HIPAA Security Rule 2026: what to expect when OCR finalizes", "url": "https://medcurity.com/hipaa-security-rule-2026/", "publisher": "Medcurity"}, {"title": "HIPAA Security Rule proposed changes: status and what to do", "url": "https://www.beefedupit.com/blog/hipaa-security-rule-proposed-changes/", "publisher": "Beefed Up IT"}]}-->
+<p>In January 2025 HHS published a proposed overhaul of the HIPAA Security Rule, the first major update in many years<sup class="cite"><a href="#ref-1">1</a></sup>. Healthcare organisations have been watching it since. As of this writing it still isn't final, and commentators report the expected timing has slipped, with regulatory agenda targets moving into 2027<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+<p>My view as an architect working on health data: stop waiting for the final text. Most of the proposal describes controls a healthcare AI platform should have anyway. Confirm the legal detail with counsel; build the engineering now.</p>
+
+<section class="block">
+<h2>What the proposal would change</h2>
+<p>Based on HHS's own summary and the proposed rule, the headline changes include<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>:</p>
+<table class="tbl">
+<thead><tr><th>Area</th><th>Proposed change</th><th>What it means for an AI platform</th></tr></thead>
+<tbody>
+<tr><td>Encryption</td><td>Required for ePHI at rest and in transit, with limited exceptions, instead of "addressable"</td><td>Every store holding ePHI is encrypted, including vector indexes, caches and logs</td></tr>
+<tr><td>Multi-factor authentication</td><td>Required for access to systems with ePHI, with limited exceptions</td><td>MFA on consoles, notebooks, data tools and admin APIs, not just the main app</td></tr>
+<tr><td>Asset inventory and network map</td><td>Written, maintained inventory of technology assets and data flows</td><td>You must know every place ePHI travels, including model providers</td></tr>
+<tr><td>Testing and recovery</td><td>Regular vulnerability scanning, penetration testing and restoration expectations</td><td>Recovery is tested, not assumed</td></tr>
+</tbody>
+</table>
+<p>Treat the specifics as proposed. The final rule could change, be scaled back or be withdrawn<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+</section>
+
+<section class="block">
+<h2>The AI-specific blind spots</h2>
+<p>Traditional HIPAA programmes were built around EHRs and databases. AI systems add places for ePHI to hide that inventories often miss:</p>
+<ul>
+<li><strong>Embeddings and vector indexes</strong> built from clinical notes. They are derived from ePHI and should be protected like it.</li>
+<li><strong>Prompt and response logs</strong>, which can contain full patient details if content capture is switched on. My <a href="/insights/llm-observability-opentelemetry-genai/">LLM observability</a> post covers capturing metadata without content.</li>
+<li><strong>Evaluation datasets</strong> copied from production to test quality, often into less controlled environments.</li>
+<li><strong>External model providers</strong>, which need appropriate agreements and a clear record of what data reaches them.</li>
+<li><strong>Agent tool calls</strong> that move data between systems, which should be scoped and logged as in <a href="/insights/securing-mcp-servers-checklist/">securing MCP servers</a>.</li>
+</ul>
+<div class="callout"><p>If your asset inventory doesn't list your vector database, your prompt logs and your model providers, it is incomplete, whatever the final rule says.</p></div>
+</section>
+
+<section class="block">
+<h2>What I'd build now</h2>
+<ol>
+<li><strong>A data-flow map for every AI use case</strong>: where ePHI enters, every store it lands in, and every service it reaches.</li>
+<li><strong>Encryption everywhere by default</strong>, enforced in infrastructure as code so new stores can't be created unencrypted.</li>
+<li><strong>MFA through a single identity provider</strong> for every tool that touches ePHI, including data science environments.</li>
+<li><strong>An AI gateway</strong> that redacts or blocks ePHI before it reaches providers without the right agreements, and logs every call.</li>
+<li><strong>Synthetic or de-identified data for evaluation</strong> wherever possible, with production samples handled under the same controls as production.</li>
+<li><strong>Tested restores</strong> of the data platform and vector indexes on a schedule, with the results recorded.</li>
+</ol>
+<p>These sit naturally on top of a governed clinical data platform like the one in <a href="/insights/fhir-to-omop-architecture/">FHIR to OMOP</a>.</p>
+</section>
+
+<section class="block">
+<h2>The cost of waiting</h2>
+<p>Commentary suggests organisations may get a limited window to comply once a final rule is published<sup class="cite"><a href="#ref-3">3</a></sup>. Retrofitting encryption, MFA and an accurate inventory across a sprawling AI estate in a few months is far harder than building them in as the estate grows. And the risk these controls reduce exists today, rule or no rule.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I design healthcare data and AI platforms with security built in, from ePHI data-flow mapping to gateways and recovery testing. See <a href="/healthcare-data-architecture/">healthcare data architecture</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>

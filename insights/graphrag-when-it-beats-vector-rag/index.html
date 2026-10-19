@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>GraphRAG vs vector RAG: when a knowledge graph is worth it</title>
+<meta name="description" content="GraphRAG answers whole-corpus questions plain RAG can&#x27;t, at a real indexing cost. When it&#x27;s worth building, how it works, and how I&#x27;d combine it with an ontology." />
+<meta name="keywords" content="GraphRAG, graph RAG, knowledge graph RAG, vector RAG, query-focused summarization, Microsoft GraphRAG, community summaries, RAG architecture, ontology for LLMs, enterprise search AI" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://asksumanta.com/insights/graphrag-when-it-beats-vector-rag/" />
+<meta name="theme-color" content="#111214" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="GraphRAG vs vector RAG: when a knowledge graph is worth it" />
+<meta property="og:description" content="GraphRAG answers whole-corpus questions plain RAG can&#x27;t, at a real indexing cost. When it&#x27;s worth building, how it works, and how I&#x27;d combine it with an ontology." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://asksumanta.com/insights/graphrag-when-it-beats-vector-rag/" />
+<meta property="og:image" content="https://asksumanta.com/assets/og/graphrag-when-it-beats-vector-rag.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="GraphRAG vs vector RAG: when a knowledge graph is worth it" />
+<meta name="twitter:description" content="GraphRAG answers whole-corpus questions plain RAG can&#x27;t, at a real indexing cost. When it&#x27;s worth building, how it works, and how I&#x27;d combine it with an ontology." />
+<meta name="twitter:image" content="https://asksumanta.com/assets/og/graphrag-when-it-beats-vector-rag.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "BlogPosting", "headline": "GraphRAG vs vector RAG: when a knowledge graph is worth the cost", "description": "GraphRAG answers whole-corpus questions plain RAG can't, at a real indexing cost. When it's worth building, how it works, and how I'd combine it with an ontology.", "datePublished": "2026-10-20T00:15:00+04:00", "dateModified": "2026-10-20T00:15:00+04:00", "articleSection": "AI · Knowledge graphs", "genre": "Comparison", "citation": [{"@type": "CreativeWork", "name": "From Local to Global: A Graph RAG Approach to Query-Focused Summarization", "url": "https://arxiv.org/abs/2404.16130"}, {"@type": "CreativeWork", "name": "From Local to Global: A Graph RAG Approach to Query-Focused Summarization (publication page)", "url": "https://www.microsoft.com/en-us/research/publication/from-local-to-global-a-graph-rag-approach-to-query-focused-summarization/"}, {"@type": "CreativeWork", "name": "GraphRAG", "url": "https://github.com/microsoft/graphrag"}, {"@type": "CreativeWork", "name": "Graph RAG glossary entry", "url": "https://klu.ai/glossary/graph-rag"}], "author": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "publisher": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "mainEntityOfPage": "https://asksumanta.com/insights/graphrag-when-it-beats-vector-rag/", "image": "https://asksumanta.com/assets/og/graphrag-when-it-beats-vector-rag.png", "keywords": "GraphRAG, graph RAG, knowledge graph RAG, vector RAG, query-focused summarization, Microsoft GraphRAG, community summaries, RAG architecture, ontology for LLMs, enterprise search AI", "wordCount": 589}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://asksumanta.com/"}, {"@type": "ListItem", "position": 2, "name": "Insights", "item": "https://asksumanta.com/insights/"}, {"@type": "ListItem", "position": 3, "name": "GraphRAG vs vector RAG: when a knowledge graph is worth the cost", "item": "https://asksumanta.com/insights/graphrag-when-it-beats-vector-rag/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What is GraphRAG?", "acceptedAnswer": {"@type": "Answer", "text": "GraphRAG is an approach from Microsoft Research that uses an LLM to build an entity knowledge graph from documents, groups related entities into communities, pre-generates summaries for them, and uses those summaries to answer questions about a whole corpus."}}, {"@type": "Question", "name": "When does GraphRAG beat vector RAG?", "acceptedAnswer": {"@type": "Answer", "text": "On global sensemaking questions such as 'what are the main themes across these documents?', where the answer isn't in any single passage. The original paper reported more comprehensive and diverse answers than a conventional RAG baseline on such questions."}}, {"@type": "Question", "name": "What does GraphRAG cost?", "acceptedAnswer": {"@type": "Answer", "text": "Mainly indexing. Building the graph and community summaries requires many LLM calls over the corpus, which can be expensive for large or fast-changing collections. Lighter variants aim to reduce that cost."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+</script>
+</head>
+<body class="sub is-post">
+<div class="progress" id="progress"></div>
+<nav>
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="/#practice">Services</a>
+      <a href="/#work">Case studies</a>
+      <a href="/insights/">Insights</a>
+      <a href="/#assess">Analyse</a>
+      <a href="/#connect">Connect</a>
+    </div>
+    <div class="nav-r">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/insights/">Insights</a> <span>/</span> <em>GraphRAG vs vector RAG: when a knowledge graph is worth the cost</em></div>
+    <div class="kicker">AI · Knowledge graphs</div>
+    <h1>GraphRAG vs vector RAG: when a knowledge graph is worth the cost</h1>
+    <p class="sub-lede">Vector RAG is great at finding the paragraph that answers a question. It is poor at questions about the whole corpus. GraphRAG was designed for exactly that gap, and it comes with trade-offs worth understanding before you build.</p>
+    <div class="ameta"><span class="fmt">Comparison</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-10-20T00:15:00+04:00">20 Oct 2026 · 00:15 GST</time><span>7 min read</span><span>4 sources</span></div><div class="atags"><span class="tagp">#ai</span><span class="tagp">#rag</span><span class="tagp">#knowledge-graph</span><span class="tagp">#ontology</span><span class="tagp">#llm</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Comparison cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><polyline points="540,170 596,200 652,219 708,216 764,245 820,238 876,233 932,215 988,195 1044,171 1100,234 1156,212" class="cv-line"/><polyline points="540,267 596,290 652,267 708,213 764,215 820,237 876,217 932,280 988,197 1044,177 1100,209 1156,220" class="cv-line"/><polyline points="540,143 596,269 652,200 708,277 764,82 820,225 876,151 932,278 988,148 1044,132 1100,184 1156,338" class="cv-line hl"/><text x="60" y="90" class="cv-k">COMPARISON · AI · KNOWLEDGE GRAPHS</text><text x="60" y="350" class="cv-n">20 Oct 2026 · 00:15 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <p>Ask a well-built RAG system "what does our refund policy say about digital goods?" and it will find the right paragraph. Ask it "what are the recurring complaints across last year's support tickets?" and it struggles. No single chunk contains the answer, so retrieving the top ten similar chunks doesn't help.</p>
+<p>That second kind of question is what GraphRAG was designed for. I use it selectively, because it is powerful and it is not cheap.</p>
+
+<section class="block">
+<h2 id="how-graphrag-works">How GraphRAG works</h2>
+<p>The approach comes from a 2024 Microsoft Research paper. It frames whole-corpus questions as query-focused summarisation rather than retrieval<sup class="cite"><a href="#ref-1">1</a></sup>. The method has two stages at indexing time and two at query time<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>:</p>
+<ol>
+<li><strong>Extract a graph.</strong> An LLM reads the documents and extracts entities and relationships into a knowledge graph.</li>
+<li><strong>Summarise communities.</strong> Closely related entities are grouped into communities, and the LLM writes a summary for each one in advance.</li>
+<li><strong>Answer in parts.</strong> At query time, each relevant community summary produces a partial answer.</li>
+<li><strong>Combine.</strong> The partial answers are summarised into a final response.</li>
+</ol>
+<p>On global questions over corpora of around a million tokens, the authors reported substantially more comprehensive and diverse answers than a conventional RAG baseline<sup class="cite"><a href="#ref-1">1</a></sup>. Microsoft released an open-source implementation<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+</section>
+
+<section class="block">
+<h2 id="side-by-side">Side by side</h2>
+<table class="tbl">
+<thead><tr><th></th><th>Vector RAG</th><th>GraphRAG</th></tr></thead>
+<tbody>
+<tr><td>Best at</td><td>Specific questions answered by a passage</td><td>Themes, patterns and questions across the whole corpus</td></tr>
+<tr><td>Indexing cost</td><td>Low: chunk and embed</td><td>High: many LLM calls to extract and summarise</td></tr>
+<tr><td>Freshness</td><td>Easy to update incrementally</td><td>Harder; summaries go stale as content changes</td></tr>
+<tr><td>Explainability</td><td>Cites passages</td><td>Cites entities, relationships and communities</td></tr>
+<tr><td>Failure mode</td><td>Misses answers spread across documents</td><td>Extraction errors propagate into summaries</td></tr>
+</tbody>
+</table>
+<p>The indexing cost is the main reason teams hesitate, and lighter variants have since appeared that aim to reduce it<sup class="cite"><a href="#ref-4">4</a></sup>. Check the current state of the library before budgeting.</p>
+</section>
+
+<section class="block">
+<h2 id="an-llm-extracted-graph-is-not-an-ontology">An LLM-extracted graph is not an ontology</h2>
+<p>This is the most important caveat. GraphRAG's graph is extracted automatically from text. It is useful, but it is not governed: entity types vary, duplicates appear, relationships are whatever the model inferred. For exploration that is fine. For an enterprise system of record, it isn't.</p>
+<div class="callout"><p>The strongest setups I design combine both: a governed ontology and knowledge graph for the entities that matter, with resolved identities, and LLM extraction to enrich it from documents.</p></div>
+<p>That means defining the core types and relationships first, as I describe in <a href="/insights/ontology-vs-knowledge-graph-vs-semantic-layer/">ontology vs knowledge graph vs semantic layer</a>, resolving duplicates with the techniques in <a href="/insights/entity-resolution-knowledge-graphs/">entity resolution for knowledge graphs</a>, and only then letting an LLM attach document evidence to those entities.</p>
+</section>
+
+<section class="block">
+<h2 id="a-decision-rule">A decision rule</h2>
+<ul>
+<li><strong>Mostly specific questions</strong> such as policies, procedures and product facts: use vector or <a href="/insights/mongodb-hybrid-search-rag/">hybrid search</a>. Don't build a graph yet.</li>
+<li><strong>Frequent "across everything" questions</strong> such as themes in research, risks across contracts or patterns in incidents: GraphRAG is worth piloting on a bounded corpus.</li>
+<li><strong>Questions about known entities and their relationships</strong>, like which suppliers serve which plants or which patients are on which drugs: build a governed knowledge graph and query it directly, using the LLM to translate questions rather than to discover structure.</li>
+</ul>
+<p>Whatever you choose, decide with an <a href="/insights/llm-evaluation-sets-that-predict-production/">evaluation set</a> that includes global questions, not just specific ones. Otherwise vector RAG will look better than it is.</p>
+</section>
+
+<section class="block">
+<h2 id="how-i-can-help">How I can help</h2>
+<p>I design retrieval architectures that combine vector search, knowledge graphs and governed ontologies, and help teams decide which they need. See <a href="/ontology-knowledge-graph/">ontology and knowledge graphs</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://arxiv.org/abs/2404.16130" target="_blank" rel="noopener">From Local to Global: A Graph RAG Approach to Query-Focused Summarization</a><small>Edge et al., Microsoft Research (arXiv) · 2024</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://www.microsoft.com/en-us/research/publication/from-local-to-global-a-graph-rag-approach-to-query-focused-summarization/" target="_blank" rel="noopener">From Local to Global: A Graph RAG Approach to Query-Focused Summarization (publication page)</a><small>Microsoft Research</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://github.com/microsoft/graphrag" target="_blank" rel="noopener">GraphRAG</a><small>Microsoft, GitHub</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://klu.ai/glossary/graph-rag" target="_blank" rel="noopener">Graph RAG glossary entry</a><small>Klu</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fgraphrag-when-it-beats-vector-rag%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fgraphrag-when-it-beats-vector-rag%2F&amp;text=GraphRAG%20vs%20vector%20RAG%3A%20when%20a%20knowledge%20graph%20is%20worth%20the%20cost" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=GraphRAG%20vs%20vector%20RAG%3A%20when%20a%20knowledge%20graph%20is%20worth%20the%20cost%20https%3A%2F%2Fasksumanta.com%2Finsights%2Fgraphrag-when-it-beats-vector-rag%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://asksumanta.com/insights/graphrag-when-it-beats-vector-rag/">Copy link</button></div>
+      <div class="pnav"><a class="pn prev" href="/insights/build-vs-buy-ai-capabilities/"><small>← Previous</small><b>Build vs buy for AI: a decision framework for leadership teams</b></a><a class="pn next" href="/insights/hipaa-security-rule-proposal-ai-platforms/"><small>Next →</small><b>The proposed HIPAA Security Rule overhaul: what healthcare AI teams should build now</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#how-graphrag-works">How GraphRAG works</a></li><li><a href="#side-by-side">Side by side</a></li><li><a href="#an-llm-extracted-graph-is-not-an-ontology">An LLM-extracted graph is not an ontology</a></li><li><a href="#a-decision-rule">A decision rule</a></li><li><a href="#how-i-can-help">How I can help</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>What is GraphRAG?</summary><p>GraphRAG is an approach from Microsoft Research that uses an LLM to build an entity knowledge graph from documents, groups related entities into communities, pre-generates summaries for them, and uses those summaries to answer questions about a whole corpus.</p></details><details class="rise"><summary>When does GraphRAG beat vector RAG?</summary><p>On global sensemaking questions such as &#x27;what are the main themes across these documents?&#x27;, where the answer isn&#x27;t in any single passage. The original paper reported more comprehensive and diverse answers than a conventional RAG baseline on such questions.</p></details><details class="rise"><summary>What does GraphRAG cost?</summary><p>Mainly indexing. Building the graph and community summaries requires many LLM calls over the corpus, which can be expensive for large or fast-changing collections. Lighter variants aim to reduce that cost.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/ontology-knowledge-graph/"><small>Service</small><b>Ontology &amp; knowledge graphs</b><span>I help organisations agree what their data means, write it down as an ontology and put it to work in a knowledge graph that analytics, APIs and AI agents can all rely on.</span><i>→</i></a><a class="rcard rise" href="/ai-architect/"><small>Service</small><b>AI &amp; LLM architecture</b><span>I design and build AI systems that leadership can trust: grounded in your data, measured by evaluations, governed by your rules and priced so they make sense at scale.</span><i>→</i></a><a class="rcard rise" href="/fractional-cto/"><small>Service</small><b>Fractional CTO</b><span>I work as a part-time CTO for founders, CEOs and boards who need experienced technical judgement now, and a team that can carry it on after I step back.</span><i>→</i></a><a class="rcard rise" href="/insights/hipaa-security-rule-proposal-ai-platforms/"><small>Insight</small><b>The proposed HIPAA Security Rule overhaul: what healthcare AI teams should build now</b><span>The biggest proposed change to the HIPAA Security Rule in years is still not final. That is not a reason to wait. Most of what it asks for is what a well-run healthcare AI platform should already have.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: GraphRAG vs vector RAG: when a knowledge graph is worth the cost">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
+        <p class="floc">United States &amp; UAE · working globally</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/uae/">Fractional CTO in the UAE</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/hipaa-security-rule-proposal-ai-platforms/">The proposed HIPAA Security Rule overhaul: what healthcare AI teams should build now</a></li><li><a href="/insights/graphrag-when-it-beats-vector-rag/">GraphRAG vs vector RAG: when a knowledge graph is worth the cost</a></li><li><a href="/insights/build-vs-buy-ai-capabilities/">Build vs buy for AI: a decision framework for leadership teams</a></li><li><a href="/insights/kubernetes-dra-gpu-scheduling/">GPUs on Kubernetes: what Dynamic Resource Allocation changes for AI platforms</a></li><li><a href="/insights/change-data-capture-event-streams/">Change data capture: turning your database into a reliable event stream</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>
