@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DGX Spark as an AI architect&#x27;s bench: what it&#x27;s good for</title>
+<meta name="description" content="128 GB of unified memory on a desk changes how I prototype private AI. What NVIDIA DGX Spark does well, where memory bandwidth limits it, and how I use it with clients." />
+<meta name="keywords" content="NVIDIA DGX Spark, DGX Spark review, GB10 Grace Blackwell, local LLM development, private LLM prototyping, on-prem AI, fine-tuning on desktop, unified memory AI, AI architect, sovereign AI" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://asksumanta.com/insights/dgx-spark-ai-architect-bench/" />
+<meta name="theme-color" content="#111214" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="DGX Spark as an AI architect&#x27;s bench: what it&#x27;s good for" />
+<meta property="og:description" content="128 GB of unified memory on a desk changes how I prototype private AI. What NVIDIA DGX Spark does well, where memory bandwidth limits it, and how I use it with clients." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://asksumanta.com/insights/dgx-spark-ai-architect-bench/" />
+<meta property="og:image" content="https://asksumanta.com/assets/og/dgx-spark-ai-architect-bench.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="DGX Spark as an AI architect&#x27;s bench: what it&#x27;s good for" />
+<meta name="twitter:description" content="128 GB of unified memory on a desk changes how I prototype private AI. What NVIDIA DGX Spark does well, where memory bandwidth limits it, and how I use it with clients." />
+<meta name="twitter:image" content="https://asksumanta.com/assets/og/dgx-spark-ai-architect-bench.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "BlogPosting", "headline": "DGX Spark as an AI architect's bench: what it is good for, and what it isn't", "description": "128 GB of unified memory on a desk changes how I prototype private AI. What NVIDIA DGX Spark does well, where memory bandwidth limits it, and how I use it with clients.", "datePublished": "2026-10-20T16:15:00+04:00", "dateModified": "2026-10-20T16:15:00+04:00", "articleSection": "AI architecture · Private LLMs", "genre": "Field note", "citation": [{"@type": "CreativeWork", "name": "DGX Spark hardware overview", "url": "https://docs.nvidia.com/dgx/dgx-spark/hardware.html"}, {"@type": "CreativeWork", "name": "NVIDIA DGX Spark In-Depth Review", "url": "https://www.lmsys.org/blog/2025-10-13-nvidia-dgx-spark"}, {"@type": "CreativeWork", "name": "DGX Spark: use it for fine-tuning", "url": "https://kaitchup.substack.com/p/dgx-spark-use-it-for-fine-tuning"}, {"@type": "CreativeWork", "name": "NVIDIA DGX Spark review: the AI appliance bringing datacenter capabilities to desktops", "url": "https://storagereview.com/review/nvidia-dgx-spark-review-the-ai-appliance-bringing-datacenter-capabilities-to-desktops"}, {"@type": "CreativeWork", "name": "DGX Spark use case guide: jobs it's suited for and not suited for", "url": "https://dev.classmethod.jp/en/articles/dgx-spark-use-case-guide/"}], "author": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "publisher": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "mainEntityOfPage": "https://asksumanta.com/insights/dgx-spark-ai-architect-bench/", "image": "https://asksumanta.com/assets/og/dgx-spark-ai-architect-bench.png", "keywords": "NVIDIA DGX Spark, DGX Spark review, GB10 Grace Blackwell, local LLM development, private LLM prototyping, on-prem AI, fine-tuning on desktop, unified memory AI, AI architect, sovereign AI", "wordCount": 700}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://asksumanta.com/"}, {"@type": "ListItem", "position": 2, "name": "Insights", "item": "https://asksumanta.com/insights/"}, {"@type": "ListItem", "position": 3, "name": "DGX Spark as an AI architect's bench: what it is good for, and what it isn't", "item": "https://asksumanta.com/insights/dgx-spark-ai-architect-bench/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What is NVIDIA DGX Spark?", "acceptedAnswer": {"@type": "Answer", "text": "A compact desktop AI system built on the GB10 Grace Blackwell superchip, with a 20-core Arm CPU, a Blackwell GPU and 128 GB of unified memory. NVIDIA says it can work with models of up to about 200 billion parameters, or about 405 billion with two units linked."}}, {"@type": "Question", "name": "Is DGX Spark fast for LLM inference?", "acceptedAnswer": {"@type": "Answer", "text": "Token generation is limited by its memory bandwidth, so it is slower than high-end discrete GPUs for single-stream decoding. LMSYS's review described it as suited to prototyping, lightweight on-device inference and research rather than raw performance."}}, {"@type": "Question", "name": "What is DGX Spark best used for?", "acceptedAnswer": {"@type": "Answer", "text": "Prototyping with large models that don't fit on consumer GPUs, fine-tuning experiments, testing private AI architectures before buying servers, and demonstrating on-premises AI to stakeholders."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+</script>
+</head>
+<body class="sub is-post">
+<div class="progress" id="progress"></div>
+<nav>
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="/#practice">Services</a>
+      <a href="/#work">Case studies</a>
+      <a href="/insights/">Insights</a>
+      <a href="/#assess">Analyse</a>
+      <a href="/#connect">Connect</a>
+    </div>
+    <div class="nav-r">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/insights/">Insights</a> <span>/</span> <em>DGX Spark as an AI architect&#x27;s bench: what it is good for, and what it isn&#x27;t</em></div>
+    <div class="kicker">AI architecture · Private LLMs</div>
+    <h1>DGX Spark as an AI architect&#x27;s bench: what it is good for, and what it isn&#x27;t</h1>
+    <p class="sub-lede">A desktop box with 128 GB of unified memory lets you load models that used to need a server. That is useful for an architect, as long as you understand what the box is and isn&#x27;t designed to do.</p>
+    <div class="ameta"><span class="fmt">Field note</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-10-20T16:15:00+04:00">20 Oct 2026 · 16:15 GST</time><span>7 min read</span><span>5 sources</span></div><div class="atags"><span class="tagp">#ai</span><span class="tagp">#llm</span><span class="tagp">#private-ai</span><span class="tagp">#infrastructure</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Field note cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><circle cx="880" cy="210" r="40" class="cv-ring"/><circle cx="880" cy="210" r="70" class="cv-ring"/><circle cx="880" cy="210" r="100" class="cv-ring hl"/><circle cx="880" cy="210" r="130" class="cv-ring"/><circle cx="880" cy="210" r="160" class="cv-ring"/><circle cx="880" cy="210" r="190" class="cv-ring"/><circle cx="860" cy="245" r="6" class="cv-dot hl"/><circle cx="728" cy="96" r="3" class="cv-dot"/><circle cx="980" cy="206" r="3" class="cv-dot"/><circle cx="948" cy="195" r="6" class="cv-dot hl"/><circle cx="1062" cy="264" r="3" class="cv-dot"/><circle cx="837" cy="395" r="3" class="cv-dot"/><circle cx="814" cy="285" r="6" class="cv-dot hl"/><circle cx="792" cy="306" r="3" class="cv-dot"/><circle cx="897" cy="399" r="3" class="cv-dot"/><circle cx="1007" cy="69" r="6" class="cv-dot hl"/><circle cx="1012" cy="119" r="3" class="cv-dot"/><circle cx="952" cy="353" r="3" class="cv-dot"/><text x="60" y="90" class="cv-k">FIELD NOTE · AI ARCHITECTURE · PRIVATE LLMS</text><text x="60" y="350" class="cv-n">20 Oct 2026 · 16:15 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <p>The "Now" section of this site mentions a DGX Spark on my desk. People ask whether it's a toy or a serious tool. For an architect, it is a serious tool with a specific job. It is not a production server, and treating it as one leads to bad decisions.</p>
+
+<section class="block">
+<h2 id="what-the-box-is">What the box is</h2>
+<p>DGX Spark is built on NVIDIA's GB10 Grace Blackwell superchip: a 20-core Arm CPU and a Blackwell GPU sharing 128 GB of unified memory. NVIDIA says a single unit can work with models of up to about 200 billion parameters, and two units linked over ConnectX-7 networking can reach about 405 billion<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<p>The unified memory is the point. Models that don't fit in the memory of a consumer graphics card fit here, without splitting across multiple GPUs or renting cloud capacity for every experiment.</p>
+</section>
+
+<section class="block">
+<h2 id="the-trade-off-memory-bandwidth">The trade-off: memory bandwidth</h2>
+<p>The memory is large but comparatively slow. Token generation in LLMs is mostly limited by how fast weights can be read from memory, so single-stream decoding is where the Spark lags. In LMSYS's early review, as summarised by The Kaitchup, GPT-OSS 20B decoded at around 50 tokens per second on the Spark, compared with roughly 215 on an RTX Pro 6000 Blackwell<sup class="cite"><a href="#ref-3">3</a></sup>. Prompt processing and batched workloads fare much better than single-stream decoding<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<p>LMSYS's own conclusion was balanced: well engineered for its size and power envelope, limited in raw performance next to full-size discrete GPUs, and well suited to prototyping, lightweight on-device inference and research<sup class="cite"><a href="#ref-2">2</a></sup>. That matches how I think about it.</p>
+<table class="tbl">
+<thead><tr><th>Good fit</th><th>Poor fit</th></tr></thead>
+<tbody>
+<tr><td>Loading large models to test behaviour and quality</td><td>Serving many concurrent production users</td></tr>
+<tr><td>Fine-tuning and adapter experiments</td><td>Latency-sensitive chat at scale</td></tr>
+<tr><td>Building and testing a full private AI stack end to end</td><td>Benchmarking production throughput for capacity planning</td></tr>
+<tr><td>Demonstrating on-premises AI to stakeholders</td><td>Replacing a GPU server or cluster</td></tr>
+</tbody>
+</table>
+</section>
+
+<section class="block">
+<h2 id="how-i-use-it-as-an-architect">How I use it as an architect</h2>
+<ol>
+<li><strong>Answering "will this model do the job?" privately.</strong> Before a client commits to a model family, I can run their evaluation set against candidate open-weight models locally, using the method in <a href="/insights/llm-evaluation-sets-that-predict-production/">evaluation sets that predict production</a>. Quality questions don't need production hardware.</li>
+<li><strong>Rehearsing the whole private stack.</strong> Model server, gateway, retrieval, observability and guardrails, all running on one box. Integration problems show up here rather than on expensive servers. This is the stack described in <a href="/insights/private-llm-on-prem/">private LLMs on-prem</a>.</li>
+<li><strong>Fine-tuning experiments.</strong> Testing whether adapters on domain data actually beat good retrieval, before anyone buys training capacity. Fine-tuning is where reviewers have found the hardware strongest<sup class="cite"><a href="#ref-3">3</a></sup>.</li>
+<li><strong>Agent and MCP prototyping</strong> against local models, which keeps sensitive test data off third-party APIs. The containment patterns in <a href="/insights/prompt-injection-defence-for-agents/">prompt injection defence</a> can be tested end to end.</li>
+</ol>
+<div class="callout"><p>The value is in decisions, not throughput. A week on a desktop box can tell you which model, which architecture and roughly what hardware you need, before you sign for servers or a long cloud commitment.</p></div>
+</section>
+
+<section class="block">
+<h2 id="the-mistake-to-avoid">The mistake to avoid</h2>
+<p>Don't size production from a Spark. Its performance profile differs from datacenter GPUs, so a prototype that feels fast or slow on the desk tells you little about a production cluster. Use the Spark to settle quality, architecture and integration questions, then run a short, targeted benchmark on the actual production class of hardware, whether that's on-premises, in a sovereign cloud region or in a hyperscaler. For Gulf clients, that last decision is the subject of <a href="/insights/uae-ai-infrastructure-where-to-run-models/">where to run models in the UAE</a>.</p>
+</section>
+
+<section class="block">
+<h2 id="should-your-team-buy-one">Should your team buy one?</h2>
+<p>If your team regularly experiments with open-weight models larger than a consumer GPU can hold, works with data that can't leave your premises, or needs to show stakeholders private AI working, it is a reasonable purchase. Reviewers put its price in the low thousands of dollars, with figures varying by configuration and market<sup class="cite"><a href="#ref-4">4</a></sup>. If your AI work is mainly calling hosted APIs, it won't change much.</p>
+</section>
+
+<section class="block">
+<h2 id="how-i-can-help">How I can help</h2>
+<p>I help teams decide on models, architecture and hardware for private and sovereign AI, using prototypes to settle questions before money is committed. See my <a href="/ai-architect/">AI architecture work</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://docs.nvidia.com/dgx/dgx-spark/hardware.html" target="_blank" rel="noopener">DGX Spark hardware overview</a><small>NVIDIA documentation</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://www.lmsys.org/blog/2025-10-13-nvidia-dgx-spark" target="_blank" rel="noopener">NVIDIA DGX Spark In-Depth Review</a><small>LMSYS · 13 Oct 2025</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://kaitchup.substack.com/p/dgx-spark-use-it-for-fine-tuning" target="_blank" rel="noopener">DGX Spark: use it for fine-tuning</a><small>The Kaitchup</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://storagereview.com/review/nvidia-dgx-spark-review-the-ai-appliance-bringing-datacenter-capabilities-to-desktops" target="_blank" rel="noopener">NVIDIA DGX Spark review: the AI appliance bringing datacenter capabilities to desktops</a><small>StorageReview</small></div></li><li id="ref-5"><span class="rn">5</span><div><a href="https://dev.classmethod.jp/en/articles/dgx-spark-use-case-guide/" target="_blank" rel="noopener">DGX Spark use case guide: jobs it&#x27;s suited for and not suited for</a><small>Classmethod</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fdgx-spark-ai-architect-bench%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fdgx-spark-ai-architect-bench%2F&amp;text=DGX%20Spark%20as%20an%20AI%20architect%27s%20bench%3A%20what%20it%20is%20good%20for%2C%20and%20what%20it%20isn%27t" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=DGX%20Spark%20as%20an%20AI%20architect%27s%20bench%3A%20what%20it%20is%20good%20for%2C%20and%20what%20it%20isn%27t%20https%3A%2F%2Fasksumanta.com%2Finsights%2Fdgx-spark-ai-architect-bench%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://asksumanta.com/insights/dgx-spark-ai-architect-bench/">Copy link</button></div>
+      <div class="pnav"><a class="pn prev" href="/insights/shacl-validation-knowledge-graphs/"><small>← Previous</small><b>SHACL for knowledge graphs: a practical validation checklist</b></a><a class="pn next" href="/insights/difc-regulation-10-ai-systems/"><small>Next →</small><b>DIFC Regulation 10: what it means for AI systems built in Dubai&#x27;s financial centre</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#what-the-box-is">What the box is</a></li><li><a href="#the-trade-off-memory-bandwidth">The trade-off: memory bandwidth</a></li><li><a href="#how-i-use-it-as-an-architect">How I use it as an architect</a></li><li><a href="#the-mistake-to-avoid">The mistake to avoid</a></li><li><a href="#should-your-team-buy-one">Should your team buy one?</a></li><li><a href="#how-i-can-help">How I can help</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>What is NVIDIA DGX Spark?</summary><p>A compact desktop AI system built on the GB10 Grace Blackwell superchip, with a 20-core Arm CPU, a Blackwell GPU and 128 GB of unified memory. NVIDIA says it can work with models of up to about 200 billion parameters, or about 405 billion with two units linked.</p></details><details class="rise"><summary>Is DGX Spark fast for LLM inference?</summary><p>Token generation is limited by its memory bandwidth, so it is slower than high-end discrete GPUs for single-stream decoding. LMSYS&#x27;s review described it as suited to prototyping, lightweight on-device inference and research rather than raw performance.</p></details><details class="rise"><summary>What is DGX Spark best used for?</summary><p>Prototyping with large models that don&#x27;t fit on consumer GPUs, fine-tuning experiments, testing private AI architectures before buying servers, and demonstrating on-premises AI to stakeholders.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/ai-architect/"><small>Service</small><b>AI &amp; LLM architecture</b><span>I design and build AI systems that leadership can trust: grounded in your data, measured by evaluations, governed by your rules and priced so they make sense at scale.</span><i>→</i></a><a class="rcard rise" href="/fractional-cto/"><small>Service</small><b>Fractional CTO</b><span>I work as a part-time CTO for founders, CEOs and boards who need experienced technical judgement now, and a team that can carry it on after I step back.</span><i>→</i></a><a class="rcard rise" href="/uae/"><small>Service</small><b>Fractional CTO in the UAE</b><span>I work with founders, enterprises and investors across the UAE and the Gulf on AI, data and technology leadership, with an eye on local data-protection rules and residency from day one.</span><i>→</i></a><a class="rcard rise" href="/insights/difc-regulation-10-ai-systems/"><small>Insight</small><b>DIFC Regulation 10: what it means for AI systems built in Dubai&#x27;s financial centre</b><span>The Dubai International Financial Centre was one of the first jurisdictions in the region to write data protection rules specifically for AI systems. If you build or deploy AI for DIFC firms, Regulation 10 shapes your architecture.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: DGX Spark as an AI architect&#x27;s bench: what it is good for, and what it isn&#x27;t">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
+        <p class="floc">United States &amp; UAE · working globally</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/uae/">Fractional CTO in the UAE</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/difc-regulation-10-ai-systems/">DIFC Regulation 10: what it means for AI systems built in Dubai&#x27;s financial centre</a></li><li><a href="/insights/dgx-spark-ai-architect-bench/">DGX Spark as an AI architect&#x27;s bench: what it is good for, and what it isn&#x27;t</a></li><li><a href="/insights/shacl-validation-knowledge-graphs/">SHACL for knowledge graphs: a practical validation checklist</a></li><li><a href="/insights/ingress-nginx-to-gateway-api/">Ingress NGINX is retired: a practical playbook for moving to Gateway API</a></li><li><a href="/insights/dora-metrics-ai-assisted-engineering/">DORA metrics in the AI era: what engineering leaders should actually measure</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,49 @@
+<!--{"title": "DGX Spark as an AI architect's bench: what it's good for", "description": "128 GB of unified memory on a desk changes how I prototype private AI. What NVIDIA DGX Spark does well, where memory bandwidth limits it, and how I use it with clients.", "h1": "DGX Spark as an AI architect's bench: what it is good for, and what it isn't", "kicker": "AI architecture · Private LLMs", "lede": "A desktop box with 128 GB of unified memory lets you load models that used to need a server. That is useful for an architect, as long as you understand what the box is and isn't designed to do.", "date": "2026-10-20", "datetime": "2026-10-20T16:15:00+04:00", "readtime": "7 min read", "format": "field-note", "tags": ["ai", "llm", "private-ai", "infrastructure"], "keywords": ["NVIDIA DGX Spark", "DGX Spark review", "GB10 Grace Blackwell", "local LLM development", "private LLM prototyping", "on-prem AI", "fine-tuning on desktop", "unified memory AI", "AI architect", "sovereign AI"], "faq": [["What is NVIDIA DGX Spark?", "A compact desktop AI system built on the GB10 Grace Blackwell superchip, with a 20-core Arm CPU, a Blackwell GPU and 128 GB of unified memory. NVIDIA says it can work with models of up to about 200 billion parameters, or about 405 billion with two units linked."], ["Is DGX Spark fast for LLM inference?", "Token generation is limited by its memory bandwidth, so it is slower than high-end discrete GPUs for single-stream decoding. LMSYS's review described it as suited to prototyping, lightweight on-device inference and research rather than raw performance."], ["What is DGX Spark best used for?", "Prototyping with large models that don't fit on consumer GPUs, fine-tuning experiments, testing private AI architectures before buying servers, and demonstrating on-premises AI to stakeholders."]], "related": ["/ai-architect/", "/fractional-cto/", "/uae/"], "citations": [{"title": "DGX Spark hardware overview", "url": "https://docs.nvidia.com/dgx/dgx-spark/hardware.html", "publisher": "NVIDIA documentation"}, {"title": "NVIDIA DGX Spark In-Depth Review", "url": "https://www.lmsys.org/blog/2025-10-13-nvidia-dgx-spark", "publisher": "LMSYS", "date": "13 Oct 2025"}, {"title": "DGX Spark: use it for fine-tuning", "url": "https://kaitchup.substack.com/p/dgx-spark-use-it-for-fine-tuning", "publisher": "The Kaitchup"}, {"title": "NVIDIA DGX Spark review: the AI appliance bringing datacenter capabilities to desktops", "url": "https://storagereview.com/review/nvidia-dgx-spark-review-the-ai-appliance-bringing-datacenter-capabilities-to-desktops", "publisher": "StorageReview"}, {"title": "DGX Spark use case guide: jobs it's suited for and not suited for", "url": "https://dev.classmethod.jp/en/articles/dgx-spark-use-case-guide/", "publisher": "Classmethod"}]}-->
+<p>The "Now" section of this site mentions a DGX Spark on my desk. People ask whether it's a toy or a serious tool. For an architect, it is a serious tool with a specific job. It is not a production server, and treating it as one leads to bad decisions.</p>
+
+<section class="block">
+<h2>What the box is</h2>
+<p>DGX Spark is built on NVIDIA's GB10 Grace Blackwell superchip: a 20-core Arm CPU and a Blackwell GPU sharing 128 GB of unified memory. NVIDIA says a single unit can work with models of up to about 200 billion parameters, and two units linked over ConnectX-7 networking can reach about 405 billion<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<p>The unified memory is the point. Models that don't fit in the memory of a consumer graphics card fit here, without splitting across multiple GPUs or renting cloud capacity for every experiment.</p>
+</section>
+
+<section class="block">
+<h2>The trade-off: memory bandwidth</h2>
+<p>The memory is large but comparatively slow. Token generation in LLMs is mostly limited by how fast weights can be read from memory, so single-stream decoding is where the Spark lags. In LMSYS's early review, as summarised by The Kaitchup, GPT-OSS 20B decoded at around 50 tokens per second on the Spark, compared with roughly 215 on an RTX Pro 6000 Blackwell<sup class="cite"><a href="#ref-3">3</a></sup>. Prompt processing and batched workloads fare much better than single-stream decoding<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<p>LMSYS's own conclusion was balanced: well engineered for its size and power envelope, limited in raw performance next to full-size discrete GPUs, and well suited to prototyping, lightweight on-device inference and research<sup class="cite"><a href="#ref-2">2</a></sup>. That matches how I think about it.</p>
+<table class="tbl">
+<thead><tr><th>Good fit</th><th>Poor fit</th></tr></thead>
+<tbody>
+<tr><td>Loading large models to test behaviour and quality</td><td>Serving many concurrent production users</td></tr>
+<tr><td>Fine-tuning and adapter experiments</td><td>Latency-sensitive chat at scale</td></tr>
+<tr><td>Building and testing a full private AI stack end to end</td><td>Benchmarking production throughput for capacity planning</td></tr>
+<tr><td>Demonstrating on-premises AI to stakeholders</td><td>Replacing a GPU server or cluster</td></tr>
+</tbody>
+</table>
+</section>
+
+<section class="block">
+<h2>How I use it as an architect</h2>
+<ol>
+<li><strong>Answering "will this model do the job?" privately.</strong> Before a client commits to a model family, I can run their evaluation set against candidate open-weight models locally, using the method in <a href="/insights/llm-evaluation-sets-that-predict-production/">evaluation sets that predict production</a>. Quality questions don't need production hardware.</li>
+<li><strong>Rehearsing the whole private stack.</strong> Model server, gateway, retrieval, observability and guardrails, all running on one box. Integration problems show up here rather than on expensive servers. This is the stack described in <a href="/insights/private-llm-on-prem/">private LLMs on-prem</a>.</li>
+<li><strong>Fine-tuning experiments.</strong> Testing whether adapters on domain data actually beat good retrieval, before anyone buys training capacity. Fine-tuning is where reviewers have found the hardware strongest<sup class="cite"><a href="#ref-3">3</a></sup>.</li>
+<li><strong>Agent and MCP prototyping</strong> against local models, which keeps sensitive test data off third-party APIs. The containment patterns in <a href="/insights/prompt-injection-defence-for-agents/">prompt injection defence</a> can be tested end to end.</li>
+</ol>
+<div class="callout"><p>The value is in decisions, not throughput. A week on a desktop box can tell you which model, which architecture and roughly what hardware you need, before you sign for servers or a long cloud commitment.</p></div>
+</section>
+
+<section class="block">
+<h2>The mistake to avoid</h2>
+<p>Don't size production from a Spark. Its performance profile differs from datacenter GPUs, so a prototype that feels fast or slow on the desk tells you little about a production cluster. Use the Spark to settle quality, architecture and integration questions, then run a short, targeted benchmark on the actual production class of hardware, whether that's on-premises, in a sovereign cloud region or in a hyperscaler. For Gulf clients, that last decision is the subject of <a href="/insights/uae-ai-infrastructure-where-to-run-models/">where to run models in the UAE</a>.</p>
+</section>
+
+<section class="block">
+<h2>Should your team buy one?</h2>
+<p>If your team regularly experiments with open-weight models larger than a consumer GPU can hold, works with data that can't leave your premises, or needs to show stakeholders private AI working, it is a reasonable purchase. Reviewers put its price in the low thousands of dollars, with figures varying by configuration and market<sup class="cite"><a href="#ref-4">4</a></sup>. If your AI work is mainly calling hosted APIs, it won't change much.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I help teams decide on models, architecture and hardware for private and sovereign AI, using prototypes to settle questions before money is committed. See my <a href="/ai-architect/">AI architecture work</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
