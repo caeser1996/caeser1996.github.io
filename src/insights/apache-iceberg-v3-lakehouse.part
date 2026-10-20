@@ -1,0 +1,60 @@
+<!--{"title": "Apache Iceberg v3: should your lakehouse upgrade?", "description": "Iceberg v3 adds deletion vectors, row lineage, variant and geospatial types. What changes from v2, the one-way upgrade risk, and how I decide when a data platform should move.", "h1": "Apache Iceberg v3: what changes from v2, and when your lakehouse should upgrade", "kicker": "Data platforms · Scale", "lede": "Iceberg has become the default open table format for many lakehouses. Version 3 of the spec brings features teams have wanted for years, along with an upgrade that can't be undone. Here is how I weigh it.", "date": "2026-10-20", "datetime": "2026-10-20T20:30:00+04:00", "readtime": "7 min read", "format": "comparison", "tags": ["data", "platform", "scale", "cloud"], "keywords": ["Apache Iceberg v3", "Iceberg deletion vectors", "Iceberg row lineage", "variant data type", "lakehouse architecture", "open table format", "Iceberg v2 vs v3", "change data capture lakehouse", "data platform consultant", "Iceberg upgrade"], "faq": [["What is new in Apache Iceberg v3?", "Headline features include deletion vectors that replace positional delete files, row lineage fields for tracking changes, a variant type for semi-structured data, geospatial types, nanosecond timestamps and default column values."], ["Can I downgrade an Iceberg table from v3 to v2?", "Not through standard operations. AWS guidance describes the upgrade as one-way, and v2 readers can't read v3 tables, so every engine that reads the table must support v3 first."], ["When should I upgrade to Iceberg v3?", "When every engine and tool reading the table supports v3, and you have a concrete need such as heavy row-level updates, change data capture or semi-structured data. Upgrade table by table, starting with tables that benefit most."]], "related": ["/fractional-cto/", "/technical-due-diligence/", "/ai-architect/"], "citations": [{"title": "What's new in Apache Iceberg v3?", "url": "https://opensource.googleblog.com/2025/08/whats-new-in-iceberg-v3.html", "publisher": "Google Open Source Blog", "date": "Aug 2025"}, {"title": "Working with Iceberg table format specification version 3", "url": "https://docs.aws.amazon.com/prescriptive-guidance/latest/apache-iceberg-on-aws/table-spec-v3.html", "publisher": "AWS Prescriptive Guidance"}, {"title": "Iceberg v3: moving the ecosystem towards unification", "url": "https://www.databricks.com/blog/iceberg-v3-moving-ecosystem-towards-unification", "publisher": "Databricks"}, {"title": "Apache Iceberg v3", "url": "https://www.starburst.io/blog/iceberg-v3/", "publisher": "Starburst"}, {"title": "Iceberg v3 features (Amazon Redshift)", "url": "https://docs.aws.amazon.com/redshift/latest/dg/iceberg-v3-features.html", "publisher": "AWS documentation"}, {"title": "Iceberg table spec", "url": "https://iceberg.apache.org/spec/", "publisher": "Apache Iceberg"}]}-->
+<p>Open table formats solved a real problem: they let many engines share the same tables on cheap object storage, with transactions, schema evolution and time travel. Apache Iceberg has become a common choice, and the format version 3 specification<sup class="cite"><a href="#ref-6">6</a></sup> is now supported across much of the ecosystem.</p>
+<p>The question I get from data leaders is simple: should we upgrade? The answer depends less on the features than on every engine that touches your tables.</p>
+
+<section class="block">
+<h2>What v3 adds</h2>
+<table class="tbl">
+<thead><tr><th>Feature</th><th>What it does</th><th>Who benefits</th></tr></thead>
+<tbody>
+<tr><td>Deletion vectors</td><td>Compact per-file bitmaps marking deleted rows, replacing positional delete files<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-4">4</a></sup></td><td>Tables with frequent updates, deletes and merges</td></tr>
+<tr><td>Row lineage</td><td>Per-row identifiers and last-updated sequence numbers<sup class="cite"><a href="#ref-2">2</a></sup></td><td>Incremental processing and change data capture</td></tr>
+<tr><td>Variant type</td><td>Native storage for semi-structured data<sup class="cite"><a href="#ref-3">3</a></sup></td><td>Event, log and API payload data currently stored as strings</td></tr>
+<tr><td>Geospatial types</td><td>Geometry and geography types<sup class="cite"><a href="#ref-1">1</a></sup></td><td>Logistics, mobility, real estate and mapping workloads</td></tr>
+<tr><td>Nanosecond timestamps and default values</td><td>Finer time precision; defaults for new columns<sup class="cite"><a href="#ref-1">1</a></sup></td><td>Financial and telemetry data; smoother schema evolution</td></tr>
+</tbody>
+</table>
+<p>Deletion vectors and row lineage are the two I see mattering most. The first makes row-level changes cheaper; the second makes "what changed since last time?" a property of the table rather than a separate pipeline, which simplifies the patterns in <a href="/insights/change-data-capture-event-streams/">change data capture and event streams</a>.</p>
+</section>
+
+<section class="block">
+<h2>The catch: it's one-way</h2>
+<p>AWS guidance is explicit that upgrading a table from v2 to v3 can't be reversed through standard operations, and that v2 readers can't read v3 tables. It also notes that the upgrade does not backfill row lineage history<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<p>Engine support also varies in detail. Amazon Redshift's documentation, for example, lists v3 data types it does not support<sup class="cite"><a href="#ref-5">5</a></sup>. A table that works perfectly in Spark could become unreadable to a BI tool, an ML feature pipeline or a partner's engine the day you upgrade it.</p>
+<div class="callout"><p>Before upgrading any table, list every engine, service and tool that reads it, including the ones owned by other teams. One unsupported reader turns an upgrade into an outage.</p></div>
+</section>
+
+<section class="block">
+<h2>v2 or v3: how I decide</h2>
+<table class="tbl">
+<thead><tr><th>Stay on v2 for now if</th><th>Move to v3 if</th></tr></thead>
+<tbody>
+<tr><td>Any reader lacks confirmed v3 support</td><td>All readers support v3 and you've tested them</td></tr>
+<tr><td>Tables are mostly append-only</td><td>Tables see heavy updates, deletes or merges</td></tr>
+<tr><td>Change tracking already works well</td><td>You need incremental processing without extra pipelines</td></tr>
+<tr><td>Semi-structured data is rare</td><td>JSON payloads are common and painful to query</td></tr>
+</tbody>
+</table>
+</section>
+
+<section class="block">
+<h2>An upgrade plan</h2>
+<ol>
+<li><strong>Inventory readers and writers</strong> per table, with their versions and v3 support status.</li>
+<li><strong>Create new tables on v3</strong> where all their consumers support it. New tables carry no compatibility risk.</li>
+<li><strong>Upgrade high-benefit tables first</strong>, such as those with heavy merge workloads, after copying and testing a sample in a separate namespace.</li>
+<li><strong>Record format versions in the catalog</strong> and your data contracts, so consumers know what to expect.</li>
+<li><strong>Leave stable, append-only tables alone</strong> until there is a reason to move them.</li>
+</ol>
+<p>Treat it like any platform change: an <a href="/insights/architecture-decision-records-fractional-cto/">architecture decision record</a> per domain, a rollback plan that doesn't depend on downgrading, and monitoring for read failures.</p>
+</section>
+
+<section class="block">
+<h2>Why this matters for AI</h2>
+<p>Lakehouses increasingly feed AI: training data, feature pipelines and document stores for retrieval. Row lineage helps keep downstream indexes and features in sync with source changes, and variant columns make it easier to keep raw payloads queryable. Both reduce the custom plumbing that tends to break quietly between a data platform and an AI product.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I design and review data platforms for scale, from table formats and catalogs to the pipelines that feed analytics and AI. As a <a href="/fractional-cto/">fractional CTO</a> I can own the data roadmap, or I can assess an existing platform in <a href="/technical-due-diligence/">technical due diligence</a>. Or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>

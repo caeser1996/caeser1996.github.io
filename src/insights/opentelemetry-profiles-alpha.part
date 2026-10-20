@@ -1,0 +1,45 @@
+<!--{"title": "OpenTelemetry Profiles is in alpha: what it means for your stack", "description": "Continuous profiling joins traces, metrics and logs in OpenTelemetry. What the Profiles alpha includes, why it matters for cost and AI workloads, and how to pilot it safely.", "h1": "OpenTelemetry Profiles is in alpha: the fourth signal and what to do about it", "kicker": "Cloud · Observability", "lede": "Traces tell you which request was slow. Profiles tell you which line of code burned the CPU. In March 2026 OpenTelemetry's Profiles signal reached public alpha, putting continuous profiling on the same open standard as everything else.", "date": "2026-10-20", "datetime": "2026-10-20T20:15:00+04:00", "readtime": "7 min read", "format": "news-analysis", "tags": ["observability", "platform", "cloud", "finops"], "keywords": ["OpenTelemetry Profiles", "continuous profiling", "OTel profiles alpha", "eBPF profiler", "OpenTelemetry Collector profiling", "pprof", "observability strategy", "cloud cost optimisation", "performance engineering", "observability consultant"], "faq": [["What is the OpenTelemetry Profiles signal?", "A standard way to capture and transport continuous profiling data in OpenTelemetry, alongside traces, metrics and logs. It defines a data format compatible with pprof, a reference eBPF profiler and integration with the OpenTelemetry Collector."], ["Is OpenTelemetry Profiles production ready?", "Not yet. It entered public alpha in March 2026, and the project says it should not be used for critical production workloads. The announcement also noted that production-ready backends had not yet emerged."], ["Why does profiling matter for cost?", "Profiles show which functions consume CPU and memory across a fleet. That makes it possible to find and fix the code paths that drive compute spend, rather than only scaling infrastructure."]], "related": ["/fractional-cto/", "/ai-architect/", "/technical-due-diligence/"], "citations": [{"title": "OpenTelemetry Profiles Enters Public Alpha", "url": "https://opentelemetry.io/blog/2026/profiles-alpha/", "publisher": "OpenTelemetry blog", "date": "26 Mar 2026"}, {"title": "Profiles (signal concepts)", "url": "https://opentelemetry.io/docs/concepts/signals/profiles/", "publisher": "OpenTelemetry documentation"}, {"title": "Elastic contributes its continuous profiling agent to OpenTelemetry", "url": "https://opentelemetry.io/blog/2024/elastic-contributes-continuous-profiling-agent/", "publisher": "OpenTelemetry blog", "date": "2024"}, {"title": "OpenTelemetry eBPF profiler", "url": "https://github.com/open-telemetry/opentelemetry-ebpf-profiler", "publisher": "OpenTelemetry, GitHub"}, {"title": "OpenTelemetry Profiling goes Alpha", "url": "https://blog.polarsignals.com/blog/posts/2026/03/26/opentelemetry-profiling-goes-alpha", "publisher": "Polar Signals", "date": "26 Mar 2026"}]}-->
+<p>Most observability programmes stop at three signals: traces, metrics and logs. They tell you that something is slow or expensive and roughly where. They rarely tell you why at the level of code. That is what profiling does, and until recently every profiling tool used its own agent and format.</p>
+<p>On 26 March 2026 the OpenTelemetry Profiling SIG announced that the Profiles signal had entered public alpha<sup class="cite"><a href="#ref-1">1</a></sup>. It is not ready for critical production use. It is ready for teams to start planning around.</p>
+
+<section class="block">
+<h2>What the alpha includes</h2>
+<p>According to the announcement, there are three parts<sup class="cite"><a href="#ref-1">1</a></sup>:</p>
+<ul>
+<li><strong>A standard data format.</strong> Stacks are deduplicated and common values stored in dictionary tables for efficiency. Samples can carry trace and span IDs for correlation with traces. Data in pprof format can be converted to and from OTLP Profiles with no loss of information.</li>
+<li><strong>A reference eBPF profiler.</strong> Donated by Elastic in 2024<sup class="cite"><a href="#ref-3">3</a></sup>, it provides whole-system profiling on Linux without instrumenting applications. In the alpha it runs as an OpenTelemetry Collector receiver, shipped as an official Collector distribution, with additions including .NET 9 and 10 support and initial BEAM support<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>.</li>
+<li><strong>Collector integration.</strong> A pprof receiver, Kubernetes metadata enrichment and OTTL transformation rules work with profiles, and Collector v0.148.0 or newer supports the signal<sup class="cite"><a href="#ref-1">1</a></sup>.</li>
+</ul>
+<figure class="fig"><div class="im"><img src="/assets/img/opentelemetry-profiles-alpha/devfiler.webp" alt="Screenshot of devfiler, a desktop application showing a flame graph of profiling data collected by the OpenTelemetry eBPF profiler" width="1600" height="868" loading="lazy"></div><figcaption>Devfiler, Elastic's open-source desktop tool for experimenting with eBPF profiler data. It is for development only, not a production backend. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2026/profiles-alpha/" target="_blank" rel="noopener">OpenTelemetry blog, OpenTelemetry Profiles Enters Public Alpha</a> · CC BY 4.0</span></figcaption></figure>
+<p>Two caveats from the project itself: the signal should not be used for critical production workloads at alpha, and production-ready backends had not yet emerged at the time of the announcement<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+</section>
+
+<section class="block">
+<h2>Why this matters</h2>
+<p><strong>Correlation.</strong> The ability to link a profile sample to a trace and span is the real prize. A slow span becomes a flame graph of exactly what that request was doing, without switching tools or guessing.</p>
+<p><strong>Cost.</strong> Profiling across a fleet shows which functions consume the most CPU and memory. That turns cost work from "buy smaller instances" into "fix the three hot paths", which complements the infrastructure levers in <a href="/insights/kubernetes-finops-scale-to-zero/">Kubernetes FinOps</a>.</p>
+<p><strong>Portability.</strong> As with traces, a standard format means you can change profiling backends without re-instrumenting. Vendors in the profiling space have been part of the effort<sup class="cite"><a href="#ref-5">5</a></sup>, which suggests support will follow.</p>
+<div class="callout"><p>Profiling is the observability signal most teams skip, and the one that most often pays for itself. A standard makes it much easier to justify.</p></div>
+</section>
+
+<section class="block">
+<h2>What about AI workloads?</h2>
+<p>For AI platforms, profiling helps in the parts around the model: tokenisation, retrieval, serialisation, preprocessing and orchestration code, which often consume more CPU than teams expect. Combined with the GenAI tracing conventions in <a href="/insights/llm-observability-opentelemetry-genai/">LLM observability with OpenTelemetry</a>, it gives a complete picture of where time and money go in a request. GPU-side profiling is a separate problem; check what your chosen tools cover.</p>
+</section>
+
+<section class="block">
+<h2>How I would pilot it</h2>
+<ol>
+<li><strong>Pick a non-critical environment</strong> such as staging or a performance test cluster, in line with the alpha guidance.</li>
+<li><strong>Deploy the eBPF profiler Collector distribution</strong> on a few nodes, with Kubernetes metadata enrichment, and check the overhead yourself.</li>
+<li><strong>Choose a backend</strong> that accepts OTLP Profiles, or use a development tool to explore the data while backends mature.</li>
+<li><strong>Answer one real question</strong>, such as the top CPU consumers of your most expensive service. A pilot with a concrete finding wins support for wider rollout.</li>
+<li><strong>Keep the pipeline in your Collector configuration</strong>, so that promoting it to production later is a configuration change, not a new project.</li>
+</ol>
+<p>If you already run continuous profiling with a vendor agent, there is no need to rip it out. Ask the vendor about OTLP Profiles support and plan the switch for when the signal reaches beta.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I design observability strategies across traces, metrics, logs and now profiles, with a focus on finding cost and reliability problems quickly. As a <a href="/fractional-cto/">fractional CTO</a> I can own that roadmap. Or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>

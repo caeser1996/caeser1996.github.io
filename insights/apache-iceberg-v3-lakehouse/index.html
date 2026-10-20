@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Apache Iceberg v3: should your lakehouse upgrade?</title>
+<meta name="description" content="Iceberg v3 adds deletion vectors, row lineage, variant and geospatial types. What changes from v2, the one-way upgrade risk, and how I decide when a data platform should move." />
+<meta name="keywords" content="Apache Iceberg v3, Iceberg deletion vectors, Iceberg row lineage, variant data type, lakehouse architecture, open table format, Iceberg v2 vs v3, change data capture lakehouse, data platform consultant, Iceberg upgrade" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://asksumanta.com/insights/apache-iceberg-v3-lakehouse/" />
+<meta name="theme-color" content="#111214" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="Apache Iceberg v3: should your lakehouse upgrade?" />
+<meta property="og:description" content="Iceberg v3 adds deletion vectors, row lineage, variant and geospatial types. What changes from v2, the one-way upgrade risk, and how I decide when a data platform should move." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://asksumanta.com/insights/apache-iceberg-v3-lakehouse/" />
+<meta property="og:image" content="https://asksumanta.com/assets/og/apache-iceberg-v3-lakehouse.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Apache Iceberg v3: should your lakehouse upgrade?" />
+<meta name="twitter:description" content="Iceberg v3 adds deletion vectors, row lineage, variant and geospatial types. What changes from v2, the one-way upgrade risk, and how I decide when a data platform should move." />
+<meta name="twitter:image" content="https://asksumanta.com/assets/og/apache-iceberg-v3-lakehouse.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "BlogPosting", "headline": "Apache Iceberg v3: what changes from v2, and when your lakehouse should upgrade", "description": "Iceberg v3 adds deletion vectors, row lineage, variant and geospatial types. What changes from v2, the one-way upgrade risk, and how I decide when a data platform should move.", "datePublished": "2026-10-20T20:30:00+04:00", "dateModified": "2026-10-20T20:30:00+04:00", "articleSection": "Data platforms · Scale", "genre": "Comparison", "citation": [{"@type": "CreativeWork", "name": "What's new in Apache Iceberg v3?", "url": "https://opensource.googleblog.com/2025/08/whats-new-in-iceberg-v3.html"}, {"@type": "CreativeWork", "name": "Working with Iceberg table format specification version 3", "url": "https://docs.aws.amazon.com/prescriptive-guidance/latest/apache-iceberg-on-aws/table-spec-v3.html"}, {"@type": "CreativeWork", "name": "Iceberg v3: moving the ecosystem towards unification", "url": "https://www.databricks.com/blog/iceberg-v3-moving-ecosystem-towards-unification"}, {"@type": "CreativeWork", "name": "Apache Iceberg v3", "url": "https://www.starburst.io/blog/iceberg-v3/"}, {"@type": "CreativeWork", "name": "Iceberg v3 features (Amazon Redshift)", "url": "https://docs.aws.amazon.com/redshift/latest/dg/iceberg-v3-features.html"}, {"@type": "CreativeWork", "name": "Iceberg table spec", "url": "https://iceberg.apache.org/spec/"}], "author": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "publisher": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "mainEntityOfPage": "https://asksumanta.com/insights/apache-iceberg-v3-lakehouse/", "image": "https://asksumanta.com/assets/og/apache-iceberg-v3-lakehouse.png", "keywords": "Apache Iceberg v3, Iceberg deletion vectors, Iceberg row lineage, variant data type, lakehouse architecture, open table format, Iceberg v2 vs v3, change data capture lakehouse, data platform consultant, Iceberg upgrade", "wordCount": 633}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://asksumanta.com/"}, {"@type": "ListItem", "position": 2, "name": "Insights", "item": "https://asksumanta.com/insights/"}, {"@type": "ListItem", "position": 3, "name": "Apache Iceberg v3: what changes from v2, and when your lakehouse should upgrade", "item": "https://asksumanta.com/insights/apache-iceberg-v3-lakehouse/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What is new in Apache Iceberg v3?", "acceptedAnswer": {"@type": "Answer", "text": "Headline features include deletion vectors that replace positional delete files, row lineage fields for tracking changes, a variant type for semi-structured data, geospatial types, nanosecond timestamps and default column values."}}, {"@type": "Question", "name": "Can I downgrade an Iceberg table from v3 to v2?", "acceptedAnswer": {"@type": "Answer", "text": "Not through standard operations. AWS guidance describes the upgrade as one-way, and v2 readers can't read v3 tables, so every engine that reads the table must support v3 first."}}, {"@type": "Question", "name": "When should I upgrade to Iceberg v3?", "acceptedAnswer": {"@type": "Answer", "text": "When every engine and tool reading the table supports v3, and you have a concrete need such as heavy row-level updates, change data capture or semi-structured data. Upgrade table by table, starting with tables that benefit most."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+</script>
+</head>
+<body class="sub is-post">
+<div class="progress" id="progress"></div>
+<nav>
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="/#practice">Services</a>
+      <a href="/#work">Case studies</a>
+      <a href="/insights/">Insights</a>
+      <a href="/#assess">Analyse</a>
+      <a href="/#connect">Connect</a>
+    </div>
+    <div class="nav-r">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/insights/">Insights</a> <span>/</span> <em>Apache Iceberg v3: what changes from v2, and when your lakehouse should upgrade</em></div>
+    <div class="kicker">Data platforms · Scale</div>
+    <h1>Apache Iceberg v3: what changes from v2, and when your lakehouse should upgrade</h1>
+    <p class="sub-lede">Iceberg has become the default open table format for many lakehouses. Version 3 of the spec brings features teams have wanted for years, along with an upgrade that can&#x27;t be undone. Here is how I weigh it.</p>
+    <div class="ameta"><span class="fmt">Comparison</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-10-20T20:30:00+04:00">20 Oct 2026 · 20:30 GST</time><span>7 min read</span><span>6 sources</span></div><div class="atags"><span class="tagp">#data</span><span class="tagp">#platform</span><span class="tagp">#scale</span><span class="tagp">#cloud</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Comparison cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><polyline points="540,216 596,227 652,201 708,193 764,221 820,237 876,225 932,196 988,235 1044,174 1100,187 1156,234" class="cv-line"/><polyline points="540,293 596,253 652,154 708,255 764,173 820,194 876,269 932,170 988,277 1044,235 1100,141 1156,128" class="cv-line"/><polyline points="540,231 596,136 652,146 708,99 764,86 820,333 876,218 932,323 988,238 1044,179 1100,178 1156,230" class="cv-line hl"/><text x="60" y="90" class="cv-k">COMPARISON · DATA PLATFORMS · SCALE</text><text x="60" y="350" class="cv-n">20 Oct 2026 · 20:30 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <p>Open table formats solved a real problem: they let many engines share the same tables on cheap object storage, with transactions, schema evolution and time travel. Apache Iceberg has become a common choice, and the format version 3 specification<sup class="cite"><a href="#ref-6">6</a></sup> is now supported across much of the ecosystem.</p>
+<p>The question I get from data leaders is simple: should we upgrade? The answer depends less on the features than on every engine that touches your tables.</p>
+
+<section class="block">
+<h2 id="what-v3-adds">What v3 adds</h2>
+<table class="tbl">
+<thead><tr><th>Feature</th><th>What it does</th><th>Who benefits</th></tr></thead>
+<tbody>
+<tr><td>Deletion vectors</td><td>Compact per-file bitmaps marking deleted rows, replacing positional delete files<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-4">4</a></sup></td><td>Tables with frequent updates, deletes and merges</td></tr>
+<tr><td>Row lineage</td><td>Per-row identifiers and last-updated sequence numbers<sup class="cite"><a href="#ref-2">2</a></sup></td><td>Incremental processing and change data capture</td></tr>
+<tr><td>Variant type</td><td>Native storage for semi-structured data<sup class="cite"><a href="#ref-3">3</a></sup></td><td>Event, log and API payload data currently stored as strings</td></tr>
+<tr><td>Geospatial types</td><td>Geometry and geography types<sup class="cite"><a href="#ref-1">1</a></sup></td><td>Logistics, mobility, real estate and mapping workloads</td></tr>
+<tr><td>Nanosecond timestamps and default values</td><td>Finer time precision; defaults for new columns<sup class="cite"><a href="#ref-1">1</a></sup></td><td>Financial and telemetry data; smoother schema evolution</td></tr>
+</tbody>
+</table>
+<p>Deletion vectors and row lineage are the two I see mattering most. The first makes row-level changes cheaper; the second makes "what changed since last time?" a property of the table rather than a separate pipeline, which simplifies the patterns in <a href="/insights/change-data-capture-event-streams/">change data capture and event streams</a>.</p>
+</section>
+
+<section class="block">
+<h2 id="the-catch-it-s-one-way">The catch: it's one-way</h2>
+<p>AWS guidance is explicit that upgrading a table from v2 to v3 can't be reversed through standard operations, and that v2 readers can't read v3 tables. It also notes that the upgrade does not backfill row lineage history<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<p>Engine support also varies in detail. Amazon Redshift's documentation, for example, lists v3 data types it does not support<sup class="cite"><a href="#ref-5">5</a></sup>. A table that works perfectly in Spark could become unreadable to a BI tool, an ML feature pipeline or a partner's engine the day you upgrade it.</p>
+<div class="callout"><p>Before upgrading any table, list every engine, service and tool that reads it, including the ones owned by other teams. One unsupported reader turns an upgrade into an outage.</p></div>
+</section>
+
+<section class="block">
+<h2 id="v2-or-v3-how-i-decide">v2 or v3: how I decide</h2>
+<table class="tbl">
+<thead><tr><th>Stay on v2 for now if</th><th>Move to v3 if</th></tr></thead>
+<tbody>
+<tr><td>Any reader lacks confirmed v3 support</td><td>All readers support v3 and you've tested them</td></tr>
+<tr><td>Tables are mostly append-only</td><td>Tables see heavy updates, deletes or merges</td></tr>
+<tr><td>Change tracking already works well</td><td>You need incremental processing without extra pipelines</td></tr>
+<tr><td>Semi-structured data is rare</td><td>JSON payloads are common and painful to query</td></tr>
+</tbody>
+</table>
+</section>
+
+<section class="block">
+<h2 id="an-upgrade-plan">An upgrade plan</h2>
+<ol>
+<li><strong>Inventory readers and writers</strong> per table, with their versions and v3 support status.</li>
+<li><strong>Create new tables on v3</strong> where all their consumers support it. New tables carry no compatibility risk.</li>
+<li><strong>Upgrade high-benefit tables first</strong>, such as those with heavy merge workloads, after copying and testing a sample in a separate namespace.</li>
+<li><strong>Record format versions in the catalog</strong> and your data contracts, so consumers know what to expect.</li>
+<li><strong>Leave stable, append-only tables alone</strong> until there is a reason to move them.</li>
+</ol>
+<p>Treat it like any platform change: an <a href="/insights/architecture-decision-records-fractional-cto/">architecture decision record</a> per domain, a rollback plan that doesn't depend on downgrading, and monitoring for read failures.</p>
+</section>
+
+<section class="block">
+<h2 id="why-this-matters-for-ai">Why this matters for AI</h2>
+<p>Lakehouses increasingly feed AI: training data, feature pipelines and document stores for retrieval. Row lineage helps keep downstream indexes and features in sync with source changes, and variant columns make it easier to keep raw payloads queryable. Both reduce the custom plumbing that tends to break quietly between a data platform and an AI product.</p>
+</section>
+
+<section class="block">
+<h2 id="how-i-can-help">How I can help</h2>
+<p>I design and review data platforms for scale, from table formats and catalogs to the pipelines that feed analytics and AI. As a <a href="/fractional-cto/">fractional CTO</a> I can own the data roadmap, or I can assess an existing platform in <a href="/technical-due-diligence/">technical due diligence</a>. Or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://opensource.googleblog.com/2025/08/whats-new-in-iceberg-v3.html" target="_blank" rel="noopener">What&#x27;s new in Apache Iceberg v3?</a><small>Google Open Source Blog · Aug 2025</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://docs.aws.amazon.com/prescriptive-guidance/latest/apache-iceberg-on-aws/table-spec-v3.html" target="_blank" rel="noopener">Working with Iceberg table format specification version 3</a><small>AWS Prescriptive Guidance</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://www.databricks.com/blog/iceberg-v3-moving-ecosystem-towards-unification" target="_blank" rel="noopener">Iceberg v3: moving the ecosystem towards unification</a><small>Databricks</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://www.starburst.io/blog/iceberg-v3/" target="_blank" rel="noopener">Apache Iceberg v3</a><small>Starburst</small></div></li><li id="ref-5"><span class="rn">5</span><div><a href="https://docs.aws.amazon.com/redshift/latest/dg/iceberg-v3-features.html" target="_blank" rel="noopener">Iceberg v3 features (Amazon Redshift)</a><small>AWS documentation</small></div></li><li id="ref-6"><span class="rn">6</span><div><a href="https://iceberg.apache.org/spec/" target="_blank" rel="noopener">Iceberg table spec</a><small>Apache Iceberg</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fapache-iceberg-v3-lakehouse%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fapache-iceberg-v3-lakehouse%2F&amp;text=Apache%20Iceberg%20v3%3A%20what%20changes%20from%20v2%2C%20and%20when%20your%20lakehouse%20should%20upgrade" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=Apache%20Iceberg%20v3%3A%20what%20changes%20from%20v2%2C%20and%20when%20your%20lakehouse%20should%20upgrade%20https%3A%2F%2Fasksumanta.com%2Finsights%2Fapache-iceberg-v3-lakehouse%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://asksumanta.com/insights/apache-iceberg-v3-lakehouse/">Copy link</button></div>
+      <div class="pnav"><a class="pn prev" href="/insights/opentelemetry-profiles-alpha/"><small>← Previous</small><b>OpenTelemetry Profiles is in alpha: the fourth signal and what to do about it</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#what-v3-adds">What v3 adds</a></li><li><a href="#the-catch-it-s-one-way">The catch: it&#x27;s one-way</a></li><li><a href="#v2-or-v3-how-i-decide">v2 or v3: how I decide</a></li><li><a href="#an-upgrade-plan">An upgrade plan</a></li><li><a href="#why-this-matters-for-ai">Why this matters for AI</a></li><li><a href="#how-i-can-help">How I can help</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>What is new in Apache Iceberg v3?</summary><p>Headline features include deletion vectors that replace positional delete files, row lineage fields for tracking changes, a variant type for semi-structured data, geospatial types, nanosecond timestamps and default column values.</p></details><details class="rise"><summary>Can I downgrade an Iceberg table from v3 to v2?</summary><p>Not through standard operations. AWS guidance describes the upgrade as one-way, and v2 readers can&#x27;t read v3 tables, so every engine that reads the table must support v3 first.</p></details><details class="rise"><summary>When should I upgrade to Iceberg v3?</summary><p>When every engine and tool reading the table supports v3, and you have a concrete need such as heavy row-level updates, change data capture or semi-structured data. Upgrade table by table, starting with tables that benefit most.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/fractional-cto/"><small>Service</small><b>Fractional CTO</b><span>I work as a part-time CTO for founders, CEOs and boards who need experienced technical judgement now, and a team that can carry it on after I step back.</span><i>→</i></a><a class="rcard rise" href="/technical-due-diligence/"><small>Service</small><b>Technical due diligence</b><span>I give investors an independent, plain-language view of a company&#x27;s technology, team and AI claims, so the risks are priced in before the deal closes, not discovered after.</span><i>→</i></a><a class="rcard rise" href="/ai-architect/"><small>Service</small><b>AI &amp; LLM architecture</b><span>I design and build AI systems that leadership can trust: grounded in your data, measured by evaluations, governed by your rules and priced so they make sense at scale.</span><i>→</i></a><a class="rcard rise" href="/insights/opentelemetry-profiles-alpha/"><small>Insight</small><b>OpenTelemetry Profiles is in alpha: the fourth signal and what to do about it</b><span>Traces tell you which request was slow. Profiles tell you which line of code burned the CPU. In March 2026 OpenTelemetry&#x27;s Profiles signal reached public alpha, putting continuous profiling on the same open standard as everything else.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: Apache Iceberg v3: what changes from v2, and when your lakehouse should upgrade">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
+        <p class="floc">United States &amp; UAE · working globally</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/uae/">Fractional CTO in the UAE</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/apache-iceberg-v3-lakehouse/">Apache Iceberg v3: what changes from v2, and when your lakehouse should upgrade</a></li><li><a href="/insights/opentelemetry-profiles-alpha/">OpenTelemetry Profiles is in alpha: the fourth signal and what to do about it</a></li><li><a href="/insights/difc-regulation-10-ai-systems/">DIFC Regulation 10: what it means for AI systems built in Dubai&#x27;s financial centre</a></li><li><a href="/insights/dgx-spark-ai-architect-bench/">DGX Spark as an AI architect&#x27;s bench: what it is good for, and what it isn&#x27;t</a></li><li><a href="/insights/shacl-validation-knowledge-graphs/">SHACL for knowledge graphs: a practical validation checklist</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>
