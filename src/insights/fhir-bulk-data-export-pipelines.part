@@ -1,0 +1,67 @@
+<!--{"title": "FHIR Bulk Data export: building pipelines that survive production", "description": "FHIR Bulk Data $export moves population data out of EHRs as NDJSON. How the async flow works, where pipelines break, and how I design for incremental loads.", "h1": "FHIR Bulk Data export: building population data pipelines that survive production", "kicker": "Healthcare · Data platforms", "lede": "Bulk FHIR is the standard way to get population-level data out of a certified EHR. The specification is short. The production pipeline around it is not, and most of the work is in the parts the spec leaves to you.", "date": "2026-10-20", "datetime": "2026-10-20T08:15:00+04:00", "readtime": "8 min read", "format": "field-note", "tags": ["healthcare", "fhir", "data", "platform"], "keywords": ["FHIR Bulk Data", "FHIR $export", "bulk FHIR", "NDJSON", "SMART Backend Services", "population health data pipeline", "EHR data extraction", "FHIR to OMOP", "healthcare data engineering", "g(10) certification"], "faq": [["What is FHIR Bulk Data export?", "An HL7 implementation guide that defines a $export operation for exporting data for all patients, a group of patients or a whole system. It uses FHIR's asynchronous request pattern and returns files in newline-delimited JSON (NDJSON)."], ["How does the asynchronous flow work?", "The client sends a kick-off request with a Prefer: respond-async header. The server returns 202 Accepted with a Content-Location status URL. The client polls that URL, respecting any Retry-After header, until it receives a manifest listing the output files to download."], ["How do I load only changes since the last export?", "Use the _since parameter with the transactionTime from the previous export's manifest. Note that for Group exports, the IG allows servers to return older resources for patients added to the group after that date, so your loader must handle them."]], "related": ["/healthcare-data-architecture/", "/fractional-cto/", "/ai-architect/"], "citations": [{"title": "Bulk Data Access Implementation Guide (STU2, 2.0.0): change history", "url": "https://hl7.org/fhir/uv/bulkdata/changes.html", "publisher": "HL7 International"}, {"title": "Bulk Data Access IG: Group-level export operation", "url": "https://hl7.org/fhir/uv/bulkdata/OperationDefinition-group-export.html", "publisher": "HL7 International"}, {"title": "Asynchronous request patterns (FHIR R4)", "url": "https://hl7.org/fhir/R4/async.html", "publisher": "HL7 International"}, {"title": "§170.315(g)(10) Standardized API for patient and population services", "url": "https://www.healthit.gov/test-method/standardized-api-patient-and-population-services", "publisher": "ASTP/ONC, HealthIT.gov"}, {"title": "FHIR Bulk Data Export", "url": "https://docs.oystehr.com/services/fhir/bulk-data-export", "publisher": "Oystehr documentation"}, {"title": "Bulk Export (FHIR Bulk Access)", "url": "https://developers.greenwayhealth.com/developer-platform/docs/fhir-bulk-access", "publisher": "Greenway Health developer documentation"}]}-->
+<p>Most healthcare analytics and AI projects start with the same question: how do we get the data out? For US EHRs, the standard answer is FHIR Bulk Data. ONC certification for the standardised API criterion points to SMART Backend Services for system-to-system authorisation, and multi-patient access is built on the Bulk Data Access specification<sup class="cite"><a href="#ref-4">4</a></sup>. So if you are building a population health platform, a research warehouse or a clinical AI product, you will probably be writing a bulk FHIR client.</p>
+<p>The specification itself is compact. What decides whether the pipeline works in production is everything around it: scheduling, retries, incremental loads, validation and what happens downstream.</p>
+
+<section class="block">
+<h2>How the flow works</h2>
+<p>Bulk export uses FHIR's asynchronous request pattern, which exists because ordinary synchronous REST calls break down for large result sets<sup class="cite"><a href="#ref-3">3</a></sup>. In outline:</p>
+<ol>
+<li><strong>Authorise.</strong> The client authenticates as a backend service, typically by signing a JWT with its registered key and exchanging it for an access token<sup class="cite"><a href="#ref-4">4</a></sup>.</li>
+<li><strong>Kick off.</strong> The client calls <code>$export</code> at the patient, group or system level with <code>Prefer: respond-async</code>. The server replies <code>202 Accepted</code> with a <code>Content-Location</code> status URL<sup class="cite"><a href="#ref-3">3</a></sup>.</li>
+<li><strong>Poll.</strong> The client polls the status URL. Servers may send <code>Retry-After</code>, and the R4 async page tells clients to back off accordingly<sup class="cite"><a href="#ref-3">3</a></sup>. Some vendors return <code>429</code> if you poll too early<sup class="cite"><a href="#ref-6">6</a></sup>.</li>
+<li><strong>Collect the manifest.</strong> On completion the server returns a manifest with a <code>transactionTime</code>, whether downloads need a token, an <code>output</code> list of NDJSON files per resource type and an <code>error</code> list of OperationOutcome files<sup class="cite"><a href="#ref-5">5</a></sup>.</li>
+<li><strong>Download and clean up.</strong> The client fetches each file, then can delete the job by sending <code>DELETE</code> to the status URL<sup class="cite"><a href="#ref-5">5</a></sup>.</li>
+</ol>
+<p>The current published version of the IG is STU2 (2.0.0), on FHIR R4<sup class="cite"><a href="#ref-1">1</a></sup>. Check which version each EHR vendor supports. Behaviour still differs between implementations, so I read the vendor's own documentation alongside the IG.</p>
+</section>
+
+<section class="block">
+<h2>Where pipelines break</h2>
+<table class="tbl">
+<thead><tr><th>Failure</th><th>What it looks like</th><th>The design response</th></tr></thead>
+<tbody>
+<tr><td>Long-running jobs</td><td>Exports take hours, tokens expire mid-download</td><td>Treat each export as a durable job with state; refresh tokens per file, not per job</td></tr>
+<tr><td>Partial success</td><td>A manifest with outputs and errors together</td><td>Load what succeeded, record what failed, alert on error files rather than ignoring them</td></tr>
+<tr><td>Polling too eagerly</td><td>Throttling and <code>429</code> responses</td><td>Honour <code>Retry-After</code>; use exponential backoff when it is absent</td></tr>
+<tr><td>Duplicate loads</td><td>The same resource arrives in two exports</td><td>Upsert by resource ID and version; make every load idempotent</td></tr>
+<tr><td>Silent schema drift</td><td>New extensions or profiles appear after an EHR upgrade</td><td>Keep raw NDJSON, validate against expected profiles, quarantine what doesn't parse</td></tr>
+</tbody>
+</table>
+<div class="callout"><p>The single most useful rule: land the raw NDJSON untouched in object storage before any transformation. When something goes wrong downstream, and it will, you can replay from the files instead of asking a hospital to run another export.</p></div>
+</section>
+
+<section class="block">
+<h2>Incremental loads and the <code>_since</code> trap</h2>
+<p>Full exports are expensive for the source system and for you. The standard approach is to pass the previous manifest's <code>transactionTime</code> as <code>_since</code> on the next run, so you only receive resources updated after it.</p>
+<p>There is a subtlety for Group exports. The 2.0.0 changes widened the Group-level <code>_since</code> definition: for patients added to the group after the supplied time, servers may return resources with an earlier last-updated date<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. That is the right behaviour, because a new cohort member's history is new to you, but a loader that assumes everything is newer than the watermark will mishandle it. Store the manifest's <code>transactionTime</code> as the watermark, never your own clock, and compare versions per resource rather than trusting the export window.</p>
+<p>Use <code>_type</code> to request only the resource types you need<sup class="cite"><a href="#ref-1">1</a></sup>. Exporting everything "just in case" multiplies cost and widens the amount of ePHI you hold, which matters for the controls in <a href="/insights/hipaa-security-rule-proposal-ai-platforms/">the proposed HIPAA Security Rule update</a>.</p>
+</section>
+
+<section class="block">
+<h2>The reference architecture I use</h2>
+<ol>
+<li><strong>An export orchestrator</strong> that runs each source on a schedule, persists job state, handles polling and retries, and records every manifest.</li>
+<li><strong>A raw landing zone</strong> of encrypted, immutable NDJSON files, partitioned by source, resource type and export time.</li>
+<li><strong>A validated FHIR layer</strong> that parses, validates and deduplicates resources, with a quarantine for failures and per-source data quality metrics.</li>
+<li><strong>Analytical models</strong> on top: OMOP for research and AI, as in <a href="/insights/fhir-to-omop-architecture/">FHIR to OMOP</a>, checked with the tools in <a href="/insights/omop-data-quality-checks/">OMOP data quality checks</a>.</li>
+</ol>
+<figure class="fig"><div class="im"><img src="/assets/img/briefings/ohdsi-cdm.webp" alt="Diagram of the OMOP Common Data Model showing clinical data, vocabulary, health system and derived element tables" width="1400" height="1103" loading="lazy"></div><figcaption>The OMOP Common Data Model, a common analytical destination for bulk FHIR data. <span class="credit">Source: <a href="https://ohdsi.github.io/TheBookOfOhdsi/CommonDataModel.html" target="_blank" rel="noopener">OHDSI, The Book of OHDSI: The Common Data Model</a> · CC0 1.0</span></figcaption></figure>
+<p>Each layer can be rebuilt from the one below it. That property matters more than any particular tool choice, because mapping logic will change many times over a platform's life.</p>
+</section>
+
+<section class="block">
+<h2>Questions to ask each EHR source</h2>
+<ul>
+<li>Which Bulk Data IG version and which export levels (patient, group, system) are supported?</li>
+<li>How are groups defined and maintained, and who can change membership?</li>
+<li>What are the rate limits, typical export durations and maintenance windows?</li>
+<li>Are download URLs protected by tokens, and how long do they stay valid?</li>
+<li>Which resource types and profiles are populated in practice, not just supported on paper?</li>
+</ul>
+<p>The answers shape the orchestrator more than the spec does. Write them down per source; they are the first thing a new engineer needs.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I design healthcare data platforms from EHR extraction through to research-ready OMOP and clinical AI, with security and data quality built in. See <a href="/healthcare-data-architecture/">healthcare data architecture</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
