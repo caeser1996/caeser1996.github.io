@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Multi-tenant SaaS on MongoDB: choosing the right isolation</title>
+<meta name="description" content="Shared collection, database per tenant or cluster per tenant? How I choose MongoDB multi-tenancy patterns for SaaS and AI products, including search and vector indexes." />
+<meta name="keywords" content="MongoDB multi-tenancy, multi-tenant SaaS architecture, tenant isolation, database per tenant, shared collection tenant_id, MongoDB Atlas Search multi-tenant, vector search multi-tenant, SaaS data architecture, MongoDB consultant, noisy neighbour" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://asksumanta.com/insights/mongodb-multi-tenant-saas-patterns/" />
+<meta name="theme-color" content="#111214" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="Multi-tenant SaaS on MongoDB: choosing the right isolation" />
+<meta property="og:description" content="Shared collection, database per tenant or cluster per tenant? How I choose MongoDB multi-tenancy patterns for SaaS and AI products, including search and vector indexes." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://asksumanta.com/insights/mongodb-multi-tenant-saas-patterns/" />
+<meta property="og:image" content="https://asksumanta.com/assets/og/mongodb-multi-tenant-saas-patterns.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Multi-tenant SaaS on MongoDB: choosing the right isolation" />
+<meta name="twitter:description" content="Shared collection, database per tenant or cluster per tenant? How I choose MongoDB multi-tenancy patterns for SaaS and AI products, including search and vector indexes." />
+<meta name="twitter:image" content="https://asksumanta.com/assets/og/mongodb-multi-tenant-saas-patterns.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "BlogPosting", "headline": "Multi-tenant SaaS on MongoDB: choosing the right level of isolation", "description": "Shared collection, database per tenant or cluster per tenant? How I choose MongoDB multi-tenancy patterns for SaaS and AI products, including search and vector indexes.", "datePublished": "2026-10-20T04:30:00+04:00", "dateModified": "2026-10-20T04:30:00+04:00", "articleSection": "Data platforms", "genre": "Comparison", "citation": [{"@type": "CreativeWork", "name": "Multi-tenant architecture (MongoDB Search)", "url": "https://www.mongodb.com/docs/atlas/atlas-search/multi-tenant-architecture"}, {"@type": "CreativeWork", "name": "Multi-tenant architecture (MongoDB Vector Search)", "url": "https://www.mongodb.com/docs/vector-search/deployment/multi-tenant-architecture/"}, {"@type": "CreativeWork", "name": "Build a multi-tenant architecture", "url": "https://mongodb.com/docs/atlas/build-multi-tenant-arch"}, {"@type": "CreativeWork", "name": "Moveable collections: multi-tenant", "url": "https://www.mongodb.com/pt-br/docs/upcoming/core/moveable-collections/multi-tenant/"}], "author": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "publisher": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "mainEntityOfPage": "https://asksumanta.com/insights/mongodb-multi-tenant-saas-patterns/", "image": "https://asksumanta.com/assets/og/mongodb-multi-tenant-saas-patterns.png", "keywords": "MongoDB multi-tenancy, multi-tenant SaaS architecture, tenant isolation, database per tenant, shared collection tenant_id, MongoDB Atlas Search multi-tenant, vector search multi-tenant, SaaS data architecture, MongoDB consultant, noisy neighbour", "wordCount": 632}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://asksumanta.com/"}, {"@type": "ListItem", "position": 2, "name": "Insights", "item": "https://asksumanta.com/insights/"}, {"@type": "ListItem", "position": 3, "name": "Multi-tenant SaaS on MongoDB: choosing the right level of isolation", "item": "https://asksumanta.com/insights/mongodb-multi-tenant-saas-patterns/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What is the recommended MongoDB multi-tenancy pattern?", "acceptedAnswer": {"@type": "Answer", "text": "For most workloads, MongoDB's Search and Vector Search documentation recommends a single shared collection with a tenant identifier field on every document, which needs only one index for all tenants. Stronger isolation options exist for tenants that need them."}}, {"@type": "Question", "name": "Why not use a collection per tenant?", "acceptedAnswer": {"@type": "Answer", "text": "MongoDB's Search documentation advises against it, citing problems such as increased replication lag and resource contention at scale, and notes that separate collections in one database add no isolation benefit."}}, {"@type": "Question", "name": "How do I isolate a very large or regulated tenant?", "acceptedAnswer": {"@type": "Answer", "text": "Move it to its own database, cluster or project as needed. Many SaaS platforms run a hybrid: most tenants share a collection, while a few large or regulated tenants get dedicated infrastructure."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+</script>
+</head>
+<body class="sub is-post">
+<div class="progress" id="progress"></div>
+<nav>
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="/#practice">Services</a>
+      <a href="/#work">Case studies</a>
+      <a href="/insights/">Insights</a>
+      <a href="/#assess">Analyse</a>
+      <a href="/#connect">Connect</a>
+    </div>
+    <div class="nav-r">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/insights/">Insights</a> <span>/</span> <em>Multi-tenant SaaS on MongoDB: choosing the right level of isolation</em></div>
+    <div class="kicker">Data platforms</div>
+    <h1>Multi-tenant SaaS on MongoDB: choosing the right level of isolation</h1>
+    <p class="sub-lede">Every SaaS product eventually has to decide how tenants share its database. The choice shapes cost, security and how painful your biggest customer will be. Here is how I make it on MongoDB.</p>
+    <div class="ameta"><span class="fmt">Comparison</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-10-20T04:30:00+04:00">20 Oct 2026 · 04:30 GST</time><span>7 min read</span><span>4 sources</span></div><div class="atags"><span class="tagp">#data</span><span class="tagp">#mongodb</span><span class="tagp">#platform</span><span class="tagp">#security</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Comparison cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><polyline points="540,250 596,215 652,241 708,210 764,184 820,223 876,170 932,194 988,171 1044,253 1100,194 1156,208" class="cv-line"/><polyline points="540,259 596,231 652,183 708,265 764,235 820,135 876,212 932,263 988,136 1044,174 1100,213 1156,256" class="cv-line"/><polyline points="540,228 596,132 652,228 708,277 764,151 820,313 876,153 932,118 988,124 1044,223 1100,142 1156,287" class="cv-line hl"/><text x="60" y="90" class="cv-k">COMPARISON · DATA PLATFORMS</text><text x="60" y="350" class="cv-n">20 Oct 2026 · 04:30 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <p>As a MongoDB Community Leader, the multi-tenancy question is one I get asked about regularly, usually at one of two moments: when a startup is designing its first schema, or when its largest customer has started to slow everyone else down. The right answer depends on the tenant, not just the product.</p>
+
+<section class="block">
+<h2 id="the-three-main-patterns">The three main patterns</h2>
+<table class="tbl">
+<thead><tr><th>Pattern</th><th>Isolation</th><th>Cost and operations</th><th>Good for</th></tr></thead>
+<tbody>
+<tr><td>Shared collection with <code>tenant_id</code></td><td>Logical, enforced in application and queries</td><td>Cheapest; one set of indexes</td><td>Most tenants of most SaaS products</td></tr>
+<tr><td>Database per tenant</td><td>Stronger; separate namespaces and access rules</td><td>More indexes and operational overhead</td><td>Mid-sized tenants with specific needs</td></tr>
+<tr><td>Cluster or project per tenant</td><td>Strongest, including network and resources</td><td>Most expensive</td><td>Large or regulated tenants, data residency</td></tr>
+</tbody>
+</table>
+<p>MongoDB's Search and Vector Search documentation recommends the shared-collection approach for most workloads, with a tenant identifier on every document and a single index serving all tenants<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+</section>
+
+<section class="block">
+<h2 id="the-pattern-to-avoid">The pattern to avoid</h2>
+<p>A collection per tenant feels like a neat compromise. The documentation advises against it: for Search it cites issues such as increased replication lag and resource contention, and it notes that isolation guarantees apply at the database level, so separate collections in the same database add no isolation benefit<sup class="cite"><a href="#ref-1">1</a></sup>. You pay the operational cost of many collections and get none of the isolation.</p>
+</section>
+
+<section class="block">
+<h2 id="making-the-shared-collection-safe">Making the shared collection safe</h2>
+<p>Logical isolation is only as strong as its enforcement. The controls I put in place:</p>
+<ul>
+<li><strong>Tenant ID in every index</strong>, as the leading field where queries filter by tenant, so tenant-scoped queries stay fast and selective.</li>
+<li><strong>One data-access layer</strong> that adds the tenant filter to every query automatically. Developers should not be able to forget it.</li>
+<li><strong>Tests that try cross-tenant reads</strong> on every release, including through search and aggregation paths.</li>
+<li><strong>Search and vector indexes filtered by tenant</strong>, so retrieval for an AI feature can never return another customer's documents. This is the same rule as in <a href="/insights/mongodb-hybrid-search-rag/">hybrid search for RAG</a>, applied at the tenant level.</li>
+<li><strong>Per-tenant metrics</strong> for query volume and latency, so a noisy tenant is visible before it hurts others.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2 id="the-hybrid-most-saas-platforms-end-up-with">The hybrid most SaaS platforms end up with</h2>
+<p>In practice, I usually design for a hybrid from the start: the long tail of tenants shares a collection, while a small number of large or regulated tenants move to dedicated databases or clusters. The trick is making that move cheap:</p>
+<ol>
+<li>Route every request through a tenant directory that says where each tenant's data lives.</li>
+<li>Keep the schema identical across shared and dedicated placements.</li>
+<li>Build and rehearse a migration path for moving a tenant, including its search and vector indexes.</li>
+</ol>
+<p>On sharded clusters, MongoDB's documentation also covers moving busy collections between shards when tenants have their own databases, which helps balance load<sup class="cite"><a href="#ref-4">4</a></sup>. The general Atlas guidance on building multi-tenant architectures is worth reading alongside the search-specific pages, since the trade-offs differ<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+<div class="callout"><p>Design the tenant directory on day one, even if every tenant starts in the shared collection. It is the difference between a one-day migration and a three-month project when your biggest customer asks for dedicated infrastructure.</p></div>
+</section>
+
+<section class="block">
+<h2 id="isolation-questions-buyers-will-ask">Isolation questions buyers will ask</h2>
+<p>Enterprise and regulated buyers increasingly ask where their data lives and how it is separated. Have clear answers for data residency, encryption and access control per tenant, ideally backed by controls you can evidence, as in <a href="/insights/soc2-for-ai-startups/">SOC 2 for AI and SaaS startups</a>. For buyers in the Gulf, residency often means a dedicated in-country placement, which the hybrid model handles cleanly.</p>
+</section>
+
+<section class="block">
+<h2 id="how-i-can-help">How I can help</h2>
+<p>I design MongoDB data models and multi-tenant architectures for SaaS and AI products, and review existing ones before they become painful. As a <a href="/fractional-cto/">fractional CTO</a> I can own the data roadmap. Or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://www.mongodb.com/docs/atlas/atlas-search/multi-tenant-architecture" target="_blank" rel="noopener">Multi-tenant architecture (MongoDB Search)</a><small>MongoDB documentation</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://www.mongodb.com/docs/vector-search/deployment/multi-tenant-architecture/" target="_blank" rel="noopener">Multi-tenant architecture (MongoDB Vector Search)</a><small>MongoDB documentation</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://mongodb.com/docs/atlas/build-multi-tenant-arch" target="_blank" rel="noopener">Build a multi-tenant architecture</a><small>MongoDB Atlas documentation</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://www.mongodb.com/pt-br/docs/upcoming/core/moveable-collections/multi-tenant/" target="_blank" rel="noopener">Moveable collections: multi-tenant</a><small>MongoDB documentation</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fmongodb-multi-tenant-saas-patterns%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fmongodb-multi-tenant-saas-patterns%2F&amp;text=Multi-tenant%20SaaS%20on%20MongoDB%3A%20choosing%20the%20right%20level%20of%20isolation" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=Multi-tenant%20SaaS%20on%20MongoDB%3A%20choosing%20the%20right%20level%20of%20isolation%20https%3A%2F%2Fasksumanta.com%2Finsights%2Fmongodb-multi-tenant-saas-patterns%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://asksumanta.com/insights/mongodb-multi-tenant-saas-patterns/">Copy link</button></div>
+      <div class="pnav"><a class="pn prev" href="/insights/prompt-injection-defence-for-agents/"><small>← Previous</small><b>Prompt injection and AI agents: stop trying to block it, design to contain it</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#the-three-main-patterns">The three main patterns</a></li><li><a href="#the-pattern-to-avoid">The pattern to avoid</a></li><li><a href="#making-the-shared-collection-safe">Making the shared collection safe</a></li><li><a href="#the-hybrid-most-saas-platforms-end-up-with">The hybrid most SaaS platforms end up with</a></li><li><a href="#isolation-questions-buyers-will-ask">Isolation questions buyers will ask</a></li><li><a href="#how-i-can-help">How I can help</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>What is the recommended MongoDB multi-tenancy pattern?</summary><p>For most workloads, MongoDB&#x27;s Search and Vector Search documentation recommends a single shared collection with a tenant identifier field on every document, which needs only one index for all tenants. Stronger isolation options exist for tenants that need them.</p></details><details class="rise"><summary>Why not use a collection per tenant?</summary><p>MongoDB&#x27;s Search documentation advises against it, citing problems such as increased replication lag and resource contention at scale, and notes that separate collections in one database add no isolation benefit.</p></details><details class="rise"><summary>How do I isolate a very large or regulated tenant?</summary><p>Move it to its own database, cluster or project as needed. Many SaaS platforms run a hybrid: most tenants share a collection, while a few large or regulated tenants get dedicated infrastructure.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/fractional-cto/"><small>Service</small><b>Fractional CTO</b><span>I work as a part-time CTO for founders, CEOs and boards who need experienced technical judgement now, and a team that can carry it on after I step back.</span><i>→</i></a><a class="rcard rise" href="/technical-due-diligence/"><small>Service</small><b>Technical due diligence</b><span>I give investors an independent, plain-language view of a company&#x27;s technology, team and AI claims, so the risks are priced in before the deal closes, not discovered after.</span><i>→</i></a><a class="rcard rise" href="/ai-architect/"><small>Service</small><b>AI &amp; LLM architecture</b><span>I design and build AI systems that leadership can trust: grounded in your data, measured by evaluations, governed by your rules and priced so they make sense at scale.</span><i>→</i></a><a class="rcard rise" href="/insights/prompt-injection-defence-for-agents/"><small>Insight</small><b>Prompt injection and AI agents: stop trying to block it, design to contain it</b><span>There is no filter that reliably stops prompt injection. The UK&#x27;s NCSC says as much. The useful question is not how to block it, but how to design agents so that a successful injection can&#x27;t do much damage.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: Multi-tenant SaaS on MongoDB: choosing the right level of isolation">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
+        <p class="floc">United States &amp; UAE · working globally</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/uae/">Fractional CTO in the UAE</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/mongodb-multi-tenant-saas-patterns/">Multi-tenant SaaS on MongoDB: choosing the right level of isolation</a></li><li><a href="/insights/prompt-injection-defence-for-agents/">Prompt injection and AI agents: stop trying to block it, design to contain it</a></li><li><a href="/insights/hipaa-security-rule-proposal-ai-platforms/">The proposed HIPAA Security Rule overhaul: what healthcare AI teams should build now</a></li><li><a href="/insights/graphrag-when-it-beats-vector-rag/">GraphRAG vs vector RAG: when a knowledge graph is worth the cost</a></li><li><a href="/insights/build-vs-buy-ai-capabilities/">Build vs buy for AI: a decision framework for leadership teams</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>

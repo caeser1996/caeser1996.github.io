@@ -1,0 +1,53 @@
+<!--{"title": "Prompt injection and AI agents: design for containment", "description": "Prompt injection can't be fully prevented, says the NCSC. How I design agents to contain it: the lethal trifecta, privileged and quarantined models, and hard boundaries.", "h1": "Prompt injection and AI agents: stop trying to block it, design to contain it", "kicker": "AI architecture · Security", "lede": "There is no filter that reliably stops prompt injection. The UK's NCSC says as much. The useful question is not how to block it, but how to design agents so that a successful injection can't do much damage.", "date": "2026-10-20", "datetime": "2026-10-20T04:15:00+04:00", "readtime": "7 min read", "format": "playbook", "tags": ["ai", "agents", "security", "mcp", "llm"], "keywords": ["prompt injection", "AI agent security", "lethal trifecta", "indirect prompt injection", "CaMeL prompt injection", "LLM security architecture", "agent permissions", "data exfiltration AI", "NCSC prompt injection", "MCP security"], "faq": [["Can prompt injection be fully prevented?", "Not with today's models. The UK NCSC has argued that LLMs don't enforce a boundary between instructions and data within a prompt, so prompt injection may never be mitigated the way SQL injection can. The practical goal is to limit what a successful injection can achieve."], ["What is the lethal trifecta?", "A term coined by Simon Willison for the combination of an agent having access to private data, exposure to untrusted content, and the ability to communicate externally. Together they let an attacker's instructions exfiltrate data."], ["What does a containment architecture look like?", "Separate the model that plans from the model that reads untrusted content, enforce policies on every tool call outside the model, avoid giving any single agent all three trifecta capabilities, and require human approval for sensitive actions."]], "related": ["/ai-architect/", "/technical-due-diligence/", "/fractional-cto/"], "citations": [{"title": "Prompt injection is not SQL injection (it may be worse)", "url": "https://www.ncsc.gov.uk/blog-post/prompt-injection-is-not-sql-injection", "publisher": "UK National Cyber Security Centre", "date": "Dec 2025"}, {"title": "The lethal trifecta for AI agents: private data, untrusted content, and external communication", "url": "https://simonwillison.net/2025/Jun/16/the-lethal-trifecta/", "publisher": "Simon Willison", "date": "16 Jun 2025"}, {"title": "Defeating Prompt Injections by Design", "url": "https://arxiv.org/abs/2503.18813", "publisher": "Debenedetti et al., Google, Google DeepMind and ETH Zurich (arXiv)", "date": "2025"}, {"title": "OWASP Top 10 for LLM Applications", "url": "https://genai.owasp.org/llm-top-10/", "publisher": "OWASP GenAI Security Project"}]}-->
+<p>Many teams still treat prompt injection like SQL injection: find the right filter, sanitise the input, move on. It doesn't work, and the reason matters for how you design agents.</p>
+
+<section class="block">
+<h2>Why filters don't fix it</h2>
+<p>SQL injection was solved with parameterised queries, which make it structurally impossible for data to be read as code. The UK's National Cyber Security Centre points out that current LLMs have no equivalent: they don't enforce a security boundary between instructions and data inside a prompt. Its conclusion is that prompt injection may never be mitigated the way SQL injection was, and that effort should go into reducing the impact instead<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<p>OWASP lists prompt injection first among LLM application risks for the same reason<sup class="cite"><a href="#ref-4">4</a></sup>. Detection products help at the margins, but a defence that stops most attacks still fails against a determined attacker.</p>
+</section>
+
+<section class="block">
+<h2>The lethal trifecta</h2>
+<p>Simon Willison gave the problem a useful shape. An agent becomes dangerous when it combines three things<sup class="cite"><a href="#ref-2">2</a></sup>:</p>
+<table class="tbl">
+<thead><tr><th>Capability</th><th>Example</th></tr></thead>
+<tbody>
+<tr><td>Access to private data</td><td>Reading the user's email, documents or database</td></tr>
+<tr><td>Exposure to untrusted content</td><td>Reading web pages, inbound emails, uploaded files</td></tr>
+<tr><td>Ability to communicate externally</td><td>Sending email, calling APIs, rendering links or images</td></tr>
+</tbody>
+</table>
+<p>With all three, a single poisoned input can tell the agent to collect private data and send it somewhere. Remove any one leg and that path closes.</p>
+<div class="callout"><p>The design rule I use: no single agent gets all three legs without a human approving the dangerous step. Split the work so the agent that reads untrusted content can't reach private data or the outside world.</p></div>
+</section>
+
+<section class="block">
+<h2>Separate planning from reading</h2>
+<p>Research from Google, Google DeepMind and ETH Zurich, the CaMeL paper, shows what this looks like in practice. A privileged model writes a plan from the trusted user request. A quarantined model processes untrusted data but has no tool access. A separate interpreter tracks where each piece of data came from and checks security policies before every tool call, so untrusted content can't change the plan or send data where it isn't allowed<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+<p>The authors are clear it isn't perfect and doesn't cover every attack<sup class="cite"><a href="#ref-3">3</a></sup>. But the principle is the right one: security decisions are made by ordinary code outside the model, using provenance the model can't forge.</p>
+</section>
+
+<section class="block">
+<h2>A containment checklist</h2>
+<ol>
+<li><strong>Map each agent against the trifecta.</strong> If one has all three legs, split it or add an approval step.</li>
+<li><strong>Enforce permissions outside the model.</strong> Tool calls go through a gateway that checks the user's rights, the tool's scope and the data's origin. The model's opinion is not an access control.</li>
+<li><strong>Treat retrieved content as data.</strong> Mark it as untrusted in the context, and never let it change the agent's permissions or goals.</li>
+<li><strong>Constrain outputs that leave the system.</strong> Allow-list destinations for email and HTTP, and strip links and images from model output that could carry data out.</li>
+<li><strong>Require approval for irreversible actions</strong>, showing the exact action and data involved.</li>
+<li><strong>Log everything</strong>, so an incident can be reconstructed. The tracing approach in <a href="/insights/llm-observability-opentelemetry-genai/">LLM observability</a> helps here.</li>
+<li><strong>Red-team continuously</strong> with injection tests in the release pipeline, alongside quality evaluations.</li>
+</ol>
+<p>This complements the protocol-level controls in <a href="/insights/securing-mcp-servers-checklist/">securing MCP servers</a>. MCP security protects the pipes; containment limits what a confused agent can do with them.</p>
+</section>
+
+<section class="block">
+<h2>What this means for product design</h2>
+<p>Containment has a cost. Agents that need approval are slower, and splitting capabilities means more engineering. The trade-off is worth discussing explicitly with product owners: an autonomous agent that reads the internet and sends email on your behalf is a different risk class from one that drafts replies for a human to send. Write the choice down as an <a href="/insights/architecture-decision-records-fractional-cto/">architecture decision record</a>, including what would change it.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I design and review agent architectures for containment, from capability splitting to gateway policies and red-team suites. See my <a href="/ai-architect/">AI architecture work</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>

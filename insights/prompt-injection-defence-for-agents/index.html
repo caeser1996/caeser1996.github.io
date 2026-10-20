@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Prompt injection and AI agents: design for containment</title>
+<meta name="description" content="Prompt injection can&#x27;t be fully prevented, says the NCSC. How I design agents to contain it: the lethal trifecta, privileged and quarantined models, and hard boundaries." />
+<meta name="keywords" content="prompt injection, AI agent security, lethal trifecta, indirect prompt injection, CaMeL prompt injection, LLM security architecture, agent permissions, data exfiltration AI, NCSC prompt injection, MCP security" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://asksumanta.com/insights/prompt-injection-defence-for-agents/" />
+<meta name="theme-color" content="#111214" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="Prompt injection and AI agents: design for containment" />
+<meta property="og:description" content="Prompt injection can&#x27;t be fully prevented, says the NCSC. How I design agents to contain it: the lethal trifecta, privileged and quarantined models, and hard boundaries." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://asksumanta.com/insights/prompt-injection-defence-for-agents/" />
+<meta property="og:image" content="https://asksumanta.com/assets/og/prompt-injection-defence-for-agents.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Prompt injection and AI agents: design for containment" />
+<meta name="twitter:description" content="Prompt injection can&#x27;t be fully prevented, says the NCSC. How I design agents to contain it: the lethal trifecta, privileged and quarantined models, and hard boundaries." />
+<meta name="twitter:image" content="https://asksumanta.com/assets/og/prompt-injection-defence-for-agents.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "BlogPosting", "headline": "Prompt injection and AI agents: stop trying to block it, design to contain it", "description": "Prompt injection can't be fully prevented, says the NCSC. How I design agents to contain it: the lethal trifecta, privileged and quarantined models, and hard boundaries.", "datePublished": "2026-10-20T04:15:00+04:00", "dateModified": "2026-10-20T04:15:00+04:00", "articleSection": "AI architecture · Security", "genre": "Playbook", "citation": [{"@type": "CreativeWork", "name": "Prompt injection is not SQL injection (it may be worse)", "url": "https://www.ncsc.gov.uk/blog-post/prompt-injection-is-not-sql-injection"}, {"@type": "CreativeWork", "name": "The lethal trifecta for AI agents: private data, untrusted content, and external communication", "url": "https://simonwillison.net/2025/Jun/16/the-lethal-trifecta/"}, {"@type": "CreativeWork", "name": "Defeating Prompt Injections by Design", "url": "https://arxiv.org/abs/2503.18813"}, {"@type": "CreativeWork", "name": "OWASP Top 10 for LLM Applications", "url": "https://genai.owasp.org/llm-top-10/"}], "author": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "publisher": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "mainEntityOfPage": "https://asksumanta.com/insights/prompt-injection-defence-for-agents/", "image": "https://asksumanta.com/assets/og/prompt-injection-defence-for-agents.png", "keywords": "prompt injection, AI agent security, lethal trifecta, indirect prompt injection, CaMeL prompt injection, LLM security architecture, agent permissions, data exfiltration AI, NCSC prompt injection, MCP security", "wordCount": 659}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://asksumanta.com/"}, {"@type": "ListItem", "position": 2, "name": "Insights", "item": "https://asksumanta.com/insights/"}, {"@type": "ListItem", "position": 3, "name": "Prompt injection and AI agents: stop trying to block it, design to contain it", "item": "https://asksumanta.com/insights/prompt-injection-defence-for-agents/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Can prompt injection be fully prevented?", "acceptedAnswer": {"@type": "Answer", "text": "Not with today's models. The UK NCSC has argued that LLMs don't enforce a boundary between instructions and data within a prompt, so prompt injection may never be mitigated the way SQL injection can. The practical goal is to limit what a successful injection can achieve."}}, {"@type": "Question", "name": "What is the lethal trifecta?", "acceptedAnswer": {"@type": "Answer", "text": "A term coined by Simon Willison for the combination of an agent having access to private data, exposure to untrusted content, and the ability to communicate externally. Together they let an attacker's instructions exfiltrate data."}}, {"@type": "Question", "name": "What does a containment architecture look like?", "acceptedAnswer": {"@type": "Answer", "text": "Separate the model that plans from the model that reads untrusted content, enforce policies on every tool call outside the model, avoid giving any single agent all three trifecta capabilities, and require human approval for sensitive actions."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+</script>
+</head>
+<body class="sub is-post">
+<div class="progress" id="progress"></div>
+<nav>
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="/#practice">Services</a>
+      <a href="/#work">Case studies</a>
+      <a href="/insights/">Insights</a>
+      <a href="/#assess">Analyse</a>
+      <a href="/#connect">Connect</a>
+    </div>
+    <div class="nav-r">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/insights/">Insights</a> <span>/</span> <em>Prompt injection and AI agents: stop trying to block it, design to contain it</em></div>
+    <div class="kicker">AI architecture · Security</div>
+    <h1>Prompt injection and AI agents: stop trying to block it, design to contain it</h1>
+    <p class="sub-lede">There is no filter that reliably stops prompt injection. The UK&#x27;s NCSC says as much. The useful question is not how to block it, but how to design agents so that a successful injection can&#x27;t do much damage.</p>
+    <div class="ameta"><span class="fmt">Playbook</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-10-20T04:15:00+04:00">20 Oct 2026 · 04:15 GST</time><span>7 min read</span><span>4 sources</span></div><div class="atags"><span class="tagp">#ai</span><span class="tagp">#agents</span><span class="tagp">#security</span><span class="tagp">#mcp</span><span class="tagp">#llm</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Playbook cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><circle cx="560" cy="61" r="8" class="cv-dot hl"/><rect x="590" y="50" width="527" height="22" class="cv-bar hl"/><circle cx="560" cy="109" r="8" class="cv-dot"/><rect x="590" y="98" width="258" height="22" class="cv-bar"/><circle cx="560" cy="157" r="8" class="cv-dot"/><rect x="590" y="146" width="436" height="22" class="cv-bar"/><circle cx="560" cy="205" r="8" class="cv-dot hl"/><rect x="590" y="194" width="383" height="22" class="cv-bar hl"/><circle cx="560" cy="253" r="8" class="cv-dot"/><rect x="590" y="242" width="246" height="22" class="cv-bar"/><circle cx="560" cy="301" r="8" class="cv-dot"/><rect x="590" y="290" width="389" height="22" class="cv-bar"/><circle cx="560" cy="349" r="8" class="cv-dot hl"/><rect x="590" y="338" width="227" height="22" class="cv-bar hl"/><text x="60" y="90" class="cv-k">PLAYBOOK · AI ARCHITECTURE · SECURITY</text><text x="60" y="350" class="cv-n">20 Oct 2026 · 04:15 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <p>Many teams still treat prompt injection like SQL injection: find the right filter, sanitise the input, move on. It doesn't work, and the reason matters for how you design agents.</p>
+
+<section class="block">
+<h2 id="why-filters-don-t-fix-it">Why filters don't fix it</h2>
+<p>SQL injection was solved with parameterised queries, which make it structurally impossible for data to be read as code. The UK's National Cyber Security Centre points out that current LLMs have no equivalent: they don't enforce a security boundary between instructions and data inside a prompt. Its conclusion is that prompt injection may never be mitigated the way SQL injection was, and that effort should go into reducing the impact instead<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<p>OWASP lists prompt injection first among LLM application risks for the same reason<sup class="cite"><a href="#ref-4">4</a></sup>. Detection products help at the margins, but a defence that stops most attacks still fails against a determined attacker.</p>
+</section>
+
+<section class="block">
+<h2 id="the-lethal-trifecta">The lethal trifecta</h2>
+<p>Simon Willison gave the problem a useful shape. An agent becomes dangerous when it combines three things<sup class="cite"><a href="#ref-2">2</a></sup>:</p>
+<table class="tbl">
+<thead><tr><th>Capability</th><th>Example</th></tr></thead>
+<tbody>
+<tr><td>Access to private data</td><td>Reading the user's email, documents or database</td></tr>
+<tr><td>Exposure to untrusted content</td><td>Reading web pages, inbound emails, uploaded files</td></tr>
+<tr><td>Ability to communicate externally</td><td>Sending email, calling APIs, rendering links or images</td></tr>
+</tbody>
+</table>
+<p>With all three, a single poisoned input can tell the agent to collect private data and send it somewhere. Remove any one leg and that path closes.</p>
+<div class="callout"><p>The design rule I use: no single agent gets all three legs without a human approving the dangerous step. Split the work so the agent that reads untrusted content can't reach private data or the outside world.</p></div>
+</section>
+
+<section class="block">
+<h2 id="separate-planning-from-reading">Separate planning from reading</h2>
+<p>Research from Google, Google DeepMind and ETH Zurich, the CaMeL paper, shows what this looks like in practice. A privileged model writes a plan from the trusted user request. A quarantined model processes untrusted data but has no tool access. A separate interpreter tracks where each piece of data came from and checks security policies before every tool call, so untrusted content can't change the plan or send data where it isn't allowed<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+<p>The authors are clear it isn't perfect and doesn't cover every attack<sup class="cite"><a href="#ref-3">3</a></sup>. But the principle is the right one: security decisions are made by ordinary code outside the model, using provenance the model can't forge.</p>
+</section>
+
+<section class="block">
+<h2 id="a-containment-checklist">A containment checklist</h2>
+<ol>
+<li><strong>Map each agent against the trifecta.</strong> If one has all three legs, split it or add an approval step.</li>
+<li><strong>Enforce permissions outside the model.</strong> Tool calls go through a gateway that checks the user's rights, the tool's scope and the data's origin. The model's opinion is not an access control.</li>
+<li><strong>Treat retrieved content as data.</strong> Mark it as untrusted in the context, and never let it change the agent's permissions or goals.</li>
+<li><strong>Constrain outputs that leave the system.</strong> Allow-list destinations for email and HTTP, and strip links and images from model output that could carry data out.</li>
+<li><strong>Require approval for irreversible actions</strong>, showing the exact action and data involved.</li>
+<li><strong>Log everything</strong>, so an incident can be reconstructed. The tracing approach in <a href="/insights/llm-observability-opentelemetry-genai/">LLM observability</a> helps here.</li>
+<li><strong>Red-team continuously</strong> with injection tests in the release pipeline, alongside quality evaluations.</li>
+</ol>
+<p>This complements the protocol-level controls in <a href="/insights/securing-mcp-servers-checklist/">securing MCP servers</a>. MCP security protects the pipes; containment limits what a confused agent can do with them.</p>
+</section>
+
+<section class="block">
+<h2 id="what-this-means-for-product-design">What this means for product design</h2>
+<p>Containment has a cost. Agents that need approval are slower, and splitting capabilities means more engineering. The trade-off is worth discussing explicitly with product owners: an autonomous agent that reads the internet and sends email on your behalf is a different risk class from one that drafts replies for a human to send. Write the choice down as an <a href="/insights/architecture-decision-records-fractional-cto/">architecture decision record</a>, including what would change it.</p>
+</section>
+
+<section class="block">
+<h2 id="how-i-can-help">How I can help</h2>
+<p>I design and review agent architectures for containment, from capability splitting to gateway policies and red-team suites. See my <a href="/ai-architect/">AI architecture work</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://www.ncsc.gov.uk/blog-post/prompt-injection-is-not-sql-injection" target="_blank" rel="noopener">Prompt injection is not SQL injection (it may be worse)</a><small>UK National Cyber Security Centre · Dec 2025</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://simonwillison.net/2025/Jun/16/the-lethal-trifecta/" target="_blank" rel="noopener">The lethal trifecta for AI agents: private data, untrusted content, and external communication</a><small>Simon Willison · 16 Jun 2025</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://arxiv.org/abs/2503.18813" target="_blank" rel="noopener">Defeating Prompt Injections by Design</a><small>Debenedetti et al., Google, Google DeepMind and ETH Zurich (arXiv) · 2025</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://genai.owasp.org/llm-top-10/" target="_blank" rel="noopener">OWASP Top 10 for LLM Applications</a><small>OWASP GenAI Security Project</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fprompt-injection-defence-for-agents%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fprompt-injection-defence-for-agents%2F&amp;text=Prompt%20injection%20and%20AI%20agents%3A%20stop%20trying%20to%20block%20it%2C%20design%20to%20contain%20it" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=Prompt%20injection%20and%20AI%20agents%3A%20stop%20trying%20to%20block%20it%2C%20design%20to%20contain%20it%20https%3A%2F%2Fasksumanta.com%2Finsights%2Fprompt-injection-defence-for-agents%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://asksumanta.com/insights/prompt-injection-defence-for-agents/">Copy link</button></div>
+      <div class="pnav"><a class="pn prev" href="/insights/hipaa-security-rule-proposal-ai-platforms/"><small>← Previous</small><b>The proposed HIPAA Security Rule overhaul: what healthcare AI teams should build now</b></a><a class="pn next" href="/insights/mongodb-multi-tenant-saas-patterns/"><small>Next →</small><b>Multi-tenant SaaS on MongoDB: choosing the right level of isolation</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#why-filters-don-t-fix-it">Why filters don&#x27;t fix it</a></li><li><a href="#the-lethal-trifecta">The lethal trifecta</a></li><li><a href="#separate-planning-from-reading">Separate planning from reading</a></li><li><a href="#a-containment-checklist">A containment checklist</a></li><li><a href="#what-this-means-for-product-design">What this means for product design</a></li><li><a href="#how-i-can-help">How I can help</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>Can prompt injection be fully prevented?</summary><p>Not with today&#x27;s models. The UK NCSC has argued that LLMs don&#x27;t enforce a boundary between instructions and data within a prompt, so prompt injection may never be mitigated the way SQL injection can. The practical goal is to limit what a successful injection can achieve.</p></details><details class="rise"><summary>What is the lethal trifecta?</summary><p>A term coined by Simon Willison for the combination of an agent having access to private data, exposure to untrusted content, and the ability to communicate externally. Together they let an attacker&#x27;s instructions exfiltrate data.</p></details><details class="rise"><summary>What does a containment architecture look like?</summary><p>Separate the model that plans from the model that reads untrusted content, enforce policies on every tool call outside the model, avoid giving any single agent all three trifecta capabilities, and require human approval for sensitive actions.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/ai-architect/"><small>Service</small><b>AI &amp; LLM architecture</b><span>I design and build AI systems that leadership can trust: grounded in your data, measured by evaluations, governed by your rules and priced so they make sense at scale.</span><i>→</i></a><a class="rcard rise" href="/technical-due-diligence/"><small>Service</small><b>Technical due diligence</b><span>I give investors an independent, plain-language view of a company&#x27;s technology, team and AI claims, so the risks are priced in before the deal closes, not discovered after.</span><i>→</i></a><a class="rcard rise" href="/fractional-cto/"><small>Service</small><b>Fractional CTO</b><span>I work as a part-time CTO for founders, CEOs and boards who need experienced technical judgement now, and a team that can carry it on after I step back.</span><i>→</i></a><a class="rcard rise" href="/insights/mongodb-multi-tenant-saas-patterns/"><small>Insight</small><b>Multi-tenant SaaS on MongoDB: choosing the right level of isolation</b><span>Every SaaS product eventually has to decide how tenants share its database. The choice shapes cost, security and how painful your biggest customer will be. Here is how I make it on MongoDB.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: Prompt injection and AI agents: stop trying to block it, design to contain it">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
+        <p class="floc">United States &amp; UAE · working globally</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/uae/">Fractional CTO in the UAE</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/mongodb-multi-tenant-saas-patterns/">Multi-tenant SaaS on MongoDB: choosing the right level of isolation</a></li><li><a href="/insights/prompt-injection-defence-for-agents/">Prompt injection and AI agents: stop trying to block it, design to contain it</a></li><li><a href="/insights/hipaa-security-rule-proposal-ai-platforms/">The proposed HIPAA Security Rule overhaul: what healthcare AI teams should build now</a></li><li><a href="/insights/graphrag-when-it-beats-vector-rag/">GraphRAG vs vector RAG: when a knowledge graph is worth the cost</a></li><li><a href="/insights/build-vs-buy-ai-capabilities/">Build vs buy for AI: a decision framework for leadership teams</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,54 @@
+<!--{"title": "Multi-tenant SaaS on MongoDB: choosing the right isolation", "description": "Shared collection, database per tenant or cluster per tenant? How I choose MongoDB multi-tenancy patterns for SaaS and AI products, including search and vector indexes.", "h1": "Multi-tenant SaaS on MongoDB: choosing the right level of isolation", "kicker": "Data platforms", "lede": "Every SaaS product eventually has to decide how tenants share its database. The choice shapes cost, security and how painful your biggest customer will be. Here is how I make it on MongoDB.", "date": "2026-10-20", "datetime": "2026-10-20T04:30:00+04:00", "readtime": "7 min read", "format": "comparison", "tags": ["data", "mongodb", "platform", "security"], "keywords": ["MongoDB multi-tenancy", "multi-tenant SaaS architecture", "tenant isolation", "database per tenant", "shared collection tenant_id", "MongoDB Atlas Search multi-tenant", "vector search multi-tenant", "SaaS data architecture", "MongoDB consultant", "noisy neighbour"], "faq": [["What is the recommended MongoDB multi-tenancy pattern?", "For most workloads, MongoDB's Search and Vector Search documentation recommends a single shared collection with a tenant identifier field on every document, which needs only one index for all tenants. Stronger isolation options exist for tenants that need them."], ["Why not use a collection per tenant?", "MongoDB's Search documentation advises against it, citing problems such as increased replication lag and resource contention at scale, and notes that separate collections in one database add no isolation benefit."], ["How do I isolate a very large or regulated tenant?", "Move it to its own database, cluster or project as needed. Many SaaS platforms run a hybrid: most tenants share a collection, while a few large or regulated tenants get dedicated infrastructure."]], "related": ["/fractional-cto/", "/technical-due-diligence/", "/ai-architect/"], "citations": [{"title": "Multi-tenant architecture (MongoDB Search)", "url": "https://www.mongodb.com/docs/atlas/atlas-search/multi-tenant-architecture", "publisher": "MongoDB documentation"}, {"title": "Multi-tenant architecture (MongoDB Vector Search)", "url": "https://www.mongodb.com/docs/vector-search/deployment/multi-tenant-architecture/", "publisher": "MongoDB documentation"}, {"title": "Build a multi-tenant architecture", "url": "https://mongodb.com/docs/atlas/build-multi-tenant-arch", "publisher": "MongoDB Atlas documentation"}, {"title": "Moveable collections: multi-tenant", "url": "https://www.mongodb.com/pt-br/docs/upcoming/core/moveable-collections/multi-tenant/", "publisher": "MongoDB documentation"}]}-->
+<p>As a MongoDB Community Leader, the multi-tenancy question is one I get asked about regularly, usually at one of two moments: when a startup is designing its first schema, or when its largest customer has started to slow everyone else down. The right answer depends on the tenant, not just the product.</p>
+
+<section class="block">
+<h2>The three main patterns</h2>
+<table class="tbl">
+<thead><tr><th>Pattern</th><th>Isolation</th><th>Cost and operations</th><th>Good for</th></tr></thead>
+<tbody>
+<tr><td>Shared collection with <code>tenant_id</code></td><td>Logical, enforced in application and queries</td><td>Cheapest; one set of indexes</td><td>Most tenants of most SaaS products</td></tr>
+<tr><td>Database per tenant</td><td>Stronger; separate namespaces and access rules</td><td>More indexes and operational overhead</td><td>Mid-sized tenants with specific needs</td></tr>
+<tr><td>Cluster or project per tenant</td><td>Strongest, including network and resources</td><td>Most expensive</td><td>Large or regulated tenants, data residency</td></tr>
+</tbody>
+</table>
+<p>MongoDB's Search and Vector Search documentation recommends the shared-collection approach for most workloads, with a tenant identifier on every document and a single index serving all tenants<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+</section>
+
+<section class="block">
+<h2>The pattern to avoid</h2>
+<p>A collection per tenant feels like a neat compromise. The documentation advises against it: for Search it cites issues such as increased replication lag and resource contention, and it notes that isolation guarantees apply at the database level, so separate collections in the same database add no isolation benefit<sup class="cite"><a href="#ref-1">1</a></sup>. You pay the operational cost of many collections and get none of the isolation.</p>
+</section>
+
+<section class="block">
+<h2>Making the shared collection safe</h2>
+<p>Logical isolation is only as strong as its enforcement. The controls I put in place:</p>
+<ul>
+<li><strong>Tenant ID in every index</strong>, as the leading field where queries filter by tenant, so tenant-scoped queries stay fast and selective.</li>
+<li><strong>One data-access layer</strong> that adds the tenant filter to every query automatically. Developers should not be able to forget it.</li>
+<li><strong>Tests that try cross-tenant reads</strong> on every release, including through search and aggregation paths.</li>
+<li><strong>Search and vector indexes filtered by tenant</strong>, so retrieval for an AI feature can never return another customer's documents. This is the same rule as in <a href="/insights/mongodb-hybrid-search-rag/">hybrid search for RAG</a>, applied at the tenant level.</li>
+<li><strong>Per-tenant metrics</strong> for query volume and latency, so a noisy tenant is visible before it hurts others.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>The hybrid most SaaS platforms end up with</h2>
+<p>In practice, I usually design for a hybrid from the start: the long tail of tenants shares a collection, while a small number of large or regulated tenants move to dedicated databases or clusters. The trick is making that move cheap:</p>
+<ol>
+<li>Route every request through a tenant directory that says where each tenant's data lives.</li>
+<li>Keep the schema identical across shared and dedicated placements.</li>
+<li>Build and rehearse a migration path for moving a tenant, including its search and vector indexes.</li>
+</ol>
+<p>On sharded clusters, MongoDB's documentation also covers moving busy collections between shards when tenants have their own databases, which helps balance load<sup class="cite"><a href="#ref-4">4</a></sup>. The general Atlas guidance on building multi-tenant architectures is worth reading alongside the search-specific pages, since the trade-offs differ<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+<div class="callout"><p>Design the tenant directory on day one, even if every tenant starts in the shared collection. It is the difference between a one-day migration and a three-month project when your biggest customer asks for dedicated infrastructure.</p></div>
+</section>
+
+<section class="block">
+<h2>Isolation questions buyers will ask</h2>
+<p>Enterprise and regulated buyers increasingly ask where their data lives and how it is separated. Have clear answers for data residency, encryption and access control per tenant, ideally backed by controls you can evidence, as in <a href="/insights/soc2-for-ai-startups/">SOC 2 for AI and SaaS startups</a>. For buyers in the Gulf, residency often means a dedicated in-country placement, which the hybrid model handles cleanly.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I design MongoDB data models and multi-tenant architectures for SaaS and AI products, and review existing ones before they become painful. As a <a href="/fractional-cto/">fractional CTO</a> I can own the data roadmap. Or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
