@@ -1,0 +1,58 @@
+<!--{"title": "Ingress NGINX is retired: a migration playbook for Gateway API", "description": "The community Ingress NGINX controller stopped receiving fixes in March 2026. A practical playbook for inventorying annotations and moving to Kubernetes Gateway API safely.", "h1": "Ingress NGINX is retired: a practical playbook for moving to Gateway API", "kicker": "Cloud · Kubernetes", "lede": "The community Ingress NGINX controller reached the end of maintenance in March 2026. Clusters still running it are carrying an unpatched component at their front door. Here is how I plan the move to Gateway API.", "date": "2026-10-20", "datetime": "2026-10-20T12:15:00+04:00", "readtime": "8 min read", "format": "playbook", "tags": ["kubernetes", "platform", "security", "cloud"], "keywords": ["Ingress NGINX retirement", "ingress-nginx end of life", "Kubernetes Gateway API", "Gateway API migration", "ingress2gateway", "HTTPRoute", "Kubernetes ingress controller", "platform engineering", "Kubernetes security", "cloud consultant"], "faq": [["Is the Kubernetes Ingress API being removed?", "No. The retirement covers the community Ingress NGINX controller, not the Ingress API. Commentators describe the Ingress API as feature-frozen but still available, while the Kubernetes project recommends Gateway API as the modern replacement."], ["What happens if I keep running Ingress NGINX?", "Existing deployments keep working, but the project no longer ships fixes for newly found vulnerabilities. The Kubernetes Steering and Security Response Committees warned that staying on it after retirement leaves you and your users vulnerable to attack."], ["Is there a drop-in replacement?", "No. The Kubernetes statement says none of the alternatives are direct drop-in replacements, and much of the work is translating controller-specific annotations into Gateway API resources or implementation-specific policies."]], "related": ["/fractional-cto/", "/technical-due-diligence/", "/ai-architect/"], "citations": [{"title": "Ingress NGINX Retirement: What You Need to Know", "url": "https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/", "publisher": "Kubernetes blog", "date": "11 Nov 2025"}, {"title": "Ingress NGINX: Statement from the Kubernetes Steering and Security Response Committees", "url": "https://kubernetes.io/blog/2026/01/29/ingress-nginx-statement/", "publisher": "Kubernetes blog", "date": "29 Jan 2026"}, {"title": "The End of an Era: Transitioning Away from Ingress NGINX", "url": "https://opensource.googleblog.com/2026/02/the-end-of-an-era-transitioning-away-from-ingress-nginx.html", "publisher": "Google Open Source Blog", "date": "Feb 2026"}, {"title": "Gateway API", "url": "https://kubernetes.io/docs/concepts/services-networking/gateway/", "publisher": "Kubernetes documentation"}, {"title": "Migrate from Ingress-NGINX to Gateway API", "url": "https://wz-it.com/en/knowledge/kubernetes/migrate-ingress-nginx-to-gateway-api/", "publisher": "WZ-IT"}, {"title": "Introducing Gateway API Inference Extension", "url": "https://kubernetes.io/blog/2025/06/05/introducing-gateway-api-inference-extension/", "publisher": "Kubernetes blog", "date": "5 Jun 2025"}]}-->
+<p>In November 2025 the Kubernetes project announced that the community Ingress NGINX controller would be retired. Best-effort maintenance continued until March 2026; after that, no further releases, bug fixes or security updates. Existing deployments keep running and the artefacts stay available<sup class="cite"><a href="#ref-1">1</a></sup>. In January 2026 the Steering and Security Response Committees put it more bluntly: staying on Ingress NGINX after retirement leaves you and your users vulnerable to attack<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<p>It is now October. If a cluster you are responsible for still runs it, the internet-facing entry point to your platform is a component nobody is patching. That makes this a risk item for the board as much as an engineering task.</p>
+
+<section class="block">
+<h2>What is and isn't changing</h2>
+<ul>
+<li><strong>Retired:</strong> the community <code>kubernetes/ingress-nginx</code> controller. Commercial NGINX products from F5 are separate projects<sup class="cite"><a href="#ref-5">5</a></sup>.</li>
+<li><strong>Not removed:</strong> the Ingress API itself. Google's open source team notes it remains available with no immediate plans for removal, but it is feature-frozen<sup class="cite"><a href="#ref-3">3</a></sup>.</li>
+<li><strong>Recommended:</strong> Gateway API, which the Kubernetes project calls the modern replacement for Ingress<sup class="cite"><a href="#ref-1">1</a></sup>.</li>
+</ul>
+<p>So you have two legitimate paths: swap to another Ingress controller, or move to Gateway API. For anything you expect to run for more than a year or two, I recommend Gateway API. Swapping controllers still means translating annotations, so you pay most of the migration cost without the long-term benefit.</p>
+</section>
+
+<section class="block">
+<h2>Why Gateway API is the better destination</h2>
+<p>Ingress put everything in one resource and pushed anything beyond host and path routing into controller-specific annotations. Gateway API splits responsibilities across roles: infrastructure providers define a <code>GatewayClass</code>, platform teams run <code>Gateway</code> listeners, and application teams attach <code>HTTPRoute</code> resources<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/ingress-nginx-to-gateway-api/gateway-kind-relationships.svg" alt="Diagram showing a GatewayClass referenced by a Gateway, which an HTTPRoute attaches to, and the HTTPRoute pointing at a Service" width="466" height="130" loading="lazy"></div><figcaption>How Gateway API resources relate: GatewayClass, Gateway, HTTPRoute and the backing Service. <span class="credit">Source: <a href="https://kubernetes.io/docs/concepts/services-networking/gateway/" target="_blank" rel="noopener">Kubernetes documentation, Gateway API</a> · CC BY 4.0</span></figcaption></figure>
+<p>That split matters in organisations. Application teams can change their own routes without touching shared listeners or certificates, and features like header matching, traffic splitting and cross-namespace references are part of the API rather than annotation conventions.</p>
+</section>
+
+<section class="block">
+<h2>The playbook</h2>
+<ol>
+<li><strong>Find every instance.</strong> List clusters running the community controller, including forgotten ones in staging, CI and edge sites. Include Helm charts and vendor products that bundle it.</li>
+<li><strong>Inventory annotations.</strong> Export every Ingress object and count the annotations in use. This is where the real effort lives; the WZ-IT migration write-up describes how most behaviour beyond simple routing was expressed through annotations<sup class="cite"><a href="#ref-5">5</a></sup>. Sort them into three buckets: covered by core Gateway API, covered by your chosen implementation's policies, and not supported.</li>
+<li><strong>Pick an implementation.</strong> Choose a Gateway API implementation that covers your bucket-two needs, and check its conformance and support model. There is no drop-in replacement, as the Kubernetes statement says<sup class="cite"><a href="#ref-2">2</a></sup>, so this choice decides how much translation you do.</li>
+<li><strong>Convert, then review by hand.</strong> Use a conversion tool such as ingress2gateway to generate a first draft of Gateway and HTTPRoute resources, then review each one. Generated configuration is a starting point, not a migration.</li>
+<li><strong>Run both in parallel.</strong> Stand up the new Gateway alongside the old controller with its own load balancer, and test with real traffic patterns: TLS, redirects, timeouts, body sizes, WebSockets, rate limits.</li>
+<li><strong>Shift traffic gradually.</strong> Move hostnames one at a time using DNS weighting or a front-end load balancer, with a tested rollback.</li>
+<li><strong>Remove the old controller</strong> and its RBAC, webhooks and CRDs, and add a policy check so it can't come back through a chart dependency.</li>
+</ol>
+<div class="callout"><p>Budget most of the time for step 2. The YAML conversion is quick. Discovering that a critical service depends on an obscure annotation is what turns a two-week migration into a two-month one.</p></div>
+</section>
+
+<section class="block">
+<h2>Where teams get caught out</h2>
+<table class="tbl">
+<thead><tr><th>Area</th><th>What to check</th></tr></thead>
+<tbody>
+<tr><td>Custom snippets</td><td>Configuration injected as raw NGINX snippets has no equivalent and needs redesign</td></tr>
+<tr><td>Authentication</td><td>External auth annotations need an implementation-specific policy or a move into the application or a gateway layer</td></tr>
+<tr><td>TLS</td><td>Certificate references, redirects and minimum TLS versions move to Gateway listeners</td></tr>
+<tr><td>Observability</td><td>Access log formats and metrics change; update dashboards and alerts before cutover, using the approach in <a href="/insights/llm-observability-opentelemetry-genai/">LLM observability with OpenTelemetry</a> where relevant</td></tr>
+<tr><td>Infrastructure as code</td><td>Update modules and pipelines, as in <a href="/insights/terraform-multi-cloud-module-design/">Terraform module design</a>, so new services don't keep creating Ingress objects</td></tr>
+</tbody>
+</table>
+</section>
+
+<section class="block">
+<h2>A note for AI platforms</h2>
+<p>If you serve models on Kubernetes, Gateway API is also where inference-aware routing is heading, with the Gateway API Inference Extension designed for model serving traffic<sup class="cite"><a href="#ref-6">6</a></sup>. Moving now puts your entry point on the same foundation, which pairs well with the GPU scheduling changes in <a href="/insights/kubernetes-dra-gpu-scheduling/">Kubernetes DRA for GPUs</a>.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I plan and lead platform migrations like this one, from annotation inventory to staged cutover, and review Kubernetes estates for unsupported components as part of <a href="/technical-due-diligence/">technical due diligence</a>. Or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>

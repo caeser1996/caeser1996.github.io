@@ -1,0 +1,47 @@
+<!--{"title": "SHACL for knowledge graphs: a validation checklist", "description": "OWL tells you what can be inferred; SHACL tells you whether your data is acceptable. A practical checklist for using SHACL shapes to keep enterprise knowledge graphs clean.", "h1": "SHACL for knowledge graphs: a practical validation checklist", "kicker": "Ontology · Knowledge graphs", "lede": "An ontology describes what your world can contain. It does not stop bad data getting into the graph. That is SHACL's job, and most knowledge graph projects add it too late.", "date": "2026-10-20", "datetime": "2026-10-20T12:30:00+04:00", "readtime": "7 min read", "format": "checklist", "tags": ["ontology", "knowledge-graph", "data", "ai"], "keywords": ["SHACL", "SHACL validation", "Shapes Constraint Language", "knowledge graph data quality", "OWL vs SHACL", "RDF validation", "ontology engineering", "SHACL 1.2", "enterprise knowledge graph", "ontology consultant"], "faq": [["What is SHACL?", "The Shapes Constraint Language, a W3C Recommendation since July 2017. It validates RDF data graphs against conditions described in shapes graphs and produces a validation report."], ["What is the difference between OWL and SHACL?", "OWL works under an open-world assumption: a missing fact is unknown, not false, and OWL is used to infer new facts. SHACL validates the data as it is, so a missing required property is reported as a violation. Many teams use both."], ["Is there a new version of SHACL?", "The W3C Data Shapes Working Group has published SHACL 1.2 Working Drafts in 2026, including Core, SPARQL Extensions and Node Expressions. They are drafts and may change; the 2017 Recommendation remains the stable reference."]], "related": ["/ontology-knowledge-graph/", "/ai-architect/", "/fractional-cto/"], "citations": [{"title": "Shapes Constraint Language (SHACL)", "url": "https://www.w3.org/TR/2017/REC-shacl-20170720/", "publisher": "W3C Recommendation", "date": "20 Jul 2017"}, {"title": "Shapes Constraint Language (SHACL) is now a W3C Recommendation", "url": "https://www.w3.org/news/2017/shapes-constraint-language-shacl-is-now-a-w3c-recommendation/", "publisher": "W3C News", "date": "2017"}, {"title": "SHACL 1.2 Core (Working Draft)", "url": "https://www.w3.org/TR/shacl-core/", "publisher": "W3C Data Shapes Working Group", "date": "2026"}, {"title": "SHACL 1.2 Node Expressions (First Public Working Draft)", "url": "https://www.w3.org/TR/2026/WD-shacl12-node-expr-20260108/", "publisher": "W3C", "date": "8 Jan 2026"}, {"title": "SHACL Validation in the Presence of Ontologies: Semantics and Rewriting Techniques", "url": "https://arxiv.org/abs/2507.12286", "publisher": "Oudshoorn, Ortiz and Šimkus, TU Wien (arXiv)", "date": "2025"}]}-->
+<p>A common pattern in knowledge graph projects: the team spends months on a careful ontology, loads data from a dozen sources, and then discovers that a third of the customer nodes have no country, some products have two prices and a few suppliers are typed as people. Nothing in the ontology stopped it, because that isn't what an ontology does.</p>
+
+<section class="block">
+<h2>OWL and SHACL do different jobs</h2>
+<p>OWL reasons under an open-world assumption: a missing fact is unknown, not false, and the language is built to infer new facts from the ones you have. SHACL validates the data graph as it stands, so a missing required property is a violation<sup class="cite"><a href="#ref-5">5</a></sup>. The W3C Recommendation describes this as checking "data graphs" against conditions in "shapes graphs"<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<table class="tbl">
+<thead><tr><th></th><th>OWL</th><th>SHACL</th></tr></thead>
+<tbody>
+<tr><td>Question it answers</td><td>What follows from what we know?</td><td>Is this data acceptable?</td></tr>
+<tr><td>Missing value</td><td>Unknown</td><td>A violation, if the shape requires it</td></tr>
+<tr><td>Output</td><td>Inferred facts</td><td>A validation report</td></tr>
+<tr><td>Typical owner</td><td>Ontology and domain experts</td><td>Data engineering and data quality</td></tr>
+</tbody>
+</table>
+<p>Combining the two is not trivial. Research from TU Wien describes the semantic gap between OWL reasoning and SHACL validation as a major challenge, and notes conflicts, for example between reasoning and closed shapes<sup class="cite"><a href="#ref-5">5</a></sup>. In practice I keep them in separate stages and decide explicitly whether validation runs before or after inference.</p>
+</section>
+
+<section class="block">
+<h2>The checklist</h2>
+<ol>
+<li><strong>Write shapes for the entities that matter first.</strong> Customer, product, patient, supplier: whatever your use cases depend on. Cardinality, datatypes, allowed values and required relationships cover most real problems.</li>
+<li><strong>Validate at the boundary.</strong> Run SHACL on each source's data before it joins the main graph, so bad data is quarantined with a report rather than merged.</li>
+<li><strong>Use severities deliberately.</strong> Not every failure should block a load. Separate hard violations from warnings, and route warnings to the data owner instead of the pipeline.</li>
+<li><strong>Decide where inference sits.</strong> If you validate after reasoning, test that inferred facts don't create spurious violations, particularly with closed shapes<sup class="cite"><a href="#ref-5">5</a></sup>.</li>
+<li><strong>Keep shapes in version control</strong> next to the ontology, reviewed like code and changed through the same process. A shape change can reject yesterday's valid data.</li>
+<li><strong>Track validation results over time.</strong> Violation counts per source and per shape are a data quality metric the business can understand.</li>
+<li><strong>Validate what AI writes.</strong> When an LLM extracts entities into the graph, as in <a href="/insights/graphrag-when-it-beats-vector-rag/">GraphRAG</a>, run its output through the same shapes. Extraction errors are cheap to catch at the door and expensive to find later.</li>
+<li><strong>Pair with entity resolution.</strong> Shapes catch malformed records; they don't catch two records for the same customer. That needs <a href="/insights/entity-resolution-knowledge-graphs/">entity resolution</a>.</li>
+</ol>
+<div class="callout"><p>The rule I give teams: no data enters the shared graph without passing its shapes. The ontology says what the world looks like; the shapes are the contract every source has to meet.</p></div>
+</section>
+
+<section class="block">
+<h2>Where the standard is going</h2>
+<p>SHACL became a W3C Recommendation in July 2017, with Core constraints and SPARQL-based extensions<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. The W3C Data Shapes Working Group is now developing SHACL 1.2, with 2026 Working Drafts for Core and for Node Expressions among others<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>. They are drafts and may change, so I build on the 2017 Recommendation and track 1.2 for features worth adopting once they settle.</p>
+</section>
+
+<section class="block">
+<h2>Why this matters for AI</h2>
+<p>Knowledge graphs are increasingly the grounding layer for LLM applications. A graph that answers confidently with malformed or contradictory data is worse than no graph, because the model will present it fluently. Validation is what makes a graph trustworthy enough to ground AI, and it fits the layered model in <a href="/insights/ontology-vs-knowledge-graph-vs-semantic-layer/">ontology vs knowledge graph vs semantic layer</a>.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I design ontologies, shapes and validation pipelines for enterprise knowledge graphs, so they stay trustworthy as sources and AI extraction grow. See <a href="/ontology-knowledge-graph/">ontology and knowledge graphs</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
