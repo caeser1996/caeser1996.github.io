@@ -1,0 +1,52 @@
+<!--{"title": "Saudi PDPL and cross-border AI: designing data flows that hold up", "description": "Saudi Arabia's PDPL is enforceable and its transfer rules shape where AI can process data. SCCs, risk assessments, and the architecture I use for Saudi AI products.", "h1": "Saudi PDPL and cross-border AI: designing data flows that hold up", "kicker": "Regulation · GCC", "lede": "Many AI products serving Saudi Arabia process data with models hosted elsewhere. Since September 2024, the Personal Data Protection Law has been enforceable, and its transfer rules decide whether that design works.", "date": "2026-10-21", "datetime": "2026-10-21T00:30:00+04:00", "readtime": "7 min read", "format": "field-note", "tags": ["regulation", "uae", "ai", "governance"], "keywords": ["Saudi PDPL", "Saudi Arabia data protection", "SDAIA", "cross-border data transfer Saudi", "Saudi standard contractual clauses", "transfer risk assessment", "data residency Saudi Arabia", "GCC AI compliance", "AI architecture Saudi", "sovereign AI GCC"], "faq": [["When did the Saudi PDPL become enforceable?", "Law firm commentary reports that the Personal Data Protection Law became enforceable on 14 September 2024, after a grace period, with SDAIA issuing further rules and guidelines around that date."], ["How can personal data be transferred outside Saudi Arabia?", "The amended transfer regulation keeps the concepts of adequate jurisdictions and permitted purposes. Where those don't apply, appropriate safeguards such as SDAIA's standard contractual clauses, binding common rules or certification can be used, in some cases with a risk assessment."], ["When is a transfer risk assessment needed?", "According to commentary on the amended regulation, when a controller relies on appropriate safeguards or certain exemptions, and for continuous or large-scale transfers of sensitive data. SDAIA published guidelines in 2025 on how to conduct it."]], "related": ["/uae/", "/ai-architect/", "/technical-due-diligence/"], "citations": [{"title": "Saudi Arabia updates Data Transfer Regulations and introduces the first set of Standard Contractual Clauses", "url": "https://insightplus.bakermckenzie.com/bm/data-technology/saudi-arabia-updates-data-transfer-regulations-and-introduces-the-first-set-of-standard-contractual-clauses", "publisher": "Baker McKenzie", "date": "2024"}, {"title": "Updates to Saudi Arabia's personal data protection regulations: SCCs, guidelines and more", "url": "https://www.mayerbrown.com/en/insights/publications/2024/10/updates-to-saudi-arabias-personal-data-protection-regulations-sccs-guidelines-and-more", "publisher": "Mayer Brown", "date": "9 Oct 2024"}, {"title": "Saudi Arabia's Personal Data Protection Law becomes enforceable: essential insights for businesses", "url": "https://www.clydeco.com/en/insights/2024/09/saudi-arabia-s-personal-data-protection-law-become", "publisher": "Clyde & Co", "date": "Sep 2024"}, {"title": "Update on Saudi Arabia's cross border data transfers: understanding the new risk assessment guidelines", "url": "https://www.clydeco.com/en/insights/2025/03/update-on-saudi-arabia-risk-assessment-guidelines", "publisher": "Clyde & Co", "date": "Mar 2025"}, {"title": "New SDAIA rules and guidelines published as KSA's personal data protection framework is now enforceable", "url": "https://cms.law/en/omn/legal-updates/new-sdaia-rules-and-guidelines-published-as-ksa-s-personal-data-protection-framework-is-now-enforceable", "publisher": "CMS"}]}-->
+<p>A common pattern in GCC AI products: the application runs in a regional data centre, but the model, the vector database or the analytics pipeline sits somewhere else. In Saudi Arabia, that pattern now has to stand up to the Personal Data Protection Law, which became enforceable on 14 September 2024<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<p>This is an architect's view, not legal advice. Confirm the details with Saudi counsel, and check SDAIA's current publications, since the rules have changed more than once.</p>
+
+<section class="block">
+<h2>The transfer rules in brief</h2>
+<p>SDAIA issued an amended Regulation on Personal Data Transfer Outside the Kingdom in September 2024, elaborating on the PDPL's transfer article<sup class="cite"><a href="#ref-1">1</a></sup>. In outline, as described by law firm commentary:</p>
+<ul>
+<li><strong>Adequacy and permitted purposes</strong> remain the first route, similar to the earlier version<sup class="cite"><a href="#ref-1">1</a></sup>. One firm noted in March 2025 that an adequacy list had not yet been issued<sup class="cite"><a href="#ref-4">4</a></sup>; check whether that has changed.</li>
+<li><strong>Appropriate safeguards</strong> apply where adequacy doesn't: standard contractual clauses, binding common rules and certification, with binding codes of conduct removed from the list<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>.</li>
+<li><strong>Standard contractual clauses</strong> come in four versions covering controller and processor combinations, and modifying them invalidates them<sup class="cite"><a href="#ref-2">2</a></sup>.</li>
+<li><strong>Risk assessments</strong> are needed when relying on safeguards or certain exemptions, and for continuous or large-scale transfers of sensitive data<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>. SDAIA published guidelines on conducting them in 2025<sup class="cite"><a href="#ref-4">4</a></sup>.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>Where AI architectures create transfers</h2>
+<p>Teams often underestimate how many cross-border flows an AI feature creates. For each one, ask whether personal data leaves the Kingdom:</p>
+<table class="tbl">
+<thead><tr><th>Component</th><th>Hidden transfer</th></tr></thead>
+<tbody>
+<tr><td>Hosted model API</td><td>Every prompt containing customer data</td></tr>
+<tr><td>Embedding service</td><td>Documents sent for vectorisation</td></tr>
+<tr><td>Vector database</td><td>Embeddings and stored text chunks</td></tr>
+<tr><td>Observability tools</td><td>Prompt and response logs, traces</td></tr>
+<tr><td>Evaluation and labelling</td><td>Production samples copied for testing or annotation</td></tr>
+<tr><td>Support tooling</td><td>Vendor staff accessing data from abroad</td></tr>
+</tbody>
+</table>
+<div class="callout"><p>The model call is the transfer everyone notices. The logs, embeddings and evaluation sets are the ones that turn up in an audit.</p></div>
+</section>
+
+<section class="block">
+<h2>The architecture I use</h2>
+<ol>
+<li><strong>Classify first.</strong> Tag data as personal, sensitive or non-personal at ingestion, so routing decisions can be automated.</li>
+<li><strong>Keep sensitive processing in-country</strong> where possible: in-Kingdom cloud regions or on-premises models for sensitive data, which is where <a href="/insights/private-llm-on-prem/">private LLMs</a> earn their cost.</li>
+<li><strong>Route through an AI gateway</strong> that redacts or blocks personal data before calls to models outside the Kingdom, and records every call with its legal basis.</li>
+<li><strong>Keep logs local</strong> or capture metadata only, following the approach in <a href="/insights/llm-observability-opentelemetry-genai/">LLM observability</a>.</li>
+<li><strong>Maintain a transfer register</strong> mapping each flow to its route (adequacy, SCCs, other safeguard) and its risk assessment, kept in step with the architecture.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2>One design for the region</h2>
+<p>Many companies serve Saudi Arabia, the UAE and the wider Gulf from one platform. The UAE PDPL, DIFC rules and the Saudi PDPL differ in detail, but the engineering controls overlap heavily: classification, in-region processing, gateways, logging and registers. I design one control set and map it to each regime, as I describe in <a href="/insights/uae-pdpl-ai-architecture-2026/">UAE PDPL and AI architecture</a> and <a href="/insights/difc-regulation-10-ai-systems/">DIFC Regulation 10</a>, and pair it with the hosting choices in <a href="/insights/uae-ai-infrastructure-where-to-run-models/">where to run models in the UAE</a>.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I design AI platforms for the GCC with data residency and transfer controls built in, so legal review confirms the design rather than reworks it. See my <a href="/uae/">UAE and GCC practice</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>

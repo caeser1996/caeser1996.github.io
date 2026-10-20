@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ambient AI scribes: what the evidence says and how to deploy safely</title>
+<meta name="description" content="Randomised trials of ambient AI scribes show modest time savings and real error rates. What the evidence says, and the architecture and review controls I&#x27;d put around them." />
+<meta name="keywords" content="ambient AI scribe, AI medical scribe, ambient clinical documentation, AI scribe accuracy, AI scribe randomised trial, clinician burnout AI, clinical AI safety, healthcare LLM, EHR AI documentation, healthcare AI architect" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://asksumanta.com/insights/ambient-ai-scribes-architecture/" />
+<meta name="theme-color" content="#111214" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="Ambient AI scribes: what the evidence says and how to deploy safely" />
+<meta property="og:description" content="Randomised trials of ambient AI scribes show modest time savings and real error rates. What the evidence says, and the architecture and review controls I&#x27;d put around them." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://asksumanta.com/insights/ambient-ai-scribes-architecture/" />
+<meta property="og:image" content="https://asksumanta.com/assets/og/ambient-ai-scribes-architecture.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Ambient AI scribes: what the evidence says and how to deploy safely" />
+<meta name="twitter:description" content="Randomised trials of ambient AI scribes show modest time savings and real error rates. What the evidence says, and the architecture and review controls I&#x27;d put around them." />
+<meta name="twitter:image" content="https://asksumanta.com/assets/og/ambient-ai-scribes-architecture.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "BlogPosting", "headline": "Ambient AI scribes: what the evidence says, and how to deploy them safely", "description": "Randomised trials of ambient AI scribes show modest time savings and real error rates. What the evidence says, and the architecture and review controls I'd put around them.", "datePublished": "2026-10-21T00:15:00+04:00", "dateModified": "2026-10-21T00:15:00+04:00", "articleSection": "Healthcare · Clinical AI", "genre": "Essay", "citation": [{"@type": "CreativeWork", "name": "UCLA study finds AI scribes may reduce documentation time and improve physician well-being", "url": "https://www.uclahealth.org/news/release/ucla-study-finds-ai-scribes-may-reduce-documentation-time"}, {"@type": "CreativeWork", "name": "A Randomized Controlled Trial of Ambient Artificial Intelligence Scribe Technologies (NCT06792890)", "url": "https://clinicaltrials.gov/study/NCT06792890"}, {"@type": "CreativeWork", "name": "Ambient AI scribes linked to lower work exhaustion in multistate pragmatic trial", "url": "https://www.consultant360.com/exclusive/ambient-ai-scribes-linked-lower-work-exhaustion-multistate-pragmatic-trial"}, {"@type": "CreativeWork", "name": "Studies find AI technology for clinical documentation aids efficiency and reduces burnout", "url": "https://uwclinicaltrials.org/2025/12/12/studies-find-ai-technology-for-clinical-documentation-aids-efficiency-and-reduces-burnout/"}, {"@type": "CreativeWork", "name": "Physician review of errors in AI-generated clinic notes (e86474)", "url": "https://medinform.jmir.org/2026/1/e86474"}], "author": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "publisher": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "mainEntityOfPage": "https://asksumanta.com/insights/ambient-ai-scribes-architecture/", "image": "https://asksumanta.com/assets/og/ambient-ai-scribes-architecture.png", "keywords": "ambient AI scribe, AI medical scribe, ambient clinical documentation, AI scribe accuracy, AI scribe randomised trial, clinician burnout AI, clinical AI safety, healthcare LLM, EHR AI documentation, healthcare AI architect", "wordCount": 725}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://asksumanta.com/"}, {"@type": "ListItem", "position": 2, "name": "Insights", "item": "https://asksumanta.com/insights/"}, {"@type": "ListItem", "position": 3, "name": "Ambient AI scribes: what the evidence says, and how to deploy them safely", "item": "https://asksumanta.com/insights/ambient-ai-scribes-architecture/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Do ambient AI scribes save clinicians time?", "acceptedAnswer": {"@type": "Answer", "text": "Modestly, and it varies by product. In a randomised trial published in NEJM AI with 238 outpatient physicians, one scribe produced a statistically significant reduction in time per note while another's reduction was not significant compared with usual care."}}, {"@type": "Question", "name": "How accurate are AI-generated clinical notes?", "acceptedAnswer": {"@type": "Answer", "text": "Not error-free. A JMIR Medical Informatics pilot in which physicians reviewed AI-generated notes found omissions in 18% of reviewed notes and hallucinations in 11.5%, with about 2.5% containing errors rated as posing serious risk. Clinician review remains essential."}}, {"@type": "Question", "name": "What controls should a health system put around AI scribes?", "acceptedAnswer": {"@type": "Answer", "text": "Clear patient notice or consent, mandatory clinician review before signing, monitoring of edit rates and error reports, data retention limits for audio and transcripts, and evaluation of each product locally before scaling."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+</script>
+</head>
+<body class="sub is-post">
+<div class="progress" id="progress"></div>
+<nav>
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="/#practice">Services</a>
+      <a href="/#work">Case studies</a>
+      <a href="/insights/">Insights</a>
+      <a href="/#assess">Analyse</a>
+      <a href="/#connect">Connect</a>
+    </div>
+    <div class="nav-r">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/insights/">Insights</a> <span>/</span> <em>Ambient AI scribes: what the evidence says, and how to deploy them safely</em></div>
+    <div class="kicker">Healthcare · Clinical AI</div>
+    <h1>Ambient AI scribes: what the evidence says, and how to deploy them safely</h1>
+    <p class="sub-lede">Ambient AI scribes have spread faster than almost any clinical technology. The first randomised trials are now in, and the picture is more nuanced than the marketing: real but modest benefits, and errors that need designing around.</p>
+    <div class="ameta"><span class="fmt">Essay</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-10-21T00:15:00+04:00">21 Oct 2026 · 00:15 GST</time><span>8 min read</span><span>5 sources</span></div><div class="atags"><span class="tagp">#healthcare</span><span class="tagp">#ai</span><span class="tagp">#llm</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Essay cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><line x1="862" y1="39" x2="883" y2="108" class="cv-edge" opacity="0.52"/><line x1="862" y1="39" x2="937" y2="155" class="cv-edge hl" opacity="0.08"/><line x1="862" y1="39" x2="747" y2="91" class="cv-edge hl" opacity="0.16"/><line x1="862" y1="39" x2="765" y2="104" class="cv-edge hl" opacity="0.22"/><line x1="586" y1="210" x2="575" y2="340" class="cv-edge" opacity="0.13"/><line x1="586" y1="210" x2="616" y2="326" class="cv-edge" opacity="0.20"/><line x1="586" y1="210" x2="623" y2="110" class="cv-edge" opacity="0.29"/><line x1="575" y1="340" x2="531" y2="384" class="cv-edge" opacity="0.59"/><line x1="575" y1="340" x2="616" y2="326" class="cv-edge" opacity="0.71"/><line x1="1096" y1="219" x2="1135" y2="358" class="cv-edge" opacity="0.04"/><line x1="1096" y1="219" x2="960" y2="186" class="cv-edge" opacity="0.06"/><line x1="1096" y1="219" x2="1031" y2="228" class="cv-edge" opacity="0.56"/><line x1="1096" y1="219" x2="1073" y2="271" class="cv-edge" opacity="0.62"/><line x1="1096" y1="219" x2="1120" y2="176" class="cv-edge" opacity="0.66"/><line x1="1096" y1="219" x2="1077" y2="193" class="cv-edge" opacity="0.78"/><line x1="1135" y1="358" x2="1073" y2="271" class="cv-edge" opacity="0.29"/><line x1="960" y1="186" x2="836" y2="212" class="cv-edge" opacity="0.16"/><line x1="960" y1="186" x2="1031" y2="228" class="cv-edge" opacity="0.45"/><line x1="960" y1="186" x2="883" y2="108" class="cv-edge" opacity="0.27"/><line x1="960" y1="186" x2="1073" y2="271" class="cv-edge" opacity="0.05"/><line x1="960" y1="186" x2="958" y2="155" class="cv-edge" opacity="0.80"/><line x1="960" y1="186" x2="937" y2="155" class="cv-edge hl" opacity="0.75"/><line x1="960" y1="186" x2="1077" y2="193" class="cv-edge" opacity="0.22"/><line x1="836" y1="212" x2="883" y2="108" class="cv-edge" opacity="0.24"/><line x1="836" y1="212" x2="729" y2="304" class="cv-edge" opacity="0.06"/><line x1="836" y1="212" x2="782" y2="217" class="cv-edge hl" opacity="0.64"/><line x1="836" y1="212" x2="958" y2="155" class="cv-edge" opacity="0.10"/><line x1="836" y1="212" x2="937" y2="155" class="cv-edge hl" opacity="0.23"/><line x1="836" y1="212" x2="765" y2="104" class="cv-edge hl" opacity="0.14"/><line x1="1031" y1="228" x2="1073" y2="271" class="cv-edge" opacity="0.60"/><line x1="1031" y1="228" x2="958" y2="155" class="cv-edge" opacity="0.31"/><line x1="1031" y1="228" x2="1120" y2="176" class="cv-edge" opacity="0.31"/><line x1="1031" y1="228" x2="937" y2="155" class="cv-edge hl" opacity="0.20"/><line x1="1031" y1="228" x2="1077" y2="193" class="cv-edge" opacity="0.61"/><line x1="531" y1="384" x2="616" y2="326" class="cv-edge" opacity="0.31"/><line x1="883" y1="108" x2="782" y2="217" class="cv-edge hl" opacity="0.01"/><line x1="883" y1="108" x2="958" y2="155" class="cv-edge" opacity="0.41"/><line x1="883" y1="108" x2="937" y2="155" class="cv-edge hl" opacity="0.52"/><line x1="883" y1="108" x2="747" y2="91" class="cv-edge hl" opacity="0.09"/><line x1="883" y1="108" x2="765" y2="104" class="cv-edge hl" opacity="0.22"/><line x1="1073" y1="271" x2="1120" y2="176" class="cv-edge" opacity="0.29"/><line x1="1073" y1="271" x2="1077" y2="193" class="cv-edge" opacity="0.48"/><line x1="729" y1="304" x2="756" y2="356" class="cv-edge hl" opacity="0.61"/><line x1="729" y1="304" x2="782" y2="217" class="cv-edge hl" opacity="0.32"/><line x1="729" y1="304" x2="616" y2="326" class="cv-edge" opacity="0.24"/><line x1="729" y1="304" x2="789" y2="369" class="cv-edge" opacity="0.41"/><line x1="756" y1="356" x2="782" y2="217" class="cv-edge hl" opacity="0.06"/><line x1="756" y1="356" x2="616" y2="326" class="cv-edge hl" opacity="0.05"/><line x1="756" y1="356" x2="789" y2="369" class="cv-edge hl" opacity="0.76"/><line x1="782" y1="217" x2="747" y2="91" class="cv-edge hl" opacity="0.13"/><line x1="782" y1="217" x2="765" y2="104" class="cv-edge hl" opacity="0.24"/><line x1="1073" y1="37" x2="1085" y2="33" class="cv-edge hl" opacity="0.92"/><line x1="1073" y1="37" x2="1120" y2="176" class="cv-edge hl" opacity="0.03"/><line x1="958" y1="155" x2="937" y2="155" class="cv-edge hl" opacity="0.86"/><line x1="958" y1="155" x2="1077" y2="193" class="cv-edge" opacity="0.17"/><line x1="1085" y1="33" x2="1120" y2="176" class="cv-edge hl" opacity="0.02"/><line x1="623" y1="110" x2="747" y2="91" class="cv-edge hl" opacity="0.16"/><line x1="623" y1="110" x2="765" y2="104" class="cv-edge hl" opacity="0.05"/><line x1="1120" y1="176" x2="1077" y2="193" class="cv-edge" opacity="0.69"/><line x1="923" y1="381" x2="789" y2="369" class="cv-edge" opacity="0.11"/><line x1="937" y1="155" x2="1077" y2="193" class="cv-edge hl" opacity="0.03"/><line x1="747" y1="91" x2="765" y2="104" class="cv-edge hl" opacity="0.85"/><circle cx="862" cy="39" r="3" class="cv-dot"/><circle cx="586" cy="210" r="3" class="cv-dot"/><circle cx="575" cy="340" r="3" class="cv-dot"/><circle cx="1096" cy="219" r="3" class="cv-dot"/><circle cx="1135" cy="358" r="3" class="cv-dot"/><circle cx="960" cy="186" r="3" class="cv-dot"/><circle cx="836" cy="212" r="3" class="cv-dot"/><circle cx="1031" cy="228" r="3" class="cv-dot"/><circle cx="531" cy="384" r="3" class="cv-dot"/><circle cx="883" cy="108" r="3" class="cv-dot"/><circle cx="1073" cy="271" r="3" class="cv-dot"/><circle cx="729" cy="304" r="3" class="cv-dot"/><circle cx="756" cy="356" r="6" class="cv-dot hl"/><circle cx="782" cy="217" r="6" class="cv-dot hl"/><circle cx="1073" cy="37" r="6" class="cv-dot hl"/><circle cx="616" cy="326" r="3" class="cv-dot"/><circle cx="958" cy="155" r="3" class="cv-dot"/><circle cx="1085" cy="33" r="6" class="cv-dot hl"/><circle cx="623" cy="110" r="3" class="cv-dot"/><circle cx="1120" cy="176" r="3" class="cv-dot"/><circle cx="923" cy="381" r="3" class="cv-dot"/><circle cx="937" cy="155" r="6" class="cv-dot hl"/><circle cx="789" cy="369" r="3" class="cv-dot"/><circle cx="747" cy="91" r="6" class="cv-dot hl"/><circle cx="1077" cy="193" r="3" class="cv-dot"/><circle cx="765" cy="104" r="6" class="cv-dot hl"/><text x="60" y="90" class="cv-k">ESSAY · HEALTHCARE · CLINICAL AI</text><text x="60" y="350" class="cv-n">21 Oct 2026 · 00:15 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <p>Few clinical technologies have been adopted as quickly as ambient AI scribes: software that listens to a consultation and drafts the clinical note. The appeal is obvious. Documentation is a major driver of clinician burnout, and a tool that gives time back is an easy sell.</p>
+<p>The evidence base has caught up enough to say something more useful than "promising". As someone who designs healthcare data and AI platforms, here is my reading and how I would deploy them.</p>
+
+<section class="block">
+<h2 id="what-the-trials-found">What the trials found</h2>
+<p>The clearest evidence so far comes from a three-arm randomised trial at UCLA, published in NEJM AI. It enrolled 238 outpatient physicians across 14 specialties and randomly assigned them to one of two commercial scribes or usual care<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. One product produced a statistically significant reduction in time spent per note, of around 41 seconds compared with 18 seconds in the control group; the other's reduction was not significant against control<sup class="cite"><a href="#ref-1">1</a></sup>. Both showed potential benefits on burnout and work-related stress, and the authors called for longer, multi-site studies<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<p>Other trials point in a similar direction. A multistate pragmatic trial reported reduced documentation time and lower work exhaustion<sup class="cite"><a href="#ref-3">3</a></sup>, and a University of Wisconsin trial published in NEJM AI examined both efficiency and practitioner well-being<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+<div class="callout"><p>The fair summary: real but modest time savings that vary by product, with the clearest benefits in how clinicians feel about their work. That is worth having, but it is not the transformation some business cases assume.</p></div>
+</section>
+
+<section class="block">
+<h2 id="the-error-problem">The error problem</h2>
+<p>Accuracy is the harder question. In a JMIR Medical Informatics pilot, physicians reviewed a sample of AI-generated clinic notes. Omissions were the most common error, found in 18% of reviewed notes, followed by hallucinations at 11.5%. Most errors were rated mild to moderate, but about 2.5% of notes contained errors rated as posing serious or imminent risk<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<p>Those numbers come from one pilot and will differ by product and setting. The pattern is what matters: errors are common enough that clinician review is not optional, and some are serious. A note is a legal and clinical record. An omitted allergy or an invented examination finding can travel through the record for years.</p>
+</section>
+
+<section class="block">
+<h2 id="the-controls-i-would-put-in-place">The controls I would put in place</h2>
+<table class="tbl">
+<thead><tr><th>Area</th><th>Control</th></tr></thead>
+<tbody>
+<tr><td>Patient trust</td><td>Clear notice to patients that the consultation is recorded for documentation, with an easy way to decline</td></tr>
+<tr><td>Clinical safety</td><td>Mandatory clinician review and sign-off; the draft is never filed automatically</td></tr>
+<tr><td>Quality monitoring</td><td>Track edit rates, error reports and specialty differences; sample notes for structured review</td></tr>
+<tr><td>Data protection</td><td>Defined retention for audio and transcripts, encryption, and contracts that limit vendor use of recordings</td></tr>
+<tr><td>Integration</td><td>Write drafts into the EHR through standard interfaces, with provenance marking the note as AI-assisted</td></tr>
+<tr><td>Evaluation</td><td>Local pilots comparing products on your specialties before scaling, not just vendor-reported figures</td></tr>
+</tbody>
+</table>
+<p>Audio and transcripts are new stores of highly sensitive data. They belong in the asset inventory and data-flow maps I describe in <a href="/insights/hipaa-security-rule-proposal-ai-platforms/">the proposed HIPAA Security Rule update</a>, and they should be covered by the same encryption and access controls as the record itself.</p>
+</section>
+
+<section class="block">
+<h2 id="measure-it-like-any-clinical-intervention">Measure it like any clinical intervention</h2>
+<ol>
+<li><strong>Baseline first.</strong> Documentation time from EHR audit logs, after-hours work and a validated burnout measure, before rollout.</li>
+<li><strong>Compare products on your own workload.</strong> The UCLA trial showed different products performing differently<sup class="cite"><a href="#ref-1">1</a></sup>. Your specialties and patient mix will matter.</li>
+<li><strong>Build an evaluation set</strong> of de-identified or synthetic encounters with reference notes, so updates to the vendor's model can be re-tested. The approach in <a href="/insights/llm-evaluation-sets-that-predict-production/">evaluation sets that predict production</a> applies directly.</li>
+<li><strong>Watch for drift.</strong> Vendors update models frequently. Track edit rates and error reports per release.</li>
+<li><strong>Report honestly.</strong> If time savings are small but well-being improves, say so. That is still a valid reason to invest.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2 id="the-bigger-opportunity">The bigger opportunity</h2>
+<p>A scribe produces structured clinical content at the point of care. Mapped carefully into FHIR and on to analytical models such as <a href="/insights/fhir-to-omop-architecture/">OMOP</a>, that content could improve data quality for research and population health. That only works if the notes are accurate, which brings us back to review and monitoring.</p>
+</section>
+
+<section class="block">
+<h2 id="how-i-can-help">How I can help</h2>
+<p>I help health systems and health tech companies evaluate, integrate and govern clinical AI, from data flows and security to measurement. See <a href="/healthcare-data-architecture/">healthcare data architecture</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://www.uclahealth.org/news/release/ucla-study-finds-ai-scribes-may-reduce-documentation-time" target="_blank" rel="noopener">UCLA study finds AI scribes may reduce documentation time and improve physician well-being</a><small>UCLA Health · 2025</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://clinicaltrials.gov/study/NCT06792890" target="_blank" rel="noopener">A Randomized Controlled Trial of Ambient Artificial Intelligence Scribe Technologies (NCT06792890)</a><small>ClinicalTrials.gov</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://www.consultant360.com/exclusive/ambient-ai-scribes-linked-lower-work-exhaustion-multistate-pragmatic-trial" target="_blank" rel="noopener">Ambient AI scribes linked to lower work exhaustion in multistate pragmatic trial</a><small>Consultant360</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://uwclinicaltrials.org/2025/12/12/studies-find-ai-technology-for-clinical-documentation-aids-efficiency-and-reduces-burnout/" target="_blank" rel="noopener">Studies find AI technology for clinical documentation aids efficiency and reduces burnout</a><small>University of Wisconsin · 12 Dec 2025</small></div></li><li id="ref-5"><span class="rn">5</span><div><a href="https://medinform.jmir.org/2026/1/e86474" target="_blank" rel="noopener">Physician review of errors in AI-generated clinic notes (e86474)</a><small>JMIR Medical Informatics · 2026</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fambient-ai-scribes-architecture%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fambient-ai-scribes-architecture%2F&amp;text=Ambient%20AI%20scribes%3A%20what%20the%20evidence%20says%2C%20and%20how%20to%20deploy%20them%20safely" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=Ambient%20AI%20scribes%3A%20what%20the%20evidence%20says%2C%20and%20how%20to%20deploy%20them%20safely%20https%3A%2F%2Fasksumanta.com%2Finsights%2Fambient-ai-scribes-architecture%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://asksumanta.com/insights/ambient-ai-scribes-architecture/">Copy link</button></div>
+      <div class="pnav"><a class="pn prev" href="/insights/apache-iceberg-v3-lakehouse/"><small>← Previous</small><b>Apache Iceberg v3: what changes from v2, and when your lakehouse should upgrade</b></a><a class="pn next" href="/insights/saudi-pdpl-cross-border-ai/"><small>Next →</small><b>Saudi PDPL and cross-border AI: designing data flows that hold up</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#what-the-trials-found">What the trials found</a></li><li><a href="#the-error-problem">The error problem</a></li><li><a href="#the-controls-i-would-put-in-place">The controls I would put in place</a></li><li><a href="#measure-it-like-any-clinical-intervention">Measure it like any clinical intervention</a></li><li><a href="#the-bigger-opportunity">The bigger opportunity</a></li><li><a href="#how-i-can-help">How I can help</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>Do ambient AI scribes save clinicians time?</summary><p>Modestly, and it varies by product. In a randomised trial published in NEJM AI with 238 outpatient physicians, one scribe produced a statistically significant reduction in time per note while another&#x27;s reduction was not significant compared with usual care.</p></details><details class="rise"><summary>How accurate are AI-generated clinical notes?</summary><p>Not error-free. A JMIR Medical Informatics pilot in which physicians reviewed AI-generated notes found omissions in 18% of reviewed notes and hallucinations in 11.5%, with about 2.5% containing errors rated as posing serious risk. Clinician review remains essential.</p></details><details class="rise"><summary>What controls should a health system put around AI scribes?</summary><p>Clear patient notice or consent, mandatory clinician review before signing, monitoring of edit rates and error reports, data retention limits for audio and transcripts, and evaluation of each product locally before scaling.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/healthcare-data-architecture/"><small>Service</small><b>Healthcare data architecture</b><span>I help healthcare and life-sciences organisations turn fragmented clinical data into governed platforms for care, research and AI, using the standards the industry already agrees on.</span><i>→</i></a><a class="rcard rise" href="/ai-architect/"><small>Service</small><b>AI &amp; LLM architecture</b><span>I design and build AI systems that leadership can trust: grounded in your data, measured by evaluations, governed by your rules and priced so they make sense at scale.</span><i>→</i></a><a class="rcard rise" href="/fractional-cto/"><small>Service</small><b>Fractional CTO</b><span>I work as a part-time CTO for founders, CEOs and boards who need experienced technical judgement now, and a team that can carry it on after I step back.</span><i>→</i></a><a class="rcard rise" href="/insights/saudi-pdpl-cross-border-ai/"><small>Insight</small><b>Saudi PDPL and cross-border AI: designing data flows that hold up</b><span>Many AI products serving Saudi Arabia process data with models hosted elsewhere. Since September 2024, the Personal Data Protection Law has been enforceable, and its transfer rules decide whether that design works.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: Ambient AI scribes: what the evidence says, and how to deploy them safely">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
+        <p class="floc">United States &amp; UAE · working globally</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/uae/">Fractional CTO in the UAE</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/saudi-pdpl-cross-border-ai/">Saudi PDPL and cross-border AI: designing data flows that hold up</a></li><li><a href="/insights/ambient-ai-scribes-architecture/">Ambient AI scribes: what the evidence says, and how to deploy them safely</a></li><li><a href="/insights/apache-iceberg-v3-lakehouse/">Apache Iceberg v3: what changes from v2, and when your lakehouse should upgrade</a></li><li><a href="/insights/opentelemetry-profiles-alpha/">OpenTelemetry Profiles is in alpha: the fourth signal and what to do about it</a></li><li><a href="/insights/difc-regulation-10-ai-systems/">DIFC Regulation 10: what it means for AI systems built in Dubai&#x27;s financial centre</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>
