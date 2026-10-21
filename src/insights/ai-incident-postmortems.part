@@ -1,0 +1,51 @@
+<!--{"title": "AI incident postmortems: learning when the model gets it wrong", "description": "AI systems fail differently from ordinary software. How I adapt blameless postmortems for AI incidents, using the OECD definition of AI incidents and SRE practice.", "h1": "AI incident postmortems: how to learn when the model gets it wrong", "kicker": "Leadership · AI operations", "lede": "When a chatbot invents a refund policy or a model scores applicants unfairly, most teams have no process for it. Site reliability engineering solved the learning problem for outages years ago. Adapted carefully, the same approach works for AI.", "date": "2026-10-21", "datetime": "2026-10-21T16:30:00+04:00", "readtime": "7 min read", "format": "playbook", "tags": ["leadership", "ai", "governance", "platform"], "keywords": ["AI incident", "AI incident response", "blameless postmortem", "AI postmortem template", "OECD AI incidents", "AI risk management", "LLM failures", "SRE postmortem culture", "AI governance", "fractional CTO"], "faq": [["What is an AI incident?", "The OECD defines an AI incident as an event where the development or use of an AI system results in actual harm, such as injury, disruption of critical infrastructure, rights violations, or harm to property, communities or the environment. An AI hazard is an event that could plausibly lead to such harm."], ["What is a blameless postmortem?", "A review practice from site reliability engineering that focuses on the contributing causes of an incident without blaming individuals, on the assumption that people acted in good faith with the information they had."], ["How are AI postmortems different from outage postmortems?", "AI failures are often silent, probabilistic and hard to reproduce. Postmortems need captured inputs, model and prompt versions and retrieved context, and fixes usually involve evaluation sets and guardrails as well as code."]], "related": ["/fractional-cto/", "/ai-architect/", "/technical-due-diligence/"], "citations": [{"title": "Postmortem culture: learning from failure (Site Reliability Engineering, chapter 15)", "url": "https://sre.google/sre-book/postmortem-culture/", "publisher": "Google SRE"}, {"title": "Postmortem culture: learning from failure (The Site Reliability Workbook, chapter 10)", "url": "https://sre.google/workbook/postmortem-culture/", "publisher": "Google SRE"}, {"title": "Name it to tame it: defining AI incidents and hazards", "url": "https://oecd.ai/en/wonk/defining-ai-incidents-and-hazards", "publisher": "OECD.AI"}, {"title": "Overview and methodology of the AI Incidents and Hazards Monitor", "url": "https://oecd.ai/en/incidents-methodology", "publisher": "OECD.AI"}, {"title": "Regulation (EU) 2024/1689 (Artificial Intelligence Act), Article 73: reporting of serious incidents", "url": "https://eur-lex.europa.eu/eli/reg/2024/1689/oj", "publisher": "EUR-Lex", "date": "2024"}]}-->
+<p>Most engineering organisations know what to do when a service goes down: page someone, restore it, write a postmortem, fix the causes. Far fewer know what to do when an AI feature confidently gives a customer wrong information, leaks something it shouldn't, or treats one group of users worse than another. There is often no alert, no owner and no record, just an unhappy customer and an awkward meeting.</p>
+
+<section class="block">
+<h2>Define what counts</h2>
+<p>A shared definition is the starting point. The OECD defines an <strong>AI incident</strong> as an event where the development or use of an AI system results in actual harm, and an <strong>AI hazard</strong> as one that could plausibly lead to harm. Its harm categories include injury to health, disruption of critical infrastructure, violations of rights or legal obligations, and harm to property, communities or the environment<sup class="cite"><a href="#ref-3">3</a></sup>. The OECD also tracks publicly reported incidents and hazards through its AI Incidents and Hazards Monitor<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+<p>Internally, I use a wider net, because most AI problems never reach the news. A useful internal definition adds near misses: wrong outputs caught by a human, guardrails triggering on real traffic, and quality regressions found in production.</p>
+</section>
+
+<section class="block">
+<h2>Borrow from SRE, deliberately</h2>
+<p>Google's SRE book describes blameless postmortems as focusing on contributing causes without indicting individuals, assuming people acted in good faith with the information they had. It warns that a culture of blame stops people bringing problems to light<sup class="cite"><a href="#ref-1">1</a></sup>. The SRE workbook adds that introducing postmortems is as much a cultural change as a technical one<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<p>That matters even more for AI. If an engineer who reports a model's embarrassing output gets blamed, the next one won't report it, and silent failures are exactly what AI systems produce.</p>
+<div class="callout"><p>The goal is to make reporting an AI failure feel like a contribution, not a confession. Everything else depends on people speaking up.</p></div>
+</section>
+
+<section class="block">
+<h2>What makes AI incidents different</h2>
+<table class="tbl">
+<thead><tr><th>Ordinary outage</th><th>AI incident</th></tr></thead>
+<tbody>
+<tr><td>Usually loud: errors, alerts, downtime</td><td>Often silent: the system works but the answer is wrong</td></tr>
+<tr><td>Reproducible with the same input</td><td>Probabilistic; the same prompt may not fail twice</td></tr>
+<tr><td>Cause is usually a change in code or infrastructure</td><td>Cause may be data, prompt, model version, retrieval or user behaviour</td></tr>
+<tr><td>Fix is a code or config change</td><td>Fix often includes evaluation cases, guardrails and product changes</td></tr>
+</tbody>
+</table>
+</section>
+
+<section class="block">
+<h2>The playbook</h2>
+<ol>
+<li><strong>Make it easy to report.</strong> A feedback button in the product, a channel for staff and a clear rule that guardrail triggers on real traffic open a ticket.</li>
+<li><strong>Capture the evidence automatically.</strong> Inputs, retrieved context, prompt and model versions, tool calls and outputs, with appropriate privacy controls, as described in <a href="/insights/llm-observability-opentelemetry-genai/">LLM observability</a>. Without this, AI postmortems become guesswork.</li>
+<li><strong>Classify severity by harm,</strong> using categories like the OECD's, not just by technical impact. A wrong answer to one vulnerable user can outrank an hour of downtime.</li>
+<li><strong>Contain first.</strong> Disable the feature, route to a safer model or add a temporary guardrail before investigating. Design these switches in advance.</li>
+<li><strong>Write the postmortem blamelessly</strong>, covering what happened, who was affected, contributing causes across data, prompts, models and product, and what made it hard to detect.</li>
+<li><strong>Turn every incident into evaluation cases.</strong> The failing inputs join your <a href="/insights/llm-evaluation-sets-that-predict-production/">evaluation set</a>, so the same failure can't quietly return after the next model update.</li>
+<li><strong>Review patterns quarterly.</strong> Individual incidents fix bugs; patterns reveal design problems, such as an agent with too many permissions or a retrieval index without access controls.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2>Regulatory context</h2>
+<p>Incident handling is increasingly expected by regulators and auditors. Serious incident reporting is part of the EU AI Act for high-risk systems<sup class="cite"><a href="#ref-5">5</a></sup>, and a working process is strong evidence for <a href="/insights/soc2-for-ai-startups/">SOC 2</a> and for governance programmes in the Gulf. Even where no rule applies, a record of how you learn from failures is one of the most persuasive things you can show an enterprise customer or investor.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I set up AI operations for engineering teams, from monitoring and evidence capture to postmortem practice and evaluation loops. As a <a href="/fractional-cto/">fractional CTO</a> I can build that culture alongside the systems. Or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>

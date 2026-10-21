@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI incident postmortems: learning when the model gets it wrong</title>
+<meta name="description" content="AI systems fail differently from ordinary software. How I adapt blameless postmortems for AI incidents, using the OECD definition of AI incidents and SRE practice." />
+<meta name="keywords" content="AI incident, AI incident response, blameless postmortem, AI postmortem template, OECD AI incidents, AI risk management, LLM failures, SRE postmortem culture, AI governance, fractional CTO" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://asksumanta.com/insights/ai-incident-postmortems/" />
+<meta name="theme-color" content="#111214" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="AI incident postmortems: learning when the model gets it wrong" />
+<meta property="og:description" content="AI systems fail differently from ordinary software. How I adapt blameless postmortems for AI incidents, using the OECD definition of AI incidents and SRE practice." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://asksumanta.com/insights/ai-incident-postmortems/" />
+<meta property="og:image" content="https://asksumanta.com/assets/og/ai-incident-postmortems.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="AI incident postmortems: learning when the model gets it wrong" />
+<meta name="twitter:description" content="AI systems fail differently from ordinary software. How I adapt blameless postmortems for AI incidents, using the OECD definition of AI incidents and SRE practice." />
+<meta name="twitter:image" content="https://asksumanta.com/assets/og/ai-incident-postmortems.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "BlogPosting", "headline": "AI incident postmortems: how to learn when the model gets it wrong", "description": "AI systems fail differently from ordinary software. How I adapt blameless postmortems for AI incidents, using the OECD definition of AI incidents and SRE practice.", "datePublished": "2026-10-21T16:30:00+04:00", "dateModified": "2026-10-21T16:30:00+04:00", "articleSection": "Leadership · AI operations", "genre": "Playbook", "citation": [{"@type": "CreativeWork", "name": "Postmortem culture: learning from failure (Site Reliability Engineering, chapter 15)", "url": "https://sre.google/sre-book/postmortem-culture/"}, {"@type": "CreativeWork", "name": "Postmortem culture: learning from failure (The Site Reliability Workbook, chapter 10)", "url": "https://sre.google/workbook/postmortem-culture/"}, {"@type": "CreativeWork", "name": "Name it to tame it: defining AI incidents and hazards", "url": "https://oecd.ai/en/wonk/defining-ai-incidents-and-hazards"}, {"@type": "CreativeWork", "name": "Overview and methodology of the AI Incidents and Hazards Monitor", "url": "https://oecd.ai/en/incidents-methodology"}, {"@type": "CreativeWork", "name": "Regulation (EU) 2024/1689 (Artificial Intelligence Act), Article 73: reporting of serious incidents", "url": "https://eur-lex.europa.eu/eli/reg/2024/1689/oj"}], "author": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "publisher": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "mainEntityOfPage": "https://asksumanta.com/insights/ai-incident-postmortems/", "image": "https://asksumanta.com/assets/og/ai-incident-postmortems.png", "keywords": "AI incident, AI incident response, blameless postmortem, AI postmortem template, OECD AI incidents, AI risk management, LLM failures, SRE postmortem culture, AI governance, fractional CTO", "wordCount": 692}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://asksumanta.com/"}, {"@type": "ListItem", "position": 2, "name": "Insights", "item": "https://asksumanta.com/insights/"}, {"@type": "ListItem", "position": 3, "name": "AI incident postmortems: how to learn when the model gets it wrong", "item": "https://asksumanta.com/insights/ai-incident-postmortems/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What is an AI incident?", "acceptedAnswer": {"@type": "Answer", "text": "The OECD defines an AI incident as an event where the development or use of an AI system results in actual harm, such as injury, disruption of critical infrastructure, rights violations, or harm to property, communities or the environment. An AI hazard is an event that could plausibly lead to such harm."}}, {"@type": "Question", "name": "What is a blameless postmortem?", "acceptedAnswer": {"@type": "Answer", "text": "A review practice from site reliability engineering that focuses on the contributing causes of an incident without blaming individuals, on the assumption that people acted in good faith with the information they had."}}, {"@type": "Question", "name": "How are AI postmortems different from outage postmortems?", "acceptedAnswer": {"@type": "Answer", "text": "AI failures are often silent, probabilistic and hard to reproduce. Postmortems need captured inputs, model and prompt versions and retrieved context, and fixes usually involve evaluation sets and guardrails as well as code."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+</script>
+</head>
+<body class="sub is-post">
+<div class="progress" id="progress"></div>
+<nav>
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="/#practice">Services</a>
+      <a href="/#work">Case studies</a>
+      <a href="/insights/">Insights</a>
+      <a href="/#assess">Analyse</a>
+      <a href="/#connect">Connect</a>
+    </div>
+    <div class="nav-r">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/insights/">Insights</a> <span>/</span> <em>AI incident postmortems: how to learn when the model gets it wrong</em></div>
+    <div class="kicker">Leadership · AI operations</div>
+    <h1>AI incident postmortems: how to learn when the model gets it wrong</h1>
+    <p class="sub-lede">When a chatbot invents a refund policy or a model scores applicants unfairly, most teams have no process for it. Site reliability engineering solved the learning problem for outages years ago. Adapted carefully, the same approach works for AI.</p>
+    <div class="ameta"><span class="fmt">Playbook</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-10-21T16:30:00+04:00">21 Oct 2026 · 16:30 GST</time><span>7 min read</span><span>5 sources</span></div><div class="atags"><span class="tagp">#leadership</span><span class="tagp">#ai</span><span class="tagp">#governance</span><span class="tagp">#platform</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Playbook cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><circle cx="560" cy="61" r="8" class="cv-dot hl"/><rect x="590" y="50" width="461" height="22" class="cv-bar hl"/><circle cx="560" cy="109" r="8" class="cv-dot"/><rect x="590" y="98" width="553" height="22" class="cv-bar"/><circle cx="560" cy="157" r="8" class="cv-dot"/><rect x="590" y="146" width="261" height="22" class="cv-bar"/><circle cx="560" cy="205" r="8" class="cv-dot hl"/><rect x="590" y="194" width="555" height="22" class="cv-bar hl"/><circle cx="560" cy="253" r="8" class="cv-dot"/><rect x="590" y="242" width="339" height="22" class="cv-bar"/><circle cx="560" cy="301" r="8" class="cv-dot"/><rect x="590" y="290" width="179" height="22" class="cv-bar"/><circle cx="560" cy="349" r="8" class="cv-dot hl"/><rect x="590" y="338" width="438" height="22" class="cv-bar hl"/><text x="60" y="90" class="cv-k">PLAYBOOK · LEADERSHIP · AI OPERATIONS</text><text x="60" y="350" class="cv-n">21 Oct 2026 · 16:30 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <p>Most engineering organisations know what to do when a service goes down: page someone, restore it, write a postmortem, fix the causes. Far fewer know what to do when an AI feature confidently gives a customer wrong information, leaks something it shouldn't, or treats one group of users worse than another. There is often no alert, no owner and no record, just an unhappy customer and an awkward meeting.</p>
+
+<section class="block">
+<h2 id="define-what-counts">Define what counts</h2>
+<p>A shared definition is the starting point. The OECD defines an <strong>AI incident</strong> as an event where the development or use of an AI system results in actual harm, and an <strong>AI hazard</strong> as one that could plausibly lead to harm. Its harm categories include injury to health, disruption of critical infrastructure, violations of rights or legal obligations, and harm to property, communities or the environment<sup class="cite"><a href="#ref-3">3</a></sup>. The OECD also tracks publicly reported incidents and hazards through its AI Incidents and Hazards Monitor<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+<p>Internally, I use a wider net, because most AI problems never reach the news. A useful internal definition adds near misses: wrong outputs caught by a human, guardrails triggering on real traffic, and quality regressions found in production.</p>
+</section>
+
+<section class="block">
+<h2 id="borrow-from-sre-deliberately">Borrow from SRE, deliberately</h2>
+<p>Google's SRE book describes blameless postmortems as focusing on contributing causes without indicting individuals, assuming people acted in good faith with the information they had. It warns that a culture of blame stops people bringing problems to light<sup class="cite"><a href="#ref-1">1</a></sup>. The SRE workbook adds that introducing postmortems is as much a cultural change as a technical one<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<p>That matters even more for AI. If an engineer who reports a model's embarrassing output gets blamed, the next one won't report it, and silent failures are exactly what AI systems produce.</p>
+<div class="callout"><p>The goal is to make reporting an AI failure feel like a contribution, not a confession. Everything else depends on people speaking up.</p></div>
+</section>
+
+<section class="block">
+<h2 id="what-makes-ai-incidents-different">What makes AI incidents different</h2>
+<table class="tbl">
+<thead><tr><th>Ordinary outage</th><th>AI incident</th></tr></thead>
+<tbody>
+<tr><td>Usually loud: errors, alerts, downtime</td><td>Often silent: the system works but the answer is wrong</td></tr>
+<tr><td>Reproducible with the same input</td><td>Probabilistic; the same prompt may not fail twice</td></tr>
+<tr><td>Cause is usually a change in code or infrastructure</td><td>Cause may be data, prompt, model version, retrieval or user behaviour</td></tr>
+<tr><td>Fix is a code or config change</td><td>Fix often includes evaluation cases, guardrails and product changes</td></tr>
+</tbody>
+</table>
+</section>
+
+<section class="block">
+<h2 id="the-playbook">The playbook</h2>
+<ol>
+<li><strong>Make it easy to report.</strong> A feedback button in the product, a channel for staff and a clear rule that guardrail triggers on real traffic open a ticket.</li>
+<li><strong>Capture the evidence automatically.</strong> Inputs, retrieved context, prompt and model versions, tool calls and outputs, with appropriate privacy controls, as described in <a href="/insights/llm-observability-opentelemetry-genai/">LLM observability</a>. Without this, AI postmortems become guesswork.</li>
+<li><strong>Classify severity by harm,</strong> using categories like the OECD's, not just by technical impact. A wrong answer to one vulnerable user can outrank an hour of downtime.</li>
+<li><strong>Contain first.</strong> Disable the feature, route to a safer model or add a temporary guardrail before investigating. Design these switches in advance.</li>
+<li><strong>Write the postmortem blamelessly</strong>, covering what happened, who was affected, contributing causes across data, prompts, models and product, and what made it hard to detect.</li>
+<li><strong>Turn every incident into evaluation cases.</strong> The failing inputs join your <a href="/insights/llm-evaluation-sets-that-predict-production/">evaluation set</a>, so the same failure can't quietly return after the next model update.</li>
+<li><strong>Review patterns quarterly.</strong> Individual incidents fix bugs; patterns reveal design problems, such as an agent with too many permissions or a retrieval index without access controls.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2 id="regulatory-context">Regulatory context</h2>
+<p>Incident handling is increasingly expected by regulators and auditors. Serious incident reporting is part of the EU AI Act for high-risk systems<sup class="cite"><a href="#ref-5">5</a></sup>, and a working process is strong evidence for <a href="/insights/soc2-for-ai-startups/">SOC 2</a> and for governance programmes in the Gulf. Even where no rule applies, a record of how you learn from failures is one of the most persuasive things you can show an enterprise customer or investor.</p>
+</section>
+
+<section class="block">
+<h2 id="how-i-can-help">How I can help</h2>
+<p>I set up AI operations for engineering teams, from monitoring and evidence capture to postmortem practice and evaluation loops. As a <a href="/fractional-cto/">fractional CTO</a> I can build that culture alongside the systems. Or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://sre.google/sre-book/postmortem-culture/" target="_blank" rel="noopener">Postmortem culture: learning from failure (Site Reliability Engineering, chapter 15)</a><small>Google SRE</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://sre.google/workbook/postmortem-culture/" target="_blank" rel="noopener">Postmortem culture: learning from failure (The Site Reliability Workbook, chapter 10)</a><small>Google SRE</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://oecd.ai/en/wonk/defining-ai-incidents-and-hazards" target="_blank" rel="noopener">Name it to tame it: defining AI incidents and hazards</a><small>OECD.AI</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://oecd.ai/en/incidents-methodology" target="_blank" rel="noopener">Overview and methodology of the AI Incidents and Hazards Monitor</a><small>OECD.AI</small></div></li><li id="ref-5"><span class="rn">5</span><div><a href="https://eur-lex.europa.eu/eli/reg/2024/1689/oj" target="_blank" rel="noopener">Regulation (EU) 2024/1689 (Artificial Intelligence Act), Article 73: reporting of serious incidents</a><small>EUR-Lex · 2024</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fai-incident-postmortems%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fai-incident-postmortems%2F&amp;text=AI%20incident%20postmortems%3A%20how%20to%20learn%20when%20the%20model%20gets%20it%20wrong" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=AI%20incident%20postmortems%3A%20how%20to%20learn%20when%20the%20model%20gets%20it%20wrong%20https%3A%2F%2Fasksumanta.com%2Finsights%2Fai-incident-postmortems%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://asksumanta.com/insights/ai-incident-postmortems/">Copy link</button></div>
+      <div class="pnav"><a class="pn prev" href="/insights/eu-ai-act-ai-literacy-article-4/"><small>← Previous</small><b>AI literacy under the EU AI Act: building a programme that holds up</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#define-what-counts">Define what counts</a></li><li><a href="#borrow-from-sre-deliberately">Borrow from SRE, deliberately</a></li><li><a href="#what-makes-ai-incidents-different">What makes AI incidents different</a></li><li><a href="#the-playbook">The playbook</a></li><li><a href="#regulatory-context">Regulatory context</a></li><li><a href="#how-i-can-help">How I can help</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>What is an AI incident?</summary><p>The OECD defines an AI incident as an event where the development or use of an AI system results in actual harm, such as injury, disruption of critical infrastructure, rights violations, or harm to property, communities or the environment. An AI hazard is an event that could plausibly lead to such harm.</p></details><details class="rise"><summary>What is a blameless postmortem?</summary><p>A review practice from site reliability engineering that focuses on the contributing causes of an incident without blaming individuals, on the assumption that people acted in good faith with the information they had.</p></details><details class="rise"><summary>How are AI postmortems different from outage postmortems?</summary><p>AI failures are often silent, probabilistic and hard to reproduce. Postmortems need captured inputs, model and prompt versions and retrieved context, and fixes usually involve evaluation sets and guardrails as well as code.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/fractional-cto/"><small>Service</small><b>Fractional CTO</b><span>I work as a part-time CTO for founders, CEOs and boards who need experienced technical judgement now, and a team that can carry it on after I step back.</span><i>→</i></a><a class="rcard rise" href="/ai-architect/"><small>Service</small><b>AI &amp; LLM architecture</b><span>I design and build AI systems that leadership can trust: grounded in your data, measured by evaluations, governed by your rules and priced so they make sense at scale.</span><i>→</i></a><a class="rcard rise" href="/technical-due-diligence/"><small>Service</small><b>Technical due diligence</b><span>I give investors an independent, plain-language view of a company&#x27;s technology, team and AI claims, so the risks are priced in before the deal closes, not discovered after.</span><i>→</i></a><a class="rcard rise" href="/insights/eu-ai-act-ai-literacy-article-4/"><small>Insight</small><b>AI literacy under the EU AI Act: building a programme that holds up</b><span>AI literacy is the least dramatic obligation in the EU AI Act and the one that applies to almost everyone. The Digital Omnibus softened the wording but kept the duty. Here is how I turn it into something useful rather than a slide deck.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: AI incident postmortems: how to learn when the model gets it wrong">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
+        <p class="floc">United States &amp; UAE · working globally</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/uae/">Fractional CTO in the UAE</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/ai-incident-postmortems/">AI incident postmortems: how to learn when the model gets it wrong</a></li><li><a href="/insights/eu-ai-act-ai-literacy-article-4/">AI literacy under the EU AI Act: building a programme that holds up</a></li><li><a href="/insights/structured-data-for-ai-search/">Structured data for AI search: what it does, what it doesn&#x27;t, and how I approach it</a></li><li><a href="/insights/llm-inference-serving-vllm/">LLM inference serving: what modern engines like vLLM actually optimise</a></li><li><a href="/insights/focus-finops-ai-cost-allocation/">FOCUS and AI spend: how to make token costs visible to finance</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>
