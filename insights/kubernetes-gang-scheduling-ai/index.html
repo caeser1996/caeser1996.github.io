@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Gang scheduling in Kubernetes: native support for AI training jobs</title>
+<meta name="description" content="Kubernetes now schedules multi-pod AI jobs all-or-nothing. How Workload-aware scheduling evolved from v1.35 to beta in v1.37, where Kueue fits, and how I plan GPU clusters." />
+<meta name="keywords" content="Kubernetes gang scheduling, workload aware scheduling, Kubernetes Workload API, PodGroup API, Kueue, AI training on Kubernetes, GPU cluster scheduling, Kubernetes v1.37, distributed training scheduling, platform engineering" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://asksumanta.com/insights/kubernetes-gang-scheduling-ai/" />
+<meta name="theme-color" content="#111214" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="Gang scheduling in Kubernetes: native support for AI training jobs" />
+<meta property="og:description" content="Kubernetes now schedules multi-pod AI jobs all-or-nothing. How Workload-aware scheduling evolved from v1.35 to beta in v1.37, where Kueue fits, and how I plan GPU clusters." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://asksumanta.com/insights/kubernetes-gang-scheduling-ai/" />
+<meta property="og:image" content="https://asksumanta.com/assets/og/kubernetes-gang-scheduling-ai.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Gang scheduling in Kubernetes: native support for AI training jobs" />
+<meta name="twitter:description" content="Kubernetes now schedules multi-pod AI jobs all-or-nothing. How Workload-aware scheduling evolved from v1.35 to beta in v1.37, where Kueue fits, and how I plan GPU clusters." />
+<meta name="twitter:image" content="https://asksumanta.com/assets/og/kubernetes-gang-scheduling-ai.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "BlogPosting", "headline": "Gang scheduling in Kubernetes: native, all-or-nothing scheduling for AI training", "description": "Kubernetes now schedules multi-pod AI jobs all-or-nothing. How Workload-aware scheduling evolved from v1.35 to beta in v1.37, where Kueue fits, and how I plan GPU clusters.", "datePublished": "2026-10-21T20:15:00+04:00", "dateModified": "2026-10-21T20:15:00+04:00", "articleSection": "Cloud · Kubernetes · AI infrastructure", "genre": "Analysis", "citation": [{"@type": "CreativeWork", "name": "Kubernetes v1.35: Introducing Workload Aware Scheduling", "url": "https://kubernetes.io/blog/2025/12/29/kubernetes-v1-35-introducing-workload-aware-scheduling/"}, {"@type": "CreativeWork", "name": "Kubernetes v1.36: Advancing Workload-Aware Scheduling", "url": "https://kubernetes.io/blog/2026/05/13/kubernetes-v1-36-advancing-workload-aware-scheduling/"}, {"@type": "CreativeWork", "name": "Kubernetes v1.37: Advancing Workload-Aware Scheduling", "url": "https://kubernetes.io/blog/2026/09/08/kubernetes-v1-37-advancing-workload-aware-scheduling/"}, {"@type": "CreativeWork", "name": "Why is my Kubernetes Job still pending? Tracing Kueue admission with Headlamp", "url": "https://kubernetes.io/blog/2026/10/14/tracing-kueue-admission-with-headlamp/"}], "author": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "publisher": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "mainEntityOfPage": "https://asksumanta.com/insights/kubernetes-gang-scheduling-ai/", "image": "https://asksumanta.com/assets/og/kubernetes-gang-scheduling-ai.png", "keywords": "Kubernetes gang scheduling, workload aware scheduling, Kubernetes Workload API, PodGroup API, Kueue, AI training on Kubernetes, GPU cluster scheduling, Kubernetes v1.37, distributed training scheduling, platform engineering", "wordCount": 702}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://asksumanta.com/"}, {"@type": "ListItem", "position": 2, "name": "Insights", "item": "https://asksumanta.com/insights/"}, {"@type": "ListItem", "position": 3, "name": "Gang scheduling in Kubernetes: native, all-or-nothing scheduling for AI training", "item": "https://asksumanta.com/insights/kubernetes-gang-scheduling-ai/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What is gang scheduling?", "acceptedAnswer": {"@type": "Answer", "text": "Scheduling a group of pods all-or-nothing: either every pod in the group (or at least a minimum count) can be placed at once, or none are. It prevents partially scheduled distributed jobs from holding resources without being able to run."}}, {"@type": "Question", "name": "Does Kubernetes support gang scheduling natively?", "acceptedAnswer": {"@type": "Answer", "text": "Yes, increasingly. Kubernetes v1.35 introduced an alpha Workload API with gang scheduling, v1.36 split it into Workload and PodGroup APIs and added topology-aware scheduling and workload-aware preemption, and v1.37 graduated the core APIs and gang scheduling to beta."}}, {"@type": "Question", "name": "Do I still need Kueue?", "acceptedAnswer": {"@type": "Answer", "text": "Kueue handles job queueing, quotas and admission across teams, which is a different concern from placing a group of pods. Many GPU platforms will use both: Kueue to decide which jobs may run, and the scheduler to place each job's pods together."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+</script>
+</head>
+<body class="sub is-post">
+<div class="progress" id="progress"></div>
+<nav>
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="/#practice">Services</a>
+      <a href="/#work">Case studies</a>
+      <a href="/insights/">Insights</a>
+      <a href="/#assess">Analyse</a>
+      <a href="/#connect">Connect</a>
+    </div>
+    <div class="nav-r">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/insights/">Insights</a> <span>/</span> <em>Gang scheduling in Kubernetes: native, all-or-nothing scheduling for AI training</em></div>
+    <div class="kicker">Cloud · Kubernetes · AI infrastructure</div>
+    <h1>Gang scheduling in Kubernetes: native, all-or-nothing scheduling for AI training</h1>
+    <p class="sub-lede">A distributed training job that gets only half its GPUs doesn&#x27;t run slowly; it doesn&#x27;t run at all, while holding expensive hardware hostage. Kubernetes has been building native gang scheduling for exactly this, and in v1.37 it reached beta.</p>
+    <div class="ameta"><span class="fmt">Analysis</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-10-21T20:15:00+04:00">21 Oct 2026 · 20:15 GST</time><span>8 min read</span><span>4 sources</span></div><div class="atags"><span class="tagp">#kubernetes</span><span class="tagp">#ai</span><span class="tagp">#platform</span><span class="tagp">#finops</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Analysis cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><polyline points="540,227 596,215 652,183 708,203 764,199 820,170 876,206 932,222 988,177 1044,183 1100,232 1156,243" class="cv-line"/><polyline points="540,137 596,148 652,247 708,212 764,162 820,131 876,282 932,195 988,174 1044,246 1100,146 1156,274" class="cv-line"/><polyline points="540,159 596,286 652,130 708,111 764,290 820,258 876,229 932,237 988,276 1044,100 1100,233 1156,294" class="cv-line hl"/><text x="60" y="90" class="cv-k">ANALYSIS · CLOUD · KUBERNETES · AI INFRASTRUCTURE</text><text x="60" y="350" class="cv-n">21 Oct 2026 · 20:15 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <p>Distributed training has an awkward property: a job that needs eight GPU workers is useless with six. On a busy cluster, the default scheduler places pods one at a time, so two large jobs can each grab half of what they need and both sit waiting forever, holding GPUs nobody else can use. For years the answer was a custom scheduler or an add-on. Kubernetes has been building the answer into the core.</p>
+
+<section class="block">
+<h2 id="how-it-evolved-over-three-releases">How it evolved over three releases</h2>
+<table class="tbl">
+<thead><tr><th>Release</th><th>What arrived</th></tr></thead>
+<tbody>
+<tr><td>v1.35 (Dec 2025)</td><td>Alpha Workload API with all-or-nothing gang scheduling, plus opportunistic batching to speed up scheduling of identical pods<sup class="cite"><a href="#ref-1">1</a></sup></td></tr>
+<tr><td>v1.36 (May 2026)</td><td>Workload becomes a static template and a new PodGroup API holds runtime state; a PodGroup scheduling cycle, first topology-aware scheduling and workload-aware preemption, and DRA ResourceClaims for pod groups<sup class="cite"><a href="#ref-2">2</a></sup></td></tr>
+<tr><td>v1.37 (Sep 2026)</td><td>Workload and PodGroup APIs and gang scheduling graduate to beta, with workload-aware preemption and shared DRA claims; new CompositePodGroup API for multi-level groups; mutable minimum counts for elastic jobs<sup class="cite"><a href="#ref-3">3</a></sup></td></tr>
+</tbody>
+</table>
+<p>The mechanics are straightforward. A pod group declares a minimum count. In the original design, the scheduler held pods at a permit gate until it had found placements for the whole group; if only part of the group fitted within the timeout, all of them went back to the queue and their reserved resources were released<sup class="cite"><a href="#ref-1">1</a></sup>. Later releases made the pod group the unit that is queued and scheduled<sup class="cite"><a href="#ref-2">2</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+</section>
+
+<section class="block">
+<h2 id="why-v1-37-matters">Why v1.37 matters</h2>
+<p>Beta means the core APIs are one step from general availability, in the project's own words<sup class="cite"><a href="#ref-3">3</a></sup>. Three changes stand out for AI platforms:</p>
+<ul>
+<li><strong>Workload-aware preemption.</strong> A high-priority training job can preempt lower-priority work as a group, rather than evicting pods one by one in ways that don't free a usable block of GPUs.</li>
+<li><strong>CompositePodGroup.</strong> Multi-level groups with topology constraints support structures commonly managed by JobSet and LeaderWorkerSet, which covers many distributed training and multi-host inference patterns<sup class="cite"><a href="#ref-3">3</a></sup>.</li>
+<li><strong>Elastic minimum counts.</strong> Controllers can change a group's minimum size on the fly, so jobs can shrink or grow without interrupting pods already scheduled<sup class="cite"><a href="#ref-3">3</a></sup>.</li>
+</ul>
+<p>Alpha API versions have changed with breaking changes between releases<sup class="cite"><a href="#ref-3">3</a></sup>. If you adopted early, budget time for migration.</p>
+</section>
+
+<section class="block">
+<h2 id="where-kueue-fits">Where Kueue fits</h2>
+<p>Gang scheduling decides how one job's pods are placed. Kueue answers a different question: which jobs may run at all, given team quotas and shared capacity. A job becomes a Kueue workload, is evaluated against its local and cluster queues, resource flavours and optional cohort, and is resumed only when admitted<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/kubernetes-gang-scheduling-ai/kueue-admission-architecture.webp" alt="Diagram of Kueue admission: a Kubernetes Job becomes a Kueue Workload, evaluated against LocalQueue, ClusterQueue, ResourceFlavor and an optional Cohort before the Job is resumed, with Headlamp reading these resources through the Kubernetes API" width="1600" height="941" loading="lazy"></div><figcaption>Kueue's admission flow, from job to workload to queues and resource flavours. <span class="credit">Source: <a href="https://kubernetes.io/blog/2026/10/14/tracing-kueue-admission-with-headlamp/" target="_blank" rel="noopener">Kubernetes blog, Tracing Kueue Admission with Headlamp</a> · CC BY 4.0</span></figcaption></figure>
+<p>On a shared GPU cluster, I use both layers: Kueue for fairness and quotas between teams, and native gang scheduling so that admitted jobs land together. The same blog post is a useful guide to answering the most common question on such platforms: why is my job still pending?<sup class="cite"><a href="#ref-4">4</a></sup></p>
+</section>
+
+<section class="block">
+<h2 id="how-i-would-plan-a-gpu-cluster-now">How I would plan a GPU cluster now</h2>
+<ol>
+<li><strong>Separate admission from placement.</strong> Quotas and priorities in a queueing layer; all-or-nothing placement in the scheduler.</li>
+<li><strong>Model topology.</strong> Training performance depends on how close workers are. Use topology-aware placement where your hardware has meaningful racks or interconnect domains.</li>
+<li><strong>Use DRA for GPUs</strong>, as in <a href="/insights/kubernetes-dra-gpu-scheduling/">Kubernetes DRA for GPUs</a>, now that pod groups can share resource claims.</li>
+<li><strong>Set preemption policy deliberately.</strong> Decide which work can be interrupted, and make sure training jobs checkpoint so preemption doesn't waste hours.</li>
+<li><strong>Measure idle GPU time.</strong> Partially scheduled jobs and fragmentation show up as expensive idle hardware, which the cost practices in <a href="/insights/kubernetes-finops-scale-to-zero/">Kubernetes FinOps</a> and <a href="/insights/focus-finops-ai-cost-allocation/">FOCUS for AI spend</a> can make visible.</li>
+<li><strong>Pilot on beta in non-production</strong> before replacing an existing custom scheduler, and keep an eye on the path to GA.</li>
+</ol>
+<div class="callout"><p>The most expensive state for a GPU is allocated but not working. Gang scheduling attacks one of the main causes of that state.</p></div>
+</section>
+
+<section class="block">
+<h2 id="how-i-can-help">How I can help</h2>
+<p>I design Kubernetes platforms for AI training and inference, from scheduling and quotas to GPU allocation and cost visibility. See my <a href="/ai-architect/">AI architecture work</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://kubernetes.io/blog/2025/12/29/kubernetes-v1-35-introducing-workload-aware-scheduling/" target="_blank" rel="noopener">Kubernetes v1.35: Introducing Workload Aware Scheduling</a><small>Kubernetes blog · 29 Dec 2025</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://kubernetes.io/blog/2026/05/13/kubernetes-v1-36-advancing-workload-aware-scheduling/" target="_blank" rel="noopener">Kubernetes v1.36: Advancing Workload-Aware Scheduling</a><small>Kubernetes blog · 13 May 2026</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://kubernetes.io/blog/2026/09/08/kubernetes-v1-37-advancing-workload-aware-scheduling/" target="_blank" rel="noopener">Kubernetes v1.37: Advancing Workload-Aware Scheduling</a><small>Kubernetes blog · 8 Sep 2026</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://kubernetes.io/blog/2026/10/14/tracing-kueue-admission-with-headlamp/" target="_blank" rel="noopener">Why is my Kubernetes Job still pending? Tracing Kueue admission with Headlamp</a><small>Kubernetes blog · 14 Oct 2026</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fkubernetes-gang-scheduling-ai%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fkubernetes-gang-scheduling-ai%2F&amp;text=Gang%20scheduling%20in%20Kubernetes%3A%20native%2C%20all-or-nothing%20scheduling%20for%20AI%20training" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=Gang%20scheduling%20in%20Kubernetes%3A%20native%2C%20all-or-nothing%20scheduling%20for%20AI%20training%20https%3A%2F%2Fasksumanta.com%2Finsights%2Fkubernetes-gang-scheduling-ai%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://asksumanta.com/insights/kubernetes-gang-scheduling-ai/">Copy link</button></div>
+      <div class="pnav"><a class="pn prev" href="/insights/ai-incident-postmortems/"><small>← Previous</small><b>AI incident postmortems: how to learn when the model gets it wrong</b></a><a class="pn next" href="/insights/synthetic-patient-data-synthea/"><small>Next →</small><b>Synthetic patient data: where Synthea helps, and where it can mislead you</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#how-it-evolved-over-three-releases">How it evolved over three releases</a></li><li><a href="#why-v1-37-matters">Why v1.37 matters</a></li><li><a href="#where-kueue-fits">Where Kueue fits</a></li><li><a href="#how-i-would-plan-a-gpu-cluster-now">How I would plan a GPU cluster now</a></li><li><a href="#how-i-can-help">How I can help</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>What is gang scheduling?</summary><p>Scheduling a group of pods all-or-nothing: either every pod in the group (or at least a minimum count) can be placed at once, or none are. It prevents partially scheduled distributed jobs from holding resources without being able to run.</p></details><details class="rise"><summary>Does Kubernetes support gang scheduling natively?</summary><p>Yes, increasingly. Kubernetes v1.35 introduced an alpha Workload API with gang scheduling, v1.36 split it into Workload and PodGroup APIs and added topology-aware scheduling and workload-aware preemption, and v1.37 graduated the core APIs and gang scheduling to beta.</p></details><details class="rise"><summary>Do I still need Kueue?</summary><p>Kueue handles job queueing, quotas and admission across teams, which is a different concern from placing a group of pods. Many GPU platforms will use both: Kueue to decide which jobs may run, and the scheduler to place each job&#x27;s pods together.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/ai-architect/"><small>Service</small><b>AI &amp; LLM architecture</b><span>I design and build AI systems that leadership can trust: grounded in your data, measured by evaluations, governed by your rules and priced so they make sense at scale.</span><i>→</i></a><a class="rcard rise" href="/fractional-cto/"><small>Service</small><b>Fractional CTO</b><span>I work as a part-time CTO for founders, CEOs and boards who need experienced technical judgement now, and a team that can carry it on after I step back.</span><i>→</i></a><a class="rcard rise" href="/technical-due-diligence/"><small>Service</small><b>Technical due diligence</b><span>I give investors an independent, plain-language view of a company&#x27;s technology, team and AI claims, so the risks are priced in before the deal closes, not discovered after.</span><i>→</i></a><a class="rcard rise" href="/insights/synthetic-patient-data-synthea/"><small>Insight</small><b>Synthetic patient data: where Synthea helps, and where it can mislead you</b><span>Every health tech team wants data to build with before they can get access to real patient records. Synthetic data is the obvious answer, and a good one, as long as you know which questions it can&#x27;t answer.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: Gang scheduling in Kubernetes: native, all-or-nothing scheduling for AI training">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
+        <p class="floc">United States &amp; UAE · working globally</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/uae/">Fractional CTO in the UAE</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/synthetic-patient-data-synthea/">Synthetic patient data: where Synthea helps, and where it can mislead you</a></li><li><a href="/insights/kubernetes-gang-scheduling-ai/">Gang scheduling in Kubernetes: native, all-or-nothing scheduling for AI training</a></li><li><a href="/insights/ai-incident-postmortems/">AI incident postmortems: how to learn when the model gets it wrong</a></li><li><a href="/insights/eu-ai-act-ai-literacy-article-4/">AI literacy under the EU AI Act: building a programme that holds up</a></li><li><a href="/insights/structured-data-for-ai-search/">Structured data for AI search: what it does, what it doesn&#x27;t, and how I approach it</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>

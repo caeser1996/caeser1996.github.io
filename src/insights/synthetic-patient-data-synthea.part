@@ -1,0 +1,50 @@
+<!--{"title": "Synthetic patient data: where Synthea helps and where it misleads", "description": "Synthetic health records let teams build without touching PHI, but they don't behave like real data. When I use Synthea, de-identified data or real data in health AI projects.", "h1": "Synthetic patient data: where Synthea helps, and where it can mislead you", "kicker": "Healthcare · Data", "lede": "Every health tech team wants data to build with before they can get access to real patient records. Synthetic data is the obvious answer, and a good one, as long as you know which questions it can't answer.", "date": "2026-10-21", "datetime": "2026-10-21T20:30:00+04:00", "readtime": "7 min read", "format": "comparison", "tags": ["healthcare", "data", "fhir", "ai"], "keywords": ["synthetic patient data", "Synthea", "synthetic EHR data", "HIPAA de-identification", "Safe Harbor Expert Determination", "health AI development data", "FHIR test data", "OMOP synthetic data", "clinical AI validation", "healthcare data architect"], "faq": [["What is Synthea?", "An open-source synthetic patient generator described in a 2018 JAMIA paper. It simulates patient lifespans using publicly available data and produces records in standard formats including HL7 FHIR and C-CDA, free of privacy restrictions."], ["Can I train or validate clinical AI on Synthea data?", "It is useful for building and testing pipelines, but not for judging clinical performance. Later evaluations note that synthetic records lack the errors, missing fields and local conventions of real EHR data, and that some distributions need modification to be realistic."], ["What are the HIPAA de-identification methods?", "HHS guidance describes two methods: Safe Harbor, which removes specified identifiers, and Expert Determination, in which a qualified expert determines that the risk of re-identification is very small."]], "related": ["/healthcare-data-architecture/", "/ai-architect/", "/fractional-cto/"], "citations": [{"title": "Synthea: an approach, method, and software mechanism for generating synthetic patients and the synthetic electronic health care record", "url": "https://academic.oup.com/jamia/article/25/3/230/4098271", "publisher": "Walonoski et al., JAMIA", "date": "Mar 2018"}, {"title": "Evaluating Synthea (OHDSI Symposium poster)", "url": "https://ohdsi.org/wp-content/uploads/2024/10/41-Wagner-Evaluating_Synthea-Clair-Blacketer.pdf", "publisher": "OHDSI", "date": "Oct 2024"}, {"title": "Serialisation strategy matters: how FHIR data format affects LLM medication reconciliation", "url": "https://arxiv.org/abs/2604.21076", "publisher": "arXiv", "date": "2026"}, {"title": "Guidance regarding methods for de-identification of protected health information", "url": "https://www.hhs.gov/hipaa/for-professionals/special-topics/de-identification/index.html", "publisher": "US Department of Health and Human Services"}, {"title": "Adapting Synthea for Germany's MII FHIR profiles", "url": "https://medblocks.com/blog/highmed-synthea-german-mii-fhir-profiles", "publisher": "Medblocks"}]}-->
+<p>Health tech projects often stall in the same place: engineering is ready, but data access agreements, ethics approvals and security reviews take months. Synthetic data fills the gap. Used well, it lets a team build and test an entire pipeline before seeing a single real record. Used badly, it produces a model that looks great in testing and fails on contact with a real hospital.</p>
+
+<section class="block">
+<h2>What Synthea is</h2>
+<p>Synthea is an open-source synthetic patient generator, described in a 2018 JAMIA paper. It simulates patient lifespans using publicly available data, covering common reasons for primary care visits and high-burden chronic conditions in the United States, and outputs records in formats such as HL7 FHIR and C-CDA, free of legal and privacy restrictions<sup class="cite"><a href="#ref-1">1</a></sup>. For FHIR and OMOP pipeline work, it is the default starting point.</p>
+</section>
+
+<section class="block">
+<h2>The realism gap</h2>
+<p>Synthetic data is clean in ways real data never is. A 2026 study using Synthea output notes that real EHR records contain transcription errors, inconsistent formatting, missing fields, local coding conventions and data quality issues not present in Synthea data<sup class="cite"><a href="#ref-3">3</a></sup>. An evaluation presented at the OHDSI symposium summarised earlier findings that some Synthea distributions needed external modification to be realistic, and that more validation was needed for chronic disease tracking<sup class="cite"><a href="#ref-2">2</a></sup>. And it is American by design: teams in other countries have had to adapt it to local profiles<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<div class="callout"><p>Synthetic data tells you whether your system works. It cannot tell you whether your model is right.</p></div>
+</section>
+
+<section class="block">
+<h2>Synthetic, de-identified or real: which for what</h2>
+<table class="tbl">
+<thead><tr><th>Task</th><th>Synthetic</th><th>De-identified</th><th>Real (controlled)</th></tr></thead>
+<tbody>
+<tr><td>Building FHIR and OMOP pipelines</td><td>Ideal</td><td>Useful for edge cases</td><td>Final validation</td></tr>
+<tr><td>Developer environments and demos</td><td>Ideal</td><td>Rarely needed</td><td>Avoid</td></tr>
+<tr><td>Load and performance testing</td><td>Ideal, at any scale</td><td>Not needed</td><td>Avoid</td></tr>
+<tr><td>Data quality rules</td><td>Too clean to test them</td><td>Good</td><td>Best</td></tr>
+<tr><td>Model training</td><td>Prototyping only</td><td>Often appropriate</td><td>When governance allows</td></tr>
+<tr><td>Clinical performance and bias evaluation</td><td>Not valid</td><td>Possible with care</td><td>Required</td></tr>
+</tbody>
+</table>
+<p>De-identified data sits in the middle. HHS guidance describes two HIPAA methods: Safe Harbor, removing specified identifiers, and Expert Determination, where a qualified expert concludes the risk of re-identification is very small<sup class="cite"><a href="#ref-4">4</a></sup>. Free-text notes are the hard part; identifiers hide in narrative.</p>
+</section>
+
+<section class="block">
+<h2>How I use synthetic data in projects</h2>
+<ol>
+<li><strong>Build the whole pipeline on synthetic data first:</strong> ingestion, <a href="/insights/fhir-to-omop-architecture/">FHIR to OMOP</a> mapping, APIs and dashboards. Access requests run in parallel.</li>
+<li><strong>Inject realistic mess deliberately.</strong> Add missing fields, duplicate patients, odd codes and late-arriving data, so the pipeline's error handling is exercised before real data arrives.</li>
+<li><strong>Keep developer environments synthetic permanently.</strong> Real data in development is one of the commonest sources of PHI exposure, which matters under <a href="/insights/hipaa-security-rule-proposal-ai-platforms/">HIPAA security expectations</a>.</li>
+<li><strong>Validate on real data under governance.</strong> Run <a href="/insights/omop-data-quality-checks/">data quality checks</a> and model evaluations in a controlled environment before any claim about performance.</li>
+<li><strong>Label results honestly.</strong> Any metric computed on synthetic data is marked as such in reports, so nobody mistakes a pipeline test for clinical evidence.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2>For AI and LLM work</h2>
+<p>Synthetic records are excellent for testing LLM applications end to end: prompt construction from FHIR resources, retrieval, safety filters and integration, as in <a href="/insights/ambient-ai-scribes-architecture/">ambient AI scribes</a>. They are poor evidence of how a model will handle real notes and real patients. Build your <a href="/insights/llm-evaluation-sets-that-predict-production/">evaluation sets</a> from de-identified or governed real data wherever the claim is about clinical quality.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I help health tech teams move fast on synthetic data and validate properly on real data, with platforms that keep PHI where it belongs. See <a href="/healthcare-data-architecture/">healthcare data architecture</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>

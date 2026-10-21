@@ -1,0 +1,51 @@
+<!--{"title": "Gang scheduling in Kubernetes: native support for AI training jobs", "description": "Kubernetes now schedules multi-pod AI jobs all-or-nothing. How Workload-aware scheduling evolved from v1.35 to beta in v1.37, where Kueue fits, and how I plan GPU clusters.", "h1": "Gang scheduling in Kubernetes: native, all-or-nothing scheduling for AI training", "kicker": "Cloud · Kubernetes · AI infrastructure", "lede": "A distributed training job that gets only half its GPUs doesn't run slowly; it doesn't run at all, while holding expensive hardware hostage. Kubernetes has been building native gang scheduling for exactly this, and in v1.37 it reached beta.", "date": "2026-10-21", "datetime": "2026-10-21T20:15:00+04:00", "readtime": "8 min read", "format": "news-analysis", "tags": ["kubernetes", "ai", "platform", "finops"], "keywords": ["Kubernetes gang scheduling", "workload aware scheduling", "Kubernetes Workload API", "PodGroup API", "Kueue", "AI training on Kubernetes", "GPU cluster scheduling", "Kubernetes v1.37", "distributed training scheduling", "platform engineering"], "faq": [["What is gang scheduling?", "Scheduling a group of pods all-or-nothing: either every pod in the group (or at least a minimum count) can be placed at once, or none are. It prevents partially scheduled distributed jobs from holding resources without being able to run."], ["Does Kubernetes support gang scheduling natively?", "Yes, increasingly. Kubernetes v1.35 introduced an alpha Workload API with gang scheduling, v1.36 split it into Workload and PodGroup APIs and added topology-aware scheduling and workload-aware preemption, and v1.37 graduated the core APIs and gang scheduling to beta."], ["Do I still need Kueue?", "Kueue handles job queueing, quotas and admission across teams, which is a different concern from placing a group of pods. Many GPU platforms will use both: Kueue to decide which jobs may run, and the scheduler to place each job's pods together."]], "related": ["/ai-architect/", "/fractional-cto/", "/technical-due-diligence/"], "citations": [{"title": "Kubernetes v1.35: Introducing Workload Aware Scheduling", "url": "https://kubernetes.io/blog/2025/12/29/kubernetes-v1-35-introducing-workload-aware-scheduling/", "publisher": "Kubernetes blog", "date": "29 Dec 2025"}, {"title": "Kubernetes v1.36: Advancing Workload-Aware Scheduling", "url": "https://kubernetes.io/blog/2026/05/13/kubernetes-v1-36-advancing-workload-aware-scheduling/", "publisher": "Kubernetes blog", "date": "13 May 2026"}, {"title": "Kubernetes v1.37: Advancing Workload-Aware Scheduling", "url": "https://kubernetes.io/blog/2026/09/08/kubernetes-v1-37-advancing-workload-aware-scheduling/", "publisher": "Kubernetes blog", "date": "8 Sep 2026"}, {"title": "Why is my Kubernetes Job still pending? Tracing Kueue admission with Headlamp", "url": "https://kubernetes.io/blog/2026/10/14/tracing-kueue-admission-with-headlamp/", "publisher": "Kubernetes blog", "date": "14 Oct 2026"}]}-->
+<p>Distributed training has an awkward property: a job that needs eight GPU workers is useless with six. On a busy cluster, the default scheduler places pods one at a time, so two large jobs can each grab half of what they need and both sit waiting forever, holding GPUs nobody else can use. For years the answer was a custom scheduler or an add-on. Kubernetes has been building the answer into the core.</p>
+
+<section class="block">
+<h2>How it evolved over three releases</h2>
+<table class="tbl">
+<thead><tr><th>Release</th><th>What arrived</th></tr></thead>
+<tbody>
+<tr><td>v1.35 (Dec 2025)</td><td>Alpha Workload API with all-or-nothing gang scheduling, plus opportunistic batching to speed up scheduling of identical pods<sup class="cite"><a href="#ref-1">1</a></sup></td></tr>
+<tr><td>v1.36 (May 2026)</td><td>Workload becomes a static template and a new PodGroup API holds runtime state; a PodGroup scheduling cycle, first topology-aware scheduling and workload-aware preemption, and DRA ResourceClaims for pod groups<sup class="cite"><a href="#ref-2">2</a></sup></td></tr>
+<tr><td>v1.37 (Sep 2026)</td><td>Workload and PodGroup APIs and gang scheduling graduate to beta, with workload-aware preemption and shared DRA claims; new CompositePodGroup API for multi-level groups; mutable minimum counts for elastic jobs<sup class="cite"><a href="#ref-3">3</a></sup></td></tr>
+</tbody>
+</table>
+<p>The mechanics are straightforward. A pod group declares a minimum count. In the original design, the scheduler held pods at a permit gate until it had found placements for the whole group; if only part of the group fitted within the timeout, all of them went back to the queue and their reserved resources were released<sup class="cite"><a href="#ref-1">1</a></sup>. Later releases made the pod group the unit that is queued and scheduled<sup class="cite"><a href="#ref-2">2</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+</section>
+
+<section class="block">
+<h2>Why v1.37 matters</h2>
+<p>Beta means the core APIs are one step from general availability, in the project's own words<sup class="cite"><a href="#ref-3">3</a></sup>. Three changes stand out for AI platforms:</p>
+<ul>
+<li><strong>Workload-aware preemption.</strong> A high-priority training job can preempt lower-priority work as a group, rather than evicting pods one by one in ways that don't free a usable block of GPUs.</li>
+<li><strong>CompositePodGroup.</strong> Multi-level groups with topology constraints support structures commonly managed by JobSet and LeaderWorkerSet, which covers many distributed training and multi-host inference patterns<sup class="cite"><a href="#ref-3">3</a></sup>.</li>
+<li><strong>Elastic minimum counts.</strong> Controllers can change a group's minimum size on the fly, so jobs can shrink or grow without interrupting pods already scheduled<sup class="cite"><a href="#ref-3">3</a></sup>.</li>
+</ul>
+<p>Alpha API versions have changed with breaking changes between releases<sup class="cite"><a href="#ref-3">3</a></sup>. If you adopted early, budget time for migration.</p>
+</section>
+
+<section class="block">
+<h2>Where Kueue fits</h2>
+<p>Gang scheduling decides how one job's pods are placed. Kueue answers a different question: which jobs may run at all, given team quotas and shared capacity. A job becomes a Kueue workload, is evaluated against its local and cluster queues, resource flavours and optional cohort, and is resumed only when admitted<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/kubernetes-gang-scheduling-ai/kueue-admission-architecture.webp" alt="Diagram of Kueue admission: a Kubernetes Job becomes a Kueue Workload, evaluated against LocalQueue, ClusterQueue, ResourceFlavor and an optional Cohort before the Job is resumed, with Headlamp reading these resources through the Kubernetes API" width="1600" height="941" loading="lazy"></div><figcaption>Kueue's admission flow, from job to workload to queues and resource flavours. <span class="credit">Source: <a href="https://kubernetes.io/blog/2026/10/14/tracing-kueue-admission-with-headlamp/" target="_blank" rel="noopener">Kubernetes blog, Tracing Kueue Admission with Headlamp</a> · CC BY 4.0</span></figcaption></figure>
+<p>On a shared GPU cluster, I use both layers: Kueue for fairness and quotas between teams, and native gang scheduling so that admitted jobs land together. The same blog post is a useful guide to answering the most common question on such platforms: why is my job still pending?<sup class="cite"><a href="#ref-4">4</a></sup></p>
+</section>
+
+<section class="block">
+<h2>How I would plan a GPU cluster now</h2>
+<ol>
+<li><strong>Separate admission from placement.</strong> Quotas and priorities in a queueing layer; all-or-nothing placement in the scheduler.</li>
+<li><strong>Model topology.</strong> Training performance depends on how close workers are. Use topology-aware placement where your hardware has meaningful racks or interconnect domains.</li>
+<li><strong>Use DRA for GPUs</strong>, as in <a href="/insights/kubernetes-dra-gpu-scheduling/">Kubernetes DRA for GPUs</a>, now that pod groups can share resource claims.</li>
+<li><strong>Set preemption policy deliberately.</strong> Decide which work can be interrupted, and make sure training jobs checkpoint so preemption doesn't waste hours.</li>
+<li><strong>Measure idle GPU time.</strong> Partially scheduled jobs and fragmentation show up as expensive idle hardware, which the cost practices in <a href="/insights/kubernetes-finops-scale-to-zero/">Kubernetes FinOps</a> and <a href="/insights/focus-finops-ai-cost-allocation/">FOCUS for AI spend</a> can make visible.</li>
+<li><strong>Pilot on beta in non-production</strong> before replacing an existing custom scheduler, and keep an eye on the path to GA.</li>
+</ol>
+<div class="callout"><p>The most expensive state for a GPU is allocated but not working. Gang scheduling attacks one of the main causes of that state.</p></div>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I design Kubernetes platforms for AI training and inference, from scheduling and quotas to GPU allocation and cost visibility. See my <a href="/ai-architect/">AI architecture work</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
