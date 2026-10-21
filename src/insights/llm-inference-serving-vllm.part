@@ -1,0 +1,54 @@
+<!--{"title": "LLM inference serving: what vLLM-style engines actually optimise", "description": "Self-hosting an LLM is mostly a serving problem. How PagedAttention, continuous batching and prefix caching work, and how I choose and tune a serving engine for private AI.", "h1": "LLM inference serving: what modern engines like vLLM actually optimise", "kicker": "AI architecture · Private LLMs", "lede": "Teams that self-host models often discover that the model is the easy part. Throughput, latency and cost are decided by the serving engine. Here is what those engines do, in plain terms, and how I choose between them.", "date": "2026-10-21", "datetime": "2026-10-21T12:15:00+04:00", "readtime": "8 min read", "format": "explainer", "tags": ["ai", "llm", "private-ai", "platform"], "keywords": ["vLLM", "PagedAttention", "LLM inference serving", "continuous batching", "prefix caching", "KV cache", "SGLang RadixAttention", "self-hosted LLM", "GPU utilisation LLM", "AI infrastructure architect"], "faq": [["What is PagedAttention?", "A technique introduced with vLLM that manages the key-value cache in fixed-size blocks, similar to virtual memory paging, reducing wasted GPU memory so more requests can be batched together. The original paper reported 2 to 4 times higher throughput than earlier systems at similar latency."], ["What is prefix caching?", "Reusing the computed key-value cache for prompt prefixes shared across requests, such as a long system prompt or shared document, so the engine doesn't recompute them for every request."], ["Which serving engine should I use?", "It depends on workload. Compare candidate engines on your own prompts, output lengths and concurrency, measuring throughput, time to first token and cost per request, rather than relying on published benchmarks."]], "related": ["/ai-architect/", "/fractional-cto/", "/uae/"], "citations": [{"title": "Efficient Memory Management for Large Language Model Serving with PagedAttention", "url": "https://arxiv.org/abs/2309.06180", "publisher": "Kwon et al. (arXiv; SOSP 2023)", "date": "2023"}, {"title": "vLLM: a high-throughput and memory-efficient inference and serving engine for LLMs", "url": "https://sky.cs.berkeley.edu/project/vllm/", "publisher": "UC Berkeley Sky Computing Lab"}, {"title": "SGLang", "url": "https://www.thoughtworks.com/radar/tools/sglang", "publisher": "Thoughtworks Technology Radar"}, {"title": "What is SGLang?", "url": "https://www.digitalocean.com/resources/articles/what-is-sglang", "publisher": "DigitalOcean"}, {"title": "Introducing Gateway API Inference Extension", "url": "https://kubernetes.io/blog/2025/06/05/introducing-gateway-api-inference-extension/", "publisher": "Kubernetes blog", "date": "5 Jun 2025"}]}-->
+<p>A common story in private AI projects: the team downloads an open-weight model, gets it answering questions on a GPU, and declares the hard part done. Then fifty users arrive at once, latency climbs, the GPU bill looks alarming and someone suggests buying more hardware. Usually the problem isn't the hardware. It's how requests are being served.</p>
+
+<section class="block">
+<h2>Why serving is hard</h2>
+<p>Generating text has two phases. <strong>Prefill</strong> processes the whole prompt at once and is compute-heavy. <strong>Decode</strong> produces one token at a time and is limited by how fast weights and cached state can be read from memory. Each in-flight request also holds a key-value (KV) cache that grows with its length. Serving well means keeping the GPU busy with as many requests as possible without running out of memory for those caches.</p>
+</section>
+
+<section class="block">
+<h2>The techniques that matter</h2>
+<table class="tbl">
+<thead><tr><th>Technique</th><th>What it does</th><th>Why you care</th></tr></thead>
+<tbody>
+<tr><td>PagedAttention</td><td>Stores the KV cache in fixed-size blocks, like virtual memory pages, instead of large contiguous chunks<sup class="cite"><a href="#ref-1">1</a></sup></td><td>Far less wasted memory, so many more concurrent requests per GPU</td></tr>
+<tr><td>Continuous batching</td><td>Adds and removes requests from the running batch at each step instead of waiting for a whole batch to finish</td><td>Short requests don't wait behind long ones; utilisation stays high</td></tr>
+<tr><td>Prefix caching</td><td>Reuses the KV cache for shared prompt prefixes across requests</td><td>Long system prompts and shared documents aren't recomputed every time</td></tr>
+<tr><td>Quantisation</td><td>Stores weights at lower precision</td><td>Bigger models fit on fewer GPUs, at some quality risk you must test</td></tr>
+</tbody>
+</table>
+<p>The vLLM paper, presented at SOSP 2023, reported 2 to 4 times higher throughput than earlier state-of-the-art systems at similar latency, with bigger gains for longer sequences and larger models<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. SGLang took prefix reuse further with RadixAttention, which keeps cached prefixes in a radix tree so they can be shared across many requests<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+<div class="callout"><p>Most enterprise workloads share long prefixes: the same system prompt, the same policies, the same retrieved documents. Designing prompts so the shared part comes first is one of the cheapest performance wins available.</p></div>
+</section>
+
+<section class="block">
+<h2>Choosing an engine</h2>
+<p>vLLM and SGLang are the two open-source engines I evaluate most often; hardware vendors and cloud providers offer their own. Rather than trusting published benchmarks, I test on the client's workload:</p>
+<ol>
+<li><strong>Capture a realistic traffic sample</strong>: prompt lengths, output lengths, concurrency and how much prefix is shared.</li>
+<li><strong>Measure what users feel</strong>: time to first token and tokens per second per user at your target concurrency, not just total throughput.</li>
+<li><strong>Measure what finance feels</strong>: cost per thousand requests at that concurrency, on the hardware you will actually buy or rent.</li>
+<li><strong>Check operational fit</strong>: model support, OpenAI-compatible APIs, metrics, upgrade cadence and how it runs on your platform.</li>
+<li><strong>Re-test quality after quantisation</strong> with your <a href="/insights/llm-evaluation-sets-that-predict-production/">evaluation set</a>, not a generic benchmark.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2>Running it on Kubernetes</h2>
+<p>Ordinary load balancing works poorly for LLM servers, because requests vary so much in cost and because sending a request to the replica that already holds its prefix in cache is far cheaper. The Gateway API Inference Extension was introduced to make routing on Kubernetes aware of model-serving concerns like these<sup class="cite"><a href="#ref-5">5</a></sup>. Combined with GPU scheduling from <a href="/insights/kubernetes-dra-gpu-scheduling/">Kubernetes DRA</a> and the gateway changes in <a href="/insights/ingress-nginx-to-gateway-api/">moving to Gateway API</a>, it gives a coherent platform for private models.</p>
+</section>
+
+<section class="block">
+<h2>Common mistakes</h2>
+<ul>
+<li><strong>Sizing from a demo.</strong> One user on one GPU tells you nothing about fifty. Load test at target concurrency.</li>
+<li><strong>Ignoring output length.</strong> Long outputs dominate decode time. Cap them where the product allows.</li>
+<li><strong>Prompt layouts that defeat caching.</strong> Putting a timestamp or user ID at the start of every prompt makes each prefix unique.</li>
+<li><strong>Prototyping on different hardware.</strong> A desktop bench like the one in <a href="/insights/dgx-spark-ai-architect-bench/">DGX Spark as an AI architect's bench</a> is great for quality and integration, but it can't tell you how production hardware will perform.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I design and tune private LLM platforms, from engine selection and load testing to Kubernetes routing and cost per request. See <a href="/insights/private-llm-on-prem/">private LLMs on-prem</a> and my <a href="/ai-architect/">AI architecture work</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>

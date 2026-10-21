@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>LLM inference serving: what vLLM-style engines actually optimise</title>
+<meta name="description" content="Self-hosting an LLM is mostly a serving problem. How PagedAttention, continuous batching and prefix caching work, and how I choose and tune a serving engine for private AI." />
+<meta name="keywords" content="vLLM, PagedAttention, LLM inference serving, continuous batching, prefix caching, KV cache, SGLang RadixAttention, self-hosted LLM, GPU utilisation LLM, AI infrastructure architect" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://asksumanta.com/insights/llm-inference-serving-vllm/" />
+<meta name="theme-color" content="#111214" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="LLM inference serving: what vLLM-style engines actually optimise" />
+<meta property="og:description" content="Self-hosting an LLM is mostly a serving problem. How PagedAttention, continuous batching and prefix caching work, and how I choose and tune a serving engine for private AI." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://asksumanta.com/insights/llm-inference-serving-vllm/" />
+<meta property="og:image" content="https://asksumanta.com/assets/og/llm-inference-serving-vllm.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="LLM inference serving: what vLLM-style engines actually optimise" />
+<meta name="twitter:description" content="Self-hosting an LLM is mostly a serving problem. How PagedAttention, continuous batching and prefix caching work, and how I choose and tune a serving engine for private AI." />
+<meta name="twitter:image" content="https://asksumanta.com/assets/og/llm-inference-serving-vllm.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "BlogPosting", "headline": "LLM inference serving: what modern engines like vLLM actually optimise", "description": "Self-hosting an LLM is mostly a serving problem. How PagedAttention, continuous batching and prefix caching work, and how I choose and tune a serving engine for private AI.", "datePublished": "2026-10-21T12:15:00+04:00", "dateModified": "2026-10-21T12:15:00+04:00", "articleSection": "AI architecture · Private LLMs", "genre": "Explainer", "citation": [{"@type": "CreativeWork", "name": "Efficient Memory Management for Large Language Model Serving with PagedAttention", "url": "https://arxiv.org/abs/2309.06180"}, {"@type": "CreativeWork", "name": "vLLM: a high-throughput and memory-efficient inference and serving engine for LLMs", "url": "https://sky.cs.berkeley.edu/project/vllm/"}, {"@type": "CreativeWork", "name": "SGLang", "url": "https://www.thoughtworks.com/radar/tools/sglang"}, {"@type": "CreativeWork", "name": "What is SGLang?", "url": "https://www.digitalocean.com/resources/articles/what-is-sglang"}, {"@type": "CreativeWork", "name": "Introducing Gateway API Inference Extension", "url": "https://kubernetes.io/blog/2025/06/05/introducing-gateway-api-inference-extension/"}], "author": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "publisher": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "mainEntityOfPage": "https://asksumanta.com/insights/llm-inference-serving-vllm/", "image": "https://asksumanta.com/assets/og/llm-inference-serving-vllm.png", "keywords": "vLLM, PagedAttention, LLM inference serving, continuous batching, prefix caching, KV cache, SGLang RadixAttention, self-hosted LLM, GPU utilisation LLM, AI infrastructure architect", "wordCount": 681}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://asksumanta.com/"}, {"@type": "ListItem", "position": 2, "name": "Insights", "item": "https://asksumanta.com/insights/"}, {"@type": "ListItem", "position": 3, "name": "LLM inference serving: what modern engines like vLLM actually optimise", "item": "https://asksumanta.com/insights/llm-inference-serving-vllm/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What is PagedAttention?", "acceptedAnswer": {"@type": "Answer", "text": "A technique introduced with vLLM that manages the key-value cache in fixed-size blocks, similar to virtual memory paging, reducing wasted GPU memory so more requests can be batched together. The original paper reported 2 to 4 times higher throughput than earlier systems at similar latency."}}, {"@type": "Question", "name": "What is prefix caching?", "acceptedAnswer": {"@type": "Answer", "text": "Reusing the computed key-value cache for prompt prefixes shared across requests, such as a long system prompt or shared document, so the engine doesn't recompute them for every request."}}, {"@type": "Question", "name": "Which serving engine should I use?", "acceptedAnswer": {"@type": "Answer", "text": "It depends on workload. Compare candidate engines on your own prompts, output lengths and concurrency, measuring throughput, time to first token and cost per request, rather than relying on published benchmarks."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+</script>
+</head>
+<body class="sub is-post">
+<div class="progress" id="progress"></div>
+<nav>
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="/#practice">Services</a>
+      <a href="/#work">Case studies</a>
+      <a href="/insights/">Insights</a>
+      <a href="/#assess">Analyse</a>
+      <a href="/#connect">Connect</a>
+    </div>
+    <div class="nav-r">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/insights/">Insights</a> <span>/</span> <em>LLM inference serving: what modern engines like vLLM actually optimise</em></div>
+    <div class="kicker">AI architecture · Private LLMs</div>
+    <h1>LLM inference serving: what modern engines like vLLM actually optimise</h1>
+    <p class="sub-lede">Teams that self-host models often discover that the model is the easy part. Throughput, latency and cost are decided by the serving engine. Here is what those engines do, in plain terms, and how I choose between them.</p>
+    <div class="ameta"><span class="fmt">Explainer</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-10-21T12:15:00+04:00">21 Oct 2026 · 12:15 GST</time><span>8 min read</span><span>5 sources</span></div><div class="atags"><span class="tagp">#ai</span><span class="tagp">#llm</span><span class="tagp">#private-ai</span><span class="tagp">#platform</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Explainer cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><line x1="1067" y1="216" x2="990" y2="138" class="cv-edge" opacity="0.27"/><line x1="1067" y1="216" x2="1021" y2="212" class="cv-edge" opacity="0.69"/><line x1="1067" y1="216" x2="1156" y2="155" class="cv-edge" opacity="0.28"/><line x1="1067" y1="216" x2="1024" y2="116" class="cv-edge" opacity="0.28"/><line x1="1067" y1="216" x2="1021" y2="338" class="cv-edge" opacity="0.13"/><line x1="1067" y1="216" x2="1044" y2="177" class="cv-edge" opacity="0.70"/><line x1="1067" y1="216" x2="1044" y2="186" class="cv-edge hl" opacity="0.75"/><line x1="1067" y1="216" x2="991" y2="164" class="cv-edge" opacity="0.39"/><line x1="1067" y1="216" x2="1104" y2="150" class="cv-edge" opacity="0.50"/><line x1="783" y1="153" x2="818" y2="79" class="cv-edge" opacity="0.45"/><line x1="783" y1="153" x2="798" y2="144" class="cv-edge" opacity="0.88"/><line x1="783" y1="153" x2="890" y2="247" class="cv-edge hl" opacity="0.05"/><line x1="783" y1="153" x2="873" y2="135" class="cv-edge hl" opacity="0.39"/><line x1="783" y1="153" x2="785" y2="187" class="cv-edge hl" opacity="0.77"/><line x1="818" y1="79" x2="798" y2="144" class="cv-edge" opacity="0.55"/><line x1="818" y1="79" x2="873" y2="135" class="cv-edge hl" opacity="0.48"/><line x1="818" y1="79" x2="785" y2="187" class="cv-edge hl" opacity="0.25"/><line x1="798" y1="144" x2="890" y2="247" class="cv-edge hl" opacity="0.08"/><line x1="798" y1="144" x2="873" y2="135" class="cv-edge hl" opacity="0.50"/><line x1="798" y1="144" x2="785" y2="187" class="cv-edge hl" opacity="0.70"/><line x1="990" y1="138" x2="1021" y2="212" class="cv-edge" opacity="0.47"/><line x1="990" y1="138" x2="1024" y2="116" class="cv-edge" opacity="0.73"/><line x1="990" y1="138" x2="890" y2="247" class="cv-edge hl" opacity="0.01"/><line x1="990" y1="138" x2="1044" y2="177" class="cv-edge" opacity="0.56"/><line x1="990" y1="138" x2="1044" y2="186" class="cv-edge hl" opacity="0.52"/><line x1="990" y1="138" x2="873" y2="135" class="cv-edge hl" opacity="0.22"/><line x1="990" y1="138" x2="991" y2="164" class="cv-edge" opacity="0.83"/><line x1="990" y1="138" x2="1104" y2="150" class="cv-edge" opacity="0.24"/><line x1="1021" y1="212" x2="1156" y2="155" class="cv-edge" opacity="0.02"/><line x1="1021" y1="212" x2="1024" y2="116" class="cv-edge" opacity="0.36"/><line x1="1021" y1="212" x2="890" y2="247" class="cv-edge hl" opacity="0.10"/><line x1="1021" y1="212" x2="1021" y2="338" class="cv-edge" opacity="0.16"/><line x1="1021" y1="212" x2="1044" y2="177" class="cv-edge" opacity="0.72"/><line x1="1021" y1="212" x2="1044" y2="186" class="cv-edge hl" opacity="0.76"/><line x1="1021" y1="212" x2="991" y2="164" class="cv-edge" opacity="0.63"/><line x1="1021" y1="212" x2="1104" y2="150" class="cv-edge" opacity="0.31"/><line x1="1156" y1="155" x2="1024" y2="116" class="cv-edge" opacity="0.08"/><line x1="1156" y1="155" x2="1044" y2="177" class="cv-edge" opacity="0.24"/><line x1="1156" y1="155" x2="1044" y2="186" class="cv-edge hl" opacity="0.23"/><line x1="1156" y1="155" x2="1104" y2="150" class="cv-edge" opacity="0.65"/><line x1="1024" y1="116" x2="1044" y2="177" class="cv-edge" opacity="0.57"/><line x1="1024" y1="116" x2="1044" y2="186" class="cv-edge hl" opacity="0.52"/><line x1="1024" y1="116" x2="991" y2="164" class="cv-edge" opacity="0.62"/><line x1="1024" y1="116" x2="1104" y2="150" class="cv-edge" opacity="0.42"/><line x1="890" y1="247" x2="908" y2="386" class="cv-edge hl" opacity="0.07"/><line x1="890" y1="247" x2="873" y2="135" class="cv-edge hl" opacity="0.24"/><line x1="890" y1="247" x2="991" y2="164" class="cv-edge hl" opacity="0.12"/><line x1="890" y1="247" x2="835" y2="313" class="cv-edge hl" opacity="0.43"/><line x1="890" y1="247" x2="785" y2="187" class="cv-edge hl" opacity="0.19"/><line x1="1021" y1="338" x2="908" y2="386" class="cv-edge hl" opacity="0.18"/><line x1="1044" y1="177" x2="1044" y2="186" class="cv-edge hl" opacity="0.94"/><line x1="1044" y1="177" x2="991" y2="164" class="cv-edge" opacity="0.64"/><line x1="1044" y1="177" x2="1104" y2="150" class="cv-edge" opacity="0.56"/><line x1="585" y1="275" x2="550" y2="141" class="cv-edge" opacity="0.07"/><line x1="585" y1="275" x2="535" y2="302" class="cv-edge" opacity="0.62"/><line x1="585" y1="275" x2="704" y2="314" class="cv-edge" opacity="0.17"/><line x1="585" y1="275" x2="666" y2="275" class="cv-edge" opacity="0.46"/><line x1="552" y1="63" x2="571" y2="50" class="cv-edge hl" opacity="0.85"/><line x1="552" y1="63" x2="550" y2="141" class="cv-edge hl" opacity="0.48"/><line x1="571" y1="50" x2="550" y2="141" class="cv-edge hl" opacity="0.38"/><line x1="908" y1="386" x2="835" y2="313" class="cv-edge hl" opacity="0.31"/><line x1="1044" y1="186" x2="991" y2="164" class="cv-edge hl" opacity="0.62"/><line x1="1044" y1="186" x2="1104" y2="150" class="cv-edge hl" opacity="0.54"/><line x1="737" y1="309" x2="704" y2="314" class="cv-edge hl" opacity="0.78"/><line x1="737" y1="309" x2="666" y2="275" class="cv-edge hl" opacity="0.47"/><line x1="737" y1="309" x2="835" y2="313" class="cv-edge hl" opacity="0.35"/><line x1="737" y1="309" x2="785" y2="187" class="cv-edge hl" opacity="0.13"/><line x1="535" y1="302" x2="666" y2="275" class="cv-edge" opacity="0.11"/><line x1="704" y1="314" x2="666" y2="275" class="cv-edge" opacity="0.64"/><line x1="704" y1="314" x2="835" y2="313" class="cv-edge hl" opacity="0.13"/><line x1="704" y1="314" x2="785" y2="187" class="cv-edge hl" opacity="0.00"/><line x1="873" y1="135" x2="991" y2="164" class="cv-edge hl" opacity="0.19"/><line x1="873" y1="135" x2="785" y2="187" class="cv-edge hl" opacity="0.32"/><line x1="666" y1="275" x2="785" y2="187" class="cv-edge hl" opacity="0.02"/><line x1="991" y1="164" x2="1104" y2="150" class="cv-edge" opacity="0.24"/><line x1="835" y1="313" x2="785" y2="187" class="cv-edge hl" opacity="0.10"/><circle cx="1067" cy="216" r="3" class="cv-dot"/><circle cx="783" cy="153" r="3" class="cv-dot"/><circle cx="818" cy="79" r="3" class="cv-dot"/><circle cx="798" cy="144" r="3" class="cv-dot"/><circle cx="990" cy="138" r="3" class="cv-dot"/><circle cx="1021" cy="212" r="3" class="cv-dot"/><circle cx="1156" cy="155" r="3" class="cv-dot"/><circle cx="1024" cy="116" r="3" class="cv-dot"/><circle cx="890" cy="247" r="6" class="cv-dot hl"/><circle cx="1021" cy="338" r="3" class="cv-dot"/><circle cx="1044" cy="177" r="3" class="cv-dot"/><circle cx="585" cy="275" r="3" class="cv-dot"/><circle cx="552" cy="63" r="6" class="cv-dot hl"/><circle cx="571" cy="50" r="6" class="cv-dot hl"/><circle cx="908" cy="386" r="6" class="cv-dot hl"/><circle cx="550" cy="141" r="3" class="cv-dot"/><circle cx="1044" cy="186" r="6" class="cv-dot hl"/><circle cx="737" cy="309" r="6" class="cv-dot hl"/><circle cx="535" cy="302" r="3" class="cv-dot"/><circle cx="704" cy="314" r="3" class="cv-dot"/><circle cx="873" cy="135" r="6" class="cv-dot hl"/><circle cx="666" cy="275" r="3" class="cv-dot"/><circle cx="991" cy="164" r="3" class="cv-dot"/><circle cx="835" cy="313" r="6" class="cv-dot hl"/><circle cx="1104" cy="150" r="3" class="cv-dot"/><circle cx="785" cy="187" r="6" class="cv-dot hl"/><text x="60" y="90" class="cv-k">EXPLAINER · AI ARCHITECTURE · PRIVATE LLMS</text><text x="60" y="350" class="cv-n">21 Oct 2026 · 12:15 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <p>A common story in private AI projects: the team downloads an open-weight model, gets it answering questions on a GPU, and declares the hard part done. Then fifty users arrive at once, latency climbs, the GPU bill looks alarming and someone suggests buying more hardware. Usually the problem isn't the hardware. It's how requests are being served.</p>
+
+<section class="block">
+<h2 id="why-serving-is-hard">Why serving is hard</h2>
+<p>Generating text has two phases. <strong>Prefill</strong> processes the whole prompt at once and is compute-heavy. <strong>Decode</strong> produces one token at a time and is limited by how fast weights and cached state can be read from memory. Each in-flight request also holds a key-value (KV) cache that grows with its length. Serving well means keeping the GPU busy with as many requests as possible without running out of memory for those caches.</p>
+</section>
+
+<section class="block">
+<h2 id="the-techniques-that-matter">The techniques that matter</h2>
+<table class="tbl">
+<thead><tr><th>Technique</th><th>What it does</th><th>Why you care</th></tr></thead>
+<tbody>
+<tr><td>PagedAttention</td><td>Stores the KV cache in fixed-size blocks, like virtual memory pages, instead of large contiguous chunks<sup class="cite"><a href="#ref-1">1</a></sup></td><td>Far less wasted memory, so many more concurrent requests per GPU</td></tr>
+<tr><td>Continuous batching</td><td>Adds and removes requests from the running batch at each step instead of waiting for a whole batch to finish</td><td>Short requests don't wait behind long ones; utilisation stays high</td></tr>
+<tr><td>Prefix caching</td><td>Reuses the KV cache for shared prompt prefixes across requests</td><td>Long system prompts and shared documents aren't recomputed every time</td></tr>
+<tr><td>Quantisation</td><td>Stores weights at lower precision</td><td>Bigger models fit on fewer GPUs, at some quality risk you must test</td></tr>
+</tbody>
+</table>
+<p>The vLLM paper, presented at SOSP 2023, reported 2 to 4 times higher throughput than earlier state-of-the-art systems at similar latency, with bigger gains for longer sequences and larger models<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. SGLang took prefix reuse further with RadixAttention, which keeps cached prefixes in a radix tree so they can be shared across many requests<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+<div class="callout"><p>Most enterprise workloads share long prefixes: the same system prompt, the same policies, the same retrieved documents. Designing prompts so the shared part comes first is one of the cheapest performance wins available.</p></div>
+</section>
+
+<section class="block">
+<h2 id="choosing-an-engine">Choosing an engine</h2>
+<p>vLLM and SGLang are the two open-source engines I evaluate most often; hardware vendors and cloud providers offer their own. Rather than trusting published benchmarks, I test on the client's workload:</p>
+<ol>
+<li><strong>Capture a realistic traffic sample</strong>: prompt lengths, output lengths, concurrency and how much prefix is shared.</li>
+<li><strong>Measure what users feel</strong>: time to first token and tokens per second per user at your target concurrency, not just total throughput.</li>
+<li><strong>Measure what finance feels</strong>: cost per thousand requests at that concurrency, on the hardware you will actually buy or rent.</li>
+<li><strong>Check operational fit</strong>: model support, OpenAI-compatible APIs, metrics, upgrade cadence and how it runs on your platform.</li>
+<li><strong>Re-test quality after quantisation</strong> with your <a href="/insights/llm-evaluation-sets-that-predict-production/">evaluation set</a>, not a generic benchmark.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2 id="running-it-on-kubernetes">Running it on Kubernetes</h2>
+<p>Ordinary load balancing works poorly for LLM servers, because requests vary so much in cost and because sending a request to the replica that already holds its prefix in cache is far cheaper. The Gateway API Inference Extension was introduced to make routing on Kubernetes aware of model-serving concerns like these<sup class="cite"><a href="#ref-5">5</a></sup>. Combined with GPU scheduling from <a href="/insights/kubernetes-dra-gpu-scheduling/">Kubernetes DRA</a> and the gateway changes in <a href="/insights/ingress-nginx-to-gateway-api/">moving to Gateway API</a>, it gives a coherent platform for private models.</p>
+</section>
+
+<section class="block">
+<h2 id="common-mistakes">Common mistakes</h2>
+<ul>
+<li><strong>Sizing from a demo.</strong> One user on one GPU tells you nothing about fifty. Load test at target concurrency.</li>
+<li><strong>Ignoring output length.</strong> Long outputs dominate decode time. Cap them where the product allows.</li>
+<li><strong>Prompt layouts that defeat caching.</strong> Putting a timestamp or user ID at the start of every prompt makes each prefix unique.</li>
+<li><strong>Prototyping on different hardware.</strong> A desktop bench like the one in <a href="/insights/dgx-spark-ai-architect-bench/">DGX Spark as an AI architect's bench</a> is great for quality and integration, but it can't tell you how production hardware will perform.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2 id="how-i-can-help">How I can help</h2>
+<p>I design and tune private LLM platforms, from engine selection and load testing to Kubernetes routing and cost per request. See <a href="/insights/private-llm-on-prem/">private LLMs on-prem</a> and my <a href="/ai-architect/">AI architecture work</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://arxiv.org/abs/2309.06180" target="_blank" rel="noopener">Efficient Memory Management for Large Language Model Serving with PagedAttention</a><small>Kwon et al. (arXiv; SOSP 2023) · 2023</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://sky.cs.berkeley.edu/project/vllm/" target="_blank" rel="noopener">vLLM: a high-throughput and memory-efficient inference and serving engine for LLMs</a><small>UC Berkeley Sky Computing Lab</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://www.thoughtworks.com/radar/tools/sglang" target="_blank" rel="noopener">SGLang</a><small>Thoughtworks Technology Radar</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://www.digitalocean.com/resources/articles/what-is-sglang" target="_blank" rel="noopener">What is SGLang?</a><small>DigitalOcean</small></div></li><li id="ref-5"><span class="rn">5</span><div><a href="https://kubernetes.io/blog/2025/06/05/introducing-gateway-api-inference-extension/" target="_blank" rel="noopener">Introducing Gateway API Inference Extension</a><small>Kubernetes blog · 5 Jun 2025</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fllm-inference-serving-vllm%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fllm-inference-serving-vllm%2F&amp;text=LLM%20inference%20serving%3A%20what%20modern%20engines%20like%20vLLM%20actually%20optimise" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=LLM%20inference%20serving%3A%20what%20modern%20engines%20like%20vLLM%20actually%20optimise%20https%3A%2F%2Fasksumanta.com%2Finsights%2Fllm-inference-serving-vllm%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://asksumanta.com/insights/llm-inference-serving-vllm/">Copy link</button></div>
+      <div class="pnav"><a class="pn prev" href="/insights/focus-finops-ai-cost-allocation/"><small>← Previous</small><b>FOCUS and AI spend: how to make token costs visible to finance</b></a><a class="pn next" href="/insights/structured-data-for-ai-search/"><small>Next →</small><b>Structured data for AI search: what it does, what it doesn&#x27;t, and how I approach it</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#why-serving-is-hard">Why serving is hard</a></li><li><a href="#the-techniques-that-matter">The techniques that matter</a></li><li><a href="#choosing-an-engine">Choosing an engine</a></li><li><a href="#running-it-on-kubernetes">Running it on Kubernetes</a></li><li><a href="#common-mistakes">Common mistakes</a></li><li><a href="#how-i-can-help">How I can help</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>What is PagedAttention?</summary><p>A technique introduced with vLLM that manages the key-value cache in fixed-size blocks, similar to virtual memory paging, reducing wasted GPU memory so more requests can be batched together. The original paper reported 2 to 4 times higher throughput than earlier systems at similar latency.</p></details><details class="rise"><summary>What is prefix caching?</summary><p>Reusing the computed key-value cache for prompt prefixes shared across requests, such as a long system prompt or shared document, so the engine doesn&#x27;t recompute them for every request.</p></details><details class="rise"><summary>Which serving engine should I use?</summary><p>It depends on workload. Compare candidate engines on your own prompts, output lengths and concurrency, measuring throughput, time to first token and cost per request, rather than relying on published benchmarks.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/ai-architect/"><small>Service</small><b>AI &amp; LLM architecture</b><span>I design and build AI systems that leadership can trust: grounded in your data, measured by evaluations, governed by your rules and priced so they make sense at scale.</span><i>→</i></a><a class="rcard rise" href="/fractional-cto/"><small>Service</small><b>Fractional CTO</b><span>I work as a part-time CTO for founders, CEOs and boards who need experienced technical judgement now, and a team that can carry it on after I step back.</span><i>→</i></a><a class="rcard rise" href="/uae/"><small>Service</small><b>Fractional CTO in the UAE</b><span>I work with founders, enterprises and investors across the UAE and the Gulf on AI, data and technology leadership, with an eye on local data-protection rules and residency from day one.</span><i>→</i></a><a class="rcard rise" href="/insights/structured-data-for-ai-search/"><small>Insight</small><b>Structured data for AI search: what it does, what it doesn&#x27;t, and how I approach it</b><span>Every company now wants to show up in AI answers, and structured data is often sold as the shortcut. The evidence is more modest. Here is what search engines have actually said, and how I treat structured data as a small ontology rather than an SEO trick.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: LLM inference serving: what modern engines like vLLM actually optimise">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
+        <p class="floc">United States &amp; UAE · working globally</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/uae/">Fractional CTO in the UAE</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/structured-data-for-ai-search/">Structured data for AI search: what it does, what it doesn&#x27;t, and how I approach it</a></li><li><a href="/insights/llm-inference-serving-vllm/">LLM inference serving: what modern engines like vLLM actually optimise</a></li><li><a href="/insights/focus-finops-ai-cost-allocation/">FOCUS and AI spend: how to make token costs visible to finance</a></li><li><a href="/insights/tefca-2026-what-health-tech-should-build/">TEFCA in 2026: what changed, and what health tech teams should build for</a></li><li><a href="/insights/data-contracts-playbook/">Data contracts: a practical playbook for pipelines that stop breaking</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>
