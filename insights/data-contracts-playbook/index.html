@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Data contracts: a playbook for pipelines that stop breaking</title>
+<meta name="description" content="Data contracts turn the interface between data producers and consumers into something written down and checked. How I introduce them with ODCS, CI checks and versioning." />
+<meta name="keywords" content="data contracts, Open Data Contract Standard, ODCS, Bitol, data quality, schema evolution, breaking changes data pipeline, data mesh, data platform consultant, data governance" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://asksumanta.com/insights/data-contracts-playbook/" />
+<meta name="theme-color" content="#111214" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="Data contracts: a playbook for pipelines that stop breaking" />
+<meta property="og:description" content="Data contracts turn the interface between data producers and consumers into something written down and checked. How I introduce them with ODCS, CI checks and versioning." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://asksumanta.com/insights/data-contracts-playbook/" />
+<meta property="og:image" content="https://asksumanta.com/assets/og/data-contracts-playbook.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Data contracts: a playbook for pipelines that stop breaking" />
+<meta name="twitter:description" content="Data contracts turn the interface between data producers and consumers into something written down and checked. How I introduce them with ODCS, CI checks and versioning." />
+<meta name="twitter:image" content="https://asksumanta.com/assets/og/data-contracts-playbook.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "BlogPosting", "headline": "Data contracts: a practical playbook for pipelines that stop breaking", "description": "Data contracts turn the interface between data producers and consumers into something written down and checked. How I introduce them with ODCS, CI checks and versioning.", "datePublished": "2026-10-21T04:30:00+04:00", "dateModified": "2026-10-21T04:30:00+04:00", "articleSection": "Data platforms · Scale", "genre": "Playbook", "citation": [{"@type": "CreativeWork", "name": "ODCS version 3: transforming data contracts with enhanced flexibility, integration and global collaboration", "url": "https://bitol.io/odcs-version-3-transforming-data-contracts-with-enhanced-flexibility-integration-and-global-collaboration/"}, {"@type": "CreativeWork", "name": "Bitol announces ODCS v3.1.0: stronger, smarter, and stricter", "url": "https://bitol.io/bitol-announces-odcs-v3-1-0-stronger-smarter-and-stricter/"}, {"@type": "CreativeWork", "name": "Open Data Contract Standard", "url": "https://docs.datacontract.com/docs/open-data-contract-standard.md"}, {"@type": "CreativeWork", "name": "What are data contracts? A practical guide to getting started", "url": "https://datahub.com/?p=2320"}, {"@type": "CreativeWork", "name": "Kafka data contracts: prevent breaking changes", "url": "https://conduktor.io/blog/kafka-data-contracts"}, {"@type": "CreativeWork", "name": "ODCS v3.2 and ODPS v1.1: making AI smart about your data", "url": "https://dataintelligenceplatform.substack.com/p/odcs-32-and-odps-11-making-ai-smart"}], "author": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "publisher": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "mainEntityOfPage": "https://asksumanta.com/insights/data-contracts-playbook/", "image": "https://asksumanta.com/assets/og/data-contracts-playbook.png", "keywords": "data contracts, Open Data Contract Standard, ODCS, Bitol, data quality, schema evolution, breaking changes data pipeline, data mesh, data platform consultant, data governance", "wordCount": 683}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://asksumanta.com/"}, {"@type": "ListItem", "position": 2, "name": "Insights", "item": "https://asksumanta.com/insights/"}, {"@type": "ListItem", "position": 3, "name": "Data contracts: a practical playbook for pipelines that stop breaking", "item": "https://asksumanta.com/insights/data-contracts-playbook/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What is a data contract?", "acceptedAnswer": {"@type": "Answer", "text": "A written, agreed and checkable description of the interface between a data producer and its consumers: schema, meaning, quality expectations, service levels and how changes are handled."}}, {"@type": "Question", "name": "What is the Open Data Contract Standard?", "acceptedAnswer": {"@type": "Answer", "text": "ODCS is an open, vendor-neutral YAML standard for data contracts maintained by the Bitol project under the Linux Foundation. Version 3 covers fundamentals, schema, data quality, servers, ownership, SLAs and support, and v3.1.0 added executable SLAs and relationships."}}, {"@type": "Question", "name": "How are data contracts enforced?", "acceptedAnswer": {"@type": "Answer", "text": "Typically in CI: a change that would break a contract's schema fails before it merges. Runtime checks then validate quality and freshness, and versioning with a deprecation window handles intentional breaking changes."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+</script>
+</head>
+<body class="sub is-post">
+<div class="progress" id="progress"></div>
+<nav>
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="/#practice">Services</a>
+      <a href="/#work">Case studies</a>
+      <a href="/insights/">Insights</a>
+      <a href="/#assess">Analyse</a>
+      <a href="/#connect">Connect</a>
+    </div>
+    <div class="nav-r">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/insights/">Insights</a> <span>/</span> <em>Data contracts: a practical playbook for pipelines that stop breaking</em></div>
+    <div class="kicker">Data platforms · Scale</div>
+    <h1>Data contracts: a practical playbook for pipelines that stop breaking</h1>
+    <p class="sub-lede">Most data incidents start with a change nobody told the consumers about. Data contracts make the interface between producers and consumers explicit and checkable. Here is how I introduce them without a big-bang programme.</p>
+    <div class="ameta"><span class="fmt">Playbook</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-10-21T04:30:00+04:00">21 Oct 2026 · 04:30 GST</time><span>7 min read</span><span>6 sources</span></div><div class="atags"><span class="tagp">#data</span><span class="tagp">#platform</span><span class="tagp">#governance</span><span class="tagp">#ai</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Playbook cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><circle cx="560" cy="61" r="8" class="cv-dot hl"/><rect x="590" y="50" width="457" height="22" class="cv-bar hl"/><circle cx="560" cy="109" r="8" class="cv-dot"/><rect x="590" y="98" width="540" height="22" class="cv-bar"/><circle cx="560" cy="157" r="8" class="cv-dot"/><rect x="590" y="146" width="434" height="22" class="cv-bar"/><circle cx="560" cy="205" r="8" class="cv-dot hl"/><rect x="590" y="194" width="381" height="22" class="cv-bar hl"/><circle cx="560" cy="253" r="8" class="cv-dot"/><rect x="590" y="242" width="276" height="22" class="cv-bar"/><circle cx="560" cy="301" r="8" class="cv-dot"/><rect x="590" y="290" width="190" height="22" class="cv-bar"/><circle cx="560" cy="349" r="8" class="cv-dot hl"/><rect x="590" y="338" width="314" height="22" class="cv-bar hl"/><text x="60" y="90" class="cv-k">PLAYBOOK · DATA PLATFORMS · SCALE</text><text x="60" y="350" class="cv-n">21 Oct 2026 · 04:30 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <p>A familiar incident: an application team renames a column, or changes a status code from a number to a string. Their tests pass. Two days later the finance dashboard is wrong, a machine learning feature has gone null and an executive is asking why. Nobody did anything unreasonable. The interface between the application and its data consumers was simply never written down.</p>
+<p>Data contracts fix that by treating data like an API: documented, versioned and checked.</p>
+
+<section class="block">
+<h2 id="what-a-contract-contains">What a contract contains</h2>
+<p>The Open Data Contract Standard, maintained by the Bitol project under the Linux Foundation, gives a useful vendor-neutral structure. Version 3 covers a contract's fundamentals, schema, data quality rules, servers, ownership, SLAs and support channels, and extended support beyond relational tables to hierarchical, streaming and unstructured data<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>. Version 3.1.0 added executable SLAs, relationships between properties and stricter validation, while keeping v3.0 contracts valid<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<table class="tbl">
+<thead><tr><th>Section</th><th>Question it answers</th></tr></thead>
+<tbody>
+<tr><td>Schema</td><td>What fields, types, keys and nullability can consumers rely on?</td></tr>
+<tr><td>Semantics</td><td>What does each field mean, in business terms?</td></tr>
+<tr><td>Quality</td><td>What checks must the data pass, and what happens when it doesn't?</td></tr>
+<tr><td>SLA</td><td>How fresh and available is it?</td></tr>
+<tr><td>Ownership and support</td><td>Who owns it, and how do consumers raise problems?</td></tr>
+</tbody>
+</table>
+<p>A standard format matters less for the first contract than the tenth. Once contracts are machine-readable, catalogues, quality tools and CI checks can all read the same file.</p>
+</section>
+
+<section class="block">
+<h2 id="the-playbook">The playbook</h2>
+<ol>
+<li><strong>Start where it hurts.</strong> Pick the two or three datasets behind recent incidents or critical reports. Don't try to contract the whole estate.</li>
+<li><strong>Write the contract with both sides in the room.</strong> The producer knows what the data is; consumers know what they depend on. The contract is the overlap.</li>
+<li><strong>Put it in the producer's repository</strong>, next to the code that emits the data, so changes to both are reviewed together.</li>
+<li><strong>Fail breaking changes in CI.</strong> A pull request that removes a field, narrows a type or changes a key should fail before merge, as practitioners recommend<sup class="cite"><a href="#ref-4">4</a></sup><sup class="cite"><a href="#ref-5">5</a></sup>.</li>
+<li><strong>Version intentionally.</strong> Additive changes such as a new nullable field are minor versions. Breaking changes get a new major version, run in parallel with the old one for an agreed deprecation window<sup class="cite"><a href="#ref-5">5</a></sup>.</li>
+<li><strong>Check quality and freshness at runtime</strong>, against the same contract, and route failures to the owner named in it.</li>
+<li><strong>Publish contracts in the catalogue</strong>, so consumers discover data through its contract rather than by browsing tables.</li>
+</ol>
+<div class="callout"><p>The contract only works if a breaking change actually fails a build. A contract that lives on a wiki page is documentation, and documentation drifts.</p></div>
+</section>
+
+<section class="block">
+<h2 id="where-contracts-sit-in-the-architecture">Where contracts sit in the architecture</h2>
+<p>Contracts are most valuable at the boundaries: where operational systems publish events or change streams, as in <a href="/insights/change-data-capture-event-streams/">change data capture and event streams</a>, and where curated datasets are shared between domains. They pair naturally with table formats that track schema and lineage, such as <a href="/insights/apache-iceberg-v3-lakehouse/">Apache Iceberg v3</a>, and with semantic definitions from an <a href="/insights/ontology-vs-knowledge-graph-vs-semantic-layer/">ontology or semantic layer</a>, which give fields meaning beyond their types.</p>
+</section>
+
+<section class="block">
+<h2 id="why-ai-raises-the-stakes">Why AI raises the stakes</h2>
+<p>AI systems consume data silently. A dashboard with a broken number may get noticed; a retrieval index or a model feature fed malformed data often doesn't, and the model presents the result fluently. Contracts on the data feeding features, training sets and retrieval indexes are an inexpensive guard against that kind of quiet failure. The Bitol community is also working on making contracts more useful to AI consumers, though that work is still in progress<sup class="cite"><a href="#ref-6">6</a></sup>.</p>
+</section>
+
+<section class="block">
+<h2 id="common-objections">Common objections</h2>
+<ul>
+<li><strong>"It slows producers down."</strong> Only for breaking changes, which is the point. Additive changes flow through.</li>
+<li><strong>"We have too many datasets."</strong> Start with the critical few. Coverage grows as teams see incidents drop.</li>
+<li><strong>"Our tools are different."</strong> A standard, machine-readable format is what lets different tools share one definition.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2 id="how-i-can-help">How I can help</h2>
+<p>I design data platforms where reliability is built in, from contracts and CI checks to catalogues and quality monitoring. As a <a href="/fractional-cto/">fractional CTO</a> I can lead the rollout across teams. Or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://bitol.io/odcs-version-3-transforming-data-contracts-with-enhanced-flexibility-integration-and-global-collaboration/" target="_blank" rel="noopener">ODCS version 3: transforming data contracts with enhanced flexibility, integration and global collaboration</a><small>Bitol, Linux Foundation</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://bitol.io/bitol-announces-odcs-v3-1-0-stronger-smarter-and-stricter/" target="_blank" rel="noopener">Bitol announces ODCS v3.1.0: stronger, smarter, and stricter</a><small>Bitol, Linux Foundation</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://docs.datacontract.com/docs/open-data-contract-standard.md" target="_blank" rel="noopener">Open Data Contract Standard</a><small>Data Contract documentation</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://datahub.com/?p=2320" target="_blank" rel="noopener">What are data contracts? A practical guide to getting started</a><small>DataHub</small></div></li><li id="ref-5"><span class="rn">5</span><div><a href="https://conduktor.io/blog/kafka-data-contracts" target="_blank" rel="noopener">Kafka data contracts: prevent breaking changes</a><small>Conduktor</small></div></li><li id="ref-6"><span class="rn">6</span><div><a href="https://dataintelligenceplatform.substack.com/p/odcs-32-and-odps-11-making-ai-smart" target="_blank" rel="noopener">ODCS v3.2 and ODPS v1.1: making AI smart about your data</a><small>Data Intelligence Platform (Substack)</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fdata-contracts-playbook%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fdata-contracts-playbook%2F&amp;text=Data%20contracts%3A%20a%20practical%20playbook%20for%20pipelines%20that%20stop%20breaking" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=Data%20contracts%3A%20a%20practical%20playbook%20for%20pipelines%20that%20stop%20breaking%20https%3A%2F%2Fasksumanta.com%2Finsights%2Fdata-contracts-playbook%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://asksumanta.com/insights/data-contracts-playbook/">Copy link</button></div>
+      <div class="pnav"><a class="pn prev" href="/insights/mcp-apps-tool-annotations/"><small>← Previous</small><b>MCP Apps and tool annotations: how to govern what agents show and do</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#what-a-contract-contains">What a contract contains</a></li><li><a href="#the-playbook">The playbook</a></li><li><a href="#where-contracts-sit-in-the-architecture">Where contracts sit in the architecture</a></li><li><a href="#why-ai-raises-the-stakes">Why AI raises the stakes</a></li><li><a href="#common-objections">Common objections</a></li><li><a href="#how-i-can-help">How I can help</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>What is a data contract?</summary><p>A written, agreed and checkable description of the interface between a data producer and its consumers: schema, meaning, quality expectations, service levels and how changes are handled.</p></details><details class="rise"><summary>What is the Open Data Contract Standard?</summary><p>ODCS is an open, vendor-neutral YAML standard for data contracts maintained by the Bitol project under the Linux Foundation. Version 3 covers fundamentals, schema, data quality, servers, ownership, SLAs and support, and v3.1.0 added executable SLAs and relationships.</p></details><details class="rise"><summary>How are data contracts enforced?</summary><p>Typically in CI: a change that would break a contract&#x27;s schema fails before it merges. Runtime checks then validate quality and freshness, and versioning with a deprecation window handles intentional breaking changes.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/fractional-cto/"><small>Service</small><b>Fractional CTO</b><span>I work as a part-time CTO for founders, CEOs and boards who need experienced technical judgement now, and a team that can carry it on after I step back.</span><i>→</i></a><a class="rcard rise" href="/technical-due-diligence/"><small>Service</small><b>Technical due diligence</b><span>I give investors an independent, plain-language view of a company&#x27;s technology, team and AI claims, so the risks are priced in before the deal closes, not discovered after.</span><i>→</i></a><a class="rcard rise" href="/ai-architect/"><small>Service</small><b>AI &amp; LLM architecture</b><span>I design and build AI systems that leadership can trust: grounded in your data, measured by evaluations, governed by your rules and priced so they make sense at scale.</span><i>→</i></a><a class="rcard rise" href="/insights/mcp-apps-tool-annotations/"><small>Insight</small><b>MCP Apps and tool annotations: how to govern what agents show and do</b><span>Two MCP features change what enterprise agents look like. MCP Apps let tools return interactive interfaces inside the conversation. Tool annotations describe how risky a tool is. Both are useful, and both need governance the protocol can&#x27;t provide on its own.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: Data contracts: a practical playbook for pipelines that stop breaking">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
+        <p class="floc">United States &amp; UAE · working globally</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/uae/">Fractional CTO in the UAE</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/data-contracts-playbook/">Data contracts: a practical playbook for pipelines that stop breaking</a></li><li><a href="/insights/mcp-apps-tool-annotations/">MCP Apps and tool annotations: how to govern what agents show and do</a></li><li><a href="/insights/saudi-pdpl-cross-border-ai/">Saudi PDPL and cross-border AI: designing data flows that hold up</a></li><li><a href="/insights/ambient-ai-scribes-architecture/">Ambient AI scribes: what the evidence says, and how to deploy them safely</a></li><li><a href="/insights/apache-iceberg-v3-lakehouse/">Apache Iceberg v3: what changes from v2, and when your lakehouse should upgrade</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>

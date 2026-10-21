@@ -1,0 +1,57 @@
+<!--{"title": "Data contracts: a playbook for pipelines that stop breaking", "description": "Data contracts turn the interface between data producers and consumers into something written down and checked. How I introduce them with ODCS, CI checks and versioning.", "h1": "Data contracts: a practical playbook for pipelines that stop breaking", "kicker": "Data platforms · Scale", "lede": "Most data incidents start with a change nobody told the consumers about. Data contracts make the interface between producers and consumers explicit and checkable. Here is how I introduce them without a big-bang programme.", "date": "2026-10-21", "datetime": "2026-10-21T04:30:00+04:00", "readtime": "7 min read", "format": "playbook", "tags": ["data", "platform", "governance", "ai"], "keywords": ["data contracts", "Open Data Contract Standard", "ODCS", "Bitol", "data quality", "schema evolution", "breaking changes data pipeline", "data mesh", "data platform consultant", "data governance"], "faq": [["What is a data contract?", "A written, agreed and checkable description of the interface between a data producer and its consumers: schema, meaning, quality expectations, service levels and how changes are handled."], ["What is the Open Data Contract Standard?", "ODCS is an open, vendor-neutral YAML standard for data contracts maintained by the Bitol project under the Linux Foundation. Version 3 covers fundamentals, schema, data quality, servers, ownership, SLAs and support, and v3.1.0 added executable SLAs and relationships."], ["How are data contracts enforced?", "Typically in CI: a change that would break a contract's schema fails before it merges. Runtime checks then validate quality and freshness, and versioning with a deprecation window handles intentional breaking changes."]], "related": ["/fractional-cto/", "/technical-due-diligence/", "/ai-architect/"], "citations": [{"title": "ODCS version 3: transforming data contracts with enhanced flexibility, integration and global collaboration", "url": "https://bitol.io/odcs-version-3-transforming-data-contracts-with-enhanced-flexibility-integration-and-global-collaboration/", "publisher": "Bitol, Linux Foundation"}, {"title": "Bitol announces ODCS v3.1.0: stronger, smarter, and stricter", "url": "https://bitol.io/bitol-announces-odcs-v3-1-0-stronger-smarter-and-stricter/", "publisher": "Bitol, Linux Foundation"}, {"title": "Open Data Contract Standard", "url": "https://docs.datacontract.com/docs/open-data-contract-standard.md", "publisher": "Data Contract documentation"}, {"title": "What are data contracts? A practical guide to getting started", "url": "https://datahub.com/?p=2320", "publisher": "DataHub"}, {"title": "Kafka data contracts: prevent breaking changes", "url": "https://conduktor.io/blog/kafka-data-contracts", "publisher": "Conduktor"}, {"title": "ODCS v3.2 and ODPS v1.1: making AI smart about your data", "url": "https://dataintelligenceplatform.substack.com/p/odcs-32-and-odps-11-making-ai-smart", "publisher": "Data Intelligence Platform (Substack)"}]}-->
+<p>A familiar incident: an application team renames a column, or changes a status code from a number to a string. Their tests pass. Two days later the finance dashboard is wrong, a machine learning feature has gone null and an executive is asking why. Nobody did anything unreasonable. The interface between the application and its data consumers was simply never written down.</p>
+<p>Data contracts fix that by treating data like an API: documented, versioned and checked.</p>
+
+<section class="block">
+<h2>What a contract contains</h2>
+<p>The Open Data Contract Standard, maintained by the Bitol project under the Linux Foundation, gives a useful vendor-neutral structure. Version 3 covers a contract's fundamentals, schema, data quality rules, servers, ownership, SLAs and support channels, and extended support beyond relational tables to hierarchical, streaming and unstructured data<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>. Version 3.1.0 added executable SLAs, relationships between properties and stricter validation, while keeping v3.0 contracts valid<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<table class="tbl">
+<thead><tr><th>Section</th><th>Question it answers</th></tr></thead>
+<tbody>
+<tr><td>Schema</td><td>What fields, types, keys and nullability can consumers rely on?</td></tr>
+<tr><td>Semantics</td><td>What does each field mean, in business terms?</td></tr>
+<tr><td>Quality</td><td>What checks must the data pass, and what happens when it doesn't?</td></tr>
+<tr><td>SLA</td><td>How fresh and available is it?</td></tr>
+<tr><td>Ownership and support</td><td>Who owns it, and how do consumers raise problems?</td></tr>
+</tbody>
+</table>
+<p>A standard format matters less for the first contract than the tenth. Once contracts are machine-readable, catalogues, quality tools and CI checks can all read the same file.</p>
+</section>
+
+<section class="block">
+<h2>The playbook</h2>
+<ol>
+<li><strong>Start where it hurts.</strong> Pick the two or three datasets behind recent incidents or critical reports. Don't try to contract the whole estate.</li>
+<li><strong>Write the contract with both sides in the room.</strong> The producer knows what the data is; consumers know what they depend on. The contract is the overlap.</li>
+<li><strong>Put it in the producer's repository</strong>, next to the code that emits the data, so changes to both are reviewed together.</li>
+<li><strong>Fail breaking changes in CI.</strong> A pull request that removes a field, narrows a type or changes a key should fail before merge, as practitioners recommend<sup class="cite"><a href="#ref-4">4</a></sup><sup class="cite"><a href="#ref-5">5</a></sup>.</li>
+<li><strong>Version intentionally.</strong> Additive changes such as a new nullable field are minor versions. Breaking changes get a new major version, run in parallel with the old one for an agreed deprecation window<sup class="cite"><a href="#ref-5">5</a></sup>.</li>
+<li><strong>Check quality and freshness at runtime</strong>, against the same contract, and route failures to the owner named in it.</li>
+<li><strong>Publish contracts in the catalogue</strong>, so consumers discover data through its contract rather than by browsing tables.</li>
+</ol>
+<div class="callout"><p>The contract only works if a breaking change actually fails a build. A contract that lives on a wiki page is documentation, and documentation drifts.</p></div>
+</section>
+
+<section class="block">
+<h2>Where contracts sit in the architecture</h2>
+<p>Contracts are most valuable at the boundaries: where operational systems publish events or change streams, as in <a href="/insights/change-data-capture-event-streams/">change data capture and event streams</a>, and where curated datasets are shared between domains. They pair naturally with table formats that track schema and lineage, such as <a href="/insights/apache-iceberg-v3-lakehouse/">Apache Iceberg v3</a>, and with semantic definitions from an <a href="/insights/ontology-vs-knowledge-graph-vs-semantic-layer/">ontology or semantic layer</a>, which give fields meaning beyond their types.</p>
+</section>
+
+<section class="block">
+<h2>Why AI raises the stakes</h2>
+<p>AI systems consume data silently. A dashboard with a broken number may get noticed; a retrieval index or a model feature fed malformed data often doesn't, and the model presents the result fluently. Contracts on the data feeding features, training sets and retrieval indexes are an inexpensive guard against that kind of quiet failure. The Bitol community is also working on making contracts more useful to AI consumers, though that work is still in progress<sup class="cite"><a href="#ref-6">6</a></sup>.</p>
+</section>
+
+<section class="block">
+<h2>Common objections</h2>
+<ul>
+<li><strong>"It slows producers down."</strong> Only for breaking changes, which is the point. Additive changes flow through.</li>
+<li><strong>"We have too many datasets."</strong> Start with the critical few. Coverage grows as teams see incidents drop.</li>
+<li><strong>"Our tools are different."</strong> A standard, machine-readable format is what lets different tools share one definition.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I design data platforms where reliability is built in, from contracts and CI checks to catalogues and quality monitoring. As a <a href="/fractional-cto/">fractional CTO</a> I can lead the rollout across teams. Or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>

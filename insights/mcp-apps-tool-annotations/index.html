@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MCP Apps and tool annotations: governing agent UIs and actions</title>
+<meta name="description" content="MCP tools can now return interactive UIs, and annotations hint at tool risk. How MCP Apps and tool annotations work, what they can&#x27;t guarantee, and how I govern them." />
+<meta name="keywords" content="MCP Apps, Model Context Protocol UI, MCP tool annotations, readOnlyHint destructiveHint, agent governance, MCP security, agentic UI, enterprise AI agents, lethal trifecta MCP, AI architect" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://asksumanta.com/insights/mcp-apps-tool-annotations/" />
+<meta name="theme-color" content="#111214" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="MCP Apps and tool annotations: governing agent UIs and actions" />
+<meta property="og:description" content="MCP tools can now return interactive UIs, and annotations hint at tool risk. How MCP Apps and tool annotations work, what they can&#x27;t guarantee, and how I govern them." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://asksumanta.com/insights/mcp-apps-tool-annotations/" />
+<meta property="og:image" content="https://asksumanta.com/assets/og/mcp-apps-tool-annotations.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="MCP Apps and tool annotations: governing agent UIs and actions" />
+<meta name="twitter:description" content="MCP tools can now return interactive UIs, and annotations hint at tool risk. How MCP Apps and tool annotations work, what they can&#x27;t guarantee, and how I govern them." />
+<meta name="twitter:image" content="https://asksumanta.com/assets/og/mcp-apps-tool-annotations.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "BlogPosting", "headline": "MCP Apps and tool annotations: how to govern what agents show and do", "description": "MCP tools can now return interactive UIs, and annotations hint at tool risk. How MCP Apps and tool annotations work, what they can't guarantee, and how I govern them.", "datePublished": "2026-10-21T04:15:00+04:00", "dateModified": "2026-10-21T04:15:00+04:00", "articleSection": "AI architecture · MCP", "genre": "Explainer", "citation": [{"@type": "CreativeWork", "name": "MCP Apps: bringing UI capabilities to MCP clients", "url": "https://blog.modelcontextprotocol.io/posts/2026-01-26-mcp-apps/"}, {"@type": "CreativeWork", "name": "Tool annotations as risk vocabulary: what hints can and can't do", "url": "https://blog.modelcontextprotocol.io/posts/2026-03-16-tool-annotations/"}, {"@type": "CreativeWork", "name": "Tools (specification 2025-11-25)", "url": "https://modelcontextprotocol.io/specification/2025-11-25/server/tools"}, {"@type": "CreativeWork", "name": "MCP Apps extension documentation", "url": "https://modelcontextprotocol.io/docs/extensions/apps"}, {"@type": "CreativeWork", "name": "The lethal trifecta for AI agents", "url": "https://simonwillison.net/2025/Jun/16/the-lethal-trifecta/"}], "author": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "publisher": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "mainEntityOfPage": "https://asksumanta.com/insights/mcp-apps-tool-annotations/", "image": "https://asksumanta.com/assets/og/mcp-apps-tool-annotations.png", "keywords": "MCP Apps, Model Context Protocol UI, MCP tool annotations, readOnlyHint destructiveHint, agent governance, MCP security, agentic UI, enterprise AI agents, lethal trifecta MCP, AI architect", "wordCount": 846}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://asksumanta.com/"}, {"@type": "ListItem", "position": 2, "name": "Insights", "item": "https://asksumanta.com/insights/"}, {"@type": "ListItem", "position": 3, "name": "MCP Apps and tool annotations: how to govern what agents show and do", "item": "https://asksumanta.com/insights/mcp-apps-tool-annotations/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What are MCP Apps?", "acceptedAnswer": {"@type": "Answer", "text": "The first official MCP extension, announced as live in January 2026. Tools can declare a UI resource that the host renders in a sandboxed iframe, so tools can return dashboards, forms and other interactive components inside the conversation."}}, {"@type": "Question", "name": "What are MCP tool annotations?", "acceptedAnswer": {"@type": "Answer", "text": "Optional hints a server attaches to a tool, such as readOnlyHint, destructiveHint, idempotentHint and openWorldHint. The specification says they are hints and clients must treat them as untrusted unless they come from a trusted server."}}, {"@type": "Question", "name": "Can I rely on tool annotations for security?", "acceptedAnswer": {"@type": "Answer", "text": "Not on their own. They are useful inputs to confirmation prompts and policy engines, especially for servers you control, but enforcement should happen in a gateway or host policy that combines them with other signals."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+</script>
+</head>
+<body class="sub is-post">
+<div class="progress" id="progress"></div>
+<nav>
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="/#practice">Services</a>
+      <a href="/#work">Case studies</a>
+      <a href="/insights/">Insights</a>
+      <a href="/#assess">Analyse</a>
+      <a href="/#connect">Connect</a>
+    </div>
+    <div class="nav-r">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/insights/">Insights</a> <span>/</span> <em>MCP Apps and tool annotations: how to govern what agents show and do</em></div>
+    <div class="kicker">AI architecture · MCP</div>
+    <h1>MCP Apps and tool annotations: how to govern what agents show and do</h1>
+    <p class="sub-lede">Two MCP features change what enterprise agents look like. MCP Apps let tools return interactive interfaces inside the conversation. Tool annotations describe how risky a tool is. Both are useful, and both need governance the protocol can&#x27;t provide on its own.</p>
+    <div class="ameta"><span class="fmt">Explainer</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-10-21T04:15:00+04:00">21 Oct 2026 · 04:15 GST</time><span>8 min read</span><span>5 sources</span></div><div class="atags"><span class="tagp">#ai</span><span class="tagp">#mcp</span><span class="tagp">#agents</span><span class="tagp">#security</span><span class="tagp">#governance</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Explainer cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><line x1="1100" y1="325" x2="1004" y2="261" class="cv-edge" opacity="0.23"/><line x1="1100" y1="325" x2="1093" y2="199" class="cv-edge" opacity="0.16"/><line x1="1100" y1="325" x2="1058" y2="191" class="cv-edge" opacity="0.06"/><line x1="1100" y1="325" x2="1127" y2="186" class="cv-edge" opacity="0.05"/><line x1="1100" y1="325" x2="1112" y2="346" class="cv-edge" opacity="0.84"/><line x1="1100" y1="325" x2="1068" y2="238" class="cv-edge" opacity="0.38"/><line x1="1100" y1="325" x2="1023" y2="299" class="cv-edge" opacity="0.46"/><line x1="607" y1="355" x2="531" y2="377" class="cv-edge" opacity="0.47"/><line x1="607" y1="355" x2="603" y2="319" class="cv-edge" opacity="0.76"/><line x1="913" y1="283" x2="1004" y2="261" class="cv-edge" opacity="0.37"/><line x1="913" y1="283" x2="969" y2="244" class="cv-edge" opacity="0.54"/><line x1="913" y1="283" x2="958" y2="382" class="cv-edge" opacity="0.27"/><line x1="913" y1="283" x2="935" y2="335" class="cv-edge" opacity="0.63"/><line x1="913" y1="283" x2="1023" y2="299" class="cv-edge" opacity="0.26"/><line x1="1004" y1="261" x2="969" y2="244" class="cv-edge" opacity="0.74"/><line x1="1004" y1="261" x2="1093" y2="199" class="cv-edge" opacity="0.28"/><line x1="1004" y1="261" x2="958" y2="382" class="cv-edge" opacity="0.13"/><line x1="1004" y1="261" x2="935" y2="335" class="cv-edge" opacity="0.32"/><line x1="1004" y1="261" x2="1058" y2="191" class="cv-edge" opacity="0.41"/><line x1="1004" y1="261" x2="1127" y2="186" class="cv-edge" opacity="0.04"/><line x1="1004" y1="261" x2="1112" y2="346" class="cv-edge" opacity="0.08"/><line x1="1004" y1="261" x2="1068" y2="238" class="cv-edge" opacity="0.55"/><line x1="1004" y1="261" x2="1023" y2="299" class="cv-edge" opacity="0.71"/><line x1="1147" y1="78" x2="1093" y2="199" class="cv-edge" opacity="0.11"/><line x1="1147" y1="78" x2="1040" y2="52" class="cv-edge" opacity="0.27"/><line x1="1147" y1="78" x2="1129" y2="108" class="cv-edge hl" opacity="0.77"/><line x1="1147" y1="78" x2="1058" y2="191" class="cv-edge" opacity="0.04"/><line x1="1147" y1="78" x2="1127" y2="186" class="cv-edge" opacity="0.27"/><line x1="969" y1="244" x2="1093" y2="199" class="cv-edge" opacity="0.12"/><line x1="969" y1="244" x2="958" y2="382" class="cv-edge" opacity="0.07"/><line x1="969" y1="244" x2="935" y2="335" class="cv-edge" opacity="0.35"/><line x1="969" y1="244" x2="1058" y2="191" class="cv-edge" opacity="0.31"/><line x1="969" y1="244" x2="1068" y2="238" class="cv-edge" opacity="0.34"/><line x1="969" y1="244" x2="1023" y2="299" class="cv-edge" opacity="0.48"/><line x1="736" y1="189" x2="714" y2="63" class="cv-edge hl" opacity="0.15"/><line x1="736" y1="189" x2="748" y2="41" class="cv-edge hl" opacity="0.01"/><line x1="736" y1="189" x2="768" y2="102" class="cv-edge" opacity="0.38"/><line x1="736" y1="189" x2="736" y2="80" class="cv-edge hl" opacity="0.28"/><line x1="736" y1="189" x2="768" y2="110" class="cv-edge" opacity="0.43"/><line x1="736" y1="189" x2="715" y2="89" class="cv-edge hl" opacity="0.32"/><line x1="714" y1="63" x2="748" y2="41" class="cv-edge hl" opacity="0.73"/><line x1="714" y1="63" x2="768" y2="102" class="cv-edge hl" opacity="0.56"/><line x1="714" y1="63" x2="736" y2="80" class="cv-edge hl" opacity="0.82"/><line x1="714" y1="63" x2="768" y2="110" class="cv-edge hl" opacity="0.52"/><line x1="714" y1="63" x2="715" y2="89" class="cv-edge hl" opacity="0.83"/><line x1="531" y1="377" x2="603" y2="319" class="cv-edge" opacity="0.39"/><line x1="1093" y1="199" x2="1129" y2="108" class="cv-edge hl" opacity="0.34"/><line x1="1093" y1="199" x2="1058" y2="191" class="cv-edge" opacity="0.76"/><line x1="1093" y1="199" x2="1127" y2="186" class="cv-edge" opacity="0.76"/><line x1="1093" y1="199" x2="1112" y2="346" class="cv-edge" opacity="0.01"/><line x1="1093" y1="199" x2="1068" y2="238" class="cv-edge" opacity="0.69"/><line x1="1093" y1="199" x2="1023" y2="299" class="cv-edge" opacity="0.19"/><line x1="748" y1="41" x2="768" y2="102" class="cv-edge hl" opacity="0.57"/><line x1="748" y1="41" x2="736" y2="80" class="cv-edge hl" opacity="0.73"/><line x1="748" y1="41" x2="768" y2="110" class="cv-edge hl" opacity="0.52"/><line x1="748" y1="41" x2="715" y2="89" class="cv-edge hl" opacity="0.62"/><line x1="1040" y1="52" x2="1129" y2="108" class="cv-edge hl" opacity="0.30"/><line x1="1040" y1="52" x2="1058" y2="191" class="cv-edge" opacity="0.07"/><line x1="958" y1="382" x2="935" y2="335" class="cv-edge" opacity="0.65"/><line x1="958" y1="382" x2="1023" y2="299" class="cv-edge" opacity="0.30"/><line x1="768" y1="102" x2="736" y2="80" class="cv-edge hl" opacity="0.74"/><line x1="768" y1="102" x2="768" y2="110" class="cv-edge" opacity="0.94"/><line x1="768" y1="102" x2="887" y2="114" class="cv-edge" opacity="0.20"/><line x1="768" y1="102" x2="715" y2="89" class="cv-edge hl" opacity="0.64"/><line x1="736" y1="80" x2="768" y2="110" class="cv-edge hl" opacity="0.71"/><line x1="736" y1="80" x2="715" y2="89" class="cv-edge hl" opacity="0.85"/><line x1="1129" y1="108" x2="1058" y2="191" class="cv-edge hl" opacity="0.27"/><line x1="1129" y1="108" x2="1127" y2="186" class="cv-edge hl" opacity="0.48"/><line x1="1129" y1="108" x2="1068" y2="238" class="cv-edge hl" opacity="0.04"/><line x1="935" y1="335" x2="1023" y2="299" class="cv-edge" opacity="0.36"/><line x1="1058" y1="191" x2="1127" y2="186" class="cv-edge" opacity="0.54"/><line x1="1058" y1="191" x2="1068" y2="238" class="cv-edge" opacity="0.68"/><line x1="1058" y1="191" x2="1023" y2="299" class="cv-edge" opacity="0.24"/><line x1="1127" y1="186" x2="1068" y2="238" class="cv-edge" opacity="0.47"/><line x1="768" y1="110" x2="887" y2="114" class="cv-edge" opacity="0.20"/><line x1="768" y1="110" x2="715" y2="89" class="cv-edge hl" opacity="0.62"/><line x1="1112" y1="346" x2="1068" y2="238" class="cv-edge" opacity="0.22"/><line x1="1112" y1="346" x2="1023" y2="299" class="cv-edge" opacity="0.33"/><line x1="1068" y1="238" x2="1023" y2="299" class="cv-edge" opacity="0.49"/><circle cx="1100" cy="325" r="3" class="cv-dot"/><circle cx="607" cy="355" r="3" class="cv-dot"/><circle cx="913" cy="283" r="3" class="cv-dot"/><circle cx="1004" cy="261" r="3" class="cv-dot"/><circle cx="1147" cy="78" r="3" class="cv-dot"/><circle cx="969" cy="244" r="3" class="cv-dot"/><circle cx="736" cy="189" r="3" class="cv-dot"/><circle cx="714" cy="63" r="6" class="cv-dot hl"/><circle cx="531" cy="377" r="3" class="cv-dot"/><circle cx="1093" cy="199" r="3" class="cv-dot"/><circle cx="748" cy="41" r="6" class="cv-dot hl"/><circle cx="1040" cy="52" r="3" class="cv-dot"/><circle cx="958" cy="382" r="3" class="cv-dot"/><circle cx="768" cy="102" r="3" class="cv-dot"/><circle cx="736" cy="80" r="6" class="cv-dot hl"/><circle cx="1129" cy="108" r="6" class="cv-dot hl"/><circle cx="935" cy="335" r="3" class="cv-dot"/><circle cx="1058" cy="191" r="3" class="cv-dot"/><circle cx="1127" cy="186" r="3" class="cv-dot"/><circle cx="768" cy="110" r="3" class="cv-dot"/><circle cx="887" cy="114" r="3" class="cv-dot"/><circle cx="1112" cy="346" r="3" class="cv-dot"/><circle cx="1068" cy="238" r="3" class="cv-dot"/><circle cx="1023" cy="299" r="3" class="cv-dot"/><circle cx="603" cy="319" r="3" class="cv-dot"/><circle cx="715" cy="89" r="6" class="cv-dot hl"/><text x="60" y="90" class="cv-k">EXPLAINER · AI ARCHITECTURE · MCP</text><text x="60" y="350" class="cv-n">21 Oct 2026 · 04:15 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <p>Enterprise agents are moving beyond chat. A tool that queries a database no longer has to return hundreds of rows as text; it can return a table the user can sort and filter. A deployment tool can present a form instead of asking twenty questions. At the same time, organisations are connecting agents to more tools from more servers, and need a way to tell a harmless lookup from a destructive action.</p>
+<p>MCP has answers to both: MCP Apps and tool annotations. Here is how they work and how I fit them into an enterprise architecture.</p>
+
+<section class="block">
+<h2 id="mcp-apps-interfaces-inside-the-conversation">MCP Apps: interfaces inside the conversation</h2>
+<p>In January 2026 the MCP maintainers announced MCP Apps as the first official MCP extension. A tool declares a UI resource, served under a <code>ui://</code> scheme, and the host fetches it and renders it in a sandboxed iframe. The UI and host communicate over JSON-RPC via <code>postMessage</code>, so the interface can call server tools and update the model's context as the user interacts<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/mcp-apps-tool-annotations/mcp-app-color-picker.webp" alt="A colour picker MCP App rendered inside a chat conversation, with hex, RGB and HSL values and a Select Color button" width="1080" height="836" loading="lazy"></div><figcaption>An example MCP App: a tool returns an interactive colour picker that renders inside the conversation. <span class="credit">Source: <a href="https://blog.modelcontextprotocol.io/posts/2026-01-26-mcp-apps/" target="_blank" rel="noopener">MCP blog, MCP Apps: Bringing UI Capabilities To MCP Clients</a> · CC BY 4.0</span></figcaption></figure>
+<p>The announcement lists support across several major clients, and builds on earlier work from MCP-UI and OpenAI's Apps SDK<sup class="cite"><a href="#ref-1">1</a></sup>. For enterprise teams, the appeal is one interactive tool that works in several AI clients without client-specific code.</p>
+<p>The security model has several layers: sandboxed iframes, templates the host can review before rendering, loggable messages between UI and host, and optional user consent for tool calls the UI initiates<sup class="cite"><a href="#ref-1">1</a></sup>. The maintainers are clear that users should still vet servers before connecting them.</p>
+</section>
+
+<section class="block">
+<h2 id="tool-annotations-a-risk-vocabulary-not-a-guarantee">Tool annotations: a risk vocabulary, not a guarantee</h2>
+<p>Tool annotations let a server describe a tool's behaviour with four hints: whether it is read-only, destructive, idempotent, or reaches an open world of external entities<sup class="cite"><a href="#ref-2">2</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>. The defaults are deliberately cautious: a tool with no annotations is assumed to be able to modify things, possibly destructively, and to reach outside its environment<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<p>The key word is hint. The specification says annotations aren't guaranteed to describe behaviour faithfully, and clients must treat them as untrusted unless they come from a trusted server<sup class="cite"><a href="#ref-2">2</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>. A malicious server can label a destructive tool read-only.</p>
+<table class="tbl">
+<thead><tr><th>Annotations can</th><th>Annotations can't</th></tr></thead>
+<tbody>
+<tr><td>Drive confirmation prompts for destructive tools</td><td>Prove a tool behaves as described</td></tr>
+<tr><td>Feed a policy engine as one input among several</td><td>Replace enforcement in a gateway or host</td></tr>
+<tr><td>Support graduated trust for internal servers you control</td><td>Make an untrusted third-party server safe</td></tr>
+<tr><td>Help users understand tools before running them</td><td>Detect risk that comes from combining tools</td></tr>
+</tbody>
+</table>
+</section>
+
+<section class="block">
+<h2 id="risk-lives-in-the-session-not-the-tool">Risk lives in the session, not the tool</h2>
+<p>The MCP maintainers' post on annotations makes a point I agree with strongly: risk often comes from combinations. Drawing on Simon Willison's lethal trifecta of private data, untrusted content and external communication<sup class="cite"><a href="#ref-5">5</a></sup>, it notes that users routinely combine tools from several servers, so the risk profile belongs to the session rather than any single server<sup class="cite"><a href="#ref-2">2</a></sup>. Several open proposals aim to add metadata so clients can detect when a session has all three legs available<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<p>This is the same containment logic as in <a href="/insights/prompt-injection-defence-for-agents/">prompt injection defence for agents</a>. MCP Apps add a wrinkle: a UI that can call tools and update model context is another path by which actions happen, and it needs the same policies as the model.</p>
+</section>
+
+<section class="block">
+<h2 id="how-i-govern-them-in-an-enterprise">How I govern them in an enterprise</h2>
+<ol>
+<li><strong>Approve servers, not just tools.</strong> Maintain an allow-list of MCP servers. Annotations from internal, reviewed servers can drive policy; from others they are informational only.</li>
+<li><strong>Require annotations on internal servers</strong>, reviewed in code review like any other interface contract, and test that tools behave as annotated.</li>
+<li><strong>Enforce at a gateway.</strong> Route tool calls, including those initiated from MCP App UIs, through a policy layer that checks user rights, tool risk and session state, as in <a href="/insights/securing-mcp-servers-checklist/">securing MCP servers</a>.</li>
+<li><strong>Track session state.</strong> Once a session has read private data and seen untrusted content, block or require approval for open-world and destructive tools.</li>
+<li><strong>Review UI templates</strong> for MCP Apps before approving a server, and log every UI-to-host message.</li>
+<li><strong>Design approvals people actually read.</strong> Show the exact action and data affected. A confirmation dialog users click through by reflex is not a control.</li>
+</ol>
+<div class="callout"><p>Treat annotations as labels and the gateway as the lock. Labels help people and policies make decisions; only enforcement outside the model and the server stops a mislabelled tool.</p></div>
+</section>
+
+<section class="block">
+<h2 id="where-this-is-heading">Where this is heading</h2>
+<p>The annotation vocabulary is deliberately small today, with several proposals open for trust, sensitivity and output-safety hints<sup class="cite"><a href="#ref-2">2</a></sup>. Build your policy engine so new hints can be added as inputs without redesign, and record your choices in an <a href="/insights/architecture-decision-records-fractional-cto/">architecture decision record</a>.</p>
+</section>
+
+<section class="block">
+<h2 id="how-i-can-help">How I can help</h2>
+<p>I design MCP architectures for enterprises, from server approval and gateways to session policies and agent UIs. See my <a href="/ai-architect/">AI architecture work</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://blog.modelcontextprotocol.io/posts/2026-01-26-mcp-apps/" target="_blank" rel="noopener">MCP Apps: bringing UI capabilities to MCP clients</a><small>Model Context Protocol blog · 26 Jan 2026</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://blog.modelcontextprotocol.io/posts/2026-03-16-tool-annotations/" target="_blank" rel="noopener">Tool annotations as risk vocabulary: what hints can and can&#x27;t do</a><small>Model Context Protocol blog · 16 Mar 2026</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://modelcontextprotocol.io/specification/2025-11-25/server/tools" target="_blank" rel="noopener">Tools (specification 2025-11-25)</a><small>Model Context Protocol</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://modelcontextprotocol.io/docs/extensions/apps" target="_blank" rel="noopener">MCP Apps extension documentation</a><small>Model Context Protocol</small></div></li><li id="ref-5"><span class="rn">5</span><div><a href="https://simonwillison.net/2025/Jun/16/the-lethal-trifecta/" target="_blank" rel="noopener">The lethal trifecta for AI agents</a><small>Simon Willison · 16 Jun 2025</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fmcp-apps-tool-annotations%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fmcp-apps-tool-annotations%2F&amp;text=MCP%20Apps%20and%20tool%20annotations%3A%20how%20to%20govern%20what%20agents%20show%20and%20do" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=MCP%20Apps%20and%20tool%20annotations%3A%20how%20to%20govern%20what%20agents%20show%20and%20do%20https%3A%2F%2Fasksumanta.com%2Finsights%2Fmcp-apps-tool-annotations%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://asksumanta.com/insights/mcp-apps-tool-annotations/">Copy link</button></div>
+      <div class="pnav"><a class="pn prev" href="/insights/saudi-pdpl-cross-border-ai/"><small>← Previous</small><b>Saudi PDPL and cross-border AI: designing data flows that hold up</b></a><a class="pn next" href="/insights/data-contracts-playbook/"><small>Next →</small><b>Data contracts: a practical playbook for pipelines that stop breaking</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#mcp-apps-interfaces-inside-the-conversation">MCP Apps: interfaces inside the conversation</a></li><li><a href="#tool-annotations-a-risk-vocabulary-not-a-guarantee">Tool annotations: a risk vocabulary, not a guarantee</a></li><li><a href="#risk-lives-in-the-session-not-the-tool">Risk lives in the session, not the tool</a></li><li><a href="#how-i-govern-them-in-an-enterprise">How I govern them in an enterprise</a></li><li><a href="#where-this-is-heading">Where this is heading</a></li><li><a href="#how-i-can-help">How I can help</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>What are MCP Apps?</summary><p>The first official MCP extension, announced as live in January 2026. Tools can declare a UI resource that the host renders in a sandboxed iframe, so tools can return dashboards, forms and other interactive components inside the conversation.</p></details><details class="rise"><summary>What are MCP tool annotations?</summary><p>Optional hints a server attaches to a tool, such as readOnlyHint, destructiveHint, idempotentHint and openWorldHint. The specification says they are hints and clients must treat them as untrusted unless they come from a trusted server.</p></details><details class="rise"><summary>Can I rely on tool annotations for security?</summary><p>Not on their own. They are useful inputs to confirmation prompts and policy engines, especially for servers you control, but enforcement should happen in a gateway or host policy that combines them with other signals.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/ai-architect/"><small>Service</small><b>AI &amp; LLM architecture</b><span>I design and build AI systems that leadership can trust: grounded in your data, measured by evaluations, governed by your rules and priced so they make sense at scale.</span><i>→</i></a><a class="rcard rise" href="/fractional-cto/"><small>Service</small><b>Fractional CTO</b><span>I work as a part-time CTO for founders, CEOs and boards who need experienced technical judgement now, and a team that can carry it on after I step back.</span><i>→</i></a><a class="rcard rise" href="/technical-due-diligence/"><small>Service</small><b>Technical due diligence</b><span>I give investors an independent, plain-language view of a company&#x27;s technology, team and AI claims, so the risks are priced in before the deal closes, not discovered after.</span><i>→</i></a><a class="rcard rise" href="/insights/data-contracts-playbook/"><small>Insight</small><b>Data contracts: a practical playbook for pipelines that stop breaking</b><span>Most data incidents start with a change nobody told the consumers about. Data contracts make the interface between producers and consumers explicit and checkable. Here is how I introduce them without a big-bang programme.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: MCP Apps and tool annotations: how to govern what agents show and do">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
+        <p class="floc">United States &amp; UAE · working globally</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/uae/">Fractional CTO in the UAE</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/data-contracts-playbook/">Data contracts: a practical playbook for pipelines that stop breaking</a></li><li><a href="/insights/mcp-apps-tool-annotations/">MCP Apps and tool annotations: how to govern what agents show and do</a></li><li><a href="/insights/saudi-pdpl-cross-border-ai/">Saudi PDPL and cross-border AI: designing data flows that hold up</a></li><li><a href="/insights/ambient-ai-scribes-architecture/">Ambient AI scribes: what the evidence says, and how to deploy them safely</a></li><li><a href="/insights/apache-iceberg-v3-lakehouse/">Apache Iceberg v3: what changes from v2, and when your lakehouse should upgrade</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>
