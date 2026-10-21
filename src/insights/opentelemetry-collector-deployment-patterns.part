@@ -1,0 +1,57 @@
+<!--{"title": "OpenTelemetry Collector patterns: agent, gateway or both?", "description": "Where to run the OpenTelemetry Collector shapes cost, sampling and security. The agent, gateway and agent-to-gateway patterns explained, and how I choose for a platform.", "h1": "OpenTelemetry Collector deployment patterns: agent, gateway, or both?", "kicker": "Cloud · Observability", "lede": "Instrumenting services with OpenTelemetry is the easy part. Deciding where the Collector runs decides your sampling options, your egress bill and how many places hold backend credentials. Here is how I choose.", "date": "2026-10-22", "datetime": "2026-10-22T00:15:00+04:00", "readtime": "7 min read", "format": "playbook", "tags": ["observability", "opentelemetry", "platform", "kubernetes"], "keywords": ["OpenTelemetry Collector", "Collector deployment patterns", "agent pattern", "gateway pattern", "tail sampling", "load balancing exporter", "OTLP", "observability architecture", "Kubernetes DaemonSet collector", "observability cost"], "faq": [["What is the agent pattern for the OpenTelemetry Collector?", "A Collector runs alongside the application or on the same host, for example as a sidecar or Kubernetes DaemonSet. Applications send OTLP data to it, and it exports to one or more backends."], ["What is the gateway pattern?", "Applications or other Collectors send telemetry to a single OTLP endpoint provided by one or more Collector instances running as a standalone service, typically per cluster, data centre or region. A two-tier version uses a load-balancing exporter so all spans of a trace reach the same Collector, which tail sampling requires."], ["Why combine agents and gateways?", "OpenTelemetry's documentation lists separation of concerns, scalable cost control through central sampling and batching, and security, since gateways become a stable egress point that handles retries and credentials."]], "related": ["/fractional-cto/", "/ai-architect/", "/technical-due-diligence/"], "citations": [{"title": "Agent deployment pattern", "url": "https://opentelemetry.io/docs/collector/deploy/agent/", "publisher": "OpenTelemetry documentation"}, {"title": "Gateway deployment pattern", "url": "https://opentelemetry.io/docs/collector/deploy/gateway/", "publisher": "OpenTelemetry documentation"}, {"title": "Agent-to-gateway deployment pattern", "url": "https://opentelemetry.io/docs/collector/deploy/other/agent-to-gateway/", "publisher": "OpenTelemetry documentation"}, {"title": "OpenTelemetry Profiles Enters Public Alpha", "url": "https://opentelemetry.io/blog/2026/profiles-alpha/", "publisher": "OpenTelemetry blog", "date": "26 Mar 2026"}]}-->
+<p>Most teams adopting OpenTelemetry start by pointing their SDKs straight at a vendor endpoint. It works for a demo. At scale it means every service holds backend credentials, sampling decisions happen in hundreds of places, and switching vendors requires redeploying everything. The OpenTelemetry Collector fixes that, but where you run it matters.</p>
+
+<section class="block">
+<h2>The agent pattern</h2>
+<p>In the agent pattern, a Collector runs alongside the application or on the same host, as a sidecar or a Kubernetes DaemonSet. Applications send OTLP to it, and it exports to one or more backends<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/opentelemetry-collector-deployment-patterns/otel-agent-sdk.svg" alt="Diagram of the agent pattern: applications with OpenTelemetry SDKs send OTLP to a Collector running alongside them, which exports to backends" width="1800" height="379" loading="lazy"></div><figcaption>The agent pattern: a Collector per host or per application, close to the workload. <span class="credit">Source: <a href="https://opentelemetry.io/docs/collector/deploy/agent/" target="_blank" rel="noopener">OpenTelemetry documentation, Agent deployment pattern</a> · CC BY 4.0</span></figcaption></figure>
+<p>Agents are good at collecting host-level data, adding local metadata such as Kubernetes attributes, and buffering briefly when the network hiccups. They're poor at decisions that need to see a whole trace, because each agent only sees its own host's spans.</p>
+</section>
+
+<section class="block">
+<h2>The gateway pattern</h2>
+<p>In the gateway pattern, applications or other Collectors send telemetry to a single OTLP endpoint served by Collector instances running as a standalone service, typically one endpoint per cluster, data centre or region<sup class="cite"><a href="#ref-2">2</a></sup>. A simple version puts an ordinary load balancer in front of Collector replicas.</p>
+<p>For tail sampling, that isn't enough: every span of a trace must reach the same Collector. The documented answer is two tiers. The first tier uses a load-balancing exporter that routes by trace ID or service name; the second tier runs processors such as tail sampling<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/opentelemetry-collector-deployment-patterns/otel-gateway-lb-sdk.svg" alt="Diagram of a two-tier gateway: an application sends OTLP to a first-tier Collector using the load-balancing exporter, which routes to second-tier Collector replicas and then to a backend" width="2113" height="599" loading="lazy"></div><figcaption>A two-tier gateway: the first tier load-balances by trace so the second tier can make whole-trace decisions. <span class="credit">Source: <a href="https://opentelemetry.io/docs/collector/deploy/gateway/" target="_blank" rel="noopener">OpenTelemetry documentation, Gateway deployment pattern</a> · CC BY 4.0</span></figcaption></figure>
+</section>
+
+<section class="block">
+<h2>Agent-to-gateway: the usual answer</h2>
+<p>OpenTelemetry's documentation describes combining the two, and gives three reasons<sup class="cite"><a href="#ref-3">3</a></sup>:</p>
+<ul>
+<li><strong>Separation of concerns.</strong> Agent configuration stays small; heavy processing lives centrally.</li>
+<li><strong>Scalable cost control.</strong> Gateways see complete traces, so sampling and batching decisions are better, and they scale independently.</li>
+<li><strong>Security and stability.</strong> Agents talk to gateways over internal networks; gateways are the stable egress point that manages retries and credentials.</li>
+</ul>
+<div class="callout"><p>Credentials for your observability vendor should live in a handful of gateway pods, not in every service. That alone justifies the gateway for most organisations.</p></div>
+</section>
+
+<section class="block">
+<h2>How I choose</h2>
+<table class="tbl">
+<thead><tr><th>Situation</th><th>Pattern</th></tr></thead>
+<tbody>
+<tr><td>Small team, one cluster, low volume</td><td>Agent only, or SDK straight to a single gateway</td></tr>
+<tr><td>Need host metrics and Kubernetes metadata</td><td>Agents as a DaemonSet</td></tr>
+<tr><td>Need tail sampling or central PII redaction</td><td>Two-tier gateway</td></tr>
+<tr><td>Multiple clusters or regions, data residency rules</td><td>Agent-to-gateway, with a gateway per region</td></tr>
+<tr><td>Sending to more than one backend</td><td>Gateway, so routing changes in one place</td></tr>
+</tbody>
+</table>
+</section>
+
+<section class="block">
+<h2>Practical rules</h2>
+<ol>
+<li><strong>Redact centrally.</strong> Put PII and secret scrubbing in the gateway so one policy covers everything, especially for prompt and response content in <a href="/insights/llm-observability-opentelemetry-genai/">LLM observability</a>.</li>
+<li><strong>Keep data in region.</strong> For GCC and EU workloads, a regional gateway makes residency rules enforceable, as in <a href="/insights/saudi-pdpl-cross-border-ai/">Saudi PDPL and cross-border AI</a>.</li>
+<li><strong>Sample where you can see the trace.</strong> Head sampling in SDKs is cheap but blind; tail sampling in the gateway keeps errors and slow traces.</li>
+<li><strong>Monitor the Collectors themselves</strong>: queue sizes, dropped data and export failures. A silent pipeline failure looks like a quiet system.</li>
+<li><strong>Plan for new signals.</strong> Profiles now flow through the Collector too<sup class="cite"><a href="#ref-4">4</a></sup>, as covered in <a href="/insights/opentelemetry-profiles-alpha/">OpenTelemetry Profiles</a>. A gateway layer makes adding them a configuration change.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I design observability platforms on OpenTelemetry, from Collector topology and sampling to redaction and cost control. As a <a href="/fractional-cto/">fractional CTO</a> I can own that roadmap. Or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
