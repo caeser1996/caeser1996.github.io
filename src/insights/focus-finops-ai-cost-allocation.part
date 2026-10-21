@@ -1,0 +1,50 @@
+<!--{"title": "FOCUS and AI spend: making token costs visible to finance", "description": "The FinOps FOCUS standard now spans cloud, SaaS and AI. What versions 1.3 and 1.4 cover, where token costs still fall outside it, and how I build AI cost allocation today.", "h1": "FOCUS and AI spend: how to make token costs visible to finance", "kicker": "Cloud · FinOps", "lede": "AI spend arrives as tokens, GPU hours and seat licences, often from vendors that bill nothing like a cloud provider. The FinOps Foundation's FOCUS standard is the best bet for a common format, but it doesn't cover everything yet.", "date": "2026-10-21", "datetime": "2026-10-21T08:30:00+04:00", "readtime": "7 min read", "format": "explainer", "tags": ["finops", "cloud", "ai", "platform"], "keywords": ["FOCUS FinOps", "FinOps Open Cost and Usage Specification", "AI cost allocation", "LLM token costs", "FinOps for AI", "cloud cost management", "FOCUS 1.4", "AI unit economics", "GPU cost allocation", "FinOps consultant"], "faq": [["What is FOCUS?", "The FinOps Open Cost and Usage Specification, an open standard from the FinOps Foundation for cost and usage billing data, so that data from different cloud, SaaS and other providers can be combined and analysed consistently."], ["Does FOCUS cover AI token costs?", "Partly. Guidance maps AI usage onto existing columns, for example token counts as consumed quantity and unit and the model as a SKU. Commentary in 2026 described token-level economics as largely outside the standard so far, with richer AI breakdowns planned for version 1.5."], ["How should I allocate AI costs today?", "Route model calls through a gateway that tags each call with team, product and feature, record token usage per call, and reconcile it with provider invoices normalised to FOCUS where available."]], "related": ["/fractional-cto/", "/ai-architect/", "/technical-due-diligence/"], "citations": [{"title": "FOCUS Specification", "url": "https://focus.finops.org/focus-specification/", "publisher": "FinOps Foundation"}, {"title": "FOCUS Specification v1.3 (PDF)", "url": "https://focus.finops.org/wp-content/uploads/2025/12/FOCUS_spec-v1_3.pdf", "publisher": "FinOps Foundation", "date": "Dec 2025"}, {"title": "FinOps Foundation extends specification to rein in cloud costs in the AI era", "url": "https://techstrong.it/featured/finops-foundation-extends-specification-to-rein-in-cloud-costs-in-the-ai-era/", "publisher": "Techstrong IT", "date": "2026"}, {"title": "FOCUS specification and AI cost accountability at FinOps X", "url": "https://siliconangle.com/2026/06/08/focus-specification-ai-cost-accountability-finopsx/", "publisher": "SiliconANGLE", "date": "8 Jun 2026"}, {"title": "FOCUS spec, Kubernetes and AI costs", "url": "https://cast.ai/blog/focus-spec-kubernetes-ai-costs/", "publisher": "Cast AI"}]}-->
+<p>A typical AI cost conversation: finance sees one large invoice from a model provider, another from a GPU cloud, a growing line for AI features in SaaS tools, and a Kubernetes bill that now includes GPU nodes. Engineering can't say which product or customer drove any of it. Without that, AI unit economics are guesswork.</p>
+
+<section class="block">
+<h2>What FOCUS is</h2>
+<p>FOCUS, the FinOps Open Cost and Usage Specification, is the FinOps Foundation's open standard for billing data. The idea is simple: if every provider publishes cost and usage in the same columns, you can combine cloud, SaaS and AI spend in one dataset without writing a custom parser for each.</p>
+<p>The standard has moved quickly. Version 1.3 added split cost allocation and a contract commitments dataset<sup class="cite"><a href="#ref-2">2</a></sup><sup class="cite"><a href="#ref-5">5</a></sup>. The FinOps Foundation reports that its steering committee ratified version 1.4 on 4 June 2026, adding new datasets and columns<sup class="cite"><a href="#ref-1">1</a></sup>, and coverage from FinOps X described additional data integrity tooling<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+</section>
+
+<section class="block">
+<h2>Where AI fits, and where it doesn't yet</h2>
+<p>AI usage can be represented with existing columns: token counts as a consumed quantity and unit, the model and price point as a SKU, and AI services under a service category<sup class="cite"><a href="#ref-1">1</a></sup>. That is enough to put model API spend next to everything else.</p>
+<p>It is not yet enough for detailed token economics. Reports around FinOps X 2026 described plans for version 1.5 to break down AI spend by token type and workload<sup class="cite"><a href="#ref-4">4</a></sup>. Until that lands and providers adopt it, input versus output tokens, cached tokens and per-feature attribution mostly have to come from your own telemetry.</p>
+<table class="tbl">
+<thead><tr><th>Cost source</th><th>Where the data comes from today</th></tr></thead>
+<tbody>
+<tr><td>Hyperscaler AI services</td><td>Provider billing exports, increasingly in FOCUS format</td></tr>
+<tr><td>Model API providers</td><td>Invoices and usage APIs; detail varies by provider</td></tr>
+<tr><td>Self-hosted models on Kubernetes</td><td>Cluster cost allocation, with GPU attribution per workload<sup class="cite"><a href="#ref-5">5</a></sup></td></tr>
+<tr><td>AI features in SaaS tools</td><td>Seat and add-on licences, often outside any usage feed</td></tr>
+<tr><td>Per-feature and per-customer usage</td><td>Your own gateway and tracing telemetry</td></tr>
+</tbody>
+</table>
+</section>
+
+<section class="block">
+<h2>The architecture I use</h2>
+<ol>
+<li><strong>A model gateway for every call</strong>, which records model, input and output tokens, latency and the calling team, product, feature and, where relevant, customer.</li>
+<li><strong>Tracing with GenAI attributes</strong>, as in <a href="/insights/llm-observability-opentelemetry-genai/">LLM observability with OpenTelemetry</a>, so cost can be tied to user journeys rather than just API keys.</li>
+<li><strong>FOCUS as the finance format.</strong> Normalise provider exports to FOCUS, and publish internal usage in compatible columns so finance sees one dataset.</li>
+<li><strong>GPU allocation for self-hosted models</strong>, using the cluster techniques in <a href="/insights/kubernetes-finops-scale-to-zero/">Kubernetes FinOps</a> and <a href="/insights/kubernetes-dra-gpu-scheduling/">DRA for GPUs</a>.</li>
+<li><strong>Reconciliation each month</strong> between gateway totals and invoices. Gaps reveal untracked keys and shadow usage.</li>
+</ol>
+<div class="callout"><p>The single most useful number is cost per successful outcome: per resolved ticket, per document processed, per qualified answer. Tokens are an input; outcomes are what the business buys.</p></div>
+</section>
+
+<section class="block">
+<h2>Decisions this unlocks</h2>
+<ul>
+<li><strong>Model routing.</strong> Send simple requests to cheaper models once you can see which features use expensive ones.</li>
+<li><strong>Build versus buy.</strong> Compare API spend with the cost of self-hosting, as in <a href="/insights/build-vs-buy-ai-capabilities/">build vs buy for AI</a>, using real usage instead of estimates.</li>
+<li><strong>Pricing.</strong> Set customer pricing for AI features with actual unit costs, not hopes.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I set up AI cost visibility and unit economics, from gateways and tagging to FOCUS-based reporting finance can use. As a <a href="/fractional-cto/">fractional CTO</a> I can own the cost roadmap alongside the technology one. Or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
