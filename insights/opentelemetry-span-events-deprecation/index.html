@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>OpenTelemetry is deprecating span events: what to change</title>
+<meta name="description" content="OpenTelemetry is moving events from span events to log-based events. What the deprecation means for instrumentation, dashboards and AI telemetry, and how I&#x27;d prepare." />
+<meta name="keywords" content="OpenTelemetry span events deprecation, Span.AddEvent, RecordException, log-based events, OpenTelemetry Logs API, OpenTelemetry events, observability migration, OTLP logs, GenAI telemetry, observability architecture" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://asksumanta.com/insights/opentelemetry-span-events-deprecation/" />
+<meta name="theme-color" content="#111214" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="OpenTelemetry is deprecating span events: what to change" />
+<meta property="og:description" content="OpenTelemetry is moving events from span events to log-based events. What the deprecation means for instrumentation, dashboards and AI telemetry, and how I&#x27;d prepare." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://asksumanta.com/insights/opentelemetry-span-events-deprecation/" />
+<meta property="og:image" content="https://asksumanta.com/assets/og/opentelemetry-span-events-deprecation.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="OpenTelemetry is deprecating span events: what to change" />
+<meta name="twitter:description" content="OpenTelemetry is moving events from span events to log-based events. What the deprecation means for instrumentation, dashboards and AI telemetry, and how I&#x27;d prepare." />
+<meta name="twitter:image" content="https://asksumanta.com/assets/og/opentelemetry-span-events-deprecation.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "BlogPosting", "headline": "OpenTelemetry is deprecating the Span Events API: what to change, and when", "description": "OpenTelemetry is moving events from span events to log-based events. What the deprecation means for instrumentation, dashboards and AI telemetry, and how I'd prepare.", "datePublished": "2026-10-23T00:15:00+04:00", "dateModified": "2026-10-23T00:15:00+04:00", "articleSection": "Cloud · Observability", "genre": "Analysis", "citation": [{"@type": "CreativeWork", "name": "Deprecating Span Events API", "url": "https://opentelemetry.io/blog/2026/deprecating-span-events/"}, {"@type": "CreativeWork", "name": "OpenTelemetry logging and you", "url": "https://opentelemetry.io/blog/2025/opentelemetry-logging-and-you/"}, {"@type": "CreativeWork", "name": "Logs API specification", "url": "https://opentelemetry.io/docs/specs/otel/logs/api/"}, {"@type": "CreativeWork", "name": "Tracing API specification", "url": "https://opentelemetry.io/docs/specs/otel/trace/api/"}], "author": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "publisher": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "mainEntityOfPage": "https://asksumanta.com/insights/opentelemetry-span-events-deprecation/", "image": "https://asksumanta.com/assets/og/opentelemetry-span-events-deprecation.png", "keywords": "OpenTelemetry span events deprecation, Span.AddEvent, RecordException, log-based events, OpenTelemetry Logs API, OpenTelemetry events, observability migration, OTLP logs, GenAI telemetry, observability architecture", "wordCount": 506}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://asksumanta.com/"}, {"@type": "ListItem", "position": 2, "name": "Insights", "item": "https://asksumanta.com/insights/"}, {"@type": "ListItem", "position": 3, "name": "OpenTelemetry is deprecating the Span Events API: what to change, and when", "item": "https://asksumanta.com/insights/opentelemetry-span-events-deprecation/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Is OpenTelemetry removing span events?", "acceptedAnswer": {"@type": "Answer", "text": "It is deprecating the API for recording them, such as Span.AddEvent and Span.RecordException, in favour of log-based events emitted through the Logs API. Existing span event data remains part of the supported trace model, and compatibility options can still surface events on spans."}}, {"@type": "Question", "name": "Do I need to change my applications now?", "acceptedAnswer": {"@type": "Answer", "text": "Not immediately. The project says operators should not need to change applications or dashboards straight away, but should check after upgrades that events still appear where expected. New code should emit events as logs correlated with the current span."}}, {"@type": "Question", "name": "Why is OpenTelemetry making this change?", "acceptedAnswer": {"@type": "Answer", "text": "Having two overlapping ways to emit events split guidance for instrumentation authors, duplicated concepts for users and slowed improvements, which had to be made in two places."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+</script>
+</head>
+<body class="sub is-post">
+<div class="progress" id="progress"></div>
+<nav>
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="/#practice">Services</a>
+      <a href="/#work">Case studies</a>
+      <a href="/insights/">Insights</a>
+      <a href="/#assess">Analyse</a>
+      <a href="/#connect">Connect</a>
+    </div>
+    <div class="nav-r">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/insights/">Insights</a> <span>/</span> <em>OpenTelemetry is deprecating the Span Events API: what to change, and when</em></div>
+    <div class="kicker">Cloud · Observability</div>
+    <h1>OpenTelemetry is deprecating the Span Events API: what to change, and when</h1>
+    <p class="sub-lede">For years there were two ways to record an event in OpenTelemetry. The project has chosen one: events are logs with names, correlated with traces. Existing data keeps working, but new instrumentation should change direction.</p>
+    <div class="ameta"><span class="fmt">Analysis</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-10-23T00:15:00+04:00">23 Oct 2026 · 00:15 GST</time><span>6 min read</span><span>4 sources</span></div><div class="atags"><span class="tagp">#observability</span><span class="tagp">#opentelemetry</span><span class="tagp">#platform</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Analysis cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><polyline points="540,249 596,198 652,224 708,239 764,247 820,250 876,207 932,229 988,220 1044,189 1100,179 1156,171" class="cv-line"/><polyline points="540,234 596,231 652,241 708,126 764,222 820,281 876,262 932,193 988,153 1044,196 1100,217 1156,274" class="cv-line"/><polyline points="540,155 596,183 652,192 708,293 764,181 820,149 876,192 932,323 988,287 1044,221 1100,198 1156,192" class="cv-line hl"/><text x="60" y="90" class="cv-k">ANALYSIS · CLOUD · OBSERVABILITY</text><text x="60" y="350" class="cv-n">23 Oct 2026 · 00:15 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <p>If you have instrumented code with OpenTelemetry, you have probably called <code>Span.AddEvent</code> or <code>Span.RecordException</code>. In March 2026 the project announced it is deprecating that API. New events should be emitted as logs, correlated with the active span through context<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<p>It sounds like a small API change. For platform teams it touches instrumentation guidelines, dashboards, cost and, increasingly, AI telemetry.</p>
+
+<section class="block">
+<h2 id="why-the-change">Why the change</h2>
+<p>OpenTelemetry has offered two ways to emit events correlated with traces: span events via the Tracing API, and log-based events via the Logs API<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>. The announcement lists the problems with having both: split guidance for library authors, duplicate concepts for operators, and slower evolution because every improvement had to be specified twice<sup class="cite"><a href="#ref-1">1</a></sup>. The community has converged on a simpler model: <strong>events are logs with names</strong>, emitted via the Logs API and correlated through context, a direction set out in an earlier post on logging<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+</section>
+
+<section class="block">
+<h2 id="what-changes-and-what-doesn-t">What changes and what doesn't</h2>
+<table class="tbl">
+<thead><tr><th>Changing</th><th>Staying the same</th></tr></thead>
+<tbody>
+<tr><td>Span event APIs such as <code>AddEvent</code> and <code>RecordException</code> are deprecated in the tracing specification</td><td>Existing span event data remains valid in the OTLP trace model</td></tr>
+<tr><td>SDKs make log-based events first-class</td><td>Correlation across signals works the same way</td></tr>
+<tr><td>Instrumentations and semantic conventions move to log-based events in their next major versions</td><td>Compatibility options can still show events on spans</td></tr>
+</tbody>
+</table>
+<p>As the authors put it, they are deprecating the API for recording span events, not the ability to see events attached to spans<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<div class="callout"><p>The practical risk isn't broken code. It's a dashboard or alert that quietly stops showing exceptions because they now arrive as logs instead of span events.</p></div>
+</section>
+
+<section class="block">
+<h2 id="what-i-d-do-now">What I'd do now</h2>
+<ol>
+<li><strong>Update instrumentation guidelines.</strong> New code emits events and exceptions as log-based events correlated with the current span.</li>
+<li><strong>Check the logs pipeline.</strong> If logs aren't collected through OpenTelemetry yet, events will have nowhere to go. A Collector gateway, as in <a href="/insights/opentelemetry-collector-deployment-patterns/">Collector deployment patterns</a>, is the natural place to route them.</li>
+<li><strong>Audit dashboards and alerts</strong> that depend on span events, especially exception counts and error views, and test them after each instrumentation upgrade, as the project recommends<sup class="cite"><a href="#ref-1">1</a></sup>.</li>
+<li><strong>Confirm backend support</strong> for showing log-based events in trace views, so engineers don't lose context when debugging.</li>
+<li><strong>Watch costs.</strong> Moving events to the logs pipeline may change how they are priced and retained by your vendor. Model it before the switch.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2 id="why-this-matters-for-ai-telemetry">Why this matters for AI telemetry</h2>
+<p>AI applications produce a lot of event-like data: prompts, responses, tool calls, guardrail decisions. Treating these as named, structured log events correlated with traces fits the GenAI observability work described in <a href="/insights/llm-observability-opentelemetry-genai/">LLM observability with OpenTelemetry</a>. It also makes it easier to apply separate retention, redaction and access rules to sensitive content than when it is embedded in spans.</p>
+</section>
+
+<section class="block">
+<h2 id="how-i-can-help">How I can help</h2>
+<p>I design observability platforms on OpenTelemetry and help teams plan migrations like this one without losing visibility. As a <a href="/fractional-cto/">fractional CTO</a> I can own that roadmap. Or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://opentelemetry.io/blog/2026/deprecating-span-events/" target="_blank" rel="noopener">Deprecating Span Events API</a><small>OpenTelemetry blog · 17 Mar 2026</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://opentelemetry.io/blog/2025/opentelemetry-logging-and-you/" target="_blank" rel="noopener">OpenTelemetry logging and you</a><small>OpenTelemetry blog · 2025</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://opentelemetry.io/docs/specs/otel/logs/api/" target="_blank" rel="noopener">Logs API specification</a><small>OpenTelemetry</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://opentelemetry.io/docs/specs/otel/trace/api/" target="_blank" rel="noopener">Tracing API specification</a><small>OpenTelemetry</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fopentelemetry-span-events-deprecation%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fopentelemetry-span-events-deprecation%2F&amp;text=OpenTelemetry%20is%20deprecating%20the%20Span%20Events%20API%3A%20what%20to%20change%2C%20and%20when" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=OpenTelemetry%20is%20deprecating%20the%20Span%20Events%20API%3A%20what%20to%20change%2C%20and%20when%20https%3A%2F%2Fasksumanta.com%2Finsights%2Fopentelemetry-span-events-deprecation%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://asksumanta.com/insights/opentelemetry-span-events-deprecation/">Copy link</button></div>
+      <div class="pnav"><a class="pn prev" href="/insights/clinical-terminologies-omop-vocabularies/"><small>← Previous</small><b>Clinical terminologies explained: SNOMED, LOINC, RxNorm and the OMOP vocabularies</b></a><a class="pn next" href="/insights/iso-42001-vs-nist-ai-rmf/"><small>Next →</small><b>ISO/IEC 42001 or the NIST AI RMF? How to choose, and how to use both</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#why-the-change">Why the change</a></li><li><a href="#what-changes-and-what-doesn-t">What changes and what doesn&#x27;t</a></li><li><a href="#what-i-d-do-now">What I&#x27;d do now</a></li><li><a href="#why-this-matters-for-ai-telemetry">Why this matters for AI telemetry</a></li><li><a href="#how-i-can-help">How I can help</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>Is OpenTelemetry removing span events?</summary><p>It is deprecating the API for recording them, such as Span.AddEvent and Span.RecordException, in favour of log-based events emitted through the Logs API. Existing span event data remains part of the supported trace model, and compatibility options can still surface events on spans.</p></details><details class="rise"><summary>Do I need to change my applications now?</summary><p>Not immediately. The project says operators should not need to change applications or dashboards straight away, but should check after upgrades that events still appear where expected. New code should emit events as logs correlated with the current span.</p></details><details class="rise"><summary>Why is OpenTelemetry making this change?</summary><p>Having two overlapping ways to emit events split guidance for instrumentation authors, duplicated concepts for users and slowed improvements, which had to be made in two places.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/fractional-cto/"><small>Service</small><b>Fractional CTO</b><span>I work as a part-time CTO for founders, CEOs and boards who need experienced technical judgement now, and a team that can carry it on after I step back.</span><i>→</i></a><a class="rcard rise" href="/ai-architect/"><small>Service</small><b>AI &amp; LLM architecture</b><span>I design and build AI systems that leadership can trust: grounded in your data, measured by evaluations, governed by your rules and priced so they make sense at scale.</span><i>→</i></a><a class="rcard rise" href="/technical-due-diligence/"><small>Service</small><b>Technical due diligence</b><span>I give investors an independent, plain-language view of a company&#x27;s technology, team and AI claims, so the risks are priced in before the deal closes, not discovered after.</span><i>→</i></a><a class="rcard rise" href="/insights/iso-42001-vs-nist-ai-rmf/"><small>Insight</small><b>ISO/IEC 42001 or the NIST AI RMF? How to choose, and how to use both</b><span>Enterprise buyers increasingly ask AI vendors how they govern their AI. Two frameworks come up most: the NIST AI Risk Management Framework and ISO/IEC 42001. They solve different problems, and most companies will end up using both.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: OpenTelemetry is deprecating the Span Events API: what to change, and when">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
+        <p class="floc">United States &amp; UAE · working globally</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/uae/">Fractional CTO in the UAE</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/iso-42001-vs-nist-ai-rmf/">ISO/IEC 42001 or the NIST AI RMF? How to choose, and how to use both</a></li><li><a href="/insights/opentelemetry-span-events-deprecation/">OpenTelemetry is deprecating the Span Events API: what to change, and when</a></li><li><a href="/insights/clinical-terminologies-omop-vocabularies/">Clinical terminologies explained: SNOMED, LOINC, RxNorm and the OMOP vocabularies</a></li><li><a href="/insights/kubernetes-admission-policies-cel/">Kubernetes admission policies in CEL: a playbook for retiring your webhooks</a></li><li><a href="/insights/team-topologies-for-ai-teams/">Team Topologies for AI: where your AI engineers should actually sit</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,43 @@
+<!--{"title": "OpenTelemetry is deprecating span events: what to change", "description": "OpenTelemetry is moving events from span events to log-based events. What the deprecation means for instrumentation, dashboards and AI telemetry, and how I'd prepare.", "h1": "OpenTelemetry is deprecating the Span Events API: what to change, and when", "kicker": "Cloud · Observability", "lede": "For years there were two ways to record an event in OpenTelemetry. The project has chosen one: events are logs with names, correlated with traces. Existing data keeps working, but new instrumentation should change direction.", "date": "2026-10-23", "datetime": "2026-10-23T00:15:00+04:00", "readtime": "6 min read", "format": "news-analysis", "tags": ["observability", "opentelemetry", "platform"], "keywords": ["OpenTelemetry span events deprecation", "Span.AddEvent", "RecordException", "log-based events", "OpenTelemetry Logs API", "OpenTelemetry events", "observability migration", "OTLP logs", "GenAI telemetry", "observability architecture"], "faq": [["Is OpenTelemetry removing span events?", "It is deprecating the API for recording them, such as Span.AddEvent and Span.RecordException, in favour of log-based events emitted through the Logs API. Existing span event data remains part of the supported trace model, and compatibility options can still surface events on spans."], ["Do I need to change my applications now?", "Not immediately. The project says operators should not need to change applications or dashboards straight away, but should check after upgrades that events still appear where expected. New code should emit events as logs correlated with the current span."], ["Why is OpenTelemetry making this change?", "Having two overlapping ways to emit events split guidance for instrumentation authors, duplicated concepts for users and slowed improvements, which had to be made in two places."]], "related": ["/fractional-cto/", "/ai-architect/", "/technical-due-diligence/"], "citations": [{"title": "Deprecating Span Events API", "url": "https://opentelemetry.io/blog/2026/deprecating-span-events/", "publisher": "OpenTelemetry blog", "date": "17 Mar 2026"}, {"title": "OpenTelemetry logging and you", "url": "https://opentelemetry.io/blog/2025/opentelemetry-logging-and-you/", "publisher": "OpenTelemetry blog", "date": "2025"}, {"title": "Logs API specification", "url": "https://opentelemetry.io/docs/specs/otel/logs/api/", "publisher": "OpenTelemetry"}, {"title": "Tracing API specification", "url": "https://opentelemetry.io/docs/specs/otel/trace/api/", "publisher": "OpenTelemetry"}]}-->
+<p>If you have instrumented code with OpenTelemetry, you have probably called <code>Span.AddEvent</code> or <code>Span.RecordException</code>. In March 2026 the project announced it is deprecating that API. New events should be emitted as logs, correlated with the active span through context<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<p>It sounds like a small API change. For platform teams it touches instrumentation guidelines, dashboards, cost and, increasingly, AI telemetry.</p>
+
+<section class="block">
+<h2>Why the change</h2>
+<p>OpenTelemetry has offered two ways to emit events correlated with traces: span events via the Tracing API, and log-based events via the Logs API<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>. The announcement lists the problems with having both: split guidance for library authors, duplicate concepts for operators, and slower evolution because every improvement had to be specified twice<sup class="cite"><a href="#ref-1">1</a></sup>. The community has converged on a simpler model: <strong>events are logs with names</strong>, emitted via the Logs API and correlated through context, a direction set out in an earlier post on logging<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+</section>
+
+<section class="block">
+<h2>What changes and what doesn't</h2>
+<table class="tbl">
+<thead><tr><th>Changing</th><th>Staying the same</th></tr></thead>
+<tbody>
+<tr><td>Span event APIs such as <code>AddEvent</code> and <code>RecordException</code> are deprecated in the tracing specification</td><td>Existing span event data remains valid in the OTLP trace model</td></tr>
+<tr><td>SDKs make log-based events first-class</td><td>Correlation across signals works the same way</td></tr>
+<tr><td>Instrumentations and semantic conventions move to log-based events in their next major versions</td><td>Compatibility options can still show events on spans</td></tr>
+</tbody>
+</table>
+<p>As the authors put it, they are deprecating the API for recording span events, not the ability to see events attached to spans<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<div class="callout"><p>The practical risk isn't broken code. It's a dashboard or alert that quietly stops showing exceptions because they now arrive as logs instead of span events.</p></div>
+</section>
+
+<section class="block">
+<h2>What I'd do now</h2>
+<ol>
+<li><strong>Update instrumentation guidelines.</strong> New code emits events and exceptions as log-based events correlated with the current span.</li>
+<li><strong>Check the logs pipeline.</strong> If logs aren't collected through OpenTelemetry yet, events will have nowhere to go. A Collector gateway, as in <a href="/insights/opentelemetry-collector-deployment-patterns/">Collector deployment patterns</a>, is the natural place to route them.</li>
+<li><strong>Audit dashboards and alerts</strong> that depend on span events, especially exception counts and error views, and test them after each instrumentation upgrade, as the project recommends<sup class="cite"><a href="#ref-1">1</a></sup>.</li>
+<li><strong>Confirm backend support</strong> for showing log-based events in trace views, so engineers don't lose context when debugging.</li>
+<li><strong>Watch costs.</strong> Moving events to the logs pipeline may change how they are priced and retained by your vendor. Model it before the switch.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2>Why this matters for AI telemetry</h2>
+<p>AI applications produce a lot of event-like data: prompts, responses, tool calls, guardrail decisions. Treating these as named, structured log events correlated with traces fits the GenAI observability work described in <a href="/insights/llm-observability-opentelemetry-genai/">LLM observability with OpenTelemetry</a>. It also makes it easier to apply separate retention, redaction and access rules to sensitive content than when it is embedded in spans.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I design observability platforms on OpenTelemetry and help teams plan migrations like this one without losing visibility. As a <a href="/fractional-cto/">fractional CTO</a> I can own that roadmap. Or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
