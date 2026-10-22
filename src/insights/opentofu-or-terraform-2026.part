@@ -1,0 +1,43 @@
+<!--{"title": "OpenTofu or Terraform in 2026: a decision checklist", "description": "Three years after the licence split, OpenTofu and Terraform have diverged on features and governance. A practical checklist for choosing, and for migrating if you decide to.", "h1": "OpenTofu or Terraform in 2026: a practical decision checklist", "kicker": "Cloud · Infrastructure as code", "lede": "When HashiCorp changed Terraform's licence in 2023, most teams waited to see what would happen. The fork now has its own features, governance and release cadence. Waiting is still a valid choice, but it should be a deliberate one.", "date": "2026-10-22", "datetime": "2026-10-22T08:30:00+04:00", "readtime": "6 min read", "format": "checklist", "tags": ["terraform", "cloud", "platform", "governance"], "keywords": ["OpenTofu vs Terraform", "OpenTofu", "Terraform BSL", "Terraform licence change", "OpenTofu state encryption", "infrastructure as code", "Terraform migration", "IBM HashiCorp", "CNCF OpenTofu", "platform engineering"], "faq": [["What is the difference between OpenTofu and Terraform?", "OpenTofu is a fork of Terraform created after HashiCorp moved Terraform to the Business Source License in 2023. OpenTofu remains under the MPL 2.0 open-source licence with Linux Foundation governance, and has since added features of its own, such as client-side state encryption."], ["Does the Terraform licence affect my company?", "Commentary generally notes that the BSL mainly affects vendors building competing products. Most organisations running Terraform against their own infrastructure are less directly affected, but should confirm with their legal team."], ["Is migrating from Terraform to OpenTofu difficult?", "Commentators describe the technical migration as fairly straightforward for many codebases, with most effort going into organisational changes, testing and tooling. Feature divergence means the longer you wait, the more you should test."]], "related": ["/fractional-cto/", "/technical-due-diligence/", "/ai-architect/"], "citations": [{"title": "OpenTofu vs Terraform in 2026: the fork finally diverged", "url": "https://jorijn.com/en/blog/opentofu-vs-terraform-2026-the-fork-finally-diverged/", "publisher": "jorijn.com", "date": "2026"}, {"title": "OpenTofu vs Terraform", "url": "https://scalr.com/learning-center/opentofu-vs-terraform", "publisher": "Scalr"}, {"title": "OpenTofu vs Terraform", "url": "https://www.stackguardian.io/post/opentofu-vs-terraform", "publisher": "StackGuardian", "date": "21 Aug 2026"}, {"title": "OpenTofu vs Terraform 2026", "url": "https://encore.dev/articles/opentofu-vs-terraform-2026", "publisher": "Encore"}]}-->
+<p>In my earlier piece on <a href="/insights/terraform-multi-cloud-module-design/">Terraform multi-cloud module design</a> I said both tools remain viable. That's still true. But the question comes up in almost every platform review, so here is the checklist I use to answer it for a specific organisation rather than in general.</p>
+
+<section class="block">
+<h2>Where things stand</h2>
+<ul>
+<li><strong>Licence.</strong> Terraform has shipped under HashiCorp's Business Source License since version 1.6; OpenTofu remains under MPL 2.0 with Linux Foundation governance<sup class="cite"><a href="#ref-2">2</a></sup><sup class="cite"><a href="#ref-1">1</a></sup>.</li>
+<li><strong>Ownership.</strong> IBM's acquisition of HashiCorp completed in February 2025. Commentary notes it didn't change the licence but raised questions about long-term direction<sup class="cite"><a href="#ref-1">1</a></sup>.</li>
+<li><strong>Features.</strong> OpenTofu added client-side state and plan encryption in 2024, and has since added capabilities such as provider iteration and early variable evaluation that Terraform lacks<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. Terraform has its own additions, so configurations increasingly depend on which tool they target.</li>
+</ul>
+<p>Most commentary agrees on one point: for teams running Terraform against their own infrastructure, the licence matters less than it does for vendors building competing products<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>. Several of these sources come from vendors that support both tools, so weigh their framing accordingly.</p>
+</section>
+
+<section class="block">
+<h2>The checklist</h2>
+<ol>
+<li><strong>Do you sell infrastructure tooling or a hosted platform?</strong> If so, have counsel review the BSL. This is the case where the licence matters most.</li>
+<li><strong>Is open-source licensing a policy requirement?</strong> Some public sector and regulated organisations require OSI-approved licences. That points to OpenTofu.</li>
+<li><strong>Do you need a specific feature?</strong> Native state encryption is a common reason to choose OpenTofu where state contains secrets. Check whether a Terraform-only feature you rely on would block a move.</li>
+<li><strong>What does your tooling support?</strong> CI pipelines, policy engines, cost tools and your managed platform. Most support both, but verify.</li>
+<li><strong>How large and old is the estate?</strong> Small, well-tested estates migrate easily. Large estates with many modules need a staged plan.</li>
+<li><strong>What do your providers and modules require?</strong> Check provider and registry compatibility for everything you depend on.</li>
+<li><strong>Who will own the decision?</strong> Record it as an <a href="/insights/architecture-decision-records-fractional-cto/">architecture decision record</a>, with the conditions that would change it.</li>
+</ol>
+<div class="callout"><p>The worst outcome is drift by accident: half the estate on each tool because different teams chose differently. Pick one per organisation, write it down, and enforce it in CI.</p></div>
+</section>
+
+<section class="block">
+<h2>If you migrate</h2>
+<ol>
+<li><strong>Pin versions</strong> of the tool and providers before starting.</li>
+<li><strong>Start with a low-risk workspace</strong> and confirm that plans show no changes after switching.</li>
+<li><strong>Back up state</strong> before any operation, and test restore.</li>
+<li><strong>Adopt new features only after</strong> the whole estate is on one tool, so nothing depends on features the other lacks mid-migration.</li>
+<li><strong>Update CI, policy checks and documentation</strong> in the same change, so new work doesn't keep targeting the old tool.</li>
+</ol>
+<p>Commentators describe the technical migration as straightforward for many teams, with most effort going into organisation and tooling<sup class="cite"><a href="#ref-4">4</a></sup>. That matches the shape of the work: the commands are easy; the coordination is not.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I review infrastructure-as-code estates as part of <a href="/technical-due-diligence/">technical due diligence</a> and platform work, and plan tool decisions and migrations that don't disrupt delivery. As a <a href="/fractional-cto/">fractional CTO</a> I can own that roadmap. Or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>

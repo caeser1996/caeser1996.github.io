@@ -1,0 +1,50 @@
+<!--{"title": "CMS-0057-F: building prior authorisation APIs before January 2027", "description": "CMS's interoperability and prior authorisation rule requires payer FHIR APIs from January 2027. What's required, what's already in force, and how I'd architect the build.", "h1": "CMS-0057-F: how to build payer prior authorisation APIs before January 2027", "kicker": "Healthcare · Interoperability", "lede": "The decision-time and reporting parts of CMS's prior authorisation rule have applied since January 2026. The API requirements land in January 2027. For payers and the vendors who serve them, the build window is now.", "date": "2026-10-22", "datetime": "2026-10-22T08:15:00+04:00", "readtime": "8 min read", "format": "playbook", "tags": ["healthcare", "fhir", "regulation", "data"], "keywords": ["CMS-0057-F", "prior authorization API", "Interoperability and Prior Authorization final rule", "Provider Access API", "Payer-to-Payer API", "Patient Access API", "Da Vinci PAS CRD DTR", "FHIR prior authorization", "payer interoperability", "healthcare API architecture"], "faq": [["What does CMS-0057-F require?", "It requires impacted payers to meet prior authorisation decision timeframes and report metrics, generally from January 2026, and to build or enhance FHIR-based APIs, including Provider Access, Payer-to-Payer and Prior Authorization APIs and prior authorisation data in Patient Access, generally from January 2027."], ["What are the prior authorisation decision timeframes?", "According to CMS, impacted payers must generally decide expedited requests within 72 hours and standard requests within seven calendar days, and give a specific reason when they deny a request."], ["Do the API deadlines vary by plan type?", "Yes. Commentary notes that Medicaid and CHIP managed care deadlines follow rating periods and exchange plan deadlines follow plan years beginning on or after 1 January 2027. Confirm your own dates against the rule text."]], "related": ["/healthcare-data-architecture/", "/fractional-cto/", "/technical-due-diligence/"], "citations": [{"title": "CMS Interoperability and Prior Authorization Final Rule (CMS-0057-F) fact sheet", "url": "https://www.cms.gov/newsroom/fact-sheets/cms-interoperability-and-prior-authorization-final-rule-cms-0057-f", "publisher": "Centers for Medicare & Medicaid Services", "date": "17 Jan 2024"}, {"title": "Fact sheet: CMS Interoperability and Prior Authorization Final Rule (PDF)", "url": "https://www.cms.gov/files/document/fact-sheet-cms-interoperability-and-prior-authorization-final-rule-cms-0057-f.pdf", "publisher": "Centers for Medicare & Medicaid Services"}, {"title": "Understanding the CMS-0057-F Interoperability and Prior Authorization final rule", "url": "https://www.health-samurai.io/articles/understanding-the-cms-0057-f-interoperability-and-prior-authorization-final-rule", "publisher": "Health Samurai"}, {"title": "CMS-0057 prior authorization rule: requirements, deadlines, APIs and operational impact", "url": "https://innovaccer.com/blogs/cms-0057-prior-authorization-rule-requirements-deadlines-apis-and-operational-impact", "publisher": "Innovaccer"}]}-->
+<p>Prior authorisation is one of the most disliked processes in US healthcare: faxes, portals, phone calls and long waits for decisions that often affect care. CMS's Interoperability and Prior Authorization final rule, CMS-0057-F, is the most significant federal push to move it onto standard APIs. It has two phases, and the second is close.</p>
+
+<section class="block">
+<h2>What applies when</h2>
+<table class="tbl">
+<thead><tr><th>Requirement</th><th>Generally from</th></tr></thead>
+<tbody>
+<tr><td>Decisions within 72 hours for expedited and seven calendar days for standard requests, with specific denial reasons</td><td>1 January 2026<sup class="cite"><a href="#ref-1">1</a></sup></td></tr>
+<tr><td>Public reporting of prior authorisation metrics</td><td>2026, with the first report due by 31 March 2026<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-4">4</a></sup></td></tr>
+<tr><td>Patient Access API usage metrics</td><td>2026<sup class="cite"><a href="#ref-2">2</a></sup></td></tr>
+<tr><td>Provider Access, Payer-to-Payer and Prior Authorization APIs, plus prior authorisation data in Patient Access</td><td>1 January 2027<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-3">3</a></sup></td></tr>
+</tbody>
+</table>
+<p>Dates differ by plan type: commentary notes that Medicaid and CHIP managed care follow rating periods, and exchange plans follow plan years beginning on or after 1 January 2027<sup class="cite"><a href="#ref-4">4</a></sup>. Drugs are excluded from the prior authorisation API requirements<sup class="cite"><a href="#ref-1">1</a></sup>. Secondary sources disagree on some plan-specific details, so confirm your own obligations against the rule text with counsel.</p>
+</section>
+
+<section class="block">
+<h2>The four API workstreams</h2>
+<ul>
+<li><strong>Patient Access API</strong>, extended with prior authorisation information, so members can see requests and decisions in their own apps.</li>
+<li><strong>Provider Access API</strong>, giving in-network providers data on their attributed patients, with a patient opt-out.</li>
+<li><strong>Payer-to-Payer API</strong>, moving a member's data to a new payer when they switch, with patient opt-in.</li>
+<li><strong>Prior Authorization API</strong>, letting provider systems check whether authorisation is needed, see documentation requirements, and submit requests and receive decisions electronically<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>.</li>
+</ul>
+<p>These build on FHIR and the HL7 Da Vinci implementation guides that commentary associates with the rule, covering coverage requirements discovery, documentation templates and prior authorisation support<sup class="cite"><a href="#ref-3">3</a></sup>. CMS also proposed in April 2026 to adopt FHIR standards for prior authorisation transactions under HIPAA, as I covered in the <a href="/insights/briefing-2026-04/">April 2026 briefing</a>.</p>
+</section>
+
+<section class="block">
+<h2>The hard part isn't the API</h2>
+<p>Exposing FHIR endpoints is the visible work. The hidden work is behind them:</p>
+<ol>
+<li><strong>Codifying policy.</strong> The Prior Authorization API needs machine-readable rules for when authorisation is required and what documentation is needed. Many payers hold those rules in PDFs and reviewer knowledge.</li>
+<li><strong>Integrating with utilisation management systems</strong> so decisions, statuses and reasons flow back through the API within the required timeframes.</li>
+<li><strong>Member and provider identity and attribution</strong>, which Provider Access and Payer-to-Payer depend on, plus opt-in and opt-out consent handling.</li>
+<li><strong>Clinical data normalisation</strong>: claims and clinical data mapped to US Core and related profiles, using the pipeline patterns in <a href="/insights/fhir-bulk-data-export-pipelines/">FHIR Bulk Data pipelines</a> for bulk exchange.</li>
+<li><strong>Metrics.</strong> The reporting requirements need reliable timestamps across the whole workflow, not just the API.</li>
+</ol>
+<div class="callout"><p>Start with policy codification. It has the longest lead time, involves clinical and business owners rather than engineers, and nothing in the Prior Authorization API works without it.</p></div>
+</section>
+
+<section class="block">
+<h2>Where AI fits, carefully</h2>
+<p>Prior authorisation is an obvious target for AI: extracting evidence from clinical documents, summarising cases for reviewers, and turning policy documents into structured rules. Those are reasonable uses with human oversight. Using models to make or influence denials is a different matter, with regulatory and reputational risk. I keep AI on the assistive side, log its contributions as described in <a href="/insights/ai-incident-postmortems/">AI incident postmortems</a>, and design so a clinician owns every adverse decision.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I design FHIR API platforms and the data and policy layers behind them, for payers and the vendors who serve them. See <a href="/healthcare-data-architecture/">healthcare data architecture</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>

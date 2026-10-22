@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CMS-0057-F: building prior authorisation APIs before January 2027</title>
+<meta name="description" content="CMS&#x27;s interoperability and prior authorisation rule requires payer FHIR APIs from January 2027. What&#x27;s required, what&#x27;s already in force, and how I&#x27;d architect the build." />
+<meta name="keywords" content="CMS-0057-F, prior authorization API, Interoperability and Prior Authorization final rule, Provider Access API, Payer-to-Payer API, Patient Access API, Da Vinci PAS CRD DTR, FHIR prior authorization, payer interoperability, healthcare API architecture" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://asksumanta.com/insights/cms-0057-prior-authorization-apis/" />
+<meta name="theme-color" content="#111214" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="CMS-0057-F: building prior authorisation APIs before January 2027" />
+<meta property="og:description" content="CMS&#x27;s interoperability and prior authorisation rule requires payer FHIR APIs from January 2027. What&#x27;s required, what&#x27;s already in force, and how I&#x27;d architect the build." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://asksumanta.com/insights/cms-0057-prior-authorization-apis/" />
+<meta property="og:image" content="https://asksumanta.com/assets/og/cms-0057-prior-authorization-apis.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="CMS-0057-F: building prior authorisation APIs before January 2027" />
+<meta name="twitter:description" content="CMS&#x27;s interoperability and prior authorisation rule requires payer FHIR APIs from January 2027. What&#x27;s required, what&#x27;s already in force, and how I&#x27;d architect the build." />
+<meta name="twitter:image" content="https://asksumanta.com/assets/og/cms-0057-prior-authorization-apis.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "BlogPosting", "headline": "CMS-0057-F: how to build payer prior authorisation APIs before January 2027", "description": "CMS's interoperability and prior authorisation rule requires payer FHIR APIs from January 2027. What's required, what's already in force, and how I'd architect the build.", "datePublished": "2026-10-22T08:15:00+04:00", "dateModified": "2026-10-22T08:15:00+04:00", "articleSection": "Healthcare · Interoperability", "genre": "Playbook", "citation": [{"@type": "CreativeWork", "name": "CMS Interoperability and Prior Authorization Final Rule (CMS-0057-F) fact sheet", "url": "https://www.cms.gov/newsroom/fact-sheets/cms-interoperability-and-prior-authorization-final-rule-cms-0057-f"}, {"@type": "CreativeWork", "name": "Fact sheet: CMS Interoperability and Prior Authorization Final Rule (PDF)", "url": "https://www.cms.gov/files/document/fact-sheet-cms-interoperability-and-prior-authorization-final-rule-cms-0057-f.pdf"}, {"@type": "CreativeWork", "name": "Understanding the CMS-0057-F Interoperability and Prior Authorization final rule", "url": "https://www.health-samurai.io/articles/understanding-the-cms-0057-f-interoperability-and-prior-authorization-final-rule"}, {"@type": "CreativeWork", "name": "CMS-0057 prior authorization rule: requirements, deadlines, APIs and operational impact", "url": "https://innovaccer.com/blogs/cms-0057-prior-authorization-rule-requirements-deadlines-apis-and-operational-impact"}], "author": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "publisher": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "mainEntityOfPage": "https://asksumanta.com/insights/cms-0057-prior-authorization-apis/", "image": "https://asksumanta.com/assets/og/cms-0057-prior-authorization-apis.png", "keywords": "CMS-0057-F, prior authorization API, Interoperability and Prior Authorization final rule, Provider Access API, Payer-to-Payer API, Patient Access API, Da Vinci PAS CRD DTR, FHIR prior authorization, payer interoperability, healthcare API architecture", "wordCount": 596}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://asksumanta.com/"}, {"@type": "ListItem", "position": 2, "name": "Insights", "item": "https://asksumanta.com/insights/"}, {"@type": "ListItem", "position": 3, "name": "CMS-0057-F: how to build payer prior authorisation APIs before January 2027", "item": "https://asksumanta.com/insights/cms-0057-prior-authorization-apis/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What does CMS-0057-F require?", "acceptedAnswer": {"@type": "Answer", "text": "It requires impacted payers to meet prior authorisation decision timeframes and report metrics, generally from January 2026, and to build or enhance FHIR-based APIs, including Provider Access, Payer-to-Payer and Prior Authorization APIs and prior authorisation data in Patient Access, generally from January 2027."}}, {"@type": "Question", "name": "What are the prior authorisation decision timeframes?", "acceptedAnswer": {"@type": "Answer", "text": "According to CMS, impacted payers must generally decide expedited requests within 72 hours and standard requests within seven calendar days, and give a specific reason when they deny a request."}}, {"@type": "Question", "name": "Do the API deadlines vary by plan type?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Commentary notes that Medicaid and CHIP managed care deadlines follow rating periods and exchange plan deadlines follow plan years beginning on or after 1 January 2027. Confirm your own dates against the rule text."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+</script>
+</head>
+<body class="sub is-post">
+<div class="progress" id="progress"></div>
+<nav>
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="/#practice">Services</a>
+      <a href="/#work">Case studies</a>
+      <a href="/insights/">Insights</a>
+      <a href="/#assess">Analyse</a>
+      <a href="/#connect">Connect</a>
+    </div>
+    <div class="nav-r">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/insights/">Insights</a> <span>/</span> <em>CMS-0057-F: how to build payer prior authorisation APIs before January 2027</em></div>
+    <div class="kicker">Healthcare · Interoperability</div>
+    <h1>CMS-0057-F: how to build payer prior authorisation APIs before January 2027</h1>
+    <p class="sub-lede">The decision-time and reporting parts of CMS&#x27;s prior authorisation rule have applied since January 2026. The API requirements land in January 2027. For payers and the vendors who serve them, the build window is now.</p>
+    <div class="ameta"><span class="fmt">Playbook</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-10-22T08:15:00+04:00">22 Oct 2026 · 08:15 GST</time><span>8 min read</span><span>4 sources</span></div><div class="atags"><span class="tagp">#healthcare</span><span class="tagp">#fhir</span><span class="tagp">#regulation</span><span class="tagp">#data</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Playbook cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><circle cx="560" cy="61" r="8" class="cv-dot hl"/><rect x="590" y="50" width="489" height="22" class="cv-bar hl"/><circle cx="560" cy="109" r="8" class="cv-dot"/><rect x="590" y="98" width="451" height="22" class="cv-bar"/><circle cx="560" cy="157" r="8" class="cv-dot"/><rect x="590" y="146" width="293" height="22" class="cv-bar"/><circle cx="560" cy="205" r="8" class="cv-dot hl"/><rect x="590" y="194" width="380" height="22" class="cv-bar hl"/><circle cx="560" cy="253" r="8" class="cv-dot"/><rect x="590" y="242" width="548" height="22" class="cv-bar"/><circle cx="560" cy="301" r="8" class="cv-dot"/><rect x="590" y="290" width="476" height="22" class="cv-bar"/><circle cx="560" cy="349" r="8" class="cv-dot hl"/><rect x="590" y="338" width="341" height="22" class="cv-bar hl"/><text x="60" y="90" class="cv-k">PLAYBOOK · HEALTHCARE · INTEROPERABILITY</text><text x="60" y="350" class="cv-n">22 Oct 2026 · 08:15 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <p>Prior authorisation is one of the most disliked processes in US healthcare: faxes, portals, phone calls and long waits for decisions that often affect care. CMS's Interoperability and Prior Authorization final rule, CMS-0057-F, is the most significant federal push to move it onto standard APIs. It has two phases, and the second is close.</p>
+
+<section class="block">
+<h2 id="what-applies-when">What applies when</h2>
+<table class="tbl">
+<thead><tr><th>Requirement</th><th>Generally from</th></tr></thead>
+<tbody>
+<tr><td>Decisions within 72 hours for expedited and seven calendar days for standard requests, with specific denial reasons</td><td>1 January 2026<sup class="cite"><a href="#ref-1">1</a></sup></td></tr>
+<tr><td>Public reporting of prior authorisation metrics</td><td>2026, with the first report due by 31 March 2026<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-4">4</a></sup></td></tr>
+<tr><td>Patient Access API usage metrics</td><td>2026<sup class="cite"><a href="#ref-2">2</a></sup></td></tr>
+<tr><td>Provider Access, Payer-to-Payer and Prior Authorization APIs, plus prior authorisation data in Patient Access</td><td>1 January 2027<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-3">3</a></sup></td></tr>
+</tbody>
+</table>
+<p>Dates differ by plan type: commentary notes that Medicaid and CHIP managed care follow rating periods, and exchange plans follow plan years beginning on or after 1 January 2027<sup class="cite"><a href="#ref-4">4</a></sup>. Drugs are excluded from the prior authorisation API requirements<sup class="cite"><a href="#ref-1">1</a></sup>. Secondary sources disagree on some plan-specific details, so confirm your own obligations against the rule text with counsel.</p>
+</section>
+
+<section class="block">
+<h2 id="the-four-api-workstreams">The four API workstreams</h2>
+<ul>
+<li><strong>Patient Access API</strong>, extended with prior authorisation information, so members can see requests and decisions in their own apps.</li>
+<li><strong>Provider Access API</strong>, giving in-network providers data on their attributed patients, with a patient opt-out.</li>
+<li><strong>Payer-to-Payer API</strong>, moving a member's data to a new payer when they switch, with patient opt-in.</li>
+<li><strong>Prior Authorization API</strong>, letting provider systems check whether authorisation is needed, see documentation requirements, and submit requests and receive decisions electronically<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>.</li>
+</ul>
+<p>These build on FHIR and the HL7 Da Vinci implementation guides that commentary associates with the rule, covering coverage requirements discovery, documentation templates and prior authorisation support<sup class="cite"><a href="#ref-3">3</a></sup>. CMS also proposed in April 2026 to adopt FHIR standards for prior authorisation transactions under HIPAA, as I covered in the <a href="/insights/briefing-2026-04/">April 2026 briefing</a>.</p>
+</section>
+
+<section class="block">
+<h2 id="the-hard-part-isn-t-the-api">The hard part isn't the API</h2>
+<p>Exposing FHIR endpoints is the visible work. The hidden work is behind them:</p>
+<ol>
+<li><strong>Codifying policy.</strong> The Prior Authorization API needs machine-readable rules for when authorisation is required and what documentation is needed. Many payers hold those rules in PDFs and reviewer knowledge.</li>
+<li><strong>Integrating with utilisation management systems</strong> so decisions, statuses and reasons flow back through the API within the required timeframes.</li>
+<li><strong>Member and provider identity and attribution</strong>, which Provider Access and Payer-to-Payer depend on, plus opt-in and opt-out consent handling.</li>
+<li><strong>Clinical data normalisation</strong>: claims and clinical data mapped to US Core and related profiles, using the pipeline patterns in <a href="/insights/fhir-bulk-data-export-pipelines/">FHIR Bulk Data pipelines</a> for bulk exchange.</li>
+<li><strong>Metrics.</strong> The reporting requirements need reliable timestamps across the whole workflow, not just the API.</li>
+</ol>
+<div class="callout"><p>Start with policy codification. It has the longest lead time, involves clinical and business owners rather than engineers, and nothing in the Prior Authorization API works without it.</p></div>
+</section>
+
+<section class="block">
+<h2 id="where-ai-fits-carefully">Where AI fits, carefully</h2>
+<p>Prior authorisation is an obvious target for AI: extracting evidence from clinical documents, summarising cases for reviewers, and turning policy documents into structured rules. Those are reasonable uses with human oversight. Using models to make or influence denials is a different matter, with regulatory and reputational risk. I keep AI on the assistive side, log its contributions as described in <a href="/insights/ai-incident-postmortems/">AI incident postmortems</a>, and design so a clinician owns every adverse decision.</p>
+</section>
+
+<section class="block">
+<h2 id="how-i-can-help">How I can help</h2>
+<p>I design FHIR API platforms and the data and policy layers behind them, for payers and the vendors who serve them. See <a href="/healthcare-data-architecture/">healthcare data architecture</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://www.cms.gov/newsroom/fact-sheets/cms-interoperability-and-prior-authorization-final-rule-cms-0057-f" target="_blank" rel="noopener">CMS Interoperability and Prior Authorization Final Rule (CMS-0057-F) fact sheet</a><small>Centers for Medicare &amp; Medicaid Services · 17 Jan 2024</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://www.cms.gov/files/document/fact-sheet-cms-interoperability-and-prior-authorization-final-rule-cms-0057-f.pdf" target="_blank" rel="noopener">Fact sheet: CMS Interoperability and Prior Authorization Final Rule (PDF)</a><small>Centers for Medicare &amp; Medicaid Services</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://www.health-samurai.io/articles/understanding-the-cms-0057-f-interoperability-and-prior-authorization-final-rule" target="_blank" rel="noopener">Understanding the CMS-0057-F Interoperability and Prior Authorization final rule</a><small>Health Samurai</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://innovaccer.com/blogs/cms-0057-prior-authorization-rule-requirements-deadlines-apis-and-operational-impact" target="_blank" rel="noopener">CMS-0057 prior authorization rule: requirements, deadlines, APIs and operational impact</a><small>Innovaccer</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fcms-0057-prior-authorization-apis%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fcms-0057-prior-authorization-apis%2F&amp;text=CMS-0057-F%3A%20how%20to%20build%20payer%20prior%20authorisation%20APIs%20before%20January%202027" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=CMS-0057-F%3A%20how%20to%20build%20payer%20prior%20authorisation%20APIs%20before%20January%202027%20https%3A%2F%2Fasksumanta.com%2Finsights%2Fcms-0057-prior-authorization-apis%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://asksumanta.com/insights/cms-0057-prior-authorization-apis/">Copy link</button></div>
+      <div class="pnav"><a class="pn prev" href="/insights/llm-model-routing/"><small>← Previous</small><b>LLM model routing: paying for the big model only when it matters</b></a><a class="pn next" href="/insights/opentofu-or-terraform-2026/"><small>Next →</small><b>OpenTofu or Terraform in 2026: a practical decision checklist</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#what-applies-when">What applies when</a></li><li><a href="#the-four-api-workstreams">The four API workstreams</a></li><li><a href="#the-hard-part-isn-t-the-api">The hard part isn&#x27;t the API</a></li><li><a href="#where-ai-fits-carefully">Where AI fits, carefully</a></li><li><a href="#how-i-can-help">How I can help</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>What does CMS-0057-F require?</summary><p>It requires impacted payers to meet prior authorisation decision timeframes and report metrics, generally from January 2026, and to build or enhance FHIR-based APIs, including Provider Access, Payer-to-Payer and Prior Authorization APIs and prior authorisation data in Patient Access, generally from January 2027.</p></details><details class="rise"><summary>What are the prior authorisation decision timeframes?</summary><p>According to CMS, impacted payers must generally decide expedited requests within 72 hours and standard requests within seven calendar days, and give a specific reason when they deny a request.</p></details><details class="rise"><summary>Do the API deadlines vary by plan type?</summary><p>Yes. Commentary notes that Medicaid and CHIP managed care deadlines follow rating periods and exchange plan deadlines follow plan years beginning on or after 1 January 2027. Confirm your own dates against the rule text.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/healthcare-data-architecture/"><small>Service</small><b>Healthcare data architecture</b><span>I help healthcare and life-sciences organisations turn fragmented clinical data into governed platforms for care, research and AI, using the standards the industry already agrees on.</span><i>→</i></a><a class="rcard rise" href="/fractional-cto/"><small>Service</small><b>Fractional CTO</b><span>I work as a part-time CTO for founders, CEOs and boards who need experienced technical judgement now, and a team that can carry it on after I step back.</span><i>→</i></a><a class="rcard rise" href="/technical-due-diligence/"><small>Service</small><b>Technical due diligence</b><span>I give investors an independent, plain-language view of a company&#x27;s technology, team and AI claims, so the risks are priced in before the deal closes, not discovered after.</span><i>→</i></a><a class="rcard rise" href="/insights/opentofu-or-terraform-2026/"><small>Insight</small><b>OpenTofu or Terraform in 2026: a practical decision checklist</b><span>When HashiCorp changed Terraform&#x27;s licence in 2023, most teams waited to see what would happen. The fork now has its own features, governance and release cadence. Waiting is still a valid choice, but it should be a deliberate one.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: CMS-0057-F: how to build payer prior authorisation APIs before January 2027">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
+        <p class="floc">United States &amp; UAE · working globally</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/uae/">Fractional CTO in the UAE</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/opentofu-or-terraform-2026/">OpenTofu or Terraform in 2026: a practical decision checklist</a></li><li><a href="/insights/cms-0057-prior-authorization-apis/">CMS-0057-F: how to build payer prior authorisation APIs before January 2027</a></li><li><a href="/insights/llm-model-routing/">LLM model routing: paying for the big model only when it matters</a></li><li><a href="/insights/omop-cohort-definitions/">OMOP cohort definitions: the logic behind every real-world evidence study</a></li><li><a href="/insights/platform-engineering-maturity/">Platform engineering maturity: how to use the CNCF model without fooling yourself</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>
