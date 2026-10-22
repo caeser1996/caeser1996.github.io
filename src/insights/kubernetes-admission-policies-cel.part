@@ -1,0 +1,52 @@
+<!--{"title": "Kubernetes admission policies in CEL: retiring your webhooks", "description": "ValidatingAdmissionPolicy is GA and MutatingAdmissionPolicy reached stable in v1.36. How CEL policies replace admission webhooks, and how I migrate cluster guardrails safely.", "h1": "Kubernetes admission policies in CEL: a playbook for retiring your webhooks", "kicker": "Cloud · Kubernetes · Security", "lede": "Admission webhooks have guarded Kubernetes clusters for years, at the cost of extra services that can slow or break the API server. Kubernetes now has built-in, declarative alternatives for both validation and mutation.", "date": "2026-10-22", "datetime": "2026-10-22T20:15:00+04:00", "readtime": "7 min read", "format": "playbook", "tags": ["kubernetes", "security", "platform", "governance"], "keywords": ["ValidatingAdmissionPolicy", "MutatingAdmissionPolicy", "Kubernetes CEL", "admission webhooks", "Kubernetes policy as code", "Kubernetes security guardrails", "Common Expression Language", "Kubernetes v1.36", "platform engineering", "Kubernetes consultant"], "faq": [["What is ValidatingAdmissionPolicy?", "A built-in, declarative way to validate Kubernetes API requests using Common Expression Language (CEL) expressions, as an alternative to validating admission webhooks. It reached general availability in Kubernetes 1.30."], ["What is MutatingAdmissionPolicy?", "The equivalent for mutation: a declarative, in-process alternative to mutating admission webhooks that uses CEL to define changes, applied either as an apply configuration or a JSON patch. Its feature gate is listed as stable from Kubernetes 1.36."], ["Should I remove my policy engine?", "Not necessarily. Built-in policies suit many common guardrails without running extra services. Policy engines still add value for reporting, complex logic, image verification and organisation-wide policy libraries. Many teams will use both."]], "related": ["/fractional-cto/", "/technical-due-diligence/", "/ai-architect/"], "citations": [{"title": "Kubernetes 1.30: Validating Admission Policy is generally available", "url": "https://kubernetes.io/blog/2024/04/24/validating-admission-policy-ga/", "publisher": "Kubernetes blog", "date": "24 Apr 2024"}, {"title": "Validating Admission Policy", "url": "https://kubernetes.io/docs/reference/access-authn-authz/validating-admission-policy/", "publisher": "Kubernetes documentation"}, {"title": "Mutating Admission Policy", "url": "https://kubernetes.io/docs/reference/access-authn-authz/mutating-admission-policy/", "publisher": "Kubernetes documentation"}, {"title": "Feature gates", "url": "https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/", "publisher": "Kubernetes documentation"}, {"title": "Common Expression Language in Kubernetes", "url": "https://kubernetes.io/docs/reference/using-api/cel/", "publisher": "Kubernetes documentation"}]}-->
+<p>Every mature Kubernetes platform ends up with guardrails: containers must not run as root, images must come from approved registries, every workload needs an owner label, and some defaults should be injected automatically. For years the standard way to enforce them was admission webhooks, separate services the API server calls on every relevant request. They work, but they're more infrastructure to run, they add latency, and a failing webhook can block deployments across a cluster.</p>
+
+<section class="block">
+<h2>Built-in policies, in CEL</h2>
+<p><strong>ValidatingAdmissionPolicy</strong> reached general availability in Kubernetes 1.30. It lets you express validation rules declaratively in Common Expression Language (CEL), evaluated inside the API server, as an alternative to validating webhooks<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. The GA announcement walks through replacing a webhook that enforces least-privilege security context settings with an equivalent policy<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<p><strong>MutatingAdmissionPolicy</strong> does the same for changes. The documentation describes it as a declarative, in-process alternative to mutating webhooks, with mutations defined as an apply configuration merged using server-side apply rules, or as a JSON patch<sup class="cite"><a href="#ref-3">3</a></sup>. The feature gate list shows it moving through alpha and beta to stable in v1.36<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+<p>A policy is made of a policy resource, a binding that scopes where it applies, and optional parameters, so one policy can be reused with different settings per namespace or environment<sup class="cite"><a href="#ref-2">2</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+</section>
+
+<section class="block">
+<h2>Webhooks, built-in policies, or a policy engine</h2>
+<table class="tbl">
+<thead><tr><th></th><th>Built-in CEL policies</th><th>Webhooks or policy engines</th></tr></thead>
+<tbody>
+<tr><td>Runs where</td><td>Inside the API server</td><td>Separate services the API server calls</td></tr>
+<tr><td>Failure mode</td><td>No extra service to go down</td><td>Webhook outages can block or slow admission</td></tr>
+<tr><td>Logic</td><td>CEL expressions over the request and parameters</td><td>Arbitrary code or rich policy languages</td></tr>
+<tr><td>External calls</td><td>Not designed for them</td><td>Possible, for example image signature checks</td></tr>
+<tr><td>Reporting</td><td>Basic</td><td>Often richer reports and policy libraries</td></tr>
+</tbody>
+</table>
+<p>My rule of thumb: simple, high-volume guardrails move to built-in policies; checks that need external data or rich reporting stay in a policy engine.</p>
+</section>
+
+<section class="block">
+<h2>The migration playbook</h2>
+<ol>
+<li><strong>Inventory webhooks</strong> and policies across clusters, including those installed by vendor charts, with their failure policies and timeouts.</li>
+<li><strong>Classify each rule</strong>: expressible in CEL, needs external data, or needs complex logic.</li>
+<li><strong>Write CEL equivalents</strong> for the first group, with test cases for allowed and rejected objects, kept in version control alongside your platform code.</li>
+<li><strong>Roll out in audit or warn mode first</strong>, comparing results with the existing webhook before switching to deny.</li>
+<li><strong>Use parameters and bindings</strong> to vary settings per environment instead of copying policies.</li>
+<li><strong>Remove the old webhook</strong> only after the policy has matched its decisions in production for a period.</li>
+</ol>
+<div class="callout"><p>Every webhook you retire is one less service that can take down deployments at 2am. That operational simplicity is the main benefit, more than any feature.</p></div>
+</section>
+
+<section class="block">
+<h2>Guardrails worth having on AI clusters</h2>
+<ul>
+<li>GPU workloads must declare an owner, cost centre and priority class, so costs and preemption are traceable, supporting <a href="/insights/focus-finops-ai-cost-allocation/">AI cost allocation</a>.</li>
+<li>Model-serving pods must not run privileged and must come from approved registries.</li>
+<li>Namespaces holding regulated data must carry labels that other controls depend on, such as region or data class, as in <a href="/insights/uae-health-data-law-localisation/">UAE health data localisation</a>.</li>
+<li>Training jobs must use the queueing and scheduling setup in <a href="/insights/kubernetes-gang-scheduling-ai/">Kubernetes gang scheduling</a> rather than bypassing it.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I design Kubernetes platforms with guardrails that are simple to operate, and review cluster security in <a href="/technical-due-diligence/">technical due diligence</a>. As a <a href="/fractional-cto/">fractional CTO</a> I can own the platform roadmap. Or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>

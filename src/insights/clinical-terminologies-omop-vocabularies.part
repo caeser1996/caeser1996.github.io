@@ -1,0 +1,48 @@
+<!--{"title": "Clinical terminologies explained: SNOMED, LOINC, RxNorm and OMOP", "description": "Healthcare data speaks many coding systems. How SNOMED CT, LOINC, RxNorm and ICD relate, how the OMOP Standardized Vocabularies unify them, and why this matters for health AI.", "h1": "Clinical terminologies explained: SNOMED, LOINC, RxNorm and the OMOP vocabularies", "kicker": "Healthcare · Ontology", "lede": "The same diagnosis can arrive as an ICD code, a SNOMED concept, a Read code or free text. Any serious health data or AI platform has to reconcile them. The OMOP Standardized Vocabularies are one of the most practical ways to do it.", "date": "2026-10-22", "datetime": "2026-10-22T20:30:00+04:00", "readtime": "8 min read", "format": "explainer", "tags": ["healthcare", "omop", "ontology", "data"], "keywords": ["clinical terminologies", "SNOMED CT", "LOINC", "RxNorm", "ICD-10", "OMOP Standardized Vocabularies", "OHDSI Athena", "standard concepts", "medical ontology", "healthcare data mapping"], "faq": [["What are the OMOP Standardized Vocabularies?", "A consolidated collection of medical vocabularies in one common format, maintained by OHDSI and required as the reference tables of every OMOP CDM instance. They can be downloaded from ATHENA."], ["What is a standard concept in OMOP?", "For each clinical meaning, one concept is designated standard and used to record data. For example, several vocabularies have codes for atrial fibrillation, but only the SNOMED concept is standard; the others are source concepts mapped to it."], ["Which vocabularies are standard for which domains?", "According to The Book of OHDSI, conditions mainly use SNOMED, measurements use SNOMED and LOINC, drugs use RxNorm, RxNorm Extension and CVX, and procedures draw on several vocabularies including SNOMED and CPT4. Designation is decided per domain, not per vocabulary."]], "related": ["/healthcare-data-architecture/", "/ontology-knowledge-graph/", "/ai-architect/"], "citations": [{"title": "Standardized Vocabularies (The Book of OHDSI)", "url": "https://ohdsi.github.io/TheBookOfOhdsi/StandardizedVocabularies.html", "publisher": "OHDSI"}, {"title": "ATHENA: OHDSI vocabulary repository", "url": "https://athena.ohdsi.org/", "publisher": "OHDSI"}, {"title": "Vocabulary-v5.0", "url": "https://github.com/OHDSI/Vocabulary-v5.0", "publisher": "OHDSI, GitHub"}, {"title": "The Book of OHDSI", "url": "https://ohdsi.github.io/TheBookOfOhdsi/", "publisher": "OHDSI"}]}-->
+<p>Healthcare has never had a single language. Hospitals bill in one coding system, record diagnoses in another, report lab results in a third and prescribe in a fourth. Countries add their own variants. Anyone building analytics, research or AI on health data meets this problem in the first week, and it is fundamentally an ontology problem.</p>
+
+<section class="block">
+<h2>The main terminologies</h2>
+<table class="tbl">
+<thead><tr><th>Terminology</th><th>Used mainly for</th><th>Typical role in analytics</th></tr></thead>
+<tbody>
+<tr><td>SNOMED CT</td><td>Clinical findings, conditions, procedures</td><td>Rich hierarchy for clinical meaning</td></tr>
+<tr><td>ICD-9/ICD-10 and national variants</td><td>Diagnoses for billing and statistics</td><td>Common in source data; often mapped to SNOMED</td></tr>
+<tr><td>LOINC</td><td>Laboratory tests and observations</td><td>Identifies what was measured</td></tr>
+<tr><td>RxNorm</td><td>Medications</td><td>Normalised drugs, ingredients and doses</td></tr>
+<tr><td>CPT4, HCPCS and others</td><td>Procedures and services</td><td>Common in US claims data</td></tr>
+</tbody>
+</table>
+<p>Medical vocabularies go back centuries; The Book of OHDSI starts with London's Bills of Mortality. Over time each country, system and institution tended to develop its own, which is exactly what makes interoperability and multi-site research hard<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+</section>
+
+<section class="block">
+<h2>How OMOP unifies them</h2>
+<p>The OMOP Standardized Vocabularies consolidate many vocabularies into one common format, refreshed regularly by the OHDSI vocabulary team, and they are mandatory reference tables for every OMOP CDM instance<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>. Organisations download them from ATHENA, which also offers search across vocabularies; proprietary vocabularies require a licence<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<p>The key idea is the <strong>standard concept</strong>. For each clinical meaning, one concept is designated standard and used to record data. The book's example: codes in MeSH, CIEL, SNOMED, ICD-9-CM and Read all describe atrial fibrillation, but only the SNOMED concept is standard; the others are source concepts mapped to it<sup class="cite"><a href="#ref-1">1</a></sup>. Classification concepts, such as MedDRA terms, take part in hierarchies for querying but aren't used to record data<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/clinical-terminologies-omop-vocabularies/hierarchy.webp" alt="Diagram of standard, non-standard source and classification concepts and their hierarchical relationships in the condition domain" width="1600" height="854" loading="lazy"></div><figcaption>Standard, source and classification concepts in the condition domain: source codes map to standard SNOMED concepts, which sit in a hierarchy with classification concepts. <span class="credit">Source: <a href="https://ohdsi.github.io/TheBookOfOhdsi/StandardizedVocabularies.html" target="_blank" rel="noopener">The Book of OHDSI, Standardized Vocabularies</a> · CC0 1.0</span></figcaption></figure>
+<p>Standard designation is decided per domain, not per vocabulary: conditions mainly use SNOMED, measurements SNOMED and LOINC, drugs RxNorm, RxNorm Extension and CVX<sup class="cite"><a href="#ref-1">1</a></sup>. In the book's words, there is no such thing as a "standard vocabulary".</p>
+</section>
+
+<section class="block">
+<h2>Domains are messier than they look</h2>
+<p>Every concept is assigned a domain, such as condition, drug, procedure or measurement, which decides which CDM table it lands in. Source vocabularies often mix domains; the book shows that procedure vocabularies like CPT4 and HCPCS contain concepts from several domains<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/clinical-terminologies-omop-vocabularies/domains.webp" alt="Chart showing domain assignment of concepts in the CPT4 and HCPCS vocabularies, which contain a mix of procedure, measurement, drug, device and other domains" width="1200" height="1167" loading="lazy"></div><figcaption>Domain assignment in CPT4 and HCPCS: vocabularies you'd expect to hold procedures contain many other domains too. <span class="credit">Source: <a href="https://ohdsi.github.io/TheBookOfOhdsi/StandardizedVocabularies.html" target="_blank" rel="noopener">The Book of OHDSI, Standardized Vocabularies</a> · CC0 1.0</span></figcaption></figure>
+<div class="callout"><p>Mapping isn't a one-off ETL task. Vocabularies change, concepts are deprecated and remapped, and every refresh can shift results. Version the vocabulary like any other dependency.</p></div>
+</section>
+
+<section class="block">
+<h2>Why this matters for health AI</h2>
+<ul>
+<li><strong>Features and cohorts depend on it.</strong> A model trained on "diabetes" is only as good as the concept set behind it, as in <a href="/insights/omop-cohort-definitions/">OMOP cohort definitions</a>.</li>
+<li><strong>Portability depends on it.</strong> A model built on standard concepts can be validated at another site; one built on local codes usually can't.</li>
+<li><strong>LLMs need grounding.</strong> Language models are good at suggesting codes and poor at being reliably right. Constrain them to look up concepts in the vocabulary rather than generate codes from memory, and validate outputs, in the spirit of <a href="/insights/shacl-validation-knowledge-graphs/">SHACL validation for knowledge graphs</a>.</li>
+<li><strong>Hierarchies enable better questions.</strong> Querying all descendants of a concept finds patients that a flat code list would miss.</li>
+</ul>
+<p>For the architecture around the vocabularies, see <a href="/insights/fhir-to-omop-architecture/">FHIR to OMOP</a> and <a href="/insights/omop-data-quality-checks/">OMOP data quality checks</a>.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I design health data platforms with terminology and mapping at their core, from OMOP vocabularies to ontologies that make health data usable for AI. See <a href="/healthcare-data-architecture/">healthcare data architecture</a> and <a href="/ontology-knowledge-graph/">ontology and knowledge graphs</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
