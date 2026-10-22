@@ -1,0 +1,44 @@
+<!--{"title": "LLM model routing: paying for the big model only when it matters", "description": "Most requests don't need your most expensive model. How routing and cascades work, what RouteLLM and FrugalGPT showed, and how I design routing that saves money safely.", "h1": "LLM model routing: paying for the big model only when it matters", "kicker": "AI architecture · Cost", "lede": "Sending every request to the most capable model is the simplest design and usually the most expensive. Routing sends easy requests to cheaper models. Done well it cuts cost substantially; done badly it quietly lowers quality.", "date": "2026-10-22", "datetime": "2026-10-22T04:30:00+04:00", "readtime": "7 min read", "format": "comparison", "tags": ["ai", "llm", "finops", "platform"], "keywords": ["LLM routing", "model routing", "RouteLLM", "FrugalGPT", "LLM cascade", "LLM cost optimisation", "AI gateway", "small language models", "LLM evaluation", "AI architect"], "faq": [["What is LLM model routing?", "Choosing, per request, which model should answer: for example sending simple queries to a smaller, cheaper model and harder ones to a stronger, more expensive model."], ["What is the difference between routing and a cascade?", "A router makes one decision per request and calls a single model. A cascade, as in FrugalGPT, queries models in sequence and stops when a response is judged reliable, so hard requests can incur several calls."], ["How much can routing save?", "It depends on your traffic. The RouteLLM project reported large cost reductions on public benchmarks while keeping 95% of the stronger model's performance, but savings on your workload must be measured with your own evaluation set."]], "related": ["/ai-architect/", "/fractional-cto/", "/technical-due-diligence/"], "citations": [{"title": "RouteLLM: Learning to Route LLMs with Preference Data", "url": "https://arxiv.org/abs/2406.18665", "publisher": "Ong et al. (arXiv)", "date": "2024"}, {"title": "RouteLLM: an open-source framework for cost-effective LLM routing", "url": "https://sky.cs.berkeley.edu/project/routellm/", "publisher": "UC Berkeley Sky Computing Lab"}, {"title": "FrugalGPT: How to Use Large Language Models While Reducing Cost and Improving Performance", "url": "https://arxiv.org/abs/2305.05176", "publisher": "Chen, Zaharia and Zou, Stanford (arXiv)", "date": "2023"}, {"title": "What is LLM model routing?", "url": "https://neuraltrust.ai/blog/llm-model-routing", "publisher": "NeuralTrust"}]}-->
+<p>Look at a month of prompts in almost any AI product and you'll find a long tail of simple requests: reformat this, summarise that, classify this ticket. Then there is a smaller set of hard ones: multi-step reasoning, ambiguous questions, long documents. Paying top-model prices for all of it is like sending every support call to your most senior engineer.</p>
+
+<section class="block">
+<h2>Two approaches</h2>
+<table class="tbl">
+<thead><tr><th></th><th>Router</th><th>Cascade</th></tr></thead>
+<tbody>
+<tr><td>How it works</td><td>Predicts which model should answer, then calls one model</td><td>Tries a cheaper model first; escalates if the answer isn't judged reliable</td></tr>
+<tr><td>Cost on hard requests</td><td>One call to the strong model</td><td>Several calls, including the failed cheap attempt</td></tr>
+<tr><td>Latency</td><td>Predictable</td><td>Higher on escalated requests</td></tr>
+<tr><td>Hardest part</td><td>Training a router that predicts difficulty well</td><td>Judging reliability of an answer</td></tr>
+</tbody>
+</table>
+<p>FrugalGPT, from Stanford, is the best-known cascade: it queries models in sequence and stops when a response is judged reliable<sup class="cite"><a href="#ref-3">3</a></sup>. RouteLLM, from the LMSYS and Berkeley team behind Chatbot Arena, trains routers on human preference data to choose between a stronger and a weaker model per request<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+</section>
+
+<section class="block">
+<h2>What the research showed</h2>
+<p>On public benchmarks, the RouteLLM project reported cost reductions of over 85% on MT Bench, 45% on MMLU and 35% on GSM8K compared with using only GPT-4, while achieving 95% of GPT-4's performance<sup class="cite"><a href="#ref-2">2</a></sup>. The spread is the lesson: savings depend heavily on how much of the workload is easy. Conversational traffic had lots of easy requests; maths problems had fewer.</p>
+<div class="callout"><p>Benchmark savings don't transfer. The only number that matters is the saving on your traffic at a quality level your users accept, measured on your own evaluation set.</p></div>
+</section>
+
+<section class="block">
+<h2>How I design routing</h2>
+<ol>
+<li><strong>Start with rules, not a learned router.</strong> Route by task type the product already knows: classification and extraction to a small model, open-ended reasoning to a large one. This captures much of the saving with no model to maintain.</li>
+<li><strong>Put routing in the gateway</strong>, not in application code, so policies change in one place. The same gateway records cost per call, as in <a href="/insights/focus-finops-ai-cost-allocation/">FOCUS and AI spend</a>.</li>
+<li><strong>Evaluate every route.</strong> Each model on each route needs a passing score on the relevant slice of your <a href="/insights/llm-evaluation-sets-that-predict-production/">evaluation set</a> before it takes traffic.</li>
+<li><strong>Add a learned router only when the rules plateau</strong>, and train it on your own data: requests labelled with which model's answer was acceptable.</li>
+<li><strong>Monitor quality per route</strong>: user feedback, escalations and sampled reviews. Routing failures look like a gradual decline in satisfaction, not an outage.</li>
+<li><strong>Keep sensitive routes fixed.</strong> Requests involving regulated data may be pinned to private models, as in <a href="/insights/private-llm-on-prem/">private LLMs on-prem</a>, regardless of cost.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2>Don't forget the cheaper levers</h2>
+<p>Routing is one of several cost tools. Prompt caching and shared prefixes, covered in <a href="/insights/llm-inference-serving-vllm/">LLM inference serving</a>, shorter outputs and better retrieval that sends fewer tokens can each save as much as routing, with less risk. I usually apply those first, then route.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I design AI gateways, routing policies and evaluation loops that cut model spend without quietly cutting quality. See my <a href="/ai-architect/">AI architecture work</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>

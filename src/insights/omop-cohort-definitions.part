@@ -1,0 +1,47 @@
+<!--{"title": "OMOP cohort definitions: the logic behind every real-world study", "description": "A cohort is not a code list. How OHDSI defines cohorts with entry events, inclusion criteria and exit rules, and how LLMs can help write them without being trusted blindly.", "h1": "OMOP cohort definitions: the logic behind every real-world evidence study", "kicker": "Healthcare · OMOP", "lede": "Ask a team for 'patients with diabetes' and you will get as many answers as there are analysts. OHDSI's cohort definitions make that question precise, reusable and executable across databases. They are also where LLMs could help most, and where they need the most checking.", "date": "2026-10-22", "datetime": "2026-10-22T04:15:00+04:00", "readtime": "7 min read", "format": "explainer", "tags": ["healthcare", "omop", "data", "ai"], "keywords": ["OMOP cohort definition", "OHDSI cohort", "ATLAS cohort", "phenotype definition", "real-world evidence", "concept sets", "Circe JSON", "LLM cohort generation", "observational health data", "healthcare data architect"], "faq": [["What is a cohort in OHDSI?", "A set of persons who satisfy one or more inclusion criteria for a duration of time. A well-defined cohort specifies how a person enters it and how they exit, not just which codes are involved."], ["What are the parts of an OHDSI cohort definition?", "An entry event that sets the index date, inclusion criteria applied to that initial cohort, and exit criteria that define when a person no longer qualifies. Each is built from CDM domains, concept sets, domain-specific attributes and temporal logic."], ["Can LLMs write OHDSI cohort definitions?", "Research is exploring it, including using MCP tools that expose the OHDSI WebAPI so a model can assemble definitions from natural language. Any generated definition should be reviewed by a clinical expert and checked against data before use."]], "related": ["/healthcare-data-architecture/", "/ai-architect/", "/ontology-knowledge-graph/"], "citations": [{"title": "Defining cohorts (The Book of OHDSI)", "url": "https://ohdsi.github.io/TheBookOfOhdsi/Cohorts.html", "publisher": "OHDSI"}, {"title": "Generating cohorts (CohortGenerator)", "url": "https://ohdsi.r-universe.dev/CohortGenerator/doc/GeneratingCohorts.html", "publisher": "OHDSI"}, {"title": "MCP server exposing the OHDSI WebAPI cohort subsystem (CBMS 2026 slides)", "url": "https://easychair.org/smart-slide/slide/xXl9", "publisher": "EasyChair Smart Slide"}, {"title": "The Book of OHDSI", "url": "https://ohdsi.github.io/TheBookOfOhdsi/", "publisher": "OHDSI"}]}-->
+<p>Real-world evidence studies, quality measures and many clinical AI projects begin with the same deceptively simple step: find the right patients. "Patients with type 2 diabetes starting metformin" sounds precise until you ask which codes, which first occurrence, how much prior history, and when someone stops counting. Different answers produce different results from the same data.</p>
+
+<section class="block">
+<h2>A cohort is not a code list</h2>
+<p>The Book of OHDSI defines a cohort as a set of persons who satisfy one or more inclusion criteria for a duration of time. It is explicit that a cohort is not a code set: it needs logic for how codes are used, such as first occurrence versus any occurrence, and a well-defined cohort specifies how a person enters and how they exit<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<p>A few properties follow: one person can belong to several cohorts, can belong to the same cohort in different periods, but not twice in the same period, and a cohort can be empty<sup class="cite"><a href="#ref-1">1</a></sup>. Cohorts are also defined independently and reused, so the same outcome cohort can serve many studies<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+</section>
+
+<section class="block">
+<h2>The building blocks</h2>
+<figure class="fig"><div class="im"><img src="/assets/img/omop-cohort-definitions/cohort-legos.webp" alt="Illustration of cohort definition building blocks, with domains such as conditions, drugs, procedures and measurements shown as stackable blocks" width="358" height="419" loading="lazy"></div><figcaption>Building blocks of cohort definitions: CDM domains combined with concept sets and logic. <span class="credit">Source: <a href="https://ohdsi.github.io/TheBookOfOhdsi/Cohorts.html" target="_blank" rel="noopener">The Book of OHDSI, Defining Cohorts</a> · CC0 1.0</span></figcaption></figure>
+<p>Rule-based definitions combine four components<sup class="cite"><a href="#ref-1">1</a></sup>:</p>
+<ul>
+<li><strong>Domain</strong>: where the data lives in the CDM, such as drug exposures or procedures.</li>
+<li><strong>Concept set</strong>: a data-agnostic expression of standard concepts for the clinical idea, portable across databases.</li>
+<li><strong>Domain-specific attributes</strong>: days' supply for a drug, a measurement value or range.</li>
+<li><strong>Temporal logic</strong>: when one criterion must occur relative to another, for example within 365 days before the index event.</li>
+</ul>
+<p>Assembled, they answer three questions: what event sets the index date, which inclusion criteria apply, and what ends cohort membership<sup class="cite"><a href="#ref-1">1</a></sup>. In OHDSI tools there are no separate exclusion criteria; "exclude prior hypertension" becomes "include people with zero occurrences of prior hypertension"<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/omop-cohort-definitions/atlas-initialevent.webp" alt="Screenshot of the ATLAS cohort definition editor showing the cohort entry events section" width="1278" height="783" loading="lazy"></div><figcaption>Defining a cohort's entry event in ATLAS, OHDSI's web tool for building definitions. <span class="credit">Source: <a href="https://ohdsi.github.io/TheBookOfOhdsi/Cohorts.html" target="_blank" rel="noopener">The Book of OHDSI, Defining Cohorts</a> · CC0 1.0</span></figcaption></figure>
+</section>
+
+<section class="block">
+<h2>Definitions as code</h2>
+<p>Definitions built in ATLAS are stored as JSON and compiled to SQL for each database platform, and tools such as CohortGenerator run them in analysis pipelines<sup class="cite"><a href="#ref-2">2</a></sup>. That is what makes OHDSI network studies possible: the same definition, run unchanged at many sites.</p>
+<p>For a data platform, I treat cohort definitions as versioned artefacts: stored in a repository, reviewed, tested against data quality checks as in <a href="/insights/omop-data-quality-checks/">OMOP data quality checks</a>, and linked to every result produced with them.</p>
+<div class="callout"><p>If a result can't be traced to the exact cohort definition version that produced it, it isn't reproducible, however good the analysis was.</p></div>
+</section>
+
+<section class="block">
+<h2>Where LLMs fit</h2>
+<p>Turning a clinical question into a cohort definition is skilled, slow work, which makes it a natural target for language models. Research is exploring this, including an MCP server that exposes the OHDSI WebAPI's cohort tools so a model can assemble definitions from natural language<sup class="cite"><a href="#ref-3">3</a></sup>. That design is the right shape: the model calls structured tools that produce standard definitions, rather than writing free-form SQL.</p>
+<p>The risks are clinical, not technical. A plausible definition with the wrong concept set, a missing washout period or an exit rule that silently drops patients will run perfectly and produce wrong evidence. My rules:</p>
+<ol>
+<li><strong>Generate into the standard format</strong>, never ad hoc SQL, so definitions can be reviewed in familiar tools.</li>
+<li><strong>Require clinical review</strong> of concept sets and temporal logic before any use.</li>
+<li><strong>Check against data</strong>: counts, attrition by criterion and patient profiles, before trusting results.</li>
+<li><strong>Prefer reuse.</strong> Start from established, validated definitions where they exist, and let the model adapt rather than invent.</li>
+</ol>
+<p>The tool-based approach also follows the governance patterns in <a href="/insights/mcp-apps-tool-annotations/">MCP Apps and tool annotations</a>: read-only tools for exploration, review before anything is saved or run.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I design OMOP platforms and research pipelines where cohort definitions are versioned, tested and reproducible, and help teams apply AI to them safely. See <a href="/healthcare-data-architecture/">healthcare data architecture</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>OMOP cohort definitions: the logic behind every real-world study</title>
+<meta name="description" content="A cohort is not a code list. How OHDSI defines cohorts with entry events, inclusion criteria and exit rules, and how LLMs can help write them without being trusted blindly." />
+<meta name="keywords" content="OMOP cohort definition, OHDSI cohort, ATLAS cohort, phenotype definition, real-world evidence, concept sets, Circe JSON, LLM cohort generation, observational health data, healthcare data architect" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://asksumanta.com/insights/omop-cohort-definitions/" />
+<meta name="theme-color" content="#111214" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="OMOP cohort definitions: the logic behind every real-world study" />
+<meta property="og:description" content="A cohort is not a code list. How OHDSI defines cohorts with entry events, inclusion criteria and exit rules, and how LLMs can help write them without being trusted blindly." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://asksumanta.com/insights/omop-cohort-definitions/" />
+<meta property="og:image" content="https://asksumanta.com/assets/og/omop-cohort-definitions.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="OMOP cohort definitions: the logic behind every real-world study" />
+<meta name="twitter:description" content="A cohort is not a code list. How OHDSI defines cohorts with entry events, inclusion criteria and exit rules, and how LLMs can help write them without being trusted blindly." />
+<meta name="twitter:image" content="https://asksumanta.com/assets/og/omop-cohort-definitions.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "BlogPosting", "headline": "OMOP cohort definitions: the logic behind every real-world evidence study", "description": "A cohort is not a code list. How OHDSI defines cohorts with entry events, inclusion criteria and exit rules, and how LLMs can help write them without being trusted blindly.", "datePublished": "2026-10-22T04:15:00+04:00", "dateModified": "2026-10-22T04:15:00+04:00", "articleSection": "Healthcare · OMOP", "genre": "Explainer", "citation": [{"@type": "CreativeWork", "name": "Defining cohorts (The Book of OHDSI)", "url": "https://ohdsi.github.io/TheBookOfOhdsi/Cohorts.html"}, {"@type": "CreativeWork", "name": "Generating cohorts (CohortGenerator)", "url": "https://ohdsi.r-universe.dev/CohortGenerator/doc/GeneratingCohorts.html"}, {"@type": "CreativeWork", "name": "MCP server exposing the OHDSI WebAPI cohort subsystem (CBMS 2026 slides)", "url": "https://easychair.org/smart-slide/slide/xXl9"}, {"@type": "CreativeWork", "name": "The Book of OHDSI", "url": "https://ohdsi.github.io/TheBookOfOhdsi/"}], "author": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "publisher": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "mainEntityOfPage": "https://asksumanta.com/insights/omop-cohort-definitions/", "image": "https://asksumanta.com/assets/og/omop-cohort-definitions.png", "keywords": "OMOP cohort definition, OHDSI cohort, ATLAS cohort, phenotype definition, real-world evidence, concept sets, Circe JSON, LLM cohort generation, observational health data, healthcare data architect", "wordCount": 688}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://asksumanta.com/"}, {"@type": "ListItem", "position": 2, "name": "Insights", "item": "https://asksumanta.com/insights/"}, {"@type": "ListItem", "position": 3, "name": "OMOP cohort definitions: the logic behind every real-world evidence study", "item": "https://asksumanta.com/insights/omop-cohort-definitions/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What is a cohort in OHDSI?", "acceptedAnswer": {"@type": "Answer", "text": "A set of persons who satisfy one or more inclusion criteria for a duration of time. A well-defined cohort specifies how a person enters it and how they exit, not just which codes are involved."}}, {"@type": "Question", "name": "What are the parts of an OHDSI cohort definition?", "acceptedAnswer": {"@type": "Answer", "text": "An entry event that sets the index date, inclusion criteria applied to that initial cohort, and exit criteria that define when a person no longer qualifies. Each is built from CDM domains, concept sets, domain-specific attributes and temporal logic."}}, {"@type": "Question", "name": "Can LLMs write OHDSI cohort definitions?", "acceptedAnswer": {"@type": "Answer", "text": "Research is exploring it, including using MCP tools that expose the OHDSI WebAPI so a model can assemble definitions from natural language. Any generated definition should be reviewed by a clinical expert and checked against data before use."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+</script>
+</head>
+<body class="sub is-post">
+<div class="progress" id="progress"></div>
+<nav>
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="/#practice">Services</a>
+      <a href="/#work">Case studies</a>
+      <a href="/insights/">Insights</a>
+      <a href="/#assess">Analyse</a>
+      <a href="/#connect">Connect</a>
+    </div>
+    <div class="nav-r">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/insights/">Insights</a> <span>/</span> <em>OMOP cohort definitions: the logic behind every real-world evidence study</em></div>
+    <div class="kicker">Healthcare · OMOP</div>
+    <h1>OMOP cohort definitions: the logic behind every real-world evidence study</h1>
+    <p class="sub-lede">Ask a team for &#x27;patients with diabetes&#x27; and you will get as many answers as there are analysts. OHDSI&#x27;s cohort definitions make that question precise, reusable and executable across databases. They are also where LLMs could help most, and where they need the most checking.</p>
+    <div class="ameta"><span class="fmt">Explainer</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-10-22T04:15:00+04:00">22 Oct 2026 · 04:15 GST</time><span>7 min read</span><span>4 sources</span></div><div class="atags"><span class="tagp">#healthcare</span><span class="tagp">#omop</span><span class="tagp">#data</span><span class="tagp">#ai</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Explainer cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><line x1="874" y1="128" x2="960" y2="45" class="cv-edge hl" opacity="0.20"/><line x1="874" y1="128" x2="903" y2="262" class="cv-edge hl" opacity="0.09"/><line x1="874" y1="128" x2="858" y2="53" class="cv-edge hl" opacity="0.49"/><line x1="874" y1="128" x2="992" y2="47" class="cv-edge hl" opacity="0.05"/><line x1="874" y1="128" x2="973" y2="149" class="cv-edge hl" opacity="0.33"/><line x1="874" y1="128" x2="760" y2="182" class="cv-edge hl" opacity="0.16"/><line x1="528" y1="266" x2="549" y2="311" class="cv-edge" opacity="0.67"/><line x1="528" y1="266" x2="543" y2="156" class="cv-edge" opacity="0.26"/><line x1="695" y1="384" x2="736" y2="360" class="cv-edge" opacity="0.69"/><line x1="695" y1="384" x2="741" y2="374" class="cv-edge" opacity="0.69"/><line x1="695" y1="384" x2="730" y2="334" class="cv-edge" opacity="0.59"/><line x1="1004" y1="270" x2="903" y2="262" class="cv-edge hl" opacity="0.33"/><line x1="1004" y1="270" x2="993" y2="292" class="cv-edge" opacity="0.84"/><line x1="1004" y1="270" x2="914" y2="320" class="cv-edge hl" opacity="0.32"/><line x1="1004" y1="270" x2="973" y2="149" class="cv-edge" opacity="0.16"/><line x1="1004" y1="270" x2="899" y2="335" class="cv-edge" opacity="0.18"/><line x1="1080" y1="76" x2="960" y2="45" class="cv-edge hl" opacity="0.18"/><line x1="1080" y1="76" x2="992" y2="47" class="cv-edge hl" opacity="0.39"/><line x1="1080" y1="76" x2="1113" y2="124" class="cv-edge hl" opacity="0.61"/><line x1="1080" y1="76" x2="973" y2="149" class="cv-edge hl" opacity="0.14"/><line x1="1080" y1="76" x2="1072" y2="36" class="cv-edge hl" opacity="0.73"/><line x1="960" y1="45" x2="858" y2="53" class="cv-edge hl" opacity="0.32"/><line x1="960" y1="45" x2="992" y2="47" class="cv-edge hl" opacity="0.79"/><line x1="960" y1="45" x2="973" y2="149" class="cv-edge hl" opacity="0.30"/><line x1="960" y1="45" x2="1072" y2="36" class="cv-edge hl" opacity="0.25"/><line x1="658" y1="148" x2="550" y2="50" class="cv-edge hl" opacity="0.03"/><line x1="658" y1="148" x2="704" y2="213" class="cv-edge hl" opacity="0.47"/><line x1="658" y1="148" x2="750" y2="224" class="cv-edge hl" opacity="0.21"/><line x1="658" y1="148" x2="760" y2="182" class="cv-edge hl" opacity="0.29"/><line x1="658" y1="148" x2="543" y2="156" class="cv-edge hl" opacity="0.23"/><line x1="658" y1="148" x2="675" y2="166" class="cv-edge hl" opacity="0.83"/><line x1="550" y1="50" x2="543" y2="156" class="cv-edge" opacity="0.30"/><line x1="903" y1="262" x2="993" y2="292" class="cv-edge hl" opacity="0.37"/><line x1="903" y1="262" x2="914" y2="320" class="cv-edge hl" opacity="0.61"/><line x1="903" y1="262" x2="973" y2="149" class="cv-edge hl" opacity="0.11"/><line x1="903" y1="262" x2="899" y2="335" class="cv-edge hl" opacity="0.51"/><line x1="704" y1="213" x2="750" y2="224" class="cv-edge hl" opacity="0.68"/><line x1="704" y1="213" x2="760" y2="182" class="cv-edge hl" opacity="0.57"/><line x1="704" y1="213" x2="675" y2="166" class="cv-edge hl" opacity="0.64"/><line x1="704" y1="213" x2="730" y2="334" class="cv-edge hl" opacity="0.17"/><line x1="858" y1="53" x2="992" y2="47" class="cv-edge hl" opacity="0.10"/><line x1="858" y1="53" x2="973" y2="149" class="cv-edge" opacity="0.00"/><line x1="993" y1="292" x2="914" y2="320" class="cv-edge hl" opacity="0.44"/><line x1="993" y1="292" x2="973" y2="149" class="cv-edge" opacity="0.04"/><line x1="993" y1="292" x2="899" y2="335" class="cv-edge" opacity="0.31"/><line x1="736" y1="360" x2="750" y2="224" class="cv-edge" opacity="0.09"/><line x1="736" y1="360" x2="741" y2="374" class="cv-edge" opacity="0.90"/><line x1="736" y1="360" x2="730" y2="334" class="cv-edge" opacity="0.82"/><line x1="992" y1="47" x2="1113" y2="124" class="cv-edge hl" opacity="0.04"/><line x1="992" y1="47" x2="973" y2="149" class="cv-edge hl" opacity="0.31"/><line x1="992" y1="47" x2="1072" y2="36" class="cv-edge hl" opacity="0.47"/><line x1="750" y1="224" x2="760" y2="182" class="cv-edge" opacity="0.71"/><line x1="750" y1="224" x2="675" y2="166" class="cv-edge" opacity="0.37"/><line x1="750" y1="224" x2="730" y2="334" class="cv-edge" opacity="0.26"/><line x1="914" y1="320" x2="899" y2="335" class="cv-edge hl" opacity="0.85"/><line x1="1113" y1="124" x2="973" y2="149" class="cv-edge hl" opacity="0.05"/><line x1="1113" y1="124" x2="1072" y2="36" class="cv-edge hl" opacity="0.35"/><line x1="973" y1="149" x2="1072" y2="36" class="cv-edge" opacity="0.00"/><line x1="760" y1="182" x2="675" y2="166" class="cv-edge" opacity="0.43"/><line x1="741" y1="374" x2="730" y2="334" class="cv-edge" opacity="0.72"/><line x1="543" y1="156" x2="675" y2="166" class="cv-edge" opacity="0.11"/><circle cx="874" cy="128" r="6" class="cv-dot hl"/><circle cx="528" cy="266" r="3" class="cv-dot"/><circle cx="695" cy="384" r="3" class="cv-dot"/><circle cx="1004" cy="270" r="3" class="cv-dot"/><circle cx="1080" cy="76" r="6" class="cv-dot hl"/><circle cx="549" cy="311" r="3" class="cv-dot"/><circle cx="960" cy="45" r="6" class="cv-dot hl"/><circle cx="658" cy="148" r="6" class="cv-dot hl"/><circle cx="550" cy="50" r="3" class="cv-dot"/><circle cx="903" cy="262" r="6" class="cv-dot hl"/><circle cx="704" cy="213" r="6" class="cv-dot hl"/><circle cx="858" cy="53" r="3" class="cv-dot"/><circle cx="993" cy="292" r="3" class="cv-dot"/><circle cx="736" cy="360" r="3" class="cv-dot"/><circle cx="992" cy="47" r="6" class="cv-dot hl"/><circle cx="750" cy="224" r="3" class="cv-dot"/><circle cx="914" cy="320" r="6" class="cv-dot hl"/><circle cx="1113" cy="124" r="6" class="cv-dot hl"/><circle cx="973" cy="149" r="3" class="cv-dot"/><circle cx="760" cy="182" r="3" class="cv-dot"/><circle cx="741" cy="374" r="3" class="cv-dot"/><circle cx="543" cy="156" r="3" class="cv-dot"/><circle cx="1072" cy="36" r="3" class="cv-dot"/><circle cx="675" cy="166" r="3" class="cv-dot"/><circle cx="899" cy="335" r="3" class="cv-dot"/><circle cx="730" cy="334" r="3" class="cv-dot"/><text x="60" y="90" class="cv-k">EXPLAINER · HEALTHCARE · OMOP</text><text x="60" y="350" class="cv-n">22 Oct 2026 · 04:15 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <p>Real-world evidence studies, quality measures and many clinical AI projects begin with the same deceptively simple step: find the right patients. "Patients with type 2 diabetes starting metformin" sounds precise until you ask which codes, which first occurrence, how much prior history, and when someone stops counting. Different answers produce different results from the same data.</p>
+
+<section class="block">
+<h2 id="a-cohort-is-not-a-code-list">A cohort is not a code list</h2>
+<p>The Book of OHDSI defines a cohort as a set of persons who satisfy one or more inclusion criteria for a duration of time. It is explicit that a cohort is not a code set: it needs logic for how codes are used, such as first occurrence versus any occurrence, and a well-defined cohort specifies how a person enters and how they exit<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<p>A few properties follow: one person can belong to several cohorts, can belong to the same cohort in different periods, but not twice in the same period, and a cohort can be empty<sup class="cite"><a href="#ref-1">1</a></sup>. Cohorts are also defined independently and reused, so the same outcome cohort can serve many studies<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+</section>
+
+<section class="block">
+<h2 id="the-building-blocks">The building blocks</h2>
+<figure class="fig"><div class="im"><img src="/assets/img/omop-cohort-definitions/cohort-legos.webp" alt="Illustration of cohort definition building blocks, with domains such as conditions, drugs, procedures and measurements shown as stackable blocks" width="358" height="419" loading="lazy"></div><figcaption>Building blocks of cohort definitions: CDM domains combined with concept sets and logic. <span class="credit">Source: <a href="https://ohdsi.github.io/TheBookOfOhdsi/Cohorts.html" target="_blank" rel="noopener">The Book of OHDSI, Defining Cohorts</a> · CC0 1.0</span></figcaption></figure>
+<p>Rule-based definitions combine four components<sup class="cite"><a href="#ref-1">1</a></sup>:</p>
+<ul>
+<li><strong>Domain</strong>: where the data lives in the CDM, such as drug exposures or procedures.</li>
+<li><strong>Concept set</strong>: a data-agnostic expression of standard concepts for the clinical idea, portable across databases.</li>
+<li><strong>Domain-specific attributes</strong>: days' supply for a drug, a measurement value or range.</li>
+<li><strong>Temporal logic</strong>: when one criterion must occur relative to another, for example within 365 days before the index event.</li>
+</ul>
+<p>Assembled, they answer three questions: what event sets the index date, which inclusion criteria apply, and what ends cohort membership<sup class="cite"><a href="#ref-1">1</a></sup>. In OHDSI tools there are no separate exclusion criteria; "exclude prior hypertension" becomes "include people with zero occurrences of prior hypertension"<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/omop-cohort-definitions/atlas-initialevent.webp" alt="Screenshot of the ATLAS cohort definition editor showing the cohort entry events section" width="1278" height="783" loading="lazy"></div><figcaption>Defining a cohort's entry event in ATLAS, OHDSI's web tool for building definitions. <span class="credit">Source: <a href="https://ohdsi.github.io/TheBookOfOhdsi/Cohorts.html" target="_blank" rel="noopener">The Book of OHDSI, Defining Cohorts</a> · CC0 1.0</span></figcaption></figure>
+</section>
+
+<section class="block">
+<h2 id="definitions-as-code">Definitions as code</h2>
+<p>Definitions built in ATLAS are stored as JSON and compiled to SQL for each database platform, and tools such as CohortGenerator run them in analysis pipelines<sup class="cite"><a href="#ref-2">2</a></sup>. That is what makes OHDSI network studies possible: the same definition, run unchanged at many sites.</p>
+<p>For a data platform, I treat cohort definitions as versioned artefacts: stored in a repository, reviewed, tested against data quality checks as in <a href="/insights/omop-data-quality-checks/">OMOP data quality checks</a>, and linked to every result produced with them.</p>
+<div class="callout"><p>If a result can't be traced to the exact cohort definition version that produced it, it isn't reproducible, however good the analysis was.</p></div>
+</section>
+
+<section class="block">
+<h2 id="where-llms-fit">Where LLMs fit</h2>
+<p>Turning a clinical question into a cohort definition is skilled, slow work, which makes it a natural target for language models. Research is exploring this, including an MCP server that exposes the OHDSI WebAPI's cohort tools so a model can assemble definitions from natural language<sup class="cite"><a href="#ref-3">3</a></sup>. That design is the right shape: the model calls structured tools that produce standard definitions, rather than writing free-form SQL.</p>
+<p>The risks are clinical, not technical. A plausible definition with the wrong concept set, a missing washout period or an exit rule that silently drops patients will run perfectly and produce wrong evidence. My rules:</p>
+<ol>
+<li><strong>Generate into the standard format</strong>, never ad hoc SQL, so definitions can be reviewed in familiar tools.</li>
+<li><strong>Require clinical review</strong> of concept sets and temporal logic before any use.</li>
+<li><strong>Check against data</strong>: counts, attrition by criterion and patient profiles, before trusting results.</li>
+<li><strong>Prefer reuse.</strong> Start from established, validated definitions where they exist, and let the model adapt rather than invent.</li>
+</ol>
+<p>The tool-based approach also follows the governance patterns in <a href="/insights/mcp-apps-tool-annotations/">MCP Apps and tool annotations</a>: read-only tools for exploration, review before anything is saved or run.</p>
+</section>
+
+<section class="block">
+<h2 id="how-i-can-help">How I can help</h2>
+<p>I design OMOP platforms and research pipelines where cohort definitions are versioned, tested and reproducible, and help teams apply AI to them safely. See <a href="/healthcare-data-architecture/">healthcare data architecture</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://ohdsi.github.io/TheBookOfOhdsi/Cohorts.html" target="_blank" rel="noopener">Defining cohorts (The Book of OHDSI)</a><small>OHDSI</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://ohdsi.r-universe.dev/CohortGenerator/doc/GeneratingCohorts.html" target="_blank" rel="noopener">Generating cohorts (CohortGenerator)</a><small>OHDSI</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://easychair.org/smart-slide/slide/xXl9" target="_blank" rel="noopener">MCP server exposing the OHDSI WebAPI cohort subsystem (CBMS 2026 slides)</a><small>EasyChair Smart Slide</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://ohdsi.github.io/TheBookOfOhdsi/" target="_blank" rel="noopener">The Book of OHDSI</a><small>OHDSI</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fomop-cohort-definitions%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fomop-cohort-definitions%2F&amp;text=OMOP%20cohort%20definitions%3A%20the%20logic%20behind%20every%20real-world%20evidence%20study" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=OMOP%20cohort%20definitions%3A%20the%20logic%20behind%20every%20real-world%20evidence%20study%20https%3A%2F%2Fasksumanta.com%2Finsights%2Fomop-cohort-definitions%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://asksumanta.com/insights/omop-cohort-definitions/">Copy link</button></div>
+      <div class="pnav"><a class="pn prev" href="/insights/platform-engineering-maturity/"><small>← Previous</small><b>Platform engineering maturity: how to use the CNCF model without fooling yourself</b></a><a class="pn next" href="/insights/llm-model-routing/"><small>Next →</small><b>LLM model routing: paying for the big model only when it matters</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#a-cohort-is-not-a-code-list">A cohort is not a code list</a></li><li><a href="#the-building-blocks">The building blocks</a></li><li><a href="#definitions-as-code">Definitions as code</a></li><li><a href="#where-llms-fit">Where LLMs fit</a></li><li><a href="#how-i-can-help">How I can help</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>What is a cohort in OHDSI?</summary><p>A set of persons who satisfy one or more inclusion criteria for a duration of time. A well-defined cohort specifies how a person enters it and how they exit, not just which codes are involved.</p></details><details class="rise"><summary>What are the parts of an OHDSI cohort definition?</summary><p>An entry event that sets the index date, inclusion criteria applied to that initial cohort, and exit criteria that define when a person no longer qualifies. Each is built from CDM domains, concept sets, domain-specific attributes and temporal logic.</p></details><details class="rise"><summary>Can LLMs write OHDSI cohort definitions?</summary><p>Research is exploring it, including using MCP tools that expose the OHDSI WebAPI so a model can assemble definitions from natural language. Any generated definition should be reviewed by a clinical expert and checked against data before use.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/healthcare-data-architecture/"><small>Service</small><b>Healthcare data architecture</b><span>I help healthcare and life-sciences organisations turn fragmented clinical data into governed platforms for care, research and AI, using the standards the industry already agrees on.</span><i>→</i></a><a class="rcard rise" href="/ai-architect/"><small>Service</small><b>AI &amp; LLM architecture</b><span>I design and build AI systems that leadership can trust: grounded in your data, measured by evaluations, governed by your rules and priced so they make sense at scale.</span><i>→</i></a><a class="rcard rise" href="/ontology-knowledge-graph/"><small>Service</small><b>Ontology &amp; knowledge graphs</b><span>I help organisations agree what their data means, write it down as an ontology and put it to work in a knowledge graph that analytics, APIs and AI agents can all rely on.</span><i>→</i></a><a class="rcard rise" href="/insights/llm-model-routing/"><small>Insight</small><b>LLM model routing: paying for the big model only when it matters</b><span>Sending every request to the most capable model is the simplest design and usually the most expensive. Routing sends easy requests to cheaper models. Done well it cuts cost substantially; done badly it quietly lowers quality.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: OMOP cohort definitions: the logic behind every real-world evidence study">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
+        <p class="floc">United States &amp; UAE · working globally</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/uae/">Fractional CTO in the UAE</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/llm-model-routing/">LLM model routing: paying for the big model only when it matters</a></li><li><a href="/insights/omop-cohort-definitions/">OMOP cohort definitions: the logic behind every real-world evidence study</a></li><li><a href="/insights/platform-engineering-maturity/">Platform engineering maturity: how to use the CNCF model without fooling yourself</a></li><li><a href="/insights/opentelemetry-collector-deployment-patterns/">OpenTelemetry Collector deployment patterns: agent, gateway, or both?</a></li><li><a href="/insights/synthetic-patient-data-synthea/">Synthetic patient data: where Synthea helps, and where it can mislead you</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>
