@@ -1,0 +1,48 @@
+<!--{"title": "UAE health data law: designing AI and cloud for localisation", "description": "UAE health data must generally stay in the country unless an exception applies. What the ICT Health Data Law requires, the 2021 exceptions, and how I architect health AI around it.", "h1": "The UAE health data law: designing health AI and cloud platforms for localisation", "kicker": "Healthcare · UAE", "lede": "Health tech companies entering the UAE often plan around the general data protection law and miss the stricter rule that applies to health data. It shapes where your databases, models and support teams can be.", "date": "2026-10-22", "datetime": "2026-10-22T12:15:00+04:00", "readtime": "7 min read", "format": "explainer", "tags": ["healthcare", "uae", "regulation", "ai"], "keywords": ["UAE health data law", "Federal Law No. 2 of 2019", "ICT in health fields", "health data localisation UAE", "Article 13 health data", "Ministerial Resolution 51 of 2021", "health AI UAE", "healthcare cloud UAE", "UAE data residency", "healthcare data architect UAE"], "faq": [["Can UAE health data be stored outside the country?", "Generally not. Article 13 of the UAE's law on the use of ICT in health fields restricts storing, processing, generating or transferring health data outside the UAE unless permitted, for example under exceptions set by ministerial resolution."], ["What exceptions exist?", "A 2021 Ministry of Health and Prevention resolution sets out a number of circumstances where transfers may be permitted, which commentary describes as including pharmacovigilance reporting, scientific research, insurance claims administration and wearables and health monitoring devices, each subject to conditions."], ["How does this affect health AI products?", "Model hosting, vector stores, logs, analytics and support access all need to be designed so UAE health data stays in the country unless a specific exception and its conditions apply. In-country cloud regions and private models are common answers."]], "related": ["/uae/", "/healthcare-data-architecture/", "/ai-architect/"], "citations": [{"title": "Health data transfers outside the UAE", "url": "https://www.tamimi.com/news/health-data-transfers-outside-the-uae/", "publisher": "Al Tamimi & Company", "date": "29 Jun 2021"}, {"title": "Setting healthy boundaries: regulated exemptions to restrictions on the transfer of health data outside of the UAE", "url": "https://www.tamimi.com/law-update-articles/setting-healthy-boundaries-regulated-exemptions-to-restrictions-on-the-transfer-the-health-data-outside-of-the-uae/", "publisher": "Al Tamimi & Company", "date": "Jan 2022"}, {"title": "UAE health data law: permitted transfers of health data", "url": "https://insightplus.bakermckenzie.com/bm/data-technology/united-arab-emirates-health-data-law-permitted-transfers-of-health-data", "publisher": "Baker McKenzie", "date": "2021"}, {"title": "Healthcare data protection in the UAE", "url": "https://www.pwc.com/m1/en/publications/healthcare-data-protection-in-the-uae.html", "publisher": "PwC Middle East"}]}-->
+<p>When health tech companies plan a UAE launch, the conversation usually starts with the federal Personal Data Protection Law, which I covered in <a href="/insights/uae-pdpl-ai-architecture-2026/">UAE PDPL and AI architecture</a>. For health data there is a more specific and stricter rule: the federal law on the use of information and communications technology in health fields, Federal Law No. 2 of 2019. Its localisation requirement is the one that most often changes an architecture.</p>
+<p>As always, this is an architect's reading. Confirm the current position and any emirate-level rules with UAE counsel.</p>
+
+<section class="block">
+<h2>The core rule</h2>
+<p>Article 13 of the law provides that health data relating to health services provided in the UAE cannot be stored, processed, generated or transferred outside the country, unless permitted, such as by a resolution of a health authority in coordination with the Ministry of Health and Prevention<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+<p>In 2021 the Ministry issued a resolution setting out exceptions. Commentary describes ten circumstances, including pharmacovigilance reporting, scientific research, insurance claims administration, and processing in the context of wearables and health monitoring devices<sup class="cite"><a href="#ref-2">2</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>. Qualifying is not automatic: each exception carries conditions that organisations must be able to meet<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<div class="callout"><p>Treat in-country as the default and every cross-border flow as an exception that needs a named legal basis and evidence that its conditions are met.</p></div>
+</section>
+
+<section class="block">
+<h2>Where AI and cloud designs trip up</h2>
+<table class="tbl">
+<thead><tr><th>Component</th><th>The localisation question</th></tr></thead>
+<tbody>
+<tr><td>Primary database and backups</td><td>Are both in a UAE region, including disaster recovery copies?</td></tr>
+<tr><td>Model inference</td><td>Does any prompt containing health data reach a model hosted abroad?</td></tr>
+<tr><td>Embeddings and vector store</td><td>Are embeddings of clinical text created and stored in the UAE?</td></tr>
+<tr><td>Logs, traces and analytics</td><td>Do prompts, responses or identifiers land in a foreign observability tool?</td></tr>
+<tr><td>Support and engineering access</td><td>Can staff abroad view production health data?</td></tr>
+<tr><td>Wearables and devices</td><td>Which exception applies, and are its conditions met?</td></tr>
+</tbody>
+</table>
+<p>The same hidden-transfer problem I described for <a href="/insights/saudi-pdpl-cross-border-ai/">Saudi PDPL and cross-border AI</a> applies here, with less room for manoeuvre because the default is stricter.</p>
+</section>
+
+<section class="block">
+<h2>The architecture I use</h2>
+<ol>
+<li><strong>A UAE data plane.</strong> Databases, object storage, backups, vector stores and analytics in UAE cloud regions or on-premises, with infrastructure policies that block resources elsewhere.</li>
+<li><strong>In-country inference</strong> for anything touching health data: private models or in-region managed services, following the options in <a href="/insights/uae-ai-infrastructure-where-to-run-models/">where to run models in the UAE</a>.</li>
+<li><strong>A gateway that enforces it</strong>, redacting or blocking health data before any call to services outside the country.</li>
+<li><strong>Local observability</strong>, with a regional OpenTelemetry gateway as in <a href="/insights/opentelemetry-collector-deployment-patterns/">Collector deployment patterns</a>, and metadata-only export if anything must leave.</li>
+<li><strong>Access controls by location</strong> for support and engineering, with break-glass procedures and logging.</li>
+<li><strong>A register of exceptions</strong>, mapping any permitted transfer to the specific exception, its conditions and the evidence.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2>A regional platform</h2>
+<p>For companies serving several Gulf markets, I design one platform with a data plane per jurisdiction and a shared control plane that never touches patient data. It costs more than a single region, but it is far cheaper than re-platforming after a regulator or a hospital client asks where their data lives.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I design health data and AI platforms for the UAE and wider Gulf with residency built in from the start. See my <a href="/uae/">UAE practice</a> and <a href="/healthcare-data-architecture/">healthcare data architecture</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>

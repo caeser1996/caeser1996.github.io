@@ -1,0 +1,37 @@
+<!--{"title": "Evaluating AI agents: why reliability beats a single success rate", "description": "Agents that succeed once may fail the next time. What τ-bench and τ²-bench reveal about agent reliability, the pass^k metric, and how I build agent evaluations for production.", "h1": "Evaluating AI agents: why reliability matters more than a single success rate", "kicker": "AI architecture · Agents", "lede": "An agent demo succeeds because someone ran it until it did. Production runs every task once, for real users, thousands of times. Research on agent benchmarks shows how big that gap can be, and how to measure it.", "date": "2026-10-22", "datetime": "2026-10-22T12:30:00+04:00", "readtime": "7 min read", "format": "essay", "tags": ["ai", "agents", "llm", "governance"], "keywords": ["AI agent evaluation", "tau-bench", "pass^k", "agent reliability", "LLM agent benchmark", "tau2-bench", "conversational agent evaluation", "tool-calling agents", "agent testing", "AI architect"], "faq": [["What is τ-bench?", "A benchmark from Sierra in which agents converse with simulated users, call domain APIs and follow written policies. Success is judged by comparing the final database state with the expected state."], ["What is pass^k?", "A reliability metric introduced with τ-bench: the probability that an agent succeeds on all k independent attempts at the same task. It differs from pass@k, which asks whether any of k attempts succeeds."], ["What did the τ-bench paper find?", "The authors reported that even state-of-the-art function-calling agents at the time succeeded on fewer than half the tasks, and were inconsistent, with pass^8 below 25% in the retail domain."]], "related": ["/ai-architect/", "/fractional-cto/", "/technical-due-diligence/"], "citations": [{"title": "τ-bench: A Benchmark for Tool-Agent-User Interaction in Real-World Domains", "url": "https://arxiv.org/abs/2406.12045", "publisher": "Yao et al., Sierra (arXiv)", "date": "2024"}, {"title": "τ-Bench: benchmarking AI agents for the real world", "url": "https://sierra.ai/blog/benchmarking-ai-agents", "publisher": "Sierra"}, {"title": "τ²-Bench: Evaluating Conversational Agents in a Dual-Control Environment", "url": "https://arxiv.org/abs/2506.07982", "publisher": "Barres et al. (arXiv; ICML 2026)", "date": "2025"}, {"title": "τ²-Bench (PMLR volume 306)", "url": "https://proceedings.mlr.press/v306/barres26a.html", "publisher": "Proceedings of Machine Learning Research", "date": "2026"}]}-->
+<p>Many agent evaluations report a single number: "the agent completes 80% of tasks." That number usually comes from running each task once, or from the best of several runs. For a chatbot answering questions, it might be enough. For an agent that changes bookings, issues refunds or updates records, it hides the question that matters: if a customer asks for the same thing ten times, how often does the agent get it right every time?</p>
+
+<section class="block">
+<h2>What τ-bench measures</h2>
+<p>Sierra's τ-bench put agents in realistic customer service domains. The agent talks to a simulated user, calls domain APIs and must follow a written policy. Success is judged objectively: does the final state of the database match the expected outcome<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>?</p>
+<p>It also introduced <strong>pass^k</strong>: the probability that an agent succeeds on all k independent attempts at the same task<sup class="cite"><a href="#ref-1">1</a></sup>. That is a reliability measure, unlike pass@k, which asks whether any attempt succeeds. The authors reported that even state-of-the-art function-calling agents at the time succeeded on fewer than half the tasks, and that consistency was worse, with pass^8 below 25% in the retail domain<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<div class="callout"><p>A 60% success rate on one attempt can mean a much lower chance of handling the same request correctly every time. Customers experience the second number.</p></div>
+</section>
+
+<section class="block">
+<h2>When users act too</h2>
+<p>Real support often involves the customer doing things: restarting a device, checking a setting, confirming a code. τ²-bench extended the idea to a dual-control setting where both agent and user use tools to change a shared environment, and reported that performance dropped noticeably when agents moved from no-user settings to dual control<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>. Guiding a person through a task is a skill of its own, and it needs its own tests.</p>
+</section>
+
+<section class="block">
+<h2>How I build agent evaluations</h2>
+<ol>
+<li><strong>Judge outcomes, not transcripts.</strong> Wherever possible, check the end state in the system of record, as τ-bench does, rather than asking a model whether the conversation looked right.</li>
+<li><strong>Write policies down, then test them.</strong> Refund limits, identity checks and escalation rules become explicit test cases, including ones where the right answer is "no".</li>
+<li><strong>Simulate users with variety</strong>: impatient, confused, adversarial, and users who change their minds. Include prompt injection attempts, as in <a href="/insights/prompt-injection-defence-for-agents/">prompt injection defence</a>.</li>
+<li><strong>Run every task several times</strong> and report pass^k alongside the single-run rate. Release gates should use the reliability number.</li>
+<li><strong>Grow the suite from production.</strong> Every incident and escalation becomes a test case, per <a href="/insights/ai-incident-postmortems/">AI incident postmortems</a>.</li>
+<li><strong>Trace everything.</strong> Tool calls, arguments and results, so a failing run can be diagnosed; see <a href="/insights/llm-observability-opentelemetry-genai/">LLM observability</a>.</li>
+</ol>
+<p>This sits on top of the general method in <a href="/insights/llm-evaluation-sets-that-predict-production/">evaluation sets that predict production</a>, with two additions specific to agents: state-based judging and repeated trials.</p>
+</section>
+
+<section class="block">
+<h2>What to do with the results</h2>
+<p>Low reliability isn't always a reason to stop. It's a reason to change the design: narrower tools, deterministic code for policy checks, human approval for irreversible actions, and the containment patterns in <a href="/insights/mcp-apps-tool-annotations/">MCP Apps and tool annotations</a>. Often the best improvement isn't a better model but less for the model to decide.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I design agent architectures and the evaluation suites that decide whether they're ready for production. See my <a href="/ai-architect/">AI architecture work</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
