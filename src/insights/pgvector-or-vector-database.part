@@ -1,0 +1,47 @@
+<!--{"title": "pgvector or a dedicated vector database? How I decide", "description": "Postgres with pgvector handles more vector search than many teams expect. What pgvector 0.8 changed for filtered queries, its limits, and when a dedicated vector database is worth it.", "h1": "pgvector or a dedicated vector database? How I decide for RAG and search", "kicker": "Data platforms · AI", "lede": "Teams starting retrieval-augmented generation often reach for a new database before checking the one they already run. For many workloads, Postgres with pgvector is enough. For some it isn't. Here is how I tell the difference.", "date": "2026-10-22", "datetime": "2026-10-22T16:15:00+04:00", "readtime": "7 min read", "format": "comparison", "tags": ["data", "rag", "ai", "platform"], "keywords": ["pgvector", "pgvector vs vector database", "Postgres vector search", "HNSW", "IVFFlat", "filtered vector search", "iterative index scans", "RAG architecture", "vector database selection", "data platform consultant"], "faq": [["What is pgvector?", "An open-source PostgreSQL extension for storing vectors and running similarity search, with exact search and approximate indexes such as HNSW and IVFFlat."], ["What changed in pgvector 0.8.0?", "It added iterative index scans, so that filtered queries on approximate indexes keep scanning until enough matching rows are found, and improved cost estimation so the planner chooses indexes more sensibly when filtering."], ["When should I choose a dedicated vector database?", "When vector search is the core workload at large scale, needs features Postgres lacks, or would compete for resources with transactional work. For moderate scale with relational filters and existing Postgres expertise, pgvector is often the simpler choice."]], "related": ["/ai-architect/", "/fractional-cto/", "/technical-due-diligence/"], "citations": [{"title": "pgvector", "url": "https://github.com/pgvector/pgvector", "publisher": "pgvector, GitHub"}, {"title": "pgvector 0.8.0 released", "url": "https://www.postgresql.org/about/news/pgvector-080-released-2952/", "publisher": "PostgreSQL", "date": "Nov 2024"}, {"title": "Iterative index scans (pgvector 0.8.0)", "url": "https://docs.pgedge.com/pgvector/v0-8-0/iterative-index-scans/", "publisher": "pgEdge documentation"}, {"title": "Announcing pgvector 0.8.0", "url": "https://www.thenile.dev/blog/pgvector-080", "publisher": "Nile"}]}-->
+<p>A familiar pattern: a team decides to add RAG to its product, evaluates three vector databases, picks one, and six months later is running a second database with its own backups, security reviews, access controls and sync pipeline, all to store a few million embeddings next to data that already lives in Postgres.</p>
+<p>Sometimes that's the right call. Often it isn't.</p>
+
+<section class="block">
+<h2>What pgvector gives you</h2>
+<p>pgvector is an open-source Postgres extension for vector similarity search, supporting exact search as well as approximate indexes such as HNSW and IVFFlat<sup class="cite"><a href="#ref-1">1</a></sup>. The strongest argument for it isn't performance. It's that vectors live beside your relational data, under the same transactions, backups, access controls and operational tooling.</p>
+<p>That matters most for filtering. Real RAG queries are rarely "the nearest chunks"; they are "the nearest chunks this user may see, from this tenant, in this product line, updated this year". In Postgres those filters are ordinary SQL against data you already govern.</p>
+</section>
+
+<section class="block">
+<h2>The filtering problem, and the 0.8 fix</h2>
+<p>Approximate indexes return a limited candidate set, and filters apply afterwards. With a selective filter, that can leave very few results: the Nile write-up of the release cites an example where a condition matching 10% of rows yields only about four results with default HNSW settings<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+<p>pgvector 0.8.0, released in late 2024, added iterative index scans: if the first pass returns too few matches, the scan continues until it finds enough or hits a configured limit, with options for strict or relaxed ordering<sup class="cite"><a href="#ref-2">2</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>. It also improved cost estimation so the planner makes better index choices when filtering<sup class="cite"><a href="#ref-2">2</a></sup>. The release notes add a useful reminder: where an ordinary index such as a B-tree can meet performance needs, it gives exact results<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<div class="callout"><p>Filtered retrieval is where many RAG systems quietly fail: the right document exists but the user is told nothing relevant was found. Test with your real filters, not unfiltered benchmarks.</p></div>
+</section>
+
+<section class="block">
+<h2>How I decide</h2>
+<table class="tbl">
+<thead><tr><th>Favours pgvector</th><th>Favours a dedicated vector database</th></tr></thead>
+<tbody>
+<tr><td>Vectors relate closely to existing relational data</td><td>Vector search is the main workload, not a feature</td></tr>
+<tr><td>Rich filters, permissions and multi-tenancy in SQL</td><td>Very large collections or very high query rates</td></tr>
+<tr><td>Moderate scale that fits your Postgres capacity</td><td>Search load would compete with transactional work</td></tr>
+<tr><td>Team already runs Postgres well</td><td>Need for features Postgres lacks in your setup</td></tr>
+<tr><td>Strong consistency between data and embeddings</td><td>Independent scaling of search from the database</td></tr>
+</tbody>
+</table>
+<p>A middle path is common: start on pgvector, measure, and move only the search workload if it outgrows Postgres. If your operational database is MongoDB, the equivalent question applies there, as in <a href="/insights/mongodb-hybrid-search-rag/">hybrid search for RAG on MongoDB</a>.</p>
+</section>
+
+<section class="block">
+<h2>Practical rules for pgvector</h2>
+<ol>
+<li><strong>Benchmark with your filters and your data</strong>, measuring recall as well as latency.</li>
+<li><strong>Enforce permissions in the query</strong>, ideally with row-level security, so retrieval can't return documents a user shouldn't see. The same principle applies to tenants, as in <a href="/insights/mongodb-multi-tenant-saas-patterns/">multi-tenant SaaS patterns</a>.</li>
+<li><strong>Separate search load</strong> with read replicas if it begins to affect transactional performance.</li>
+<li><strong>Combine with keyword search</strong>; Postgres full-text search plus vectors is a reasonable hybrid for many products.</li>
+<li><strong>Evaluate retrieval quality</strong> with a labelled set, as in <a href="/insights/rag-to-production-checklist/">the RAG to production checklist</a>, before tuning indexes.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I design retrieval architectures and data platforms for AI products, choosing the simplest stack that will scale. See my <a href="/ai-architect/">AI architecture work</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>

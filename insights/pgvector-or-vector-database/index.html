@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>pgvector or a dedicated vector database? How I decide</title>
+<meta name="description" content="Postgres with pgvector handles more vector search than many teams expect. What pgvector 0.8 changed for filtered queries, its limits, and when a dedicated vector database is worth it." />
+<meta name="keywords" content="pgvector, pgvector vs vector database, Postgres vector search, HNSW, IVFFlat, filtered vector search, iterative index scans, RAG architecture, vector database selection, data platform consultant" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://asksumanta.com/insights/pgvector-or-vector-database/" />
+<meta name="theme-color" content="#111214" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="pgvector or a dedicated vector database? How I decide" />
+<meta property="og:description" content="Postgres with pgvector handles more vector search than many teams expect. What pgvector 0.8 changed for filtered queries, its limits, and when a dedicated vector database is worth it." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://asksumanta.com/insights/pgvector-or-vector-database/" />
+<meta property="og:image" content="https://asksumanta.com/assets/og/pgvector-or-vector-database.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="pgvector or a dedicated vector database? How I decide" />
+<meta name="twitter:description" content="Postgres with pgvector handles more vector search than many teams expect. What pgvector 0.8 changed for filtered queries, its limits, and when a dedicated vector database is worth it." />
+<meta name="twitter:image" content="https://asksumanta.com/assets/og/pgvector-or-vector-database.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "BlogPosting", "headline": "pgvector or a dedicated vector database? How I decide for RAG and search", "description": "Postgres with pgvector handles more vector search than many teams expect. What pgvector 0.8 changed for filtered queries, its limits, and when a dedicated vector database is worth it.", "datePublished": "2026-10-22T16:15:00+04:00", "dateModified": "2026-10-22T16:15:00+04:00", "articleSection": "Data platforms · AI", "genre": "Comparison", "citation": [{"@type": "CreativeWork", "name": "pgvector", "url": "https://github.com/pgvector/pgvector"}, {"@type": "CreativeWork", "name": "pgvector 0.8.0 released", "url": "https://www.postgresql.org/about/news/pgvector-080-released-2952/"}, {"@type": "CreativeWork", "name": "Iterative index scans (pgvector 0.8.0)", "url": "https://docs.pgedge.com/pgvector/v0-8-0/iterative-index-scans/"}, {"@type": "CreativeWork", "name": "Announcing pgvector 0.8.0", "url": "https://www.thenile.dev/blog/pgvector-080"}], "author": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "publisher": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "mainEntityOfPage": "https://asksumanta.com/insights/pgvector-or-vector-database/", "image": "https://asksumanta.com/assets/og/pgvector-or-vector-database.png", "keywords": "pgvector, pgvector vs vector database, Postgres vector search, HNSW, IVFFlat, filtered vector search, iterative index scans, RAG architecture, vector database selection, data platform consultant", "wordCount": 580}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://asksumanta.com/"}, {"@type": "ListItem", "position": 2, "name": "Insights", "item": "https://asksumanta.com/insights/"}, {"@type": "ListItem", "position": 3, "name": "pgvector or a dedicated vector database? How I decide for RAG and search", "item": "https://asksumanta.com/insights/pgvector-or-vector-database/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What is pgvector?", "acceptedAnswer": {"@type": "Answer", "text": "An open-source PostgreSQL extension for storing vectors and running similarity search, with exact search and approximate indexes such as HNSW and IVFFlat."}}, {"@type": "Question", "name": "What changed in pgvector 0.8.0?", "acceptedAnswer": {"@type": "Answer", "text": "It added iterative index scans, so that filtered queries on approximate indexes keep scanning until enough matching rows are found, and improved cost estimation so the planner chooses indexes more sensibly when filtering."}}, {"@type": "Question", "name": "When should I choose a dedicated vector database?", "acceptedAnswer": {"@type": "Answer", "text": "When vector search is the core workload at large scale, needs features Postgres lacks, or would compete for resources with transactional work. For moderate scale with relational filters and existing Postgres expertise, pgvector is often the simpler choice."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+</script>
+</head>
+<body class="sub is-post">
+<div class="progress" id="progress"></div>
+<nav>
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="/#practice">Services</a>
+      <a href="/#work">Case studies</a>
+      <a href="/insights/">Insights</a>
+      <a href="/#assess">Analyse</a>
+      <a href="/#connect">Connect</a>
+    </div>
+    <div class="nav-r">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/insights/">Insights</a> <span>/</span> <em>pgvector or a dedicated vector database? How I decide for RAG and search</em></div>
+    <div class="kicker">Data platforms · AI</div>
+    <h1>pgvector or a dedicated vector database? How I decide for RAG and search</h1>
+    <p class="sub-lede">Teams starting retrieval-augmented generation often reach for a new database before checking the one they already run. For many workloads, Postgres with pgvector is enough. For some it isn&#x27;t. Here is how I tell the difference.</p>
+    <div class="ameta"><span class="fmt">Comparison</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-10-22T16:15:00+04:00">22 Oct 2026 · 16:15 GST</time><span>7 min read</span><span>4 sources</span></div><div class="atags"><span class="tagp">#data</span><span class="tagp">#rag</span><span class="tagp">#ai</span><span class="tagp">#platform</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Comparison cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><polyline points="540,237 596,231 652,232 708,167 764,206 820,181 876,179 932,246 988,234 1044,221 1100,214 1156,170" class="cv-line"/><polyline points="540,278 596,255 652,184 708,184 764,290 820,146 876,196 932,225 988,261 1044,212 1100,130 1156,256" class="cv-line"/><polyline points="540,92 596,272 652,199 708,194 764,107 820,154 876,108 932,223 988,253 1044,202 1100,208 1156,84" class="cv-line hl"/><text x="60" y="90" class="cv-k">COMPARISON · DATA PLATFORMS · AI</text><text x="60" y="350" class="cv-n">22 Oct 2026 · 16:15 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <p>A familiar pattern: a team decides to add RAG to its product, evaluates three vector databases, picks one, and six months later is running a second database with its own backups, security reviews, access controls and sync pipeline, all to store a few million embeddings next to data that already lives in Postgres.</p>
+<p>Sometimes that's the right call. Often it isn't.</p>
+
+<section class="block">
+<h2 id="what-pgvector-gives-you">What pgvector gives you</h2>
+<p>pgvector is an open-source Postgres extension for vector similarity search, supporting exact search as well as approximate indexes such as HNSW and IVFFlat<sup class="cite"><a href="#ref-1">1</a></sup>. The strongest argument for it isn't performance. It's that vectors live beside your relational data, under the same transactions, backups, access controls and operational tooling.</p>
+<p>That matters most for filtering. Real RAG queries are rarely "the nearest chunks"; they are "the nearest chunks this user may see, from this tenant, in this product line, updated this year". In Postgres those filters are ordinary SQL against data you already govern.</p>
+</section>
+
+<section class="block">
+<h2 id="the-filtering-problem-and-the-0-8-fix">The filtering problem, and the 0.8 fix</h2>
+<p>Approximate indexes return a limited candidate set, and filters apply afterwards. With a selective filter, that can leave very few results: the Nile write-up of the release cites an example where a condition matching 10% of rows yields only about four results with default HNSW settings<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+<p>pgvector 0.8.0, released in late 2024, added iterative index scans: if the first pass returns too few matches, the scan continues until it finds enough or hits a configured limit, with options for strict or relaxed ordering<sup class="cite"><a href="#ref-2">2</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>. It also improved cost estimation so the planner makes better index choices when filtering<sup class="cite"><a href="#ref-2">2</a></sup>. The release notes add a useful reminder: where an ordinary index such as a B-tree can meet performance needs, it gives exact results<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<div class="callout"><p>Filtered retrieval is where many RAG systems quietly fail: the right document exists but the user is told nothing relevant was found. Test with your real filters, not unfiltered benchmarks.</p></div>
+</section>
+
+<section class="block">
+<h2 id="how-i-decide">How I decide</h2>
+<table class="tbl">
+<thead><tr><th>Favours pgvector</th><th>Favours a dedicated vector database</th></tr></thead>
+<tbody>
+<tr><td>Vectors relate closely to existing relational data</td><td>Vector search is the main workload, not a feature</td></tr>
+<tr><td>Rich filters, permissions and multi-tenancy in SQL</td><td>Very large collections or very high query rates</td></tr>
+<tr><td>Moderate scale that fits your Postgres capacity</td><td>Search load would compete with transactional work</td></tr>
+<tr><td>Team already runs Postgres well</td><td>Need for features Postgres lacks in your setup</td></tr>
+<tr><td>Strong consistency between data and embeddings</td><td>Independent scaling of search from the database</td></tr>
+</tbody>
+</table>
+<p>A middle path is common: start on pgvector, measure, and move only the search workload if it outgrows Postgres. If your operational database is MongoDB, the equivalent question applies there, as in <a href="/insights/mongodb-hybrid-search-rag/">hybrid search for RAG on MongoDB</a>.</p>
+</section>
+
+<section class="block">
+<h2 id="practical-rules-for-pgvector">Practical rules for pgvector</h2>
+<ol>
+<li><strong>Benchmark with your filters and your data</strong>, measuring recall as well as latency.</li>
+<li><strong>Enforce permissions in the query</strong>, ideally with row-level security, so retrieval can't return documents a user shouldn't see. The same principle applies to tenants, as in <a href="/insights/mongodb-multi-tenant-saas-patterns/">multi-tenant SaaS patterns</a>.</li>
+<li><strong>Separate search load</strong> with read replicas if it begins to affect transactional performance.</li>
+<li><strong>Combine with keyword search</strong>; Postgres full-text search plus vectors is a reasonable hybrid for many products.</li>
+<li><strong>Evaluate retrieval quality</strong> with a labelled set, as in <a href="/insights/rag-to-production-checklist/">the RAG to production checklist</a>, before tuning indexes.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2 id="how-i-can-help">How I can help</h2>
+<p>I design retrieval architectures and data platforms for AI products, choosing the simplest stack that will scale. See my <a href="/ai-architect/">AI architecture work</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://github.com/pgvector/pgvector" target="_blank" rel="noopener">pgvector</a><small>pgvector, GitHub</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://www.postgresql.org/about/news/pgvector-080-released-2952/" target="_blank" rel="noopener">pgvector 0.8.0 released</a><small>PostgreSQL · Nov 2024</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://docs.pgedge.com/pgvector/v0-8-0/iterative-index-scans/" target="_blank" rel="noopener">Iterative index scans (pgvector 0.8.0)</a><small>pgEdge documentation</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://www.thenile.dev/blog/pgvector-080" target="_blank" rel="noopener">Announcing pgvector 0.8.0</a><small>Nile</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fpgvector-or-vector-database%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fpgvector-or-vector-database%2F&amp;text=pgvector%20or%20a%20dedicated%20vector%20database%3F%20How%20I%20decide%20for%20RAG%20and%20search" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=pgvector%20or%20a%20dedicated%20vector%20database%3F%20How%20I%20decide%20for%20RAG%20and%20search%20https%3A%2F%2Fasksumanta.com%2Finsights%2Fpgvector-or-vector-database%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://asksumanta.com/insights/pgvector-or-vector-database/">Copy link</button></div>
+      <div class="pnav"><a class="pn prev" href="/insights/evaluating-ai-agents-reliability/"><small>← Previous</small><b>Evaluating AI agents: why reliability matters more than a single success rate</b></a><a class="pn next" href="/insights/team-topologies-for-ai-teams/"><small>Next →</small><b>Team Topologies for AI: where your AI engineers should actually sit</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#what-pgvector-gives-you">What pgvector gives you</a></li><li><a href="#the-filtering-problem-and-the-0-8-fix">The filtering problem, and the 0.8 fix</a></li><li><a href="#how-i-decide">How I decide</a></li><li><a href="#practical-rules-for-pgvector">Practical rules for pgvector</a></li><li><a href="#how-i-can-help">How I can help</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>What is pgvector?</summary><p>An open-source PostgreSQL extension for storing vectors and running similarity search, with exact search and approximate indexes such as HNSW and IVFFlat.</p></details><details class="rise"><summary>What changed in pgvector 0.8.0?</summary><p>It added iterative index scans, so that filtered queries on approximate indexes keep scanning until enough matching rows are found, and improved cost estimation so the planner chooses indexes more sensibly when filtering.</p></details><details class="rise"><summary>When should I choose a dedicated vector database?</summary><p>When vector search is the core workload at large scale, needs features Postgres lacks, or would compete for resources with transactional work. For moderate scale with relational filters and existing Postgres expertise, pgvector is often the simpler choice.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/ai-architect/"><small>Service</small><b>AI &amp; LLM architecture</b><span>I design and build AI systems that leadership can trust: grounded in your data, measured by evaluations, governed by your rules and priced so they make sense at scale.</span><i>→</i></a><a class="rcard rise" href="/fractional-cto/"><small>Service</small><b>Fractional CTO</b><span>I work as a part-time CTO for founders, CEOs and boards who need experienced technical judgement now, and a team that can carry it on after I step back.</span><i>→</i></a><a class="rcard rise" href="/technical-due-diligence/"><small>Service</small><b>Technical due diligence</b><span>I give investors an independent, plain-language view of a company&#x27;s technology, team and AI claims, so the risks are priced in before the deal closes, not discovered after.</span><i>→</i></a><a class="rcard rise" href="/insights/team-topologies-for-ai-teams/"><small>Insight</small><b>Team Topologies for AI: where your AI engineers should actually sit</b><span>Most companies building with AI eventually ask the same question: central AI team, or AI engineers in every product team? Team Topologies offers a better answer than either extreme.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: pgvector or a dedicated vector database? How I decide for RAG and search">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
+        <p class="floc">United States &amp; UAE · working globally</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/uae/">Fractional CTO in the UAE</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/team-topologies-for-ai-teams/">Team Topologies for AI: where your AI engineers should actually sit</a></li><li><a href="/insights/pgvector-or-vector-database/">pgvector or a dedicated vector database? How I decide for RAG and search</a></li><li><a href="/insights/evaluating-ai-agents-reliability/">Evaluating AI agents: why reliability matters more than a single success rate</a></li><li><a href="/insights/uae-health-data-law-localisation/">The UAE health data law: designing health AI and cloud platforms for localisation</a></li><li><a href="/insights/opentofu-or-terraform-2026/">OpenTofu or Terraform in 2026: a practical decision checklist</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>
