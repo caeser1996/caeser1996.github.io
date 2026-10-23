@@ -1,0 +1,81 @@
+<!--{"title": "Technical due diligence for AI companies: an investor checklist", "description": "AI start-ups fail diligence in new ways: no evaluations, borrowed moats, uncontained agents, unclear data rights. The checklist I use when assessing an AI company for investors or acquirers.", "h1": "Technical due diligence for AI companies: the checklist I use for investors and acquirers", "kicker": "Leadership · Due diligence", "lede": "Classic technical due diligence asks whether the software is well built and the team can scale it. For AI companies those questions still matter, but a new set sits on top: is the AI actually good, is it defensible, is it safe, and does the company have the right to the data behind it?", "date": "2026-10-23", "datetime": "2026-10-23T16:15:00+04:00", "readtime": "9 min read", "format": "checklist", "tags": ["leadership", "ai", "governance", "security"], "keywords": ["technical due diligence AI", "AI startup due diligence", "AI investment diligence", "tech due diligence checklist", "LLM product assessment", "AI moat", "AI risk assessment", "M&A technical diligence", "fractional CTO", "AI architect"], "faq": [["What is different about technical due diligence for AI companies?", "In addition to code quality, architecture and team, diligence must assess model quality and how it's measured, dependence on third-party models, data rights and provenance, AI-specific security risks such as prompt injection, and regulatory exposure."], ["What is the biggest red flag in AI diligence?", "Often the absence of a maintained evaluation set. Without one, a company can't show that its product works, that it improves over time, or that a model change won't break it."], ["How long does AI technical due diligence take?", "It depends on scope, but a focused assessment typically combines document review, architecture and code walkthroughs, a review of evaluation evidence and interviews with technical leaders over a few weeks."]], "related": ["/technical-due-diligence/", "/fractional-cto/", "/ai-architect/"], "citations": [{"title": "OWASP Top 10 for LLM Applications", "url": "https://genai.owasp.org/llm-top-10/", "publisher": "OWASP GenAI Security Project"}, {"title": "AI Risk Management Framework", "url": "https://www.nist.gov/itl/ai-risk-management-framework", "publisher": "US National Institute of Standards and Technology"}, {"title": "Regulation (EU) 2024/1689 (Artificial Intelligence Act)", "url": "https://eur-lex.europa.eu/eli/reg/2024/1689/oj", "publisher": "EUR-Lex", "date": "2024"}, {"title": "DORA 2025 State of AI-assisted Software Development Report", "url": "https://research.google/pubs/dora-2025-state-of-ai-assisted-software-development-report/", "publisher": "Google Research", "date": "2025"}, {"title": "τ-bench: A Benchmark for Tool-Agent-User Interaction in Real-World Domains", "url": "https://arxiv.org/abs/2406.12045", "publisher": "Yao et al., Sierra (arXiv)", "date": "2024"}, {"title": "Prompt injection is not SQL injection (it may be worse)", "url": "https://www.ncsc.gov.uk/blog-post/prompt-injection-is-not-sql-injection", "publisher": "UK National Cyber Security Centre", "date": "Dec 2025"}]}-->
+<p>A typical AI pitch deck shows a polished demo, impressive early revenue and a slide titled "proprietary AI". Diligence is where that slide meets reality. The traditional checklist (code quality, architecture, security, team, scalability) still applies. But AI companies add risks that a conventional review can miss entirely, and some of them go straight to valuation.</p>
+<p>This is the checklist I work through when assessing an AI company for an investor or acquirer. It's organised as questions, with the evidence I'd expect to see.</p>
+
+<section class="block">
+<h2>1. Does the AI actually work, and how do they know?</h2>
+<ul>
+<li><strong>Is there a maintained evaluation set?</strong> Real examples, labelled with expected outcomes, run on every model or prompt change. If quality is judged by demos and anecdotes, that's the single biggest red flag. I describe what good looks like in <a href="/insights/llm-evaluation-sets-that-predict-production/">evaluation sets that predict production</a>.</li>
+<li><strong>Is reliability measured, not just average accuracy?</strong> For agents, a single success rate hides inconsistency. Research on τ-bench introduced pass^k, the chance of succeeding on every one of k attempts, and found that agents were notably less consistent than their single-run success rates suggested<sup class="cite"><a href="#ref-5">5</a></sup>. See <a href="/insights/evaluating-ai-agents-reliability/">evaluating AI agents</a>.</li>
+<li><strong>Is there production monitoring?</strong> Feedback, escalations, sampled reviews and drift checks, tied to the evaluation set.</li>
+<li><strong>Can they show improvement over time</strong>, with numbers from the same evaluation set across releases?</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>2. What is actually defensible?</h2>
+<ul>
+<li><strong>Which parts are theirs?</strong> Separate the third-party model, open-source components and the company's own work: data pipelines, evaluation, domain logic, workflow integration, proprietary data.</li>
+<li><strong>What happens when the underlying model improves?</strong> If a better general model would make the product unnecessary, the moat is thin. If better models make the product better, that's healthier.</li>
+<li><strong>Is there a data advantage?</strong> Proprietary data, feedback loops from usage, or curated domain knowledge such as a governed <a href="/insights/ontology-vs-knowledge-graph-vs-semantic-layer/">ontology or knowledge graph</a> are harder to copy than prompts.</li>
+<li><strong>How portable are they across model providers?</strong> A gateway and evaluation set that let them switch models are both a risk control and a negotiating position. See <a href="/insights/build-vs-buy-ai-capabilities/">build vs buy for AI</a>.</li>
+</ul>
+<div class="callout"><p>"We fine-tuned a model" is not a moat by itself. A moat is something a well-funded competitor couldn't reproduce in a quarter with the same public models.</p></div>
+</section>
+
+<section class="block">
+<h2>3. Do they have the right to their data?</h2>
+<ul>
+<li><strong>Provenance.</strong> Where did training, fine-tuning and retrieval data come from, under what licence or agreement?</li>
+<li><strong>Customer data use.</strong> Do contracts allow customer data to be used for training or evaluation? Is that used in practice, and is it consistent with the contract?</li>
+<li><strong>Personal and sensitive data.</strong> How is personal, health or financial data handled in prompts, logs, embeddings and evaluation sets? Residency matters for some markets, as in <a href="/insights/uae-health-data-law-localisation/">UAE health data</a> and <a href="/insights/saudi-pdpl-cross-border-ai/">Saudi PDPL</a>.</li>
+<li><strong>Deletion.</strong> Can they actually delete a customer's data from every store, including vector indexes and caches?</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>4. Is the AI secure and contained?</h2>
+<ul>
+<li><strong>Known risk categories.</strong> Has the team assessed the product against a recognised list such as the OWASP Top 10 for LLM Applications<sup class="cite"><a href="#ref-1">1</a></sup>?</li>
+<li><strong>Prompt injection.</strong> The UK NCSC has argued that prompt injection may never be fully mitigated the way SQL injection was<sup class="cite"><a href="#ref-6">6</a></sup>, so the question is containment: what can a compromised agent actually do? See <a href="/insights/prompt-injection-defence-for-agents/">prompt injection defence</a>.</li>
+<li><strong>Tool and data permissions.</strong> Are agent tools scoped per user, enforced outside the model, and logged? See <a href="/insights/securing-mcp-servers-checklist/">securing MCP servers</a>.</li>
+<li><strong>Tenant isolation.</strong> Can retrieval ever return another customer's data? Ask for the test that proves it can't.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>5. Is the engineering organisation healthy?</h2>
+<ul>
+<li><strong>Delivery metrics.</strong> Deployment frequency, lead time, change failure rate and recovery time, with trends. DORA's 2025 research found that AI tends to amplify an organisation's existing strengths and weaknesses<sup class="cite"><a href="#ref-4">4</a></sup>, so a team leaning heavily on AI coding tools without good foundations may be accumulating risk; see <a href="/insights/dora-metrics-ai-assisted-engineering/">DORA metrics in the AI era</a>.</li>
+<li><strong>Key-person risk.</strong> Is the AI capability concentrated in one or two people? What's documented?</li>
+<li><strong>Decision records.</strong> Are major architecture choices written down, as in <a href="/insights/architecture-decision-records-fractional-cto/">architecture decision records</a>?</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>6. Do the unit economics hold?</h2>
+<ul>
+<li><strong>Cost per outcome.</strong> Model, infrastructure and human review cost per resolved ticket, document or transaction, not just per token.</li>
+<li><strong>Sensitivity.</strong> What happens to margins if usage grows ten times, or a provider changes pricing?</li>
+<li><strong>Levers in use.</strong> Caching, routing and right-sized models, as in <a href="/insights/prompt-caching-llm-cost-latency/">prompt caching</a> and <a href="/insights/llm-model-routing/">model routing</a>. Unused levers are upside; no visibility at all is a risk.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>7. What is the regulatory exposure?</h2>
+<ul>
+<li><strong>Classification.</strong> Could any use case fall into a regulated or high-risk category under the EU AI Act<sup class="cite"><a href="#ref-3">3</a></sup>, or sector rules in health, finance or employment?</li>
+<li><strong>Governance evidence.</strong> An AI system register, risk assessments, incident handling and training. Frameworks such as the NIST AI RMF<sup class="cite"><a href="#ref-2">2</a></sup> are a reasonable yardstick; see <a href="/insights/iso-42001-vs-nist-ai-rmf/">ISO 42001 or NIST AI RMF</a>.</li>
+<li><strong>Customer commitments.</strong> What have they promised enterprise customers about AI, and can they evidence it?</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>Reading the results</h2>
+<p>No early-stage company will score well on everything, and that's not the point. Diligence should separate <strong>fixable gaps</strong>, such as missing monitoring or undocumented decisions, from <strong>structural problems</strong>, such as no data rights, no evaluation discipline or a product that a better general model would replace. The first belong in a post-investment plan with owners and dates. The second belong in the valuation conversation.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I carry out <a href="/technical-due-diligence/">technical due diligence</a> on AI and software companies for investors and acquirers in the US, Europe and the Gulf, and help portfolio companies close the gaps afterwards as a <a href="/fractional-cto/">fractional CTO</a>. Or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
