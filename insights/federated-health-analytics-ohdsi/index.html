@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Federated health analytics: evidence without moving patient data</title>
+<meta name="description" content="OHDSI network studies run the same analysis at many sites and share only aggregates. How federated health analytics works, where it&#x27;s heading in Europe and the Gulf, and how I design it." />
+<meta name="keywords" content="federated health analytics, OHDSI network study, federated data network, real-world evidence, OMOP CDM, European Health Data Space, secure processing environment, health data residency, privacy-preserving analytics, healthcare data architect" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://asksumanta.com/insights/federated-health-analytics-ohdsi/" />
+<meta name="theme-color" content="#111214" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="Federated health analytics: evidence without moving patient data" />
+<meta property="og:description" content="OHDSI network studies run the same analysis at many sites and share only aggregates. How federated health analytics works, where it&#x27;s heading in Europe and the Gulf, and how I design it." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://asksumanta.com/insights/federated-health-analytics-ohdsi/" />
+<meta property="og:image" content="https://asksumanta.com/assets/og/federated-health-analytics-ohdsi.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Federated health analytics: evidence without moving patient data" />
+<meta name="twitter:description" content="OHDSI network studies run the same analysis at many sites and share only aggregates. How federated health analytics works, where it&#x27;s heading in Europe and the Gulf, and how I design it." />
+<meta name="twitter:image" content="https://asksumanta.com/assets/og/federated-health-analytics-ohdsi.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "BlogPosting", "headline": "Federated health analytics: how to generate evidence without moving patient data", "description": "OHDSI network studies run the same analysis at many sites and share only aggregates. How federated health analytics works, where it's heading in Europe and the Gulf, and how I design it.", "datePublished": "2026-10-23T08:15:00+04:00", "dateModified": "2026-10-23T08:15:00+04:00", "articleSection": "Healthcare · Data platforms", "genre": "Explainer", "citation": [{"@type": "CreativeWork", "name": "OHDSI network research (The Book of OHDSI)", "url": "https://ohdsi.github.io/TheBookOfOhdsi/NetworkResearch.html"}, {"@type": "CreativeWork", "name": "The OHDSI community (The Book of OHDSI)", "url": "https://ohdsi.github.io/TheBookOfOhdsi/OhdsiCommunity.html"}, {"@type": "CreativeWork", "name": "European Health Data Space: Regulation (EU) 2025/327 and the new European health data framework", "url": "https://www.noze.it/en/insights/ehds-regulation-2025-327/"}, {"@type": "CreativeWork", "name": "EHDS implementation: preparing for health data access and reuse", "url": "https://www.taylorwessing.com/en/international-life-sciences-newsletter/life-sciences-legal-lens-vol-2/ehds-implementation-preparing-for-health-data-access-and-reuse"}, {"@type": "CreativeWork", "name": "Health data transfers outside the UAE", "url": "https://www.tamimi.com/news/health-data-transfers-outside-the-uae/"}], "author": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "publisher": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "mainEntityOfPage": "https://asksumanta.com/insights/federated-health-analytics-ohdsi/", "image": "https://asksumanta.com/assets/og/federated-health-analytics-ohdsi.png", "keywords": "federated health analytics, OHDSI network study, federated data network, real-world evidence, OMOP CDM, European Health Data Space, secure processing environment, health data residency, privacy-preserving analytics, healthcare data architect", "wordCount": 881}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://asksumanta.com/"}, {"@type": "ListItem", "position": 2, "name": "Insights", "item": "https://asksumanta.com/insights/"}, {"@type": "ListItem", "position": 3, "name": "Federated health analytics: how to generate evidence without moving patient data", "item": "https://asksumanta.com/insights/federated-health-analytics-ohdsi/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What is an OHDSI network study?", "acceptedAnswer": {"@type": "Answer", "text": "A study run across multiple OMOP CDM databases at different institutions. Each site runs the same study package locally and shares only aggregate results; patient-level data is never pooled centrally."}}, {"@type": "Question", "name": "Why does federated analytics need a common data model?", "acceptedAnswer": {"@type": "Answer", "text": "Because the same code has to run unchanged at every site. Standardising data to the OMOP CDM and its vocabularies lets one study package run across different databases and coding systems."}}, {"@type": "Question", "name": "How does this relate to the European Health Data Space?", "acceptedAnswer": {"@type": "Answer", "text": "The EHDS regulation, published in March 2025, creates a framework for secondary use of health data and, according to commentary, requires secondary use of personal electronic health data to take place within secure processing environments. Federated and secure-environment approaches share the goal of analysing data without uncontrolled copying."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+</script>
+</head>
+<body class="sub is-post">
+<div class="progress" id="progress"></div>
+<nav>
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="/#practice">Services</a>
+      <a href="/#work">Case studies</a>
+      <a href="/insights/">Insights</a>
+      <a href="/#assess">Analyse</a>
+      <a href="/#connect">Connect</a>
+    </div>
+    <div class="nav-r">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/insights/">Insights</a> <span>/</span> <em>Federated health analytics: how to generate evidence without moving patient data</em></div>
+    <div class="kicker">Healthcare · Data platforms</div>
+    <h1>Federated health analytics: how to generate evidence without moving patient data</h1>
+    <p class="sub-lede">Health data is increasingly required to stay where it is: inside a hospital, a country or a secure environment. Federated analytics turns that from a blocker into a design principle. The OHDSI network has been doing it at scale for years, and its lessons apply well beyond research.</p>
+    <div class="ameta"><span class="fmt">Explainer</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-10-23T08:15:00+04:00">23 Oct 2026 · 08:15 GST</time><span>9 min read</span><span>5 sources</span></div><div class="atags"><span class="tagp">#healthcare</span><span class="tagp">#omop</span><span class="tagp">#data</span><span class="tagp">#regulation</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Explainer cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><line x1="765" y1="229" x2="793" y2="316" class="cv-edge hl" opacity="0.39"/><line x1="765" y1="229" x2="791" y2="303" class="cv-edge hl" opacity="0.47"/><line x1="765" y1="229" x2="849" y2="286" class="cv-edge hl" opacity="0.32"/><line x1="765" y1="229" x2="902" y2="278" class="cv-edge hl" opacity="0.03"/><line x1="765" y1="229" x2="774" y2="219" class="cv-edge hl" opacity="0.91"/><line x1="765" y1="229" x2="735" y2="260" class="cv-edge hl" opacity="0.71"/><line x1="765" y1="229" x2="704" y2="159" class="cv-edge hl" opacity="0.38"/><line x1="765" y1="229" x2="625" y2="187" class="cv-edge hl" opacity="0.03"/><line x1="535" y1="132" x2="555" y2="48" class="cv-edge" opacity="0.42"/><line x1="535" y1="132" x2="625" y2="187" class="cv-edge" opacity="0.29"/><line x1="1138" y1="194" x2="1039" y2="224" class="cv-edge hl" opacity="0.31"/><line x1="1138" y1="194" x2="1061" y2="268" class="cv-edge" opacity="0.29"/><line x1="1138" y1="194" x2="1049" y2="190" class="cv-edge hl" opacity="0.41"/><line x1="1138" y1="194" x2="1004" y2="196" class="cv-edge hl" opacity="0.11"/><line x1="922" y1="206" x2="1019" y2="316" class="cv-edge" opacity="0.02"/><line x1="922" y1="206" x2="1039" y2="224" class="cv-edge hl" opacity="0.21"/><line x1="922" y1="206" x2="991" y2="92" class="cv-edge" opacity="0.11"/><line x1="922" y1="206" x2="849" y2="286" class="cv-edge" opacity="0.28"/><line x1="922" y1="206" x2="902" y2="278" class="cv-edge" opacity="0.50"/><line x1="922" y1="206" x2="774" y2="219" class="cv-edge hl" opacity="0.01"/><line x1="922" y1="206" x2="1049" y2="190" class="cv-edge hl" opacity="0.15"/><line x1="922" y1="206" x2="984" y2="82" class="cv-edge hl" opacity="0.08"/><line x1="922" y1="206" x2="1004" y2="196" class="cv-edge hl" opacity="0.45"/><line x1="922" y1="206" x2="951" y2="319" class="cv-edge" opacity="0.22"/><line x1="793" y1="316" x2="791" y2="303" class="cv-edge" opacity="0.91"/><line x1="793" y1="316" x2="849" y2="286" class="cv-edge" opacity="0.57"/><line x1="793" y1="316" x2="902" y2="278" class="cv-edge" opacity="0.23"/><line x1="793" y1="316" x2="774" y2="219" class="cv-edge hl" opacity="0.34"/><line x1="793" y1="316" x2="735" y2="260" class="cv-edge" opacity="0.46"/><line x1="1019" y1="316" x2="1039" y2="224" class="cv-edge hl" opacity="0.37"/><line x1="1019" y1="316" x2="1061" y2="268" class="cv-edge" opacity="0.57"/><line x1="1019" y1="316" x2="902" y2="278" class="cv-edge" opacity="0.18"/><line x1="1019" y1="316" x2="1049" y2="190" class="cv-edge hl" opacity="0.13"/><line x1="1019" y1="316" x2="941" y2="361" class="cv-edge" opacity="0.40"/><line x1="1019" y1="316" x2="1004" y2="196" class="cv-edge hl" opacity="0.19"/><line x1="1019" y1="316" x2="951" y2="319" class="cv-edge" opacity="0.55"/><line x1="585" y1="355" x2="607" y2="317" class="cv-edge" opacity="0.71"/><line x1="1039" y1="224" x2="1061" y2="268" class="cv-edge hl" opacity="0.67"/><line x1="1039" y1="224" x2="991" y2="92" class="cv-edge hl" opacity="0.07"/><line x1="1039" y1="224" x2="902" y2="278" class="cv-edge hl" opacity="0.02"/><line x1="1039" y1="224" x2="1049" y2="190" class="cv-edge hl" opacity="0.77"/><line x1="1039" y1="224" x2="1023" y2="95" class="cv-edge hl" opacity="0.13"/><line x1="1039" y1="224" x2="1004" y2="196" class="cv-edge hl" opacity="0.70"/><line x1="1039" y1="224" x2="951" y2="319" class="cv-edge hl" opacity="0.13"/><line x1="726" y1="71" x2="704" y2="159" class="cv-edge" opacity="0.39"/><line x1="791" y1="303" x2="849" y2="286" class="cv-edge" opacity="0.59"/><line x1="791" y1="303" x2="902" y2="278" class="cv-edge" opacity="0.24"/><line x1="791" y1="303" x2="774" y2="219" class="cv-edge hl" opacity="0.43"/><line x1="791" y1="303" x2="735" y2="260" class="cv-edge" opacity="0.53"/><line x1="1061" y1="268" x2="1049" y2="190" class="cv-edge hl" opacity="0.47"/><line x1="1061" y1="268" x2="1004" y2="196" class="cv-edge hl" opacity="0.39"/><line x1="1061" y1="268" x2="951" y2="319" class="cv-edge" opacity="0.19"/><line x1="991" y1="92" x2="1049" y2="190" class="cv-edge hl" opacity="0.24"/><line x1="991" y1="92" x2="1023" y2="95" class="cv-edge" opacity="0.79"/><line x1="991" y1="92" x2="984" y2="82" class="cv-edge hl" opacity="0.92"/><line x1="991" y1="92" x2="1004" y2="196" class="cv-edge hl" opacity="0.30"/><line x1="849" y1="286" x2="902" y2="278" class="cv-edge" opacity="0.65"/><line x1="849" y1="286" x2="774" y2="219" class="cv-edge hl" opacity="0.33"/><line x1="849" y1="286" x2="735" y2="260" class="cv-edge" opacity="0.22"/><line x1="849" y1="286" x2="941" y2="361" class="cv-edge" opacity="0.21"/><line x1="849" y1="286" x2="951" y2="319" class="cv-edge" opacity="0.29"/><line x1="902" y1="278" x2="774" y2="219" class="cv-edge hl" opacity="0.07"/><line x1="902" y1="278" x2="941" y2="361" class="cv-edge" opacity="0.39"/><line x1="902" y1="278" x2="1004" y2="196" class="cv-edge hl" opacity="0.13"/><line x1="902" y1="278" x2="951" y2="319" class="cv-edge" opacity="0.57"/><line x1="774" y1="219" x2="735" y2="260" class="cv-edge hl" opacity="0.62"/><line x1="774" y1="219" x2="704" y2="159" class="cv-edge hl" opacity="0.38"/><line x1="735" y1="260" x2="704" y2="159" class="cv-edge" opacity="0.30"/><line x1="735" y1="260" x2="607" y2="317" class="cv-edge" opacity="0.07"/><line x1="735" y1="260" x2="625" y2="187" class="cv-edge" opacity="0.12"/><line x1="1049" y1="190" x2="1023" y2="95" class="cv-edge hl" opacity="0.34"/><line x1="1049" y1="190" x2="984" y2="82" class="cv-edge hl" opacity="0.16"/><line x1="1049" y1="190" x2="1004" y2="196" class="cv-edge hl" opacity="0.70"/><line x1="704" y1="159" x2="625" y2="187" class="cv-edge" opacity="0.44"/><line x1="607" y1="317" x2="625" y2="187" class="cv-edge" opacity="0.12"/><line x1="1023" y1="95" x2="984" y2="82" class="cv-edge hl" opacity="0.73"/><line x1="1023" y1="95" x2="1004" y2="196" class="cv-edge hl" opacity="0.31"/><line x1="941" y1="361" x2="951" y2="319" class="cv-edge" opacity="0.71"/><line x1="984" y1="82" x2="1004" y2="196" class="cv-edge hl" opacity="0.23"/><line x1="1004" y1="196" x2="951" y2="319" class="cv-edge hl" opacity="0.11"/><circle cx="765" cy="229" r="6" class="cv-dot hl"/><circle cx="535" cy="132" r="3" class="cv-dot"/><circle cx="1138" cy="194" r="3" class="cv-dot"/><circle cx="922" cy="206" r="3" class="cv-dot"/><circle cx="793" cy="316" r="3" class="cv-dot"/><circle cx="1019" cy="316" r="3" class="cv-dot"/><circle cx="585" cy="355" r="3" class="cv-dot"/><circle cx="1039" cy="224" r="6" class="cv-dot hl"/><circle cx="726" cy="71" r="3" class="cv-dot"/><circle cx="555" cy="48" r="3" class="cv-dot"/><circle cx="791" cy="303" r="3" class="cv-dot"/><circle cx="1061" cy="268" r="3" class="cv-dot"/><circle cx="991" cy="92" r="3" class="cv-dot"/><circle cx="849" cy="286" r="3" class="cv-dot"/><circle cx="902" cy="278" r="3" class="cv-dot"/><circle cx="774" cy="219" r="6" class="cv-dot hl"/><circle cx="735" cy="260" r="3" class="cv-dot"/><circle cx="1049" cy="190" r="6" class="cv-dot hl"/><circle cx="704" cy="159" r="3" class="cv-dot"/><circle cx="607" cy="317" r="3" class="cv-dot"/><circle cx="1023" cy="95" r="3" class="cv-dot"/><circle cx="941" cy="361" r="3" class="cv-dot"/><circle cx="625" cy="187" r="3" class="cv-dot"/><circle cx="984" cy="82" r="6" class="cv-dot hl"/><circle cx="1004" cy="196" r="6" class="cv-dot hl"/><circle cx="951" cy="319" r="3" class="cv-dot"/><text x="60" y="90" class="cv-k">EXPLAINER · HEALTHCARE · DATA PLATFORMS</text><text x="60" y="350" class="cv-n">23 Oct 2026 · 08:15 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <p>The traditional way to answer a question across many hospitals was to copy their data into one place. That approach is getting harder every year. Data protection law, health-specific localisation rules, hospital governance and plain institutional caution all push the same way: the data stays where it is.</p>
+<p>Federated analytics flips the model. Instead of bringing data to the analysis, you send the analysis to the data, run it locally at each site, and combine only the results.</p>
+
+<section class="block">
+<h2 id="how-ohdsi-does-it">How OHDSI does it</h2>
+<p>The OHDSI community is one of the largest working examples. The Book of OHDSI describes a network of more than 100 databases standardised to the OMOP CDM, collectively representing over a billion patient records at the time of writing<sup class="cite"><a href="#ref-1">1</a></sup>. A study becomes a network study when it runs across multiple CDMs at different institutions<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<p>The rules are strict and simple. Each site runs the same study package against its own CDM. A local analyst reviews the outputs before anything leaves, and minimum cell counts suppress small numbers. Only aggregate results such as summary statistics, estimates and diagnostics are shared. In the book's words, OHDSI network studies do not share patient-level data, and patient-level data from different sites is never pooled centrally<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/federated-health-analytics-ohdsi/data-journey.webp" alt="Diagram of the journey from patient-level data in source systems to reliable evidence, listing the types of observational data and the types of evidence desired" width="1600" height="1057" loading="lazy"></div><figcaption>The journey from patient-level data to reliable evidence, across many data types and evidence needs. <span class="credit">Source: <a href="https://ohdsi.github.io/TheBookOfOhdsi/OhdsiCommunity.html" target="_blank" rel="noopener">The Book of OHDSI, The OHDSI Community</a> · CC0 1.0</span></figcaption></figure>
+</section>
+
+<section class="block">
+<h2 id="why-it-works-standardise-first">Why it works: standardise first</h2>
+<p>Federation only works if the same code means the same thing everywhere. That is why OHDSI insists on the CDM and its <a href="/insights/clinical-terminologies-omop-vocabularies/">standardised vocabularies</a>. The book is explicit about the design shift this requires: you are building a study package to run at sites whose data you will never see, so concept sets must be exhaustive rather than tuned to your own data, and code must be parameterised for different database platforms<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<p>The same discipline shows up in <a href="/insights/omop-cohort-definitions/">cohort definitions</a>: definitions are portable, versioned artefacts, not local SQL.</p>
+<div class="callout"><p>Federation moves the hard work from data transfer agreements to data standardisation. That's a better trade: standardisation compounds, while every transfer agreement starts from zero.</p></div>
+</section>
+
+<section class="block">
+<h2 id="the-operational-reality">The operational reality</h2>
+<p>The book is candid that network studies take real coordination. Site start-up can involve ethics approvals, database permissions, configuring an analysis environment, reviewing study code and getting dependencies installed within local IT constraints<sup class="cite"><a href="#ref-1">1</a></sup>. Data quality varies between sites, and study leads may review quality reports or run checks to understand variation<sup class="cite"><a href="#ref-1">1</a></sup>. It also notes that much of the process has been manual, with the community working to systematise it<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<p>In practice, the technical parts are rarely what slows a network down. Governance, trust and site capacity are. Architecture can help by making each site's job as small and predictable as possible.</p>
+</section>
+
+<section class="block">
+<h2 id="where-regulation-is-heading">Where regulation is heading</h2>
+<p><strong>Europe.</strong> The European Health Data Space regulation, Regulation (EU) 2025/327, was published in March 2025 and sets up a framework for secondary use of health data for purposes such as research, innovation and public health<sup class="cite"><a href="#ref-3">3</a></sup>. Commentary notes that secondary use of personal electronic health data is to take place within secure processing environments, with health data access bodies handling permits<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>. Check the regulation for application dates, which are phased.</p>
+<p><strong>The Gulf.</strong> The UAE's health data law restricts storing and processing health data outside the country unless an exception applies, with research among the circumstances commentary describes<sup class="cite"><a href="#ref-5">5</a></sup>; I cover the detail in <a href="/insights/uae-health-data-law-localisation/">UAE health data localisation</a>. Saudi Arabia's transfer rules add their own conditions, as in <a href="/insights/saudi-pdpl-cross-border-ai/">Saudi PDPL and cross-border AI</a>.</p>
+<p>Different regimes, same direction: analysis has to go to the data, or to a controlled environment, rather than data going wherever analysts happen to be.</p>
+</section>
+
+<section class="block">
+<h2 id="the-architecture-i-use">The architecture I use</h2>
+<ol>
+<li><strong>A standard node.</strong> Each site gets the same deployable stack: an OMOP CDM, vocabularies, data quality tooling as in <a href="/insights/omop-data-quality-checks/">OMOP data quality checks</a>, and an analysis runtime. Infrastructure as code makes new sites predictable.</li>
+<li><strong>Signed, reviewed study packages.</strong> Analyses arrive as versioned packages, reviewed and approved before they run, never as ad hoc queries.</li>
+<li><strong>Output controls at the edge.</strong> Minimum cell counts, automated disclosure checks and a human review step before results leave the site.</li>
+<li><strong>A coordination layer that never sees patient data</strong>: study registry, package distribution, results collection and audit trail.</li>
+<li><strong>Monitoring of the network itself</strong>: which sites are current on CDM and vocabulary versions, data quality status, and study participation.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2 id="and-ai">And AI?</h2>
+<p>Federated approaches extend to model development: training or evaluating models site by site and sharing parameters or metrics rather than data. The same principles apply, with more care, because model outputs can leak information in ways summary statistics usually don't. At minimum, I'd use federation for <strong>external validation</strong>: testing a model built at one site against many others before anyone claims it generalises. That is where a lot of clinical AI falls short, and a network makes it routine.</p>
+</section>
+
+<section class="block">
+<h2 id="how-i-can-help">How I can help</h2>
+<p>I design federated health data platforms and OMOP networks, from the standard site node to governance and results pipelines, for research groups, health systems and life sciences companies in the US, Europe and the Gulf. See <a href="/healthcare-data-architecture/">healthcare data architecture</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://ohdsi.github.io/TheBookOfOhdsi/NetworkResearch.html" target="_blank" rel="noopener">OHDSI network research (The Book of OHDSI)</a><small>OHDSI</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://ohdsi.github.io/TheBookOfOhdsi/OhdsiCommunity.html" target="_blank" rel="noopener">The OHDSI community (The Book of OHDSI)</a><small>OHDSI</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://www.noze.it/en/insights/ehds-regulation-2025-327/" target="_blank" rel="noopener">European Health Data Space: Regulation (EU) 2025/327 and the new European health data framework</a><small>Noze</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://www.taylorwessing.com/en/international-life-sciences-newsletter/life-sciences-legal-lens-vol-2/ehds-implementation-preparing-for-health-data-access-and-reuse" target="_blank" rel="noopener">EHDS implementation: preparing for health data access and reuse</a><small>Taylor Wessing</small></div></li><li id="ref-5"><span class="rn">5</span><div><a href="https://www.tamimi.com/news/health-data-transfers-outside-the-uae/" target="_blank" rel="noopener">Health data transfers outside the UAE</a><small>Al Tamimi &amp; Company · 29 Jun 2021</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Ffederated-health-analytics-ohdsi%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Ffederated-health-analytics-ohdsi%2F&amp;text=Federated%20health%20analytics%3A%20how%20to%20generate%20evidence%20without%20moving%20patient%20data" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=Federated%20health%20analytics%3A%20how%20to%20generate%20evidence%20without%20moving%20patient%20data%20https%3A%2F%2Fasksumanta.com%2Finsights%2Ffederated-health-analytics-ohdsi%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://asksumanta.com/insights/federated-health-analytics-ohdsi/">Copy link</button></div>
+      <div class="pnav"><a class="pn prev" href="/insights/long-context-vs-rag/"><small>← Previous</small><b>Long context or RAG? What the research says about very large context windows</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#how-ohdsi-does-it">How OHDSI does it</a></li><li><a href="#why-it-works-standardise-first">Why it works: standardise first</a></li><li><a href="#the-operational-reality">The operational reality</a></li><li><a href="#where-regulation-is-heading">Where regulation is heading</a></li><li><a href="#the-architecture-i-use">The architecture I use</a></li><li><a href="#and-ai">And AI?</a></li><li><a href="#how-i-can-help">How I can help</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>What is an OHDSI network study?</summary><p>A study run across multiple OMOP CDM databases at different institutions. Each site runs the same study package locally and shares only aggregate results; patient-level data is never pooled centrally.</p></details><details class="rise"><summary>Why does federated analytics need a common data model?</summary><p>Because the same code has to run unchanged at every site. Standardising data to the OMOP CDM and its vocabularies lets one study package run across different databases and coding systems.</p></details><details class="rise"><summary>How does this relate to the European Health Data Space?</summary><p>The EHDS regulation, published in March 2025, creates a framework for secondary use of health data and, according to commentary, requires secondary use of personal electronic health data to take place within secure processing environments. Federated and secure-environment approaches share the goal of analysing data without uncontrolled copying.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/healthcare-data-architecture/"><small>Service</small><b>Healthcare data architecture</b><span>I help healthcare and life-sciences organisations turn fragmented clinical data into governed platforms for care, research and AI, using the standards the industry already agrees on.</span><i>→</i></a><a class="rcard rise" href="/uae/"><small>Service</small><b>Fractional CTO in the UAE</b><span>I work with founders, enterprises and investors across the UAE and the Gulf on AI, data and technology leadership, with an eye on local data-protection rules and residency from day one.</span><i>→</i></a><a class="rcard rise" href="/ai-architect/"><small>Service</small><b>AI &amp; LLM architecture</b><span>I design and build AI systems that leadership can trust: grounded in your data, measured by evaluations, governed by your rules and priced so they make sense at scale.</span><i>→</i></a><a class="rcard rise" href="/insights/long-context-vs-rag/"><small>Insight</small><b>Long context or RAG? What the research says about very large context windows</b><span>Context windows have grown from a few thousand tokens to hundreds of thousands and more. It&#x27;s tempting to stop building retrieval and just put everything in the prompt. The research suggests that bigger windows change the trade-offs, but don&#x27;t remove them.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: Federated health analytics: how to generate evidence without moving patient data">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
+        <p class="floc">United States &amp; UAE · working globally</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/uae/">Fractional CTO in the UAE</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/federated-health-analytics-ohdsi/">Federated health analytics: how to generate evidence without moving patient data</a></li><li><a href="/insights/long-context-vs-rag/">Long context or RAG? What the research says about very large context windows</a></li><li><a href="/insights/iso-42001-vs-nist-ai-rmf/">ISO/IEC 42001 or the NIST AI RMF? How to choose, and how to use both</a></li><li><a href="/insights/opentelemetry-span-events-deprecation/">OpenTelemetry is deprecating the Span Events API: what to change, and when</a></li><li><a href="/insights/clinical-terminologies-omop-vocabularies/">Clinical terminologies explained: SNOMED, LOINC, RxNorm and the OMOP vocabularies</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>
