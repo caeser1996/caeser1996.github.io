@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Structured outputs: making LLMs dependable parts of real systems</title>
+<meta name="description" content="Schema-constrained outputs make LLM responses machine-readable by design, but can hurt reasoning if used carelessly. How structured outputs work and how I design LLM integrations with them." />
+<meta name="keywords" content="structured outputs, JSON schema LLM, constrained decoding, strict tool use, LLM integration, reliable LLM output, function calling, LLM data extraction, AI engineering, AI architect" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://asksumanta.com/insights/structured-outputs-reliable-llm-integration/" />
+<meta name="theme-color" content="#111214" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="Structured outputs: making LLMs dependable parts of real systems" />
+<meta property="og:description" content="Schema-constrained outputs make LLM responses machine-readable by design, but can hurt reasoning if used carelessly. How structured outputs work and how I design LLM integrations with them." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://asksumanta.com/insights/structured-outputs-reliable-llm-integration/" />
+<meta property="og:image" content="https://asksumanta.com/assets/og/structured-outputs-reliable-llm-integration.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Structured outputs: making LLMs dependable parts of real systems" />
+<meta name="twitter:description" content="Schema-constrained outputs make LLM responses machine-readable by design, but can hurt reasoning if used carelessly. How structured outputs work and how I design LLM integrations with them." />
+<meta name="twitter:image" content="https://asksumanta.com/assets/og/structured-outputs-reliable-llm-integration.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "BlogPosting", "headline": "Structured outputs: how to make LLMs dependable components of real systems", "description": "Schema-constrained outputs make LLM responses machine-readable by design, but can hurt reasoning if used carelessly. How structured outputs work and how I design LLM integrations with them.", "datePublished": "2026-10-24T00:15:00+04:00", "dateModified": "2026-10-24T00:15:00+04:00", "articleSection": "AI architecture · Integration", "genre": "Essay", "citation": [{"@type": "CreativeWork", "name": "Introducing Structured Outputs in the API", "url": "https://openai.com/index/introducing-structured-outputs-in-the-api/"}, {"@type": "CreativeWork", "name": "OpenAI: Structured Outputs", "url": "https://simonwillison.net/2024/Aug/6/openai-structured-outputs/"}, {"@type": "CreativeWork", "name": "Structured outputs", "url": "https://platform.claude.com/docs/en/build-with-claude/structured-outputs"}, {"@type": "CreativeWork", "name": "Strict tool use", "url": "https://platform.claude.com/docs/en/agents-and-tools/tool-use/strict-tool-use"}, {"@type": "CreativeWork", "name": "Let Me Speak Freely? A Study on the Impact of Format Restrictions on Performance of Large Language Models", "url": "https://arxiv.org/abs/2408.02442"}], "author": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "publisher": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "mainEntityOfPage": "https://asksumanta.com/insights/structured-outputs-reliable-llm-integration/", "image": "https://asksumanta.com/assets/og/structured-outputs-reliable-llm-integration.png", "keywords": "structured outputs, JSON schema LLM, constrained decoding, strict tool use, LLM integration, reliable LLM output, function calling, LLM data extraction, AI engineering, AI architect", "wordCount": 835}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://asksumanta.com/"}, {"@type": "ListItem", "position": 2, "name": "Insights", "item": "https://asksumanta.com/insights/"}, {"@type": "ListItem", "position": 3, "name": "Structured outputs: how to make LLMs dependable components of real systems", "item": "https://asksumanta.com/insights/structured-outputs-reliable-llm-integration/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What are structured outputs?", "acceptedAnswer": {"@type": "Answer", "text": "Features offered by model providers that make a model's response conform to a JSON schema you supply, typically by constraining which tokens the model can generate so that only schema-valid output is possible."}}, {"@type": "Question", "name": "Do structured outputs guarantee correct answers?", "acceptedAnswer": {"@type": "Answer", "text": "No. They make the output match the schema's shape, not its meaning. A response can be perfectly valid JSON and still contain wrong values, so validation of content and evaluation remain necessary."}}, {"@type": "Question", "name": "Can strict formats hurt model quality?", "acceptedAnswer": {"@type": "Answer", "text": "A study presented at EMNLP 2024 found that strict format restrictions such as JSON mode can reduce performance on reasoning tasks, while helping on classification by reducing answer selection errors. Letting the model reason before producing structured output can mitigate this."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+</script>
+</head>
+<body class="sub is-post">
+<div class="progress" id="progress"></div>
+<nav>
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="/#practice">Services</a>
+      <a href="/#work">Case studies</a>
+      <a href="/insights/">Insights</a>
+      <a href="/#assess">Analyse</a>
+      <a href="/#connect">Connect</a>
+    </div>
+    <div class="nav-r">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/insights/">Insights</a> <span>/</span> <em>Structured outputs: how to make LLMs dependable components of real systems</em></div>
+    <div class="kicker">AI architecture · Integration</div>
+    <h1>Structured outputs: how to make LLMs dependable components of real systems</h1>
+    <p class="sub-lede">Most enterprise value from LLMs comes when their output feeds another system: a database, a workflow, an API. That needs data in a known shape, every time. Structured outputs solve the format problem. They don&#x27;t solve the correctness problem, and used carelessly they can make it worse.</p>
+    <div class="ameta"><span class="fmt">Essay</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-10-24T00:15:00+04:00">24 Oct 2026 · 00:15 GST</time><span>8 min read</span><span>5 sources</span></div><div class="atags"><span class="tagp">#ai</span><span class="tagp">#llm</span><span class="tagp">#agents</span><span class="tagp">#platform</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Essay cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><line x1="1080" y1="113" x2="1079" y2="139" class="cv-edge hl" opacity="0.83"/><line x1="1080" y1="113" x2="1098" y2="43" class="cv-edge hl" opacity="0.52"/><line x1="1080" y1="113" x2="1081" y2="130" class="cv-edge hl" opacity="0.89"/><line x1="1080" y1="113" x2="989" y2="61" class="cv-edge hl" opacity="0.30"/><line x1="1080" y1="113" x2="1105" y2="69" class="cv-edge hl" opacity="0.66"/><line x1="1080" y1="113" x2="1134" y2="195" class="cv-edge hl" opacity="0.35"/><line x1="1079" y1="139" x2="937" y2="188" class="cv-edge hl" opacity="0.00"/><line x1="1079" y1="139" x2="1098" y2="43" class="cv-edge hl" opacity="0.35"/><line x1="1079" y1="139" x2="1081" y2="130" class="cv-edge hl" opacity="0.94"/><line x1="1079" y1="139" x2="989" y2="61" class="cv-edge hl" opacity="0.21"/><line x1="1079" y1="139" x2="1105" y2="69" class="cv-edge hl" opacity="0.50"/><line x1="1079" y1="139" x2="1134" y2="195" class="cv-edge hl" opacity="0.48"/><line x1="1024" y1="304" x2="1107" y2="317" class="cv-edge" opacity="0.44"/><line x1="1024" y1="304" x2="937" y2="188" class="cv-edge" opacity="0.03"/><line x1="1024" y1="304" x2="1033" y2="378" class="cv-edge hl" opacity="0.51"/><line x1="1024" y1="304" x2="1020" y2="317" class="cv-edge" opacity="0.91"/><line x1="1024" y1="304" x2="1001" y2="274" class="cv-edge hl" opacity="0.75"/><line x1="1024" y1="304" x2="989" y2="313" class="cv-edge hl" opacity="0.76"/><line x1="540" y1="39" x2="526" y2="156" class="cv-edge" opacity="0.21"/><line x1="540" y1="39" x2="541" y2="64" class="cv-edge" opacity="0.83"/><line x1="535" y1="212" x2="635" y2="255" class="cv-edge" opacity="0.27"/><line x1="535" y1="212" x2="526" y2="156" class="cv-edge" opacity="0.62"/><line x1="535" y1="212" x2="541" y2="64" class="cv-edge" opacity="0.01"/><line x1="535" y1="212" x2="583" y2="250" class="cv-edge" opacity="0.59"/><line x1="635" y1="255" x2="526" y2="156" class="cv-edge" opacity="0.02"/><line x1="635" y1="255" x2="742" y2="206" class="cv-edge" opacity="0.22"/><line x1="635" y1="255" x2="583" y2="250" class="cv-edge" opacity="0.65"/><line x1="1107" y1="317" x2="1033" y2="378" class="cv-edge hl" opacity="0.36"/><line x1="1107" y1="317" x2="1020" y2="317" class="cv-edge" opacity="0.42"/><line x1="1107" y1="317" x2="1001" y2="274" class="cv-edge hl" opacity="0.24"/><line x1="1107" y1="317" x2="1134" y2="195" class="cv-edge hl" opacity="0.17"/><line x1="1107" y1="317" x2="989" y2="313" class="cv-edge hl" opacity="0.22"/><line x1="937" y1="188" x2="989" y2="61" class="cv-edge" opacity="0.09"/><line x1="937" y1="188" x2="807" y2="206" class="cv-edge" opacity="0.13"/><line x1="937" y1="188" x2="867" y2="162" class="cv-edge" opacity="0.50"/><line x1="937" y1="188" x2="1001" y2="274" class="cv-edge hl" opacity="0.29"/><line x1="937" y1="188" x2="891" y2="75" class="cv-edge hl" opacity="0.19"/><line x1="937" y1="188" x2="989" y2="313" class="cv-edge hl" opacity="0.10"/><line x1="937" y1="188" x2="832" y2="153" class="cv-edge" opacity="0.26"/><line x1="1033" y1="378" x2="1020" y2="317" class="cv-edge hl" opacity="0.59"/><line x1="1033" y1="378" x2="1001" y2="274" class="cv-edge hl" opacity="0.27"/><line x1="1033" y1="378" x2="989" y2="313" class="cv-edge hl" opacity="0.48"/><line x1="1020" y1="317" x2="1001" y2="274" class="cv-edge hl" opacity="0.68"/><line x1="1020" y1="317" x2="989" y2="313" class="cv-edge hl" opacity="0.79"/><line x1="526" y1="156" x2="541" y2="64" class="cv-edge" opacity="0.38"/><line x1="526" y1="156" x2="583" y2="250" class="cv-edge" opacity="0.27"/><line x1="1098" y1="43" x2="1081" y2="130" class="cv-edge" opacity="0.41"/><line x1="1098" y1="43" x2="989" y2="61" class="cv-edge" opacity="0.27"/><line x1="1098" y1="43" x2="1105" y2="69" class="cv-edge" opacity="0.82"/><line x1="1081" y1="130" x2="989" y2="61" class="cv-edge" opacity="0.24"/><line x1="1081" y1="130" x2="1105" y2="69" class="cv-edge" opacity="0.56"/><line x1="1081" y1="130" x2="1134" y2="195" class="cv-edge hl" opacity="0.44"/><line x1="742" y1="206" x2="807" y2="206" class="cv-edge" opacity="0.56"/><line x1="742" y1="206" x2="867" y2="162" class="cv-edge" opacity="0.12"/><line x1="742" y1="206" x2="832" y2="153" class="cv-edge" opacity="0.31"/><line x1="989" y1="61" x2="1105" y2="69" class="cv-edge" opacity="0.23"/><line x1="989" y1="61" x2="891" y2="75" class="cv-edge hl" opacity="0.34"/><line x1="807" y1="206" x2="867" y2="162" class="cv-edge" opacity="0.51"/><line x1="807" y1="206" x2="832" y2="153" class="cv-edge" opacity="0.61"/><line x1="1105" y1="69" x2="1134" y2="195" class="cv-edge hl" opacity="0.14"/><line x1="867" y1="162" x2="891" y2="75" class="cv-edge hl" opacity="0.40"/><line x1="867" y1="162" x2="832" y2="153" class="cv-edge" opacity="0.76"/><line x1="1001" y1="274" x2="989" y2="313" class="cv-edge hl" opacity="0.73"/><line x1="891" y1="75" x2="832" y2="153" class="cv-edge hl" opacity="0.34"/><line x1="989" y1="313" x2="868" y2="387" class="cv-edge hl" opacity="0.05"/><circle cx="1080" cy="113" r="6" class="cv-dot hl"/><circle cx="1079" cy="139" r="6" class="cv-dot hl"/><circle cx="1024" cy="304" r="3" class="cv-dot"/><circle cx="540" cy="39" r="3" class="cv-dot"/><circle cx="535" cy="212" r="3" class="cv-dot"/><circle cx="635" cy="255" r="3" class="cv-dot"/><circle cx="1107" cy="317" r="3" class="cv-dot"/><circle cx="937" cy="188" r="3" class="cv-dot"/><circle cx="1033" cy="378" r="6" class="cv-dot hl"/><circle cx="1020" cy="317" r="3" class="cv-dot"/><circle cx="526" cy="156" r="3" class="cv-dot"/><circle cx="1098" cy="43" r="3" class="cv-dot"/><circle cx="1081" cy="130" r="3" class="cv-dot"/><circle cx="742" cy="206" r="3" class="cv-dot"/><circle cx="989" cy="61" r="3" class="cv-dot"/><circle cx="807" cy="206" r="3" class="cv-dot"/><circle cx="1105" cy="69" r="3" class="cv-dot"/><circle cx="867" cy="162" r="3" class="cv-dot"/><circle cx="1001" cy="274" r="6" class="cv-dot hl"/><circle cx="1134" cy="195" r="6" class="cv-dot hl"/><circle cx="891" cy="75" r="6" class="cv-dot hl"/><circle cx="541" cy="64" r="3" class="cv-dot"/><circle cx="989" cy="313" r="6" class="cv-dot hl"/><circle cx="583" cy="250" r="3" class="cv-dot"/><circle cx="868" cy="387" r="6" class="cv-dot hl"/><circle cx="832" cy="153" r="3" class="cv-dot"/><text x="60" y="90" class="cv-k">ESSAY · AI ARCHITECTURE · INTEGRATION</text><text x="60" y="350" class="cv-n">24 Oct 2026 · 00:15 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <p>The first version of most LLM integrations parses free text. Someone writes a prompt asking for JSON, adds a regular expression to extract it, and a retry loop for when it fails. It works in testing. In production, a small percentage of responses arrive with a trailing comment, a missing bracket or a field renamed on a whim, and the pipeline breaks at three in the morning.</p>
+<p>Structured outputs remove that class of failure. They're one of the most useful features model providers have shipped for enterprise integration. But they are often treated as a correctness guarantee, which they aren't.</p>
+
+<section class="block">
+<h2 id="what-structured-outputs-are">What structured outputs are</h2>
+<p>You supply a JSON schema, and the provider constrains generation so the response must match it. OpenAI introduced Structured Outputs in August 2024, available through strict function definitions and a JSON schema response format, and reported that its model at the time achieved 100% schema adherence in its own evaluations<sup class="cite"><a href="#ref-1">1</a></sup>. The approach restricts which tokens the model may produce at each step to those consistent with the schema, building on techniques from open-source constrained generation tools<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<p>Anthropic's documentation describes two related features: JSON outputs that shape the response, and strict tool use that enforces schema compliance on tool inputs through grammar-constrained sampling<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>. Both providers document limits on which JSON Schema features are supported, and output can still be incomplete if generation stops early, for example at a token limit<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+<div class="callout"><p>Structured outputs guarantee shape, not truth. A perfectly valid object with the wrong invoice total is still wrong; it's just wrong in a format your system will happily accept.</p></div>
+</section>
+
+<section class="block">
+<h2 id="the-reasoning-trade-off">The reasoning trade-off</h2>
+<p>Constraining format has a cost. In "Let Me Speak Freely?", presented at EMNLP 2024, researchers compared constrained decoding, format instructions in the prompt, and generating free text first then converting it. They found that strict format restrictions such as JSON mode were associated with a significant decline in reasoning performance, with stricter constraints generally doing more harm. On classification tasks, though, strict formats could help by reducing answer selection errors<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<p>The practical lesson is to separate thinking from formatting:</p>
+<ul>
+<li><strong>For extraction and classification</strong>, strict schemas are usually a clear win.</li>
+<li><strong>For tasks that need reasoning</strong>, give the model room to reason first, either in a free-text field within the schema placed before the answer fields, or in a separate step, then produce the structured result. The paper also found that simple corrective steps, such as reformatting outputs that fail to parse, improve reliability<sup class="cite"><a href="#ref-5">5</a></sup>.</li>
+<li><strong>Measure both ways</strong> on your own evaluation set before standardising.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2 id="designing-schemas-that-help-the-model">Designing schemas that help the model</h2>
+<ol>
+<li><strong>Keep schemas small and flat</strong> where possible. Deeply nested, highly optional schemas are harder for models and may hit provider complexity limits.</li>
+<li><strong>Use enums for categories</strong> instead of free strings, so downstream systems never see an unexpected label.</li>
+<li><strong>Make uncertainty representable.</strong> Include an explicit "unknown" or "not found" option and a place for a short reason, so the model isn't forced to invent a value to satisfy a required field.</li>
+<li><strong>Describe fields clearly.</strong> Field descriptions are part of the prompt; vague names produce vague values.</li>
+<li><strong>Order fields deliberately.</strong> Put evidence or reasoning fields before conclusions, so the model generates support before the answer.</li>
+<li><strong>Version schemas</strong> like any interface, with the contract discipline in <a href="/insights/data-contracts-playbook/">data contracts</a>.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2 id="validate-the-content-not-just-the-shape">Validate the content, not just the shape</h2>
+<p>Once format failures disappear, the remaining failures are about meaning. The checks I put after every structured call:</p>
+<ul>
+<li><strong>Business rules in code</strong>: totals add up, dates are in range, referenced IDs exist, a refund doesn't exceed the order value.</li>
+<li><strong>Cross-checks against source</strong>: extracted values that should appear in the input document actually do.</li>
+<li><strong>Confidence routing</strong>: low-confidence or "unknown" results go to a person instead of straight into the system of record.</li>
+<li><strong>Evaluation on real cases</strong>, field by field, as in <a href="/insights/llm-evaluation-sets-that-predict-production/">evaluation sets that predict production</a>. Report accuracy per field, not just "valid JSON rate".</li>
+</ul>
+</section>
+
+<section class="block">
+<h2 id="structured-outputs-and-agents">Structured outputs and agents</h2>
+<p>For agents, strict tool definitions mean every tool call arrives with well-formed arguments, which removes a whole category of runtime errors. It doesn't make those calls safe. Arguments still need authorisation and policy checks outside the model, and the session-level containment described in <a href="/insights/prompt-injection-defence-for-agents/">prompt injection defence</a> and <a href="/insights/mcp-apps-tool-annotations/">MCP tool annotations</a>. A schema-valid instruction to transfer money to the wrong account is still the wrong instruction.</p>
+</section>
+
+<section class="block">
+<h2 id="a-note-on-portability">A note on portability</h2>
+<p>Providers implement structured outputs differently, with different parameters and supported schema subsets. If you use several models, as in <a href="/insights/llm-model-routing/">model routing</a>, keep one canonical schema in your codebase and let a gateway translate it per provider, then test each route. Self-hosted models can get similar behaviour from constrained decoding in the serving layer, covered in <a href="/insights/llm-inference-serving-vllm/">LLM inference serving</a>.</p>
+</section>
+
+<section class="block">
+<h2 id="how-i-can-help">How I can help</h2>
+<p>I design LLM integrations that downstream systems can trust, from schemas and validation to evaluation and agent controls. See my <a href="/ai-architect/">AI architecture work</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://openai.com/index/introducing-structured-outputs-in-the-api/" target="_blank" rel="noopener">Introducing Structured Outputs in the API</a><small>OpenAI · 6 Aug 2024</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://simonwillison.net/2024/Aug/6/openai-structured-outputs/" target="_blank" rel="noopener">OpenAI: Structured Outputs</a><small>Simon Willison · 6 Aug 2024</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://platform.claude.com/docs/en/build-with-claude/structured-outputs" target="_blank" rel="noopener">Structured outputs</a><small>Anthropic documentation</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://platform.claude.com/docs/en/agents-and-tools/tool-use/strict-tool-use" target="_blank" rel="noopener">Strict tool use</a><small>Anthropic documentation</small></div></li><li id="ref-5"><span class="rn">5</span><div><a href="https://arxiv.org/abs/2408.02442" target="_blank" rel="noopener">Let Me Speak Freely? A Study on the Impact of Format Restrictions on Performance of Large Language Models</a><small>Tam et al. (arXiv; EMNLP 2024 Industry Track) · 2024</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fstructured-outputs-reliable-llm-integration%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fstructured-outputs-reliable-llm-integration%2F&amp;text=Structured%20outputs%3A%20how%20to%20make%20LLMs%20dependable%20components%20of%20real%20systems" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=Structured%20outputs%3A%20how%20to%20make%20LLMs%20dependable%20components%20of%20real%20systems%20https%3A%2F%2Fasksumanta.com%2Finsights%2Fstructured-outputs-reliable-llm-integration%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://asksumanta.com/insights/structured-outputs-reliable-llm-integration/">Copy link</button></div>
+      <div class="pnav"><a class="pn prev" href="/insights/opentelemetry-stable-by-default-kubernetes/"><small>← Previous</small><b>OpenTelemetry goes &#x27;stable by default&#x27;: what it means for Kubernetes telemetry, and how to migrate</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#what-structured-outputs-are">What structured outputs are</a></li><li><a href="#the-reasoning-trade-off">The reasoning trade-off</a></li><li><a href="#designing-schemas-that-help-the-model">Designing schemas that help the model</a></li><li><a href="#validate-the-content-not-just-the-shape">Validate the content, not just the shape</a></li><li><a href="#structured-outputs-and-agents">Structured outputs and agents</a></li><li><a href="#a-note-on-portability">A note on portability</a></li><li><a href="#how-i-can-help">How I can help</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>What are structured outputs?</summary><p>Features offered by model providers that make a model&#x27;s response conform to a JSON schema you supply, typically by constraining which tokens the model can generate so that only schema-valid output is possible.</p></details><details class="rise"><summary>Do structured outputs guarantee correct answers?</summary><p>No. They make the output match the schema&#x27;s shape, not its meaning. A response can be perfectly valid JSON and still contain wrong values, so validation of content and evaluation remain necessary.</p></details><details class="rise"><summary>Can strict formats hurt model quality?</summary><p>A study presented at EMNLP 2024 found that strict format restrictions such as JSON mode can reduce performance on reasoning tasks, while helping on classification by reducing answer selection errors. Letting the model reason before producing structured output can mitigate this.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/ai-architect/"><small>Service</small><b>AI &amp; LLM architecture</b><span>I design and build AI systems that leadership can trust: grounded in your data, measured by evaluations, governed by your rules and priced so they make sense at scale.</span><i>→</i></a><a class="rcard rise" href="/fractional-cto/"><small>Service</small><b>Fractional CTO</b><span>I work as a part-time CTO for founders, CEOs and boards who need experienced technical judgement now, and a team that can carry it on after I step back.</span><i>→</i></a><a class="rcard rise" href="/technical-due-diligence/"><small>Service</small><b>Technical due diligence</b><span>I give investors an independent, plain-language view of a company&#x27;s technology, team and AI claims, so the risks are priced in before the deal closes, not discovered after.</span><i>→</i></a><a class="rcard rise" href="/insights/opentelemetry-stable-by-default-kubernetes/"><small>Insight</small><b>OpenTelemetry goes &#x27;stable by default&#x27;: what it means for Kubernetes telemetry, and how to migrate</b><span>OpenTelemetry has spent its first years growing fast. Its governance committee has now made stability the priority, and the first big results are landing in Kubernetes telemetry, including attribute renames that will touch dashboards and alerts.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: Structured outputs: how to make LLMs dependable components of real systems">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
+        <p class="floc">United States &amp; UAE · working globally</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/uae/">Fractional CTO in the UAE</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/structured-outputs-reliable-llm-integration/">Structured outputs: how to make LLMs dependable components of real systems</a></li><li><a href="/insights/opentelemetry-stable-by-default-kubernetes/">OpenTelemetry goes &#x27;stable by default&#x27;: what it means for Kubernetes telemetry, and how to migrate</a></li><li><a href="/insights/ai-startup-technical-due-diligence-checklist/">Technical due diligence for AI companies: the checklist I use for investors and acquirers</a></li><li><a href="/insights/prompt-caching-llm-cost-latency/">Prompt caching: the cheapest LLM cost and latency win most teams leave on the table</a></li><li><a href="/insights/federated-health-analytics-ohdsi/">Federated health analytics: how to generate evidence without moving patient data</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>

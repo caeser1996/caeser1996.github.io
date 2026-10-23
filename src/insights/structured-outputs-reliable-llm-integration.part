@@ -1,0 +1,59 @@
+<!--{"title": "Structured outputs: making LLMs dependable parts of real systems", "description": "Schema-constrained outputs make LLM responses machine-readable by design, but can hurt reasoning if used carelessly. How structured outputs work and how I design LLM integrations with them.", "h1": "Structured outputs: how to make LLMs dependable components of real systems", "kicker": "AI architecture · Integration", "lede": "Most enterprise value from LLMs comes when their output feeds another system: a database, a workflow, an API. That needs data in a known shape, every time. Structured outputs solve the format problem. They don't solve the correctness problem, and used carelessly they can make it worse.", "date": "2026-10-24", "datetime": "2026-10-24T00:15:00+04:00", "readtime": "8 min read", "format": "essay", "tags": ["ai", "llm", "agents", "platform"], "keywords": ["structured outputs", "JSON schema LLM", "constrained decoding", "strict tool use", "LLM integration", "reliable LLM output", "function calling", "LLM data extraction", "AI engineering", "AI architect"], "faq": [["What are structured outputs?", "Features offered by model providers that make a model's response conform to a JSON schema you supply, typically by constraining which tokens the model can generate so that only schema-valid output is possible."], ["Do structured outputs guarantee correct answers?", "No. They make the output match the schema's shape, not its meaning. A response can be perfectly valid JSON and still contain wrong values, so validation of content and evaluation remain necessary."], ["Can strict formats hurt model quality?", "A study presented at EMNLP 2024 found that strict format restrictions such as JSON mode can reduce performance on reasoning tasks, while helping on classification by reducing answer selection errors. Letting the model reason before producing structured output can mitigate this."]], "related": ["/ai-architect/", "/fractional-cto/", "/technical-due-diligence/"], "citations": [{"title": "Introducing Structured Outputs in the API", "url": "https://openai.com/index/introducing-structured-outputs-in-the-api/", "publisher": "OpenAI", "date": "6 Aug 2024"}, {"title": "OpenAI: Structured Outputs", "url": "https://simonwillison.net/2024/Aug/6/openai-structured-outputs/", "publisher": "Simon Willison", "date": "6 Aug 2024"}, {"title": "Structured outputs", "url": "https://platform.claude.com/docs/en/build-with-claude/structured-outputs", "publisher": "Anthropic documentation"}, {"title": "Strict tool use", "url": "https://platform.claude.com/docs/en/agents-and-tools/tool-use/strict-tool-use", "publisher": "Anthropic documentation"}, {"title": "Let Me Speak Freely? A Study on the Impact of Format Restrictions on Performance of Large Language Models", "url": "https://arxiv.org/abs/2408.02442", "publisher": "Tam et al. (arXiv; EMNLP 2024 Industry Track)", "date": "2024"}]}-->
+<p>The first version of most LLM integrations parses free text. Someone writes a prompt asking for JSON, adds a regular expression to extract it, and a retry loop for when it fails. It works in testing. In production, a small percentage of responses arrive with a trailing comment, a missing bracket or a field renamed on a whim, and the pipeline breaks at three in the morning.</p>
+<p>Structured outputs remove that class of failure. They're one of the most useful features model providers have shipped for enterprise integration. But they are often treated as a correctness guarantee, which they aren't.</p>
+
+<section class="block">
+<h2>What structured outputs are</h2>
+<p>You supply a JSON schema, and the provider constrains generation so the response must match it. OpenAI introduced Structured Outputs in August 2024, available through strict function definitions and a JSON schema response format, and reported that its model at the time achieved 100% schema adherence in its own evaluations<sup class="cite"><a href="#ref-1">1</a></sup>. The approach restricts which tokens the model may produce at each step to those consistent with the schema, building on techniques from open-source constrained generation tools<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<p>Anthropic's documentation describes two related features: JSON outputs that shape the response, and strict tool use that enforces schema compliance on tool inputs through grammar-constrained sampling<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>. Both providers document limits on which JSON Schema features are supported, and output can still be incomplete if generation stops early, for example at a token limit<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+<div class="callout"><p>Structured outputs guarantee shape, not truth. A perfectly valid object with the wrong invoice total is still wrong; it's just wrong in a format your system will happily accept.</p></div>
+</section>
+
+<section class="block">
+<h2>The reasoning trade-off</h2>
+<p>Constraining format has a cost. In "Let Me Speak Freely?", presented at EMNLP 2024, researchers compared constrained decoding, format instructions in the prompt, and generating free text first then converting it. They found that strict format restrictions such as JSON mode were associated with a significant decline in reasoning performance, with stricter constraints generally doing more harm. On classification tasks, though, strict formats could help by reducing answer selection errors<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<p>The practical lesson is to separate thinking from formatting:</p>
+<ul>
+<li><strong>For extraction and classification</strong>, strict schemas are usually a clear win.</li>
+<li><strong>For tasks that need reasoning</strong>, give the model room to reason first, either in a free-text field within the schema placed before the answer fields, or in a separate step, then produce the structured result. The paper also found that simple corrective steps, such as reformatting outputs that fail to parse, improve reliability<sup class="cite"><a href="#ref-5">5</a></sup>.</li>
+<li><strong>Measure both ways</strong> on your own evaluation set before standardising.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>Designing schemas that help the model</h2>
+<ol>
+<li><strong>Keep schemas small and flat</strong> where possible. Deeply nested, highly optional schemas are harder for models and may hit provider complexity limits.</li>
+<li><strong>Use enums for categories</strong> instead of free strings, so downstream systems never see an unexpected label.</li>
+<li><strong>Make uncertainty representable.</strong> Include an explicit "unknown" or "not found" option and a place for a short reason, so the model isn't forced to invent a value to satisfy a required field.</li>
+<li><strong>Describe fields clearly.</strong> Field descriptions are part of the prompt; vague names produce vague values.</li>
+<li><strong>Order fields deliberately.</strong> Put evidence or reasoning fields before conclusions, so the model generates support before the answer.</li>
+<li><strong>Version schemas</strong> like any interface, with the contract discipline in <a href="/insights/data-contracts-playbook/">data contracts</a>.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2>Validate the content, not just the shape</h2>
+<p>Once format failures disappear, the remaining failures are about meaning. The checks I put after every structured call:</p>
+<ul>
+<li><strong>Business rules in code</strong>: totals add up, dates are in range, referenced IDs exist, a refund doesn't exceed the order value.</li>
+<li><strong>Cross-checks against source</strong>: extracted values that should appear in the input document actually do.</li>
+<li><strong>Confidence routing</strong>: low-confidence or "unknown" results go to a person instead of straight into the system of record.</li>
+<li><strong>Evaluation on real cases</strong>, field by field, as in <a href="/insights/llm-evaluation-sets-that-predict-production/">evaluation sets that predict production</a>. Report accuracy per field, not just "valid JSON rate".</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>Structured outputs and agents</h2>
+<p>For agents, strict tool definitions mean every tool call arrives with well-formed arguments, which removes a whole category of runtime errors. It doesn't make those calls safe. Arguments still need authorisation and policy checks outside the model, and the session-level containment described in <a href="/insights/prompt-injection-defence-for-agents/">prompt injection defence</a> and <a href="/insights/mcp-apps-tool-annotations/">MCP tool annotations</a>. A schema-valid instruction to transfer money to the wrong account is still the wrong instruction.</p>
+</section>
+
+<section class="block">
+<h2>A note on portability</h2>
+<p>Providers implement structured outputs differently, with different parameters and supported schema subsets. If you use several models, as in <a href="/insights/llm-model-routing/">model routing</a>, keep one canonical schema in your codebase and let a gateway translate it per provider, then test each route. Self-hosted models can get similar behaviour from constrained decoding in the serving layer, covered in <a href="/insights/llm-inference-serving-vllm/">LLM inference serving</a>.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I design LLM integrations that downstream systems can trust, from schemas and validation to evaluation and agent controls. See my <a href="/ai-architect/">AI architecture work</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
