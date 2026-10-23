@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Prompt caching: the cheapest LLM cost cut most teams leave unused</title>
+<meta name="description" content="Prompt caching can cut cost and latency on repeated prompt prefixes, but only if prompts are designed for it. How caching works across major providers and how I structure prompts for it." />
+<meta name="keywords" content="prompt caching, context caching, LLM cost optimisation, LLM latency, Claude prompt caching, OpenAI prompt caching, Gemini context caching, prefix caching, AI gateway, AI architect" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://asksumanta.com/insights/prompt-caching-llm-cost-latency/" />
+<meta name="theme-color" content="#111214" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="Prompt caching: the cheapest LLM cost cut most teams leave unused" />
+<meta property="og:description" content="Prompt caching can cut cost and latency on repeated prompt prefixes, but only if prompts are designed for it. How caching works across major providers and how I structure prompts for it." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://asksumanta.com/insights/prompt-caching-llm-cost-latency/" />
+<meta property="og:image" content="https://asksumanta.com/assets/og/prompt-caching-llm-cost-latency.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Prompt caching: the cheapest LLM cost cut most teams leave unused" />
+<meta name="twitter:description" content="Prompt caching can cut cost and latency on repeated prompt prefixes, but only if prompts are designed for it. How caching works across major providers and how I structure prompts for it." />
+<meta name="twitter:image" content="https://asksumanta.com/assets/og/prompt-caching-llm-cost-latency.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "BlogPosting", "headline": "Prompt caching: the cheapest LLM cost and latency win most teams leave on the table", "description": "Prompt caching can cut cost and latency on repeated prompt prefixes, but only if prompts are designed for it. How caching works across major providers and how I structure prompts for it.", "datePublished": "2026-10-23T12:15:00+04:00", "dateModified": "2026-10-23T12:15:00+04:00", "articleSection": "AI architecture · Cost", "genre": "Playbook", "citation": [{"@type": "CreativeWork", "name": "Prompt caching", "url": "https://docs.claude.com/en/docs/build-with-claude/prompt-caching"}, {"@type": "CreativeWork", "name": "Prompt caching 201", "url": "https://developers.openai.com/cookbook/examples/prompt_caching_201"}, {"@type": "CreativeWork", "name": "Context caching", "url": "https://ai.google.dev/gemini-api/docs/caching"}, {"@type": "CreativeWork", "name": "Prompt caching for Claude models", "url": "https://cloud.google.com/vertex-ai/generative-ai/docs/partner-models/claude/prompt-caching"}, {"@type": "CreativeWork", "name": "Efficient Memory Management for Large Language Model Serving with PagedAttention", "url": "https://arxiv.org/abs/2309.06180"}], "author": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "publisher": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "mainEntityOfPage": "https://asksumanta.com/insights/prompt-caching-llm-cost-latency/", "image": "https://asksumanta.com/assets/og/prompt-caching-llm-cost-latency.png", "keywords": "prompt caching, context caching, LLM cost optimisation, LLM latency, Claude prompt caching, OpenAI prompt caching, Gemini context caching, prefix caching, AI gateway, AI architect", "wordCount": 992}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://asksumanta.com/"}, {"@type": "ListItem", "position": 2, "name": "Insights", "item": "https://asksumanta.com/insights/"}, {"@type": "ListItem", "position": 3, "name": "Prompt caching: the cheapest LLM cost and latency win most teams leave on the table", "item": "https://asksumanta.com/insights/prompt-caching-llm-cost-latency/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What is prompt caching?", "acceptedAnswer": {"@type": "Answer", "text": "Reusing the processed form of a prompt prefix that has been seen recently, so repeated prefixes such as system prompts, tool definitions or reference documents are cheaper and faster to process on later requests."}}, {"@type": "Question", "name": "How much does prompt caching save?", "acceptedAnswer": {"@type": "Answer", "text": "It depends on the provider and your traffic. For example, Anthropic's documentation prices cache reads at a fraction of the base input price, with a premium for writing to the cache. Actual savings depend on how much of each prompt is a stable, repeated prefix and how often it is reused within the cache lifetime."}}, {"@type": "Question", "name": "Why don't teams get cache hits?", "acceptedAnswer": {"@type": "Answer", "text": "Usually because something that changes on every request, such as a timestamp, user name or request ID, appears early in the prompt, which makes every prefix unique. Stable content must come first and variable content last."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+</script>
+</head>
+<body class="sub is-post">
+<div class="progress" id="progress"></div>
+<nav>
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="/#practice">Services</a>
+      <a href="/#work">Case studies</a>
+      <a href="/insights/">Insights</a>
+      <a href="/#assess">Analyse</a>
+      <a href="/#connect">Connect</a>
+    </div>
+    <div class="nav-r">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/insights/">Insights</a> <span>/</span> <em>Prompt caching: the cheapest LLM cost and latency win most teams leave on the table</em></div>
+    <div class="kicker">AI architecture · Cost</div>
+    <h1>Prompt caching: the cheapest LLM cost and latency win most teams leave on the table</h1>
+    <p class="sub-lede">Most production prompts repeat the same long prefix on every call: system instructions, policies, tool definitions, reference documents. Every major model provider now offers a way to stop paying full price for it. Whether you benefit depends almost entirely on how your prompts are built.</p>
+    <div class="ameta"><span class="fmt">Playbook</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-10-23T12:15:00+04:00">23 Oct 2026 · 12:15 GST</time><span>9 min read</span><span>5 sources</span></div><div class="atags"><span class="tagp">#ai</span><span class="tagp">#llm</span><span class="tagp">#finops</span><span class="tagp">#platform</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Playbook cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><circle cx="560" cy="61" r="8" class="cv-dot hl"/><rect x="590" y="50" width="489" height="22" class="cv-bar hl"/><circle cx="560" cy="109" r="8" class="cv-dot"/><rect x="590" y="98" width="166" height="22" class="cv-bar"/><circle cx="560" cy="157" r="8" class="cv-dot"/><rect x="590" y="146" width="205" height="22" class="cv-bar"/><circle cx="560" cy="205" r="8" class="cv-dot hl"/><rect x="590" y="194" width="160" height="22" class="cv-bar hl"/><circle cx="560" cy="253" r="8" class="cv-dot"/><rect x="590" y="242" width="273" height="22" class="cv-bar"/><circle cx="560" cy="301" r="8" class="cv-dot"/><rect x="590" y="290" width="439" height="22" class="cv-bar"/><circle cx="560" cy="349" r="8" class="cv-dot hl"/><rect x="590" y="338" width="309" height="22" class="cv-bar hl"/><text x="60" y="90" class="cv-k">PLAYBOOK · AI ARCHITECTURE · COST</text><text x="60" y="350" class="cv-n">23 Oct 2026 · 12:15 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <p>Look at the prompts your AI product actually sends. In many production systems, the first several thousand tokens are identical on every call: the system prompt, safety and style rules, tool definitions, perhaps a policy document or schema. Only the last few hundred tokens are specific to the user and the request. Yet many teams pay full input price, and wait for full processing, on that repeated prefix every time.</p>
+<p>Prompt caching exists to fix exactly that. It is usually the cheapest optimisation available, and the most commonly wasted.</p>
+
+<section class="block">
+<h2 id="how-it-works">How it works</h2>
+<p>When a model processes a prompt, it builds internal state for every token. If the next request begins with exactly the same tokens, that work can in principle be reused rather than repeated. Self-hosted serving engines do this with prefix caching on top of memory management techniques such as PagedAttention<sup class="cite"><a href="#ref-5">5</a></sup>, which I cover in <a href="/insights/llm-inference-serving-vllm/">LLM inference serving</a>. Hosted model providers expose the same idea as a pricing and latency feature.</p>
+<p>The key word is <strong>prefix</strong>. Caches match from the start of the prompt. Change one token near the beginning and everything after it is a miss.</p>
+</section>
+
+<section class="block">
+<h2 id="how-the-major-providers-differ">How the major providers differ</h2>
+<table class="tbl">
+<thead><tr><th>Provider</th><th>How it's enabled</th><th>What the documentation describes</th></tr></thead>
+<tbody>
+<tr><td>Anthropic (Claude)</td><td>Explicit cache breakpoints in the request</td><td>A default cache lifetime of five minutes, refreshed on use, with a one-hour option; cache writes cost more than base input and cache reads cost a small fraction of it<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-4">4</a></sup></td></tr>
+<tr><td>OpenAI</td><td>Automatic for long enough prompts</td><td>Applies automatically to prompts of 1,024 tokens or more, with hits in 128-token increments and cached tokens reported in the usage data<sup class="cite"><a href="#ref-2">2</a></sup></td></tr>
+<tr><td>Google Gemini</td><td>Implicit by default on recent models, or explicit caches</td><td>Implicit caching passes savings through on hits without a guarantee; explicit caching lets you create a cache with a configurable time to live<sup class="cite"><a href="#ref-3">3</a></sup></td></tr>
+</tbody>
+</table>
+<p>Prices, minimum sizes and lifetimes change, and differ by model and by cloud platform. Read the current documentation for the models you actually use, and measure, rather than relying on any table, including this one.</p>
+<div class="callout"><p>Explicit caching rewards teams who design for it. Automatic caching rewards teams who happen to have stable prefixes. Either way, prompt structure decides the outcome.</p></div>
+</section>
+
+<section class="block">
+<h2 id="why-most-teams-miss">Why most teams miss</h2>
+<p>The usual culprits are small and easy to fix once you look:</p>
+<ul>
+<li><strong>A timestamp or request ID at the top</strong> of the system prompt, so every prefix is unique.</li>
+<li><strong>The user's name or account details</strong> injected into the system prompt rather than the user turn.</li>
+<li><strong>Tool definitions in a different order</strong> on each request, because they're built from an unordered map.</li>
+<li><strong>Retrieved documents placed before</strong> the static instructions.</li>
+<li><strong>Prompt templates edited constantly</strong>, invalidating caches across all traffic with every deployment.</li>
+<li><strong>Traffic too sparse</strong> for the cache lifetime: if a given prefix is used once an hour and the cache lasts minutes, it will rarely hit.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2 id="the-playbook">The playbook</h2>
+<ol>
+<li><strong>Order prompts from most stable to least stable.</strong> Static instructions and tool definitions first, then slowly changing reference material, then per-user context, then the request itself.</li>
+<li><strong>Make serialisation deterministic.</strong> Sort tool definitions and keys, fix whitespace and formatting, and version templates so the same version always produces the same bytes.</li>
+<li><strong>Move volatile values to the end.</strong> Dates, user details and request metadata belong in the final turn, not the system prompt.</li>
+<li><strong>Use explicit breakpoints where available</strong>, placing them after the large stable sections. Consider the longer lifetime for traffic that is regular but not constant, and compare the extra write cost with the expected reads<sup class="cite"><a href="#ref-1">1</a></sup>.</li>
+<li><strong>Measure hit rates from usage data.</strong> Providers report cached tokens in responses<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>. Record them per route in your gateway alongside cost, as in <a href="/insights/focus-finops-ai-cost-allocation/">FOCUS and AI spend</a>.</li>
+<li><strong>Treat prompt changes as cache events.</strong> A template change resets caching for that route. Batch changes and watch cost after deployment.</li>
+<li><strong>Route consistently.</strong> If you use several models or regions, send requests with the same prefix to the same destination where possible, so caches have a chance to warm. The same logic applies to replicas in self-hosted serving.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2 id="where-it-pays-most">Where it pays most</h2>
+<ul>
+<li><strong>Agents.</strong> Long system prompts and large tool catalogues, repeated across many steps of the same task. Caching often makes multi-step agents economically viable; see <a href="/insights/evaluating-ai-agents-reliability/">evaluating AI agents</a> for keeping them reliable too.</li>
+<li><strong>Document question answering.</strong> When users ask several questions about the same long document, cache the document once and vary the question, which pairs well with the approach in <a href="/insights/long-context-vs-rag/">long context or RAG</a>.</li>
+<li><strong>Batch processing</strong> with a shared instruction block and many short inputs.</li>
+<li><strong>Coding assistants</strong> that resend large amounts of repository context on each turn.</li>
+</ul>
+<p>It pays least for short prompts, highly personalised prompts and very low traffic, where little is shared or the cache expires between uses.</p>
+</section>
+
+<section class="block">
+<h2 id="caching-routing-and-the-gateway">Caching, routing and the gateway</h2>
+<p>Prompt caching interacts with the other cost levers. <a href="/insights/llm-model-routing/">Model routing</a> that sends similar requests to different models can split traffic and lower hit rates on each. Retrieval that returns results in a different order each time defeats caching of the retrieved section. A gateway that owns prompt assembly, routing and measurement in one place is the simplest way to manage these trade-offs, and it's the same gateway that enforces security policies in <a href="/insights/securing-mcp-servers-checklist/">securing MCP servers</a>.</p>
+</section>
+
+<section class="block">
+<h2 id="data-protection-note">Data protection note</h2>
+<p>Caching keeps processed prompt state on the provider's side for a period. For regulated data, check each provider's documentation and your agreements on how cached content is isolated and retained, and whether that is compatible with obligations such as those in <a href="/insights/hipaa-security-rule-proposal-ai-platforms/">the HIPAA Security Rule proposal</a> or Gulf residency rules. For the most sensitive workloads, self-hosted serving with prefix caching keeps the cache inside your own boundary.</p>
+</section>
+
+<section class="block">
+<h2 id="how-i-can-help">How I can help</h2>
+<p>I review AI products for cost and latency, from prompt structure and caching to routing and serving, and build the gateway measurements that keep savings visible. See my <a href="/ai-architect/">AI architecture work</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://docs.claude.com/en/docs/build-with-claude/prompt-caching" target="_blank" rel="noopener">Prompt caching</a><small>Anthropic documentation</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://developers.openai.com/cookbook/examples/prompt_caching_201" target="_blank" rel="noopener">Prompt caching 201</a><small>OpenAI Cookbook</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://ai.google.dev/gemini-api/docs/caching" target="_blank" rel="noopener">Context caching</a><small>Google AI for Developers</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://cloud.google.com/vertex-ai/generative-ai/docs/partner-models/claude/prompt-caching" target="_blank" rel="noopener">Prompt caching for Claude models</a><small>Google Cloud Vertex AI documentation</small></div></li><li id="ref-5"><span class="rn">5</span><div><a href="https://arxiv.org/abs/2309.06180" target="_blank" rel="noopener">Efficient Memory Management for Large Language Model Serving with PagedAttention</a><small>Kwon et al. (arXiv; SOSP 2023) · 2023</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fprompt-caching-llm-cost-latency%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fprompt-caching-llm-cost-latency%2F&amp;text=Prompt%20caching%3A%20the%20cheapest%20LLM%20cost%20and%20latency%20win%20most%20teams%20leave%20on%20the%20table" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=Prompt%20caching%3A%20the%20cheapest%20LLM%20cost%20and%20latency%20win%20most%20teams%20leave%20on%20the%20table%20https%3A%2F%2Fasksumanta.com%2Finsights%2Fprompt-caching-llm-cost-latency%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://asksumanta.com/insights/prompt-caching-llm-cost-latency/">Copy link</button></div>
+      <div class="pnav"><a class="pn prev" href="/insights/federated-health-analytics-ohdsi/"><small>← Previous</small><b>Federated health analytics: how to generate evidence without moving patient data</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#how-it-works">How it works</a></li><li><a href="#how-the-major-providers-differ">How the major providers differ</a></li><li><a href="#why-most-teams-miss">Why most teams miss</a></li><li><a href="#the-playbook">The playbook</a></li><li><a href="#where-it-pays-most">Where it pays most</a></li><li><a href="#caching-routing-and-the-gateway">Caching, routing and the gateway</a></li><li><a href="#data-protection-note">Data protection note</a></li><li><a href="#how-i-can-help">How I can help</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>What is prompt caching?</summary><p>Reusing the processed form of a prompt prefix that has been seen recently, so repeated prefixes such as system prompts, tool definitions or reference documents are cheaper and faster to process on later requests.</p></details><details class="rise"><summary>How much does prompt caching save?</summary><p>It depends on the provider and your traffic. For example, Anthropic&#x27;s documentation prices cache reads at a fraction of the base input price, with a premium for writing to the cache. Actual savings depend on how much of each prompt is a stable, repeated prefix and how often it is reused within the cache lifetime.</p></details><details class="rise"><summary>Why don&#x27;t teams get cache hits?</summary><p>Usually because something that changes on every request, such as a timestamp, user name or request ID, appears early in the prompt, which makes every prefix unique. Stable content must come first and variable content last.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/ai-architect/"><small>Service</small><b>AI &amp; LLM architecture</b><span>I design and build AI systems that leadership can trust: grounded in your data, measured by evaluations, governed by your rules and priced so they make sense at scale.</span><i>→</i></a><a class="rcard rise" href="/fractional-cto/"><small>Service</small><b>Fractional CTO</b><span>I work as a part-time CTO for founders, CEOs and boards who need experienced technical judgement now, and a team that can carry it on after I step back.</span><i>→</i></a><a class="rcard rise" href="/technical-due-diligence/"><small>Service</small><b>Technical due diligence</b><span>I give investors an independent, plain-language view of a company&#x27;s technology, team and AI claims, so the risks are priced in before the deal closes, not discovered after.</span><i>→</i></a><a class="rcard rise" href="/insights/federated-health-analytics-ohdsi/"><small>Insight</small><b>Federated health analytics: how to generate evidence without moving patient data</b><span>Health data is increasingly required to stay where it is: inside a hospital, a country or a secure environment. Federated analytics turns that from a blocker into a design principle. The OHDSI network has been doing it at scale for years, and its lessons apply well beyond research.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: Prompt caching: the cheapest LLM cost and latency win most teams leave on the table">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
+        <p class="floc">United States &amp; UAE · working globally</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/uae/">Fractional CTO in the UAE</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/prompt-caching-llm-cost-latency/">Prompt caching: the cheapest LLM cost and latency win most teams leave on the table</a></li><li><a href="/insights/federated-health-analytics-ohdsi/">Federated health analytics: how to generate evidence without moving patient data</a></li><li><a href="/insights/long-context-vs-rag/">Long context or RAG? What the research says about very large context windows</a></li><li><a href="/insights/iso-42001-vs-nist-ai-rmf/">ISO/IEC 42001 or the NIST AI RMF? How to choose, and how to use both</a></li><li><a href="/insights/opentelemetry-span-events-deprecation/">OpenTelemetry is deprecating the Span Events API: what to change, and when</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>

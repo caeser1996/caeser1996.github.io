@@ -1,0 +1,75 @@
+<!--{"title": "Prompt caching: the cheapest LLM cost cut most teams leave unused", "description": "Prompt caching can cut cost and latency on repeated prompt prefixes, but only if prompts are designed for it. How caching works across major providers and how I structure prompts for it.", "h1": "Prompt caching: the cheapest LLM cost and latency win most teams leave on the table", "kicker": "AI architecture · Cost", "lede": "Most production prompts repeat the same long prefix on every call: system instructions, policies, tool definitions, reference documents. Every major model provider now offers a way to stop paying full price for it. Whether you benefit depends almost entirely on how your prompts are built.", "date": "2026-10-23", "datetime": "2026-10-23T12:15:00+04:00", "readtime": "9 min read", "format": "playbook", "tags": ["ai", "llm", "finops", "platform"], "keywords": ["prompt caching", "context caching", "LLM cost optimisation", "LLM latency", "Claude prompt caching", "OpenAI prompt caching", "Gemini context caching", "prefix caching", "AI gateway", "AI architect"], "faq": [["What is prompt caching?", "Reusing the processed form of a prompt prefix that has been seen recently, so repeated prefixes such as system prompts, tool definitions or reference documents are cheaper and faster to process on later requests."], ["How much does prompt caching save?", "It depends on the provider and your traffic. For example, Anthropic's documentation prices cache reads at a fraction of the base input price, with a premium for writing to the cache. Actual savings depend on how much of each prompt is a stable, repeated prefix and how often it is reused within the cache lifetime."], ["Why don't teams get cache hits?", "Usually because something that changes on every request, such as a timestamp, user name or request ID, appears early in the prompt, which makes every prefix unique. Stable content must come first and variable content last."]], "related": ["/ai-architect/", "/fractional-cto/", "/technical-due-diligence/"], "citations": [{"title": "Prompt caching", "url": "https://docs.claude.com/en/docs/build-with-claude/prompt-caching", "publisher": "Anthropic documentation"}, {"title": "Prompt caching 201", "url": "https://developers.openai.com/cookbook/examples/prompt_caching_201", "publisher": "OpenAI Cookbook"}, {"title": "Context caching", "url": "https://ai.google.dev/gemini-api/docs/caching", "publisher": "Google AI for Developers"}, {"title": "Prompt caching for Claude models", "url": "https://cloud.google.com/vertex-ai/generative-ai/docs/partner-models/claude/prompt-caching", "publisher": "Google Cloud Vertex AI documentation"}, {"title": "Efficient Memory Management for Large Language Model Serving with PagedAttention", "url": "https://arxiv.org/abs/2309.06180", "publisher": "Kwon et al. (arXiv; SOSP 2023)", "date": "2023"}]}-->
+<p>Look at the prompts your AI product actually sends. In many production systems, the first several thousand tokens are identical on every call: the system prompt, safety and style rules, tool definitions, perhaps a policy document or schema. Only the last few hundred tokens are specific to the user and the request. Yet many teams pay full input price, and wait for full processing, on that repeated prefix every time.</p>
+<p>Prompt caching exists to fix exactly that. It is usually the cheapest optimisation available, and the most commonly wasted.</p>
+
+<section class="block">
+<h2>How it works</h2>
+<p>When a model processes a prompt, it builds internal state for every token. If the next request begins with exactly the same tokens, that work can in principle be reused rather than repeated. Self-hosted serving engines do this with prefix caching on top of memory management techniques such as PagedAttention<sup class="cite"><a href="#ref-5">5</a></sup>, which I cover in <a href="/insights/llm-inference-serving-vllm/">LLM inference serving</a>. Hosted model providers expose the same idea as a pricing and latency feature.</p>
+<p>The key word is <strong>prefix</strong>. Caches match from the start of the prompt. Change one token near the beginning and everything after it is a miss.</p>
+</section>
+
+<section class="block">
+<h2>How the major providers differ</h2>
+<table class="tbl">
+<thead><tr><th>Provider</th><th>How it's enabled</th><th>What the documentation describes</th></tr></thead>
+<tbody>
+<tr><td>Anthropic (Claude)</td><td>Explicit cache breakpoints in the request</td><td>A default cache lifetime of five minutes, refreshed on use, with a one-hour option; cache writes cost more than base input and cache reads cost a small fraction of it<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-4">4</a></sup></td></tr>
+<tr><td>OpenAI</td><td>Automatic for long enough prompts</td><td>Applies automatically to prompts of 1,024 tokens or more, with hits in 128-token increments and cached tokens reported in the usage data<sup class="cite"><a href="#ref-2">2</a></sup></td></tr>
+<tr><td>Google Gemini</td><td>Implicit by default on recent models, or explicit caches</td><td>Implicit caching passes savings through on hits without a guarantee; explicit caching lets you create a cache with a configurable time to live<sup class="cite"><a href="#ref-3">3</a></sup></td></tr>
+</tbody>
+</table>
+<p>Prices, minimum sizes and lifetimes change, and differ by model and by cloud platform. Read the current documentation for the models you actually use, and measure, rather than relying on any table, including this one.</p>
+<div class="callout"><p>Explicit caching rewards teams who design for it. Automatic caching rewards teams who happen to have stable prefixes. Either way, prompt structure decides the outcome.</p></div>
+</section>
+
+<section class="block">
+<h2>Why most teams miss</h2>
+<p>The usual culprits are small and easy to fix once you look:</p>
+<ul>
+<li><strong>A timestamp or request ID at the top</strong> of the system prompt, so every prefix is unique.</li>
+<li><strong>The user's name or account details</strong> injected into the system prompt rather than the user turn.</li>
+<li><strong>Tool definitions in a different order</strong> on each request, because they're built from an unordered map.</li>
+<li><strong>Retrieved documents placed before</strong> the static instructions.</li>
+<li><strong>Prompt templates edited constantly</strong>, invalidating caches across all traffic with every deployment.</li>
+<li><strong>Traffic too sparse</strong> for the cache lifetime: if a given prefix is used once an hour and the cache lasts minutes, it will rarely hit.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>The playbook</h2>
+<ol>
+<li><strong>Order prompts from most stable to least stable.</strong> Static instructions and tool definitions first, then slowly changing reference material, then per-user context, then the request itself.</li>
+<li><strong>Make serialisation deterministic.</strong> Sort tool definitions and keys, fix whitespace and formatting, and version templates so the same version always produces the same bytes.</li>
+<li><strong>Move volatile values to the end.</strong> Dates, user details and request metadata belong in the final turn, not the system prompt.</li>
+<li><strong>Use explicit breakpoints where available</strong>, placing them after the large stable sections. Consider the longer lifetime for traffic that is regular but not constant, and compare the extra write cost with the expected reads<sup class="cite"><a href="#ref-1">1</a></sup>.</li>
+<li><strong>Measure hit rates from usage data.</strong> Providers report cached tokens in responses<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>. Record them per route in your gateway alongside cost, as in <a href="/insights/focus-finops-ai-cost-allocation/">FOCUS and AI spend</a>.</li>
+<li><strong>Treat prompt changes as cache events.</strong> A template change resets caching for that route. Batch changes and watch cost after deployment.</li>
+<li><strong>Route consistently.</strong> If you use several models or regions, send requests with the same prefix to the same destination where possible, so caches have a chance to warm. The same logic applies to replicas in self-hosted serving.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2>Where it pays most</h2>
+<ul>
+<li><strong>Agents.</strong> Long system prompts and large tool catalogues, repeated across many steps of the same task. Caching often makes multi-step agents economically viable; see <a href="/insights/evaluating-ai-agents-reliability/">evaluating AI agents</a> for keeping them reliable too.</li>
+<li><strong>Document question answering.</strong> When users ask several questions about the same long document, cache the document once and vary the question, which pairs well with the approach in <a href="/insights/long-context-vs-rag/">long context or RAG</a>.</li>
+<li><strong>Batch processing</strong> with a shared instruction block and many short inputs.</li>
+<li><strong>Coding assistants</strong> that resend large amounts of repository context on each turn.</li>
+</ul>
+<p>It pays least for short prompts, highly personalised prompts and very low traffic, where little is shared or the cache expires between uses.</p>
+</section>
+
+<section class="block">
+<h2>Caching, routing and the gateway</h2>
+<p>Prompt caching interacts with the other cost levers. <a href="/insights/llm-model-routing/">Model routing</a> that sends similar requests to different models can split traffic and lower hit rates on each. Retrieval that returns results in a different order each time defeats caching of the retrieved section. A gateway that owns prompt assembly, routing and measurement in one place is the simplest way to manage these trade-offs, and it's the same gateway that enforces security policies in <a href="/insights/securing-mcp-servers-checklist/">securing MCP servers</a>.</p>
+</section>
+
+<section class="block">
+<h2>Data protection note</h2>
+<p>Caching keeps processed prompt state on the provider's side for a period. For regulated data, check each provider's documentation and your agreements on how cached content is isolated and retained, and whether that is compatible with obligations such as those in <a href="/insights/hipaa-security-rule-proposal-ai-platforms/">the HIPAA Security Rule proposal</a> or Gulf residency rules. For the most sensitive workloads, self-hosted serving with prefix caching keeps the cache inside your own boundary.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I review AI products for cost and latency, from prompt structure and caching to routing and serving, and build the gateway measurements that keep savings visible. See my <a href="/ai-architect/">AI architecture work</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
