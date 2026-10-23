@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>OpenTelemetry goes &#x27;stable by default&#x27;: a Kubernetes migration plan</title>
+<meta name="description" content="OpenTelemetry is prioritising stability, and the Kubernetes attributes processor hit v1.0.0 with stable conventions and breaking renames. What changed and how I&#x27;d plan the migration." />
+<meta name="keywords" content="OpenTelemetry stable by default, k8sattributes processor, Kubernetes semantic conventions, OpenTelemetry Collector stability, semantic conventions v1.42.0, observability migration, Kubernetes observability, OpenTelemetry feature gates, telemetry schema migration, observability consultant" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://asksumanta.com/insights/opentelemetry-stable-by-default-kubernetes/" />
+<meta name="theme-color" content="#111214" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="OpenTelemetry goes &#x27;stable by default&#x27;: a Kubernetes migration plan" />
+<meta property="og:description" content="OpenTelemetry is prioritising stability, and the Kubernetes attributes processor hit v1.0.0 with stable conventions and breaking renames. What changed and how I&#x27;d plan the migration." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://asksumanta.com/insights/opentelemetry-stable-by-default-kubernetes/" />
+<meta property="og:image" content="https://asksumanta.com/assets/og/opentelemetry-stable-by-default-kubernetes.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="OpenTelemetry goes &#x27;stable by default&#x27;: a Kubernetes migration plan" />
+<meta name="twitter:description" content="OpenTelemetry is prioritising stability, and the Kubernetes attributes processor hit v1.0.0 with stable conventions and breaking renames. What changed and how I&#x27;d plan the migration." />
+<meta name="twitter:image" content="https://asksumanta.com/assets/og/opentelemetry-stable-by-default-kubernetes.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "BlogPosting", "headline": "OpenTelemetry goes 'stable by default': what it means for Kubernetes telemetry, and how to migrate", "description": "OpenTelemetry is prioritising stability, and the Kubernetes attributes processor hit v1.0.0 with stable conventions and breaking renames. What changed and how I'd plan the migration.", "datePublished": "2026-10-23T20:15:00+04:00", "dateModified": "2026-10-23T20:15:00+04:00", "articleSection": "Cloud · Observability", "genre": "Playbook", "citation": [{"@type": "CreativeWork", "name": "Evolving OpenTelemetry's stabilization and release practices", "url": "https://opentelemetry.io/blog/2025/stability-proposal-announcement/"}, {"@type": "CreativeWork", "name": "Kubernetes attributes promoted to release candidate in OTel Semantic Conventions", "url": "https://opentelemetry.io/blog/2026/k8s-semconv-rc/"}, {"@type": "CreativeWork", "name": "Kubernetes attributes processor reaches v1.0.0 milestone", "url": "https://opentelemetry.io/blog/2026/k8s-attributes-processor-v1/"}, {"@type": "CreativeWork", "name": "Semantic Conventions v1.42.0", "url": "https://github.com/open-telemetry/semantic-conventions/releases/tag/v1.42.0"}, {"@type": "CreativeWork", "name": "Kubernetes attributes processor: semantic conventions compatibility", "url": "https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/42e6adb99d409af1935536652e633d49c98e77cd/processor/k8sattributesprocessor#semantic-conventions-compatibility"}], "author": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "publisher": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "mainEntityOfPage": "https://asksumanta.com/insights/opentelemetry-stable-by-default-kubernetes/", "image": "https://asksumanta.com/assets/og/opentelemetry-stable-by-default-kubernetes.png", "keywords": "OpenTelemetry stable by default, k8sattributes processor, Kubernetes semantic conventions, OpenTelemetry Collector stability, semantic conventions v1.42.0, observability migration, Kubernetes observability, OpenTelemetry feature gates, telemetry schema migration, observability consultant", "wordCount": 745}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://asksumanta.com/"}, {"@type": "ListItem", "position": 2, "name": "Insights", "item": "https://asksumanta.com/insights/"}, {"@type": "ListItem", "position": 3, "name": "OpenTelemetry goes 'stable by default': what it means for Kubernetes telemetry, and how to migrate", "item": "https://asksumanta.com/insights/opentelemetry-stable-by-default-kubernetes/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What does 'stable by default' mean in OpenTelemetry?", "acceptedAnswer": {"@type": "Answer", "text": "It is a goal set by the OpenTelemetry Governance Committee in late 2025: distributions should be stable by default, with standard ways to opt in to experimental features, and a single, consistent set of stability criteria covering documentation, performance testing and benchmarks."}}, {"@type": "Question", "name": "What changed with the Kubernetes attributes processor?", "acceptedAnswer": {"@type": "Answer", "text": "It reached v1.0.0 in September 2026, meeting the Collector's stable criteria. It now emits Kubernetes attributes based on semantic conventions that became stable in Semantic Conventions v1.42.0, which involves some breaking changes for existing users, covered by a migration guide."}}, {"@type": "Question", "name": "How can I test the new Kubernetes attribute schema safely?", "acceptedAnswer": {"@type": "Answer", "text": "The processor offered feature gates, processor.k8sattributes.EmitV1K8sConventions and processor.k8sattributes.DontEmitV0K8sConventions, to switch to the new conventions gradually. Check the processor's documentation for the gates and behaviour in your Collector version."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+</script>
+</head>
+<body class="sub is-post">
+<div class="progress" id="progress"></div>
+<nav>
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="/#practice">Services</a>
+      <a href="/#work">Case studies</a>
+      <a href="/insights/">Insights</a>
+      <a href="/#assess">Analyse</a>
+      <a href="/#connect">Connect</a>
+    </div>
+    <div class="nav-r">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/insights/">Insights</a> <span>/</span> <em>OpenTelemetry goes &#x27;stable by default&#x27;: what it means for Kubernetes telemetry, and how to migrate</em></div>
+    <div class="kicker">Cloud · Observability</div>
+    <h1>OpenTelemetry goes &#x27;stable by default&#x27;: what it means for Kubernetes telemetry, and how to migrate</h1>
+    <p class="sub-lede">OpenTelemetry has spent its first years growing fast. Its governance committee has now made stability the priority, and the first big results are landing in Kubernetes telemetry, including attribute renames that will touch dashboards and alerts.</p>
+    <div class="ameta"><span class="fmt">Playbook</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-10-23T20:15:00+04:00">23 Oct 2026 · 20:15 GST</time><span>8 min read</span><span>5 sources</span></div><div class="atags"><span class="tagp">#observability</span><span class="tagp">#opentelemetry</span><span class="tagp">#kubernetes</span><span class="tagp">#platform</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Playbook cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><circle cx="560" cy="61" r="8" class="cv-dot hl"/><rect x="590" y="50" width="466" height="22" class="cv-bar hl"/><circle cx="560" cy="109" r="8" class="cv-dot"/><rect x="590" y="98" width="188" height="22" class="cv-bar"/><circle cx="560" cy="157" r="8" class="cv-dot"/><rect x="590" y="146" width="462" height="22" class="cv-bar"/><circle cx="560" cy="205" r="8" class="cv-dot hl"/><rect x="590" y="194" width="191" height="22" class="cv-bar hl"/><circle cx="560" cy="253" r="8" class="cv-dot"/><rect x="590" y="242" width="360" height="22" class="cv-bar"/><circle cx="560" cy="301" r="8" class="cv-dot"/><rect x="590" y="290" width="494" height="22" class="cv-bar"/><circle cx="560" cy="349" r="8" class="cv-dot hl"/><rect x="590" y="338" width="428" height="22" class="cv-bar hl"/><text x="60" y="90" class="cv-k">PLAYBOOK · CLOUD · OBSERVABILITY</text><text x="60" y="350" class="cv-n">23 Oct 2026 · 20:15 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <p>Ask platform teams what frustrates them about OpenTelemetry and stability comes up quickly: components at different maturity levels, attribute names that change between releases, and upgrades that quietly break dashboards. The project has heard the same thing. In November 2025 its Governance Committee wrote that complexity and lack of stability were creating impediments to production deployments, and set out a plan to change priorities<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<p>A year on, the first concrete results are in, and Kubernetes telemetry is where most platform teams will feel them.</p>
+
+<section class="block">
+<h2 id="what-stable-by-default-means">What 'stable by default' means</h2>
+<p>The committee's goals were explicit<sup class="cite"><a href="#ref-1">1</a></sup>:</p>
+<ul>
+<li>All OpenTelemetry distributions should be <strong>stable by default</strong>, with standard mechanisms to opt in to experimental features.</li>
+<li>A <strong>single, consistent set of stability criteria</strong>, including documentation, performance testing and benchmarks.</li>
+<li>Easier stabilisation of instrumentation libraries, and federation of semantic conventions.</li>
+<li><strong>Epoch releases</strong> that are easier for organisations to consume.</li>
+</ul>
+<p>For a platform team, the practical promise is fewer surprises: stable components you can rely on, and clearly marked opt-ins for anything that isn't.</p>
+</section>
+
+<section class="block">
+<h2 id="the-kubernetes-example">The Kubernetes example</h2>
+<p>The Kubernetes attributes processor, which enriches telemetry with metadata such as pod, namespace and node, shows what that journey involves. Its stability depended on the Kubernetes semantic conventions it emits, so the two efforts moved together<sup class="cite"><a href="#ref-2">2</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>:</p>
+<table class="tbl">
+<thead><tr><th>When</th><th>What happened</th></tr></thead>
+<tbody>
+<tr><td>Nov 2025</td><td>The Kubernetes semantic conventions group began focused work on stabilising Kubernetes attributes, in step with the Collector's stability goals<sup class="cite"><a href="#ref-2">2</a></sup></td></tr>
+<tr><td>Mar 2026</td><td>Kubernetes attributes reached release candidate; the processor offered feature gates to try the new schema<sup class="cite"><a href="#ref-2">2</a></sup></td></tr>
+<tr><td>Jun 2026</td><td>The attributes shipped as stable in Semantic Conventions v1.42.0<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-4">4</a></sup></td></tr>
+<tr><td>Sep 2026</td><td>The Kubernetes attributes processor reached v1.0.0, meeting the Collector's stable criteria<sup class="cite"><a href="#ref-3">3</a></sup></td></tr>
+</tbody>
+</table>
+<p>The v1.0.0 announcement is clear that moving to the new convention names means <strong>some breakage for existing users</strong>, and points to a migration guide<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-5">5</a></sup>. During the transition the processor provided feature gates, <code>processor.k8sattributes.EmitV1K8sConventions</code> and <code>processor.k8sattributes.DontEmitV0K8sConventions</code>, so teams could emit the new attributes before dropping the old ones<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<div class="callout"><p>Stability is a one-time cost paid up front: a final round of renames, then a long period where names stop moving. It's worth paying deliberately rather than discovering it in a broken dashboard.</p></div>
+</section>
+
+<section class="block">
+<h2 id="why-attribute-renames-hurt-more-than-they-look">Why attribute renames hurt more than they look</h2>
+<p>Kubernetes attributes are everywhere in an observability estate: dashboard filters, alert rules, service level objectives, cost allocation by namespace, retention policies, access controls and the queries engineers keep in runbooks. A renamed attribute doesn't throw an error. It just makes a filter match nothing, so a dashboard goes quiet and an alert never fires.</p>
+</section>
+
+<section class="block">
+<h2 id="the-migration-plan-i-use">The migration plan I use</h2>
+<ol>
+<li><strong>Inventory dependencies on attribute names.</strong> Export dashboards, alert rules, recording rules and saved queries, and search them for the Kubernetes attributes in your telemetry. Include cost reports that group by namespace or workload, as in <a href="/insights/kubernetes-finops-scale-to-zero/">Kubernetes FinOps</a>.</li>
+<li><strong>Read the migration guide for your exact version</strong> of the Collector and processor<sup class="cite"><a href="#ref-5">5</a></sup>, and list old and new names side by side.</li>
+<li><strong>Emit both, then switch.</strong> Where your version supports it, emit the new conventions alongside the old in a non-production environment, update dashboards and alerts to the new names, then stop emitting the old ones.</li>
+<li><strong>Use the gateway layer</strong> to manage the transition centrally rather than on every node, which is one reason I favour the agent-to-gateway pattern in <a href="/insights/opentelemetry-collector-deployment-patterns/">Collector deployment patterns</a>.</li>
+<li><strong>Add canary checks</strong>: alerts that fire when a key dashboard query returns no data, so silent breakage is caught.</li>
+<li><strong>Pin Collector versions</strong> and upgrade deliberately, with a changelog review for every component you use.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2 id="a-broader-stability-strategy">A broader stability strategy</h2>
+<p>The Kubernetes processor is one component among many working towards stability<sup class="cite"><a href="#ref-3">3</a></sup>. The same pattern applies elsewhere, from the <a href="/insights/opentelemetry-span-events-deprecation/">span events deprecation</a> to GenAI conventions that are still evolving, covered in <a href="/insights/llm-observability-opentelemetry-genai/">LLM observability</a>. My rules for platform teams:</p>
+<ul>
+<li><strong>Prefer stable components</strong> in production, and record each experimental component you depend on with the reason and an owner.</li>
+<li><strong>Treat telemetry schemas as interfaces</strong>, with the same versioning discipline as APIs and the contract thinking in <a href="/insights/data-contracts-playbook/">data contracts</a>.</li>
+<li><strong>Budget a small, regular amount of time</strong> for observability upgrades, rather than a painful catch-up every two years.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2 id="how-i-can-help">How I can help</h2>
+<p>I design and modernise observability platforms on OpenTelemetry and Kubernetes, including migrations like this one that keep dashboards and alerts working. As a <a href="/fractional-cto/">fractional CTO</a> I can own that roadmap. Or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://opentelemetry.io/blog/2025/stability-proposal-announcement/" target="_blank" rel="noopener">Evolving OpenTelemetry&#x27;s stabilization and release practices</a><small>OpenTelemetry Governance Committee · 7 Nov 2025</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://opentelemetry.io/blog/2026/k8s-semconv-rc/" target="_blank" rel="noopener">Kubernetes attributes promoted to release candidate in OTel Semantic Conventions</a><small>OpenTelemetry blog · 16 Mar 2026</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://opentelemetry.io/blog/2026/k8s-attributes-processor-v1/" target="_blank" rel="noopener">Kubernetes attributes processor reaches v1.0.0 milestone</a><small>OpenTelemetry blog · 16 Sep 2026</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://github.com/open-telemetry/semantic-conventions/releases/tag/v1.42.0" target="_blank" rel="noopener">Semantic Conventions v1.42.0</a><small>OpenTelemetry, GitHub</small></div></li><li id="ref-5"><span class="rn">5</span><div><a href="https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/42e6adb99d409af1935536652e633d49c98e77cd/processor/k8sattributesprocessor#semantic-conventions-compatibility" target="_blank" rel="noopener">Kubernetes attributes processor: semantic conventions compatibility</a><small>OpenTelemetry Collector Contrib, GitHub</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fopentelemetry-stable-by-default-kubernetes%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fopentelemetry-stable-by-default-kubernetes%2F&amp;text=OpenTelemetry%20goes%20%27stable%20by%20default%27%3A%20what%20it%20means%20for%20Kubernetes%20telemetry%2C%20and%20how%20to%20migrate" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=OpenTelemetry%20goes%20%27stable%20by%20default%27%3A%20what%20it%20means%20for%20Kubernetes%20telemetry%2C%20and%20how%20to%20migrate%20https%3A%2F%2Fasksumanta.com%2Finsights%2Fopentelemetry-stable-by-default-kubernetes%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://asksumanta.com/insights/opentelemetry-stable-by-default-kubernetes/">Copy link</button></div>
+      <div class="pnav"><a class="pn prev" href="/insights/ai-startup-technical-due-diligence-checklist/"><small>← Previous</small><b>Technical due diligence for AI companies: the checklist I use for investors and acquirers</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#what-stable-by-default-means">What &#x27;stable by default&#x27; means</a></li><li><a href="#the-kubernetes-example">The Kubernetes example</a></li><li><a href="#why-attribute-renames-hurt-more-than-they-look">Why attribute renames hurt more than they look</a></li><li><a href="#the-migration-plan-i-use">The migration plan I use</a></li><li><a href="#a-broader-stability-strategy">A broader stability strategy</a></li><li><a href="#how-i-can-help">How I can help</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>What does &#x27;stable by default&#x27; mean in OpenTelemetry?</summary><p>It is a goal set by the OpenTelemetry Governance Committee in late 2025: distributions should be stable by default, with standard ways to opt in to experimental features, and a single, consistent set of stability criteria covering documentation, performance testing and benchmarks.</p></details><details class="rise"><summary>What changed with the Kubernetes attributes processor?</summary><p>It reached v1.0.0 in September 2026, meeting the Collector&#x27;s stable criteria. It now emits Kubernetes attributes based on semantic conventions that became stable in Semantic Conventions v1.42.0, which involves some breaking changes for existing users, covered by a migration guide.</p></details><details class="rise"><summary>How can I test the new Kubernetes attribute schema safely?</summary><p>The processor offered feature gates, processor.k8sattributes.EmitV1K8sConventions and processor.k8sattributes.DontEmitV0K8sConventions, to switch to the new conventions gradually. Check the processor&#x27;s documentation for the gates and behaviour in your Collector version.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/fractional-cto/"><small>Service</small><b>Fractional CTO</b><span>I work as a part-time CTO for founders, CEOs and boards who need experienced technical judgement now, and a team that can carry it on after I step back.</span><i>→</i></a><a class="rcard rise" href="/technical-due-diligence/"><small>Service</small><b>Technical due diligence</b><span>I give investors an independent, plain-language view of a company&#x27;s technology, team and AI claims, so the risks are priced in before the deal closes, not discovered after.</span><i>→</i></a><a class="rcard rise" href="/ai-architect/"><small>Service</small><b>AI &amp; LLM architecture</b><span>I design and build AI systems that leadership can trust: grounded in your data, measured by evaluations, governed by your rules and priced so they make sense at scale.</span><i>→</i></a><a class="rcard rise" href="/insights/ai-startup-technical-due-diligence-checklist/"><small>Insight</small><b>Technical due diligence for AI companies: the checklist I use for investors and acquirers</b><span>Classic technical due diligence asks whether the software is well built and the team can scale it. For AI companies those questions still matter, but a new set sits on top: is the AI actually good, is it defensible, is it safe, and does the company have the right to the data behind it?</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: OpenTelemetry goes &#x27;stable by default&#x27;: what it means for Kubernetes telemetry, and how to migrate">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
+        <p class="floc">United States &amp; UAE · working globally</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/uae/">Fractional CTO in the UAE</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/opentelemetry-stable-by-default-kubernetes/">OpenTelemetry goes &#x27;stable by default&#x27;: what it means for Kubernetes telemetry, and how to migrate</a></li><li><a href="/insights/ai-startup-technical-due-diligence-checklist/">Technical due diligence for AI companies: the checklist I use for investors and acquirers</a></li><li><a href="/insights/prompt-caching-llm-cost-latency/">Prompt caching: the cheapest LLM cost and latency win most teams leave on the table</a></li><li><a href="/insights/federated-health-analytics-ohdsi/">Federated health analytics: how to generate evidence without moving patient data</a></li><li><a href="/insights/long-context-vs-rag/">Long context or RAG? What the research says about very large context windows</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>
