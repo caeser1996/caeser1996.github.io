@@ -1,0 +1,53 @@
+<!--{"title": "The lakehouse catalog is your real lock-in: choosing one in 2026", "description": "Open table formats freed data files; the catalog now decides access, governance and portability. What Apache Polaris, Unity Catalog and the Iceberg REST API mean for your lakehouse.", "h1": "The lakehouse catalog is your real lock-in: how to choose one in 2026", "kicker": "Data platforms · Governance", "lede": "Open table formats like Iceberg promised that no vendor would own your data. They mostly delivered, for the files. But every engine still has to ask a catalog where tables are and who may read them, and that's where control has moved.", "date": "2026-10-24", "datetime": "2026-10-24T16:15:00+04:00", "readtime": "8 min read", "format": "essay", "tags": ["data", "platform", "governance", "cloud"], "keywords": ["Iceberg REST catalog", "Apache Polaris", "Unity Catalog", "lakehouse catalog", "credential vending", "open table formats", "data governance lakehouse", "multi-engine lakehouse", "data platform strategy", "data platform consultant"], "faq": [["Why does the catalog matter in an Iceberg lakehouse?", "Engines find tables, schemas and current metadata through the catalog, and modern catalogs also enforce permissions and issue short-lived storage credentials. Whoever runs the catalog therefore controls access and, in practice, portability."], ["What is Apache Polaris?", "An open-source catalog for Apache Iceberg that implements Iceberg's REST API for interoperability across engines such as Spark, Flink and Trino. It entered the Apache incubator in 2024 and was announced as a top-level Apache project in 2026."], ["What is credential vending?", "A catalog feature that issues short-lived, scoped storage credentials to an engine for the specific tables it is allowed to access, instead of giving engines broad, long-lived access to the underlying storage."]], "related": ["/fractional-cto/", "/technical-due-diligence/", "/ai-architect/"], "citations": [{"title": "The Apache Software Foundation graduates two open source projects from incubator", "url": "https://news.apache.org/foundation/entry/the-apache-software-foundation-graduates-two-open-source-projects-from-incubator", "publisher": "The Apache Software Foundation", "date": "Mar 2026"}, {"title": "The impact of Apache Polaris graduating to a top-level Apache project", "url": "https://www.fivetran.com/blog/the-impact-of-apache-polaris-graduating-to-top-level-apache-project", "publisher": "Fivetran"}, {"title": "What's new in Apache Polaris 1.4: advanced multi-tenancy and streamlined deployment", "url": "https://www.snowflake.com/en/blog/engineering/apache-polaris-1-4-release/", "publisher": "Snowflake", "date": "Apr 2026"}, {"title": "Unity Catalog credential vending for external system access", "url": "https://docs.databricks.com/aws/en/external-access/credential-vending", "publisher": "Databricks documentation"}, {"title": "Secure external access to Unity Catalog assets with open APIs", "url": "https://www.databricks.com/blog/secure-external-access-unity-catalog-assets-open-apis", "publisher": "Databricks"}]}-->
+<p>A few years ago the lakehouse argument was about table formats. That argument is largely settled: Apache Iceberg is widely supported, and I've covered its latest version in <a href="/insights/apache-iceberg-v3-lakehouse/">Apache Iceberg v3</a>. The files sit in your own object storage in an open format any engine can read.</p>
+<p>The quieter question is who every engine asks before reading those files. That is the catalog, and it has become the most strategic choice in a modern data platform.</p>
+
+<section class="block">
+<h2>Why the catalog holds the power</h2>
+<p>In an Iceberg lakehouse, the catalog tracks which tables exist, their current metadata and schema, and increasingly who may access them. Modern catalogs go further and issue engines short-lived storage credentials scoped to the tables they're allowed to read, a pattern called credential vending. Databricks' documentation, for example, describes Unity Catalog granting short-lived credentials to external systems that connect through its REST API or the Iceberg REST catalog interface, subject to explicit privileges and metastore settings<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+<p>That is good security design. It also means the catalog is where permissions, lineage, audit and access for every engine live. Changing the catalog later is far harder than changing an engine.</p>
+<div class="callout"><p>Open files with a closed catalog is a more polite form of lock-in, but it's still lock-in. Evaluate catalogs as carefully as you once evaluated databases.</p></div>
+</section>
+
+<section class="block">
+<h2>The open REST interface</h2>
+<p>The Iceberg REST catalog API is what makes multi-engine lakehouses practical: any engine that speaks it can work with any catalog that implements it. Apache Polaris is an open-source catalog built around that API, described by the Apache Software Foundation as a fully featured catalog for Iceberg that enables interoperability across engines such as Spark, Flink and Trino<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<p>Polaris entered the Apache incubator in 2024 after being donated by Snowflake and Dremio, and the foundation announced it as a top-level project in March 2026<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. Commentary on the graduation noted multiple releases and a broad contributor base<sup class="cite"><a href="#ref-2">2</a></sup>, and the 1.4 release added multi-tenancy and deployment improvements<sup class="cite"><a href="#ref-3">3</a></sup>. Top-level status means independent Apache governance, which matters if neutrality is part of why you chose an open catalog.</p>
+<p>Unity Catalog takes a different route: a catalog with its own API that also exposes Iceberg REST access for external engines, alongside Delta support<sup class="cite"><a href="#ref-4">4</a></sup><sup class="cite"><a href="#ref-5">5</a></sup>. Check the current status of each capability, since some external access features have been labelled preview.</p>
+</section>
+
+<section class="block">
+<h2>Questions I ask when choosing</h2>
+<table class="tbl">
+<thead><tr><th>Question</th><th>Why it matters</th></tr></thead>
+<tbody>
+<tr><td>Which engines must read and write, today and in three years?</td><td>Every engine needs a supported path through the catalog, including write access</td></tr>
+<tr><td>Where are permissions defined, and can they be exported?</td><td>Governance that can't leave the catalog is the deepest form of lock-in</td></tr>
+<tr><td>Does it vend scoped, short-lived credentials?</td><td>Avoids engines holding broad storage keys</td></tr>
+<tr><td>Who governs the project or product?</td><td>Foundation governance and vendor roadmaps carry different risks</td></tr>
+<tr><td>Can it be self-hosted in-region?</td><td>Residency rules, as in <a href="/insights/saudi-pdpl-cross-border-ai/">Saudi PDPL</a> and <a href="/insights/uae-health-data-law-localisation/">UAE health data</a>, may require it</td></tr>
+<tr><td>How are lineage and audit exposed?</td><td>Regulators and AI governance increasingly ask where data came from</td></tr>
+</tbody>
+</table>
+</section>
+
+<section class="block">
+<h2>Patterns that keep options open</h2>
+<ol>
+<li><strong>Standardise on the Iceberg REST interface</strong> for engine access, even if your catalog also offers proprietary APIs. That keeps engines swappable.</li>
+<li><strong>Keep governance definitions as code</strong>: roles, grants and policies in version control, applied to the catalog, so they can be reapplied elsewhere.</li>
+<li><strong>Use one catalog per governance domain</strong>, not one per engine. Several catalogs over the same tables invite inconsistency.</li>
+<li><strong>Pair the catalog with <a href="/insights/data-contracts-playbook/">data contracts</a></strong>, so table semantics and ownership travel with the data rather than living only in catalog metadata.</li>
+<li><strong>Test an exit.</strong> Once a year, prove that a second engine, or a second catalog, can read critical tables. It's cheap insurance.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2>The AI angle</h2>
+<p>AI systems are now among the biggest consumers of lakehouse data: feature pipelines, training sets, retrieval indexes and agents querying tables directly. A catalog that vends scoped credentials and records access gives you one place to control what each AI workload may read, which supports the evidence expected in <a href="/insights/iso-42001-vs-nist-ai-rmf/">AI governance frameworks</a>. Without it, every AI project tends to get its own copy of the data, and governance dissolves.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I design lakehouse and data platform architectures that stay open where it matters, from table formats and catalogs to governance and AI access. As a <a href="/fractional-cto/">fractional CTO</a> I can own the data platform roadmap, or review an existing one in <a href="/technical-due-diligence/">technical due diligence</a>. Or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
