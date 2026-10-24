@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Inference gateways on Kubernetes: model-aware routing for LLMs</title>
+<meta name="description" content="LLM traffic breaks ordinary load balancing. How the Gateway API Inference Extension routes on live model-server metrics, what the benchmarks showed, and how I&#x27;d adopt it." />
+<meta name="keywords" content="Gateway API Inference Extension, inference gateway, InferencePool, endpoint picker, LLM load balancing, Kubernetes LLM serving, vLLM Kubernetes, model-aware routing, GPU utilisation, AI infrastructure architect" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://asksumanta.com/insights/kubernetes-inference-gateway/" />
+<meta name="theme-color" content="#111214" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="Inference gateways on Kubernetes: model-aware routing for LLMs" />
+<meta property="og:description" content="LLM traffic breaks ordinary load balancing. How the Gateway API Inference Extension routes on live model-server metrics, what the benchmarks showed, and how I&#x27;d adopt it." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://asksumanta.com/insights/kubernetes-inference-gateway/" />
+<meta property="og:image" content="https://asksumanta.com/assets/og/kubernetes-inference-gateway.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Inference gateways on Kubernetes: model-aware routing for LLMs" />
+<meta name="twitter:description" content="LLM traffic breaks ordinary load balancing. How the Gateway API Inference Extension routes on live model-server metrics, what the benchmarks showed, and how I&#x27;d adopt it." />
+<meta name="twitter:image" content="https://asksumanta.com/assets/og/kubernetes-inference-gateway.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "BlogPosting", "headline": "Inference gateways on Kubernetes: model-aware routing for self-hosted LLMs", "description": "LLM traffic breaks ordinary load balancing. How the Gateway API Inference Extension routes on live model-server metrics, what the benchmarks showed, and how I'd adopt it.", "datePublished": "2026-10-24T04:15:00+04:00", "dateModified": "2026-10-24T04:15:00+04:00", "articleSection": "Cloud · Kubernetes · AI infrastructure", "genre": "Explainer", "citation": [{"@type": "CreativeWork", "name": "Introducing Gateway API Inference Extension", "url": "https://kubernetes.io/blog/2025/06/05/introducing-gateway-api-inference-extension/"}, {"@type": "CreativeWork", "name": "InferencePool", "url": "https://gateway-api-inference-extension.sigs.k8s.io/api-types/inferencepool/"}, {"@type": "CreativeWork", "name": "Gateway API Inference Extension", "url": "https://gateway-api-inference-extension.sigs.k8s.io/"}, {"@type": "CreativeWork", "name": "Inference routing", "url": "https://agentgateway.dev/docs/kubernetes/main/inference/"}, {"@type": "CreativeWork", "name": "Gateway API", "url": "https://kubernetes.io/docs/concepts/services-networking/gateway/"}], "author": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "publisher": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "mainEntityOfPage": "https://asksumanta.com/insights/kubernetes-inference-gateway/", "image": "https://asksumanta.com/assets/og/kubernetes-inference-gateway.png", "keywords": "Gateway API Inference Extension, inference gateway, InferencePool, endpoint picker, LLM load balancing, Kubernetes LLM serving, vLLM Kubernetes, model-aware routing, GPU utilisation, AI infrastructure architect", "wordCount": 794}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://asksumanta.com/"}, {"@type": "ListItem", "position": 2, "name": "Insights", "item": "https://asksumanta.com/insights/"}, {"@type": "ListItem", "position": 3, "name": "Inference gateways on Kubernetes: model-aware routing for self-hosted LLMs", "item": "https://asksumanta.com/insights/kubernetes-inference-gateway/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What is the Gateway API Inference Extension?", "acceptedAnswer": {"@type": "Answer", "text": "A Kubernetes project that builds on Gateway API to add inference-specific routing. It lets a gateway pick the best model-server pod for each request using live metrics such as queue length, memory use and loaded adapters, rather than plain round-robin."}}, {"@type": "Question", "name": "What is an InferencePool?", "acceptedAnswer": {"@type": "Answer", "text": "A resource that defines a group of model-server pods on shared compute, similar to a Service but specialised for model serving. The project's documentation lists InferencePool as generally available since its v1.0.0 release."}}, {"@type": "Question", "name": "Does model-aware routing improve performance?", "acceptedAnswer": {"@type": "Answer", "text": "In the project's 2025 benchmark with vLLM on H100 GPUs, the extension delivered throughput roughly on par with a standard Kubernetes Service but significantly lower tail latency at higher request rates. Results on your own workload will vary and should be measured."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+</script>
+</head>
+<body class="sub is-post">
+<div class="progress" id="progress"></div>
+<nav>
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="/#practice">Services</a>
+      <a href="/#work">Case studies</a>
+      <a href="/insights/">Insights</a>
+      <a href="/#assess">Analyse</a>
+      <a href="/#connect">Connect</a>
+    </div>
+    <div class="nav-r">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/insights/">Insights</a> <span>/</span> <em>Inference gateways on Kubernetes: model-aware routing for self-hosted LLMs</em></div>
+    <div class="kicker">Cloud · Kubernetes · AI infrastructure</div>
+    <h1>Inference gateways on Kubernetes: model-aware routing for self-hosted LLMs</h1>
+    <p class="sub-lede">Round-robin load balancing assumes requests are short and roughly equal. LLM requests are neither. The Kubernetes Gateway API Inference Extension adds model-aware routing to an ordinary gateway, and it changes how I design private model platforms.</p>
+    <div class="ameta"><span class="fmt">Explainer</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-10-24T04:15:00+04:00">24 Oct 2026 · 04:15 GST</time><span>8 min read</span><span>5 sources</span></div><div class="atags"><span class="tagp">#kubernetes</span><span class="tagp">#ai</span><span class="tagp">#llm</span><span class="tagp">#platform</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Explainer cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><line x1="675" y1="179" x2="697" y2="188" class="cv-edge hl" opacity="0.85"/><line x1="675" y1="179" x2="661" y2="54" class="cv-edge hl" opacity="0.16"/><line x1="675" y1="179" x2="816" y2="226" class="cv-edge" opacity="0.01"/><line x1="675" y1="179" x2="622" y2="167" class="cv-edge hl" opacity="0.64"/><line x1="675" y1="179" x2="576" y2="280" class="cv-edge" opacity="0.06"/><line x1="675" y1="179" x2="593" y2="84" class="cv-edge" opacity="0.16"/><line x1="675" y1="179" x2="529" y2="184" class="cv-edge" opacity="0.03"/><line x1="697" y1="188" x2="661" y2="54" class="cv-edge hl" opacity="0.07"/><line x1="697" y1="188" x2="816" y2="226" class="cv-edge hl" opacity="0.17"/><line x1="697" y1="188" x2="622" y2="167" class="cv-edge hl" opacity="0.49"/><line x1="697" y1="188" x2="593" y2="84" class="cv-edge hl" opacity="0.02"/><line x1="1143" y1="246" x2="1097" y2="367" class="cv-edge hl" opacity="0.13"/><line x1="1143" y1="246" x2="1055" y2="333" class="cv-edge hl" opacity="0.17"/><line x1="1143" y1="246" x2="1055" y2="216" class="cv-edge hl" opacity="0.38"/><line x1="1002" y1="143" x2="946" y2="225" class="cv-edge" opacity="0.34"/><line x1="1002" y1="143" x2="1055" y2="216" class="cv-edge" opacity="0.40"/><line x1="1002" y1="143" x2="996" y2="34" class="cv-edge" opacity="0.27"/><line x1="539" y1="389" x2="576" y2="280" class="cv-edge" opacity="0.23"/><line x1="539" y1="389" x2="671" y2="379" class="cv-edge hl" opacity="0.12"/><line x1="539" y1="389" x2="611" y2="331" class="cv-edge" opacity="0.39"/><line x1="661" y1="54" x2="528" y2="42" class="cv-edge hl" opacity="0.11"/><line x1="661" y1="54" x2="622" y2="167" class="cv-edge hl" opacity="0.20"/><line x1="661" y1="54" x2="593" y2="84" class="cv-edge hl" opacity="0.50"/><line x1="995" y1="368" x2="1097" y2="367" class="cv-edge" opacity="0.32"/><line x1="995" y1="368" x2="1055" y2="333" class="cv-edge" opacity="0.54"/><line x1="995" y1="368" x2="923" y2="303" class="cv-edge" opacity="0.35"/><line x1="528" y1="42" x2="593" y2="84" class="cv-edge" opacity="0.48"/><line x1="528" y1="42" x2="529" y2="184" class="cv-edge" opacity="0.05"/><line x1="806" y1="304" x2="816" y2="226" class="cv-edge" opacity="0.47"/><line x1="806" y1="304" x2="824" y2="317" class="cv-edge hl" opacity="0.85"/><line x1="806" y1="304" x2="840" y2="291" class="cv-edge" opacity="0.76"/><line x1="806" y1="304" x2="836" y2="295" class="cv-edge" opacity="0.79"/><line x1="806" y1="304" x2="923" y2="303" class="cv-edge" opacity="0.22"/><line x1="816" y1="226" x2="824" y2="317" class="cv-edge hl" opacity="0.39"/><line x1="816" y1="226" x2="946" y2="225" class="cv-edge" opacity="0.13"/><line x1="816" y1="226" x2="840" y2="291" class="cv-edge" opacity="0.54"/><line x1="816" y1="226" x2="836" y2="295" class="cv-edge" opacity="0.52"/><line x1="816" y1="226" x2="923" y2="303" class="cv-edge" opacity="0.12"/><line x1="824" y1="317" x2="840" y2="291" class="cv-edge hl" opacity="0.79"/><line x1="824" y1="317" x2="836" y2="295" class="cv-edge hl" opacity="0.83"/><line x1="824" y1="317" x2="923" y2="303" class="cv-edge hl" opacity="0.33"/><line x1="1097" y1="367" x2="1055" y2="333" class="cv-edge" opacity="0.64"/><line x1="622" y1="167" x2="576" y2="280" class="cv-edge hl" opacity="0.19"/><line x1="622" y1="167" x2="593" y2="84" class="cv-edge hl" opacity="0.42"/><line x1="622" y1="167" x2="529" y2="184" class="cv-edge hl" opacity="0.37"/><line x1="946" y1="225" x2="1055" y2="216" class="cv-edge" opacity="0.27"/><line x1="946" y1="225" x2="840" y2="291" class="cv-edge" opacity="0.17"/><line x1="946" y1="225" x2="836" y2="295" class="cv-edge" opacity="0.13"/><line x1="946" y1="225" x2="923" y2="303" class="cv-edge" opacity="0.46"/><line x1="1055" y1="333" x2="1055" y2="216" class="cv-edge" opacity="0.22"/><line x1="1055" y1="333" x2="923" y2="303" class="cv-edge" opacity="0.10"/><line x1="576" y1="280" x2="671" y2="379" class="cv-edge hl" opacity="0.08"/><line x1="576" y1="280" x2="611" y2="331" class="cv-edge" opacity="0.58"/><line x1="576" y1="280" x2="529" y2="184" class="cv-edge" opacity="0.29"/><line x1="840" y1="291" x2="836" y2="295" class="cv-edge" opacity="0.96"/><line x1="840" y1="291" x2="923" y2="303" class="cv-edge" opacity="0.44"/><line x1="836" y1="295" x2="923" y2="303" class="cv-edge" opacity="0.42"/><line x1="671" y1="379" x2="611" y2="331" class="cv-edge hl" opacity="0.49"/><line x1="593" y1="84" x2="529" y2="184" class="cv-edge" opacity="0.21"/><circle cx="812" cy="70" r="3" class="cv-dot"/><circle cx="675" cy="179" r="3" class="cv-dot"/><circle cx="697" cy="188" r="6" class="cv-dot hl"/><circle cx="1143" cy="246" r="6" class="cv-dot hl"/><circle cx="1002" cy="143" r="3" class="cv-dot"/><circle cx="539" cy="389" r="3" class="cv-dot"/><circle cx="661" cy="54" r="6" class="cv-dot hl"/><circle cx="995" cy="368" r="3" class="cv-dot"/><circle cx="528" cy="42" r="3" class="cv-dot"/><circle cx="806" cy="304" r="3" class="cv-dot"/><circle cx="816" cy="226" r="3" class="cv-dot"/><circle cx="824" cy="317" r="6" class="cv-dot hl"/><circle cx="1097" cy="367" r="3" class="cv-dot"/><circle cx="622" cy="167" r="6" class="cv-dot hl"/><circle cx="946" cy="225" r="3" class="cv-dot"/><circle cx="1055" cy="333" r="3" class="cv-dot"/><circle cx="576" cy="280" r="3" class="cv-dot"/><circle cx="1055" cy="216" r="3" class="cv-dot"/><circle cx="840" cy="291" r="3" class="cv-dot"/><circle cx="836" cy="295" r="3" class="cv-dot"/><circle cx="671" cy="379" r="6" class="cv-dot hl"/><circle cx="611" cy="331" r="3" class="cv-dot"/><circle cx="923" cy="303" r="3" class="cv-dot"/><circle cx="593" cy="84" r="3" class="cv-dot"/><circle cx="529" cy="184" r="3" class="cv-dot"/><circle cx="996" cy="34" r="3" class="cv-dot"/><text x="60" y="90" class="cv-k">EXPLAINER · CLOUD · KUBERNETES · AI INFRASTRUCTURE</text><text x="60" y="350" class="cv-n">24 Oct 2026 · 04:15 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <p>When teams first put a self-hosted model behind Kubernetes, they usually reach for the familiar pattern: a Deployment of model servers, a Service in front, and a load balancer spreading requests evenly. It works in a demo. Under real load, some replicas sit with long queues and nearly full GPU memory while others are idle, and tail latency climbs even though the cluster as a whole has spare capacity.</p>
+
+<section class="block">
+<h2 id="why-llm-traffic-breaks-ordinary-load-balancing">Why LLM traffic breaks ordinary load balancing</h2>
+<p>The Kubernetes project's introduction to the Inference Extension puts it plainly: LLM inference sessions are often long-running, resource-intensive and partially stateful, and a single GPU-backed server may hold several sessions and in-memory token caches. Load balancers that route by HTTP path or round-robin don't account for model identity, request criticality or the current state of each server<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<p>Two requests to the same model can differ in cost by orders of magnitude, depending on prompt and output length. And as covered in <a href="/insights/llm-inference-serving-vllm/">LLM inference serving</a>, sending a request to a replica that already holds its prompt prefix in cache is far cheaper than sending it anywhere else.</p>
+</section>
+
+<section class="block">
+<h2 id="how-the-extension-works">How the extension works</h2>
+<p>The Gateway API Inference Extension builds on <a href="/insights/ingress-nginx-to-gateway-api/">Gateway API</a>, keeping the familiar Gateway and HTTPRoute model and adding inference-specific steps<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-5">5</a></sup>. Its central resource is the <strong>InferencePool</strong>: a pool of model-server pods on shared compute, similar to a Service but aware of model serving<sup class="cite"><a href="#ref-1">1</a></sup>. The project documentation lists InferencePool as generally available since v1.0.0<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/kubernetes-inference-gateway/resource-model.webp" alt="Diagram of the Gateway API Inference Extension resource model: cluster operators own the Gateway, application developers own the HTTPRoute, inference platform owners own the InferencePool, and inference workload owners own InferenceModel resources beneath it" width="800" height="572" loading="lazy"></div><figcaption>The resource model as introduced in 2025: platform operators manage pools of model servers; model owners manage what is served. <span class="credit">Source: <a href="https://kubernetes.io/blog/2025/06/05/introducing-gateway-api-inference-extension/" target="_blank" rel="noopener">Kubernetes blog, Introducing Gateway API Inference Extension</a> · CC BY 4.0</span></figcaption></figure>
+<p>The original design separated responsibilities by persona: platform operators manage where and how models are served through pools, while model owners manage what is served, including traffic splitting between versions<sup class="cite"><a href="#ref-1">1</a></sup>. The model-facing APIs have continued to evolve, so check the current documentation for your version.</p>
+</section>
+
+<section class="block">
+<h2 id="the-request-flow">The request flow</h2>
+<p>A request reaches the gateway, which matches an HTTPRoute to an InferencePool. Instead of forwarding to any pod, the gateway consults an endpoint selection extension, often called the endpoint picker, which examines live pod metrics such as queue length, memory use and loaded adapters, and chooses the pod that can serve the request most efficiently<sup class="cite"><a href="#ref-1">1</a></sup>. Gateway implementations describe the picker tracking signals such as KV-cache utilisation and queue length<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/kubernetes-inference-gateway/request-flow.webp" alt="Diagram of the inference request flow: a client completion request reaches the Kubernetes Gateway, which uses body-based routing to select an InferencePool by model name and an endpoint selection step to pick the least-loaded model replica, then routes to that replica in the pool" width="802" height="751" loading="lazy"></div><figcaption>Request flow with the endpoint selection extension choosing a model-server pod based on live metrics. <span class="credit">Source: <a href="https://kubernetes.io/blog/2025/06/05/introducing-gateway-api-inference-extension/" target="_blank" rel="noopener">Kubernetes blog, Introducing Gateway API Inference Extension</a> · CC BY 4.0</span></figcaption></figure>
+<p>To the client it's still one ordinary request. The intelligence lives in the gateway layer, where the platform team controls it.</p>
+</section>
+
+<section class="block">
+<h2 id="what-the-benchmark-showed">What the benchmark showed</h2>
+<p>The project compared the extension with a standard Kubernetes Service for a vLLM deployment on H100 GPUs, ramping traffic from 100 to 1,000 queries per second. Throughput was roughly on par, but the extension showed significantly lower p90 per-output-token latency at higher load, and lower end-to-end tail latency as traffic rose beyond about 400 to 500 queries per second<sup class="cite"><a href="#ref-1">1</a></sup>. The authors attribute this to avoiding hotspots that ordinary load balancing creates for long-running inference requests<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<div class="callout"><p>Tail latency is what users feel, and GPU hotspots are what finance pays for. Model-aware routing improves both without buying another GPU.</p></div>
+</section>
+
+<section class="block">
+<h2 id="how-i-d-adopt-it">How I'd adopt it</h2>
+<ol>
+<li><strong>Start from Gateway API.</strong> If your clusters still use an Ingress controller, the move to Gateway API is the prerequisite and has its own value.</li>
+<li><strong>Pick a gateway implementation</strong> that supports the Inference Extension, and confirm which version of the APIs it implements.</li>
+<li><strong>Expose metrics from your model servers</strong> that the endpoint picker needs, and check them under load before trusting the routing.</li>
+<li><strong>Load test against your own traffic</strong>, comparing tail latency and cost per request with your current setup, as in <a href="/insights/llm-inference-serving-vllm/">LLM inference serving</a>.</li>
+<li><strong>Use pools to separate concerns</strong>: interactive and batch traffic, regulated and general workloads, or different hardware classes.</li>
+<li><strong>Combine with scheduling and cost controls</strong>: GPU allocation through <a href="/insights/kubernetes-dra-gpu-scheduling/">DRA</a>, training jobs through <a href="/insights/kubernetes-gang-scheduling-ai/">gang scheduling</a>, and spend visibility through <a href="/insights/focus-finops-ai-cost-allocation/">FOCUS-based cost allocation</a>.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2 id="where-it-fits-in-a-private-ai-platform">Where it fits in a private AI platform</h2>
+<p>An inference gateway is the routing layer in the platform described in <a href="/insights/private-llm-on-prem/">private LLMs on-prem</a> and <a href="/insights/uae-ai-infrastructure-where-to-run-models/">where to run models in the UAE</a>. Above it sits the policy gateway that handles authentication, model approval and logging; below it, the serving engines and GPUs. Keeping those layers distinct makes each easier to change.</p>
+</section>
+
+<section class="block">
+<h2 id="how-i-can-help">How I can help</h2>
+<p>I design Kubernetes platforms for private and sovereign AI, from GPU scheduling to model-aware routing and cost control. See my <a href="/ai-architect/">AI architecture work</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://kubernetes.io/blog/2025/06/05/introducing-gateway-api-inference-extension/" target="_blank" rel="noopener">Introducing Gateway API Inference Extension</a><small>Kubernetes blog · 5 Jun 2025</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://gateway-api-inference-extension.sigs.k8s.io/api-types/inferencepool/" target="_blank" rel="noopener">InferencePool</a><small>Gateway API Inference Extension documentation</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://gateway-api-inference-extension.sigs.k8s.io/" target="_blank" rel="noopener">Gateway API Inference Extension</a><small>Kubernetes SIG Network</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://agentgateway.dev/docs/kubernetes/main/inference/" target="_blank" rel="noopener">Inference routing</a><small>agentgateway documentation</small></div></li><li id="ref-5"><span class="rn">5</span><div><a href="https://kubernetes.io/docs/concepts/services-networking/gateway/" target="_blank" rel="noopener">Gateway API</a><small>Kubernetes documentation</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fkubernetes-inference-gateway%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fkubernetes-inference-gateway%2F&amp;text=Inference%20gateways%20on%20Kubernetes%3A%20model-aware%20routing%20for%20self-hosted%20LLMs" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=Inference%20gateways%20on%20Kubernetes%3A%20model-aware%20routing%20for%20self-hosted%20LLMs%20https%3A%2F%2Fasksumanta.com%2Finsights%2Fkubernetes-inference-gateway%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://asksumanta.com/insights/kubernetes-inference-gateway/">Copy link</button></div>
+      <div class="pnav"><a class="pn prev" href="/insights/structured-outputs-reliable-llm-integration/"><small>← Previous</small><b>Structured outputs: how to make LLMs dependable components of real systems</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#why-llm-traffic-breaks-ordinary-load-balancing">Why LLM traffic breaks ordinary load balancing</a></li><li><a href="#how-the-extension-works">How the extension works</a></li><li><a href="#the-request-flow">The request flow</a></li><li><a href="#what-the-benchmark-showed">What the benchmark showed</a></li><li><a href="#how-i-d-adopt-it">How I&#x27;d adopt it</a></li><li><a href="#where-it-fits-in-a-private-ai-platform">Where it fits in a private AI platform</a></li><li><a href="#how-i-can-help">How I can help</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>What is the Gateway API Inference Extension?</summary><p>A Kubernetes project that builds on Gateway API to add inference-specific routing. It lets a gateway pick the best model-server pod for each request using live metrics such as queue length, memory use and loaded adapters, rather than plain round-robin.</p></details><details class="rise"><summary>What is an InferencePool?</summary><p>A resource that defines a group of model-server pods on shared compute, similar to a Service but specialised for model serving. The project&#x27;s documentation lists InferencePool as generally available since its v1.0.0 release.</p></details><details class="rise"><summary>Does model-aware routing improve performance?</summary><p>In the project&#x27;s 2025 benchmark with vLLM on H100 GPUs, the extension delivered throughput roughly on par with a standard Kubernetes Service but significantly lower tail latency at higher request rates. Results on your own workload will vary and should be measured.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/ai-architect/"><small>Service</small><b>AI &amp; LLM architecture</b><span>I design and build AI systems that leadership can trust: grounded in your data, measured by evaluations, governed by your rules and priced so they make sense at scale.</span><i>→</i></a><a class="rcard rise" href="/fractional-cto/"><small>Service</small><b>Fractional CTO</b><span>I work as a part-time CTO for founders, CEOs and boards who need experienced technical judgement now, and a team that can carry it on after I step back.</span><i>→</i></a><a class="rcard rise" href="/technical-due-diligence/"><small>Service</small><b>Technical due diligence</b><span>I give investors an independent, plain-language view of a company&#x27;s technology, team and AI claims, so the risks are priced in before the deal closes, not discovered after.</span><i>→</i></a><a class="rcard rise" href="/insights/structured-outputs-reliable-llm-integration/"><small>Insight</small><b>Structured outputs: how to make LLMs dependable components of real systems</b><span>Most enterprise value from LLMs comes when their output feeds another system: a database, a workflow, an API. That needs data in a known shape, every time. Structured outputs solve the format problem. They don&#x27;t solve the correctness problem, and used carelessly they can make it worse.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: Inference gateways on Kubernetes: model-aware routing for self-hosted LLMs">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
+        <p class="floc">United States &amp; UAE · working globally</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/uae/">Fractional CTO in the UAE</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/kubernetes-inference-gateway/">Inference gateways on Kubernetes: model-aware routing for self-hosted LLMs</a></li><li><a href="/insights/structured-outputs-reliable-llm-integration/">Structured outputs: how to make LLMs dependable components of real systems</a></li><li><a href="/insights/opentelemetry-stable-by-default-kubernetes/">OpenTelemetry goes &#x27;stable by default&#x27;: what it means for Kubernetes telemetry, and how to migrate</a></li><li><a href="/insights/ai-startup-technical-due-diligence-checklist/">Technical due diligence for AI companies: the checklist I use for investors and acquirers</a></li><li><a href="/insights/prompt-caching-llm-cost-latency/">Prompt caching: the cheapest LLM cost and latency win most teams leave on the table</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>
