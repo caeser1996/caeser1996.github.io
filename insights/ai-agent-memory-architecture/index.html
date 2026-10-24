@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI agent memory: what to remember, retrieve and forget</title>
+<meta name="description" content="Agents that remember users and past work are more useful and riskier. What MemGPT, Generative Agents and LongMemEval teach about memory design, and the architecture and governance I use." />
+<meta name="keywords" content="AI agent memory, long-term memory LLM, MemGPT, LongMemEval, generative agents memory stream, agent architecture, conversational memory, memory retrieval, AI privacy, AI architect" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://asksumanta.com/insights/ai-agent-memory-architecture/" />
+<meta name="theme-color" content="#111214" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="AI agent memory: what to remember, retrieve and forget" />
+<meta property="og:description" content="Agents that remember users and past work are more useful and riskier. What MemGPT, Generative Agents and LongMemEval teach about memory design, and the architecture and governance I use." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://asksumanta.com/insights/ai-agent-memory-architecture/" />
+<meta property="og:image" content="https://asksumanta.com/assets/og/ai-agent-memory-architecture.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="AI agent memory: what to remember, retrieve and forget" />
+<meta name="twitter:description" content="Agents that remember users and past work are more useful and riskier. What MemGPT, Generative Agents and LongMemEval teach about memory design, and the architecture and governance I use." />
+<meta name="twitter:image" content="https://asksumanta.com/assets/og/ai-agent-memory-architecture.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "BlogPosting", "headline": "AI agent memory: what to remember, how to retrieve it, and when to forget", "description": "Agents that remember users and past work are more useful and riskier. What MemGPT, Generative Agents and LongMemEval teach about memory design, and the architecture and governance I use.", "datePublished": "2026-10-25T00:15:00+04:00", "dateModified": "2026-10-25T00:15:00+04:00", "articleSection": "AI architecture · Agents", "genre": "Explainer", "citation": [{"@type": "CreativeWork", "name": "MemGPT: Towards LLMs as Operating Systems", "url": "https://arxiv.org/abs/2310.08560"}, {"@type": "CreativeWork", "name": "Generative Agents: Interactive Simulacra of Human Behavior", "url": "https://arxiv.org/abs/2304.03442"}, {"@type": "CreativeWork", "name": "LongMemEval: Benchmarking Chat Assistants on Long-Term Interactive Memory", "url": "https://arxiv.org/abs/2410.10813"}, {"@type": "CreativeWork", "name": "Context Rot: How Increasing Input Tokens Impacts LLM Performance", "url": "https://research.trychroma.com/context-rot"}], "author": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "publisher": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "mainEntityOfPage": "https://asksumanta.com/insights/ai-agent-memory-architecture/", "image": "https://asksumanta.com/assets/og/ai-agent-memory-architecture.png", "keywords": "AI agent memory, long-term memory LLM, MemGPT, LongMemEval, generative agents memory stream, agent architecture, conversational memory, memory retrieval, AI privacy, AI architect", "wordCount": 774}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://asksumanta.com/"}, {"@type": "ListItem", "position": 2, "name": "Insights", "item": "https://asksumanta.com/insights/"}, {"@type": "ListItem", "position": 3, "name": "AI agent memory: what to remember, how to retrieve it, and when to forget", "item": "https://asksumanta.com/insights/ai-agent-memory-architecture/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Why not just keep the whole conversation history in the context window?", "acceptedAnswer": {"@type": "Answer", "text": "Because cost and latency grow with every token, and research shows model performance degrades as inputs grow. Benchmarks of long-term memory found that commercial assistants and long-context models lost substantial accuracy when recalling information across long interactions."}}, {"@type": "Question", "name": "What are the main memory designs for agents?", "acceptedAnswer": {"@type": "Answer", "text": "Common patterns include a short working context, summaries of past sessions, a store of extracted facts about the user or task, and retrieval over past interactions. Research systems such as MemGPT manage memory tiers like an operating system, and Generative Agents retrieve memories by relevance, recency and importance."}}, {"@type": "Question", "name": "What governance does agent memory need?", "acceptedAnswer": {"@type": "Answer", "text": "Users should be able to see, correct and delete what is remembered; sensitive categories should not be stored without a clear basis; memories should be scoped per user and tenant; and retention periods should be defined."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+</script>
+</head>
+<body class="sub is-post">
+<div class="progress" id="progress"></div>
+<nav>
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="/#practice">Services</a>
+      <a href="/#work">Case studies</a>
+      <a href="/insights/">Insights</a>
+      <a href="/#assess">Analyse</a>
+      <a href="/#connect">Connect</a>
+    </div>
+    <div class="nav-r">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/insights/">Insights</a> <span>/</span> <em>AI agent memory: what to remember, how to retrieve it, and when to forget</em></div>
+    <div class="kicker">AI architecture · Agents</div>
+    <h1>AI agent memory: what to remember, how to retrieve it, and when to forget</h1>
+    <p class="sub-lede">An assistant that forgets everything between sessions feels shallow. One that remembers everything becomes slow, confused and a privacy liability. Designing memory is about choosing what deserves to persist, and research gives useful guidance.</p>
+    <div class="ameta"><span class="fmt">Explainer</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-10-25T00:15:00+04:00">25 Oct 2026 · 00:15 GST</time><span>9 min read</span><span>4 sources</span></div><div class="atags"><span class="tagp">#ai</span><span class="tagp">#agents</span><span class="tagp">#llm</span><span class="tagp">#governance</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Explainer cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><line x1="1084" y1="35" x2="1015" y2="48" class="cv-edge" opacity="0.53"/><line x1="1084" y1="35" x2="986" y2="48" class="cv-edge hl" opacity="0.34"/><line x1="1116" y1="299" x2="986" y2="282" class="cv-edge hl" opacity="0.13"/><line x1="1116" y1="299" x2="980" y2="282" class="cv-edge hl" opacity="0.09"/><line x1="1116" y1="299" x2="998" y2="295" class="cv-edge hl" opacity="0.22"/><line x1="1116" y1="299" x2="1120" y2="203" class="cv-edge hl" opacity="0.36"/><line x1="1116" y1="299" x2="1014" y2="269" class="cv-edge hl" opacity="0.29"/><line x1="1116" y1="299" x2="1010" y2="273" class="cv-edge hl" opacity="0.28"/><line x1="986" y1="282" x2="962" y2="135" class="cv-edge" opacity="0.00"/><line x1="986" y1="282" x2="980" y2="282" class="cv-edge" opacity="0.96"/><line x1="986" y1="282" x2="990" y2="204" class="cv-edge" opacity="0.48"/><line x1="986" y1="282" x2="998" y2="295" class="cv-edge" opacity="0.88"/><line x1="986" y1="282" x2="1014" y2="269" class="cv-edge hl" opacity="0.79"/><line x1="986" y1="282" x2="1010" y2="273" class="cv-edge" opacity="0.83"/><line x1="962" y1="135" x2="1015" y2="48" class="cv-edge" opacity="0.32"/><line x1="962" y1="135" x2="986" y2="48" class="cv-edge hl" opacity="0.40"/><line x1="962" y1="135" x2="849" y2="157" class="cv-edge hl" opacity="0.24"/><line x1="962" y1="135" x2="871" y2="166" class="cv-edge" opacity="0.36"/><line x1="962" y1="135" x2="980" y2="282" class="cv-edge" opacity="0.01"/><line x1="962" y1="135" x2="990" y2="204" class="cv-edge" opacity="0.50"/><line x1="962" y1="135" x2="1014" y2="269" class="cv-edge hl" opacity="0.04"/><line x1="962" y1="135" x2="1010" y2="273" class="cv-edge" opacity="0.02"/><line x1="669" y1="367" x2="678" y2="224" class="cv-edge" opacity="0.04"/><line x1="669" y1="367" x2="713" y2="367" class="cv-edge" opacity="0.71"/><line x1="669" y1="367" x2="530" y2="346" class="cv-edge" opacity="0.06"/><line x1="669" y1="367" x2="702" y2="380" class="cv-edge" opacity="0.76"/><line x1="669" y1="367" x2="631" y2="345" class="cv-edge" opacity="0.71"/><line x1="669" y1="367" x2="589" y2="311" class="cv-edge" opacity="0.35"/><line x1="669" y1="367" x2="750" y2="258" class="cv-edge" opacity="0.09"/><line x1="1015" y1="48" x2="986" y2="48" class="cv-edge hl" opacity="0.81"/><line x1="849" y1="157" x2="871" y2="166" class="cv-edge hl" opacity="0.85"/><line x1="849" y1="157" x2="835" y2="32" class="cv-edge hl" opacity="0.16"/><line x1="849" y1="157" x2="990" y2="204" class="cv-edge hl" opacity="0.01"/><line x1="849" y1="157" x2="797" y2="145" class="cv-edge hl" opacity="0.64"/><line x1="849" y1="157" x2="750" y2="258" class="cv-edge hl" opacity="0.06"/><line x1="871" y1="166" x2="835" y2="32" class="cv-edge" opacity="0.07"/><line x1="871" y1="166" x2="990" y2="204" class="cv-edge" opacity="0.17"/><line x1="871" y1="166" x2="797" y2="145" class="cv-edge" opacity="0.49"/><line x1="678" y1="224" x2="713" y2="367" class="cv-edge" opacity="0.02"/><line x1="678" y1="224" x2="631" y2="345" class="cv-edge" opacity="0.13"/><line x1="678" y1="224" x2="797" y2="145" class="cv-edge" opacity="0.05"/><line x1="678" y1="224" x2="589" y2="311" class="cv-edge" opacity="0.17"/><line x1="678" y1="224" x2="750" y2="258" class="cv-edge" opacity="0.47"/><line x1="678" y1="224" x2="589" y2="194" class="cv-edge hl" opacity="0.38"/><line x1="536" y1="121" x2="589" y2="194" class="cv-edge hl" opacity="0.40"/><line x1="713" y1="367" x2="702" y2="380" class="cv-edge" opacity="0.89"/><line x1="713" y1="367" x2="631" y2="345" class="cv-edge" opacity="0.44"/><line x1="713" y1="367" x2="589" y2="311" class="cv-edge" opacity="0.09"/><line x1="713" y1="367" x2="750" y2="258" class="cv-edge" opacity="0.23"/><line x1="835" y1="32" x2="797" y2="145" class="cv-edge" opacity="0.20"/><line x1="530" y1="346" x2="631" y2="345" class="cv-edge" opacity="0.32"/><line x1="530" y1="346" x2="589" y2="311" class="cv-edge" opacity="0.54"/><line x1="702" y1="380" x2="631" y2="345" class="cv-edge" opacity="0.47"/><line x1="702" y1="380" x2="589" y2="311" class="cv-edge" opacity="0.12"/><line x1="702" y1="380" x2="750" y2="258" class="cv-edge" opacity="0.13"/><line x1="980" y1="282" x2="990" y2="204" class="cv-edge" opacity="0.47"/><line x1="980" y1="282" x2="998" y2="295" class="cv-edge" opacity="0.85"/><line x1="980" y1="282" x2="1014" y2="269" class="cv-edge hl" opacity="0.76"/><line x1="980" y1="282" x2="1010" y2="273" class="cv-edge" opacity="0.79"/><line x1="990" y1="204" x2="998" y2="295" class="cv-edge" opacity="0.39"/><line x1="990" y1="204" x2="1120" y2="203" class="cv-edge hl" opacity="0.13"/><line x1="990" y1="204" x2="1014" y2="269" class="cv-edge hl" opacity="0.54"/><line x1="990" y1="204" x2="1010" y2="273" class="cv-edge" opacity="0.52"/><line x1="998" y1="295" x2="1014" y2="269" class="cv-edge hl" opacity="0.79"/><line x1="998" y1="295" x2="1010" y2="273" class="cv-edge" opacity="0.83"/><line x1="631" y1="345" x2="589" y2="311" class="cv-edge" opacity="0.64"/><line x1="631" y1="345" x2="750" y2="258" class="cv-edge" opacity="0.02"/><line x1="797" y1="145" x2="750" y2="258" class="cv-edge" opacity="0.19"/><line x1="1120" y1="203" x2="1014" y2="269" class="cv-edge hl" opacity="0.17"/><line x1="1120" y1="203" x2="1010" y2="273" class="cv-edge hl" opacity="0.13"/><line x1="589" y1="311" x2="589" y2="194" class="cv-edge hl" opacity="0.22"/><line x1="1014" y1="269" x2="1010" y2="273" class="cv-edge hl" opacity="0.96"/><circle cx="1084" cy="35" r="3" class="cv-dot"/><circle cx="1116" cy="299" r="6" class="cv-dot hl"/><circle cx="986" cy="282" r="3" class="cv-dot"/><circle cx="962" cy="135" r="3" class="cv-dot"/><circle cx="669" cy="367" r="3" class="cv-dot"/><circle cx="1015" cy="48" r="3" class="cv-dot"/><circle cx="986" cy="48" r="6" class="cv-dot hl"/><circle cx="849" cy="157" r="6" class="cv-dot hl"/><circle cx="871" cy="166" r="3" class="cv-dot"/><circle cx="678" cy="224" r="3" class="cv-dot"/><circle cx="536" cy="121" r="3" class="cv-dot"/><circle cx="713" cy="367" r="3" class="cv-dot"/><circle cx="835" cy="32" r="3" class="cv-dot"/><circle cx="530" cy="346" r="3" class="cv-dot"/><circle cx="702" cy="380" r="3" class="cv-dot"/><circle cx="980" cy="282" r="3" class="cv-dot"/><circle cx="990" cy="204" r="3" class="cv-dot"/><circle cx="998" cy="295" r="3" class="cv-dot"/><circle cx="631" cy="345" r="3" class="cv-dot"/><circle cx="797" cy="145" r="3" class="cv-dot"/><circle cx="1120" cy="203" r="6" class="cv-dot hl"/><circle cx="589" cy="311" r="3" class="cv-dot"/><circle cx="750" cy="258" r="3" class="cv-dot"/><circle cx="589" cy="194" r="6" class="cv-dot hl"/><circle cx="1014" cy="269" r="6" class="cv-dot hl"/><circle cx="1010" cy="273" r="3" class="cv-dot"/><text x="60" y="90" class="cv-k">EXPLAINER · AI ARCHITECTURE · AGENTS</text><text x="60" y="350" class="cv-n">25 Oct 2026 · 00:15 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <p>The most common complaint about AI assistants in the workplace is that they don't remember. You explain your role, your project and your preferences, and the next day you explain them again. The obvious fix, keeping everything, creates different problems: slower and more expensive responses, answers based on stale information, and a growing store of personal data nobody designed for.</p>
+<p>Memory is an architecture decision, not a feature toggle.</p>
+
+<section class="block">
+<h2 id="why-keep-everything-in-context-fails">Why "keep everything in context" fails</h2>
+<p>Stuffing history into the prompt runs into the limits covered in <a href="/insights/long-context-vs-rag/">long context or RAG</a>: cost and latency grow with every token, and models use long inputs unevenly. Chroma's research found performance grows increasingly unreliable as input length grows, even on simple tasks<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+<p>LongMemEval, a benchmark presented at ICLR 2025, tested exactly this for assistants. Its 500 questions probe five abilities: information extraction, multi-session reasoning, temporal reasoning, knowledge updates and abstention, embedded in long user-assistant histories. The authors reported that commercial chat assistants and long-context models showed about a 30% accuracy drop when recalling information across sustained interactions<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+<p>Two of those abilities deserve attention. <strong>Knowledge updates</strong>: when a user changes their address or a project changes scope, memory must reflect the latest truth, not the first. <strong>Abstention</strong>: when the assistant doesn't know, it should say so rather than inventing a memory.</p>
+</section>
+
+<section class="block">
+<h2 id="ideas-from-research">Ideas from research</h2>
+<p><strong>Memory as an operating system.</strong> MemGPT proposed virtual context management, borrowing from operating system memory hierarchies: the model pages information between a small, fast working context and larger external storage, using function calls to read, write and manage its own context<sup class="cite"><a href="#ref-1">1</a></sup>. The authors showed it maintaining consistency over long conversations and analysing documents larger than the context window<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<p><strong>Retrieval by relevance, recency and importance.</strong> The Generative Agents paper gave simulated characters a memory stream of experiences, retrieved by combining how relevant, how recent and how important each memory is, plus periodic reflection that synthesises memories into higher-level conclusions<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<p><strong>Indexing, retrieval and reading.</strong> LongMemEval's authors framed memory design as stages of indexing, retrieval and reading, and proposed improvements such as splitting sessions into smaller units, expanding memory keys with extracted facts, and making queries time-aware<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+<div class="callout"><p>Good memory isn't storing more. It's storing the right things in the right shape, and retrieving them with time and relevance in mind.</p></div>
+</section>
+
+<section class="block">
+<h2 id="the-memory-architecture-i-use">The memory architecture I use</h2>
+<table class="tbl">
+<thead><tr><th>Layer</th><th>Contents</th><th>Lifetime</th></tr></thead>
+<tbody>
+<tr><td>Working context</td><td>The current task, recent turns, retrieved items</td><td>One request or session</td></tr>
+<tr><td>Session summaries</td><td>What was discussed, decided and left open</td><td>Weeks to months</td></tr>
+<tr><td>Profile and facts</td><td>Stable facts and preferences, each with source and timestamp</td><td>Until changed or deleted</td></tr>
+<tr><td>Episodic store</td><td>Past interactions, indexed for retrieval</td><td>Defined retention period</td></tr>
+<tr><td>Organisational knowledge</td><td>Documents and data the user may access, via RAG</td><td>Governed by the source system</td></tr>
+</tbody>
+</table>
+<p>Practical rules that make it work:</p>
+<ol>
+<li><strong>Extract facts deliberately</strong>, as structured records with a source and timestamp, using <a href="/insights/structured-outputs-reliable-llm-integration/">structured outputs</a>, rather than keeping raw transcripts as the only memory.</li>
+<li><strong>Resolve conflicts by time.</strong> Newer facts supersede older ones; keep history but retrieve the current value.</li>
+<li><strong>Retrieve with time awareness</strong>, so "last week's decision" finds last week's session.</li>
+<li><strong>Let the model abstain.</strong> If retrieval finds nothing reliable, the answer is "I don't have that", not a guess.</li>
+<li><strong>Evaluate memory specifically</strong>, with test cases for recall, updates and abstention, added to your <a href="/insights/evaluating-ai-agents-reliability/">agent evaluation suite</a>.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2 id="memory-is-personal-data">Memory is personal data</h2>
+<p>A memory store is a profile of a person. Treat it accordingly:</p>
+<ul>
+<li><strong>Visibility and control.</strong> Users can see what is remembered, correct it and delete it.</li>
+<li><strong>Scope.</strong> Memory is partitioned per user and per tenant, with the same isolation tests as any multi-tenant store, as in <a href="/insights/mongodb-multi-tenant-saas-patterns/">multi-tenant SaaS patterns</a>.</li>
+<li><strong>Sensitive categories.</strong> Don't store health, financial or other sensitive details without a clear basis and purpose, especially under regimes such as the <a href="/insights/uae-pdpl-ai-architecture-2026/">UAE PDPL</a>.</li>
+<li><strong>Retention.</strong> Define how long each layer is kept and enforce it automatically.</li>
+<li><strong>Injection risk.</strong> Content written into memory from untrusted sources can carry instructions into future sessions. Treat remembered content as data, with the controls in <a href="/insights/prompt-injection-defence-for-agents/">prompt injection defence</a>.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2 id="start-small">Start small</h2>
+<p>Most products don't need the full stack on day one. A useful first version is session summaries plus a small, user-visible set of facts. Add episodic retrieval when evaluation shows users need it, and measure whether each layer improves outcomes enough to justify its cost and risk.</p>
+</section>
+
+<section class="block">
+<h2 id="how-i-can-help">How I can help</h2>
+<p>I design agent architectures, including memory, retrieval and the governance around them, so assistants become more useful without becoming a liability. See my <a href="/ai-architect/">AI architecture work</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://arxiv.org/abs/2310.08560" target="_blank" rel="noopener">MemGPT: Towards LLMs as Operating Systems</a><small>Packer et al. (arXiv) · 2023</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://arxiv.org/abs/2304.03442" target="_blank" rel="noopener">Generative Agents: Interactive Simulacra of Human Behavior</a><small>Park et al. (arXiv) · 2023</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://arxiv.org/abs/2410.10813" target="_blank" rel="noopener">LongMemEval: Benchmarking Chat Assistants on Long-Term Interactive Memory</a><small>Wu et al. (arXiv; ICLR 2025) · 2024</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://research.trychroma.com/context-rot" target="_blank" rel="noopener">Context Rot: How Increasing Input Tokens Impacts LLM Performance</a><small>Hong, Troynikov and Huber, Chroma · 14 Jul 2025</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fai-agent-memory-architecture%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fai-agent-memory-architecture%2F&amp;text=AI%20agent%20memory%3A%20what%20to%20remember%2C%20how%20to%20retrieve%20it%2C%20and%20when%20to%20forget" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=AI%20agent%20memory%3A%20what%20to%20remember%2C%20how%20to%20retrieve%20it%2C%20and%20when%20to%20forget%20https%3A%2F%2Fasksumanta.com%2Finsights%2Fai-agent-memory-architecture%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://asksumanta.com/insights/ai-agent-memory-architecture/">Copy link</button></div>
+      <div class="pnav"><a class="pn prev" href="/insights/hti-1-to-hti-5-health-it-ai-rules/"><small>← Previous</small><b>From HTI-1 to HTI-5: how US health IT certification rules for AI are shifting, and what to build anyway</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#why-keep-everything-in-context-fails">Why &quot;keep everything in context&quot; fails</a></li><li><a href="#ideas-from-research">Ideas from research</a></li><li><a href="#the-memory-architecture-i-use">The memory architecture I use</a></li><li><a href="#memory-is-personal-data">Memory is personal data</a></li><li><a href="#start-small">Start small</a></li><li><a href="#how-i-can-help">How I can help</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>Why not just keep the whole conversation history in the context window?</summary><p>Because cost and latency grow with every token, and research shows model performance degrades as inputs grow. Benchmarks of long-term memory found that commercial assistants and long-context models lost substantial accuracy when recalling information across long interactions.</p></details><details class="rise"><summary>What are the main memory designs for agents?</summary><p>Common patterns include a short working context, summaries of past sessions, a store of extracted facts about the user or task, and retrieval over past interactions. Research systems such as MemGPT manage memory tiers like an operating system, and Generative Agents retrieve memories by relevance, recency and importance.</p></details><details class="rise"><summary>What governance does agent memory need?</summary><p>Users should be able to see, correct and delete what is remembered; sensitive categories should not be stored without a clear basis; memories should be scoped per user and tenant; and retention periods should be defined.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/ai-architect/"><small>Service</small><b>AI &amp; LLM architecture</b><span>I design and build AI systems that leadership can trust: grounded in your data, measured by evaluations, governed by your rules and priced so they make sense at scale.</span><i>→</i></a><a class="rcard rise" href="/fractional-cto/"><small>Service</small><b>Fractional CTO</b><span>I work as a part-time CTO for founders, CEOs and boards who need experienced technical judgement now, and a team that can carry it on after I step back.</span><i>→</i></a><a class="rcard rise" href="/technical-due-diligence/"><small>Service</small><b>Technical due diligence</b><span>I give investors an independent, plain-language view of a company&#x27;s technology, team and AI claims, so the risks are priced in before the deal closes, not discovered after.</span><i>→</i></a><a class="rcard rise" href="/insights/hti-1-to-hti-5-health-it-ai-rules/"><small>Insight</small><b>From HTI-1 to HTI-5: how US health IT certification rules for AI are shifting, and what to build anyway</b><span>In 2023 US health IT regulation added detailed transparency duties for AI in certified EHRs. Two years later, a deregulatory proposal would remove them. For health tech teams, the lesson is not to build only what the rule of the moment requires.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: AI agent memory: what to remember, how to retrieve it, and when to forget">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
+        <p class="floc">United States &amp; UAE · working globally</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/uae/">Fractional CTO in the UAE</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/ai-agent-memory-architecture/">AI agent memory: what to remember, how to retrieve it, and when to forget</a></li><li><a href="/insights/hti-1-to-hti-5-health-it-ai-rules/">From HTI-1 to HTI-5: how US health IT certification rules for AI are shifting, and what to build anyway</a></li><li><a href="/insights/lakehouse-catalog-strategy-iceberg/">The lakehouse catalog is your real lock-in: how to choose one in 2026</a></li><li><a href="/insights/ai-model-supply-chain-security/">Securing the AI model supply chain: signing, provenance and safe formats</a></li><li><a href="/insights/openehr-vs-fhir/">openEHR vs FHIR: why the best health platforms often use both</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>

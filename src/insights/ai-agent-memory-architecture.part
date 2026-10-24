@@ -1,0 +1,62 @@
+<!--{"title": "AI agent memory: what to remember, retrieve and forget", "description": "Agents that remember users and past work are more useful and riskier. What MemGPT, Generative Agents and LongMemEval teach about memory design, and the architecture and governance I use.", "h1": "AI agent memory: what to remember, how to retrieve it, and when to forget", "kicker": "AI architecture · Agents", "lede": "An assistant that forgets everything between sessions feels shallow. One that remembers everything becomes slow, confused and a privacy liability. Designing memory is about choosing what deserves to persist, and research gives useful guidance.", "date": "2026-10-25", "datetime": "2026-10-25T00:15:00+04:00", "readtime": "9 min read", "format": "explainer", "tags": ["ai", "agents", "llm", "governance"], "keywords": ["AI agent memory", "long-term memory LLM", "MemGPT", "LongMemEval", "generative agents memory stream", "agent architecture", "conversational memory", "memory retrieval", "AI privacy", "AI architect"], "faq": [["Why not just keep the whole conversation history in the context window?", "Because cost and latency grow with every token, and research shows model performance degrades as inputs grow. Benchmarks of long-term memory found that commercial assistants and long-context models lost substantial accuracy when recalling information across long interactions."], ["What are the main memory designs for agents?", "Common patterns include a short working context, summaries of past sessions, a store of extracted facts about the user or task, and retrieval over past interactions. Research systems such as MemGPT manage memory tiers like an operating system, and Generative Agents retrieve memories by relevance, recency and importance."], ["What governance does agent memory need?", "Users should be able to see, correct and delete what is remembered; sensitive categories should not be stored without a clear basis; memories should be scoped per user and tenant; and retention periods should be defined."]], "related": ["/ai-architect/", "/fractional-cto/", "/technical-due-diligence/"], "citations": [{"title": "MemGPT: Towards LLMs as Operating Systems", "url": "https://arxiv.org/abs/2310.08560", "publisher": "Packer et al. (arXiv)", "date": "2023"}, {"title": "Generative Agents: Interactive Simulacra of Human Behavior", "url": "https://arxiv.org/abs/2304.03442", "publisher": "Park et al. (arXiv)", "date": "2023"}, {"title": "LongMemEval: Benchmarking Chat Assistants on Long-Term Interactive Memory", "url": "https://arxiv.org/abs/2410.10813", "publisher": "Wu et al. (arXiv; ICLR 2025)", "date": "2024"}, {"title": "Context Rot: How Increasing Input Tokens Impacts LLM Performance", "url": "https://research.trychroma.com/context-rot", "publisher": "Hong, Troynikov and Huber, Chroma", "date": "14 Jul 2025"}]}-->
+<p>The most common complaint about AI assistants in the workplace is that they don't remember. You explain your role, your project and your preferences, and the next day you explain them again. The obvious fix, keeping everything, creates different problems: slower and more expensive responses, answers based on stale information, and a growing store of personal data nobody designed for.</p>
+<p>Memory is an architecture decision, not a feature toggle.</p>
+
+<section class="block">
+<h2>Why "keep everything in context" fails</h2>
+<p>Stuffing history into the prompt runs into the limits covered in <a href="/insights/long-context-vs-rag/">long context or RAG</a>: cost and latency grow with every token, and models use long inputs unevenly. Chroma's research found performance grows increasingly unreliable as input length grows, even on simple tasks<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+<p>LongMemEval, a benchmark presented at ICLR 2025, tested exactly this for assistants. Its 500 questions probe five abilities: information extraction, multi-session reasoning, temporal reasoning, knowledge updates and abstention, embedded in long user-assistant histories. The authors reported that commercial chat assistants and long-context models showed about a 30% accuracy drop when recalling information across sustained interactions<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+<p>Two of those abilities deserve attention. <strong>Knowledge updates</strong>: when a user changes their address or a project changes scope, memory must reflect the latest truth, not the first. <strong>Abstention</strong>: when the assistant doesn't know, it should say so rather than inventing a memory.</p>
+</section>
+
+<section class="block">
+<h2>Ideas from research</h2>
+<p><strong>Memory as an operating system.</strong> MemGPT proposed virtual context management, borrowing from operating system memory hierarchies: the model pages information between a small, fast working context and larger external storage, using function calls to read, write and manage its own context<sup class="cite"><a href="#ref-1">1</a></sup>. The authors showed it maintaining consistency over long conversations and analysing documents larger than the context window<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<p><strong>Retrieval by relevance, recency and importance.</strong> The Generative Agents paper gave simulated characters a memory stream of experiences, retrieved by combining how relevant, how recent and how important each memory is, plus periodic reflection that synthesises memories into higher-level conclusions<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<p><strong>Indexing, retrieval and reading.</strong> LongMemEval's authors framed memory design as stages of indexing, retrieval and reading, and proposed improvements such as splitting sessions into smaller units, expanding memory keys with extracted facts, and making queries time-aware<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+<div class="callout"><p>Good memory isn't storing more. It's storing the right things in the right shape, and retrieving them with time and relevance in mind.</p></div>
+</section>
+
+<section class="block">
+<h2>The memory architecture I use</h2>
+<table class="tbl">
+<thead><tr><th>Layer</th><th>Contents</th><th>Lifetime</th></tr></thead>
+<tbody>
+<tr><td>Working context</td><td>The current task, recent turns, retrieved items</td><td>One request or session</td></tr>
+<tr><td>Session summaries</td><td>What was discussed, decided and left open</td><td>Weeks to months</td></tr>
+<tr><td>Profile and facts</td><td>Stable facts and preferences, each with source and timestamp</td><td>Until changed or deleted</td></tr>
+<tr><td>Episodic store</td><td>Past interactions, indexed for retrieval</td><td>Defined retention period</td></tr>
+<tr><td>Organisational knowledge</td><td>Documents and data the user may access, via RAG</td><td>Governed by the source system</td></tr>
+</tbody>
+</table>
+<p>Practical rules that make it work:</p>
+<ol>
+<li><strong>Extract facts deliberately</strong>, as structured records with a source and timestamp, using <a href="/insights/structured-outputs-reliable-llm-integration/">structured outputs</a>, rather than keeping raw transcripts as the only memory.</li>
+<li><strong>Resolve conflicts by time.</strong> Newer facts supersede older ones; keep history but retrieve the current value.</li>
+<li><strong>Retrieve with time awareness</strong>, so "last week's decision" finds last week's session.</li>
+<li><strong>Let the model abstain.</strong> If retrieval finds nothing reliable, the answer is "I don't have that", not a guess.</li>
+<li><strong>Evaluate memory specifically</strong>, with test cases for recall, updates and abstention, added to your <a href="/insights/evaluating-ai-agents-reliability/">agent evaluation suite</a>.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2>Memory is personal data</h2>
+<p>A memory store is a profile of a person. Treat it accordingly:</p>
+<ul>
+<li><strong>Visibility and control.</strong> Users can see what is remembered, correct it and delete it.</li>
+<li><strong>Scope.</strong> Memory is partitioned per user and per tenant, with the same isolation tests as any multi-tenant store, as in <a href="/insights/mongodb-multi-tenant-saas-patterns/">multi-tenant SaaS patterns</a>.</li>
+<li><strong>Sensitive categories.</strong> Don't store health, financial or other sensitive details without a clear basis and purpose, especially under regimes such as the <a href="/insights/uae-pdpl-ai-architecture-2026/">UAE PDPL</a>.</li>
+<li><strong>Retention.</strong> Define how long each layer is kept and enforce it automatically.</li>
+<li><strong>Injection risk.</strong> Content written into memory from untrusted sources can carry instructions into future sessions. Treat remembered content as data, with the controls in <a href="/insights/prompt-injection-defence-for-agents/">prompt injection defence</a>.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>Start small</h2>
+<p>Most products don't need the full stack on day one. A useful first version is session summaries plus a small, user-visible set of facts. Add episodic retrieval when evaluation shows users need it, and measure whether each layer improves outcomes enough to justify its cost and risk.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I design agent architectures, including memory, retrieval and the governance around them, so assistants become more useful without becoming a liability. See my <a href="/ai-architect/">AI architecture work</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
