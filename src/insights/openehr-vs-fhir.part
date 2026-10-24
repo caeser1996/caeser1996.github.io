@@ -1,0 +1,61 @@
+<!--{"title": "openEHR vs FHIR: persistence, exchange and where each belongs", "description": "openEHR and FHIR are often framed as rivals. They solve different problems: governed clinical persistence and interoperable exchange. How they differ and how I combine them with OMOP.", "h1": "openEHR vs FHIR: why the best health platforms often use both", "kicker": "Healthcare · Ontology", "lede": "Ask a room of health informaticians whether to build on openEHR or FHIR and you will start a long argument. Most of it dissolves once you separate three jobs: storing clinical data well, exchanging it, and analysing it.", "date": "2026-10-24", "datetime": "2026-10-24T08:15:00+04:00", "readtime": "8 min read", "format": "comparison", "tags": ["healthcare", "fhir", "ontology", "data"], "keywords": ["openEHR vs FHIR", "openEHR", "HL7 FHIR", "archetypes", "two-level modelling", "clinical data repository", "Clinical Knowledge Manager", "AQL", "health interoperability", "healthcare data architect"], "faq": [["What is the main difference between openEHR and FHIR?", "FHIR is primarily designed for exchanging health data between systems through APIs and resources. openEHR is designed for long-term, vendor-neutral persistence of clinical data, using a stable reference model plus clinically governed archetypes and templates."], ["What is two-level modelling in openEHR?", "A stable reference model forms the first level. Archetypes, which describe individual clinical concepts, and templates, which combine and constrain archetypes for a specific use, form the second. Clinical content can evolve without changing the underlying software model."], ["Can openEHR and FHIR be used together?", "Yes. A common pattern stores clinical data in an openEHR repository as the source of truth and exposes FHIR APIs for interoperability, with analytical models such as OMOP built downstream for research."]], "related": ["/healthcare-data-architecture/", "/ontology-knowledge-graph/", "/ai-architect/"], "citations": [{"title": "openEHR, FHIR and CDA: differences, complementarities and coexistence", "url": "https://www.noze.it/en/insights/openehr-fhir-cda-comparison/", "publisher": "Noze"}, {"title": "Multi-level modelling concepts", "url": "https://openehr.atlassian.net/wiki/spaces/spec/pages/4915219/Multi-level+Modelling+concepts", "publisher": "openEHR specifications wiki"}, {"title": "Relationship between FHIR and openEHR (community discussion)", "url": "https://discourse.openehr.org/t/relationship-between-fhir-and-openehr/236/19", "publisher": "openEHR Discourse"}, {"title": "openEHR and FHIR architecture patterns in production", "url": "https://nirmitee.io/blog/openehr-fhir-architecture-patterns-production", "publisher": "Nirmitee"}, {"title": "FHIR overview", "url": "https://hl7.org/fhir/overview.html", "publisher": "HL7 International"}, {"title": "openEHR Clinical Knowledge Manager", "url": "https://ckm.openehr.org/", "publisher": "openEHR International"}]}-->
+<p>Health systems building a new clinical data platform, particularly in Europe, the Gulf and parts of Asia, often face this choice early. Vendors pitch one or the other. Standards communities defend their own. The decision gets framed as a winner-takes-all bet, when in practice the strongest platforms usually use each where it is strong.</p>
+
+<section class="block">
+<h2>Different jobs</h2>
+<p>A helpful way to see it, set out in one comparison of openEHR, FHIR and CDA, is as layers rather than rivals: FHIR for transactional exchange, openEHR for native persistence with clinical governance, and CDA for archival documents<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<table class="tbl">
+<thead><tr><th></th><th>openEHR</th><th>FHIR</th></tr></thead>
+<tbody>
+<tr><td>Primary job</td><td>Long-term, vendor-neutral clinical data persistence</td><td>Exchanging data between systems via APIs<sup class="cite"><a href="#ref-5">5</a></sup></td></tr>
+<tr><td>Modelling approach</td><td>Two-level: stable reference model plus archetypes and templates<sup class="cite"><a href="#ref-2">2</a></sup></td><td>Resources, extended and constrained by profiles</td></tr>
+<tr><td>Clinical governance</td><td>Community-reviewed archetypes in the Clinical Knowledge Manager<sup class="cite"><a href="#ref-6">6</a></sup></td><td>Implementation guides and profiles per programme or country</td></tr>
+<tr><td>Querying</td><td>Archetype Query Language across the repository</td><td>Search parameters; complex analytics usually done elsewhere</td></tr>
+<tr><td>Ecosystem</td><td>Strong in parts of Europe, Australia and Asia</td><td>Broad global adoption and regulatory backing</td></tr>
+</tbody>
+</table>
+</section>
+
+<section class="block">
+<h2>What two-level modelling buys you</h2>
+<p>openEHR's central idea is separating the software model from clinical content. A stable reference model sits at the first level. Archetypes, each describing one clinical concept such as blood pressure, and templates, which combine and constrain archetypes for a specific use such as a discharge summary, sit at the second<sup class="cite"><a href="#ref-2">2</a></sup>. Clinicians can define and evolve content without the software changing underneath.</p>
+<p>Archetypes are governed centrally and reused globally through the Clinical Knowledge Manager<sup class="cite"><a href="#ref-6">6</a></sup>. In community discussions, practitioners argue that archetypes express domain semantics independent of technology, while FHIR profiles tend to be scoped to particular implementations<sup class="cite"><a href="#ref-3">3</a></sup>. That's a perspective from the openEHR side, but the point about governance is fair: a well-reviewed archetype for blood pressure means the same thing in every system that uses it.</p>
+<div class="callout"><p>openEHR's real product is clinical agreement. The technology exists to keep that agreement stable while software and vendors change around it.</p></div>
+</section>
+
+<section class="block">
+<h2>What FHIR does better</h2>
+<p>FHIR was built for exchange: resources, RESTful APIs and a web-developer-friendly approach<sup class="cite"><a href="#ref-5">5</a></sup>. It has become the default in regulation and procurement. US interoperability rules, prior authorisation APIs and bulk data access all build on it, as covered in <a href="/insights/cms-0057-prior-authorization-apis/">CMS-0057-F</a> and <a href="/insights/fhir-bulk-data-export-pipelines/">FHIR Bulk Data pipelines</a>. Developers can be productive with FHIR quickly, and tools, libraries and test servers are plentiful.</p>
+<p>Using a FHIR server as the primary store is where opinions diverge. One practitioner write-up argues it works for simpler cases but struggles with complex documents, temporal queries and archetype-level governance<sup class="cite"><a href="#ref-4">4</a></sup>. That is a vendor perspective; plenty of organisations do run FHIR-native repositories successfully. The question is how much clinical modelling depth and long-term governance you need.</p>
+</section>
+
+<section class="block">
+<h2>The pattern I use: three layers</h2>
+<ol>
+<li><strong>Persistence.</strong> Where the organisation needs deep, governed clinical records over decades, an openEHR clinical data repository holds the source of truth, with templates agreed with clinicians.</li>
+<li><strong>Exchange.</strong> FHIR APIs expose data to apps, partners, payers and national exchanges. A facade maps between openEHR compositions and FHIR resources, a pattern described in practice write-ups<sup class="cite"><a href="#ref-4">4</a></sup>.</li>
+<li><strong>Analytics.</strong> An OMOP CDM, built downstream, serves research, quality and AI, with standard vocabularies as described in <a href="/insights/clinical-terminologies-omop-vocabularies/">clinical terminologies and OMOP</a> and the pipeline in <a href="/insights/fhir-to-omop-architecture/">FHIR to OMOP</a>.</li>
+</ol>
+<p>Where deep clinical modelling isn't needed, for example a digital health start-up with a narrow product, a FHIR-native store plus OMOP for analytics is often simpler and perfectly adequate.</p>
+</section>
+
+<section class="block">
+<h2>How to decide</h2>
+<ul>
+<li><strong>Who is the customer?</strong> National or regional health systems planning decades ahead lean towards openEHR for persistence. Products integrating with many partners lean towards FHIR first.</li>
+<li><strong>Who owns clinical content?</strong> If clinicians need to define and govern data models directly, openEHR's tooling is built for that.</li>
+<li><strong>What does regulation require?</strong> Exchange obligations almost always mean FHIR, whatever you store internally.</li>
+<li><strong>What skills can you hire?</strong> FHIR skills are more widely available; openEHR expertise is concentrated in particular regions and vendors.</li>
+<li><strong>What will you analyse?</strong> Neither is an analytics model. Plan for OMOP or a similar layer from the start.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>Why it matters for AI</h2>
+<p>Clinical AI depends on data that means the same thing across sources and over time. Governed archetypes, consistent FHIR profiles and standard vocabularies all serve that goal. The worst foundation for AI is a mix of local models with no shared semantics, whatever standard name is on the label. That is an ontology problem first, and the same principles apply as in <a href="/insights/ontology-vs-knowledge-graph-vs-semantic-layer/">ontology, knowledge graph and semantic layer</a>.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I design clinical data platforms that combine persistence, exchange and analytics standards sensibly, for health systems and health tech companies in the US, Europe and the Gulf. See <a href="/healthcare-data-architecture/">healthcare data architecture</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>

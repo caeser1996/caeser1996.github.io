@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>openEHR vs FHIR: persistence, exchange and where each belongs</title>
+<meta name="description" content="openEHR and FHIR are often framed as rivals. They solve different problems: governed clinical persistence and interoperable exchange. How they differ and how I combine them with OMOP." />
+<meta name="keywords" content="openEHR vs FHIR, openEHR, HL7 FHIR, archetypes, two-level modelling, clinical data repository, Clinical Knowledge Manager, AQL, health interoperability, healthcare data architect" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://asksumanta.com/insights/openehr-vs-fhir/" />
+<meta name="theme-color" content="#111214" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="openEHR vs FHIR: persistence, exchange and where each belongs" />
+<meta property="og:description" content="openEHR and FHIR are often framed as rivals. They solve different problems: governed clinical persistence and interoperable exchange. How they differ and how I combine them with OMOP." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://asksumanta.com/insights/openehr-vs-fhir/" />
+<meta property="og:image" content="https://asksumanta.com/assets/og/openehr-vs-fhir.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="openEHR vs FHIR: persistence, exchange and where each belongs" />
+<meta name="twitter:description" content="openEHR and FHIR are often framed as rivals. They solve different problems: governed clinical persistence and interoperable exchange. How they differ and how I combine them with OMOP." />
+<meta name="twitter:image" content="https://asksumanta.com/assets/og/openehr-vs-fhir.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "BlogPosting", "headline": "openEHR vs FHIR: why the best health platforms often use both", "description": "openEHR and FHIR are often framed as rivals. They solve different problems: governed clinical persistence and interoperable exchange. How they differ and how I combine them with OMOP.", "datePublished": "2026-10-24T08:15:00+04:00", "dateModified": "2026-10-24T08:15:00+04:00", "articleSection": "Healthcare · Ontology", "genre": "Comparison", "citation": [{"@type": "CreativeWork", "name": "openEHR, FHIR and CDA: differences, complementarities and coexistence", "url": "https://www.noze.it/en/insights/openehr-fhir-cda-comparison/"}, {"@type": "CreativeWork", "name": "Multi-level modelling concepts", "url": "https://openehr.atlassian.net/wiki/spaces/spec/pages/4915219/Multi-level+Modelling+concepts"}, {"@type": "CreativeWork", "name": "Relationship between FHIR and openEHR (community discussion)", "url": "https://discourse.openehr.org/t/relationship-between-fhir-and-openehr/236/19"}, {"@type": "CreativeWork", "name": "openEHR and FHIR architecture patterns in production", "url": "https://nirmitee.io/blog/openehr-fhir-architecture-patterns-production"}, {"@type": "CreativeWork", "name": "FHIR overview", "url": "https://hl7.org/fhir/overview.html"}, {"@type": "CreativeWork", "name": "openEHR Clinical Knowledge Manager", "url": "https://ckm.openehr.org/"}], "author": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "publisher": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "mainEntityOfPage": "https://asksumanta.com/insights/openehr-vs-fhir/", "image": "https://asksumanta.com/assets/og/openehr-vs-fhir.png", "keywords": "openEHR vs FHIR, openEHR, HL7 FHIR, archetypes, two-level modelling, clinical data repository, Clinical Knowledge Manager, AQL, health interoperability, healthcare data architect", "wordCount": 801}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://asksumanta.com/"}, {"@type": "ListItem", "position": 2, "name": "Insights", "item": "https://asksumanta.com/insights/"}, {"@type": "ListItem", "position": 3, "name": "openEHR vs FHIR: why the best health platforms often use both", "item": "https://asksumanta.com/insights/openehr-vs-fhir/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What is the main difference between openEHR and FHIR?", "acceptedAnswer": {"@type": "Answer", "text": "FHIR is primarily designed for exchanging health data between systems through APIs and resources. openEHR is designed for long-term, vendor-neutral persistence of clinical data, using a stable reference model plus clinically governed archetypes and templates."}}, {"@type": "Question", "name": "What is two-level modelling in openEHR?", "acceptedAnswer": {"@type": "Answer", "text": "A stable reference model forms the first level. Archetypes, which describe individual clinical concepts, and templates, which combine and constrain archetypes for a specific use, form the second. Clinical content can evolve without changing the underlying software model."}}, {"@type": "Question", "name": "Can openEHR and FHIR be used together?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. A common pattern stores clinical data in an openEHR repository as the source of truth and exposes FHIR APIs for interoperability, with analytical models such as OMOP built downstream for research."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+</script>
+</head>
+<body class="sub is-post">
+<div class="progress" id="progress"></div>
+<nav>
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="/#practice">Services</a>
+      <a href="/#work">Case studies</a>
+      <a href="/insights/">Insights</a>
+      <a href="/#assess">Analyse</a>
+      <a href="/#connect">Connect</a>
+    </div>
+    <div class="nav-r">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/insights/">Insights</a> <span>/</span> <em>openEHR vs FHIR: why the best health platforms often use both</em></div>
+    <div class="kicker">Healthcare · Ontology</div>
+    <h1>openEHR vs FHIR: why the best health platforms often use both</h1>
+    <p class="sub-lede">Ask a room of health informaticians whether to build on openEHR or FHIR and you will start a long argument. Most of it dissolves once you separate three jobs: storing clinical data well, exchanging it, and analysing it.</p>
+    <div class="ameta"><span class="fmt">Comparison</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-10-24T08:15:00+04:00">24 Oct 2026 · 08:15 GST</time><span>8 min read</span><span>6 sources</span></div><div class="atags"><span class="tagp">#healthcare</span><span class="tagp">#fhir</span><span class="tagp">#ontology</span><span class="tagp">#data</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Comparison cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><polyline points="540,236 596,240 652,172 708,171 764,171 820,209 876,183 932,191 988,232 1044,222 1100,250 1156,189" class="cv-line"/><polyline points="540,262 596,208 652,197 708,140 764,175 820,241 876,288 932,262 988,197 1044,257 1100,194 1156,139" class="cv-line"/><polyline points="540,335 596,221 652,102 708,338 764,240 820,294 876,138 932,93 988,270 1044,104 1100,148 1156,137" class="cv-line hl"/><text x="60" y="90" class="cv-k">COMPARISON · HEALTHCARE · ONTOLOGY</text><text x="60" y="350" class="cv-n">24 Oct 2026 · 08:15 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <p>Health systems building a new clinical data platform, particularly in Europe, the Gulf and parts of Asia, often face this choice early. Vendors pitch one or the other. Standards communities defend their own. The decision gets framed as a winner-takes-all bet, when in practice the strongest platforms usually use each where it is strong.</p>
+
+<section class="block">
+<h2 id="different-jobs">Different jobs</h2>
+<p>A helpful way to see it, set out in one comparison of openEHR, FHIR and CDA, is as layers rather than rivals: FHIR for transactional exchange, openEHR for native persistence with clinical governance, and CDA for archival documents<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<table class="tbl">
+<thead><tr><th></th><th>openEHR</th><th>FHIR</th></tr></thead>
+<tbody>
+<tr><td>Primary job</td><td>Long-term, vendor-neutral clinical data persistence</td><td>Exchanging data between systems via APIs<sup class="cite"><a href="#ref-5">5</a></sup></td></tr>
+<tr><td>Modelling approach</td><td>Two-level: stable reference model plus archetypes and templates<sup class="cite"><a href="#ref-2">2</a></sup></td><td>Resources, extended and constrained by profiles</td></tr>
+<tr><td>Clinical governance</td><td>Community-reviewed archetypes in the Clinical Knowledge Manager<sup class="cite"><a href="#ref-6">6</a></sup></td><td>Implementation guides and profiles per programme or country</td></tr>
+<tr><td>Querying</td><td>Archetype Query Language across the repository</td><td>Search parameters; complex analytics usually done elsewhere</td></tr>
+<tr><td>Ecosystem</td><td>Strong in parts of Europe, Australia and Asia</td><td>Broad global adoption and regulatory backing</td></tr>
+</tbody>
+</table>
+</section>
+
+<section class="block">
+<h2 id="what-two-level-modelling-buys-you">What two-level modelling buys you</h2>
+<p>openEHR's central idea is separating the software model from clinical content. A stable reference model sits at the first level. Archetypes, each describing one clinical concept such as blood pressure, and templates, which combine and constrain archetypes for a specific use such as a discharge summary, sit at the second<sup class="cite"><a href="#ref-2">2</a></sup>. Clinicians can define and evolve content without the software changing underneath.</p>
+<p>Archetypes are governed centrally and reused globally through the Clinical Knowledge Manager<sup class="cite"><a href="#ref-6">6</a></sup>. In community discussions, practitioners argue that archetypes express domain semantics independent of technology, while FHIR profiles tend to be scoped to particular implementations<sup class="cite"><a href="#ref-3">3</a></sup>. That's a perspective from the openEHR side, but the point about governance is fair: a well-reviewed archetype for blood pressure means the same thing in every system that uses it.</p>
+<div class="callout"><p>openEHR's real product is clinical agreement. The technology exists to keep that agreement stable while software and vendors change around it.</p></div>
+</section>
+
+<section class="block">
+<h2 id="what-fhir-does-better">What FHIR does better</h2>
+<p>FHIR was built for exchange: resources, RESTful APIs and a web-developer-friendly approach<sup class="cite"><a href="#ref-5">5</a></sup>. It has become the default in regulation and procurement. US interoperability rules, prior authorisation APIs and bulk data access all build on it, as covered in <a href="/insights/cms-0057-prior-authorization-apis/">CMS-0057-F</a> and <a href="/insights/fhir-bulk-data-export-pipelines/">FHIR Bulk Data pipelines</a>. Developers can be productive with FHIR quickly, and tools, libraries and test servers are plentiful.</p>
+<p>Using a FHIR server as the primary store is where opinions diverge. One practitioner write-up argues it works for simpler cases but struggles with complex documents, temporal queries and archetype-level governance<sup class="cite"><a href="#ref-4">4</a></sup>. That is a vendor perspective; plenty of organisations do run FHIR-native repositories successfully. The question is how much clinical modelling depth and long-term governance you need.</p>
+</section>
+
+<section class="block">
+<h2 id="the-pattern-i-use-three-layers">The pattern I use: three layers</h2>
+<ol>
+<li><strong>Persistence.</strong> Where the organisation needs deep, governed clinical records over decades, an openEHR clinical data repository holds the source of truth, with templates agreed with clinicians.</li>
+<li><strong>Exchange.</strong> FHIR APIs expose data to apps, partners, payers and national exchanges. A facade maps between openEHR compositions and FHIR resources, a pattern described in practice write-ups<sup class="cite"><a href="#ref-4">4</a></sup>.</li>
+<li><strong>Analytics.</strong> An OMOP CDM, built downstream, serves research, quality and AI, with standard vocabularies as described in <a href="/insights/clinical-terminologies-omop-vocabularies/">clinical terminologies and OMOP</a> and the pipeline in <a href="/insights/fhir-to-omop-architecture/">FHIR to OMOP</a>.</li>
+</ol>
+<p>Where deep clinical modelling isn't needed, for example a digital health start-up with a narrow product, a FHIR-native store plus OMOP for analytics is often simpler and perfectly adequate.</p>
+</section>
+
+<section class="block">
+<h2 id="how-to-decide">How to decide</h2>
+<ul>
+<li><strong>Who is the customer?</strong> National or regional health systems planning decades ahead lean towards openEHR for persistence. Products integrating with many partners lean towards FHIR first.</li>
+<li><strong>Who owns clinical content?</strong> If clinicians need to define and govern data models directly, openEHR's tooling is built for that.</li>
+<li><strong>What does regulation require?</strong> Exchange obligations almost always mean FHIR, whatever you store internally.</li>
+<li><strong>What skills can you hire?</strong> FHIR skills are more widely available; openEHR expertise is concentrated in particular regions and vendors.</li>
+<li><strong>What will you analyse?</strong> Neither is an analytics model. Plan for OMOP or a similar layer from the start.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2 id="why-it-matters-for-ai">Why it matters for AI</h2>
+<p>Clinical AI depends on data that means the same thing across sources and over time. Governed archetypes, consistent FHIR profiles and standard vocabularies all serve that goal. The worst foundation for AI is a mix of local models with no shared semantics, whatever standard name is on the label. That is an ontology problem first, and the same principles apply as in <a href="/insights/ontology-vs-knowledge-graph-vs-semantic-layer/">ontology, knowledge graph and semantic layer</a>.</p>
+</section>
+
+<section class="block">
+<h2 id="how-i-can-help">How I can help</h2>
+<p>I design clinical data platforms that combine persistence, exchange and analytics standards sensibly, for health systems and health tech companies in the US, Europe and the Gulf. See <a href="/healthcare-data-architecture/">healthcare data architecture</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://www.noze.it/en/insights/openehr-fhir-cda-comparison/" target="_blank" rel="noopener">openEHR, FHIR and CDA: differences, complementarities and coexistence</a><small>Noze</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://openehr.atlassian.net/wiki/spaces/spec/pages/4915219/Multi-level+Modelling+concepts" target="_blank" rel="noopener">Multi-level modelling concepts</a><small>openEHR specifications wiki</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://discourse.openehr.org/t/relationship-between-fhir-and-openehr/236/19" target="_blank" rel="noopener">Relationship between FHIR and openEHR (community discussion)</a><small>openEHR Discourse</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://nirmitee.io/blog/openehr-fhir-architecture-patterns-production" target="_blank" rel="noopener">openEHR and FHIR architecture patterns in production</a><small>Nirmitee</small></div></li><li id="ref-5"><span class="rn">5</span><div><a href="https://hl7.org/fhir/overview.html" target="_blank" rel="noopener">FHIR overview</a><small>HL7 International</small></div></li><li id="ref-6"><span class="rn">6</span><div><a href="https://ckm.openehr.org/" target="_blank" rel="noopener">openEHR Clinical Knowledge Manager</a><small>openEHR International</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fopenehr-vs-fhir%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fopenehr-vs-fhir%2F&amp;text=openEHR%20vs%20FHIR%3A%20why%20the%20best%20health%20platforms%20often%20use%20both" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=openEHR%20vs%20FHIR%3A%20why%20the%20best%20health%20platforms%20often%20use%20both%20https%3A%2F%2Fasksumanta.com%2Finsights%2Fopenehr-vs-fhir%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://asksumanta.com/insights/openehr-vs-fhir/">Copy link</button></div>
+      <div class="pnav"><a class="pn prev" href="/insights/kubernetes-inference-gateway/"><small>← Previous</small><b>Inference gateways on Kubernetes: model-aware routing for self-hosted LLMs</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#different-jobs">Different jobs</a></li><li><a href="#what-two-level-modelling-buys-you">What two-level modelling buys you</a></li><li><a href="#what-fhir-does-better">What FHIR does better</a></li><li><a href="#the-pattern-i-use-three-layers">The pattern I use: three layers</a></li><li><a href="#how-to-decide">How to decide</a></li><li><a href="#why-it-matters-for-ai">Why it matters for AI</a></li><li><a href="#how-i-can-help">How I can help</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>What is the main difference between openEHR and FHIR?</summary><p>FHIR is primarily designed for exchanging health data between systems through APIs and resources. openEHR is designed for long-term, vendor-neutral persistence of clinical data, using a stable reference model plus clinically governed archetypes and templates.</p></details><details class="rise"><summary>What is two-level modelling in openEHR?</summary><p>A stable reference model forms the first level. Archetypes, which describe individual clinical concepts, and templates, which combine and constrain archetypes for a specific use, form the second. Clinical content can evolve without changing the underlying software model.</p></details><details class="rise"><summary>Can openEHR and FHIR be used together?</summary><p>Yes. A common pattern stores clinical data in an openEHR repository as the source of truth and exposes FHIR APIs for interoperability, with analytical models such as OMOP built downstream for research.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/healthcare-data-architecture/"><small>Service</small><b>Healthcare data architecture</b><span>I help healthcare and life-sciences organisations turn fragmented clinical data into governed platforms for care, research and AI, using the standards the industry already agrees on.</span><i>→</i></a><a class="rcard rise" href="/ontology-knowledge-graph/"><small>Service</small><b>Ontology &amp; knowledge graphs</b><span>I help organisations agree what their data means, write it down as an ontology and put it to work in a knowledge graph that analytics, APIs and AI agents can all rely on.</span><i>→</i></a><a class="rcard rise" href="/ai-architect/"><small>Service</small><b>AI &amp; LLM architecture</b><span>I design and build AI systems that leadership can trust: grounded in your data, measured by evaluations, governed by your rules and priced so they make sense at scale.</span><i>→</i></a><a class="rcard rise" href="/insights/kubernetes-inference-gateway/"><small>Insight</small><b>Inference gateways on Kubernetes: model-aware routing for self-hosted LLMs</b><span>Round-robin load balancing assumes requests are short and roughly equal. LLM requests are neither. The Kubernetes Gateway API Inference Extension adds model-aware routing to an ordinary gateway, and it changes how I design private model platforms.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: openEHR vs FHIR: why the best health platforms often use both">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
+        <p class="floc">United States &amp; UAE · working globally</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/uae/">Fractional CTO in the UAE</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/openehr-vs-fhir/">openEHR vs FHIR: why the best health platforms often use both</a></li><li><a href="/insights/kubernetes-inference-gateway/">Inference gateways on Kubernetes: model-aware routing for self-hosted LLMs</a></li><li><a href="/insights/structured-outputs-reliable-llm-integration/">Structured outputs: how to make LLMs dependable components of real systems</a></li><li><a href="/insights/opentelemetry-stable-by-default-kubernetes/">OpenTelemetry goes &#x27;stable by default&#x27;: what it means for Kubernetes telemetry, and how to migrate</a></li><li><a href="/insights/ai-startup-technical-due-diligence-checklist/">Technical due diligence for AI companies: the checklist I use for investors and acquirers</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>
