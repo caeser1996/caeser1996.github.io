@@ -1,0 +1,55 @@
+<!--{"title": "AI model supply chain security: signing, provenance and safe formats", "description": "Downloaded model weights can execute code and be tampered with. How pickle risks, model signing, SLSA provenance and ML bills of materials fit into a practical AI supply chain checklist.", "h1": "Securing the AI model supply chain: signing, provenance and safe formats", "kicker": "AI architecture · Security", "lede": "Teams that wouldn't run an unsigned binary from the internet routinely download model weights from public hubs and load them into production. Models are software artefacts, with software supply chain risks and a few of their own.", "date": "2026-10-24", "datetime": "2026-10-24T12:15:00+04:00", "readtime": "8 min read", "format": "checklist", "tags": ["security", "ai", "llm", "governance"], "keywords": ["AI supply chain security", "model signing", "Sigstore model signing", "SLSA provenance", "ML-BOM", "AI bill of materials", "pickle security", "safetensors", "open-weight model security", "AI security architect"], "faq": [["Why are model files a security risk?", "Some model formats can execute code when loaded. Hugging Face's documentation warns that loading pickle files, the default format for PyTorch weights, can enable arbitrary code execution, and recommends safetensors as a safer alternative."], ["What is model signing?", "Cryptographically signing model files so consumers can verify they are unchanged and come from the expected publisher. The OpenSSF model-signing project released version 1.0 in April 2025, built on Sigstore, supporting any model format and size."], ["What is an ML bill of materials?", "An inventory describing a machine learning model and its components, such as datasets, training details and dependencies. CycloneDX supports ML-BOMs and model cards for transparency into security, privacy, safety and ethical considerations."]], "related": ["/ai-architect/", "/technical-due-diligence/", "/fractional-cto/"], "citations": [{"title": "Pickle scanning", "url": "https://huggingface.co/docs/hub/security-pickle", "publisher": "Hugging Face documentation"}, {"title": "Data scientists targeted by malicious Hugging Face ML models with silent backdoor", "url": "https://jfrog.com/blog/data-scientists-targeted-by-malicious-hugging-face-ml-models-with-silent-backdoor/", "publisher": "JFrog"}, {"title": "Taming the wild west of ML: practical model signing with Sigstore", "url": "https://blog.sigstore.dev/model-transparency-v1.0", "publisher": "Sigstore blog", "date": "Apr 2025"}, {"title": "Taming the wild west of ML: practical model signing", "url": "https://blog.google/security/taming-wild-west-of-ml-practical-mode/", "publisher": "Google", "date": "2025"}, {"title": "SLSA security levels (v1.1)", "url": "https://slsa.dev/spec/v1.1/levels", "publisher": "SLSA"}, {"title": "Machine Learning Bill of Materials (ML-BOM)", "url": "https://cyclonedx.org/capabilities/mlbom/", "publisher": "CycloneDX"}, {"title": "SafePickle: robust and generic ML detection of malicious pickle-based ML models", "url": "https://arxiv.org/abs/2602.19818", "publisher": "arXiv", "date": "Feb 2026"}]}-->
+<p>Software teams have spent a decade learning to verify what they run: signed packages, pinned dependencies, software bills of materials, reproducible builds. AI teams often skip all of it. A model is downloaded from a public hub by name, loaded with a single line of code and deployed. If that file had been tampered with, or was malicious from the start, few organisations would notice.</p>
+<p>As more companies run open-weight models privately, as in <a href="/insights/private-llm-on-prem/">private LLMs on-prem</a>, this becomes a real attack surface.</p>
+
+<section class="block">
+<h2>The risks</h2>
+<p><strong>Code execution on load.</strong> Hugging Face's own documentation warns that pickle, the default format for PyTorch weights, can enable arbitrary code execution when a file is loaded, and recommends safetensors as a safer alternative<sup class="cite"><a href="#ref-1">1</a></sup>. Security researchers have reported malicious models on public hubs that used this to plant backdoors, and noted that pickle isn't the only risky format: some Keras models can run code through Lambda layers<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<p><strong>Scanners are imperfect.</strong> A 2026 study of malicious pickle-based models reported that existing scanners varied widely in how well they detected them on its dataset, which is a reason not to treat a scan as proof of safety<sup class="cite"><a href="#ref-7">7</a></sup>.</p>
+<p><strong>Tampering and substitution.</strong> Without signatures, there's no reliable way to know a model file is the one its publisher released, or that the copy in your registry hasn't changed since it was approved.</p>
+<p><strong>Unknown lineage.</strong> Fine-tuned models inherit everything about their base model and training data, including licence terms and possible poisoning. Without records, you can't answer basic questions in a security review or <a href="/insights/ai-startup-technical-due-diligence-checklist/">due diligence</a>.</p>
+</section>
+
+<section class="block">
+<h2>The building blocks</h2>
+<table class="tbl">
+<thead><tr><th>Control</th><th>What it gives you</th></tr></thead>
+<tbody>
+<tr><td>Safe formats</td><td>Weights that load as data rather than executable code, such as safetensors<sup class="cite"><a href="#ref-1">1</a></sup></td></tr>
+<tr><td>Model signing</td><td>Verification that a model is unchanged and from the expected publisher. The OpenSSF model-signing project released v1.0 in April 2025, built on Sigstore and supporting any model format and size<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-4">4</a></sup></td></tr>
+<tr><td>Build provenance</td><td>A record of how an artefact was produced. SLSA's build track defines levels from provenance existing (L1), to signed provenance from a hosted build platform (L2), to a hardened build platform (L3)<sup class="cite"><a href="#ref-5">5</a></sup></td></tr>
+<tr><td>ML bill of materials</td><td>An inventory of the model, datasets and dependencies. CycloneDX supports ML-BOMs and model cards for transparency into security, privacy, safety and ethical considerations<sup class="cite"><a href="#ref-6">6</a></sup></td></tr>
+</tbody>
+</table>
+<div class="callout"><p>Treat a model like a container image: pulled from a trusted registry, pinned by digest, verified on deployment, and traceable to how it was built.</p></div>
+</section>
+
+<section class="block">
+<h2>The checklist</h2>
+<ol>
+<li><strong>Use an internal model registry.</strong> Production never pulls directly from public hubs. Models are imported, reviewed and stored internally.</li>
+<li><strong>Prefer safe formats.</strong> Accept safetensors or equivalent where possible; convert or reject formats that execute code on load. Load untrusted files only in isolated sandboxes.</li>
+<li><strong>Scan on import</strong>, while remembering scanners miss things. Scanning reduces risk; it doesn't certify safety.</li>
+<li><strong>Pin by hash, not by name.</strong> Reference models by immutable digest so "latest" can never silently change what runs.</li>
+<li><strong>Sign what you produce and verify what you run.</strong> Sign fine-tuned and approved models at the end of your pipeline, and verify signatures at deployment.</li>
+<li><strong>Generate provenance in your training pipeline</strong>, aiming for at least signed provenance from a managed build platform, in the spirit of SLSA Build L2.</li>
+<li><strong>Keep an ML-BOM per model</strong>: base model, datasets, licences, training configuration and evaluation results, linked to your AI system register.</li>
+<li><strong>Restrict runtime permissions.</strong> Model-serving containers need no outbound internet access and minimal privileges, enforced with the policies in <a href="/insights/kubernetes-admission-policies-cel/">Kubernetes admission policies</a>.</li>
+<li><strong>Re-evaluate after every model change</strong> with your <a href="/insights/llm-evaluation-sets-that-predict-production/">evaluation set</a>, including safety and behaviour tests, not just accuracy.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2>Beyond the weights</h2>
+<p>The supply chain extends past model files. Datasets, tokenisers, prompt templates, agent tools and MCP servers all shape behaviour. MCP servers in particular deserve the same allow-listing and review, as covered in <a href="/insights/securing-mcp-servers-checklist/">securing MCP servers</a>. Google's announcement of model signing noted plans to extend the approach to datasets and other ML artefacts<sup class="cite"><a href="#ref-4">4</a></sup>, which is the right direction.</p>
+</section>
+
+<section class="block">
+<h2>Why this matters now</h2>
+<p>Enterprise customers and regulators are starting to ask where models come from and how they are controlled. An ML-BOM, signed models and a registry answer those questions concretely, and support governance frameworks such as those compared in <a href="/insights/iso-42001-vs-nist-ai-rmf/">ISO 42001 and the NIST AI RMF</a>. They are also inexpensive to adopt early and painful to retrofit after an incident.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I design secure AI platforms, from model registries and signing to provenance, runtime controls and evaluation, for organisations running private and open-weight models. See my <a href="/ai-architect/">AI architecture work</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
