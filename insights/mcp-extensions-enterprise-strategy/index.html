@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MCP extensions: how to adopt them without fragmenting your stack</title>
+<meta name="description" content="MCP extensions add UI, enterprise auth and domain conventions on top of the core protocol. How extensions work, which are official, and how I decide which to adopt in an enterprise." />
+<meta name="keywords" content="MCP extensions, Model Context Protocol, MCP Apps, Enterprise-Managed Authorization, OAuth client credentials MCP, MCP capability negotiation, SEP process, enterprise agent platform, MCP governance, AI architect" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://asksumanta.com/insights/mcp-extensions-enterprise-strategy/" />
+<meta name="theme-color" content="#111214" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="MCP extensions: how to adopt them without fragmenting your stack" />
+<meta property="og:description" content="MCP extensions add UI, enterprise auth and domain conventions on top of the core protocol. How extensions work, which are official, and how I decide which to adopt in an enterprise." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://asksumanta.com/insights/mcp-extensions-enterprise-strategy/" />
+<meta property="og:image" content="https://asksumanta.com/assets/og/mcp-extensions-enterprise-strategy.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="MCP extensions: how to adopt them without fragmenting your stack" />
+<meta name="twitter:description" content="MCP extensions add UI, enterprise auth and domain conventions on top of the core protocol. How extensions work, which are official, and how I decide which to adopt in an enterprise." />
+<meta name="twitter:image" content="https://asksumanta.com/assets/og/mcp-extensions-enterprise-strategy.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "BlogPosting", "headline": "MCP extensions: how to adopt them without fragmenting your agent platform", "description": "MCP extensions add UI, enterprise auth and domain conventions on top of the core protocol. How extensions work, which are official, and how I decide which to adopt in an enterprise.", "datePublished": "2026-10-26T00:15:00+04:00", "dateModified": "2026-10-26T00:15:00+04:00", "articleSection": "AI architecture · MCP", "genre": "Explainer", "citation": [{"@type": "CreativeWork", "name": "Understanding MCP extensions", "url": "https://blog.modelcontextprotocol.io/posts/2026-03-11-understanding-mcp-extensions/"}, {"@type": "CreativeWork", "name": "Extensions overview", "url": "https://modelcontextprotocol.io/extensions/overview"}, {"@type": "CreativeWork", "name": "Authorization extensions overview", "url": "https://modelcontextprotocol.io/extensions/auth/overview"}, {"@type": "CreativeWork", "name": "Extension support matrix", "url": "https://modelcontextprotocol.io/extensions/client-matrix"}, {"@type": "CreativeWork", "name": "SEP guidelines", "url": "https://modelcontextprotocol.io/community/sep-guidelines"}], "author": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "publisher": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "mainEntityOfPage": "https://asksumanta.com/insights/mcp-extensions-enterprise-strategy/", "image": "https://asksumanta.com/assets/og/mcp-extensions-enterprise-strategy.png", "keywords": "MCP extensions, Model Context Protocol, MCP Apps, Enterprise-Managed Authorization, OAuth client credentials MCP, MCP capability negotiation, SEP process, enterprise agent platform, MCP governance, AI architect", "wordCount": 616}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://asksumanta.com/"}, {"@type": "ListItem", "position": 2, "name": "Insights", "item": "https://asksumanta.com/insights/"}, {"@type": "ListItem", "position": 3, "name": "MCP extensions: how to adopt them without fragmenting your agent platform", "item": "https://asksumanta.com/insights/mcp-extensions-enterprise-strategy/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What is an MCP extension?", "acceptedAnswer": {"@type": "Answer", "text": "An optional pattern built on existing MCP mechanisms that adds capabilities on top of the core specification. Extensions are negotiated during initialisation, and a client or server that doesn't recognise one simply skips it, so the baseline protocol keeps working."}}, {"@type": "Question", "name": "Which MCP extensions are official?", "acceptedAnswer": {"@type": "Answer", "text": "As described by the MCP maintainers in 2026, MCP Apps for interactive UI was the first official extension, and authorisation extensions including OAuth Client Credentials and Enterprise-Managed Authorization were live. The extensions documentation and client support matrix list the current set."}}, {"@type": "Question", "name": "Are proprietary client features MCP extensions?", "acceptedAnswer": {"@type": "Answer", "text": "Not necessarily. The maintainers distinguish proprietary client features that use MCP under the hood from extensions that define protocol-level behaviour, and encourage implementers to adopt extensions as the standard way to add custom behaviour."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+</script>
+</head>
+<body class="sub is-post">
+<div class="progress" id="progress"></div>
+<nav>
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="/#practice">Services</a>
+      <a href="/#work">Case studies</a>
+      <a href="/insights/">Insights</a>
+      <a href="/#assess">Analyse</a>
+      <a href="/#connect">Connect</a>
+    </div>
+    <div class="nav-r">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/insights/">Insights</a> <span>/</span> <em>MCP extensions: how to adopt them without fragmenting your agent platform</em></div>
+    <div class="kicker">AI architecture · MCP</div>
+    <h1>MCP extensions: how to adopt them without fragmenting your agent platform</h1>
+    <p class="sub-lede">The Model Context Protocol keeps its core small and grows through extensions: interactive apps, enterprise authorisation, and domain conventions. That&#x27;s good design. It also means every enterprise now needs a policy on which extensions to support.</p>
+    <div class="ameta"><span class="fmt">Explainer</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-10-26T00:15:00+04:00">26 Oct 2026 · 00:15 GST</time><span>7 min read</span><span>5 sources</span></div><div class="atags"><span class="tagp">#ai</span><span class="tagp">#mcp</span><span class="tagp">#agents</span><span class="tagp">#governance</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Explainer cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><line x1="552" y1="281" x2="671" y2="221" class="cv-edge" opacity="0.11"/><line x1="552" y1="281" x2="549" y2="268" class="cv-edge" opacity="0.91"/><line x1="552" y1="281" x2="537" y2="297" class="cv-edge" opacity="0.85"/><line x1="552" y1="281" x2="640" y2="244" class="cv-edge" opacity="0.36"/><line x1="552" y1="281" x2="636" y2="346" class="cv-edge" opacity="0.29"/><line x1="671" y1="221" x2="770" y2="200" class="cv-edge" opacity="0.32"/><line x1="671" y1="221" x2="699" y2="155" class="cv-edge" opacity="0.53"/><line x1="671" y1="221" x2="549" y2="268" class="cv-edge" opacity="0.13"/><line x1="671" y1="221" x2="713" y2="173" class="cv-edge hl" opacity="0.57"/><line x1="671" y1="221" x2="640" y2="244" class="cv-edge" opacity="0.74"/><line x1="671" y1="221" x2="701" y2="94" class="cv-edge" opacity="0.13"/><line x1="671" y1="221" x2="686" y2="102" class="cv-edge" opacity="0.20"/><line x1="671" y1="221" x2="636" y2="346" class="cv-edge" opacity="0.13"/><line x1="770" y1="200" x2="699" y2="155" class="cv-edge" opacity="0.44"/><line x1="770" y1="200" x2="713" y2="173" class="cv-edge hl" opacity="0.57"/><line x1="770" y1="200" x2="640" y2="244" class="cv-edge" opacity="0.08"/><line x1="770" y1="200" x2="701" y2="94" class="cv-edge" opacity="0.16"/><line x1="770" y1="200" x2="686" y2="102" class="cv-edge" opacity="0.14"/><line x1="1117" y1="368" x2="1134" y2="225" class="cv-edge" opacity="0.04"/><line x1="1117" y1="368" x2="1064" y2="326" class="cv-edge" opacity="0.55"/><line x1="699" y1="155" x2="713" y2="173" class="cv-edge hl" opacity="0.85"/><line x1="699" y1="155" x2="640" y2="244" class="cv-edge" opacity="0.29"/><line x1="699" y1="155" x2="701" y2="94" class="cv-edge" opacity="0.59"/><line x1="699" y1="155" x2="686" y2="102" class="cv-edge" opacity="0.63"/><line x1="1060" y1="72" x2="928" y2="70" class="cv-edge" opacity="0.12"/><line x1="1060" y1="72" x2="995" y2="179" class="cv-edge hl" opacity="0.17"/><line x1="1060" y1="72" x2="1024" y2="151" class="cv-edge hl" opacity="0.42"/><line x1="1060" y1="72" x2="1030" y2="104" class="cv-edge" opacity="0.71"/><line x1="549" y1="268" x2="537" y2="297" class="cv-edge" opacity="0.79"/><line x1="549" y1="268" x2="640" y2="244" class="cv-edge" opacity="0.38"/><line x1="549" y1="268" x2="636" y2="346" class="cv-edge" opacity="0.22"/><line x1="713" y1="173" x2="640" y2="244" class="cv-edge hl" opacity="0.32"/><line x1="713" y1="173" x2="701" y2="94" class="cv-edge hl" opacity="0.47"/><line x1="713" y1="173" x2="686" y2="102" class="cv-edge hl" opacity="0.49"/><line x1="537" y1="297" x2="640" y2="244" class="cv-edge" opacity="0.23"/><line x1="537" y1="297" x2="636" y2="346" class="cv-edge" opacity="0.26"/><line x1="928" y1="70" x2="995" y2="179" class="cv-edge hl" opacity="0.14"/><line x1="928" y1="70" x2="1024" y2="151" class="cv-edge hl" opacity="0.16"/><line x1="928" y1="70" x2="1030" y2="104" class="cv-edge" opacity="0.29"/><line x1="928" y1="70" x2="919" y2="138" class="cv-edge" opacity="0.54"/><line x1="928" y1="70" x2="862" y2="48" class="cv-edge" opacity="0.53"/><line x1="874" y1="362" x2="890" y2="363" class="cv-edge" opacity="0.89"/><line x1="874" y1="362" x2="806" y2="386" class="cv-edge" opacity="0.52"/><line x1="640" y1="244" x2="686" y2="102" class="cv-edge" opacity="0.01"/><line x1="640" y1="244" x2="636" y2="346" class="cv-edge" opacity="0.32"/><line x1="1134" y1="225" x2="995" y2="179" class="cv-edge hl" opacity="0.03"/><line x1="1134" y1="225" x2="1024" y2="151" class="cv-edge hl" opacity="0.12"/><line x1="1134" y1="225" x2="1064" y2="326" class="cv-edge" opacity="0.18"/><line x1="1134" y1="225" x2="1158" y2="208" class="cv-edge" opacity="0.80"/><line x1="701" y1="94" x2="686" y2="102" class="cv-edge" opacity="0.88"/><line x1="890" y1="363" x2="806" y2="386" class="cv-edge" opacity="0.42"/><line x1="686" y1="102" x2="549" y2="40" class="cv-edge hl" opacity="0.00"/><line x1="995" y1="179" x2="1024" y2="151" class="cv-edge hl" opacity="0.73"/><line x1="995" y1="179" x2="1030" y2="104" class="cv-edge hl" opacity="0.45"/><line x1="995" y1="179" x2="919" y2="138" class="cv-edge hl" opacity="0.42"/><line x1="1024" y1="151" x2="1030" y2="104" class="cv-edge hl" opacity="0.68"/><line x1="1024" y1="151" x2="919" y2="138" class="cv-edge hl" opacity="0.29"/><line x1="1024" y1="151" x2="1158" y2="208" class="cv-edge hl" opacity="0.03"/><line x1="1030" y1="104" x2="919" y2="138" class="cv-edge" opacity="0.23"/><line x1="919" y1="138" x2="862" y2="48" class="cv-edge" opacity="0.29"/><circle cx="552" cy="281" r="3" class="cv-dot"/><circle cx="671" cy="221" r="3" class="cv-dot"/><circle cx="770" cy="200" r="3" class="cv-dot"/><circle cx="1117" cy="368" r="3" class="cv-dot"/><circle cx="699" cy="155" r="3" class="cv-dot"/><circle cx="1060" cy="72" r="3" class="cv-dot"/><circle cx="549" cy="268" r="3" class="cv-dot"/><circle cx="713" cy="173" r="6" class="cv-dot hl"/><circle cx="537" cy="297" r="3" class="cv-dot"/><circle cx="928" cy="70" r="3" class="cv-dot"/><circle cx="874" cy="362" r="3" class="cv-dot"/><circle cx="640" cy="244" r="3" class="cv-dot"/><circle cx="1134" cy="225" r="3" class="cv-dot"/><circle cx="701" cy="94" r="3" class="cv-dot"/><circle cx="890" cy="363" r="3" class="cv-dot"/><circle cx="686" cy="102" r="3" class="cv-dot"/><circle cx="995" cy="179" r="6" class="cv-dot hl"/><circle cx="806" cy="386" r="3" class="cv-dot"/><circle cx="1024" cy="151" r="6" class="cv-dot hl"/><circle cx="636" cy="346" r="3" class="cv-dot"/><circle cx="549" cy="40" r="6" class="cv-dot hl"/><circle cx="1030" cy="104" r="3" class="cv-dot"/><circle cx="1064" cy="326" r="3" class="cv-dot"/><circle cx="919" cy="138" r="3" class="cv-dot"/><circle cx="862" cy="48" r="3" class="cv-dot"/><circle cx="1158" cy="208" r="3" class="cv-dot"/><text x="60" y="90" class="cv-k">EXPLAINER · AI ARCHITECTURE · MCP</text><text x="60" y="350" class="cv-n">26 Oct 2026 · 00:15 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <p>Enterprises adopting MCP usually start with the core: clients, servers, tools and resources. Within months, requests arrive for more: interactive interfaces inside the chat, single sign-on instead of per-server logins, machine-to-machine access for batch agents, conventions for regulated data. MCP's answer to all of these is extensions. Understanding how they work is now part of designing an agent platform.</p>
+
+<section class="block">
+<h2 id="core-projects-and-extensions">Core, projects and extensions</h2>
+<p>The MCP maintainers describe the ecosystem in three layers<sup class="cite"><a href="#ref-1">1</a></sup>:</p>
+<ul>
+<li><strong>The core specification</strong>: how clients and servers talk, and the minimum bar for interoperability.</li>
+<li><strong>Projects</strong>: supporting infrastructure such as the Registry for discovering servers and the Inspector for testing.</li>
+<li><strong>Extensions</strong>: optional patterns for specialised needs, built on top of the core.</li>
+</ul>
+<p>Extensions are strictly additive. They are negotiated during the initialisation handshake, and a client or server that doesn't recognise one simply skips it, so the baseline protocol keeps working<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. They are also how future protocol changes get validated: an extension that gains traction signals what might belong in the core<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+</section>
+
+<section class="block">
+<h2 id="what-exists-today">What exists today</h2>
+<table class="tbl">
+<thead><tr><th>Category</th><th>Examples</th><th>Why an enterprise cares</th></tr></thead>
+<tbody>
+<tr><td>UI</td><td>MCP Apps, the first official extension, for interactive interfaces in the conversation<sup class="cite"><a href="#ref-1">1</a></sup></td><td>Richer workflows; new security review surface. See <a href="/insights/mcp-apps-tool-annotations/">MCP Apps and tool annotations</a></td></tr>
+<tr><td>Authorisation</td><td>OAuth Client Credentials for machine-to-machine access, and Enterprise-Managed Authorization for central identity provider control<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-3">3</a></sup></td><td>Central policy, audit and onboarding through your identity provider</td></tr>
+<tr><td>Domain conventions</td><td>Community groups exploring, for example, compliance metadata for financial services<sup class="cite"><a href="#ref-1">1</a></sup></td><td>Shared semantics for regulated workflows, once mature</td></tr>
+</tbody>
+</table>
+<p>The maintainers also draw a useful line: proprietary client features that happen to use MCP are not necessarily extensions, and they encourage implementers to adopt extensions as the standard way to add custom behaviour<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<div class="callout"><p>Prefer official extensions over client-specific features. The first works across clients you'll adopt next year; the second ties your workflows to one vendor.</p></div>
+</section>
+
+<section class="block">
+<h2 id="how-i-decide-which-to-adopt">How I decide which to adopt</h2>
+<ol>
+<li><strong>Is it official, recommended or community-defined?</strong> Official extensions live in the MCP organisation and go through the SEP process<sup class="cite"><a href="#ref-5">5</a></sup>. Community extensions can be valuable but carry more change risk.</li>
+<li><strong>Which of our clients support it?</strong> Check the extension support matrix<sup class="cite"><a href="#ref-4">4</a></sup> against the clients your organisation actually uses. An extension supported by one client only is a pilot, not a standard.</li>
+<li><strong>What's the security impact?</strong> UI extensions run code from servers inside hosts; auth extensions change who can access what. Both need review before approval.</li>
+<li><strong>Does it degrade gracefully?</strong> Because extensions are optional, test what happens when a client doesn't support one. The workflow should still be safe, even if less convenient.</li>
+<li><strong>Who owns it internally?</strong> Each supported extension needs an owner on the platform team, a version policy and a place in your server review checklist.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2 id="auth-extensions-first">Auth extensions first</h2>
+<p>If you adopt one extension category first, make it authorisation. Per-user, per-server OAuth doesn't scale in an enterprise, and machine-to-machine agents need a supported way to authenticate without a person in the loop. Centralising access through your identity provider gives you consistent policy and one audit trail, which supports the controls in <a href="/insights/securing-mcp-servers-checklist/">securing MCP servers</a> and the evidence expected in <a href="/insights/soc2-for-ai-startups/">SOC 2</a>.</p>
+</section>
+
+<section class="block">
+<h2 id="contributing-back">Contributing back</h2>
+<p>Organisations in regulated sectors have a real opportunity here. If your industry needs shared conventions, such as provenance, consent or compliance metadata on tool calls, the SEP process offers an Extensions Track for proposing them<sup class="cite"><a href="#ref-5">5</a></sup>. Defining those conventions openly is better than every vendor inventing its own.</p>
+</section>
+
+<section class="block">
+<h2 id="how-i-can-help">How I can help</h2>
+<p>I design enterprise MCP platforms, including extension policy, identity integration and server governance, so agent capabilities can grow without fragmenting. See my <a href="/ai-architect/">AI architecture work</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://blog.modelcontextprotocol.io/posts/2026-03-11-understanding-mcp-extensions/" target="_blank" rel="noopener">Understanding MCP extensions</a><small>Model Context Protocol blog · 11 Mar 2026</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://modelcontextprotocol.io/extensions/overview" target="_blank" rel="noopener">Extensions overview</a><small>Model Context Protocol documentation</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://modelcontextprotocol.io/extensions/auth/overview" target="_blank" rel="noopener">Authorization extensions overview</a><small>Model Context Protocol documentation</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://modelcontextprotocol.io/extensions/client-matrix" target="_blank" rel="noopener">Extension support matrix</a><small>Model Context Protocol documentation</small></div></li><li id="ref-5"><span class="rn">5</span><div><a href="https://modelcontextprotocol.io/community/sep-guidelines" target="_blank" rel="noopener">SEP guidelines</a><small>Model Context Protocol</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fmcp-extensions-enterprise-strategy%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fmcp-extensions-enterprise-strategy%2F&amp;text=MCP%20extensions%3A%20how%20to%20adopt%20them%20without%20fragmenting%20your%20agent%20platform" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=MCP%20extensions%3A%20how%20to%20adopt%20them%20without%20fragmenting%20your%20agent%20platform%20https%3A%2F%2Fasksumanta.com%2Finsights%2Fmcp-extensions-enterprise-strategy%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://asksumanta.com/insights/mcp-extensions-enterprise-strategy/">Copy link</button></div>
+      <div class="pnav"><a class="pn prev" href="/insights/colorado-ai-act-2026-reset/"><small>← Previous</small><b>Colorado&#x27;s AI law reset: what changed in 2026, and what to build regardless</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#core-projects-and-extensions">Core, projects and extensions</a></li><li><a href="#what-exists-today">What exists today</a></li><li><a href="#how-i-decide-which-to-adopt">How I decide which to adopt</a></li><li><a href="#auth-extensions-first">Auth extensions first</a></li><li><a href="#contributing-back">Contributing back</a></li><li><a href="#how-i-can-help">How I can help</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>What is an MCP extension?</summary><p>An optional pattern built on existing MCP mechanisms that adds capabilities on top of the core specification. Extensions are negotiated during initialisation, and a client or server that doesn&#x27;t recognise one simply skips it, so the baseline protocol keeps working.</p></details><details class="rise"><summary>Which MCP extensions are official?</summary><p>As described by the MCP maintainers in 2026, MCP Apps for interactive UI was the first official extension, and authorisation extensions including OAuth Client Credentials and Enterprise-Managed Authorization were live. The extensions documentation and client support matrix list the current set.</p></details><details class="rise"><summary>Are proprietary client features MCP extensions?</summary><p>Not necessarily. The maintainers distinguish proprietary client features that use MCP under the hood from extensions that define protocol-level behaviour, and encourage implementers to adopt extensions as the standard way to add custom behaviour.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/ai-architect/"><small>Service</small><b>AI &amp; LLM architecture</b><span>I design and build AI systems that leadership can trust: grounded in your data, measured by evaluations, governed by your rules and priced so they make sense at scale.</span><i>→</i></a><a class="rcard rise" href="/fractional-cto/"><small>Service</small><b>Fractional CTO</b><span>I work as a part-time CTO for founders, CEOs and boards who need experienced technical judgement now, and a team that can carry it on after I step back.</span><i>→</i></a><a class="rcard rise" href="/technical-due-diligence/"><small>Service</small><b>Technical due diligence</b><span>I give investors an independent, plain-language view of a company&#x27;s technology, team and AI claims, so the risks are priced in before the deal closes, not discovered after.</span><i>→</i></a><a class="rcard rise" href="/insights/colorado-ai-act-2026-reset/"><small>Insight</small><b>Colorado&#x27;s AI law reset: what changed in 2026, and what to build regardless</b><span>Colorado passed the first broad US state law on high-risk AI in 2024. By mid-2026 it had been delayed, blocked in federal court and replaced with a narrower notice-based law. For companies selling AI into the US, the lesson goes beyond Colorado.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: MCP extensions: how to adopt them without fragmenting your agent platform">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
+        <p class="floc">United States &amp; UAE · working globally</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/uae/">Fractional CTO in the UAE</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/mcp-extensions-enterprise-strategy/">MCP extensions: how to adopt them without fragmenting your agent platform</a></li><li><a href="/insights/colorado-ai-act-2026-reset/">Colorado&#x27;s AI law reset: what changed in 2026, and what to build regardless</a></li><li><a href="/insights/opentelemetry-ebpf-instrumentation-obi/">Zero-code observability with OBI: where OpenTelemetry&#x27;s eBPF instrumentation fits</a></li><li><a href="/insights/clinical-prediction-models-omop/">Clinical prediction models on OMOP: how to build models that work beyond one hospital</a></li><li><a href="/insights/choosing-embedding-models-rag/">Choosing an embedding model for RAG: a checklist that goes beyond the leaderboard</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>

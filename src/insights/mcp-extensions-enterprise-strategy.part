@@ -1,0 +1,53 @@
+<!--{"title": "MCP extensions: how to adopt them without fragmenting your stack", "description": "MCP extensions add UI, enterprise auth and domain conventions on top of the core protocol. How extensions work, which are official, and how I decide which to adopt in an enterprise.", "h1": "MCP extensions: how to adopt them without fragmenting your agent platform", "kicker": "AI architecture · MCP", "lede": "The Model Context Protocol keeps its core small and grows through extensions: interactive apps, enterprise authorisation, and domain conventions. That's good design. It also means every enterprise now needs a policy on which extensions to support.", "date": "2026-10-26", "datetime": "2026-10-26T00:15:00+04:00", "readtime": "7 min read", "format": "explainer", "tags": ["ai", "mcp", "agents", "governance"], "keywords": ["MCP extensions", "Model Context Protocol", "MCP Apps", "Enterprise-Managed Authorization", "OAuth client credentials MCP", "MCP capability negotiation", "SEP process", "enterprise agent platform", "MCP governance", "AI architect"], "faq": [["What is an MCP extension?", "An optional pattern built on existing MCP mechanisms that adds capabilities on top of the core specification. Extensions are negotiated during initialisation, and a client or server that doesn't recognise one simply skips it, so the baseline protocol keeps working."], ["Which MCP extensions are official?", "As described by the MCP maintainers in 2026, MCP Apps for interactive UI was the first official extension, and authorisation extensions including OAuth Client Credentials and Enterprise-Managed Authorization were live. The extensions documentation and client support matrix list the current set."], ["Are proprietary client features MCP extensions?", "Not necessarily. The maintainers distinguish proprietary client features that use MCP under the hood from extensions that define protocol-level behaviour, and encourage implementers to adopt extensions as the standard way to add custom behaviour."]], "related": ["/ai-architect/", "/fractional-cto/", "/technical-due-diligence/"], "citations": [{"title": "Understanding MCP extensions", "url": "https://blog.modelcontextprotocol.io/posts/2026-03-11-understanding-mcp-extensions/", "publisher": "Model Context Protocol blog", "date": "11 Mar 2026"}, {"title": "Extensions overview", "url": "https://modelcontextprotocol.io/extensions/overview", "publisher": "Model Context Protocol documentation"}, {"title": "Authorization extensions overview", "url": "https://modelcontextprotocol.io/extensions/auth/overview", "publisher": "Model Context Protocol documentation"}, {"title": "Extension support matrix", "url": "https://modelcontextprotocol.io/extensions/client-matrix", "publisher": "Model Context Protocol documentation"}, {"title": "SEP guidelines", "url": "https://modelcontextprotocol.io/community/sep-guidelines", "publisher": "Model Context Protocol"}]}-->
+<p>Enterprises adopting MCP usually start with the core: clients, servers, tools and resources. Within months, requests arrive for more: interactive interfaces inside the chat, single sign-on instead of per-server logins, machine-to-machine access for batch agents, conventions for regulated data. MCP's answer to all of these is extensions. Understanding how they work is now part of designing an agent platform.</p>
+
+<section class="block">
+<h2>Core, projects and extensions</h2>
+<p>The MCP maintainers describe the ecosystem in three layers<sup class="cite"><a href="#ref-1">1</a></sup>:</p>
+<ul>
+<li><strong>The core specification</strong>: how clients and servers talk, and the minimum bar for interoperability.</li>
+<li><strong>Projects</strong>: supporting infrastructure such as the Registry for discovering servers and the Inspector for testing.</li>
+<li><strong>Extensions</strong>: optional patterns for specialised needs, built on top of the core.</li>
+</ul>
+<p>Extensions are strictly additive. They are negotiated during the initialisation handshake, and a client or server that doesn't recognise one simply skips it, so the baseline protocol keeps working<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. They are also how future protocol changes get validated: an extension that gains traction signals what might belong in the core<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+</section>
+
+<section class="block">
+<h2>What exists today</h2>
+<table class="tbl">
+<thead><tr><th>Category</th><th>Examples</th><th>Why an enterprise cares</th></tr></thead>
+<tbody>
+<tr><td>UI</td><td>MCP Apps, the first official extension, for interactive interfaces in the conversation<sup class="cite"><a href="#ref-1">1</a></sup></td><td>Richer workflows; new security review surface. See <a href="/insights/mcp-apps-tool-annotations/">MCP Apps and tool annotations</a></td></tr>
+<tr><td>Authorisation</td><td>OAuth Client Credentials for machine-to-machine access, and Enterprise-Managed Authorization for central identity provider control<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-3">3</a></sup></td><td>Central policy, audit and onboarding through your identity provider</td></tr>
+<tr><td>Domain conventions</td><td>Community groups exploring, for example, compliance metadata for financial services<sup class="cite"><a href="#ref-1">1</a></sup></td><td>Shared semantics for regulated workflows, once mature</td></tr>
+</tbody>
+</table>
+<p>The maintainers also draw a useful line: proprietary client features that happen to use MCP are not necessarily extensions, and they encourage implementers to adopt extensions as the standard way to add custom behaviour<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<div class="callout"><p>Prefer official extensions over client-specific features. The first works across clients you'll adopt next year; the second ties your workflows to one vendor.</p></div>
+</section>
+
+<section class="block">
+<h2>How I decide which to adopt</h2>
+<ol>
+<li><strong>Is it official, recommended or community-defined?</strong> Official extensions live in the MCP organisation and go through the SEP process<sup class="cite"><a href="#ref-5">5</a></sup>. Community extensions can be valuable but carry more change risk.</li>
+<li><strong>Which of our clients support it?</strong> Check the extension support matrix<sup class="cite"><a href="#ref-4">4</a></sup> against the clients your organisation actually uses. An extension supported by one client only is a pilot, not a standard.</li>
+<li><strong>What's the security impact?</strong> UI extensions run code from servers inside hosts; auth extensions change who can access what. Both need review before approval.</li>
+<li><strong>Does it degrade gracefully?</strong> Because extensions are optional, test what happens when a client doesn't support one. The workflow should still be safe, even if less convenient.</li>
+<li><strong>Who owns it internally?</strong> Each supported extension needs an owner on the platform team, a version policy and a place in your server review checklist.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2>Auth extensions first</h2>
+<p>If you adopt one extension category first, make it authorisation. Per-user, per-server OAuth doesn't scale in an enterprise, and machine-to-machine agents need a supported way to authenticate without a person in the loop. Centralising access through your identity provider gives you consistent policy and one audit trail, which supports the controls in <a href="/insights/securing-mcp-servers-checklist/">securing MCP servers</a> and the evidence expected in <a href="/insights/soc2-for-ai-startups/">SOC 2</a>.</p>
+</section>
+
+<section class="block">
+<h2>Contributing back</h2>
+<p>Organisations in regulated sectors have a real opportunity here. If your industry needs shared conventions, such as provenance, consent or compliance metadata on tool calls, the SEP process offers an Extensions Track for proposing them<sup class="cite"><a href="#ref-5">5</a></sup>. Defining those conventions openly is better than every vendor inventing its own.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I design enterprise MCP platforms, including extension policy, identity integration and server governance, so agent capabilities can grow without fragmenting. See my <a href="/ai-architect/">AI architecture work</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
