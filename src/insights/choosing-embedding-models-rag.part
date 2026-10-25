@@ -1,0 +1,44 @@
+<!--{"title": "Choosing an embedding model for RAG: beyond the leaderboard", "description": "Embedding choice quietly decides RAG quality, cost and portability. What MTEB and MMTEB measure, why no model wins everything, and the checklist I use to pick and re-evaluate embeddings.", "h1": "Choosing an embedding model for RAG: a checklist that goes beyond the leaderboard", "kicker": "AI architecture · RAG", "lede": "Teams spend weeks choosing an LLM and minutes choosing an embedding model. Yet the embedding model decides what retrieval can find, and changing it later means re-embedding everything. It deserves a more careful decision.", "date": "2026-10-25", "datetime": "2026-10-25T08:15:00+04:00", "readtime": "8 min read", "format": "checklist", "tags": ["ai", "rag", "llm", "data"], "keywords": ["embedding model selection", "MTEB", "MMTEB", "text embeddings RAG", "multilingual embeddings", "Matryoshka embeddings", "vector search quality", "retrieval evaluation", "Arabic embeddings", "AI architect"], "faq": [["What is MTEB?", "The Massive Text Embedding Benchmark, which evaluates text embedding models across many tasks and datasets, including retrieval, classification and clustering. Its original paper found that no single embedding method dominated across all tasks."], ["Should I pick the top model on the MTEB leaderboard?", "Not automatically. Leaderboards average across many tasks and languages that may not match your use. Shortlist from the benchmark, then evaluate candidates on your own documents and queries, measuring retrieval quality, latency and cost."], ["What are Matryoshka embeddings?", "Embeddings trained with Matryoshka Representation Learning, which encodes information at different granularities so a single embedding can be truncated to smaller sizes with limited loss of quality. This lets you trade storage and speed against accuracy."]], "related": ["/ai-architect/", "/fractional-cto/", "/technical-due-diligence/"], "citations": [{"title": "MTEB: Massive Text Embedding Benchmark", "url": "https://arxiv.org/abs/2210.07316", "publisher": "Muennighoff et al. (arXiv)", "date": "2022"}, {"title": "MMTEB: Massive Multilingual Text Embedding Benchmark", "url": "https://arxiv.org/abs/2502.13595", "publisher": "Enevoldsen et al. (arXiv; ICLR 2025)", "date": "2025"}, {"title": "Matryoshka Representation Learning", "url": "https://arxiv.org/abs/2205.13147", "publisher": "Kusupati et al. (arXiv; NeurIPS 2022)", "date": "2022"}, {"title": "mteb (Python package)", "url": "https://pypi.org/project/mteb/", "publisher": "PyPI"}]}-->
+<p>In many RAG systems, the embedding model was chosen because it was the default in a tutorial, or because it topped a leaderboard on the day someone looked. Then retrieval quality disappoints, and the team tunes prompts and chunk sizes for weeks without suspecting the component that decides what can be found at all.</p>
+
+<section class="block">
+<h2>What the benchmarks tell you</h2>
+<p>The Massive Text Embedding Benchmark, MTEB, evaluates embedding models across many tasks, such as retrieval, classification, clustering and semantic similarity, over dozens of datasets and many languages. Its central finding when published was that no single method dominated across all tasks<sup class="cite"><a href="#ref-1">1</a></sup>. Its multilingual successor, MMTEB, presented at ICLR 2025, expanded to over 500 evaluation tasks across hundreds of languages, including long-document and code retrieval<sup class="cite"><a href="#ref-2">2</a></sup>. Notably, its authors reported that the best-performing publicly available model at the time was a relatively small multilingual model of around 560 million parameters<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<p>Two lessons follow. Model size isn't the same as fitness for your task. And an average score across hundreds of tasks may hide poor performance on the one task you care about.</p>
+<div class="callout"><p>Use the leaderboard to build a shortlist, never to make the decision. Your documents, your queries and your languages are the only benchmark that matters.</p></div>
+</section>
+
+<section class="block">
+<h2>The checklist</h2>
+<ol>
+<li><strong>Filter by the task that matters.</strong> For RAG, look at retrieval scores, not the overall average. If you search code or long documents, look at those categories specifically.</li>
+<li><strong>Check your languages.</strong> For Gulf and multilingual products, test Arabic and mixed-language queries explicitly. Many models are strongest in English, and a good average can hide weak Arabic retrieval.</li>
+<li><strong>Check domain fit.</strong> Clinical, legal and financial language behave differently from web text. Test with real domain documents; if results are weak, hybrid keyword and vector search often helps more than switching models, as in <a href="/insights/mongodb-hybrid-search-rag/">hybrid search for RAG</a>.</li>
+<li><strong>Measure on your own data.</strong> Build a labelled set of queries and the documents that should be retrieved for them, and measure recall and ranking quality for each candidate. The open-source <code>mteb</code> package can help run standard tasks alongside your own<sup class="cite"><a href="#ref-4">4</a></sup>, and the wider method is in <a href="/insights/llm-evaluation-sets-that-predict-production/">evaluation sets that predict production</a>.</li>
+<li><strong>Consider dimensions and cost.</strong> Bigger vectors cost more to store and search. Models trained with Matryoshka Representation Learning let you truncate embeddings to smaller sizes with limited quality loss; the original paper reported up to 14 times smaller embeddings at the same accuracy on an image classification benchmark<sup class="cite"><a href="#ref-3">3</a></sup>. Test the trade-off on your own retrieval set.</li>
+<li><strong>Consider where it runs.</strong> Hosted embedding APIs send your documents to a third party. For regulated or residency-bound data, a self-hosted open model may be necessary, as discussed in <a href="/insights/saudi-pdpl-cross-border-ai/">Saudi PDPL and cross-border AI</a> and <a href="/insights/private-llm-on-prem/">private LLMs on-prem</a>.</li>
+<li><strong>Check licence and longevity.</strong> If a provider deprecates a model, you must re-embed everything. Prefer models you can keep running, or plan for migration.</li>
+<li><strong>Check context length.</strong> Some models truncate long inputs silently. Make sure your chunk sizes fit the model's limit.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2>Plan for re-embedding from day one</h2>
+<p>Whatever you choose, you will change it eventually: a better model appears, a provider retires one, or your content shifts language or domain. Design for that:</p>
+<ul>
+<li><strong>Store the model name and version</strong> with every vector, and never mix vectors from different models in one index.</li>
+<li><strong>Keep source text and chunking reproducible</strong>, so you can re-embed without re-ingesting.</li>
+<li><strong>Build new indexes alongside old ones</strong>, compare retrieval quality on your evaluation set, and switch traffic only when the new one wins.</li>
+<li><strong>Budget the cost.</strong> Re-embedding a large corpus takes real compute and time; estimate it before you need it.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>Where embeddings sit in the bigger picture</h2>
+<p>Embeddings are one part of retrieval. Reranking, hybrid search, metadata filters and good chunking often matter as much. Where your vectors live is its own decision, covered in <a href="/insights/pgvector-or-vector-database/">pgvector or a vector database</a>. And for some questions, a knowledge graph or GraphRAG beats any embedding, as in <a href="/insights/graphrag-when-it-beats-vector-rag/">GraphRAG vs vector RAG</a>. The most reliable systems treat the embedding model as a swappable, versioned component, chosen with evidence and re-evaluated regularly.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I design and evaluate retrieval systems for AI products, including embedding selection, hybrid search and multilingual retrieval for Gulf markets. See my <a href="/ai-architect/">AI architecture work</a> and <a href="/insights/rag-to-production-checklist/">the RAG to production checklist</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>

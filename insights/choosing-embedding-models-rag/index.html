@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Choosing an embedding model for RAG: beyond the leaderboard</title>
+<meta name="description" content="Embedding choice quietly decides RAG quality, cost and portability. What MTEB and MMTEB measure, why no model wins everything, and the checklist I use to pick and re-evaluate embeddings." />
+<meta name="keywords" content="embedding model selection, MTEB, MMTEB, text embeddings RAG, multilingual embeddings, Matryoshka embeddings, vector search quality, retrieval evaluation, Arabic embeddings, AI architect" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://asksumanta.com/insights/choosing-embedding-models-rag/" />
+<meta name="theme-color" content="#111214" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="Choosing an embedding model for RAG: beyond the leaderboard" />
+<meta property="og:description" content="Embedding choice quietly decides RAG quality, cost and portability. What MTEB and MMTEB measure, why no model wins everything, and the checklist I use to pick and re-evaluate embeddings." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://asksumanta.com/insights/choosing-embedding-models-rag/" />
+<meta property="og:image" content="https://asksumanta.com/assets/og/choosing-embedding-models-rag.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Choosing an embedding model for RAG: beyond the leaderboard" />
+<meta name="twitter:description" content="Embedding choice quietly decides RAG quality, cost and portability. What MTEB and MMTEB measure, why no model wins everything, and the checklist I use to pick and re-evaluate embeddings." />
+<meta name="twitter:image" content="https://asksumanta.com/assets/og/choosing-embedding-models-rag.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "BlogPosting", "headline": "Choosing an embedding model for RAG: a checklist that goes beyond the leaderboard", "description": "Embedding choice quietly decides RAG quality, cost and portability. What MTEB and MMTEB measure, why no model wins everything, and the checklist I use to pick and re-evaluate embeddings.", "datePublished": "2026-10-25T08:15:00+04:00", "dateModified": "2026-10-25T08:15:00+04:00", "articleSection": "AI architecture · RAG", "genre": "Checklist", "citation": [{"@type": "CreativeWork", "name": "MTEB: Massive Text Embedding Benchmark", "url": "https://arxiv.org/abs/2210.07316"}, {"@type": "CreativeWork", "name": "MMTEB: Massive Multilingual Text Embedding Benchmark", "url": "https://arxiv.org/abs/2502.13595"}, {"@type": "CreativeWork", "name": "Matryoshka Representation Learning", "url": "https://arxiv.org/abs/2205.13147"}, {"@type": "CreativeWork", "name": "mteb (Python package)", "url": "https://pypi.org/project/mteb/"}], "author": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "publisher": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "mainEntityOfPage": "https://asksumanta.com/insights/choosing-embedding-models-rag/", "image": "https://asksumanta.com/assets/og/choosing-embedding-models-rag.png", "keywords": "embedding model selection, MTEB, MMTEB, text embeddings RAG, multilingual embeddings, Matryoshka embeddings, vector search quality, retrieval evaluation, Arabic embeddings, AI architect", "wordCount": 734}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://asksumanta.com/"}, {"@type": "ListItem", "position": 2, "name": "Insights", "item": "https://asksumanta.com/insights/"}, {"@type": "ListItem", "position": 3, "name": "Choosing an embedding model for RAG: a checklist that goes beyond the leaderboard", "item": "https://asksumanta.com/insights/choosing-embedding-models-rag/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What is MTEB?", "acceptedAnswer": {"@type": "Answer", "text": "The Massive Text Embedding Benchmark, which evaluates text embedding models across many tasks and datasets, including retrieval, classification and clustering. Its original paper found that no single embedding method dominated across all tasks."}}, {"@type": "Question", "name": "Should I pick the top model on the MTEB leaderboard?", "acceptedAnswer": {"@type": "Answer", "text": "Not automatically. Leaderboards average across many tasks and languages that may not match your use. Shortlist from the benchmark, then evaluate candidates on your own documents and queries, measuring retrieval quality, latency and cost."}}, {"@type": "Question", "name": "What are Matryoshka embeddings?", "acceptedAnswer": {"@type": "Answer", "text": "Embeddings trained with Matryoshka Representation Learning, which encodes information at different granularities so a single embedding can be truncated to smaller sizes with limited loss of quality. This lets you trade storage and speed against accuracy."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+</script>
+</head>
+<body class="sub is-post">
+<div class="progress" id="progress"></div>
+<nav>
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="/#practice">Services</a>
+      <a href="/#work">Case studies</a>
+      <a href="/insights/">Insights</a>
+      <a href="/#assess">Analyse</a>
+      <a href="/#connect">Connect</a>
+    </div>
+    <div class="nav-r">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/insights/">Insights</a> <span>/</span> <em>Choosing an embedding model for RAG: a checklist that goes beyond the leaderboard</em></div>
+    <div class="kicker">AI architecture · RAG</div>
+    <h1>Choosing an embedding model for RAG: a checklist that goes beyond the leaderboard</h1>
+    <p class="sub-lede">Teams spend weeks choosing an LLM and minutes choosing an embedding model. Yet the embedding model decides what retrieval can find, and changing it later means re-embedding everything. It deserves a more careful decision.</p>
+    <div class="ameta"><span class="fmt">Checklist</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-10-25T08:15:00+04:00">25 Oct 2026 · 08:15 GST</time><span>8 min read</span><span>4 sources</span></div><div class="atags"><span class="tagp">#ai</span><span class="tagp">#rag</span><span class="tagp">#llm</span><span class="tagp">#data</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Checklist cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><circle cx="560" cy="61" r="8" class="cv-dot hl"/><rect x="590" y="50" width="402" height="22" class="cv-bar hl"/><circle cx="560" cy="109" r="8" class="cv-dot"/><rect x="590" y="98" width="560" height="22" class="cv-bar"/><circle cx="560" cy="157" r="8" class="cv-dot"/><rect x="590" y="146" width="452" height="22" class="cv-bar"/><circle cx="560" cy="205" r="8" class="cv-dot hl"/><rect x="590" y="194" width="224" height="22" class="cv-bar hl"/><circle cx="560" cy="253" r="8" class="cv-dot"/><rect x="590" y="242" width="242" height="22" class="cv-bar"/><circle cx="560" cy="301" r="8" class="cv-dot"/><rect x="590" y="290" width="339" height="22" class="cv-bar"/><circle cx="560" cy="349" r="8" class="cv-dot hl"/><rect x="590" y="338" width="197" height="22" class="cv-bar hl"/><text x="60" y="90" class="cv-k">CHECKLIST · AI ARCHITECTURE · RAG</text><text x="60" y="350" class="cv-n">25 Oct 2026 · 08:15 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <p>In many RAG systems, the embedding model was chosen because it was the default in a tutorial, or because it topped a leaderboard on the day someone looked. Then retrieval quality disappoints, and the team tunes prompts and chunk sizes for weeks without suspecting the component that decides what can be found at all.</p>
+
+<section class="block">
+<h2 id="what-the-benchmarks-tell-you">What the benchmarks tell you</h2>
+<p>The Massive Text Embedding Benchmark, MTEB, evaluates embedding models across many tasks, such as retrieval, classification, clustering and semantic similarity, over dozens of datasets and many languages. Its central finding when published was that no single method dominated across all tasks<sup class="cite"><a href="#ref-1">1</a></sup>. Its multilingual successor, MMTEB, presented at ICLR 2025, expanded to over 500 evaluation tasks across hundreds of languages, including long-document and code retrieval<sup class="cite"><a href="#ref-2">2</a></sup>. Notably, its authors reported that the best-performing publicly available model at the time was a relatively small multilingual model of around 560 million parameters<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<p>Two lessons follow. Model size isn't the same as fitness for your task. And an average score across hundreds of tasks may hide poor performance on the one task you care about.</p>
+<div class="callout"><p>Use the leaderboard to build a shortlist, never to make the decision. Your documents, your queries and your languages are the only benchmark that matters.</p></div>
+</section>
+
+<section class="block">
+<h2 id="the-checklist">The checklist</h2>
+<ol>
+<li><strong>Filter by the task that matters.</strong> For RAG, look at retrieval scores, not the overall average. If you search code or long documents, look at those categories specifically.</li>
+<li><strong>Check your languages.</strong> For Gulf and multilingual products, test Arabic and mixed-language queries explicitly. Many models are strongest in English, and a good average can hide weak Arabic retrieval.</li>
+<li><strong>Check domain fit.</strong> Clinical, legal and financial language behave differently from web text. Test with real domain documents; if results are weak, hybrid keyword and vector search often helps more than switching models, as in <a href="/insights/mongodb-hybrid-search-rag/">hybrid search for RAG</a>.</li>
+<li><strong>Measure on your own data.</strong> Build a labelled set of queries and the documents that should be retrieved for them, and measure recall and ranking quality for each candidate. The open-source <code>mteb</code> package can help run standard tasks alongside your own<sup class="cite"><a href="#ref-4">4</a></sup>, and the wider method is in <a href="/insights/llm-evaluation-sets-that-predict-production/">evaluation sets that predict production</a>.</li>
+<li><strong>Consider dimensions and cost.</strong> Bigger vectors cost more to store and search. Models trained with Matryoshka Representation Learning let you truncate embeddings to smaller sizes with limited quality loss; the original paper reported up to 14 times smaller embeddings at the same accuracy on an image classification benchmark<sup class="cite"><a href="#ref-3">3</a></sup>. Test the trade-off on your own retrieval set.</li>
+<li><strong>Consider where it runs.</strong> Hosted embedding APIs send your documents to a third party. For regulated or residency-bound data, a self-hosted open model may be necessary, as discussed in <a href="/insights/saudi-pdpl-cross-border-ai/">Saudi PDPL and cross-border AI</a> and <a href="/insights/private-llm-on-prem/">private LLMs on-prem</a>.</li>
+<li><strong>Check licence and longevity.</strong> If a provider deprecates a model, you must re-embed everything. Prefer models you can keep running, or plan for migration.</li>
+<li><strong>Check context length.</strong> Some models truncate long inputs silently. Make sure your chunk sizes fit the model's limit.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2 id="plan-for-re-embedding-from-day-one">Plan for re-embedding from day one</h2>
+<p>Whatever you choose, you will change it eventually: a better model appears, a provider retires one, or your content shifts language or domain. Design for that:</p>
+<ul>
+<li><strong>Store the model name and version</strong> with every vector, and never mix vectors from different models in one index.</li>
+<li><strong>Keep source text and chunking reproducible</strong>, so you can re-embed without re-ingesting.</li>
+<li><strong>Build new indexes alongside old ones</strong>, compare retrieval quality on your evaluation set, and switch traffic only when the new one wins.</li>
+<li><strong>Budget the cost.</strong> Re-embedding a large corpus takes real compute and time; estimate it before you need it.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2 id="where-embeddings-sit-in-the-bigger-picture">Where embeddings sit in the bigger picture</h2>
+<p>Embeddings are one part of retrieval. Reranking, hybrid search, metadata filters and good chunking often matter as much. Where your vectors live is its own decision, covered in <a href="/insights/pgvector-or-vector-database/">pgvector or a vector database</a>. And for some questions, a knowledge graph or GraphRAG beats any embedding, as in <a href="/insights/graphrag-when-it-beats-vector-rag/">GraphRAG vs vector RAG</a>. The most reliable systems treat the embedding model as a swappable, versioned component, chosen with evidence and re-evaluated regularly.</p>
+</section>
+
+<section class="block">
+<h2 id="how-i-can-help">How I can help</h2>
+<p>I design and evaluate retrieval systems for AI products, including embedding selection, hybrid search and multilingual retrieval for Gulf markets. See my <a href="/ai-architect/">AI architecture work</a> and <a href="/insights/rag-to-production-checklist/">the RAG to production checklist</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://arxiv.org/abs/2210.07316" target="_blank" rel="noopener">MTEB: Massive Text Embedding Benchmark</a><small>Muennighoff et al. (arXiv) · 2022</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://arxiv.org/abs/2502.13595" target="_blank" rel="noopener">MMTEB: Massive Multilingual Text Embedding Benchmark</a><small>Enevoldsen et al. (arXiv; ICLR 2025) · 2025</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://arxiv.org/abs/2205.13147" target="_blank" rel="noopener">Matryoshka Representation Learning</a><small>Kusupati et al. (arXiv; NeurIPS 2022) · 2022</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://pypi.org/project/mteb/" target="_blank" rel="noopener">mteb (Python package)</a><small>PyPI</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fchoosing-embedding-models-rag%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fchoosing-embedding-models-rag%2F&amp;text=Choosing%20an%20embedding%20model%20for%20RAG%3A%20a%20checklist%20that%20goes%20beyond%20the%20leaderboard" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=Choosing%20an%20embedding%20model%20for%20RAG%3A%20a%20checklist%20that%20goes%20beyond%20the%20leaderboard%20https%3A%2F%2Fasksumanta.com%2Finsights%2Fchoosing-embedding-models-rag%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://asksumanta.com/insights/choosing-embedding-models-rag/">Copy link</button></div>
+      <div class="pnav"><a class="pn prev" href="/insights/kubernetes-multi-tenancy/"><small>← Previous</small><b>Kubernetes multi-tenancy: namespaces, virtual control planes or dedicated clusters?</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#what-the-benchmarks-tell-you">What the benchmarks tell you</a></li><li><a href="#the-checklist">The checklist</a></li><li><a href="#plan-for-re-embedding-from-day-one">Plan for re-embedding from day one</a></li><li><a href="#where-embeddings-sit-in-the-bigger-picture">Where embeddings sit in the bigger picture</a></li><li><a href="#how-i-can-help">How I can help</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>What is MTEB?</summary><p>The Massive Text Embedding Benchmark, which evaluates text embedding models across many tasks and datasets, including retrieval, classification and clustering. Its original paper found that no single embedding method dominated across all tasks.</p></details><details class="rise"><summary>Should I pick the top model on the MTEB leaderboard?</summary><p>Not automatically. Leaderboards average across many tasks and languages that may not match your use. Shortlist from the benchmark, then evaluate candidates on your own documents and queries, measuring retrieval quality, latency and cost.</p></details><details class="rise"><summary>What are Matryoshka embeddings?</summary><p>Embeddings trained with Matryoshka Representation Learning, which encodes information at different granularities so a single embedding can be truncated to smaller sizes with limited loss of quality. This lets you trade storage and speed against accuracy.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/ai-architect/"><small>Service</small><b>AI &amp; LLM architecture</b><span>I design and build AI systems that leadership can trust: grounded in your data, measured by evaluations, governed by your rules and priced so they make sense at scale.</span><i>→</i></a><a class="rcard rise" href="/fractional-cto/"><small>Service</small><b>Fractional CTO</b><span>I work as a part-time CTO for founders, CEOs and boards who need experienced technical judgement now, and a team that can carry it on after I step back.</span><i>→</i></a><a class="rcard rise" href="/technical-due-diligence/"><small>Service</small><b>Technical due diligence</b><span>I give investors an independent, plain-language view of a company&#x27;s technology, team and AI claims, so the risks are priced in before the deal closes, not discovered after.</span><i>→</i></a><a class="rcard rise" href="/insights/kubernetes-multi-tenancy/"><small>Insight</small><b>Kubernetes multi-tenancy: namespaces, virtual control planes or dedicated clusters?</b><span>Every growing platform faces the same question: one cluster per team or customer, or shared clusters with careful isolation? Kubernetes has no built-in concept of a tenant, so the answer is a set of design choices. Here is how I make them.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: Choosing an embedding model for RAG: a checklist that goes beyond the leaderboard">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
+        <p class="floc">United States &amp; UAE · working globally</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/uae/">Fractional CTO in the UAE</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/choosing-embedding-models-rag/">Choosing an embedding model for RAG: a checklist that goes beyond the leaderboard</a></li><li><a href="/insights/kubernetes-multi-tenancy/">Kubernetes multi-tenancy: namespaces, virtual control planes or dedicated clusters?</a></li><li><a href="/insights/ai-agent-memory-architecture/">AI agent memory: what to remember, how to retrieve it, and when to forget</a></li><li><a href="/insights/hti-1-to-hti-5-health-it-ai-rules/">From HTI-1 to HTI-5: how US health IT certification rules for AI are shifting, and what to build anyway</a></li><li><a href="/insights/lakehouse-catalog-strategy-iceberg/">The lakehouse catalog is your real lock-in: how to choose one in 2026</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>
