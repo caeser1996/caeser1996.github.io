@@ -1,0 +1,53 @@
+<!--{"title": "Zero-code observability with OBI: OpenTelemetry's eBPF option", "description": "OBI uses eBPF to capture traces, metrics and log correlation without code changes. What it covers, its 2026 path to 1.0, where it fits beside SDKs, and how I'd roll it out.", "h1": "Zero-code observability with OBI: where OpenTelemetry's eBPF instrumentation fits", "kicker": "Cloud · Observability", "lede": "Instrumenting every service with an SDK is the gold standard, and the reason many estates have no tracing at all. OpenTelemetry eBPF Instrumentation, OBI, offers traces and metrics without touching application code. It changes how fast you can get visibility, though it doesn't replace SDKs entirely.", "date": "2026-10-25", "datetime": "2026-10-25T16:15:00+04:00", "readtime": "8 min read", "format": "explainer", "tags": ["observability", "opentelemetry", "kubernetes", "platform"], "keywords": ["OpenTelemetry eBPF Instrumentation", "OBI", "zero-code instrumentation", "eBPF observability", "trace log correlation", "RED metrics", "Kubernetes observability", "distributed tracing", "legacy application observability", "observability consultant"], "faq": [["What is OBI?", "OpenTelemetry eBPF Instrumentation, an auto-instrumentation tool that uses eBPF to inspect application executables and the operating system networking layer, capturing trace spans, RED metrics and service relationships for supported Linux workloads without code or configuration changes."], ["Does OBI replace OpenTelemetry SDKs?", "No. It is a fast way to get baseline traces and metrics everywhere, especially for services that are hard to instrument. SDKs remain the way to add business context, custom spans and attributes. The OBI project is strengthening integration with SDKs to support hybrid approaches."], ["Can OBI correlate logs with traces?", "Yes. OBI can add trace and span IDs to JSON and plain-text logs written to stdout or stderr, without changing the application, provided OBI has active trace context at the time of the write. It needs elevated privileges and, for the common write path, a recent Linux kernel."]], "related": ["/fractional-cto/", "/ai-architect/", "/technical-due-diligence/"], "citations": [{"title": "OpenTelemetry eBPF Instrumentation", "url": "https://opentelemetry.io/docs/zero-code/obi/", "publisher": "OpenTelemetry documentation"}, {"title": "OpenTelemetry eBPF Instrumentation 2026 goals", "url": "https://opentelemetry.io/blog/2026/obi-goals/", "publisher": "OpenTelemetry blog", "date": "23 Jan 2026"}, {"title": "Zero-code trace-log correlation with OBI", "url": "https://opentelemetry.io/blog/2026/obi-trace-log-correlation/", "publisher": "OpenTelemetry blog", "date": "6 Oct 2026"}, {"title": "opentelemetry-ebpf-instrumentation", "url": "https://github.com/open-telemetry/opentelemetry-ebpf-instrumentation", "publisher": "OpenTelemetry, GitHub"}]}-->
+<p>Many organisations have tracing on the services built in the last few years and nothing on the rest: the legacy Java monolith, the vendor binary, the Go service whose author left. Instrumenting each one with an SDK means code changes, releases and ownership that often doesn't exist. So the gaps stay, and incidents in those gaps take longest to resolve.</p>
+
+<section class="block">
+<h2>What OBI does</h2>
+<p>OpenTelemetry eBPF Instrumentation uses eBPF to inspect application executables and the operating system's networking layer, capturing trace spans, rate-errors-duration metrics, runtime metrics and service relationships for supported Linux workloads, without modifying application code or configuration<sup class="cite"><a href="#ref-1">1</a></sup>. The documentation lists support for languages including Java, .NET, Go, Python, Ruby, Node.js, C, C++ and Rust, visibility into TLS traffic without decryption, context propagation across services, and configuration-free auto-instrumentation on Kubernetes<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<p>That last point matters most in practice. On a cluster, you can get a baseline service map and latency metrics for everything in days, not quarters.</p>
+</section>
+
+<section class="block">
+<h2>Log correlation without touching the app</h2>
+<p>A recent addition addresses a common incident pain: you have a failing trace, but no way to find the matching log lines because the service never added trace context to its logs. OBI can now add trace and span IDs to logs written to stdout or stderr, because through eBPF it knows which request each thread is serving at the moment of the write<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/opentelemetry-ebpf-instrumentation-obi/logs-and-trace.webp" alt="Two terminal panels showing JSON log lines from a frontend and a backend service, each enriched with the same trace_id and different span_id values" width="1600" height="417" loading="lazy"></div><figcaption>Logs from two services enriched by OBI with the same trace ID, so a single search connects them. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2026/obi-trace-log-correlation/" target="_blank" rel="noopener">OpenTelemetry blog, Zero-code trace-log correlation with OBI</a> · CC BY 4.0</span></figcaption></figure>
+<p>The boundaries are stated clearly: it applies to stdout and stderr, only annotates lines written while OBI has active trace context, needs elevated privileges, and on older kernels only some write paths are enriched; the common write path needs Linux 6.0 or later. It also needs a small change in the log pipeline<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+<div class="callout"><p>eBPF instrumentation is the fastest way to remove blind spots. SDKs are the way to add meaning. Most mature estates will want both.</p></div>
+</section>
+
+<section class="block">
+<h2>Where it's heading in 2026</h2>
+<p>The OBI SIG's 2026 goals centre on a stable 1.0 release for production readiness, with complete configuration documentation, adoption of OpenTelemetry's declarative configuration and telemetry schemas, and test coverage targets. They also plan to expand protocols to messaging systems such as MQTT, AMQP, NATS and Redis pub/sub, extend database support, instrument cloud service SDKs, broaden .NET support, and strengthen integration with OpenTelemetry SDKs for hybrid instrumentation<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<p>Check the project's current release status before production rollout<sup class="cite"><a href="#ref-4">4</a></sup>, and pilot in non-critical environments first, in line with the stability approach in <a href="/insights/opentelemetry-stable-by-default-kubernetes/">OpenTelemetry's stable-by-default push</a>.</p>
+</section>
+
+<section class="block">
+<h2>OBI or SDK?</h2>
+<table class="tbl">
+<thead><tr><th></th><th>OBI (eBPF)</th><th>OpenTelemetry SDKs</th></tr></thead>
+<tbody>
+<tr><td>Code changes</td><td>None</td><td>Required</td></tr>
+<tr><td>Coverage speed</td><td>Whole cluster quickly</td><td>Service by service</td></tr>
+<tr><td>Business context</td><td>Limited to protocol-level data</td><td>Custom spans, attributes and events</td></tr>
+<tr><td>Privileges</td><td>Elevated, node-level</td><td>Runs inside the application</td></tr>
+<tr><td>Best for</td><td>Baselines, legacy and third-party services</td><td>Core services where detail matters</td></tr>
+</tbody>
+</table>
+</section>
+
+<section class="block">
+<h2>How I'd roll it out</h2>
+<ol>
+<li><strong>Start with the blind spots.</strong> Deploy OBI where SDK instrumentation is missing, and compare the service map with what teams believe the architecture is.</li>
+<li><strong>Route through your Collector gateway</strong>, as in <a href="/insights/opentelemetry-collector-deployment-patterns/">Collector deployment patterns</a>, so sampling, redaction and export are handled centrally.</li>
+<li><strong>Review privileges with security.</strong> eBPF instrumentation runs with elevated access on nodes; treat it as platform infrastructure with the same controls as other node-level agents, enforced through <a href="/insights/kubernetes-admission-policies-cel/">admission policies</a>.</li>
+<li><strong>Check data sensitivity.</strong> Capturing protocol data, including from encrypted traffic, can expose sensitive values. Configure what is collected and redact at the gateway.</li>
+<li><strong>Add SDKs where business context matters</strong>, such as checkout flows, AI calls with <a href="/insights/llm-observability-opentelemetry-genai/">GenAI attributes</a>, and regulated workflows.</li>
+<li><strong>Watch cardinality and cost</strong>, since cluster-wide instrumentation can generate a lot of telemetry quickly.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I design observability platforms that close blind spots quickly and add depth where it matters, using OpenTelemetry end to end. As a <a href="/fractional-cto/">fractional CTO</a> I can own the observability roadmap. Or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>

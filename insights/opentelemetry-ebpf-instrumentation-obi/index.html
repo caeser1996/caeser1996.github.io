@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Zero-code observability with OBI: OpenTelemetry&#x27;s eBPF option</title>
+<meta name="description" content="OBI uses eBPF to capture traces, metrics and log correlation without code changes. What it covers, its 2026 path to 1.0, where it fits beside SDKs, and how I&#x27;d roll it out." />
+<meta name="keywords" content="OpenTelemetry eBPF Instrumentation, OBI, zero-code instrumentation, eBPF observability, trace log correlation, RED metrics, Kubernetes observability, distributed tracing, legacy application observability, observability consultant" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://asksumanta.com/insights/opentelemetry-ebpf-instrumentation-obi/" />
+<meta name="theme-color" content="#111214" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="Zero-code observability with OBI: OpenTelemetry&#x27;s eBPF option" />
+<meta property="og:description" content="OBI uses eBPF to capture traces, metrics and log correlation without code changes. What it covers, its 2026 path to 1.0, where it fits beside SDKs, and how I&#x27;d roll it out." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://asksumanta.com/insights/opentelemetry-ebpf-instrumentation-obi/" />
+<meta property="og:image" content="https://asksumanta.com/assets/og/opentelemetry-ebpf-instrumentation-obi.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Zero-code observability with OBI: OpenTelemetry&#x27;s eBPF option" />
+<meta name="twitter:description" content="OBI uses eBPF to capture traces, metrics and log correlation without code changes. What it covers, its 2026 path to 1.0, where it fits beside SDKs, and how I&#x27;d roll it out." />
+<meta name="twitter:image" content="https://asksumanta.com/assets/og/opentelemetry-ebpf-instrumentation-obi.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "BlogPosting", "headline": "Zero-code observability with OBI: where OpenTelemetry's eBPF instrumentation fits", "description": "OBI uses eBPF to capture traces, metrics and log correlation without code changes. What it covers, its 2026 path to 1.0, where it fits beside SDKs, and how I'd roll it out.", "datePublished": "2026-10-25T16:15:00+04:00", "dateModified": "2026-10-25T16:15:00+04:00", "articleSection": "Cloud · Observability", "genre": "Explainer", "citation": [{"@type": "CreativeWork", "name": "OpenTelemetry eBPF Instrumentation", "url": "https://opentelemetry.io/docs/zero-code/obi/"}, {"@type": "CreativeWork", "name": "OpenTelemetry eBPF Instrumentation 2026 goals", "url": "https://opentelemetry.io/blog/2026/obi-goals/"}, {"@type": "CreativeWork", "name": "Zero-code trace-log correlation with OBI", "url": "https://opentelemetry.io/blog/2026/obi-trace-log-correlation/"}, {"@type": "CreativeWork", "name": "opentelemetry-ebpf-instrumentation", "url": "https://github.com/open-telemetry/opentelemetry-ebpf-instrumentation"}], "author": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "publisher": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "mainEntityOfPage": "https://asksumanta.com/insights/opentelemetry-ebpf-instrumentation-obi/", "image": "https://asksumanta.com/assets/og/opentelemetry-ebpf-instrumentation-obi.png", "keywords": "OpenTelemetry eBPF Instrumentation, OBI, zero-code instrumentation, eBPF observability, trace log correlation, RED metrics, Kubernetes observability, distributed tracing, legacy application observability, observability consultant", "wordCount": 672}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://asksumanta.com/"}, {"@type": "ListItem", "position": 2, "name": "Insights", "item": "https://asksumanta.com/insights/"}, {"@type": "ListItem", "position": 3, "name": "Zero-code observability with OBI: where OpenTelemetry's eBPF instrumentation fits", "item": "https://asksumanta.com/insights/opentelemetry-ebpf-instrumentation-obi/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What is OBI?", "acceptedAnswer": {"@type": "Answer", "text": "OpenTelemetry eBPF Instrumentation, an auto-instrumentation tool that uses eBPF to inspect application executables and the operating system networking layer, capturing trace spans, RED metrics and service relationships for supported Linux workloads without code or configuration changes."}}, {"@type": "Question", "name": "Does OBI replace OpenTelemetry SDKs?", "acceptedAnswer": {"@type": "Answer", "text": "No. It is a fast way to get baseline traces and metrics everywhere, especially for services that are hard to instrument. SDKs remain the way to add business context, custom spans and attributes. The OBI project is strengthening integration with SDKs to support hybrid approaches."}}, {"@type": "Question", "name": "Can OBI correlate logs with traces?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. OBI can add trace and span IDs to JSON and plain-text logs written to stdout or stderr, without changing the application, provided OBI has active trace context at the time of the write. It needs elevated privileges and, for the common write path, a recent Linux kernel."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+</script>
+</head>
+<body class="sub is-post">
+<div class="progress" id="progress"></div>
+<nav>
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="/#practice">Services</a>
+      <a href="/#work">Case studies</a>
+      <a href="/insights/">Insights</a>
+      <a href="/#assess">Analyse</a>
+      <a href="/#connect">Connect</a>
+    </div>
+    <div class="nav-r">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/insights/">Insights</a> <span>/</span> <em>Zero-code observability with OBI: where OpenTelemetry&#x27;s eBPF instrumentation fits</em></div>
+    <div class="kicker">Cloud · Observability</div>
+    <h1>Zero-code observability with OBI: where OpenTelemetry&#x27;s eBPF instrumentation fits</h1>
+    <p class="sub-lede">Instrumenting every service with an SDK is the gold standard, and the reason many estates have no tracing at all. OpenTelemetry eBPF Instrumentation, OBI, offers traces and metrics without touching application code. It changes how fast you can get visibility, though it doesn&#x27;t replace SDKs entirely.</p>
+    <div class="ameta"><span class="fmt">Explainer</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-10-25T16:15:00+04:00">25 Oct 2026 · 16:15 GST</time><span>8 min read</span><span>4 sources</span></div><div class="atags"><span class="tagp">#observability</span><span class="tagp">#opentelemetry</span><span class="tagp">#kubernetes</span><span class="tagp">#platform</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Explainer cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><line x1="727" y1="282" x2="866" y2="310" class="cv-edge" opacity="0.05"/><line x1="727" y1="282" x2="659" y2="243" class="cv-edge" opacity="0.48"/><line x1="727" y1="282" x2="579" y2="287" class="cv-edge" opacity="0.01"/><line x1="727" y1="282" x2="656" y2="220" class="cv-edge" opacity="0.37"/><line x1="727" y1="282" x2="699" y2="183" class="cv-edge" opacity="0.32"/><line x1="727" y1="282" x2="641" y2="389" class="cv-edge" opacity="0.08"/><line x1="727" y1="282" x2="763" y2="207" class="cv-edge" opacity="0.45"/><line x1="727" y1="282" x2="716" y2="310" class="cv-edge" opacity="0.80"/><line x1="727" y1="282" x2="777" y2="314" class="cv-edge hl" opacity="0.60"/><line x1="866" y1="310" x2="968" y2="247" class="cv-edge hl" opacity="0.20"/><line x1="866" y1="310" x2="763" y2="207" class="cv-edge" opacity="0.03"/><line x1="866" y1="310" x2="777" y2="314" class="cv-edge hl" opacity="0.41"/><line x1="866" y1="310" x2="902" y2="234" class="cv-edge" opacity="0.44"/><line x1="968" y1="247" x2="1016" y2="242" class="cv-edge hl" opacity="0.68"/><line x1="968" y1="247" x2="1018" y2="262" class="cv-edge hl" opacity="0.65"/><line x1="968" y1="247" x2="1010" y2="207" class="cv-edge hl" opacity="0.61"/><line x1="968" y1="247" x2="951" y2="142" class="cv-edge hl" opacity="0.29"/><line x1="968" y1="247" x2="1096" y2="214" class="cv-edge hl" opacity="0.12"/><line x1="968" y1="247" x2="902" y2="234" class="cv-edge hl" opacity="0.55"/><line x1="968" y1="247" x2="986" y2="130" class="cv-edge hl" opacity="0.22"/><line x1="659" y1="243" x2="579" y2="287" class="cv-edge" opacity="0.39"/><line x1="659" y1="243" x2="656" y2="220" class="cv-edge" opacity="0.84"/><line x1="659" y1="243" x2="645" y2="143" class="cv-edge" opacity="0.33"/><line x1="659" y1="243" x2="699" y2="183" class="cv-edge" opacity="0.52"/><line x1="659" y1="243" x2="641" y2="389" class="cv-edge" opacity="0.02"/><line x1="659" y1="243" x2="763" y2="207" class="cv-edge" opacity="0.27"/><line x1="659" y1="243" x2="716" y2="310" class="cv-edge" opacity="0.42"/><line x1="659" y1="243" x2="777" y2="314" class="cv-edge hl" opacity="0.08"/><line x1="847" y1="88" x2="827" y2="43" class="cv-edge" opacity="0.67"/><line x1="847" y1="88" x2="763" y2="207" class="cv-edge" opacity="0.03"/><line x1="847" y1="88" x2="951" y2="142" class="cv-edge" opacity="0.22"/><line x1="847" y1="88" x2="986" y2="130" class="cv-edge" opacity="0.04"/><line x1="1158" y1="293" x2="1018" y2="262" class="cv-edge" opacity="0.04"/><line x1="1158" y1="293" x2="1096" y2="214" class="cv-edge" opacity="0.33"/><line x1="579" y1="287" x2="656" y2="220" class="cv-edge" opacity="0.32"/><line x1="579" y1="287" x2="577" y2="373" class="cv-edge" opacity="0.42"/><line x1="579" y1="287" x2="641" y2="389" class="cv-edge" opacity="0.20"/><line x1="579" y1="287" x2="716" y2="310" class="cv-edge" opacity="0.07"/><line x1="656" y1="220" x2="645" y2="143" class="cv-edge" opacity="0.48"/><line x1="656" y1="220" x2="699" y2="183" class="cv-edge" opacity="0.62"/><line x1="656" y1="220" x2="763" y2="207" class="cv-edge" opacity="0.28"/><line x1="656" y1="220" x2="716" y2="310" class="cv-edge" opacity="0.28"/><line x1="1016" y1="242" x2="1018" y2="262" class="cv-edge" opacity="0.86"/><line x1="1016" y1="242" x2="1032" y2="100" class="cv-edge hl" opacity="0.05"/><line x1="1016" y1="242" x2="1010" y2="207" class="cv-edge" opacity="0.76"/><line x1="1016" y1="242" x2="951" y2="142" class="cv-edge" opacity="0.21"/><line x1="1016" y1="242" x2="1096" y2="214" class="cv-edge" opacity="0.43"/><line x1="1016" y1="242" x2="902" y2="234" class="cv-edge" opacity="0.24"/><line x1="1016" y1="242" x2="1095" y2="122" class="cv-edge" opacity="0.04"/><line x1="1016" y1="242" x2="986" y2="130" class="cv-edge" opacity="0.23"/><line x1="645" y1="143" x2="699" y2="183" class="cv-edge" opacity="0.55"/><line x1="645" y1="143" x2="763" y2="207" class="cv-edge" opacity="0.10"/><line x1="1091" y1="74" x2="1032" y2="100" class="cv-edge hl" opacity="0.57"/><line x1="1091" y1="74" x2="1096" y2="214" class="cv-edge" opacity="0.07"/><line x1="1091" y1="74" x2="1095" y2="122" class="cv-edge" opacity="0.67"/><line x1="1091" y1="74" x2="986" y2="130" class="cv-edge" opacity="0.20"/><line x1="699" y1="183" x2="763" y2="207" class="cv-edge" opacity="0.55"/><line x1="699" y1="183" x2="716" y2="310" class="cv-edge" opacity="0.15"/><line x1="1018" y1="262" x2="1010" y2="207" class="cv-edge" opacity="0.63"/><line x1="1018" y1="262" x2="951" y2="142" class="cv-edge" opacity="0.09"/><line x1="1018" y1="262" x2="1096" y2="214" class="cv-edge" opacity="0.39"/><line x1="1018" y1="262" x2="902" y2="234" class="cv-edge" opacity="0.20"/><line x1="1018" y1="262" x2="986" y2="130" class="cv-edge" opacity="0.10"/><line x1="1032" y1="100" x2="1010" y2="207" class="cv-edge hl" opacity="0.27"/><line x1="1032" y1="100" x2="951" y2="142" class="cv-edge hl" opacity="0.39"/><line x1="1032" y1="100" x2="1096" y2="214" class="cv-edge hl" opacity="0.13"/><line x1="1032" y1="100" x2="1095" y2="122" class="cv-edge hl" opacity="0.55"/><line x1="1032" y1="100" x2="986" y2="130" class="cv-edge hl" opacity="0.63"/><line x1="1010" y1="207" x2="951" y2="142" class="cv-edge" opacity="0.42"/><line x1="1010" y1="207" x2="1096" y2="214" class="cv-edge" opacity="0.42"/><line x1="1010" y1="207" x2="902" y2="234" class="cv-edge" opacity="0.26"/><line x1="1010" y1="207" x2="1095" y2="122" class="cv-edge" opacity="0.20"/><line x1="1010" y1="207" x2="986" y2="130" class="cv-edge" opacity="0.46"/><line x1="577" y1="373" x2="641" y2="389" class="cv-edge" opacity="0.56"/><line x1="641" y1="389" x2="716" y2="310" class="cv-edge" opacity="0.28"/><line x1="763" y1="207" x2="716" y2="310" class="cv-edge" opacity="0.24"/><line x1="763" y1="207" x2="777" y2="314" class="cv-edge hl" opacity="0.28"/><line x1="763" y1="207" x2="902" y2="234" class="cv-edge" opacity="0.06"/><line x1="716" y1="310" x2="777" y2="314" class="cv-edge hl" opacity="0.59"/><line x1="951" y1="142" x2="902" y2="234" class="cv-edge" opacity="0.31"/><line x1="951" y1="142" x2="1095" y2="122" class="cv-edge" opacity="0.03"/><line x1="951" y1="142" x2="986" y2="130" class="cv-edge" opacity="0.76"/><line x1="1096" y1="214" x2="1095" y2="122" class="cv-edge" opacity="0.39"/><line x1="1096" y1="214" x2="986" y2="130" class="cv-edge" opacity="0.08"/><line x1="777" y1="314" x2="902" y2="234" class="cv-edge hl" opacity="0.01"/><line x1="902" y1="234" x2="986" y2="130" class="cv-edge" opacity="0.11"/><line x1="1095" y1="122" x2="986" y2="130" class="cv-edge" opacity="0.27"/><circle cx="727" cy="282" r="3" class="cv-dot"/><circle cx="866" cy="310" r="3" class="cv-dot"/><circle cx="968" cy="247" r="6" class="cv-dot hl"/><circle cx="659" cy="243" r="3" class="cv-dot"/><circle cx="847" cy="88" r="3" class="cv-dot"/><circle cx="1158" cy="293" r="3" class="cv-dot"/><circle cx="579" cy="287" r="3" class="cv-dot"/><circle cx="656" cy="220" r="3" class="cv-dot"/><circle cx="1016" cy="242" r="3" class="cv-dot"/><circle cx="645" cy="143" r="3" class="cv-dot"/><circle cx="1091" cy="74" r="3" class="cv-dot"/><circle cx="699" cy="183" r="3" class="cv-dot"/><circle cx="1018" cy="262" r="3" class="cv-dot"/><circle cx="1032" cy="100" r="6" class="cv-dot hl"/><circle cx="1010" cy="207" r="3" class="cv-dot"/><circle cx="577" cy="373" r="3" class="cv-dot"/><circle cx="641" cy="389" r="3" class="cv-dot"/><circle cx="827" cy="43" r="3" class="cv-dot"/><circle cx="763" cy="207" r="3" class="cv-dot"/><circle cx="716" cy="310" r="3" class="cv-dot"/><circle cx="951" cy="142" r="3" class="cv-dot"/><circle cx="1096" cy="214" r="3" class="cv-dot"/><circle cx="777" cy="314" r="6" class="cv-dot hl"/><circle cx="902" cy="234" r="3" class="cv-dot"/><circle cx="1095" cy="122" r="3" class="cv-dot"/><circle cx="986" cy="130" r="3" class="cv-dot"/><text x="60" y="90" class="cv-k">EXPLAINER · CLOUD · OBSERVABILITY</text><text x="60" y="350" class="cv-n">25 Oct 2026 · 16:15 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <p>Many organisations have tracing on the services built in the last few years and nothing on the rest: the legacy Java monolith, the vendor binary, the Go service whose author left. Instrumenting each one with an SDK means code changes, releases and ownership that often doesn't exist. So the gaps stay, and incidents in those gaps take longest to resolve.</p>
+
+<section class="block">
+<h2 id="what-obi-does">What OBI does</h2>
+<p>OpenTelemetry eBPF Instrumentation uses eBPF to inspect application executables and the operating system's networking layer, capturing trace spans, rate-errors-duration metrics, runtime metrics and service relationships for supported Linux workloads, without modifying application code or configuration<sup class="cite"><a href="#ref-1">1</a></sup>. The documentation lists support for languages including Java, .NET, Go, Python, Ruby, Node.js, C, C++ and Rust, visibility into TLS traffic without decryption, context propagation across services, and configuration-free auto-instrumentation on Kubernetes<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<p>That last point matters most in practice. On a cluster, you can get a baseline service map and latency metrics for everything in days, not quarters.</p>
+</section>
+
+<section class="block">
+<h2 id="log-correlation-without-touching-the-app">Log correlation without touching the app</h2>
+<p>A recent addition addresses a common incident pain: you have a failing trace, but no way to find the matching log lines because the service never added trace context to its logs. OBI can now add trace and span IDs to logs written to stdout or stderr, because through eBPF it knows which request each thread is serving at the moment of the write<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/opentelemetry-ebpf-instrumentation-obi/logs-and-trace.webp" alt="Two terminal panels showing JSON log lines from a frontend and a backend service, each enriched with the same trace_id and different span_id values" width="1600" height="417" loading="lazy"></div><figcaption>Logs from two services enriched by OBI with the same trace ID, so a single search connects them. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2026/obi-trace-log-correlation/" target="_blank" rel="noopener">OpenTelemetry blog, Zero-code trace-log correlation with OBI</a> · CC BY 4.0</span></figcaption></figure>
+<p>The boundaries are stated clearly: it applies to stdout and stderr, only annotates lines written while OBI has active trace context, needs elevated privileges, and on older kernels only some write paths are enriched; the common write path needs Linux 6.0 or later. It also needs a small change in the log pipeline<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+<div class="callout"><p>eBPF instrumentation is the fastest way to remove blind spots. SDKs are the way to add meaning. Most mature estates will want both.</p></div>
+</section>
+
+<section class="block">
+<h2 id="where-it-s-heading-in-2026">Where it's heading in 2026</h2>
+<p>The OBI SIG's 2026 goals centre on a stable 1.0 release for production readiness, with complete configuration documentation, adoption of OpenTelemetry's declarative configuration and telemetry schemas, and test coverage targets. They also plan to expand protocols to messaging systems such as MQTT, AMQP, NATS and Redis pub/sub, extend database support, instrument cloud service SDKs, broaden .NET support, and strengthen integration with OpenTelemetry SDKs for hybrid instrumentation<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<p>Check the project's current release status before production rollout<sup class="cite"><a href="#ref-4">4</a></sup>, and pilot in non-critical environments first, in line with the stability approach in <a href="/insights/opentelemetry-stable-by-default-kubernetes/">OpenTelemetry's stable-by-default push</a>.</p>
+</section>
+
+<section class="block">
+<h2 id="obi-or-sdk">OBI or SDK?</h2>
+<table class="tbl">
+<thead><tr><th></th><th>OBI (eBPF)</th><th>OpenTelemetry SDKs</th></tr></thead>
+<tbody>
+<tr><td>Code changes</td><td>None</td><td>Required</td></tr>
+<tr><td>Coverage speed</td><td>Whole cluster quickly</td><td>Service by service</td></tr>
+<tr><td>Business context</td><td>Limited to protocol-level data</td><td>Custom spans, attributes and events</td></tr>
+<tr><td>Privileges</td><td>Elevated, node-level</td><td>Runs inside the application</td></tr>
+<tr><td>Best for</td><td>Baselines, legacy and third-party services</td><td>Core services where detail matters</td></tr>
+</tbody>
+</table>
+</section>
+
+<section class="block">
+<h2 id="how-i-d-roll-it-out">How I'd roll it out</h2>
+<ol>
+<li><strong>Start with the blind spots.</strong> Deploy OBI where SDK instrumentation is missing, and compare the service map with what teams believe the architecture is.</li>
+<li><strong>Route through your Collector gateway</strong>, as in <a href="/insights/opentelemetry-collector-deployment-patterns/">Collector deployment patterns</a>, so sampling, redaction and export are handled centrally.</li>
+<li><strong>Review privileges with security.</strong> eBPF instrumentation runs with elevated access on nodes; treat it as platform infrastructure with the same controls as other node-level agents, enforced through <a href="/insights/kubernetes-admission-policies-cel/">admission policies</a>.</li>
+<li><strong>Check data sensitivity.</strong> Capturing protocol data, including from encrypted traffic, can expose sensitive values. Configure what is collected and redact at the gateway.</li>
+<li><strong>Add SDKs where business context matters</strong>, such as checkout flows, AI calls with <a href="/insights/llm-observability-opentelemetry-genai/">GenAI attributes</a>, and regulated workflows.</li>
+<li><strong>Watch cardinality and cost</strong>, since cluster-wide instrumentation can generate a lot of telemetry quickly.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2 id="how-i-can-help">How I can help</h2>
+<p>I design observability platforms that close blind spots quickly and add depth where it matters, using OpenTelemetry end to end. As a <a href="/fractional-cto/">fractional CTO</a> I can own the observability roadmap. Or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://opentelemetry.io/docs/zero-code/obi/" target="_blank" rel="noopener">OpenTelemetry eBPF Instrumentation</a><small>OpenTelemetry documentation</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://opentelemetry.io/blog/2026/obi-goals/" target="_blank" rel="noopener">OpenTelemetry eBPF Instrumentation 2026 goals</a><small>OpenTelemetry blog · 23 Jan 2026</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://opentelemetry.io/blog/2026/obi-trace-log-correlation/" target="_blank" rel="noopener">Zero-code trace-log correlation with OBI</a><small>OpenTelemetry blog · 6 Oct 2026</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://github.com/open-telemetry/opentelemetry-ebpf-instrumentation" target="_blank" rel="noopener">opentelemetry-ebpf-instrumentation</a><small>OpenTelemetry, GitHub</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fopentelemetry-ebpf-instrumentation-obi%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fopentelemetry-ebpf-instrumentation-obi%2F&amp;text=Zero-code%20observability%20with%20OBI%3A%20where%20OpenTelemetry%27s%20eBPF%20instrumentation%20fits" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=Zero-code%20observability%20with%20OBI%3A%20where%20OpenTelemetry%27s%20eBPF%20instrumentation%20fits%20https%3A%2F%2Fasksumanta.com%2Finsights%2Fopentelemetry-ebpf-instrumentation-obi%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://asksumanta.com/insights/opentelemetry-ebpf-instrumentation-obi/">Copy link</button></div>
+      <div class="pnav"><a class="pn prev" href="/insights/clinical-prediction-models-omop/"><small>← Previous</small><b>Clinical prediction models on OMOP: how to build models that work beyond one hospital</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#what-obi-does">What OBI does</a></li><li><a href="#log-correlation-without-touching-the-app">Log correlation without touching the app</a></li><li><a href="#where-it-s-heading-in-2026">Where it&#x27;s heading in 2026</a></li><li><a href="#obi-or-sdk">OBI or SDK?</a></li><li><a href="#how-i-d-roll-it-out">How I&#x27;d roll it out</a></li><li><a href="#how-i-can-help">How I can help</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>What is OBI?</summary><p>OpenTelemetry eBPF Instrumentation, an auto-instrumentation tool that uses eBPF to inspect application executables and the operating system networking layer, capturing trace spans, RED metrics and service relationships for supported Linux workloads without code or configuration changes.</p></details><details class="rise"><summary>Does OBI replace OpenTelemetry SDKs?</summary><p>No. It is a fast way to get baseline traces and metrics everywhere, especially for services that are hard to instrument. SDKs remain the way to add business context, custom spans and attributes. The OBI project is strengthening integration with SDKs to support hybrid approaches.</p></details><details class="rise"><summary>Can OBI correlate logs with traces?</summary><p>Yes. OBI can add trace and span IDs to JSON and plain-text logs written to stdout or stderr, without changing the application, provided OBI has active trace context at the time of the write. It needs elevated privileges and, for the common write path, a recent Linux kernel.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/fractional-cto/"><small>Service</small><b>Fractional CTO</b><span>I work as a part-time CTO for founders, CEOs and boards who need experienced technical judgement now, and a team that can carry it on after I step back.</span><i>→</i></a><a class="rcard rise" href="/ai-architect/"><small>Service</small><b>AI &amp; LLM architecture</b><span>I design and build AI systems that leadership can trust: grounded in your data, measured by evaluations, governed by your rules and priced so they make sense at scale.</span><i>→</i></a><a class="rcard rise" href="/technical-due-diligence/"><small>Service</small><b>Technical due diligence</b><span>I give investors an independent, plain-language view of a company&#x27;s technology, team and AI claims, so the risks are priced in before the deal closes, not discovered after.</span><i>→</i></a><a class="rcard rise" href="/insights/clinical-prediction-models-omop/"><small>Insight</small><b>Clinical prediction models on OMOP: how to build models that work beyond one hospital</b><span>Clinical prediction is one of the oldest uses of machine learning in healthcare, and one of the most disappointing in practice. Models that look excellent at one hospital often fail at the next. OHDSI&#x27;s patient-level prediction framework is a practical answer.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: Zero-code observability with OBI: where OpenTelemetry&#x27;s eBPF instrumentation fits">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
+        <p class="floc">United States &amp; UAE · working globally</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/uae/">Fractional CTO in the UAE</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/opentelemetry-ebpf-instrumentation-obi/">Zero-code observability with OBI: where OpenTelemetry&#x27;s eBPF instrumentation fits</a></li><li><a href="/insights/clinical-prediction-models-omop/">Clinical prediction models on OMOP: how to build models that work beyond one hospital</a></li><li><a href="/insights/choosing-embedding-models-rag/">Choosing an embedding model for RAG: a checklist that goes beyond the leaderboard</a></li><li><a href="/insights/kubernetes-multi-tenancy/">Kubernetes multi-tenancy: namespaces, virtual control planes or dedicated clusters?</a></li><li><a href="/insights/ai-agent-memory-architecture/">AI agent memory: what to remember, how to retrieve it, and when to forget</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>
