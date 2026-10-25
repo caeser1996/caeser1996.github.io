@@ -1,0 +1,63 @@
+<!--{"title": "Kubernetes multi-tenancy: namespaces, virtual clusters or clusters?", "description": "Sharing Kubernetes clusters saves money but raises isolation questions. How I choose between namespace-per-tenant, virtual control planes and dedicated clusters, using the official guidance.", "h1": "Kubernetes multi-tenancy: namespaces, virtual control planes or dedicated clusters?", "kicker": "Cloud · Kubernetes", "lede": "Every growing platform faces the same question: one cluster per team or customer, or shared clusters with careful isolation? Kubernetes has no built-in concept of a tenant, so the answer is a set of design choices. Here is how I make them.", "date": "2026-10-25", "datetime": "2026-10-25T04:15:00+04:00", "readtime": "8 min read", "format": "comparison", "tags": ["kubernetes", "platform", "security", "finops"], "keywords": ["Kubernetes multi-tenancy", "namespace per tenant", "virtual control plane", "vcluster", "hard multi-tenancy", "Kubernetes isolation", "network policies", "sandboxed containers", "SaaS on Kubernetes", "platform engineering"], "faq": [["Does Kubernetes support multi-tenancy?", "Kubernetes has no first-class concept of tenants, but provides features such as namespaces, RBAC, resource quotas, network policies, node isolation and API Priority and Fairness that can be combined to share clusters safely."], ["What is the difference between soft and hard multi-tenancy?", "The terms describe a spectrum of isolation. Hard multi-tenancy usually refers to tenants that don't trust each other, requiring strong data-plane isolation against attacks such as data exfiltration or denial of service. Soft multi-tenancy usually means some trust, such as teams within one organisation."], ["When should each tenant get its own cluster?", "When isolation requirements are strict enough that shared control and data planes are unacceptable, for example untrusted tenants, regulated data or residency requirements, and the cost of operating many clusters is justified."]], "related": ["/fractional-cto/", "/technical-due-diligence/", "/ai-architect/"], "citations": [{"title": "Multi-tenancy", "url": "https://kubernetes.io/docs/concepts/security/multi-tenancy/", "publisher": "Kubernetes documentation"}, {"title": "Using RBAC authorization", "url": "https://kubernetes.io/docs/reference/access-authn-authz/rbac/", "publisher": "Kubernetes documentation"}, {"title": "Network policies", "url": "https://kubernetes.io/docs/concepts/services-networking/network-policies/", "publisher": "Kubernetes documentation"}, {"title": "API Priority and Fairness", "url": "https://kubernetes.io/docs/concepts/cluster-administration/flow-control/", "publisher": "Kubernetes documentation"}, {"title": "Resource quotas", "url": "https://kubernetes.io/docs/concepts/policy/resource-quotas/", "publisher": "Kubernetes documentation"}]}-->
+<p>Clusters multiply quietly. One per team, one per environment, one for that big customer, one for the data science group. Each brings its own upgrades, monitoring, security patches and idle capacity. Eventually someone asks whether all of this could share fewer clusters, and the answer depends almost entirely on who the tenants are and how much they trust each other.</p>
+
+<section class="block">
+<h2>Two kinds of tenancy</h2>
+<p>The Kubernetes documentation distinguishes two broad use cases<sup class="cite"><a href="#ref-1">1</a></sup>:</p>
+<ul>
+<li><strong>Multiple teams</strong> in one organisation share a cluster. There is some trust between them, members often have direct access through tools or GitOps, and workloads frequently talk to each other.</li>
+<li><strong>Multiple customers</strong>, where a vendor runs workload instances per customer. Customers never touch the cluster, cost matters a great deal, and isolation must be strong.</li>
+</ul>
+<figure class="fig"><div class="im"><img src="/assets/img/kubernetes-multi-tenancy/coexisting-tenancy-models.webp" alt="Diagram of a single cluster containing multi-team tenancy, where Team A and Team B run their own apps, and multi-customer tenancy, where Team C runs separate app instances for customers 1 to N" width="1155" height="698" loading="lazy"></div><figcaption>One cluster can host both models: teams sharing a cluster, and one team running per-customer instances. <span class="credit">Source: <a href="https://kubernetes.io/docs/concepts/security/multi-tenancy/" target="_blank" rel="noopener">Kubernetes documentation, Multi-tenancy</a> · CC BY 4.0</span></figcaption></figure>
+<p>The documentation also cautions that "hard" and "soft" multi-tenancy are better seen as a spectrum than two categories. Hard multi-tenancy usually describes tenants that don't trust each other, which demands particular attention to data-plane isolation<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+</section>
+
+<section class="block">
+<h2>The building blocks</h2>
+<p><strong>Control plane isolation</strong> stops tenants seeing or changing each other's API resources. Namespaces scope names and many policies; RBAC enforces least privilege, which the docs call the most important type of control-plane isolation, because a tenant who can modify another's resources can disable every other protection<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. Resource quotas cap what each namespace can consume<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<p><strong>Data plane isolation</strong> protects workloads at runtime: network policies to restrict traffic<sup class="cite"><a href="#ref-3">3</a></sup>, storage isolation, sandboxed containers using virtual machines or userspace kernels for untrusted code, and node isolation that dedicates nodes to a tenant<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<p><strong>Fairness</strong> matters too. API Priority and Fairness prevents one tenant's controllers from overwhelming the API server<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+<div class="callout"><p>Containers share a kernel. If tenants may run code you don't trust, namespaces alone are not a security boundary; plan for sandboxing, dedicated nodes or separate clusters.</p></div>
+</section>
+
+<section class="block">
+<h2>The three models compared</h2>
+<table class="tbl">
+<thead><tr><th></th><th>Namespace per tenant</th><th>Virtual control plane per tenant</th><th>Cluster per tenant</th></tr></thead>
+<tbody>
+<tr><td>Isolation</td><td>Shared API server; depends on careful policy</td><td>Separate API views, including non-namespaced resources</td><td>Strongest; nothing shared but the provider</td></tr>
+<tr><td>Cost</td><td>Negligible overhead</td><td>Somewhat higher</td><td>Highest, especially on-premises</td></tr>
+<tr><td>Limitations</td><td>Non-namespaced resources such as CRDs, storage classes and webhooks are shared</td><td>Cross-tenant sharing is harder</td><td>Operational overhead per cluster</td></tr>
+<tr><td>Best for</td><td>Internal teams with some trust</td><td>Tenants needing their own CRDs or admin rights</td><td>Untrusted tenants, regulated data, residency</td></tr>
+</tbody>
+</table>
+<p>This follows the documentation's own description: namespace isolation is well supported with negligible resource cost but can be difficult to configure and doesn't cover non-namespaced resources, while control plane virtualisation isolates those at the cost of somewhat higher resource use<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+</section>
+
+<section class="block">
+<h2>How I decide</h2>
+<ol>
+<li><strong>Who writes code that runs?</strong> If tenants can run arbitrary code, assume it may be hostile, and favour sandboxing, dedicated nodes or clusters.</li>
+<li><strong>Do tenants need cluster-level resources?</strong> Teams that ship their own operators and CRDs push towards virtual control planes.</li>
+<li><strong>What do regulators and contracts require?</strong> Data residency and customer contracts may require dedicated infrastructure in a region, as in <a href="/insights/uae-health-data-law-localisation/">UAE health data localisation</a>.</li>
+<li><strong>What can the platform team operate?</strong> Fifty clusters run badly are riskier than five run well.</li>
+<li><strong>Mix models.</strong> Shared clusters for most tenants, dedicated ones for the few that need them, mirroring the hybrid pattern in <a href="/insights/mongodb-multi-tenant-saas-patterns/">multi-tenant SaaS on MongoDB</a>.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2>Practical rules for shared clusters</h2>
+<ul>
+<li><strong>A namespace per workload</strong>, with names unique across the whole fleet, which the docs recommend so you can move between shared and dedicated clusters later<sup class="cite"><a href="#ref-1">1</a></sup>.</li>
+<li><strong>Default-deny networking</strong>, with explicit allows.</li>
+<li><strong>Quotas and limit ranges</strong> on every tenant namespace.</li>
+<li><strong>Guardrails as policy</strong>, such as the CEL policies in <a href="/insights/kubernetes-admission-policies-cel/">Kubernetes admission policies</a>, so tenants can't weaken their own isolation.</li>
+<li><strong>Cost allocation by tenant</strong>, using labels and the approaches in <a href="/insights/kubernetes-finops-scale-to-zero/">Kubernetes FinOps</a>.</li>
+<li><strong>Separate GPU pools</strong> where AI workloads from different tenants compete, with the scheduling controls in <a href="/insights/kubernetes-gang-scheduling-ai/">gang scheduling</a>.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I design Kubernetes platforms for internal teams and SaaS products, choosing the tenancy model that fits the trust, cost and compliance picture. As a <a href="/fractional-cto/">fractional CTO</a> I can own the platform roadmap. Or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
