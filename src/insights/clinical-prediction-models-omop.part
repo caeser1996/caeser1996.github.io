@@ -1,0 +1,46 @@
+<!--{"title": "Clinical prediction models on OMOP: building ones that travel", "description": "Most clinical prediction models are never validated outside the data they were built on. How OHDSI's patient-level prediction framework defines problems, measures performance and validates externally.", "h1": "Clinical prediction models on OMOP: how to build models that work beyond one hospital", "kicker": "Healthcare · Clinical AI", "lede": "Clinical prediction is one of the oldest uses of machine learning in healthcare, and one of the most disappointing in practice. Models that look excellent at one hospital often fail at the next. OHDSI's patient-level prediction framework is a practical answer.", "date": "2026-10-25", "datetime": "2026-10-25T12:15:00+04:00", "readtime": "8 min read", "format": "explainer", "tags": ["healthcare", "omop", "ai", "data"], "keywords": ["clinical prediction model", "patient-level prediction", "OHDSI PatientLevelPrediction", "external validation", "AUC calibration", "OMOP machine learning", "TRIPOD", "clinical AI validation", "real-world data", "healthcare data architect"], "faq": [["How does OHDSI define a prediction problem?", "Among a target cohort, who will go on to have an outcome within a time-at-risk period. The target cohort sets the moment of prediction, the outcome cohort defines what is predicted, and only data from before that moment may be used."], ["What is external validation?", "Developing a model in one database and evaluating it in another. The Book of OHDSI recommends always performing external validation, because different databases represent different populations, health systems and data-capture processes."], ["Why look at calibration as well as AUC?", "AUC measures discrimination, whether higher-risk patients are ranked above lower-risk ones. Calibration measures whether predicted risks match observed rates. A model can rank well but systematically over- or under-estimate risk, for example in a particular age group."]], "related": ["/healthcare-data-architecture/", "/ai-architect/", "/fractional-cto/"], "citations": [{"title": "Patient-level prediction (The Book of OHDSI)", "url": "https://ohdsi.github.io/TheBookOfOhdsi/PatientLevelPrediction.html", "publisher": "OHDSI"}, {"title": "PatientLevelPrediction R package", "url": "https://ohdsi.github.io/PatientLevelPrediction/", "publisher": "OHDSI"}, {"title": "FeatureExtraction R package", "url": "https://ohdsi.github.io/FeatureExtraction/", "publisher": "OHDSI"}, {"title": "TRIPOD statement", "url": "https://www.equator-network.org/reporting-guidelines/tripod-statement/", "publisher": "EQUATOR Network"}]}-->
+<p>Risk scores for readmission, sepsis, deterioration or medication harm are some of the most requested clinical AI projects. They are also among the easiest to get wrong. A model trained on one hospital's data, evaluated on a random split of the same data, and published with a strong AUC, often performs noticeably worse somewhere else, or even in the same hospital a year later.</p>
+<p>The OHDSI community has spent years building a standard way to do this better. Its approach is useful even if you never touch the OHDSI tools.</p>
+
+<section class="block">
+<h2>The problem with most prediction models</h2>
+<p>The Book of OHDSI is direct about it: many published patient-level prediction efforts don't follow model development guidelines, fail to perform extensive external validation, or provide too few details for others to reproduce and validate them<sup class="cite"><a href="#ref-1">1</a></sup>. It points to the TRIPOD reporting guideline as a standard for transparent reporting<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+<p>The underlying issue is that a model learns the habits of the data it was trained on: coding practices, patient mix, documentation patterns. Those don't travel.</p>
+</section>
+
+<section class="block">
+<h2>Define the problem precisely</h2>
+<p>OHDSI frames every prediction problem in the same form: among a <strong>target cohort</strong>, who will go on to have an <strong>outcome</strong> within a <strong>time-at-risk</strong>? Prediction happens at a defined moment, and only information from the observation window before that moment may be used<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/clinical-prediction-models-omop/prediction-problem.webp" alt="Timeline diagram of a prediction problem: an observation window of prior clinical events before time zero, followed by a time-at-risk window in which the outcome may occur" width="998" height="308" loading="lazy"></div><figcaption>The prediction problem: use only the observation window before t = 0 to predict an outcome during the time-at-risk. <span class="credit">Source: <a href="https://ohdsi.github.io/TheBookOfOhdsi/PatientLevelPrediction.html" target="_blank" rel="noopener">The Book of OHDSI, Patient-Level Prediction</a> · CC0 1.0</span></figcaption></figure>
+<p>The same template covers disease onset, treatment response, safety and adherence. The book's examples include predicting ischaemic stroke among newly diagnosed atrial fibrillation patients, and gastrointestinal bleeding among new users of warfarin<sup class="cite"><a href="#ref-1">1</a></sup>. Because target and outcome are standard <a href="/insights/omop-cohort-definitions/">cohort definitions</a>, another site can rebuild exactly the same problem on its own data.</p>
+<div class="callout"><p>Most prediction projects fail at the first step: an ambiguous index date. If you can't say precisely when the prediction is made, you can't validate it anywhere else.</p></div>
+</section>
+
+<section class="block">
+<h2>Measure the right things</h2>
+<p><strong>Discrimination</strong>, usually summarised by the area under the ROC curve, measures whether the model ranks patients who will have the outcome above those who won't. The book notes that for rare outcomes even a model with a high AUC may not be practical, because many false positives can accompany each true one<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<p><strong>Calibration</strong> measures whether predicted risks match reality: of a hundred patients given a 10% risk, about ten should have the outcome<sup class="cite"><a href="#ref-1">1</a></sup>. In the book's worked example, a model was well calibrated overall but poorly calibrated for younger patients<sup class="cite"><a href="#ref-1">1</a></sup>. Overall metrics hide that kind of problem, which is why subgroup checks matter for both safety and fairness.</p>
+</section>
+
+<section class="block">
+<h2>Validate externally, always</h2>
+<p>The book distinguishes internal validation, testing on held-out data from the same database, from external validation, developing in one database and evaluating in another. It recommends always performing external validation on as many new datasets as feasible, because different databases represent different populations, health systems and data capture<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<p>This is where a common data model pays off. A model built on OMOP can be shared as a package and evaluated at other OMOP sites without moving patient data, which is the federated approach described in <a href="/insights/federated-health-analytics-ohdsi/">federated health analytics</a>. The PatientLevelPrediction R package implements this end to end, from data extraction with standard covariates to training and validation<sup class="cite"><a href="#ref-2">2</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+</section>
+
+<section class="block">
+<h2>How I'd run a clinical prediction project</h2>
+<ol>
+<li><strong>Write the prediction question in the standard form</strong> and agree it with clinicians before touching data.</li>
+<li><strong>Build cohorts on OMOP</strong>, checked with <a href="/insights/omop-data-quality-checks/">data quality tools</a>, so the design is portable.</li>
+<li><strong>Start with simple models.</strong> Regularised logistic regression is often competitive and easier to explain.</li>
+<li><strong>Report discrimination and calibration</strong>, overall and by key subgroups, following TRIPOD.</li>
+<li><strong>Validate on at least one external dataset</strong> before any clinical use.</li>
+<li><strong>Plan deployment and monitoring</strong>: how the score reaches clinicians, how drift is detected, and how changes are controlled. The transparency practices in <a href="/insights/hti-1-to-hti-5-health-it-ai-rules/">HTI-1 to HTI-5</a> and <a href="/insights/fda-pccp-ai-medical-devices/">FDA PCCPs</a> apply.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I design OMOP-based platforms and clinical AI pipelines that make prediction models reproducible, externally validated and safe to deploy. See <a href="/healthcare-data-architecture/">healthcare data architecture</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
