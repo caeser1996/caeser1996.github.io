@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>An enterprise MCP registry: a playbook for governed tool discovery</title>
+<meta name="description" content="The official MCP Registry is designed to feed subregistries. A playbook for running a private enterprise MCP registry: curation, namespaces, approvals and client rollout." />
+<meta name="keywords" content="MCP Registry, MCP subregistry, private MCP registry, enterprise MCP, MCP server governance, server.json, MCP namespace verification, AI tool catalogue, agent platform governance, AI architect" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://asksumanta.com/insights/mcp-registry-enterprise-subregistry/" />
+<meta name="theme-color" content="#111214" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="An enterprise MCP registry: a playbook for governed tool discovery" />
+<meta property="og:description" content="The official MCP Registry is designed to feed subregistries. A playbook for running a private enterprise MCP registry: curation, namespaces, approvals and client rollout." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://asksumanta.com/insights/mcp-registry-enterprise-subregistry/" />
+<meta property="og:image" content="https://asksumanta.com/assets/og/mcp-registry-enterprise-subregistry.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="An enterprise MCP registry: a playbook for governed tool discovery" />
+<meta name="twitter:description" content="The official MCP Registry is designed to feed subregistries. A playbook for running a private enterprise MCP registry: curation, namespaces, approvals and client rollout." />
+<meta name="twitter:image" content="https://asksumanta.com/assets/og/mcp-registry-enterprise-subregistry.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "BlogPosting", "headline": "Running an enterprise MCP registry: a playbook for governed tool discovery", "description": "The official MCP Registry is designed to feed subregistries. A playbook for running a private enterprise MCP registry: curation, namespaces, approvals and client rollout.", "datePublished": "2026-10-27T00:20:00+04:00", "dateModified": "2026-10-27T00:20:00+04:00", "articleSection": "AI architecture · MCP", "genre": "Playbook", "citation": [{"@type": "CreativeWork", "name": "Introducing the MCP Registry", "url": "https://blog.modelcontextprotocol.io/posts/2025-09-08-mcp-registry-preview/"}, {"@type": "CreativeWork", "name": "The MCP Registry", "url": "https://modelcontextprotocol.io/registry/about"}, {"@type": "CreativeWork", "name": "modelcontextprotocol/registry", "url": "https://github.com/modelcontextprotocol/registry"}, {"@type": "CreativeWork", "name": "Introducing the MCP Registry", "url": "https://infoq.com/news/2025/09/introducing-mcp-registry"}, {"@type": "CreativeWork", "name": "MCP registry architecture: a technical overview", "url": "https://workos.com/blog/mcp-registry-architecture-technical-overview"}], "author": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "publisher": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "mainEntityOfPage": "https://asksumanta.com/insights/mcp-registry-enterprise-subregistry/", "image": "https://asksumanta.com/assets/og/mcp-registry-enterprise-subregistry.png", "keywords": "MCP Registry, MCP subregistry, private MCP registry, enterprise MCP, MCP server governance, server.json, MCP namespace verification, AI tool catalogue, agent platform governance, AI architect", "wordCount": 670}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://asksumanta.com/"}, {"@type": "ListItem", "position": 2, "name": "Insights", "item": "https://asksumanta.com/insights/"}, {"@type": "ListItem", "position": 3, "name": "Running an enterprise MCP registry: a playbook for governed tool discovery", "item": "https://asksumanta.com/insights/mcp-registry-enterprise-subregistry/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What is the MCP Registry?", "acceptedAnswer": {"@type": "Answer", "text": "The official, open catalogue of publicly available MCP servers, launched in preview in September 2025 at registry.modelcontextprotocol.io. It stores metadata about servers, which refers to packages hosted in existing registries such as npm, PyPI and Docker Hub, rather than hosting code itself."}}, {"@type": "Question", "name": "What is an MCP subregistry?", "acceptedAnswer": {"@type": "Answer", "text": "A registry that builds on the official one, for example by pulling its data, filtering or enriching it, and adding servers of its own. Because the registry's API specification is open source, organisations can run compatible private registries that include internal servers."}}, {"@type": "Question", "name": "Does the MCP Registry check servers for security?", "acceptedAnswer": {"@type": "Answer", "text": "Its role is discovery and namespace verification, not approval. Organisations should apply their own review, scanning and policy before making a server available internally, which is a main reason to run a private subregistry."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+</script>
+</head>
+<body class="sub is-post">
+<div class="progress" id="progress"></div>
+<nav>
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="/#practice">Services</a>
+      <a href="/#work">Case studies</a>
+      <a href="/insights/">Insights</a>
+      <a href="/#assess">Analyse</a>
+      <a href="/#connect">Connect</a>
+    </div>
+    <div class="nav-r">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/insights/">Insights</a> <span>/</span> <em>Running an enterprise MCP registry: a playbook for governed tool discovery</em></div>
+    <div class="kicker">AI architecture · MCP</div>
+    <h1>Running an enterprise MCP registry: a playbook for governed tool discovery</h1>
+    <p class="sub-lede">Once a few teams adopt MCP, the question shifts from &#x27;how do I build a server?&#x27; to &#x27;which servers are we allowed to use?&#x27;. The MCP Registry was designed with that in mind: a public upstream that organisations can mirror, filter and extend with their own private servers.</p>
+    <div class="ameta"><span class="fmt">Playbook</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-10-27T00:20:00+04:00">27 Oct 2026 · 00:20 GST</time><span>8 min read</span><span>5 sources</span></div><div class="atags"><span class="tagp">#ai</span><span class="tagp">#mcp</span><span class="tagp">#agents</span><span class="tagp">#governance</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Playbook cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><circle cx="560" cy="61" r="8" class="cv-dot hl"/><rect x="590" y="50" width="457" height="22" class="cv-bar hl"/><circle cx="560" cy="109" r="8" class="cv-dot"/><rect x="590" y="98" width="288" height="22" class="cv-bar"/><circle cx="560" cy="157" r="8" class="cv-dot"/><rect x="590" y="146" width="372" height="22" class="cv-bar"/><circle cx="560" cy="205" r="8" class="cv-dot hl"/><rect x="590" y="194" width="218" height="22" class="cv-bar hl"/><circle cx="560" cy="253" r="8" class="cv-dot"/><rect x="590" y="242" width="298" height="22" class="cv-bar"/><circle cx="560" cy="301" r="8" class="cv-dot"/><rect x="590" y="290" width="183" height="22" class="cv-bar"/><circle cx="560" cy="349" r="8" class="cv-dot hl"/><rect x="590" y="338" width="316" height="22" class="cv-bar hl"/><text x="60" y="90" class="cv-k">PLAYBOOK · AI ARCHITECTURE · MCP</text><text x="60" y="350" class="cv-n">27 Oct 2026 · 00:20 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <p>A typical enterprise MCP adoption follows a pattern. A few engineers connect assistants to useful servers. A platform team builds internal servers for the CRM, the data warehouse and the ticketing system. Within months there are dozens of servers, nobody knows which are approved, and security finds a community server with broad file system access on a developer laptop. The fix is not to ban MCP. It is to give people a catalogue of servers they're allowed to use.</p>
+
+<section class="block">
+<h2 id="how-the-mcp-registry-is-designed">How the MCP Registry is designed</h2>
+<p>The official MCP Registry launched in preview in September 2025 as an open catalogue of publicly available servers<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>. Three design choices matter for enterprises:</p>
+<ul>
+<li><strong>Metadata, not code.</strong> Entries describe servers and point to packages in existing registries such as npm, PyPI and Docker Hub<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>.</li>
+<li><strong>Verified namespaces.</strong> Server names use a reverse-DNS format, such as <code>io.github.username/server</code> or <code>com.example/server</code>, tied to a verified GitHub account or domain<sup class="cite"><a href="#ref-2">2</a></sup>. That gives you a basis for trusting who published what.</li>
+<li><strong>Built to be extended.</strong> The registry and its API specification are open source, so others can build compatible subregistries that pull from it, filter it and add their own servers<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>.</li>
+</ul>
+<figure class="fig"><div class="im"><img src="/assets/img/mcp-registry-enterprise-subregistry/ecosystem.webp" alt="Diagram of the MCP registry ecosystem: server developers publish to the official MCP Registry, which references packages on npm, PyPI and Docker; public subregistries pull its data, an enterprise registry adds private internal servers, and clients such as IDEs and chat assistants consume from these registries" width="1600" height="1040" loading="lazy"></div><figcaption>The intended ecosystem: an official upstream, subregistries that build on it, and an enterprise registry that adds private servers. <span class="credit">Source: <a href="https://modelcontextprotocol.io/registry/about" target="_blank" rel="noopener">Model Context Protocol documentation</a> · CC BY 4.0</span></figcaption></figure>
+<p>The registry remains in preview, and its documentation warns that breaking changes or data resets may occur before general availability<sup class="cite"><a href="#ref-2">2</a></sup>. Build against it, but pin and mirror what you depend on.</p>
+</section>
+
+<section class="block">
+<h2 id="the-playbook">The playbook</h2>
+<h3>1. Decide what "approved" means</h3>
+<p>Write down the criteria before choosing tools: publisher verified, source available, package signed or pinned, permissions documented, data classification of what it touches, and an internal owner. The controls in <a href="/insights/securing-mcp-servers-checklist/">securing MCP servers</a> make a good starting checklist.</p>
+
+<h3>2. Stand up a private subregistry</h3>
+<p>Run a registry that implements the same API, so clients that understand the official registry can use yours<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-5">5</a></sup>. Servers on internal hostnames or private package feeds belong here, not in the public registry<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+
+<h3>3. Mirror, don't proxy</h3>
+<p>Pull public entries into a staging area, review them, then promote approved versions. Pin to specific package versions so an upstream update can't change what your users run without review. This is the same discipline as <a href="/insights/ai-model-supply-chain-security/">AI supply chain security</a>.</p>
+
+<h3>4. Enrich entries with your context</h3>
+<p>Add what the public registry can't know: owner, data classification, allowed user groups, required auth extension, and a link to the review record. Tool annotations and UI capabilities, covered in <a href="/insights/mcp-apps-tool-annotations/">MCP Apps and tool annotations</a>, should be part of the review.</p>
+
+<h3>5. Point clients at it</h3>
+<p>Configure managed IDEs and assistants to discover servers from your registry, and where clients support it, block unapproved sources. A catalogue nobody is pointed at is just documentation.</p>
+
+<h3>6. Tie it to identity</h3>
+<p>Approval should map to who can use a server. Pair the registry with the enterprise authorisation patterns in <a href="/insights/mcp-extensions-enterprise-strategy/">MCP extensions</a>, so access is granted through your identity provider rather than per-server credentials.</p>
+
+<h3>7. Measure and prune</h3>
+<p>Track which servers are used, by whom and how often, using the telemetry approach in <a href="/insights/llm-observability-opentelemetry-genai/">LLM observability</a>. Retire servers without owners or usage, and re-review on major version changes.</p>
+<div class="callout"><p>A registry turns MCP from a collection of personal integrations into a platform. The governance lives in the promotion step, not the protocol.</p></div>
+</section>
+
+<section class="block">
+<h2 id="common-mistakes">Common mistakes</h2>
+<ul>
+<li><strong>Treating the public registry as an allow-list.</strong> Listing proves a verified namespace, not safety.</li>
+<li><strong>Floating versions.</strong> "Latest" from upstream means unreviewed code on every laptop.</li>
+<li><strong>No owner per server.</strong> Internal servers without owners become the next unpatched dependency.</li>
+<li><strong>Registry without enforcement.</strong> If clients can still add any server, the registry is advisory only.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2 id="how-i-can-help">How I can help</h2>
+<p>I design enterprise agent platforms, including MCP registries, approval workflows and identity integration, so teams can adopt tools quickly and safely. See my <a href="/ai-architect/">AI architecture work</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://blog.modelcontextprotocol.io/posts/2025-09-08-mcp-registry-preview/" target="_blank" rel="noopener">Introducing the MCP Registry</a><small>Model Context Protocol blog · 8 Sep 2025</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://modelcontextprotocol.io/registry/about" target="_blank" rel="noopener">The MCP Registry</a><small>Model Context Protocol documentation</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://github.com/modelcontextprotocol/registry" target="_blank" rel="noopener">modelcontextprotocol/registry</a><small>GitHub</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://infoq.com/news/2025/09/introducing-mcp-registry" target="_blank" rel="noopener">Introducing the MCP Registry</a><small>InfoQ · Sep 2025</small></div></li><li id="ref-5"><span class="rn">5</span><div><a href="https://workos.com/blog/mcp-registry-architecture-technical-overview" target="_blank" rel="noopener">MCP registry architecture: a technical overview</a><small>WorkOS</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fmcp-registry-enterprise-subregistry%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fmcp-registry-enterprise-subregistry%2F&amp;text=Running%20an%20enterprise%20MCP%20registry%3A%20a%20playbook%20for%20governed%20tool%20discovery" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=Running%20an%20enterprise%20MCP%20registry%3A%20a%20playbook%20for%20governed%20tool%20discovery%20https%3A%2F%2Fasksumanta.com%2Finsights%2Fmcp-registry-enterprise-subregistry%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://asksumanta.com/insights/mcp-registry-enterprise-subregistry/">Copy link</button></div>
+      <div class="pnav"><a class="pn prev" href="/insights/uae-federal-authority-ai-data/"><small>← Previous</small><b>The UAE&#x27;s new Federal Authority for AI and Data: what it means for technology teams</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#how-the-mcp-registry-is-designed">How the MCP Registry is designed</a></li><li><a href="#the-playbook">The playbook</a></li><li><a href="#common-mistakes">Common mistakes</a></li><li><a href="#how-i-can-help">How I can help</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>What is the MCP Registry?</summary><p>The official, open catalogue of publicly available MCP servers, launched in preview in September 2025 at registry.modelcontextprotocol.io. It stores metadata about servers, which refers to packages hosted in existing registries such as npm, PyPI and Docker Hub, rather than hosting code itself.</p></details><details class="rise"><summary>What is an MCP subregistry?</summary><p>A registry that builds on the official one, for example by pulling its data, filtering or enriching it, and adding servers of its own. Because the registry&#x27;s API specification is open source, organisations can run compatible private registries that include internal servers.</p></details><details class="rise"><summary>Does the MCP Registry check servers for security?</summary><p>Its role is discovery and namespace verification, not approval. Organisations should apply their own review, scanning and policy before making a server available internally, which is a main reason to run a private subregistry.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/ai-architect/"><small>Service</small><b>AI &amp; LLM architecture</b><span>I design and build AI systems that leadership can trust: grounded in your data, measured by evaluations, governed by your rules and priced so they make sense at scale.</span><i>→</i></a><a class="rcard rise" href="/fractional-cto/"><small>Service</small><b>Fractional CTO</b><span>I work as a part-time CTO for founders, CEOs and boards who need experienced technical judgement now, and a team that can carry it on after I step back.</span><i>→</i></a><a class="rcard rise" href="/technical-due-diligence/"><small>Service</small><b>Technical due diligence</b><span>I give investors an independent, plain-language view of a company&#x27;s technology, team and AI claims, so the risks are priced in before the deal closes, not discovered after.</span><i>→</i></a><a class="rcard rise" href="/insights/uae-federal-authority-ai-data/"><small>Insight</small><b>The UAE&#x27;s new Federal Authority for AI and Data: what it means for technology teams</b><span>In June 2026 the UAE created a single federal body for AI, data governance and digital government. This week Dubai set new targets for its AI campus. For companies building or selling AI in the Emirates, the institutional map is consolidating, and that changes who sets the standards you&#x27;ll be measured against.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: Running an enterprise MCP registry: a playbook for governed tool discovery">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
+        <p class="floc">United States &amp; UAE · working globally</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/uae/">Fractional CTO in the UAE</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/mcp-registry-enterprise-subregistry/">Running an enterprise MCP registry: a playbook for governed tool discovery</a></li><li><a href="/insights/uae-federal-authority-ai-data/">The UAE&#x27;s new Federal Authority for AI and Data: what it means for technology teams</a></li><li><a href="/insights/skos-vs-owl-enterprise-taxonomies/">SKOS or OWL? Choosing the right model for enterprise taxonomies and ontologies</a></li><li><a href="/insights/smart-on-fhir-ai-apps-authorisation/">SMART on FHIR for AI apps: an authorisation checklist for clinical data access</a></li><li><a href="/insights/kubernetes-in-place-pod-resize/">In-place Pod resize on Kubernetes: field notes for right-sizing without restarts</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>

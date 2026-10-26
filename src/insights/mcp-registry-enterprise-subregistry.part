@@ -1,0 +1,54 @@
+<!--{"title": "An enterprise MCP registry: a playbook for governed tool discovery", "description": "The official MCP Registry is designed to feed subregistries. A playbook for running a private enterprise MCP registry: curation, namespaces, approvals and client rollout.", "h1": "Running an enterprise MCP registry: a playbook for governed tool discovery", "kicker": "AI architecture · MCP", "lede": "Once a few teams adopt MCP, the question shifts from 'how do I build a server?' to 'which servers are we allowed to use?'. The MCP Registry was designed with that in mind: a public upstream that organisations can mirror, filter and extend with their own private servers.", "date": "2026-10-27", "datetime": "2026-10-27T00:20:00+04:00", "readtime": "8 min read", "format": "playbook", "tags": ["ai", "mcp", "agents", "governance"], "keywords": ["MCP Registry", "MCP subregistry", "private MCP registry", "enterprise MCP", "MCP server governance", "server.json", "MCP namespace verification", "AI tool catalogue", "agent platform governance", "AI architect"], "faq": [["What is the MCP Registry?", "The official, open catalogue of publicly available MCP servers, launched in preview in September 2025 at registry.modelcontextprotocol.io. It stores metadata about servers, which refers to packages hosted in existing registries such as npm, PyPI and Docker Hub, rather than hosting code itself."], ["What is an MCP subregistry?", "A registry that builds on the official one, for example by pulling its data, filtering or enriching it, and adding servers of its own. Because the registry's API specification is open source, organisations can run compatible private registries that include internal servers."], ["Does the MCP Registry check servers for security?", "Its role is discovery and namespace verification, not approval. Organisations should apply their own review, scanning and policy before making a server available internally, which is a main reason to run a private subregistry."]], "related": ["/ai-architect/", "/fractional-cto/", "/technical-due-diligence/"], "citations": [{"title": "Introducing the MCP Registry", "url": "https://blog.modelcontextprotocol.io/posts/2025-09-08-mcp-registry-preview/", "publisher": "Model Context Protocol blog", "date": "8 Sep 2025"}, {"title": "The MCP Registry", "url": "https://modelcontextprotocol.io/registry/about", "publisher": "Model Context Protocol documentation"}, {"title": "modelcontextprotocol/registry", "url": "https://github.com/modelcontextprotocol/registry", "publisher": "GitHub"}, {"title": "Introducing the MCP Registry", "url": "https://infoq.com/news/2025/09/introducing-mcp-registry", "publisher": "InfoQ", "date": "Sep 2025"}, {"title": "MCP registry architecture: a technical overview", "url": "https://workos.com/blog/mcp-registry-architecture-technical-overview", "publisher": "WorkOS"}]}-->
+<p>A typical enterprise MCP adoption follows a pattern. A few engineers connect assistants to useful servers. A platform team builds internal servers for the CRM, the data warehouse and the ticketing system. Within months there are dozens of servers, nobody knows which are approved, and security finds a community server with broad file system access on a developer laptop. The fix is not to ban MCP. It is to give people a catalogue of servers they're allowed to use.</p>
+
+<section class="block">
+<h2>How the MCP Registry is designed</h2>
+<p>The official MCP Registry launched in preview in September 2025 as an open catalogue of publicly available servers<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>. Three design choices matter for enterprises:</p>
+<ul>
+<li><strong>Metadata, not code.</strong> Entries describe servers and point to packages in existing registries such as npm, PyPI and Docker Hub<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>.</li>
+<li><strong>Verified namespaces.</strong> Server names use a reverse-DNS format, such as <code>io.github.username/server</code> or <code>com.example/server</code>, tied to a verified GitHub account or domain<sup class="cite"><a href="#ref-2">2</a></sup>. That gives you a basis for trusting who published what.</li>
+<li><strong>Built to be extended.</strong> The registry and its API specification are open source, so others can build compatible subregistries that pull from it, filter it and add their own servers<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>.</li>
+</ul>
+<figure class="fig"><div class="im"><img src="/assets/img/mcp-registry-enterprise-subregistry/ecosystem.webp" alt="Diagram of the MCP registry ecosystem: server developers publish to the official MCP Registry, which references packages on npm, PyPI and Docker; public subregistries pull its data, an enterprise registry adds private internal servers, and clients such as IDEs and chat assistants consume from these registries" width="1600" height="1040" loading="lazy"></div><figcaption>The intended ecosystem: an official upstream, subregistries that build on it, and an enterprise registry that adds private servers. <span class="credit">Source: <a href="https://modelcontextprotocol.io/registry/about" target="_blank" rel="noopener">Model Context Protocol documentation</a> · CC BY 4.0</span></figcaption></figure>
+<p>The registry remains in preview, and its documentation warns that breaking changes or data resets may occur before general availability<sup class="cite"><a href="#ref-2">2</a></sup>. Build against it, but pin and mirror what you depend on.</p>
+</section>
+
+<section class="block">
+<h2>The playbook</h2>
+<h3>1. Decide what "approved" means</h3>
+<p>Write down the criteria before choosing tools: publisher verified, source available, package signed or pinned, permissions documented, data classification of what it touches, and an internal owner. The controls in <a href="/insights/securing-mcp-servers-checklist/">securing MCP servers</a> make a good starting checklist.</p>
+
+<h3>2. Stand up a private subregistry</h3>
+<p>Run a registry that implements the same API, so clients that understand the official registry can use yours<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-5">5</a></sup>. Servers on internal hostnames or private package feeds belong here, not in the public registry<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+
+<h3>3. Mirror, don't proxy</h3>
+<p>Pull public entries into a staging area, review them, then promote approved versions. Pin to specific package versions so an upstream update can't change what your users run without review. This is the same discipline as <a href="/insights/ai-model-supply-chain-security/">AI supply chain security</a>.</p>
+
+<h3>4. Enrich entries with your context</h3>
+<p>Add what the public registry can't know: owner, data classification, allowed user groups, required auth extension, and a link to the review record. Tool annotations and UI capabilities, covered in <a href="/insights/mcp-apps-tool-annotations/">MCP Apps and tool annotations</a>, should be part of the review.</p>
+
+<h3>5. Point clients at it</h3>
+<p>Configure managed IDEs and assistants to discover servers from your registry, and where clients support it, block unapproved sources. A catalogue nobody is pointed at is just documentation.</p>
+
+<h3>6. Tie it to identity</h3>
+<p>Approval should map to who can use a server. Pair the registry with the enterprise authorisation patterns in <a href="/insights/mcp-extensions-enterprise-strategy/">MCP extensions</a>, so access is granted through your identity provider rather than per-server credentials.</p>
+
+<h3>7. Measure and prune</h3>
+<p>Track which servers are used, by whom and how often, using the telemetry approach in <a href="/insights/llm-observability-opentelemetry-genai/">LLM observability</a>. Retire servers without owners or usage, and re-review on major version changes.</p>
+<div class="callout"><p>A registry turns MCP from a collection of personal integrations into a platform. The governance lives in the promotion step, not the protocol.</p></div>
+</section>
+
+<section class="block">
+<h2>Common mistakes</h2>
+<ul>
+<li><strong>Treating the public registry as an allow-list.</strong> Listing proves a verified namespace, not safety.</li>
+<li><strong>Floating versions.</strong> "Latest" from upstream means unreviewed code on every laptop.</li>
+<li><strong>No owner per server.</strong> Internal servers without owners become the next unpatched dependency.</li>
+<li><strong>Registry without enforcement.</strong> If clients can still add any server, the registry is advisory only.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I design enterprise agent platforms, including MCP registries, approval workflows and identity integration, so teams can adopt tools quickly and safely. See my <a href="/ai-architect/">AI architecture work</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
