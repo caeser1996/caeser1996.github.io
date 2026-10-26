@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>In-place Pod resize on Kubernetes: notes from right-sizing</title>
+<meta name="description" content="In-place Pod resize is stable in Kubernetes 1.35, letting CPU and memory change without recreating Pods. How it works, where it bites, and how I&#x27;d use it to cut cost." />
+<meta name="keywords" content="in-place pod resize, Kubernetes 1.35, InPlacePodVerticalScaling, Vertical Pod Autoscaler, InPlaceOrRecreate, resizePolicy, Kubernetes right-sizing, Kubernetes cost optimisation, pod-level resources, Kubernetes consultant" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://asksumanta.com/insights/kubernetes-in-place-pod-resize/" />
+<meta name="theme-color" content="#111214" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="In-place Pod resize on Kubernetes: notes from right-sizing" />
+<meta property="og:description" content="In-place Pod resize is stable in Kubernetes 1.35, letting CPU and memory change without recreating Pods. How it works, where it bites, and how I&#x27;d use it to cut cost." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://asksumanta.com/insights/kubernetes-in-place-pod-resize/" />
+<meta property="og:image" content="https://asksumanta.com/assets/og/kubernetes-in-place-pod-resize.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="In-place Pod resize on Kubernetes: notes from right-sizing" />
+<meta name="twitter:description" content="In-place Pod resize is stable in Kubernetes 1.35, letting CPU and memory change without recreating Pods. How it works, where it bites, and how I&#x27;d use it to cut cost." />
+<meta name="twitter:image" content="https://asksumanta.com/assets/og/kubernetes-in-place-pod-resize.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "BlogPosting", "headline": "In-place Pod resize on Kubernetes: field notes for right-sizing without restarts", "description": "In-place Pod resize is stable in Kubernetes 1.35, letting CPU and memory change without recreating Pods. How it works, where it bites, and how I'd use it to cut cost.", "datePublished": "2026-10-26T08:15:00+04:00", "dateModified": "2026-10-26T08:15:00+04:00", "articleSection": "Cloud · Kubernetes · FinOps", "genre": "Field note", "citation": [{"@type": "CreativeWork", "name": "Kubernetes 1.35: In-Place Pod Resize Graduates to Stable", "url": "https://kubernetes.io/blog/2025/12/19/kubernetes-v1-35-in-place-pod-resize-ga/"}, {"@type": "CreativeWork", "name": "Resize CPU and Memory Resources assigned to Containers", "url": "https://kubernetes.io/docs/tasks/configure-pod-container/resize-container-resources/"}, {"@type": "CreativeWork", "name": "Kubernetes v1.33: In-Place Pod Resize Graduated to Beta", "url": "https://kubernetes.io/blog/2025/05/16/kubernetes-v1-33-in-place-pod-resize-beta/"}, {"@type": "CreativeWork", "name": "Kubernetes v1.36: In-Place Vertical Scaling for Pod-Level Resources Graduates to Beta", "url": "https://kubernetes.io/blog/2026/04/30/kubernetes-v1-36-inplace-pod-level-resources-beta/"}, {"@type": "CreativeWork", "name": "Vertical Pod Autoscaling", "url": "https://kubernetes.io/docs/concepts/workloads/autoscaling/vertical-pod-autoscale/"}], "author": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "publisher": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "mainEntityOfPage": "https://asksumanta.com/insights/kubernetes-in-place-pod-resize/", "image": "https://asksumanta.com/assets/og/kubernetes-in-place-pod-resize.png", "keywords": "in-place pod resize, Kubernetes 1.35, InPlacePodVerticalScaling, Vertical Pod Autoscaler, InPlaceOrRecreate, resizePolicy, Kubernetes right-sizing, Kubernetes cost optimisation, pod-level resources, Kubernetes consultant", "wordCount": 816}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://asksumanta.com/"}, {"@type": "ListItem", "position": 2, "name": "Insights", "item": "https://asksumanta.com/insights/"}, {"@type": "ListItem", "position": 3, "name": "In-place Pod resize on Kubernetes: field notes for right-sizing without restarts", "item": "https://asksumanta.com/insights/kubernetes-in-place-pod-resize/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Can Kubernetes change a Pod's CPU and memory without restarting it?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. In-place Pod resize graduated to stable in Kubernetes 1.35. CPU and memory requests and limits on a running Pod can be changed through the resize subresource, and with a resizePolicy of NotRequired the change is applied without restarting the container where the runtime supports it."}}, {"@type": "Question", "name": "What happens if the node doesn't have room for the resize?", "acceptedAnswer": {"@type": "Answer", "text": "The kubelet sets a PodResizePending condition with reason Deferred if the resize might fit later, or Infeasible if it can never fit on that node, and keeps retrying. Since 1.35, deferred resizes are retried in priority order."}}, {"@type": "Question", "name": "Does the Vertical Pod Autoscaler use in-place resize?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. The VPA's InPlaceOrRecreate update mode tries an in-place resize first and falls back to recreating the Pod if that isn't possible. The Kubernetes 1.35 release blog described that mode as having graduated to beta."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+</script>
+</head>
+<body class="sub is-post">
+<div class="progress" id="progress"></div>
+<nav>
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="/#practice">Services</a>
+      <a href="/#work">Case studies</a>
+      <a href="/insights/">Insights</a>
+      <a href="/#assess">Analyse</a>
+      <a href="/#connect">Connect</a>
+    </div>
+    <div class="nav-r">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/insights/">Insights</a> <span>/</span> <em>In-place Pod resize on Kubernetes: field notes for right-sizing without restarts</em></div>
+    <div class="kicker">Cloud · Kubernetes · FinOps</div>
+    <h1>In-place Pod resize on Kubernetes: field notes for right-sizing without restarts</h1>
+    <p class="sub-lede">For years, changing a Pod&#x27;s CPU or memory meant replacing the Pod. That made right-sizing disruptive, so most teams over-provisioned and left it there. With in-place resize stable since Kubernetes 1.35, the excuse is gone. The operational details still matter.</p>
+    <div class="ameta"><span class="fmt">Field note</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-10-26T08:15:00+04:00">26 Oct 2026 · 08:15 GST</time><span>8 min read</span><span>5 sources</span></div><div class="atags"><span class="tagp">#kubernetes</span><span class="tagp">#finops</span><span class="tagp">#platform</span><span class="tagp">#cloud</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Field note cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><circle cx="880" cy="210" r="40" class="cv-ring"/><circle cx="880" cy="210" r="70" class="cv-ring"/><circle cx="880" cy="210" r="100" class="cv-ring hl"/><circle cx="880" cy="210" r="130" class="cv-ring"/><circle cx="880" cy="210" r="160" class="cv-ring"/><circle cx="880" cy="210" r="190" class="cv-ring"/><circle cx="874" cy="400" r="6" class="cv-dot hl"/><circle cx="844" cy="228" r="3" class="cv-dot"/><circle cx="725" cy="251" r="3" class="cv-dot"/><circle cx="872" cy="400" r="6" class="cv-dot hl"/><circle cx="696" cy="256" r="3" class="cv-dot"/><circle cx="912" cy="186" r="3" class="cv-dot"/><circle cx="835" cy="88" r="6" class="cv-dot hl"/><circle cx="1063" cy="261" r="3" class="cv-dot"/><circle cx="797" cy="73" r="3" class="cv-dot"/><circle cx="936" cy="169" r="6" class="cv-dot hl"/><circle cx="810" cy="208" r="3" class="cv-dot"/><circle cx="1044" cy="306" r="3" class="cv-dot"/><text x="60" y="90" class="cv-k">FIELD NOTE · CLOUD · KUBERNETES · FINOPS</text><text x="60" y="350" class="cv-n">26 Oct 2026 · 08:15 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <p>Almost every Kubernetes cost review finds the same thing: requests set generously at launch and never touched again. Teams know the numbers are wrong. They leave them because changing them used to mean rolling every Pod, and nobody wants to explain a restart to a stateful service, a long-running batch job or a model server that takes minutes to warm up.</p>
+<p>That constraint has gone. These are notes on what changed and how I would put it to work.</p>
+
+<section class="block">
+<h2 id="what-changed">What changed</h2>
+<p>In-place Pod resize arrived as alpha in Kubernetes 1.27, reached beta in 1.33 and graduated to stable in 1.35<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>. It makes CPU and memory requests and limits mutable on a running Pod. You send the change to the Pod's <code>resize</code> subresource, for example with <code>kubectl patch --subresource resize</code>, which needs kubectl 1.32 or later<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<p>Each container declares a <code>resizePolicy</code> per resource. <code>NotRequired</code> asks for the change to be applied without a restart; <code>RestartContainer</code> restarts that container to apply it. A common pattern in the documentation is CPU set to <code>NotRequired</code> and memory set to <code>RestartContainer</code><sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<p>The stable release added two things operators will notice. Memory limits can now be decreased, with the kubelet only allowing it when current usage is below the new limit, a best-effort check rather than a guarantee. And when a node can't fit every pending resize, retries are ordered by PriorityClass, then QoS class, then how long the request has waited<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+</section>
+
+<section class="block">
+<h2 id="watch-the-conditions-not-just-the-spec">Watch the conditions, not just the spec</h2>
+<p>A resize is a request, not a guarantee. The kubelet reports progress through Pod conditions<sup class="cite"><a href="#ref-2">2</a></sup>:</p>
+<table class="tbl">
+<thead><tr><th>Condition</th><th>Reason</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td>PodResizePending</td><td>Deferred</td><td>Doesn't fit now, might fit later; the kubelet keeps retrying</td></tr>
+<tr><td>PodResizePending</td><td>Infeasible</td><td>Can never fit on this node as it stands</td></tr>
+<tr><td>PodResizeInProgress</td><td>(none) or Error</td><td>Accepted and being applied; errors in actuation surface here</td></tr>
+</tbody>
+</table>
+<p>The practical rule: alert on long-lived <code>PodResizePending</code>. A spec that says 4 CPUs while the container still runs on 2 is a quiet source of confusion in incidents and cost reports alike.</p>
+<div class="callout"><p>The spec says what you asked for. The status says what you got. Right-sizing dashboards should read the status.</p></div>
+</section>
+
+<section class="block">
+<h2 id="where-the-vpa-fits">Where the VPA fits</h2>
+<p>The Vertical Pod Autoscaler recommends requests from observed usage and applies them. Its <code>InPlaceOrRecreate</code> update mode tries an in-place resize first and falls back to recreating the Pod when that isn't possible; the 1.35 release blog described that mode as graduating to beta<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/kubernetes-in-place-pod-resize/vpa-architecture.webp" alt="Architecture diagram of the Vertical Pod Autoscaler: the metrics server feeds the VPA recommender, which stores recommendations in the VerticalPodAutoscaler custom resource; the admission controller injects resource values into new Pods via the API server, and the VPA updater either evicts Pods or updates them in place" width="1600" height="900" loading="lazy"></div><figcaption>VPA components: the updater can now update Pods in place rather than only evicting them. <span class="credit">Source: <a href="https://kubernetes.io/docs/concepts/workloads/autoscaling/vertical-pod-autoscale/" target="_blank" rel="noopener">Kubernetes documentation, Vertical Pod Autoscaling</a> · CC BY 4.0</span></figcaption></figure>
+<p>This is the combination that changes cost economics. Recommendations used to sit in a report because applying them was disruptive. With in-place updates they can be applied continuously, within limits you set.</p>
+</section>
+
+<section class="block">
+<h2 id="pod-level-resources-are-next">Pod-level resources are next</h2>
+<p>Kubernetes 1.36 promoted in-place resize of Pod-level resources to beta, meaning a shared budget for all containers in a Pod can also change without recreating it<sup class="cite"><a href="#ref-4">4</a></sup>. That is useful for Pods with sidecars, where per-container numbers are hard to tune separately. I would treat it as beta: pilot it, but don't build a platform default on it yet.</p>
+</section>
+
+<section class="block">
+<h2 id="where-it-bites">Where it bites</h2>
+<ul>
+<li><strong>Applications that size themselves at start-up.</strong> A runtime that reads its memory limit once, such as a JVM heap or a worker pool sized to CPU count, won't notice a change. For those, a restart policy on memory is the honest choice.</li>
+<li><strong>Memory decreases.</strong> The usage check is best-effort, so shrinking memory on a busy Pod still carries OOM risk<sup class="cite"><a href="#ref-1">1</a></sup>. Shrink gradually and watch.</li>
+<li><strong>Node fragmentation.</strong> Growing in place only works if the node has room. Busy nodes produce Deferred resizes; plan headroom or accept fallback to recreation.</li>
+<li><strong>Quotas and policy.</strong> Resizes still count against namespace quotas, and teams will need guardrails on how far they can go, enforced with <a href="/insights/kubernetes-admission-policies-cel/">admission policies</a> in <a href="/insights/kubernetes-multi-tenancy/">multi-tenant clusters</a>.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2 id="how-i-d-roll-it-out">How I'd roll it out</h2>
+<ol>
+<li><strong>Measure first.</strong> Compare requests with real usage by namespace and team, using the allocation approach in <a href="/insights/focus-finops-ai-cost-allocation/">FOCUS-based cost allocation</a>.</li>
+<li><strong>Start with CPU on stateless services</strong>, using <code>NotRequired</code>, where the risk is lowest and the savings show quickly.</li>
+<li><strong>Run the VPA in recommendation mode</strong> for a few weeks, then enable <code>InPlaceOrRecreate</code> on workloads that tolerate the fallback.</li>
+<li><strong>Use it for warm-up spikes.</strong> Services that need extra CPU at start-up, including model servers like those in <a href="/insights/llm-inference-serving-vllm/">vLLM serving</a>, can start large and shrink once warm.</li>
+<li><strong>Alert on pending resizes</strong> and report status, not spec, in cost dashboards.</li>
+<li><strong>Combine with scale-to-zero</strong> from <a href="/insights/kubernetes-finops-scale-to-zero/">Kubernetes FinOps</a>: horizontal scaling for traffic shape, vertical for per-Pod fit.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2 id="how-i-can-help">How I can help</h2>
+<p>I run Kubernetes cost and platform reviews that turn right-sizing from a one-off report into a continuous, safe process. As a <a href="/fractional-cto/">fractional CTO</a> I can own that roadmap. Or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://kubernetes.io/blog/2025/12/19/kubernetes-v1-35-in-place-pod-resize-ga/" target="_blank" rel="noopener">Kubernetes 1.35: In-Place Pod Resize Graduates to Stable</a><small>Kubernetes blog · 19 Dec 2025</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://kubernetes.io/docs/tasks/configure-pod-container/resize-container-resources/" target="_blank" rel="noopener">Resize CPU and Memory Resources assigned to Containers</a><small>Kubernetes documentation</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://kubernetes.io/blog/2025/05/16/kubernetes-v1-33-in-place-pod-resize-beta/" target="_blank" rel="noopener">Kubernetes v1.33: In-Place Pod Resize Graduated to Beta</a><small>Kubernetes blog · 16 May 2025</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://kubernetes.io/blog/2026/04/30/kubernetes-v1-36-inplace-pod-level-resources-beta/" target="_blank" rel="noopener">Kubernetes v1.36: In-Place Vertical Scaling for Pod-Level Resources Graduates to Beta</a><small>Kubernetes blog · 30 Apr 2026</small></div></li><li id="ref-5"><span class="rn">5</span><div><a href="https://kubernetes.io/docs/concepts/workloads/autoscaling/vertical-pod-autoscale/" target="_blank" rel="noopener">Vertical Pod Autoscaling</a><small>Kubernetes documentation</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fkubernetes-in-place-pod-resize%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fkubernetes-in-place-pod-resize%2F&amp;text=In-place%20Pod%20resize%20on%20Kubernetes%3A%20field%20notes%20for%20right-sizing%20without%20restarts" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=In-place%20Pod%20resize%20on%20Kubernetes%3A%20field%20notes%20for%20right-sizing%20without%20restarts%20https%3A%2F%2Fasksumanta.com%2Finsights%2Fkubernetes-in-place-pod-resize%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://asksumanta.com/insights/kubernetes-in-place-pod-resize/">Copy link</button></div>
+      <div class="pnav"><a class="pn prev" href="/insights/text-to-sql-semantic-layer/"><small>← Previous</small><b>Text-to-SQL agents need a semantic layer, not just a bigger model</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#what-changed">What changed</a></li><li><a href="#watch-the-conditions-not-just-the-spec">Watch the conditions, not just the spec</a></li><li><a href="#where-the-vpa-fits">Where the VPA fits</a></li><li><a href="#pod-level-resources-are-next">Pod-level resources are next</a></li><li><a href="#where-it-bites">Where it bites</a></li><li><a href="#how-i-d-roll-it-out">How I&#x27;d roll it out</a></li><li><a href="#how-i-can-help">How I can help</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>Can Kubernetes change a Pod&#x27;s CPU and memory without restarting it?</summary><p>Yes. In-place Pod resize graduated to stable in Kubernetes 1.35. CPU and memory requests and limits on a running Pod can be changed through the resize subresource, and with a resizePolicy of NotRequired the change is applied without restarting the container where the runtime supports it.</p></details><details class="rise"><summary>What happens if the node doesn&#x27;t have room for the resize?</summary><p>The kubelet sets a PodResizePending condition with reason Deferred if the resize might fit later, or Infeasible if it can never fit on that node, and keeps retrying. Since 1.35, deferred resizes are retried in priority order.</p></details><details class="rise"><summary>Does the Vertical Pod Autoscaler use in-place resize?</summary><p>Yes. The VPA&#x27;s InPlaceOrRecreate update mode tries an in-place resize first and falls back to recreating the Pod if that isn&#x27;t possible. The Kubernetes 1.35 release blog described that mode as having graduated to beta.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/fractional-cto/"><small>Service</small><b>Fractional CTO</b><span>I work as a part-time CTO for founders, CEOs and boards who need experienced technical judgement now, and a team that can carry it on after I step back.</span><i>→</i></a><a class="rcard rise" href="/ai-architect/"><small>Service</small><b>AI &amp; LLM architecture</b><span>I design and build AI systems that leadership can trust: grounded in your data, measured by evaluations, governed by your rules and priced so they make sense at scale.</span><i>→</i></a><a class="rcard rise" href="/technical-due-diligence/"><small>Service</small><b>Technical due diligence</b><span>I give investors an independent, plain-language view of a company&#x27;s technology, team and AI claims, so the risks are priced in before the deal closes, not discovered after.</span><i>→</i></a><a class="rcard rise" href="/insights/text-to-sql-semantic-layer/"><small>Insight</small><b>Text-to-SQL agents need a semantic layer, not just a bigger model</b><span>&#x27;Ask your data anything&#x27; is one of the most requested AI features, and one of the most disappointing in production. The demo works on a tidy schema. The real warehouse has thousands of columns, conflicting definitions and tribal knowledge. Research and the market are converging on the same fix.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: In-place Pod resize on Kubernetes: field notes for right-sizing without restarts">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
+        <p class="floc">United States &amp; UAE · working globally</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/uae/">Fractional CTO in the UAE</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/kubernetes-in-place-pod-resize/">In-place Pod resize on Kubernetes: field notes for right-sizing without restarts</a></li><li><a href="/insights/text-to-sql-semantic-layer/">Text-to-SQL agents need a semantic layer, not just a bigger model</a></li><li><a href="/insights/mcp-extensions-enterprise-strategy/">MCP extensions: how to adopt them without fragmenting your agent platform</a></li><li><a href="/insights/colorado-ai-act-2026-reset/">Colorado&#x27;s AI law reset: what changed in 2026, and what to build regardless</a></li><li><a href="/insights/opentelemetry-ebpf-instrumentation-obi/">Zero-code observability with OBI: where OpenTelemetry&#x27;s eBPF instrumentation fits</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>

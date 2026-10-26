@@ -1,0 +1,64 @@
+<!--{"title": "In-place Pod resize on Kubernetes: notes from right-sizing", "description": "In-place Pod resize is stable in Kubernetes 1.35, letting CPU and memory change without recreating Pods. How it works, where it bites, and how I'd use it to cut cost.", "h1": "In-place Pod resize on Kubernetes: field notes for right-sizing without restarts", "kicker": "Cloud · Kubernetes · FinOps", "lede": "For years, changing a Pod's CPU or memory meant replacing the Pod. That made right-sizing disruptive, so most teams over-provisioned and left it there. With in-place resize stable since Kubernetes 1.35, the excuse is gone. The operational details still matter.", "date": "2026-10-26", "datetime": "2026-10-26T08:15:00+04:00", "readtime": "8 min read", "format": "field-note", "tags": ["kubernetes", "finops", "platform", "cloud"], "keywords": ["in-place pod resize", "Kubernetes 1.35", "InPlacePodVerticalScaling", "Vertical Pod Autoscaler", "InPlaceOrRecreate", "resizePolicy", "Kubernetes right-sizing", "Kubernetes cost optimisation", "pod-level resources", "Kubernetes consultant"], "faq": [["Can Kubernetes change a Pod's CPU and memory without restarting it?", "Yes. In-place Pod resize graduated to stable in Kubernetes 1.35. CPU and memory requests and limits on a running Pod can be changed through the resize subresource, and with a resizePolicy of NotRequired the change is applied without restarting the container where the runtime supports it."], ["What happens if the node doesn't have room for the resize?", "The kubelet sets a PodResizePending condition with reason Deferred if the resize might fit later, or Infeasible if it can never fit on that node, and keeps retrying. Since 1.35, deferred resizes are retried in priority order."], ["Does the Vertical Pod Autoscaler use in-place resize?", "Yes. The VPA's InPlaceOrRecreate update mode tries an in-place resize first and falls back to recreating the Pod if that isn't possible. The Kubernetes 1.35 release blog described that mode as having graduated to beta."]], "related": ["/fractional-cto/", "/ai-architect/", "/technical-due-diligence/"], "citations": [{"title": "Kubernetes 1.35: In-Place Pod Resize Graduates to Stable", "url": "https://kubernetes.io/blog/2025/12/19/kubernetes-v1-35-in-place-pod-resize-ga/", "publisher": "Kubernetes blog", "date": "19 Dec 2025"}, {"title": "Resize CPU and Memory Resources assigned to Containers", "url": "https://kubernetes.io/docs/tasks/configure-pod-container/resize-container-resources/", "publisher": "Kubernetes documentation"}, {"title": "Kubernetes v1.33: In-Place Pod Resize Graduated to Beta", "url": "https://kubernetes.io/blog/2025/05/16/kubernetes-v1-33-in-place-pod-resize-beta/", "publisher": "Kubernetes blog", "date": "16 May 2025"}, {"title": "Kubernetes v1.36: In-Place Vertical Scaling for Pod-Level Resources Graduates to Beta", "url": "https://kubernetes.io/blog/2026/04/30/kubernetes-v1-36-inplace-pod-level-resources-beta/", "publisher": "Kubernetes blog", "date": "30 Apr 2026"}, {"title": "Vertical Pod Autoscaling", "url": "https://kubernetes.io/docs/concepts/workloads/autoscaling/vertical-pod-autoscale/", "publisher": "Kubernetes documentation"}]}-->
+<p>Almost every Kubernetes cost review finds the same thing: requests set generously at launch and never touched again. Teams know the numbers are wrong. They leave them because changing them used to mean rolling every Pod, and nobody wants to explain a restart to a stateful service, a long-running batch job or a model server that takes minutes to warm up.</p>
+<p>That constraint has gone. These are notes on what changed and how I would put it to work.</p>
+
+<section class="block">
+<h2>What changed</h2>
+<p>In-place Pod resize arrived as alpha in Kubernetes 1.27, reached beta in 1.33 and graduated to stable in 1.35<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>. It makes CPU and memory requests and limits mutable on a running Pod. You send the change to the Pod's <code>resize</code> subresource, for example with <code>kubectl patch --subresource resize</code>, which needs kubectl 1.32 or later<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<p>Each container declares a <code>resizePolicy</code> per resource. <code>NotRequired</code> asks for the change to be applied without a restart; <code>RestartContainer</code> restarts that container to apply it. A common pattern in the documentation is CPU set to <code>NotRequired</code> and memory set to <code>RestartContainer</code><sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<p>The stable release added two things operators will notice. Memory limits can now be decreased, with the kubelet only allowing it when current usage is below the new limit, a best-effort check rather than a guarantee. And when a node can't fit every pending resize, retries are ordered by PriorityClass, then QoS class, then how long the request has waited<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+</section>
+
+<section class="block">
+<h2>Watch the conditions, not just the spec</h2>
+<p>A resize is a request, not a guarantee. The kubelet reports progress through Pod conditions<sup class="cite"><a href="#ref-2">2</a></sup>:</p>
+<table class="tbl">
+<thead><tr><th>Condition</th><th>Reason</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td>PodResizePending</td><td>Deferred</td><td>Doesn't fit now, might fit later; the kubelet keeps retrying</td></tr>
+<tr><td>PodResizePending</td><td>Infeasible</td><td>Can never fit on this node as it stands</td></tr>
+<tr><td>PodResizeInProgress</td><td>(none) or Error</td><td>Accepted and being applied; errors in actuation surface here</td></tr>
+</tbody>
+</table>
+<p>The practical rule: alert on long-lived <code>PodResizePending</code>. A spec that says 4 CPUs while the container still runs on 2 is a quiet source of confusion in incidents and cost reports alike.</p>
+<div class="callout"><p>The spec says what you asked for. The status says what you got. Right-sizing dashboards should read the status.</p></div>
+</section>
+
+<section class="block">
+<h2>Where the VPA fits</h2>
+<p>The Vertical Pod Autoscaler recommends requests from observed usage and applies them. Its <code>InPlaceOrRecreate</code> update mode tries an in-place resize first and falls back to recreating the Pod when that isn't possible; the 1.35 release blog described that mode as graduating to beta<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/kubernetes-in-place-pod-resize/vpa-architecture.webp" alt="Architecture diagram of the Vertical Pod Autoscaler: the metrics server feeds the VPA recommender, which stores recommendations in the VerticalPodAutoscaler custom resource; the admission controller injects resource values into new Pods via the API server, and the VPA updater either evicts Pods or updates them in place" width="1600" height="900" loading="lazy"></div><figcaption>VPA components: the updater can now update Pods in place rather than only evicting them. <span class="credit">Source: <a href="https://kubernetes.io/docs/concepts/workloads/autoscaling/vertical-pod-autoscale/" target="_blank" rel="noopener">Kubernetes documentation, Vertical Pod Autoscaling</a> · CC BY 4.0</span></figcaption></figure>
+<p>This is the combination that changes cost economics. Recommendations used to sit in a report because applying them was disruptive. With in-place updates they can be applied continuously, within limits you set.</p>
+</section>
+
+<section class="block">
+<h2>Pod-level resources are next</h2>
+<p>Kubernetes 1.36 promoted in-place resize of Pod-level resources to beta, meaning a shared budget for all containers in a Pod can also change without recreating it<sup class="cite"><a href="#ref-4">4</a></sup>. That is useful for Pods with sidecars, where per-container numbers are hard to tune separately. I would treat it as beta: pilot it, but don't build a platform default on it yet.</p>
+</section>
+
+<section class="block">
+<h2>Where it bites</h2>
+<ul>
+<li><strong>Applications that size themselves at start-up.</strong> A runtime that reads its memory limit once, such as a JVM heap or a worker pool sized to CPU count, won't notice a change. For those, a restart policy on memory is the honest choice.</li>
+<li><strong>Memory decreases.</strong> The usage check is best-effort, so shrinking memory on a busy Pod still carries OOM risk<sup class="cite"><a href="#ref-1">1</a></sup>. Shrink gradually and watch.</li>
+<li><strong>Node fragmentation.</strong> Growing in place only works if the node has room. Busy nodes produce Deferred resizes; plan headroom or accept fallback to recreation.</li>
+<li><strong>Quotas and policy.</strong> Resizes still count against namespace quotas, and teams will need guardrails on how far they can go, enforced with <a href="/insights/kubernetes-admission-policies-cel/">admission policies</a> in <a href="/insights/kubernetes-multi-tenancy/">multi-tenant clusters</a>.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>How I'd roll it out</h2>
+<ol>
+<li><strong>Measure first.</strong> Compare requests with real usage by namespace and team, using the allocation approach in <a href="/insights/focus-finops-ai-cost-allocation/">FOCUS-based cost allocation</a>.</li>
+<li><strong>Start with CPU on stateless services</strong>, using <code>NotRequired</code>, where the risk is lowest and the savings show quickly.</li>
+<li><strong>Run the VPA in recommendation mode</strong> for a few weeks, then enable <code>InPlaceOrRecreate</code> on workloads that tolerate the fallback.</li>
+<li><strong>Use it for warm-up spikes.</strong> Services that need extra CPU at start-up, including model servers like those in <a href="/insights/llm-inference-serving-vllm/">vLLM serving</a>, can start large and shrink once warm.</li>
+<li><strong>Alert on pending resizes</strong> and report status, not spec, in cost dashboards.</li>
+<li><strong>Combine with scale-to-zero</strong> from <a href="/insights/kubernetes-finops-scale-to-zero/">Kubernetes FinOps</a>: horizontal scaling for traffic shape, vertical for per-Pod fit.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I run Kubernetes cost and platform reviews that turn right-sizing from a one-off report into a continuous, safe process. As a <a href="/fractional-cto/">fractional CTO</a> I can own that roadmap. Or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
