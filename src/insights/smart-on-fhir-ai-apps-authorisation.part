@@ -1,0 +1,66 @@
+<!--{"title": "SMART on FHIR for AI apps: an authorisation checklist", "description": "AI apps that read EHR data need SMART on FHIR authorisation done properly. A checklist covering v2 granular scopes, PKCE, backend services and agent access to clinical data.", "h1": "SMART on FHIR for AI apps: an authorisation checklist for clinical data access", "kicker": "Healthcare · Interoperability · AI", "lede": "Ambient scribes, chart summarisers and clinical agents all need to read and sometimes write EHR data. SMART on FHIR is how they should get that access. The hard questions in a health AI security review are usually about scopes, launch context and token handling, not the model.", "date": "2026-10-26", "datetime": "2026-10-26T12:20:00+04:00", "readtime": "8 min read", "format": "checklist", "tags": ["healthcare", "fhir", "ai", "security"], "keywords": ["SMART on FHIR", "SMART App Launch 2.2", "SMART v2 scopes", "granular scopes FHIR", "PKCE S256", "SMART Backend Services", "private_key_jwt", "healthcare AI security", "EHR integration AI", "healthcare interoperability consultant"], "faq": [["What changed in SMART on FHIR v2 scopes?", "SMART v2 scopes use permission suffixes drawn from c, r, u, d and s (create, read, update, delete, search), so patient/Observation.rs grants read and search on the patient's observations. Scopes can also be narrowed with search parameters, such as limiting Observation access to the vital-signs category."], ["Is PKCE required in SMART App Launch?", "Yes. The SMART App Launch specification says all SMART apps shall support PKCE, servers shall support the S256 code challenge method and shall not support the plain method."], ["How should a background AI service authenticate to a FHIR server?", "Using SMART Backend Services: the client_credentials grant with asymmetric client authentication (private_key_jwt), with pre-authorised scopes. The specification describes asymmetric authentication as its preferred method because no shared secret is sent over the wire."]], "related": ["/healthcare-data-architecture/", "/ai-architect/", "/technical-due-diligence/"], "citations": [{"title": "App Launch: Scopes and Launch Context (SMART App Launch v2.2.0)", "url": "https://hl7.org/fhir/smart-app-launch/scopes-and-launch-context.html", "publisher": "HL7 International"}, {"title": "App Launch: Launch and Authorization (SMART App Launch v2.2.0)", "url": "https://hl7.org/fhir/smart-app-launch/app-launch.html", "publisher": "HL7 International"}, {"title": "Backend Services (SMART App Launch v2.2.0)", "url": "https://hl7.org/fhir/smart-app-launch/backend-services.html", "publisher": "HL7 International"}, {"title": "Client Authentication: Asymmetric (public key) (SMART App Launch v2.2.0)", "url": "https://hl7.org/fhir/smart-app-launch/client-confidential-asymmetric.html", "publisher": "HL7 International"}, {"title": "Conformance (SMART App Launch v2.2.0)", "url": "https://hl7.org/fhir/smart-app-launch/conformance.html", "publisher": "HL7 International"}, {"title": "ONC's HTI-1 final rule adopts new health IT certification requirements", "url": "https://www.mcdermottlaw.com/insights/oncs-hti-1-final-rule-adopts-new-health-it-certification-requirements/", "publisher": "McDermott Will & Emery"}]}-->
+<p>A health AI product usually starts with a demo against a sandbox and a broad token. Then it meets a hospital's security review. The questions are rarely about the model. They are about which data the app can reach, on whose behalf, for how long, and how anyone would know if it reached further than it should.</p>
+<p>SMART on FHIR answers most of those questions if it is used properly. This checklist is what I work through when designing or reviewing EHR access for AI applications.</p>
+
+<section class="block">
+<h2>Why it matters more for AI</h2>
+<p>Traditional SMART apps show data to a clinician who is already authorised to see it. AI apps often do more: summarise a whole record, draft notes back into the chart, or run in the background across many patients. That widens both the data an app touches and the consequences of a misconfigured scope. In the US, HTI-1 also moved certified health IT from SMART v1 to the SMART App Launch 2.0 guide for the standardised patient and population API criterion, so v2 behaviour is now the baseline buyers expect<sup class="cite"><a href="#ref-6">6</a></sup>. The policy side is covered in <a href="/insights/hti-1-to-hti-5-health-it-ai-rules/">HTI-1 to HTI-5</a>.</p>
+</section>
+
+<section class="block">
+<h2>1. Scopes: ask for the least, precisely</h2>
+<ul>
+<li><strong>Use v2 scope syntax.</strong> Permissions are expressed as suffixes from c, r, u, d and s. <code>patient/Observation.rs</code> grants read and search on the patient's observations; <code>patient/Observation.cu</code> grants create and update<sup class="cite"><a href="#ref-1">1</a></sup>.</li>
+<li><strong>Narrow with search parameters.</strong> v2 allows granular scopes such as Observation access limited to the vital-signs category<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-5">5</a></sup>. A sepsis model that only needs vitals and labs shouldn't hold a token for psychotherapy notes.</li>
+<li><strong>Prefer <code>patient/</code> over <code>user/</code> and <code>system/</code></strong> wherever the use case is about one patient in context.</li>
+<li><strong>Separate read and write.</strong> If the AI drafts notes, consider a distinct, reviewable write path rather than giving the summariser create rights.</li>
+<li><strong>Check what the server actually supports.</strong> Servers advertise capabilities in their SMART configuration<sup class="cite"><a href="#ref-5">5</a></sup>; don't assume granular scopes are enforced everywhere.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>2. Launch and token handling</h2>
+<ul>
+<li><strong>PKCE with S256, always.</strong> The specification says all SMART apps shall support PKCE, servers shall support S256 and shall not support the plain method<sup class="cite"><a href="#ref-2">2</a></sup>.</li>
+<li><strong>Use EHR launch for in-workflow AI</strong>, so the patient and encounter come from the EHR's launch context, not from parameters the app constructs<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>.</li>
+<li><strong>Request <code>openid fhirUser</code></strong> so every AI action can be attributed to an identified user<sup class="cite"><a href="#ref-2">2</a></sup>.</li>
+<li><strong>Keep tokens out of the model.</strong> Access tokens belong in the integration layer, never in prompts, logs or tool arguments the model can see or echo.</li>
+<li><strong>Be deliberate about offline access.</strong> Refresh tokens extend reach well beyond the clinician's session; request them only when the use case needs it.</li>
+</ul>
+<div class="callout"><p>The model should never hold a credential. It asks a tool for data; the tool holds the token, enforces scope and logs the call.</p></div>
+</section>
+
+<section class="block">
+<h2>3. Background and population workloads</h2>
+<ul>
+<li><strong>Use SMART Backend Services</strong> for autonomous processing, such as overnight risk scoring or quality measures. It is designed for clients with pre-authorised scopes and no user in the loop<sup class="cite"><a href="#ref-3">3</a></sup>.</li>
+<li><strong>Authenticate with asymmetric keys.</strong> <code>private_key_jwt</code> is the specification's preferred method because no shared secret crosses the wire; clients must support RS384 and ES384<sup class="cite"><a href="#ref-4">4</a></sup>.</li>
+<li><strong>Rotate keys through a JWKS endpoint</strong>, and treat the private key with the same controls as any production secret.</li>
+<li><strong>Use bulk export for volume</strong>, as in <a href="/insights/fhir-bulk-data-export-pipelines/">FHIR bulk data pipelines</a>, rather than looping single-patient queries.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>4. Agents and tools</h2>
+<ul>
+<li><strong>One tool, one scope set.</strong> If an agent reaches FHIR through MCP servers, each server should hold the narrowest token for its job, with the controls in <a href="/insights/securing-mcp-servers-checklist/">securing MCP servers</a>.</li>
+<li><strong>Keep patient context fixed.</strong> An agent must not be able to switch patients by changing a tool argument; patient identity comes from the launch, not the prompt. This is a key defence against <a href="/insights/prompt-injection-defence-for-agents/">prompt injection</a>.</li>
+<li><strong>Human approval for writes.</strong> Drafted notes, orders or messages go to a clinician for review before they are committed, as in <a href="/insights/ambient-ai-scribes-architecture/">ambient scribe architectures</a>.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>5. Evidence for the security review</h2>
+<ul>
+<li>A table of every scope requested, why, and which feature uses it.</li>
+<li>Audit logs linking each FHIR call to user, patient, feature and model version.</li>
+<li>Token lifetimes, refresh policy and revocation procedure.</li>
+<li>Results of testing with a SMART conformance tool against the target servers.</li>
+<li>A data flow showing exactly where PHI goes, including any model provider, mapped to <a href="/insights/hipaa-security-rule-proposal-ai-platforms/">HIPAA Security Rule</a> controls.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I design EHR integrations for AI products that pass hospital security reviews the first time, from scope design to agent tooling and audit. See <a href="/healthcare-data-architecture/">healthcare data architecture</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
