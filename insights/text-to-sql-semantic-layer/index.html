@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Text-to-SQL agents need a semantic layer, not a bigger model</title>
+<meta name="description" content="LLMs ace text-to-SQL demos and stumble on real enterprise schemas. What Spider 2.0 showed, why a governed semantic layer helps, and how I design data access for AI agents." />
+<meta name="keywords" content="text-to-SQL, natural language to SQL, semantic layer AI, Spider 2.0, metrics layer, MetricFlow, Open Semantic Interchange, AI data agents, enterprise analytics AI, data platform consultant" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://asksumanta.com/insights/text-to-sql-semantic-layer/" />
+<meta name="theme-color" content="#111214" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="Text-to-SQL agents need a semantic layer, not a bigger model" />
+<meta property="og:description" content="LLMs ace text-to-SQL demos and stumble on real enterprise schemas. What Spider 2.0 showed, why a governed semantic layer helps, and how I design data access for AI agents." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://asksumanta.com/insights/text-to-sql-semantic-layer/" />
+<meta property="og:image" content="https://asksumanta.com/assets/og/text-to-sql-semantic-layer.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Text-to-SQL agents need a semantic layer, not a bigger model" />
+<meta name="twitter:description" content="LLMs ace text-to-SQL demos and stumble on real enterprise schemas. What Spider 2.0 showed, why a governed semantic layer helps, and how I design data access for AI agents." />
+<meta name="twitter:image" content="https://asksumanta.com/assets/og/text-to-sql-semantic-layer.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "BlogPosting", "headline": "Text-to-SQL agents need a semantic layer, not just a bigger model", "description": "LLMs ace text-to-SQL demos and stumble on real enterprise schemas. What Spider 2.0 showed, why a governed semantic layer helps, and how I design data access for AI agents.", "datePublished": "2026-10-26T04:15:00+04:00", "dateModified": "2026-10-26T04:15:00+04:00", "articleSection": "Data platforms · AI", "genre": "Essay", "citation": [{"@type": "CreativeWork", "name": "Spider 2.0: Evaluating Language Models on Real-World Enterprise Text-to-SQL Workflows", "url": "https://arxiv.org/abs/2411.07763"}, {"@type": "CreativeWork", "name": "Spider 2.0 (ICLR 2025)", "url": "https://mlanthology.org/iclr/2025/lei2025iclr-spider"}, {"@type": "CreativeWork", "name": "Snowflake, Salesforce launch new standard to unify data for AI", "url": "https://thenewstack.io/snowflake-salesforce-launch-new-standard-to-unify-data-for-ai/"}, {"@type": "CreativeWork", "name": "Open source MetricFlow: governed metrics", "url": "https://www.getdbt.com/blog/open-source-metricflow-governed-metrics"}, {"@type": "CreativeWork", "name": "About MetricFlow", "url": "https://docs.getdbt.com/docs/build/about-metricflow"}], "author": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "publisher": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "mainEntityOfPage": "https://asksumanta.com/insights/text-to-sql-semantic-layer/", "image": "https://asksumanta.com/assets/og/text-to-sql-semantic-layer.png", "keywords": "text-to-SQL, natural language to SQL, semantic layer AI, Spider 2.0, metrics layer, MetricFlow, Open Semantic Interchange, AI data agents, enterprise analytics AI, data platform consultant", "wordCount": 675}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://asksumanta.com/"}, {"@type": "ListItem", "position": 2, "name": "Insights", "item": "https://asksumanta.com/insights/"}, {"@type": "ListItem", "position": 3, "name": "Text-to-SQL agents need a semantic layer, not just a bigger model", "item": "https://asksumanta.com/insights/text-to-sql-semantic-layer/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "How good are LLMs at text-to-SQL on real enterprise data?", "acceptedAnswer": {"@type": "Answer", "text": "Much worse than on academic benchmarks. The Spider 2.0 benchmark, built from real enterprise workflows with very large schemas, reported that a strong reasoning model with an agent framework solved around a fifth of tasks, compared with over 90% on the earlier Spider 1.0 benchmark."}}, {"@type": "Question", "name": "What is a semantic layer?", "acceptedAnswer": {"@type": "Answer", "text": "A governed layer of business definitions, such as metrics, dimensions and relationships, that sits between raw tables and the tools that query them, so that 'revenue' or 'active customer' means the same thing everywhere."}}, {"@type": "Question", "name": "Should AI agents query raw tables at all?", "acceptedAnswer": {"@type": "Answer", "text": "For most business questions, no. Agents are more reliable when they query governed metrics and entities through a semantic layer, with raw-table SQL reserved for analysts or carefully scoped exploration."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+</script>
+</head>
+<body class="sub is-post">
+<div class="progress" id="progress"></div>
+<nav>
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="/#practice">Services</a>
+      <a href="/#work">Case studies</a>
+      <a href="/insights/">Insights</a>
+      <a href="/#assess">Analyse</a>
+      <a href="/#connect">Connect</a>
+    </div>
+    <div class="nav-r">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/insights/">Insights</a> <span>/</span> <em>Text-to-SQL agents need a semantic layer, not just a bigger model</em></div>
+    <div class="kicker">Data platforms · AI</div>
+    <h1>Text-to-SQL agents need a semantic layer, not just a bigger model</h1>
+    <p class="sub-lede">&#x27;Ask your data anything&#x27; is one of the most requested AI features, and one of the most disappointing in production. The demo works on a tidy schema. The real warehouse has thousands of columns, conflicting definitions and tribal knowledge. Research and the market are converging on the same fix.</p>
+    <div class="ameta"><span class="fmt">Essay</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-10-26T04:15:00+04:00">26 Oct 2026 · 04:15 GST</time><span>8 min read</span><span>5 sources</span></div><div class="atags"><span class="tagp">#data</span><span class="tagp">#ai</span><span class="tagp">#ontology</span><span class="tagp">#agents</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Essay cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><line x1="745" y1="229" x2="651" y2="266" class="cv-edge" opacity="0.33"/><line x1="745" y1="229" x2="716" y2="300" class="cv-edge" opacity="0.49"/><line x1="745" y1="229" x2="608" y2="228" class="cv-edge" opacity="0.08"/><line x1="745" y1="229" x2="754" y2="309" class="cv-edge" opacity="0.46"/><line x1="745" y1="229" x2="800" y2="195" class="cv-edge hl" opacity="0.57"/><line x1="530" y1="368" x2="580" y2="375" class="cv-edge" opacity="0.67"/><line x1="530" y1="368" x2="677" y2="368" class="cv-edge" opacity="0.02"/><line x1="530" y1="368" x2="605" y2="296" class="cv-edge" opacity="0.31"/><line x1="530" y1="368" x2="564" y2="273" class="cv-edge" opacity="0.33"/><line x1="651" y1="266" x2="580" y2="375" class="cv-edge" opacity="0.13"/><line x1="651" y1="266" x2="677" y2="368" class="cv-edge" opacity="0.30"/><line x1="651" y1="266" x2="716" y2="300" class="cv-edge" opacity="0.51"/><line x1="651" y1="266" x2="608" y2="228" class="cv-edge" opacity="0.62"/><line x1="651" y1="266" x2="605" y2="296" class="cv-edge" opacity="0.63"/><line x1="651" y1="266" x2="564" y2="273" class="cv-edge" opacity="0.42"/><line x1="651" y1="266" x2="754" y2="309" class="cv-edge" opacity="0.26"/><line x1="736" y1="73" x2="873" y2="89" class="cv-edge" opacity="0.08"/><line x1="736" y1="73" x2="800" y2="195" class="cv-edge hl" opacity="0.08"/><line x1="736" y1="73" x2="821" y2="86" class="cv-edge" opacity="0.42"/><line x1="736" y1="73" x2="830" y2="60" class="cv-edge hl" opacity="0.37"/><line x1="1049" y1="299" x2="916" y2="313" class="cv-edge hl" opacity="0.10"/><line x1="1049" y1="299" x2="947" y2="279" class="cv-edge hl" opacity="0.31"/><line x1="1049" y1="299" x2="936" y2="210" class="cv-edge hl" opacity="0.04"/><line x1="1049" y1="299" x2="1112" y2="329" class="cv-edge hl" opacity="0.54"/><line x1="580" y1="375" x2="677" y2="368" class="cv-edge" opacity="0.35"/><line x1="580" y1="375" x2="608" y2="228" class="cv-edge" opacity="0.01"/><line x1="580" y1="375" x2="605" y2="296" class="cv-edge" opacity="0.45"/><line x1="580" y1="375" x2="564" y2="273" class="cv-edge" opacity="0.32"/><line x1="873" y1="89" x2="975" y2="116" class="cv-edge" opacity="0.30"/><line x1="873" y1="89" x2="928" y2="139" class="cv-edge" opacity="0.50"/><line x1="873" y1="89" x2="800" y2="195" class="cv-edge hl" opacity="0.14"/><line x1="873" y1="89" x2="968" y2="80" class="cv-edge hl" opacity="0.36"/><line x1="873" y1="89" x2="887" y2="113" class="cv-edge" opacity="0.81"/><line x1="873" y1="89" x2="821" y2="86" class="cv-edge" opacity="0.66"/><line x1="873" y1="89" x2="830" y2="60" class="cv-edge hl" opacity="0.65"/><line x1="873" y1="89" x2="936" y2="210" class="cv-edge" opacity="0.09"/><line x1="916" y1="313" x2="947" y2="279" class="cv-edge hl" opacity="0.69"/><line x1="916" y1="313" x2="936" y2="210" class="cv-edge" opacity="0.30"/><line x1="975" y1="116" x2="928" y2="139" class="cv-edge" opacity="0.65"/><line x1="975" y1="116" x2="968" y2="80" class="cv-edge hl" opacity="0.75"/><line x1="975" y1="116" x2="887" y2="113" class="cv-edge" opacity="0.41"/><line x1="975" y1="116" x2="1039" y2="148" class="cv-edge" opacity="0.52"/><line x1="975" y1="116" x2="936" y2="210" class="cv-edge" opacity="0.32"/><line x1="677" y1="368" x2="716" y2="300" class="cv-edge" opacity="0.47"/><line x1="677" y1="368" x2="605" y2="296" class="cv-edge" opacity="0.32"/><line x1="677" y1="368" x2="564" y2="273" class="cv-edge" opacity="0.02"/><line x1="677" y1="368" x2="754" y2="309" class="cv-edge" opacity="0.35"/><line x1="928" y1="139" x2="947" y2="279" class="cv-edge hl" opacity="0.06"/><line x1="928" y1="139" x2="800" y2="195" class="cv-edge hl" opacity="0.07"/><line x1="928" y1="139" x2="968" y2="80" class="cv-edge hl" opacity="0.52"/><line x1="928" y1="139" x2="887" y2="113" class="cv-edge" opacity="0.67"/><line x1="928" y1="139" x2="821" y2="86" class="cv-edge" opacity="0.20"/><line x1="928" y1="139" x2="1039" y2="148" class="cv-edge" opacity="0.26"/><line x1="928" y1="139" x2="830" y2="60" class="cv-edge hl" opacity="0.16"/><line x1="928" y1="139" x2="936" y2="210" class="cv-edge" opacity="0.53"/><line x1="716" y1="300" x2="608" y2="228" class="cv-edge" opacity="0.13"/><line x1="716" y1="300" x2="605" y2="296" class="cv-edge" opacity="0.26"/><line x1="716" y1="300" x2="754" y2="309" class="cv-edge" opacity="0.74"/><line x1="716" y1="300" x2="800" y2="195" class="cv-edge hl" opacity="0.11"/><line x1="947" y1="279" x2="936" y2="210" class="cv-edge hl" opacity="0.53"/><line x1="608" y1="228" x2="605" y2="296" class="cv-edge" opacity="0.55"/><line x1="608" y1="228" x2="564" y2="273" class="cv-edge" opacity="0.58"/><line x1="605" y1="296" x2="564" y2="273" class="cv-edge" opacity="0.69"/><line x1="605" y1="296" x2="754" y2="309" class="cv-edge" opacity="0.00"/><line x1="754" y1="309" x2="800" y2="195" class="cv-edge hl" opacity="0.18"/><line x1="800" y1="195" x2="887" y2="113" class="cv-edge hl" opacity="0.20"/><line x1="800" y1="195" x2="821" y2="86" class="cv-edge hl" opacity="0.26"/><line x1="800" y1="195" x2="830" y2="60" class="cv-edge hl" opacity="0.08"/><line x1="800" y1="195" x2="936" y2="210" class="cv-edge hl" opacity="0.08"/><line x1="968" y1="80" x2="887" y2="113" class="cv-edge hl" opacity="0.41"/><line x1="968" y1="80" x2="821" y2="86" class="cv-edge hl" opacity="0.02"/><line x1="968" y1="80" x2="1039" y2="148" class="cv-edge hl" opacity="0.34"/><line x1="968" y1="80" x2="830" y2="60" class="cv-edge hl" opacity="0.07"/><line x1="968" y1="80" x2="936" y2="210" class="cv-edge hl" opacity="0.11"/><line x1="887" y1="113" x2="821" y2="86" class="cv-edge" opacity="0.53"/><line x1="887" y1="113" x2="830" y2="60" class="cv-edge hl" opacity="0.48"/><line x1="887" y1="113" x2="936" y2="210" class="cv-edge" opacity="0.28"/><line x1="821" y1="86" x2="830" y2="60" class="cv-edge hl" opacity="0.82"/><line x1="1039" y1="148" x2="936" y2="210" class="cv-edge" opacity="0.20"/><circle cx="745" cy="229" r="3" class="cv-dot"/><circle cx="530" cy="368" r="3" class="cv-dot"/><circle cx="651" cy="266" r="3" class="cv-dot"/><circle cx="736" cy="73" r="3" class="cv-dot"/><circle cx="1049" cy="299" r="6" class="cv-dot hl"/><circle cx="580" cy="375" r="3" class="cv-dot"/><circle cx="873" cy="89" r="3" class="cv-dot"/><circle cx="916" cy="313" r="3" class="cv-dot"/><circle cx="975" cy="116" r="3" class="cv-dot"/><circle cx="677" cy="368" r="3" class="cv-dot"/><circle cx="928" cy="139" r="3" class="cv-dot"/><circle cx="716" cy="300" r="3" class="cv-dot"/><circle cx="947" cy="279" r="6" class="cv-dot hl"/><circle cx="608" cy="228" r="3" class="cv-dot"/><circle cx="605" cy="296" r="3" class="cv-dot"/><circle cx="564" cy="273" r="3" class="cv-dot"/><circle cx="754" cy="309" r="3" class="cv-dot"/><circle cx="800" cy="195" r="6" class="cv-dot hl"/><circle cx="968" cy="80" r="6" class="cv-dot hl"/><circle cx="887" cy="113" r="3" class="cv-dot"/><circle cx="821" cy="86" r="3" class="cv-dot"/><circle cx="1039" cy="148" r="3" class="cv-dot"/><circle cx="526" cy="90" r="3" class="cv-dot"/><circle cx="830" cy="60" r="6" class="cv-dot hl"/><circle cx="936" cy="210" r="3" class="cv-dot"/><circle cx="1112" cy="329" r="3" class="cv-dot"/><text x="60" y="90" class="cv-k">ESSAY · DATA PLATFORMS · AI</text><text x="60" y="350" class="cv-n">26 Oct 2026 · 04:15 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <p>Every data team has seen the demo: a business user types "what was revenue by region last quarter?" and the model writes perfect SQL. Then the same tool meets the real warehouse, with three tables that could be "revenue", a region column that changed meaning in 2023, and a fiscal calendar nobody wrote down. The answers come back quickly, confidently and wrong.</p>
+
+<section class="block">
+<h2 id="what-the-research-shows">What the research shows</h2>
+<p>Spider 2.0, presented at ICLR 2025, was built from real enterprise workflows: 632 problems over databases often with more than a thousand columns, in systems such as BigQuery and Snowflake. The authors reported that a strong reasoning model using a code agent framework solved 21.3% of tasks, compared with 91.2% on the earlier Spider 1.0 benchmark and 73.0% on BIRD<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<p>The gap isn't mainly about SQL syntax. It is about knowing which tables matter, what columns mean, how entities join, and which business rules apply. That knowledge rarely lives in the schema.</p>
+<div class="callout"><p>Text-to-SQL fails on meaning, not grammar. A bigger model writes more fluent wrong queries; a semantic layer gives it the right things to query.</p></div>
+</section>
+
+<section class="block">
+<h2 id="what-a-semantic-layer-gives-an-agent">What a semantic layer gives an agent</h2>
+<p>A semantic layer defines business concepts, such as metrics, dimensions, entities and their relationships, once, in governed code, and exposes them to every tool. For an AI agent, that changes the task from "write SQL against 1,500 columns" to "pick the governed metric 'net revenue', group by the dimension 'sales region', filter to last fiscal quarter". The layer generates the SQL.</p>
+<ul>
+<li><strong>Consistency.</strong> The agent's answer matches the dashboard, because both use the same definition.</li>
+<li><strong>Smaller search space.</strong> Choosing from a curated set of metrics is far easier than reasoning over raw tables.</li>
+<li><strong>Governance.</strong> Access control, row-level security and certified definitions apply to AI queries just as they do to BI.</li>
+<li><strong>Explainability.</strong> The agent can say which metric and filters it used, in business terms a user can check.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2 id="the-market-is-converging">The market is converging</h2>
+<p>In September 2025 Snowflake, Salesforce, dbt Labs and others announced the Open Semantic Interchange, an initiative for a vendor-neutral semantic model specification, explicitly framed around making data ready for AI<sup class="cite"><a href="#ref-3">3</a></sup>. In October 2025 dbt Labs moved MetricFlow, the engine behind its semantic layer, to the Apache 2.0 licence and said it would align it with that initiative<sup class="cite"><a href="#ref-4">4</a></sup><sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<p>Whatever tools you choose, the direction is clear: business definitions are becoming portable, open artefacts that AI and BI share, rather than logic buried in each dashboard.</p>
+</section>
+
+<section class="block">
+<h2 id="semantic-layer-ontology-or-both">Semantic layer, ontology or both?</h2>
+<p>A semantic layer is optimised for metrics: numbers aggregated over dimensions. An ontology describes entities and relationships more broadly, as I set out in <a href="/insights/ontology-vs-knowledge-graph-vs-semantic-layer/">ontology vs knowledge graph vs semantic layer</a>. For "how much" questions, the semantic layer is the right tool. For "which suppliers are connected to this incident", a knowledge graph answers better. Mature data platforms give agents both, with clear guidance on which to use.</p>
+</section>
+
+<section class="block">
+<h2 id="how-i-design-data-access-for-ai-agents">How I design data access for AI agents</h2>
+<ol>
+<li><strong>Start with the twenty questions people actually ask</strong>, and define the metrics and dimensions they need in the semantic layer first.</li>
+<li><strong>Expose governed tools, not a SQL console.</strong> Agents call "query metric" and "list dimensions" tools, for example through MCP servers built with the controls in <a href="/insights/securing-mcp-servers-checklist/">securing MCP servers</a>.</li>
+<li><strong>Return the definition with the answer</strong>, so users see which metric, filters and time range were used.</li>
+<li><strong>Fall back honestly.</strong> If a question can't be answered from governed definitions, say so and route it to an analyst, rather than improvising SQL.</li>
+<li><strong>Evaluate with real questions</strong> and known answers, as in <a href="/insights/llm-evaluation-sets-that-predict-production/">evaluation sets that predict production</a>, and track accuracy by question type.</li>
+<li><strong>Keep definitions under contract</strong>, with the change discipline in <a href="/insights/data-contracts-playbook/">data contracts</a>, so a schema change can't silently break what agents report.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2 id="how-i-can-help">How I can help</h2>
+<p>I design data platforms where AI agents and BI share governed definitions, from semantic layers and ontologies to the tools agents call. See <a href="/ontology-knowledge-graph/">ontology and knowledge graphs</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://arxiv.org/abs/2411.07763" target="_blank" rel="noopener">Spider 2.0: Evaluating Language Models on Real-World Enterprise Text-to-SQL Workflows</a><small>Lei et al. (arXiv; ICLR 2025) · 2024</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://mlanthology.org/iclr/2025/lei2025iclr-spider" target="_blank" rel="noopener">Spider 2.0 (ICLR 2025)</a><small>ML Anthology</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://thenewstack.io/snowflake-salesforce-launch-new-standard-to-unify-data-for-ai/" target="_blank" rel="noopener">Snowflake, Salesforce launch new standard to unify data for AI</a><small>The New Stack · Sep 2025</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://www.getdbt.com/blog/open-source-metricflow-governed-metrics" target="_blank" rel="noopener">Open source MetricFlow: governed metrics</a><small>dbt Labs · Oct 2025</small></div></li><li id="ref-5"><span class="rn">5</span><div><a href="https://docs.getdbt.com/docs/build/about-metricflow" target="_blank" rel="noopener">About MetricFlow</a><small>dbt documentation</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Ftext-to-sql-semantic-layer%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Ftext-to-sql-semantic-layer%2F&amp;text=Text-to-SQL%20agents%20need%20a%20semantic%20layer%2C%20not%20just%20a%20bigger%20model" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=Text-to-SQL%20agents%20need%20a%20semantic%20layer%2C%20not%20just%20a%20bigger%20model%20https%3A%2F%2Fasksumanta.com%2Finsights%2Ftext-to-sql-semantic-layer%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://asksumanta.com/insights/text-to-sql-semantic-layer/">Copy link</button></div>
+      <div class="pnav"><a class="pn prev" href="/insights/mcp-extensions-enterprise-strategy/"><small>← Previous</small><b>MCP extensions: how to adopt them without fragmenting your agent platform</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#what-the-research-shows">What the research shows</a></li><li><a href="#what-a-semantic-layer-gives-an-agent">What a semantic layer gives an agent</a></li><li><a href="#the-market-is-converging">The market is converging</a></li><li><a href="#semantic-layer-ontology-or-both">Semantic layer, ontology or both?</a></li><li><a href="#how-i-design-data-access-for-ai-agents">How I design data access for AI agents</a></li><li><a href="#how-i-can-help">How I can help</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>How good are LLMs at text-to-SQL on real enterprise data?</summary><p>Much worse than on academic benchmarks. The Spider 2.0 benchmark, built from real enterprise workflows with very large schemas, reported that a strong reasoning model with an agent framework solved around a fifth of tasks, compared with over 90% on the earlier Spider 1.0 benchmark.</p></details><details class="rise"><summary>What is a semantic layer?</summary><p>A governed layer of business definitions, such as metrics, dimensions and relationships, that sits between raw tables and the tools that query them, so that &#x27;revenue&#x27; or &#x27;active customer&#x27; means the same thing everywhere.</p></details><details class="rise"><summary>Should AI agents query raw tables at all?</summary><p>For most business questions, no. Agents are more reliable when they query governed metrics and entities through a semantic layer, with raw-table SQL reserved for analysts or carefully scoped exploration.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/ontology-knowledge-graph/"><small>Service</small><b>Ontology &amp; knowledge graphs</b><span>I help organisations agree what their data means, write it down as an ontology and put it to work in a knowledge graph that analytics, APIs and AI agents can all rely on.</span><i>→</i></a><a class="rcard rise" href="/ai-architect/"><small>Service</small><b>AI &amp; LLM architecture</b><span>I design and build AI systems that leadership can trust: grounded in your data, measured by evaluations, governed by your rules and priced so they make sense at scale.</span><i>→</i></a><a class="rcard rise" href="/fractional-cto/"><small>Service</small><b>Fractional CTO</b><span>I work as a part-time CTO for founders, CEOs and boards who need experienced technical judgement now, and a team that can carry it on after I step back.</span><i>→</i></a><a class="rcard rise" href="/insights/mcp-extensions-enterprise-strategy/"><small>Insight</small><b>MCP extensions: how to adopt them without fragmenting your agent platform</b><span>The Model Context Protocol keeps its core small and grows through extensions: interactive apps, enterprise authorisation, and domain conventions. That&#x27;s good design. It also means every enterprise now needs a policy on which extensions to support.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: Text-to-SQL agents need a semantic layer, not just a bigger model">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
+        <p class="floc">United States &amp; UAE · working globally</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/uae/">Fractional CTO in the UAE</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/text-to-sql-semantic-layer/">Text-to-SQL agents need a semantic layer, not just a bigger model</a></li><li><a href="/insights/mcp-extensions-enterprise-strategy/">MCP extensions: how to adopt them without fragmenting your agent platform</a></li><li><a href="/insights/colorado-ai-act-2026-reset/">Colorado&#x27;s AI law reset: what changed in 2026, and what to build regardless</a></li><li><a href="/insights/opentelemetry-ebpf-instrumentation-obi/">Zero-code observability with OBI: where OpenTelemetry&#x27;s eBPF instrumentation fits</a></li><li><a href="/insights/clinical-prediction-models-omop/">Clinical prediction models on OMOP: how to build models that work beyond one hospital</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>

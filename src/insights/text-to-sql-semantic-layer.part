@@ -1,0 +1,48 @@
+<!--{"title": "Text-to-SQL agents need a semantic layer, not a bigger model", "description": "LLMs ace text-to-SQL demos and stumble on real enterprise schemas. What Spider 2.0 showed, why a governed semantic layer helps, and how I design data access for AI agents.", "h1": "Text-to-SQL agents need a semantic layer, not just a bigger model", "kicker": "Data platforms · AI", "lede": "'Ask your data anything' is one of the most requested AI features, and one of the most disappointing in production. The demo works on a tidy schema. The real warehouse has thousands of columns, conflicting definitions and tribal knowledge. Research and the market are converging on the same fix.", "date": "2026-10-26", "datetime": "2026-10-26T04:15:00+04:00", "readtime": "8 min read", "format": "essay", "tags": ["data", "ai", "ontology", "agents"], "keywords": ["text-to-SQL", "natural language to SQL", "semantic layer AI", "Spider 2.0", "metrics layer", "MetricFlow", "Open Semantic Interchange", "AI data agents", "enterprise analytics AI", "data platform consultant"], "faq": [["How good are LLMs at text-to-SQL on real enterprise data?", "Much worse than on academic benchmarks. The Spider 2.0 benchmark, built from real enterprise workflows with very large schemas, reported that a strong reasoning model with an agent framework solved around a fifth of tasks, compared with over 90% on the earlier Spider 1.0 benchmark."], ["What is a semantic layer?", "A governed layer of business definitions, such as metrics, dimensions and relationships, that sits between raw tables and the tools that query them, so that 'revenue' or 'active customer' means the same thing everywhere."], ["Should AI agents query raw tables at all?", "For most business questions, no. Agents are more reliable when they query governed metrics and entities through a semantic layer, with raw-table SQL reserved for analysts or carefully scoped exploration."]], "related": ["/ontology-knowledge-graph/", "/ai-architect/", "/fractional-cto/"], "citations": [{"title": "Spider 2.0: Evaluating Language Models on Real-World Enterprise Text-to-SQL Workflows", "url": "https://arxiv.org/abs/2411.07763", "publisher": "Lei et al. (arXiv; ICLR 2025)", "date": "2024"}, {"title": "Spider 2.0 (ICLR 2025)", "url": "https://mlanthology.org/iclr/2025/lei2025iclr-spider", "publisher": "ML Anthology"}, {"title": "Snowflake, Salesforce launch new standard to unify data for AI", "url": "https://thenewstack.io/snowflake-salesforce-launch-new-standard-to-unify-data-for-ai/", "publisher": "The New Stack", "date": "Sep 2025"}, {"title": "Open source MetricFlow: governed metrics", "url": "https://www.getdbt.com/blog/open-source-metricflow-governed-metrics", "publisher": "dbt Labs", "date": "Oct 2025"}, {"title": "About MetricFlow", "url": "https://docs.getdbt.com/docs/build/about-metricflow", "publisher": "dbt documentation"}]}-->
+<p>Every data team has seen the demo: a business user types "what was revenue by region last quarter?" and the model writes perfect SQL. Then the same tool meets the real warehouse, with three tables that could be "revenue", a region column that changed meaning in 2023, and a fiscal calendar nobody wrote down. The answers come back quickly, confidently and wrong.</p>
+
+<section class="block">
+<h2>What the research shows</h2>
+<p>Spider 2.0, presented at ICLR 2025, was built from real enterprise workflows: 632 problems over databases often with more than a thousand columns, in systems such as BigQuery and Snowflake. The authors reported that a strong reasoning model using a code agent framework solved 21.3% of tasks, compared with 91.2% on the earlier Spider 1.0 benchmark and 73.0% on BIRD<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<p>The gap isn't mainly about SQL syntax. It is about knowing which tables matter, what columns mean, how entities join, and which business rules apply. That knowledge rarely lives in the schema.</p>
+<div class="callout"><p>Text-to-SQL fails on meaning, not grammar. A bigger model writes more fluent wrong queries; a semantic layer gives it the right things to query.</p></div>
+</section>
+
+<section class="block">
+<h2>What a semantic layer gives an agent</h2>
+<p>A semantic layer defines business concepts, such as metrics, dimensions, entities and their relationships, once, in governed code, and exposes them to every tool. For an AI agent, that changes the task from "write SQL against 1,500 columns" to "pick the governed metric 'net revenue', group by the dimension 'sales region', filter to last fiscal quarter". The layer generates the SQL.</p>
+<ul>
+<li><strong>Consistency.</strong> The agent's answer matches the dashboard, because both use the same definition.</li>
+<li><strong>Smaller search space.</strong> Choosing from a curated set of metrics is far easier than reasoning over raw tables.</li>
+<li><strong>Governance.</strong> Access control, row-level security and certified definitions apply to AI queries just as they do to BI.</li>
+<li><strong>Explainability.</strong> The agent can say which metric and filters it used, in business terms a user can check.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>The market is converging</h2>
+<p>In September 2025 Snowflake, Salesforce, dbt Labs and others announced the Open Semantic Interchange, an initiative for a vendor-neutral semantic model specification, explicitly framed around making data ready for AI<sup class="cite"><a href="#ref-3">3</a></sup>. In October 2025 dbt Labs moved MetricFlow, the engine behind its semantic layer, to the Apache 2.0 licence and said it would align it with that initiative<sup class="cite"><a href="#ref-4">4</a></sup><sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<p>Whatever tools you choose, the direction is clear: business definitions are becoming portable, open artefacts that AI and BI share, rather than logic buried in each dashboard.</p>
+</section>
+
+<section class="block">
+<h2>Semantic layer, ontology or both?</h2>
+<p>A semantic layer is optimised for metrics: numbers aggregated over dimensions. An ontology describes entities and relationships more broadly, as I set out in <a href="/insights/ontology-vs-knowledge-graph-vs-semantic-layer/">ontology vs knowledge graph vs semantic layer</a>. For "how much" questions, the semantic layer is the right tool. For "which suppliers are connected to this incident", a knowledge graph answers better. Mature data platforms give agents both, with clear guidance on which to use.</p>
+</section>
+
+<section class="block">
+<h2>How I design data access for AI agents</h2>
+<ol>
+<li><strong>Start with the twenty questions people actually ask</strong>, and define the metrics and dimensions they need in the semantic layer first.</li>
+<li><strong>Expose governed tools, not a SQL console.</strong> Agents call "query metric" and "list dimensions" tools, for example through MCP servers built with the controls in <a href="/insights/securing-mcp-servers-checklist/">securing MCP servers</a>.</li>
+<li><strong>Return the definition with the answer</strong>, so users see which metric, filters and time range were used.</li>
+<li><strong>Fall back honestly.</strong> If a question can't be answered from governed definitions, say so and route it to an analyst, rather than improvising SQL.</li>
+<li><strong>Evaluate with real questions</strong> and known answers, as in <a href="/insights/llm-evaluation-sets-that-predict-production/">evaluation sets that predict production</a>, and track accuracy by question type.</li>
+<li><strong>Keep definitions under contract</strong>, with the change discipline in <a href="/insights/data-contracts-playbook/">data contracts</a>, so a schema change can't silently break what agents report.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I design data platforms where AI agents and BI share governed definitions, from semantic layers and ontologies to the tools agents call. See <a href="/ontology-knowledge-graph/">ontology and knowledge graphs</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
