@@ -1,0 +1,60 @@
+<!--{"title": "SKOS or OWL? Choosing the right model for enterprise taxonomies", "description": "SKOS and OWL are both W3C standards for knowledge models, and they solve different problems. When to use each, how to combine them, and the most common enterprise mistake.", "h1": "SKOS or OWL? Choosing the right model for enterprise taxonomies and ontologies", "kicker": "Ontology · Knowledge graphs", "lede": "Enterprise ontology programmes often stall on a modelling question disguised as a tooling one: should the product taxonomy, the risk register or the clinical code list be an OWL ontology or a SKOS vocabulary? The answer is usually both, for different jobs.", "date": "2026-10-26", "datetime": "2026-10-26T16:30:00+04:00", "readtime": "8 min read", "format": "comparison", "tags": ["ontology", "knowledge-graph", "data", "architecture"], "keywords": ["SKOS vs OWL", "SKOS taxonomy", "OWL 2 ontology", "enterprise taxonomy", "controlled vocabulary", "thesaurus management", "OWL 2 profiles", "knowledge organisation system", "semantic modelling", "ontology consultant"], "faq": [["What is the difference between SKOS and OWL?", "SKOS is a W3C model for sharing taxonomies, thesauri and classification schemes as concepts linked by broader, narrower and related relations, with labels. OWL is a W3C ontology language for defining classes, properties and logical constraints that a reasoner can use to infer new facts. SKOS describes how people organise and label ideas; OWL describes what things are, formally."], ["Is skos:broader the same as rdfs:subClassOf?", "No. skos:broader links concepts in a hierarchy for navigation and retrieval, and is not even declared transitive; skos:broaderTransitive exists for inference. rdfs:subClassOf is a logical subsumption between classes: every instance of the subclass is an instance of the superclass. Treating one as the other causes incorrect inferences."], ["Can SKOS and OWL be used together?", "Yes, and that is common. The SKOS designers described it as complementary to OWL. A typical pattern uses OWL for the core domain model and SKOS for the vocabularies that classify and label instances, linked by properties in the ontology."]], "related": ["/ontology-knowledge-graph/", "/ai-architect/", "/fractional-cto/"], "citations": [{"title": "SKOS Simple Knowledge Organization System Reference", "url": "https://www.w3.org/TR/skos-reference/", "publisher": "W3C Recommendation", "date": "18 Aug 2009"}, {"title": "SKOS Simple Knowledge Organization System Primer", "url": "https://www.w3.org/TR/skos-primer/", "publisher": "W3C"}, {"title": "OWL 2 Web Ontology Language Profiles (Second Edition)", "url": "https://www.w3.org/TR/owl2-profiles/", "publisher": "W3C Recommendation", "date": "11 Dec 2012"}, {"title": "OWL 2 profiles (working group wiki)", "url": "https://www.w3.org/2007/OWL/wiki/Profiles", "publisher": "W3C OWL Working Group"}, {"title": "Post on SKOS and its relationship to OWL", "url": "https://lists.w3.org/Archives/Public/public-esw-thes/2004Mar/0012.html", "publisher": "W3C public-esw-thes mailing list (A. Miles)", "date": "Mar 2004"}]}-->
+<p>Every organisation already has knowledge models. They're in spreadsheets of product categories, SharePoint term stores, code lists in the data warehouse and the folder structure of the document system. When an ontology or knowledge graph programme starts, one of the first decisions is how to represent these formally. Two W3C standards dominate the conversation, and choosing the wrong one for a given job is a common reason programmes lose a year.</p>
+
+<section class="block">
+<h2>Two standards, two purposes</h2>
+<p><strong>SKOS</strong>, the Simple Knowledge Organization System, became a W3C Recommendation in 2009. It is a common data model for sharing and linking knowledge organisation systems, such as thesauri, taxonomies and classification schemes, on the web<sup class="cite"><a href="#ref-1">1</a></sup>. Its world is concepts, labels and loose relations between them.</p>
+<p><strong>OWL 2</strong>, the Web Ontology Language, defines classes, properties and logical axioms that reasoners can use to infer new facts and detect contradictions. Its profiles, finalised in their second edition in 2012, trade expressiveness for tractable reasoning<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+<p>The SKOS designers were explicit that SKOS was not meant to compete with OWL but to complement it, offering a path to bring existing knowledge that doesn't map easily into an OWL ontology onto the semantic web<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+</section>
+
+<section class="block">
+<h2>Side by side</h2>
+<table class="tbl">
+<thead><tr><th></th><th>SKOS</th><th>OWL 2</th></tr></thead>
+<tbody>
+<tr><td>Core unit</td><td>Concept with labels</td><td>Class, property, individual</td></tr>
+<tr><td>Hierarchy</td><td><code>skos:broader</code>: "is filed under", for navigation and retrieval</td><td><code>rdfs:subClassOf</code>: "every X is a Y", logical subsumption</td></tr>
+<tr><td>Labels</td><td>First-class: preferred, alternative and hidden labels, with at most one preferred label per language<sup class="cite"><a href="#ref-1">1</a></sup></td><td>Annotations, not part of the logic</td></tr>
+<tr><td>Reasoning</td><td>Light; little to infer</td><td>Rich, with profiles tuned for scale<sup class="cite"><a href="#ref-3">3</a></sup></td></tr>
+<tr><td>Cross-scheme links</td><td>Mapping properties such as exact, close and broader matches<sup class="cite"><a href="#ref-1">1</a></sup></td><td>Equivalence and subclass axioms with logical consequences</td></tr>
+<tr><td>Who maintains it</td><td>Taxonomists, subject experts, business owners</td><td>Ontologists and data architects</td></tr>
+<tr><td>Best for</td><td>Product categories, subject tags, code lists, synonyms for search</td><td>Domain models, constraints, integration semantics</td></tr>
+</tbody>
+</table>
+</section>
+
+<section class="block">
+<h2>The mistake that matters most</h2>
+<p>The most expensive error is treating a taxonomy hierarchy as a class hierarchy. In a product catalogue, "Garden furniture" sits under "Outdoor" and also under "Furniture". That is a filing decision, not a claim that every garden chair is, logically, an instance of "Outdoor".</p>
+<p>SKOS is careful here. <code>skos:broader</code> is used only for direct hierarchical links and is not declared transitive; <code>skos:broaderTransitive</code> is a separate superproperty for inferring indirect links<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. Converting the same hierarchy into <code>rdfs:subClassOf</code> makes every relation logically binding, and a reasoner will happily draw conclusions nobody intended.</p>
+<div class="callout"><p>If the business owner would say "it's filed under", use SKOS. If they would say "it is always a kind of", consider OWL. Most enterprise hierarchies are the first.</p></div>
+</section>
+
+<section class="block">
+<h2>Choosing OWL profiles when you do need logic</h2>
+<p>Where OWL is the right tool, its profiles help match reasoning to scale<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>:</p>
+<ul>
+<li><strong>OWL 2 EL</strong> suits ontologies with very large numbers of classes and properties, with polynomial-time reasoning for core tasks. Large biomedical terminologies are the classic fit.</li>
+<li><strong>OWL 2 QL</strong> targets large volumes of instance data queried through relational databases, which suits virtual knowledge graphs over existing warehouses.</li>
+<li><strong>OWL 2 RL</strong> supports rule-based reasoning that works directly on RDF triples, practical inside many triple stores.</li>
+</ul>
+<p>Choosing a profile early prevents a common failure: a model that is logically elegant and unusable at production volume.</p>
+</section>
+
+<section class="block">
+<h2>The combined pattern I use</h2>
+<ol>
+<li><strong>A small OWL core</strong> for the domain: customer, product, contract, patient, asset, and the relations between them. Keep it in a tractable profile.</li>
+<li><strong>SKOS vocabularies for classification</strong>: product categories, risk types, diagnosis groupings, document subjects. Instances in the core point to concepts through ordinary properties, such as "has category".</li>
+<li><strong>Mappings between vocabularies</strong> using SKOS mapping properties, so a local code list can align with an industry standard without pretending they are identical.</li>
+<li><strong>SHACL for data quality</strong>, as described in <a href="/insights/shacl-validation-knowledge-graphs/">SHACL validation</a>, because closed-world checks belong outside the open-world logic of OWL.</li>
+<li><strong>Labels feed search and AI.</strong> SKOS alternative and hidden labels give retrieval and <a href="/insights/graphrag-when-it-beats-vector-rag/">GraphRAG</a> the synonyms and misspellings users actually type.</li>
+</ol>
+<p>This also clarifies ownership. Business teams can maintain vocabularies in a taxonomy tool without touching the ontology, while architects govern the core. How these pieces relate to a semantic layer is covered in <a href="/insights/ontology-vs-knowledge-graph-vs-semantic-layer/">ontology vs knowledge graph vs semantic layer</a>, and how clinical vocabularies are handled in practice in <a href="/insights/clinical-terminologies-omop-vocabularies/">clinical terminologies in OMOP</a>.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I design ontology and knowledge graph programmes that start with the models an organisation already has, and choose the lightest formalism that does the job. See <a href="/ontology-knowledge-graph/">ontology and knowledge graphs</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
