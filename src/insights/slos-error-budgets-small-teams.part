@@ -1,0 +1,61 @@
+<!--{"title": "SLOs and error budgets for small teams: a CTO's field notes", "description": "SLOs and error budgets aren't just for Google-scale teams. How a small engineering team can choose SLOs, write an error budget policy, alert on burn rate and use it to settle priorities.", "h1": "SLOs and error budgets for small teams: field notes on making reliability a decision, not a debate", "kicker": "Leadership · Reliability", "lede": "In a small company, the argument between shipping features and fixing reliability usually gets settled by whoever is loudest that week. Service level objectives and error budgets turn it into a rule everyone agreed in advance. The Google SRE material is written for large organisations, but the core ideas scale down well.", "date": "2026-10-27", "datetime": "2026-10-27T20:15:00+04:00", "readtime": "8 min read", "format": "field-note", "tags": ["leadership", "platform", "observability"], "keywords": ["SLO", "error budget", "error budget policy", "service level objective", "burn rate alerting", "SRE for startups", "reliability engineering", "fractional CTO", "on-call", "engineering leadership"], "faq": [["What is an error budget?", "The amount of unreliability a service is allowed over a period, defined as 100% minus the SLO target. A 99.9% availability SLO over four weeks allows 0.1% of requests, or equivalent time, to fail before the budget is exhausted."], ["What goes in an error budget policy?", "Google's SRE Workbook says it should cover the actions taken when the budget is exhausted and an escalation path for disagreements. Its example policy halts changes other than urgent fixes and security fixes until the service is back within its SLO, and requires a postmortem when a single incident consumes more than 20% of the four-week budget."], ["How should you alert on SLOs?", "Alert on how quickly the error budget is being consumed, the burn rate, rather than on individual errors or raw thresholds. The SRE Workbook recommends combining multiple windows and burn rates so that fast, severe problems page someone and slow leaks create tickets."]], "related": ["/fractional-cto/", "/technical-due-diligence/", "/ai-architect/"], "citations": [{"title": "Implementing SLOs (The Site Reliability Workbook)", "url": "https://sre.google/workbook/implementing-slos/", "publisher": "Google SRE"}, {"title": "Example error budget policy (The Site Reliability Workbook)", "url": "https://sre.google/workbook/error-budget-policy/", "publisher": "Google SRE"}, {"title": "Alerting on SLOs (The Site Reliability Workbook)", "url": "https://sre.google/workbook/alerting-on-slos/", "publisher": "Google SRE"}, {"title": "Example SLO document (The Site Reliability Workbook)", "url": "https://sre.google/workbook/slo-document/", "publisher": "Google SRE"}, {"title": "Embracing risk (Site Reliability Engineering)", "url": "https://sre.google/sre-book/embracing-risk/", "publisher": "Google SRE"}]}-->
+<p>A familiar scene in a growing company: a bad week of incidents, a tense meeting, a decision to "focus on stability" for a sprint, and then feature pressure creeps back until the next bad week. Nobody is wrong. Product wants to ship, engineering wants to stop firefighting, and there is no shared definition of "reliable enough" to settle the question.</p>
+<p>Error budgets were designed for exactly this. The original Google SRE book frames reliability as a target to be chosen, not maximised, because every extra nine costs something<sup class="cite"><a href="#ref-5">5</a></sup>. Once the target is agreed, the gap between it and perfection is a budget the team is allowed to spend.</p>
+
+<section class="block">
+<h2>Start smaller than you think</h2>
+<p>Small teams fail at SLOs by trying to cover everything. Two or three objectives on the user journeys that matter most is enough to start:</p>
+<ul>
+<li><strong>Availability</strong> of the core API or page: the proportion of valid requests that succeed.</li>
+<li><strong>Latency</strong> for the same journey: the proportion of requests faster than a threshold users would notice.</li>
+<li><strong>Freshness or correctness</strong> for data products: the proportion of runs completed on time.</li>
+</ul>
+<p>Measure at the edge closest to users, such as the load balancer or gateway, and set the first targets from what you achieved over the last month. The Workbook recommends writing the SLOs down with owners, approvers and review dates, and its example document gives each objective its own budget of 100% minus the target<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+</section>
+
+<section class="block">
+<h2>Write the policy before you need it</h2>
+<p>The SLO is a number; the policy is what makes it matter. The Workbook says a policy should state the actions taken when the budget is exhausted and a clear escalation path for disagreements<sup class="cite"><a href="#ref-1">1</a></sup>. Its example policy is a useful template<sup class="cite"><a href="#ref-2">2</a></sup>:</p>
+<table class="tbl">
+<thead><tr><th>Trigger</th><th>Example action</th></tr></thead>
+<tbody>
+<tr><td>Budget exhausted over the preceding four weeks</td><td>Halt changes and releases other than P0 issues and security fixes until back within SLO</td></tr>
+<tr><td>A single incident consumes over 20% of the four-week budget</td><td>Postmortem with at least one P0 action item</td></tr>
+<tr><td>One class of outage consumes over 20% of the quarterly budget</td><td>A P0 item in next quarter's plan</td></tr>
+<tr><td>Budget spent by causes outside the team's control</td><td>Listed exceptions, such as company-wide network problems</td></tr>
+</tbody>
+</table>
+<p>For a small company, a softer version often works better: rather than halting all releases, the next sprint's capacity goes to reliability work until the budget recovers. What matters is that product and engineering leadership sign it together, before the next bad week.</p>
+<div class="callout"><p>The error budget's real value is political, not technical. It replaces an argument about feelings with a rule both sides agreed when they were calm.</p></div>
+</section>
+
+<section class="block">
+<h2>Alert on burn rate, not on errors</h2>
+<p>Paging on every error spike burns out small on-call rotations fast. The Workbook's guidance is to alert on how quickly the budget is being consumed, combining multiple time windows and burn rates so that fast, severe problems page someone while slow leaks become tickets<sup class="cite"><a href="#ref-3">3</a></sup>. With two or three SLOs, that typically means a handful of alerts in total, each of which genuinely matters.</p>
+<p>The telemetry comes from the same pipeline as everything else; the <a href="/insights/opentelemetry-collector-deployment-patterns/">OpenTelemetry Collector patterns</a> make it straightforward to compute SLIs centrally.</p>
+</section>
+
+<section class="block">
+<h2>What changes once it's running</h2>
+<ul>
+<li><strong>Prioritisation gets easier.</strong> Budget remaining means ship; budget gone means fix. The weekly debate shrinks to a glance at a dashboard.</li>
+<li><strong>Postmortems get sharper.</strong> Budget consumed per incident is a better severity measure than whoever shouted loudest, and pairs well with the practices in <a href="/insights/ai-incident-postmortems/">AI incident postmortems</a>.</li>
+<li><strong>Delivery metrics gain context.</strong> <a href="/insights/dora-metrics-ai-assisted-engineering/">DORA metrics</a> say how fast you ship; error budgets say whether the speed is affordable.</li>
+<li><strong>Customer conversations improve.</strong> An SLO you actually meet is a far better basis for an SLA than an aspiration.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>Mistakes to avoid</h2>
+<ol>
+<li><strong>Targets nobody would notice missing.</strong> If users wouldn't feel a breach, the SLO is measuring the wrong thing.</li>
+<li><strong>100% targets.</strong> They leave no budget, so every change becomes a violation<sup class="cite"><a href="#ref-5">5</a></sup>.</li>
+<li><strong>A policy without a signature from product.</strong> Then it is an engineering wish, not an agreement.</li>
+<li><strong>Never revisiting.</strong> Review targets quarterly, as the Workbook's document template expects<sup class="cite"><a href="#ref-4">4</a></sup>.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>As a <a href="/fractional-cto/">fractional CTO</a>, I set up SLOs, error budget policies and on-call practices that fit the size of the team, so reliability decisions stop depending on the week you're having. Or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
