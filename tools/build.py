@@ -238,7 +238,8 @@ def faq_ld(faq):
 
 
 FORMAT_LABELS = {"essay": "Essay", "explainer": "Explainer", "checklist": "Checklist", "field-note": "Field note",
-                 "comparison": "Comparison", "playbook": "Playbook", "news-analysis": "Analysis"}
+                 "comparison": "Comparison", "playbook": "Playbook", "news-analysis": "Analysis",
+                 "case-study": "Case study"}
 TZ_NAMES = {"+0400": "GST", "-0400": "EDT", "-0500": "EST", "+0000": "UTC"}
 
 
@@ -348,7 +349,30 @@ def post_card(p, tag="h2"):
             f'<span class="pmeta"><time datetime="{iso}">{e(human)}</time> · {e(p.get("readtime", ""))}</span></a>')
 
 
-def page(meta, kind, pages, posts, pages_by_slug):
+def case_card(c, tag="h2"):
+    stack = "".join(f'<span class="tag">{e(t)}</span>' for t in c.get("stack", [])[:5])
+    return (f'<a class="post cstudy rise" href="/case-studies/{c["slug"]}/" data-tags="{e(" ".join(c.get("tags", [])))}">'
+            f'<div class="pcover">{cover_svg(c, small=True)}</div>'
+            f'<small><b>Case study</b> · {e(c["sector"])}</small>'
+            f'<{tag}>{e(c["h1"])}</{tag}><p>{e(c["lede"])}</p>'
+            f'<span class="cs-stack">{stack}</span><i>Read the case study →</i></a>')
+
+
+def glance_html(meta):
+    cells = "".join(f'<div><small>{k}</small><b>{e(meta[f])}</b></div>'
+                    for k, f in (("Sector", "sector"), ("My role", "role"), ("Engagement", "engagement"),
+                                 ("Scope", "scope")) if meta.get(f))
+    stack = "".join(f'<span class="tag">{e(t)}</span>' for t in meta.get("stack", []))
+    outs = "".join(f"<li>{e(o)}</li>" for o in meta.get("outcomes", []))
+    return (f'<section class="glance rise" aria-label="At a glance"><div class="kicker">At a glance</div>'
+            f'<div class="glance-grid">{cells}</div>'
+            + (f'<div class="glance-out"><small>What changed</small><ul>{outs}</ul></div>' if outs else "")
+            + (f'<div class="cs-stack">{stack}</div>' if stack else "")
+            + '<p class="glance-note">Anonymised composite. Client names, identifying details and confidential figures '
+              'are withheld; public facts are cited in the references.</p></section>')
+
+
+def page(meta, kind, pages, posts, pages_by_slug, cases=()):
     slug = meta["slug"]
     if kind == "service":
         url = f"{SITE}/{slug}/"
@@ -358,6 +382,23 @@ def page(meta, kind, pages, posts, pages_by_slug):
                    "areaServed": ["United States", "United Arab Emirates", "Worldwide"]}
         og_type = "website"
         meta_line = ""
+    elif kind == "case":
+        url = f"{SITE}/case-studies/{slug}/"
+        crumb = [("Home", f"{SITE}/"), ("Case studies", f"{SITE}/case-studies/"), (meta["h1"], url)]
+        iso, human = when(meta)
+        main_ld = {"@type": "Article", "headline": meta["h1"], "description": meta["description"],
+                   "articleSection": "Case study", "about": meta.get("sector", ""),
+                   "datePublished": iso, "dateModified": meta.get("updated", iso),
+                   "citation": [{"@type": "CreativeWork", "name": c["title"], "url": c["url"]}
+                                for c in meta.get("citations", [])],
+                   "author": person_ref(), "publisher": person_ref(), "mainEntityOfPage": url,
+                   "image": f"{SITE}/assets/og/{slug}.png", "keywords": ", ".join(meta["keywords"]),
+                   "wordCount": words(meta["body"])}
+        og_type = "article"
+        tags = "".join(f'<span class="tagp">#{e(t)}</span>' for t in meta.get("tags", []))
+        meta_line = (f'<div class="ameta"><span class="fmt">Case study</span><span>{e(meta["sector"])}</span>'
+                     f'<span>{NAME}</span><time datetime="{iso}">{e(human)}</time><span>{e(meta.get("readtime", ""))}</span></div>'
+                     f'<div class="atags">{tags}</div>')
     else:
         url = f"{SITE}/insights/{slug}/"
         crumb = [("Home", f"{SITE}/"), ("Insights", f"{SITE}/insights/"), (meta["h1"], url)]
@@ -387,14 +428,17 @@ def page(meta, kind, pages, posts, pages_by_slug):
         (f'<a href="{u.replace(SITE, "") or "/"}">{e(n)}</a>' if i < len(crumb) - 1 else f"<em>{e(n)}</em>")
         for i, (n, u) in enumerate(crumb))
     subject = SERVICE_LABELS.get(slug, meta["h1"]) if kind == "service" else f"Re: {meta['h1']}"
-    if kind == "post":
+    if kind in ("post", "case"):
         body, toc = add_heading_ids(meta["body"])
-        idx = next((i for i, p in enumerate(posts) if p["slug"] == slug), 0)
-        nxt = posts[idx - 1] if idx > 0 else None
-        prv = posts[idx + 1] if idx + 1 < len(posts) else None
+        seq, base = (posts, "insights") if kind == "post" else (list(cases), "case-studies")
+        idx = next((i for i, p in enumerate(seq) if p["slug"] == slug), 0)
+        nxt = seq[idx - 1] if idx > 0 else None
+        prv = seq[idx + 1] if idx + 1 < len(seq) else None
         pn = "".join(
-            f'<a class="pn {c}" href="/insights/{p["slug"]}/"><small>{lab}</small><b>{e(p["h1"])}</b></a>'
+            f'<a class="pn {c}" href="/{base}/{p["slug"]}/"><small>{lab}</small><b>{e(p["h1"])}</b></a>'
             for p, lab, c in ((prv, "← Previous", "prev"), (nxt, "Next →", "next")) if p)
+        if kind == "case":
+            body = glance_html(meta) + body
         toc_html = "".join(f'<li><a href="#{i}">{e(t)}</a></li>' for i, t in toc)
         body_html = f"""<figure class="cover rise">{cover_svg(meta)}</figure>
   <div class="post-wrap">
@@ -410,7 +454,7 @@ def page(meta, kind, pages, posts, pages_by_slug):
     else:
         body_html = f'<article class="prose">\n    {meta["body"]}\n  </article>'
     return f"""{head(meta['title'], meta['description'], meta['keywords'], url, og, og_type, ld)}
-<body class="sub {'is-post' if kind == 'post' else 'is-service'}">
+<body class="sub {'is-post' if kind in ('post', 'case') else 'is-service'}{' is-case' if kind == 'case' else ''}">
 {nav()}
 
 <main class="wrap">
@@ -493,6 +537,40 @@ def insights_index(pages, posts):
 """
 
 
+def cases_index(pages, posts, cases):
+    url = f"{SITE}/case-studies/"
+    title = "Case studies: ontology, AI, healthcare data and scale"
+    desc = ("Anonymised case studies by Sumanta Mukhopadhyay: the problem, the architecture, the flow and the "
+            "decisions, across AI, ontology, healthcare data, data platforms and cloud.")
+    ld = {"@context": "https://schema.org", "@graph": [
+        {"@type": "CollectionPage", "name": "Case studies", "url": url, "author": person_ref(),
+         "hasPart": [{"@type": "Article", "headline": c["h1"], "url": f"{SITE}/case-studies/{c['slug']}/",
+                      "datePublished": when(c)[0]} for c in cases]},
+        crumbs([("Home", f"{SITE}/"), ("Case studies", url)])]}
+    cards = "".join(case_card(c) for c in cases)
+    kw = sorted({k for c in cases for k in c["keywords"]})[:30]
+    return f"""{head(title + ' | Sumanta', desc, kw, url, f'{SITE}/assets/og/case-studies.png', 'website', ld)}
+<body class="sub">
+{nav()}
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <em>Case studies</em></div>
+    <div class="kicker">Case studies</div>
+    <h1>The problem, the architecture, the flow, and the decisions behind it.</h1>
+    <p class="sub-lede">Anonymised, composite case studies from the kinds of engagements I lead. No logos, no confidential numbers: just how the system was designed and why.</p>
+  </header>
+  <div class="posts">{cards}</div>
+  {cta_html('Re: Case studies')}
+</main>
+{modal()}
+{footer(pages, posts)}
+{SCRIPTS}
+</body>
+</html>
+"""
+
+
 def not_found(pages, posts):
     ld = {"@context": "https://schema.org", "@type": "WebPage", "name": "Page not found"}
     links = "".join(f'<a class="svc" href="/{p["slug"]}/"><b>{e(SERVICE_LABELS.get(p["slug"], p["h1"]))}</b><i>→</i></a>'
@@ -522,7 +600,7 @@ def not_found(pages, posts):
 """
 
 
-def update_home(pages, posts):
+def update_home(pages, posts, cases=()):
     p = ROOT / "index.html"
     s = p.read_text()
     cards = "".join(post_card(q, "h3") for q in posts[:4])
@@ -531,6 +609,11 @@ def update_home(pages, posts):
         for q in pages)
     blocks = {"INSIGHTS": f'<div class="posts">{cards}</div>', "SERVICES": f'<div class="svcs">{svc}</div>',
               "FOOTER": footer(pages, posts)}
+    if cases:
+        ccards = "".join(case_card(c, "h3") for c in list(cases)[:4])
+        blocks["CASES"] = (f'<div class="cs-more"><div class="kicker">In depth</div>'
+                           f'<div class="posts">{ccards}</div>'
+                           f'<a class="lnk" href="/case-studies/">All case studies, with architecture and flow diagrams →</a></div>')
     for k, v in blocks.items():
         s, n = re.subn(rf"<!-- {k}:START -->.*?<!-- {k}:END -->", f"<!-- {k}:START -->\n{v}\n<!-- {k}:END -->", s,
                        flags=re.S)
@@ -557,12 +640,24 @@ def main():
         out.write_text(page(m, "post", pages, posts, by_slug))
     (ROOT / "insights").mkdir(exist_ok=True)
     (ROOT / "insights/index.html").write_text(insights_index(pages, posts))
-    update_home(pages, posts)
+    cases = [load(f) for f in sorted((ROOT / "src/case-studies").glob("*.part"))]
+    cases.sort(key=sort_key, reverse=True)
+    for m in cases:
+        m.setdefault("format", "case-study")
+    for m in cases:
+        out = ROOT / "case-studies" / m["slug"] / "index.html"
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(page(m, "case", pages, posts, by_slug, cases))
+    if cases:
+        (ROOT / "case-studies/index.html").write_text(cases_index(pages, posts, cases))
+    update_home(pages, posts, cases)
     (ROOT / "404.html").write_text(not_found(pages, posts))
 
     urls = [("/", "1.0", "monthly"), ("/insights/", "0.8", "weekly")]
     urls += [(f"/{m['slug']}/", "0.9", "monthly") for m in pages]
     urls += [(f"/insights/{m['slug']}/", "0.7", "yearly") for m in posts]
+    if cases:
+        urls += [("/case-studies/", "0.8", "weekly")] + [(f"/case-studies/{m['slug']}/", "0.8", "yearly") for m in cases]
     sm = "".join(f"  <url><loc>{SITE}{u}</loc><lastmod>{TODAY}</lastmod><changefreq>{c}</changefreq>"
                  f"<priority>{pr}</priority></url>\n" for u, pr, c in urls)
     (ROOT / "sitemap.xml").write_text(
@@ -577,12 +672,15 @@ def main():
     llms += [f"- [{SERVICE_LABELS.get(m['slug'], m['h1'])}]({SITE}/{m['slug']}/): {m['description']}" for m in pages]
     llms += ["", "## Insights"]
     llms += [f"- [{m['h1']}]({SITE}/insights/{m['slug']}/): {m['description']}" for m in posts]
+    if cases:
+        llms += ["", "## Case studies"]
+        llms += [f"- [{m['h1']}]({SITE}/case-studies/{m['slug']}/): {m['description']}" for m in cases]
     llms += ["", "## Profile", f"- [Home]({SITE}/): case studies, capabilities, playbook, FAQ",
              "- [GitHub](https://github.com/caeser1996)",
              "- [Publication, Science Immunology](https://doi.org/10.1126/sciimmunol.abl9165)", ""]
     (ROOT / "llms.txt").write_text("\n".join(llms))
 
-    for m in pages + posts:
+    for m in pages + posts + cases:
         print(f"{m['slug']:45} {words(m['body']):5} words  title {len(m['title'])}c  desc {len(m['description'])}c")
 
 

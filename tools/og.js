@@ -7,8 +7,9 @@ function meta(f) { const m = fs.readFileSync(f, 'utf8').match(/<!--\s*(\{[\s\S]*
 const items = [
   { slug: 'home', kicker: 'Fractional CTO · AI Architect · US & UAE', h1: 'From the ontology to the infrastructure it runs on.' },
   { slug: 'insights', kicker: 'Insights', h1: 'Notes on AI, ontology, healthcare data and technical leadership.' },
+  { slug: 'case-studies', kicker: 'Case studies', h1: 'The problem, the architecture, the flow and the decisions.' },
 ];
-for (const dir of ['src/pages', 'src/insights']) {
+for (const dir of ['src/pages', 'src/insights', 'src/case-studies']) {
   const d = path.join(ROOT, dir); if (!fs.existsSync(d)) continue;
   for (const f of fs.readdirSync(d).filter(f => f.endsWith('.part'))) {
     const m = meta(path.join(d, f)); items.push({ slug: f.replace('.part', ''), kicker: m.kicker, h1: m.h1 });

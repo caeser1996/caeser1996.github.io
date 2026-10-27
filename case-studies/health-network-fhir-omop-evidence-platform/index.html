@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Case study: a FHIR-to-OMOP evidence platform for a hospital network</title>
+<meta name="description" content="How a multi-hospital network turned EHR data into a governed OMOP research platform: FHIR ingestion, vocabulary mapping, data quality gates and federated studies." />
+<meta name="keywords" content="FHIR to OMOP case study, OMOP CDM implementation, real-world evidence platform, hospital data platform, OHDSI, clinical data warehouse, healthcare data architect, FHIR bulk data, data quality dashboard, federated research network" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://asksumanta.com/case-studies/health-network-fhir-omop-evidence-platform/" />
+<meta name="theme-color" content="#111214" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="Case study: a FHIR-to-OMOP evidence platform for a hospital network" />
+<meta property="og:description" content="How a multi-hospital network turned EHR data into a governed OMOP research platform: FHIR ingestion, vocabulary mapping, data quality gates and federated studies." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://asksumanta.com/case-studies/health-network-fhir-omop-evidence-platform/" />
+<meta property="og:image" content="https://asksumanta.com/assets/og/health-network-fhir-omop-evidence-platform.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Case study: a FHIR-to-OMOP evidence platform for a hospital network" />
+<meta name="twitter:description" content="How a multi-hospital network turned EHR data into a governed OMOP research platform: FHIR ingestion, vocabulary mapping, data quality gates and federated studies." />
+<meta name="twitter:image" content="https://asksumanta.com/assets/og/health-network-fhir-omop-evidence-platform.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "Article", "headline": "Turning a hospital network's EHR data into a governed real-world evidence platform", "description": "How a multi-hospital network turned EHR data into a governed OMOP research platform: FHIR ingestion, vocabulary mapping, data quality gates and federated studies.", "articleSection": "Case study", "about": "Healthcare · Hospital network", "datePublished": "2026-10-28T00:45:00+04:00", "dateModified": "2026-10-28T00:45:00+04:00", "citation": [{"@type": "CreativeWork", "name": "FHIR to OMOP FHIR IG", "url": "https://hl7.org/fhir/uv/omop/INFORMATIVE1/en/"}, {"@type": "CreativeWork", "name": "Bulk Data Access IG", "url": "https://hl7.org/fhir/uv/bulkdata/"}, {"@type": "CreativeWork", "name": "The Book of OHDSI", "url": "https://ohdsi.github.io/TheBookOfOhdsi/"}, {"@type": "CreativeWork", "name": "Data Quality Dashboard", "url": "https://ohdsi.github.io/DataQualityDashboard/"}, {"@type": "CreativeWork", "name": "Standardized vocabularies (The Book of OHDSI)", "url": "https://ohdsi.github.io/TheBookOfOhdsi/StandardizedVocabularies.html"}], "author": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "publisher": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "mainEntityOfPage": "https://asksumanta.com/case-studies/health-network-fhir-omop-evidence-platform/", "image": "https://asksumanta.com/assets/og/health-network-fhir-omop-evidence-platform.png", "keywords": "FHIR to OMOP case study, OMOP CDM implementation, real-world evidence platform, hospital data platform, OHDSI, clinical data warehouse, healthcare data architect, FHIR bulk data, data quality dashboard, federated research network", "wordCount": 964}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://asksumanta.com/"}, {"@type": "ListItem", "position": 2, "name": "Case studies", "item": "https://asksumanta.com/case-studies/"}, {"@type": "ListItem", "position": 3, "name": "Turning a hospital network's EHR data into a governed real-world evidence platform", "item": "https://asksumanta.com/case-studies/health-network-fhir-omop-evidence-platform/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Why convert FHIR data to OMOP?", "acceptedAnswer": {"@type": "Answer", "text": "FHIR is designed for exchanging data between systems; OMOP is designed for analysing it consistently across institutions. Converting FHIR to OMOP lets the same analysis code, cohort definitions and quality checks run at every site."}}, {"@type": "Question", "name": "How long does an OMOP implementation take?", "acceptedAnswer": {"@type": "Answer", "text": "It depends on the number of source systems, how well coded the data is, and governance. The vocabulary mapping and data quality work usually take longer than the pipeline engineering, so plan them as first-class workstreams."}}, {"@type": "Question", "name": "Do sites need to share patient data to collaborate?", "acceptedAnswer": {"@type": "Answer", "text": "No. In the OHDSI federated model, each site keeps its data and runs shared analysis code locally, sharing only aggregate results."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+</script>
+</head>
+<body class="sub is-post is-case">
+<div class="progress" id="progress"></div>
+<nav>
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="/#practice">Services</a>
+      <a href="/#work">Case studies</a>
+      <a href="/insights/">Insights</a>
+      <a href="/#assess">Analyse</a>
+      <a href="/#connect">Connect</a>
+    </div>
+    <div class="nav-r">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/case-studies/">Case studies</a> <span>/</span> <em>Turning a hospital network&#x27;s EHR data into a governed real-world evidence platform</em></div>
+    <div class="kicker">Case study · Healthcare data</div>
+    <h1>Turning a hospital network&#x27;s EHR data into a governed real-world evidence platform</h1>
+    <p class="sub-lede">Several hospitals, several EHR configurations, and a research team waiting months for every dataset. The goal was one standardised, quality-checked research platform on OMOP, fed from FHIR, that could answer questions locally and join federated studies without moving patient data.</p>
+    <div class="ameta"><span class="fmt">Case study</span><span>Healthcare · Hospital network</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-10-28T00:45:00+04:00">28 Oct 2026 · 00:45 GST</time><span>9 min read</span></div><div class="atags"><span class="tagp">#healthcare</span><span class="tagp">#omop</span><span class="tagp">#fhir</span><span class="tagp">#data</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Case study cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><line x1="604" y1="179" x2="719" y2="159" class="cv-edge hl" opacity="0.22"/><line x1="604" y1="179" x2="588" y2="41" class="cv-edge" opacity="0.08"/><line x1="604" y1="179" x2="600" y2="281" class="cv-edge" opacity="0.32"/><line x1="604" y1="179" x2="593" y2="200" class="cv-edge" opacity="0.84"/><line x1="604" y1="179" x2="563" y2="252" class="cv-edge" opacity="0.44"/><line x1="604" y1="179" x2="642" y2="233" class="cv-edge" opacity="0.56"/><line x1="604" y1="179" x2="631" y2="155" class="cv-edge hl" opacity="0.76"/><line x1="604" y1="179" x2="605" y2="59" class="cv-edge" opacity="0.21"/><line x1="538" y1="384" x2="600" y2="281" class="cv-edge hl" opacity="0.19"/><line x1="538" y1="384" x2="563" y2="252" class="cv-edge hl" opacity="0.10"/><line x1="538" y1="384" x2="586" y2="388" class="cv-edge hl" opacity="0.68"/><line x1="538" y1="384" x2="644" y2="370" class="cv-edge hl" opacity="0.28"/><line x1="538" y1="384" x2="530" y2="345" class="cv-edge hl" opacity="0.73"/><line x1="1145" y1="299" x2="1000" y2="297" class="cv-edge hl" opacity="0.03"/><line x1="1145" y1="299" x2="1123" y2="243" class="cv-edge hl" opacity="0.59"/><line x1="1145" y1="299" x2="1060" y2="272" class="cv-edge hl" opacity="0.41"/><line x1="774" y1="73" x2="719" y2="159" class="cv-edge hl" opacity="0.32"/><line x1="774" y1="73" x2="783" y2="64" class="cv-edge" opacity="0.91"/><line x1="970" y1="216" x2="1000" y2="297" class="cv-edge hl" opacity="0.43"/><line x1="970" y1="216" x2="949" y2="206" class="cv-edge hl" opacity="0.85"/><line x1="970" y1="216" x2="1060" y2="272" class="cv-edge hl" opacity="0.29"/><line x1="719" y1="159" x2="593" y2="200" class="cv-edge hl" opacity="0.11"/><line x1="719" y1="159" x2="642" y2="233" class="cv-edge hl" opacity="0.29"/><line x1="719" y1="159" x2="783" y2="64" class="cv-edge hl" opacity="0.24"/><line x1="719" y1="159" x2="631" y2="155" class="cv-edge hl" opacity="0.41"/><line x1="930" y1="50" x2="948" y2="36" class="cv-edge" opacity="0.85"/><line x1="930" y1="50" x2="783" y2="64" class="cv-edge" opacity="0.01"/><line x1="930" y1="50" x2="1042" y2="42" class="cv-edge hl" opacity="0.25"/><line x1="588" y1="41" x2="631" y2="155" class="cv-edge hl" opacity="0.19"/><line x1="588" y1="41" x2="605" y2="59" class="cv-edge" opacity="0.83"/><line x1="600" y1="281" x2="593" y2="200" class="cv-edge" opacity="0.46"/><line x1="600" y1="281" x2="563" y2="252" class="cv-edge" opacity="0.69"/><line x1="600" y1="281" x2="586" y2="388" class="cv-edge" opacity="0.28"/><line x1="600" y1="281" x2="642" y2="233" class="cv-edge" opacity="0.57"/><line x1="600" y1="281" x2="644" y2="370" class="cv-edge" opacity="0.34"/><line x1="600" y1="281" x2="530" y2="345" class="cv-edge" opacity="0.36"/><line x1="600" y1="281" x2="631" y2="155" class="cv-edge hl" opacity="0.13"/><line x1="600" y1="281" x2="713" y2="364" class="cv-edge" opacity="0.07"/><line x1="593" y1="200" x2="563" y2="252" class="cv-edge" opacity="0.60"/><line x1="593" y1="200" x2="642" y2="233" class="cv-edge" opacity="0.61"/><line x1="593" y1="200" x2="631" y2="155" class="cv-edge hl" opacity="0.61"/><line x1="593" y1="200" x2="605" y2="59" class="cv-edge" opacity="0.06"/><line x1="834" y1="308" x2="713" y2="364" class="cv-edge" opacity="0.11"/><line x1="948" y1="36" x2="1042" y2="42" class="cv-edge hl" opacity="0.37"/><line x1="563" y1="252" x2="586" y2="388" class="cv-edge" opacity="0.08"/><line x1="563" y1="252" x2="642" y2="233" class="cv-edge" opacity="0.46"/><line x1="563" y1="252" x2="644" y2="370" class="cv-edge" opacity="0.05"/><line x1="563" y1="252" x2="530" y2="345" class="cv-edge" opacity="0.34"/><line x1="563" y1="252" x2="631" y2="155" class="cv-edge hl" opacity="0.21"/><line x1="586" y1="388" x2="644" y2="370" class="cv-edge" opacity="0.59"/><line x1="586" y1="388" x2="530" y2="345" class="cv-edge" opacity="0.53"/><line x1="586" y1="388" x2="713" y2="364" class="cv-edge" opacity="0.14"/><line x1="642" y1="233" x2="644" y2="370" class="cv-edge" opacity="0.08"/><line x1="642" y1="233" x2="631" y2="155" class="cv-edge hl" opacity="0.47"/><line x1="642" y1="233" x2="713" y2="364" class="cv-edge" opacity="0.01"/><line x1="1000" y1="297" x2="1123" y2="243" class="cv-edge hl" opacity="0.10"/><line x1="1000" y1="297" x2="949" y2="206" class="cv-edge hl" opacity="0.31"/><line x1="1000" y1="297" x2="1060" y2="272" class="cv-edge hl" opacity="0.56"/><line x1="644" y1="370" x2="530" y2="345" class="cv-edge" opacity="0.22"/><line x1="644" y1="370" x2="713" y2="364" class="cv-edge" opacity="0.54"/><line x1="1123" y1="243" x2="1060" y2="272" class="cv-edge hl" opacity="0.54"/><line x1="631" y1="155" x2="605" y2="59" class="cv-edge hl" opacity="0.34"/><line x1="949" y1="206" x2="1060" y2="272" class="cv-edge hl" opacity="0.14"/><circle cx="604" cy="179" r="3" class="cv-dot"/><circle cx="538" cy="384" r="6" class="cv-dot hl"/><circle cx="1145" cy="299" r="3" class="cv-dot"/><circle cx="774" cy="73" r="3" class="cv-dot"/><circle cx="970" cy="216" r="3" class="cv-dot"/><circle cx="719" cy="159" r="6" class="cv-dot hl"/><circle cx="930" cy="50" r="3" class="cv-dot"/><circle cx="588" cy="41" r="3" class="cv-dot"/><circle cx="600" cy="281" r="3" class="cv-dot"/><circle cx="593" cy="200" r="3" class="cv-dot"/><circle cx="834" cy="308" r="3" class="cv-dot"/><circle cx="948" cy="36" r="3" class="cv-dot"/><circle cx="563" cy="252" r="3" class="cv-dot"/><circle cx="586" cy="388" r="3" class="cv-dot"/><circle cx="642" cy="233" r="3" class="cv-dot"/><circle cx="1000" cy="297" r="6" class="cv-dot hl"/><circle cx="644" cy="370" r="3" class="cv-dot"/><circle cx="1123" cy="243" r="6" class="cv-dot hl"/><circle cx="783" cy="64" r="3" class="cv-dot"/><circle cx="530" cy="345" r="3" class="cv-dot"/><circle cx="631" cy="155" r="6" class="cv-dot hl"/><circle cx="713" cy="364" r="3" class="cv-dot"/><circle cx="1042" cy="42" r="6" class="cv-dot hl"/><circle cx="605" cy="59" r="3" class="cv-dot"/><circle cx="949" cy="206" r="6" class="cv-dot hl"/><circle cx="1060" cy="272" r="6" class="cv-dot hl"/><text x="60" y="90" class="cv-k">CASE STUDY · CASE STUDY · HEALTHCARE DATA</text><text x="60" y="350" class="cv-n">28 Oct 2026 · 00:45 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <section class="glance rise" aria-label="At a glance"><div class="kicker">At a glance</div><div class="glance-grid"><div><small>Sector</small><b>Healthcare · Hospital network</b></div><div><small>My role</small><b>Principal data architect</b></div><div><small>Engagement</small><b>Architecture, build and hand-off</b></div><div><small>Scope</small><b>Ingestion, OMOP CDM, vocabularies, data quality, analytics</b></div></div><div class="glance-out"><small>What changed</small><ul><li>One standardised research dataset across sites instead of per-request extracts</li><li>Data quality measured and published every load, with blocking checks</li><li>Cohort definitions shared and re-run across sites without moving patient data</li><li>A repeatable path to join federated network studies</li></ul></div><div class="cs-stack"><span class="tag">FHIR R4</span><span class="tag">Bulk Data export</span><span class="tag">OMOP CDM v5.4</span><span class="tag">OHDSI vocabularies</span><span class="tag">Data Quality Dashboard</span><span class="tag">ATLAS</span><span class="tag">Spark</span><span class="tag">Lakehouse</span><span class="tag">Kubernetes</span></div><p class="glance-note">Anonymised composite. Client names, identifying details and confidential figures are withheld; public facts are cited in the references.</p></section><h2 id="the-situation">The situation</h2>
+<p>A hospital network wanted to use its clinical data for research, quality improvement and, eventually, AI. In practice every question became a bespoke extract: a request, a queue, a data engineer writing site-specific SQL against each EHR's reporting database, and weeks of reconciliation when the sites disagreed. The same diagnosis was coded differently between sites, lab units varied, and nobody could say how complete the data was.</p>
+<p>The network had already invested in FHIR APIs for interoperability. The question was whether those APIs could become the feed for a research platform, rather than building yet another set of point-to-point extracts.</p>
+
+<h2 id="what-had-to-be-true">What had to be true</h2>
+<ul>
+<li><strong>One model for analysis</strong>, so a cohort defined once runs everywhere.</li>
+<li><strong>Standard vocabularies</strong>, so "type 2 diabetes" means the same concept set at every site.</li>
+<li><strong>Measured quality</strong>, visible to researchers before they trust a result.</li>
+<li><strong>Privacy by architecture</strong>: identifiable data stays inside each site's boundary, and collaboration happens by sharing code and aggregates.</li>
+<li><strong>Something the internal team could run</strong> after hand-off, without a consultancy on retainer.</li>
+</ul>
+
+<h2 id="architecture">Architecture</h2>
+<p>The design used FHIR for extraction and OMOP CDM v5.4 for analysis, following the direction of the HL7 FHIR-to-OMOP implementation guide, developed by the Vulcan accelerator with the OHDSI community<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Sources</small><div class="dgm-nodes"><span>EHR site A<em>FHIR R4</em></span><span>EHR site B<em>FHIR R4</em></span><span>Lab and imaging<em>HL7 v2 / FHIR</em></span><span>Registry files<em>CSV</em></span></div></div>
+<div class="dgm-tier"><small>Ingest</small><div class="dgm-nodes"><span>Bulk Data export<em>$export, NDJSON</em></span><span>Raw zone<em>immutable, per load</em></span><span>De-identification<em>keys stay on site</em></span></div></div>
+<div class="dgm-tier"><small>Transform</small><div class="dgm-nodes"><span class="hl">FHIR → OMOP mapping<em>versioned, tested</em></span><span class="hl">Vocabulary mapping<em>source → standard concepts</em></span><span>Era and visit logic<em>derived tables</em></span></div></div>
+<div class="dgm-tier"><small>Assure</small><div class="dgm-nodes"><span class="hl">Data Quality Dashboard<em>blocking checks</em></span><span>Characterisation<em>Achilles-style profiles</em></span><span>Load sign-off<em>data steward</em></span></div></div>
+<div class="dgm-tier"><small>Use</small><div class="dgm-nodes"><span>ATLAS<em>cohorts, characterisation</em></span><span>R / Python<em>HADES studies</em></span><span>Federated studies<em>aggregates only</em></span><span>ML features<em>governed access</em></span></div></div>
+</div>
+<figcaption>Layered architecture: FHIR in, OMOP out, with quality gates before anything reaches researchers.</figcaption>
+</figure>
+
+<h2 id="the-data-flow-end-to-end">The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Export</b><span>Scheduled Bulk Data $export per site, written as NDJSON to a raw zone</span></li>
+<li><b>Stage</b><span>Parse and validate resources; quarantine malformed records with reasons</span></li>
+<li class="hl"><b>Map</b><span>FHIR resources to OMOP tables; local codes to standard concepts</span></li>
+<li class="hl"><b>Check</b><span>Run data quality checks; fail the load on blocking thresholds</span></li>
+<li><b>Publish</b><span>Swap to a new versioned CDM schema; record lineage and vocabulary version</span></li>
+<li><b>Analyse</b><span>Cohorts and studies run against the published version only</span></li>
+</ol>
+<figcaption>Each load is versioned, so any study result can be traced to the exact data and vocabulary release it used.</figcaption>
+</figure>
+<p>Bulk export was chosen over per-patient API calls because it's designed for population-level extraction, returning newline-delimited JSON files asynchronously<sup class="cite"><a href="#ref-2">2</a></sup>. The detailed pipeline patterns are in <a href="/insights/fhir-bulk-data-export-pipelines/">FHIR bulk data export pipelines</a> and <a href="/insights/fhir-to-omop-architecture/">FHIR to OMOP architecture</a>.</p>
+
+<h2 id="the-hard-part-meaning-not-pipes">The hard part: meaning, not pipes</h2>
+<p>The pipeline engineering took less time than agreeing what the data meant. OMOP's standardised vocabularies map source codes to standard concepts in defined domains, which is what makes cross-site analysis possible<sup class="cite"><a href="#ref-5">5</a></sup>. Getting there required:</p>
+<ul>
+<li>A mapping backlog ranked by how often each unmapped local code appeared, so effort went where the data was.</li>
+<li>Clinician review for ambiguous mappings, recorded with reasons, rather than an engineer's best guess.</li>
+<li>Unit normalisation rules for laboratory measurements, agreed with lab leads.</li>
+<li>A policy for what to do with codes that can't be mapped: keep the source value, flag the concept as unmapped, and report the rate.</li>
+</ul>
+<p>More on this in <a href="/insights/clinical-terminologies-omop-vocabularies/">clinical terminologies and OMOP vocabularies</a>.</p>
+
+<h2 id="quality-as-a-release-gate">Quality as a release gate</h2>
+<p>OHDSI's Data Quality Dashboard runs a large library of checks across conformance, completeness and plausibility<sup class="cite"><a href="#ref-4">4</a></sup>. The key decision was to treat a subset as <strong>blocking</strong>: if they fail, the new version doesn't publish and researchers keep using the previous one. The rest are published alongside the data, so researchers can judge fitness for their question. See <a href="/insights/omop-data-quality-checks/">OMOP data quality checks</a>.</p>
+<div class="callout"><p>Researchers trust a platform that tells them what is wrong with it. Published quality results build more confidence than any feature list.</p></div>
+
+<h2 id="how-a-federated-study-runs">How a federated study runs</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Study lead</small><ol><li>Define cohorts in ATLAS</li><li class="hl">Package study code</li><li>Meta-analyse results</li></ol></div>
+<div class="dgm-lane"><small>Each site</small><ol><li>Review package</li><li class="hl">Run locally on OMOP</li><li>Approve aggregate output</li></ol></div>
+<div class="dgm-lane"><small>Shared</small><ol><li>Code repository</li><li>Aggregate results only</li><li>Published evidence</li></ol></div>
+</div>
+<figcaption>Code travels to the data; only reviewed aggregates travel back.</figcaption>
+</figure>
+<p>This is the OHDSI network model described in The Book of OHDSI<sup class="cite"><a href="#ref-3">3</a></sup>, and it is what let the network collaborate without centralising identifiable records. More in <a href="/insights/federated-health-analytics-ohdsi/">federated health analytics</a>.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/federated-health-analytics-ohdsi/data-journey.webp" alt="Diagram of the journey from patient-level data in source systems to reliable evidence, listing the types of observational data and the types of evidence desired" width="1600" height="1057" loading="lazy"></div><figcaption>The journey from patient-level data to reliable evidence that the platform was built to support. <span class="credit">Source: <a href="https://ohdsi.github.io/TheBookOfOhdsi/OhdsiCommunity.html" target="_blank" rel="noopener">The Book of OHDSI</a> · CC0 1.0</span></figcaption></figure>
+
+<h2 id="how-the-engagement-ran">How the engagement ran</h2>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Discover</b><ul><li>Source system inventory</li><li>Top research questions</li><li>Governance and privacy model</li></ul></div>
+<div><small>Phase 2</small><b>Pilot site</b><ul><li>Bulk export and staging</li><li>Core OMOP tables</li><li>First quality baseline</li></ul></div>
+<div><small>Phase 3</small><b>Harden</b><ul><li>Vocabulary backlog</li><li>Blocking checks</li><li>Versioned releases</li></ul></div>
+<div><small>Phase 4</small><b>Scale and hand off</b><ul><li>Further sites</li><li>Runbooks and training</li><li>First federated study</li></ul></div>
+</div>
+<figcaption>Phased delivery: one site end to end before adding the next.</figcaption>
+</figure>
+
+<h2 id="key-decisions-and-trade-offs">Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>FHIR Bulk Data as the feed</td><td>Direct database extracts</td><td>Reuses interoperability investment; vendor-neutral; less coupling to EHR schemas</td></tr>
+<tr><td>OMOP for analysis</td><td>Query FHIR directly</td><td>Standard vocabularies and the OHDSI tool and study ecosystem</td></tr>
+<tr><td>Versioned CDM releases</td><td>Update in place</td><td>Reproducible studies and safe rollback</td></tr>
+<tr><td>Blocking quality checks</td><td>Report-only quality</td><td>Stops bad loads reaching researchers</td></tr>
+<tr><td>One pilot site first</td><td>All sites in parallel</td><td>Mapping lessons learned once, reused everywhere</td></tr>
+</tbody>
+</table>
+
+<h2 id="what-i-d-do-again-and-differently">What I'd do again, and differently</h2>
+<p>Again: start from the research questions, not the tables, and make quality visible from day one. Differently: bring the vocabulary and clinical review effort forward. It's always the critical path, and it's the part that can't be bought.</p>
+<p>If you're planning something similar, the <a href="/healthcare-data-architecture/">healthcare data architecture</a> page describes how I run these engagements, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://hl7.org/fhir/uv/omop/INFORMATIVE1/en/" target="_blank" rel="noopener">FHIR to OMOP FHIR IG</a><small>HL7 International (Vulcan / OHDSI)</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://hl7.org/fhir/uv/bulkdata/" target="_blank" rel="noopener">Bulk Data Access IG</a><small>HL7 International</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://ohdsi.github.io/TheBookOfOhdsi/" target="_blank" rel="noopener">The Book of OHDSI</a><small>OHDSI</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://ohdsi.github.io/DataQualityDashboard/" target="_blank" rel="noopener">Data Quality Dashboard</a><small>OHDSI</small></div></li><li id="ref-5"><span class="rn">5</span><div><a href="https://ohdsi.github.io/TheBookOfOhdsi/StandardizedVocabularies.html" target="_blank" rel="noopener">Standardized vocabularies (The Book of OHDSI)</a><small>OHDSI</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fasksumanta.com%2Fcase-studies%2Fhealth-network-fhir-omop-evidence-platform%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fasksumanta.com%2Fcase-studies%2Fhealth-network-fhir-omop-evidence-platform%2F&amp;text=Turning%20a%20hospital%20network%27s%20EHR%20data%20into%20a%20governed%20real-world%20evidence%20platform" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=Turning%20a%20hospital%20network%27s%20EHR%20data%20into%20a%20governed%20real-world%20evidence%20platform%20https%3A%2F%2Fasksumanta.com%2Fcase-studies%2Fhealth-network-fhir-omop-evidence-platform%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://asksumanta.com/case-studies/health-network-fhir-omop-evidence-platform/">Copy link</button></div>
+      <div class="pnav"></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#the-situation">The situation</a></li><li><a href="#what-had-to-be-true">What had to be true</a></li><li><a href="#architecture">Architecture</a></li><li><a href="#the-data-flow-end-to-end">The data flow, end to end</a></li><li><a href="#the-hard-part-meaning-not-pipes">The hard part: meaning, not pipes</a></li><li><a href="#quality-as-a-release-gate">Quality as a release gate</a></li><li><a href="#how-a-federated-study-runs">How a federated study runs</a></li><li><a href="#how-the-engagement-ran">How the engagement ran</a></li><li><a href="#key-decisions-and-trade-offs">Key decisions and trade-offs</a></li><li><a href="#what-i-d-do-again-and-differently">What I&#x27;d do again, and differently</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>Why convert FHIR data to OMOP?</summary><p>FHIR is designed for exchanging data between systems; OMOP is designed for analysing it consistently across institutions. Converting FHIR to OMOP lets the same analysis code, cohort definitions and quality checks run at every site.</p></details><details class="rise"><summary>How long does an OMOP implementation take?</summary><p>It depends on the number of source systems, how well coded the data is, and governance. The vocabulary mapping and data quality work usually take longer than the pipeline engineering, so plan them as first-class workstreams.</p></details><details class="rise"><summary>Do sites need to share patient data to collaborate?</summary><p>No. In the OHDSI federated model, each site keeps its data and runs shared analysis code locally, sharing only aggregate results.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/healthcare-data-architecture/"><small>Service</small><b>Healthcare data architecture</b><span>I help healthcare and life-sciences organisations turn fragmented clinical data into governed platforms for care, research and AI, using the standards the industry already agrees on.</span><i>→</i></a><a class="rcard rise" href="/ai-architect/"><small>Service</small><b>AI &amp; LLM architecture</b><span>I design and build AI systems that leadership can trust: grounded in your data, measured by evaluations, governed by your rules and priced so they make sense at scale.</span><i>→</i></a><a class="rcard rise" href="/fractional-cto/"><small>Service</small><b>Fractional CTO</b><span>I work as a part-time CTO for founders, CEOs and boards who need experienced technical judgement now, and a team that can carry it on after I step back.</span><i>→</i></a><a class="rcard rise" href="/insights/terraform-secrets-out-of-state/"><small>Insight</small><b>Keeping secrets out of Terraform state: a checklist for platform teams</b><span>Most organisations using Terraform have database passwords, API keys or private keys sitting in state files, often in plaintext. For years that was simply how Terraform worked. Since versions 1.10 and 1.11 it doesn&#x27;t have to be, but the fix needs deliberate migration.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: Turning a hospital network&#x27;s EHR data into a governed real-world evidence platform">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
+        <p class="floc">United States &amp; UAE · working globally</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/uae/">Fractional CTO in the UAE</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/terraform-secrets-out-of-state/">Keeping secrets out of Terraform state: a checklist for platform teams</a></li><li><a href="/insights/slos-error-budgets-small-teams/">SLOs and error budgets for small teams: field notes on making reliability a decision, not a debate</a></li><li><a href="/insights/speculative-decoding-private-llms/">Speculative decoding for private LLMs: faster tokens without changing the answers</a></li><li><a href="/insights/real-world-evidence-study-designs-omop/">Real-world evidence on OMOP: comparing five study designs for treatment effects</a></li><li><a href="/insights/eu-ai-act-gpai-fine-tuning-provider/">Fine-tuning a foundation model? When the EU AI Act makes you a general-purpose AI provider</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,93 @@
+<!--{"title": "Case study: a FHIR-to-OMOP evidence platform for a hospital network", "description": "How a multi-hospital network turned EHR data into a governed OMOP research platform: FHIR ingestion, vocabulary mapping, data quality gates and federated studies.", "h1": "Turning a hospital network's EHR data into a governed real-world evidence platform", "kicker": "Case study · Healthcare data", "lede": "Several hospitals, several EHR configurations, and a research team waiting months for every dataset. The goal was one standardised, quality-checked research platform on OMOP, fed from FHIR, that could answer questions locally and join federated studies without moving patient data.", "date": "2026-10-28", "datetime": "2026-10-28T00:45:00+04:00", "readtime": "9 min read", "sector": "Healthcare · Hospital network", "role": "Principal data architect", "engagement": "Architecture, build and hand-off", "scope": "Ingestion, OMOP CDM, vocabularies, data quality, analytics", "stack": ["FHIR R4", "Bulk Data export", "OMOP CDM v5.4", "OHDSI vocabularies", "Data Quality Dashboard", "ATLAS", "Spark", "Lakehouse", "Kubernetes"], "outcomes": ["One standardised research dataset across sites instead of per-request extracts", "Data quality measured and published every load, with blocking checks", "Cohort definitions shared and re-run across sites without moving patient data", "A repeatable path to join federated network studies"], "tags": ["healthcare", "omop", "fhir", "data"], "keywords": ["FHIR to OMOP case study", "OMOP CDM implementation", "real-world evidence platform", "hospital data platform", "OHDSI", "clinical data warehouse", "healthcare data architect", "FHIR bulk data", "data quality dashboard", "federated research network"], "faq": [["Why convert FHIR data to OMOP?", "FHIR is designed for exchanging data between systems; OMOP is designed for analysing it consistently across institutions. Converting FHIR to OMOP lets the same analysis code, cohort definitions and quality checks run at every site."], ["How long does an OMOP implementation take?", "It depends on the number of source systems, how well coded the data is, and governance. The vocabulary mapping and data quality work usually take longer than the pipeline engineering, so plan them as first-class workstreams."], ["Do sites need to share patient data to collaborate?", "No. In the OHDSI federated model, each site keeps its data and runs shared analysis code locally, sharing only aggregate results."]], "related": ["/healthcare-data-architecture/", "/ai-architect/", "/fractional-cto/"], "citations": [{"title": "FHIR to OMOP FHIR IG", "url": "https://hl7.org/fhir/uv/omop/INFORMATIVE1/en/", "publisher": "HL7 International (Vulcan / OHDSI)"}, {"title": "Bulk Data Access IG", "url": "https://hl7.org/fhir/uv/bulkdata/", "publisher": "HL7 International"}, {"title": "The Book of OHDSI", "url": "https://ohdsi.github.io/TheBookOfOhdsi/", "publisher": "OHDSI"}, {"title": "Data Quality Dashboard", "url": "https://ohdsi.github.io/DataQualityDashboard/", "publisher": "OHDSI"}, {"title": "Standardized vocabularies (The Book of OHDSI)", "url": "https://ohdsi.github.io/TheBookOfOhdsi/StandardizedVocabularies.html", "publisher": "OHDSI"}]}-->
+<h2>The situation</h2>
+<p>A hospital network wanted to use its clinical data for research, quality improvement and, eventually, AI. In practice every question became a bespoke extract: a request, a queue, a data engineer writing site-specific SQL against each EHR's reporting database, and weeks of reconciliation when the sites disagreed. The same diagnosis was coded differently between sites, lab units varied, and nobody could say how complete the data was.</p>
+<p>The network had already invested in FHIR APIs for interoperability. The question was whether those APIs could become the feed for a research platform, rather than building yet another set of point-to-point extracts.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>One model for analysis</strong>, so a cohort defined once runs everywhere.</li>
+<li><strong>Standard vocabularies</strong>, so "type 2 diabetes" means the same concept set at every site.</li>
+<li><strong>Measured quality</strong>, visible to researchers before they trust a result.</li>
+<li><strong>Privacy by architecture</strong>: identifiable data stays inside each site's boundary, and collaboration happens by sharing code and aggregates.</li>
+<li><strong>Something the internal team could run</strong> after hand-off, without a consultancy on retainer.</li>
+</ul>
+
+<h2>Architecture</h2>
+<p>The design used FHIR for extraction and OMOP CDM v5.4 for analysis, following the direction of the HL7 FHIR-to-OMOP implementation guide, developed by the Vulcan accelerator with the OHDSI community<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Sources</small><div class="dgm-nodes"><span>EHR site A<em>FHIR R4</em></span><span>EHR site B<em>FHIR R4</em></span><span>Lab and imaging<em>HL7 v2 / FHIR</em></span><span>Registry files<em>CSV</em></span></div></div>
+<div class="dgm-tier"><small>Ingest</small><div class="dgm-nodes"><span>Bulk Data export<em>$export, NDJSON</em></span><span>Raw zone<em>immutable, per load</em></span><span>De-identification<em>keys stay on site</em></span></div></div>
+<div class="dgm-tier"><small>Transform</small><div class="dgm-nodes"><span class="hl">FHIR → OMOP mapping<em>versioned, tested</em></span><span class="hl">Vocabulary mapping<em>source → standard concepts</em></span><span>Era and visit logic<em>derived tables</em></span></div></div>
+<div class="dgm-tier"><small>Assure</small><div class="dgm-nodes"><span class="hl">Data Quality Dashboard<em>blocking checks</em></span><span>Characterisation<em>Achilles-style profiles</em></span><span>Load sign-off<em>data steward</em></span></div></div>
+<div class="dgm-tier"><small>Use</small><div class="dgm-nodes"><span>ATLAS<em>cohorts, characterisation</em></span><span>R / Python<em>HADES studies</em></span><span>Federated studies<em>aggregates only</em></span><span>ML features<em>governed access</em></span></div></div>
+</div>
+<figcaption>Layered architecture: FHIR in, OMOP out, with quality gates before anything reaches researchers.</figcaption>
+</figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Export</b><span>Scheduled Bulk Data $export per site, written as NDJSON to a raw zone</span></li>
+<li><b>Stage</b><span>Parse and validate resources; quarantine malformed records with reasons</span></li>
+<li class="hl"><b>Map</b><span>FHIR resources to OMOP tables; local codes to standard concepts</span></li>
+<li class="hl"><b>Check</b><span>Run data quality checks; fail the load on blocking thresholds</span></li>
+<li><b>Publish</b><span>Swap to a new versioned CDM schema; record lineage and vocabulary version</span></li>
+<li><b>Analyse</b><span>Cohorts and studies run against the published version only</span></li>
+</ol>
+<figcaption>Each load is versioned, so any study result can be traced to the exact data and vocabulary release it used.</figcaption>
+</figure>
+<p>Bulk export was chosen over per-patient API calls because it's designed for population-level extraction, returning newline-delimited JSON files asynchronously<sup class="cite"><a href="#ref-2">2</a></sup>. The detailed pipeline patterns are in <a href="/insights/fhir-bulk-data-export-pipelines/">FHIR bulk data export pipelines</a> and <a href="/insights/fhir-to-omop-architecture/">FHIR to OMOP architecture</a>.</p>
+
+<h2>The hard part: meaning, not pipes</h2>
+<p>The pipeline engineering took less time than agreeing what the data meant. OMOP's standardised vocabularies map source codes to standard concepts in defined domains, which is what makes cross-site analysis possible<sup class="cite"><a href="#ref-5">5</a></sup>. Getting there required:</p>
+<ul>
+<li>A mapping backlog ranked by how often each unmapped local code appeared, so effort went where the data was.</li>
+<li>Clinician review for ambiguous mappings, recorded with reasons, rather than an engineer's best guess.</li>
+<li>Unit normalisation rules for laboratory measurements, agreed with lab leads.</li>
+<li>A policy for what to do with codes that can't be mapped: keep the source value, flag the concept as unmapped, and report the rate.</li>
+</ul>
+<p>More on this in <a href="/insights/clinical-terminologies-omop-vocabularies/">clinical terminologies and OMOP vocabularies</a>.</p>
+
+<h2>Quality as a release gate</h2>
+<p>OHDSI's Data Quality Dashboard runs a large library of checks across conformance, completeness and plausibility<sup class="cite"><a href="#ref-4">4</a></sup>. The key decision was to treat a subset as <strong>blocking</strong>: if they fail, the new version doesn't publish and researchers keep using the previous one. The rest are published alongside the data, so researchers can judge fitness for their question. See <a href="/insights/omop-data-quality-checks/">OMOP data quality checks</a>.</p>
+<div class="callout"><p>Researchers trust a platform that tells them what is wrong with it. Published quality results build more confidence than any feature list.</p></div>
+
+<h2>How a federated study runs</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Study lead</small><ol><li>Define cohorts in ATLAS</li><li class="hl">Package study code</li><li>Meta-analyse results</li></ol></div>
+<div class="dgm-lane"><small>Each site</small><ol><li>Review package</li><li class="hl">Run locally on OMOP</li><li>Approve aggregate output</li></ol></div>
+<div class="dgm-lane"><small>Shared</small><ol><li>Code repository</li><li>Aggregate results only</li><li>Published evidence</li></ol></div>
+</div>
+<figcaption>Code travels to the data; only reviewed aggregates travel back.</figcaption>
+</figure>
+<p>This is the OHDSI network model described in The Book of OHDSI<sup class="cite"><a href="#ref-3">3</a></sup>, and it is what let the network collaborate without centralising identifiable records. More in <a href="/insights/federated-health-analytics-ohdsi/">federated health analytics</a>.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/federated-health-analytics-ohdsi/data-journey.webp" alt="Diagram of the journey from patient-level data in source systems to reliable evidence, listing the types of observational data and the types of evidence desired" width="1600" height="1057" loading="lazy"></div><figcaption>The journey from patient-level data to reliable evidence that the platform was built to support. <span class="credit">Source: <a href="https://ohdsi.github.io/TheBookOfOhdsi/OhdsiCommunity.html" target="_blank" rel="noopener">The Book of OHDSI</a> · CC0 1.0</span></figcaption></figure>
+
+<h2>How the engagement ran</h2>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Discover</b><ul><li>Source system inventory</li><li>Top research questions</li><li>Governance and privacy model</li></ul></div>
+<div><small>Phase 2</small><b>Pilot site</b><ul><li>Bulk export and staging</li><li>Core OMOP tables</li><li>First quality baseline</li></ul></div>
+<div><small>Phase 3</small><b>Harden</b><ul><li>Vocabulary backlog</li><li>Blocking checks</li><li>Versioned releases</li></ul></div>
+<div><small>Phase 4</small><b>Scale and hand off</b><ul><li>Further sites</li><li>Runbooks and training</li><li>First federated study</li></ul></div>
+</div>
+<figcaption>Phased delivery: one site end to end before adding the next.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>FHIR Bulk Data as the feed</td><td>Direct database extracts</td><td>Reuses interoperability investment; vendor-neutral; less coupling to EHR schemas</td></tr>
+<tr><td>OMOP for analysis</td><td>Query FHIR directly</td><td>Standard vocabularies and the OHDSI tool and study ecosystem</td></tr>
+<tr><td>Versioned CDM releases</td><td>Update in place</td><td>Reproducible studies and safe rollback</td></tr>
+<tr><td>Blocking quality checks</td><td>Report-only quality</td><td>Stops bad loads reaching researchers</td></tr>
+<tr><td>One pilot site first</td><td>All sites in parallel</td><td>Mapping lessons learned once, reused everywhere</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: start from the research questions, not the tables, and make quality visible from day one. Differently: bring the vocabulary and clinical review effort forward. It's always the critical path, and it's the part that can't be bought.</p>
+<p>If you're planning something similar, the <a href="/healthcare-data-architecture/">healthcare data architecture</a> page describes how I run these engagements, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
