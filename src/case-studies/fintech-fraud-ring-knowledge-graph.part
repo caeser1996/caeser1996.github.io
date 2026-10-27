@@ -1,0 +1,87 @@
+<!--{"title": "Case study: finding fintech fraud rings with a knowledge graph", "description": "How a fintech moved beyond row-by-row fraud rules: streaming entity resolution into a graph of customers, devices and payees, with graph features for risk scoring.", "short": "Fintech fraud ring knowledge graph", "h1": "Finding coordinated fraud rings with entity resolution and a knowledge graph", "kicker": "Case study · Fintech", "lede": "Fraud rules scored one transaction or one account at a time, while organised fraud spread across many accounts sharing devices, addresses and payees. The goal was to resolve those shared entities, connect them in a graph, and give risk models and investigators the network view the rules were missing.", "date": "2026-10-28", "datetime": "2026-10-28T01:16:00+04:00", "readtime": "8 min read", "sector": "Fintech · Digital payments and lending", "role": "Principal architect", "engagement": "Architecture, build and hand-off", "scope": "Streaming, entity resolution, graph model, features, investigator tooling", "stack": ["Kafka", "Splink-style probabilistic matching", "Graph database", "Connected components", "Feature store", "Risk scoring service", "Investigator UI", "Kubernetes"], "outcomes": ["Coordinated activity visible as connected networks rather than isolated alerts", "Graph features available to existing risk models in real time", "Investigators reviewing whole rings with evidence for every link", "Entity matches explainable and correctable by analysts"], "tags": ["knowledge-graph", "ontology", "streaming", "data", "security"], "keywords": ["fraud ring detection case study", "knowledge graph fraud", "entity resolution fintech", "graph features risk scoring", "connected components fraud", "probabilistic record linkage", "streaming fraud detection", "fintech data architecture", "investigator tooling"], "faq": [["Why use a graph for fraud detection?", "Organised fraud shows up as relationships: many accounts sharing a device, address or payee. A graph makes those shared connections first-class, so features like ring size and proximity to known fraud can be computed directly."], ["Why is entity resolution needed first?", "The same person, device or address appears in slightly different forms across systems. Without resolving them into single entities, the graph fragments and the rings stay hidden."], ["Does the graph replace the existing fraud model?", "No. It adds network features to the existing scoring and gives investigators a view of connected cases. Rules and models still make the real-time decision."]], "related": ["/ontology-knowledge-graph/", "/fractional-cto/", "/insights/entity-resolution-knowledge-graphs/"], "citations": [{"title": "A Survey of Blocking and Filtering Techniques for Entity Resolution", "url": "https://arxiv.org/abs/1905.06167", "publisher": "Papadakis et al., arXiv", "date": "2019"}, {"title": "Splink: probabilistic record linkage at scale", "url": "https://github.com/moj-analytical-services/splink", "publisher": "UK Ministry of Justice (GitHub)"}, {"title": "Weakly Connected Components (Graph Data Science)", "url": "https://neo4j.com/docs/graph-data-science/current/algorithms/wcc/", "publisher": "Neo4j documentation"}, {"title": "Log compaction (Kafka design)", "url": "https://docs.confluent.io/kafka/design/log_compaction.html", "publisher": "Confluent documentation"}]}-->
+<h2>The situation</h2>
+<p>A fintech offering accounts, cards and small loans had a mature rules engine and a transaction-level risk model. Both looked at one event or one account at a time. The losses that hurt most came from coordinated activity: clusters of new accounts opened from the same few devices, with addresses written slightly differently, paying out to a shared set of payees. Each account looked unremarkable alone. The pattern only appeared when someone noticed the connections by hand, usually after the money had moved.</p>
+<p>The question was how to make those connections visible automatically, fast enough to matter, without replacing the decisioning stack that already worked.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>Resolve before you connect</strong>: one entity per real person, device, address and payee.</li>
+<li><strong>Explainable links</strong>: every edge in a ring traceable to the evidence behind it.</li>
+<li><strong>Features, not a new decision engine</strong>: graph signals feed existing models and rules.</li>
+<li><strong>Fresh enough for onboarding and payouts</strong>, the two moments where stopping fraud pays.</li>
+<li><strong>Investigators in the loop</strong>, able to confirm, split or merge entities.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Events</small><div class="dgm-nodes"><span>Onboarding<em>identity, device</em></span><span>Logins<em>device, network</em></span><span>Payments<em>payer, payee</em></span><span>Case outcomes<em>confirmed fraud</em></span></div></div>
+<div class="dgm-tier"><small>Stream</small><div class="dgm-nodes"><span>Kafka topics<em>keyed by entity</em></span><span>Normalisation<em>addresses, names, devices</em></span></div></div>
+<div class="dgm-tier"><small>Resolve</small><div class="dgm-nodes"><span>Blocking<em>candidate pairs</em></span><span class="hl">Probabilistic matching<em>scored, explainable</em></span><span>Analyst overrides<em>merge, split</em></span></div></div>
+<div class="dgm-tier"><small>Graph</small><div class="dgm-nodes"><span class="hl">Entity graph<em>people, devices, addresses, payees</em></span><span>Connected components<em>ring candidates</em></span><span>Graph features<em>size, proximity to fraud</em></span></div></div>
+<div class="dgm-tier"><small>Use</small><div class="dgm-nodes"><span>Feature store<em>online lookups</em></span><span>Risk scoring<em>existing models</em></span><span>Investigator UI<em>ring view with evidence</em></span></div></div>
+</div>
+<figcaption>Layered architecture: events are resolved into entities, connected in a graph, and returned to existing scoring as features.</figcaption>
+</figure>
+<p>Confirmed fraud outcomes from closed cases were fed back as events too, so proximity to known fraud stayed current and the risk models had better labels over time.</p>
+<p>The graph model was kept deliberately small, a handful of entity and relationship types with clear definitions, following the approach in <a href="/insights/ontology-vs-knowledge-graph-vs-semantic-layer/">ontology vs knowledge graph vs semantic layer</a>.</p>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Stream</b><span>Onboarding, login and payment events published to Kafka, keyed by source identifiers</span></li>
+<li><b>Normalise</b><span>Standardise addresses, names, phone numbers and device fingerprints</span></li>
+<li class="hl"><b>Resolve</b><span>Block into candidate pairs, score matches, assign stable entity IDs with match evidence</span></li>
+<li><b>Connect</b><span>Upsert entities and relationships into the graph incrementally</span></li>
+<li class="hl"><b>Featurise</b><span>Compute component size, shared-attribute counts and distance to confirmed fraud</span></li>
+<li><b>Act</b><span>Features served to risk scoring; high-risk rings opened as investigator cases</span></li>
+</ol>
+<figcaption>Entity resolution sits before the graph, so the graph only ever connects resolved entities.</figcaption>
+</figure>
+<p>Current entity state was held in compacted topics, where Kafka retains the latest value for each key, so downstream services could rebuild their view without replaying full history<sup class="cite"><a href="#ref-4">4</a></sup>. Streaming patterns are in <a href="/insights/change-data-capture-event-streams/">change data capture and event streams</a>.</p>
+
+<h2>The hard part: entity resolution you can defend</h2>
+<p>Matching everything to everything is quadratic, so resolution started with blocking: cheap keys that limit comparisons to plausible candidates, a well-studied family of techniques<sup class="cite"><a href="#ref-1">1</a></sup>. Matching then used a probabilistic, Fellegi-Sunter style model of the kind implemented in Splink, which scores each comparison field and can be trained without labelled pairs<sup class="cite"><a href="#ref-2">2</a></sup>. What made it defensible:</p>
+<ul>
+<li>Every merge stored the field-level evidence and score, so an investigator could see why two records became one entity.</li>
+<li>Thresholds were set separately for automatic merges and for "possible match" links that investigators saw but models treated with caution.</li>
+<li>Shared infrastructure entities (a popular office address, a carrier-grade NAT IP) were flagged so they did not collapse unrelated customers into giant false rings.</li>
+<li>Analyst merges and splits were written back as overrides that survived reprocessing.</li>
+</ul>
+<p>Ring candidates came from connected components over the resolved graph, which groups nodes reachable from one another regardless of edge direction<sup class="cite"><a href="#ref-3">3</a></sup>. More detail in <a href="/insights/entity-resolution-knowledge-graphs/">entity resolution for knowledge graphs</a>.</p>
+<div class="callout"><p>In fraud work a false merge is not a modelling error, it is an accusation. Explainable matches and reversible overrides are what make a graph usable by investigators.</p></div>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Platform</small><ol><li>Resolves entities</li><li>Updates graph</li><li class="hl">Serves ring features</li></ol></div>
+<div class="dgm-lane"><small>Risk scoring</small><ol><li>Reads features</li><li>Scores event</li><li>Opens case on high risk</li></ol></div>
+<div class="dgm-lane"><small>Investigator</small><ol><li>Reviews ring and evidence</li><li class="hl">Confirms, splits or merges</li><li>Records outcome</li></ol></div>
+</div>
+<figcaption>Investigator outcomes flow back as labels and overrides.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Model</b><ul><li>Entity and relationship types</li><li>Known fraud cases mapped</li><li>Data sources inventoried</li></ul></div>
+<div><small>Phase 2</small><b>Batch proof</b><ul><li>Historical resolution</li><li>Rings found in past cases</li><li>Investigator feedback</li></ul></div>
+<div><small>Phase 3</small><b>Streaming</b><ul><li>Incremental resolution</li><li>Online features</li><li>Model integration</li></ul></div>
+<div><small>Phase 4</small><b>Operate</b><ul><li>Investigator UI</li><li>Override workflow</li><li>Runbooks and hand-off</li></ul></div>
+</div>
+<figcaption>A batch proof on historical cases before any real-time work.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Probabilistic, explainable matching</td><td>Exact keys only</td><td>Catches variant spellings while keeping evidence for every merge</td></tr>
+<tr><td>Graph features into existing models</td><td>Separate graph-based decision engine</td><td>Adds signal without replacing a working decision stack</td></tr>
+<tr><td>Small, defined graph model</td><td>Load every attribute as a node</td><td>Fewer false connections and simpler queries</td></tr>
+<tr><td>Batch proof before streaming</td><td>Build real-time first</td><td>Validates value on known cases before paying for latency</td></tr>
+<tr><td>Durable analyst overrides</td><td>Recompute from scratch each run</td><td>Human corrections are not lost on reprocessing</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: start with historical confirmed cases and show investigators the rings the graph would have surfaced. Differently: build the shared-infrastructure entity list on day one. It is the main source of false rings, and it is easier to design for than to clean up.</p>
+<p>If you are considering a knowledge graph for risk or investigations, the <a href="/ontology-knowledge-graph/">ontology and knowledge graph</a> page describes how I run these engagements, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>

@@ -1,0 +1,88 @@
+<!--{"title": "Case study: FHIR prior authorisation APIs for a health payer", "description": "How a health payer put Da Vinci CRD, DTR and PAS FHIR APIs in front of legacy claims systems, with decision tracking and metrics reporting for CMS-0057-F.", "short": "Payer prior authorisation FHIR APIs", "h1": "Putting FHIR prior authorisation APIs in front of a payer's legacy claims systems", "kicker": "Case study · Health insurance", "lede": "Prior authorisation ran on fax, phone and portals, and a federal rule had set dates for API-based exchange. The goal was standards-based FHIR APIs that providers could call, wrapped around claims and utilisation management systems that could not be replaced in time.", "date": "2026-10-28", "datetime": "2026-10-28T01:12:00+04:00", "readtime": "8 min read", "sector": "Health insurance · Payer", "role": "Principal architect", "engagement": "Architecture, delivery oversight and hand-off", "scope": "FHIR APIs, rules, reviewer workflow, decision tracking, metrics", "stack": ["FHIR R4", "Da Vinci CRD", "Da Vinci DTR", "Da Vinci PAS", "CDS Hooks", "Rules engine", "Event bus", "Kubernetes"], "outcomes": ["A standards-based prior authorisation front door without replacing core claims systems", "Every request traceable from submission to decision with a recorded reason", "Clear routing between automated checks and clinical reviewers", "Metrics reporting built on the same event stream as operations"], "tags": ["healthcare", "fhir", "regulation", "architecture", "platform"], "keywords": ["prior authorization API case study", "CMS-0057-F implementation", "Da Vinci PAS", "Da Vinci CRD DTR", "FHIR prior authorisation", "payer interoperability", "electronic prior authorization", "health plan FHIR API", "payer architecture"], "faq": [["What are CRD, DTR and PAS?", "They are HL7 Da Vinci implementation guides. CRD tells the provider at the point of care whether prior authorisation or documentation is needed, DTR gathers the documentation the payer requires, and PAS submits the request and returns the decision."], ["Do we need to replace our claims system to meet CMS-0057-F?", "Usually not. The APIs can sit in front of existing claims and utilisation management systems, translating FHIR requests into internal work items and decisions back into FHIR responses."], ["Why build metrics from events?", "The rule requires prior authorisation metrics to be reported publicly. Deriving them from the same events that drive operations means the published numbers match what actually happened."]], "related": ["/healthcare-data-architecture/", "/fractional-cto/", "/insights/cms-0057-prior-authorization-apis/"], "citations": [{"title": "CMS Interoperability and Prior Authorization Final Rule (CMS-0057-F) fact sheet", "url": "https://www.cms.gov/newsroom/fact-sheets/cms-interoperability-and-prior-authorization-final-rule-cms-0057-f", "publisher": "Centers for Medicare & Medicaid Services", "date": "17 Jan 2024"}, {"title": "Da Vinci Coverage Requirements Discovery (CRD) IG", "url": "https://hl7.org/fhir/us/davinci-crd/2.2.1/en/", "publisher": "HL7 International"}, {"title": "Da Vinci Documentation Templates and Rules (DTR) IG", "url": "https://hl7.org/fhir/us/davinci-dtr", "publisher": "HL7 International"}, {"title": "Da Vinci Prior Authorization Support (PAS) IG: background", "url": "https://hl7.org/fhir/us/davinci-pas/STU2/background.html", "publisher": "HL7 International"}]}-->
+<h2>The situation</h2>
+<p>A regional health payer handled prior authorisation the way much of the industry still does: faxes, phone calls and a provider portal, feeding a utilisation management system that sat beside the core claims platform. Providers waited, reviewers re-keyed information, and nobody could easily answer how long decisions took or why requests were pended.</p>
+<p>The CMS Interoperability and Prior Authorization Final Rule (CMS-0057-F) changed the timetable. It requires impacted payers to implement a prior authorisation API, with API compliance dates from January 2027, and to publicly report prior authorisation metrics<sup class="cite"><a href="#ref-1">1</a></sup>. Replacing the claims and utilisation management systems in that window was not realistic, so the question became how to put a standards-based front door on them.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>Standards, not a bespoke API</strong>, so provider EHR vendors could integrate once.</li>
+<li><strong>No rip-and-replace</strong>: the existing systems remain the systems of record.</li>
+<li><strong>Every decision traceable</strong>, with a reason a provider could act on.</li>
+<li><strong>Humans for clinical judgement</strong>: automation handles completeness and clear-cut rules; reviewers handle the rest.</li>
+<li><strong>Metrics by construction</strong>, not by quarterly spreadsheet.</li>
+</ul>
+
+<h2>Architecture</h2>
+<p>The design followed the three HL7 Da Vinci guides that work together for prior authorisation: Coverage Requirements Discovery, Documentation Templates and Rules, and Prior Authorization Support.</p>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Provider</small><div class="dgm-nodes"><span>EHR order workflow<em>CDS Hooks client</em></span><span>DTR app<em>questionnaires</em></span><span>PAS client<em>Claim bundle</em></span></div></div>
+<div class="dgm-tier"><small>API edge</small><div class="dgm-nodes"><span>CRD service<em>coverage requirements</em></span><span>DTR service<em>payer rules and forms</em></span><span class="hl">PAS endpoint<em>submit and inquire</em></span></div></div>
+<div class="dgm-tier"><small>Decisioning</small><div class="dgm-nodes"><span class="hl">Rules engine<em>versioned policies</em></span><span>Reviewer queue<em>clinical judgement</em></span><span>Decision record<em>status and reason</em></span></div></div>
+<div class="dgm-tier"><small>Core systems</small><div class="dgm-nodes"><span>Utilisation management<em>system of record</em></span><span>Claims platform<em>unchanged</em></span><span>Member and coverage<em>eligibility</em></span></div></div>
+<div class="dgm-tier"><small>Observe</small><div class="dgm-nodes"><span>Event bus<em>every state change</em></span><span>Metrics store<em>reporting views</em></span><span>Audit<em>who decided what</em></span></div></div>
+</div>
+<figcaption>Layered architecture: Da Vinci APIs at the edge, a thin decisioning layer, and core systems left in place.</figcaption>
+</figure>
+<p>CRD uses CDS Hooks so the payer can return coverage requirements inside the provider's ordering workflow<sup class="cite"><a href="#ref-2">2</a></sup>. DTR lets payer documentation rules run in the provider context so the required information is gathered up front<sup class="cite"><a href="#ref-3">3</a></sup>. PAS carries the request as a bundle built around a Claim resource, aligned to the X12 278 transaction, and is designed to be used together with CRD and DTR<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Discover</b><span>Order signed in the EHR triggers a CRD call; response says whether authorisation and documentation are needed</span></li>
+<li><b>Document</b><span>DTR gathers required information, pre-filled from the record where possible</span></li>
+<li class="hl"><b>Submit</b><span>PAS bundle received, validated and mapped to an internal work item</span></li>
+<li><b>Check</b><span>Rules engine checks eligibility, completeness and clear-cut policy criteria</span></li>
+<li class="hl"><b>Review</b><span>Anything needing clinical judgement goes to a reviewer queue with the evidence attached</span></li>
+<li><b>Respond</b><span>Decision and reason returned via PAS; every state change published as an event</span></li>
+</ol>
+<figcaption>Automation decides completeness; people decide clinical questions.</figcaption>
+</figure>
+<p>Status inquiries used the same decision record, so a provider checking on a pended request saw exactly what a reviewer saw, and the answer never depended on which internal system happened to hold the case.</p>
+<p>A deeper walkthrough of the rule and the APIs is in <a href="/insights/cms-0057-prior-authorization-apis/">CMS-0057 prior authorisation APIs</a>.</p>
+
+<h2>The hard part: translating policy into rules people trust</h2>
+<p>The FHIR plumbing was well specified. Medical policy was not. Coverage criteria lived in documents written for human reviewers, and turning them into DTR questionnaires and rules required:</p>
+<ul>
+<li>A policy backlog ranked by request volume, so the most common services were automated first.</li>
+<li>Clinical owners for every rule, with versioning so a decision could be traced to the policy text in force at the time.</li>
+<li>A firm boundary: rules could approve or route to review, but a denial on clinical grounds always went through a reviewer.</li>
+<li>Specific, actionable reasons in every pended or denied response, rather than generic codes.</li>
+</ul>
+<div class="callout"><p>An API that returns "pended" faster is not an improvement. The value is in returning the right question to the provider at the moment they can still answer it.</p></div>
+
+<h2>How the engagement ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Provider</small><ol><li>Signs order</li><li>Completes DTR form</li><li class="hl">Receives decision and reason</li></ol></div>
+<div class="dgm-lane"><small>Payer platform</small><ol><li>Returns requirements</li><li>Validates and checks rules</li><li>Publishes events</li></ol></div>
+<div class="dgm-lane"><small>Reviewer</small><ol><li>Receives routed case</li><li class="hl">Decides with evidence</li><li>Records reason</li></ol></div>
+</div>
+<figcaption>One request, three actors, one traceable record.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Assess</b><ul><li>Rule requirements mapped</li><li>Current workflow and systems</li><li>Highest-volume services</li></ul></div>
+<div><small>Phase 2</small><b>Front door</b><ul><li>PAS endpoint and mapping</li><li>Decision record and events</li><li>Partner testing</li></ul></div>
+<div><small>Phase 3</small><b>Upstream</b><ul><li>CRD responses</li><li>DTR questionnaires</li><li>Rules for top services</li></ul></div>
+<div><small>Phase 4</small><b>Operate</b><ul><li>Metrics reporting</li><li>Policy change process</li><li>Runbooks and hand-off</li></ul></div>
+</div>
+<figcaption>PAS first, because it gives every later step a single place to record decisions.</figcaption>
+</figure>
+<p>For the security model of provider-facing apps, see <a href="/insights/smart-on-fhir-ai-apps-authorisation/">SMART on FHIR authorisation</a>; for the event backbone, <a href="/insights/change-data-capture-event-streams/">change data capture and event streams</a>.</p>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Da Vinci CRD, DTR and PAS</td><td>Proprietary REST API</td><td>EHR vendors integrate once across payers</td></tr>
+<tr><td>Façade over existing systems</td><td>Replace utilisation management</td><td>Meets the timetable without core system risk</td></tr>
+<tr><td>Versioned, owned rules</td><td>Rules embedded in code</td><td>Policy changes are auditable and owned by clinicians</td></tr>
+<tr><td>Clinical denials always reviewed</td><td>Full automation</td><td>Keeps clinical judgement with qualified people</td></tr>
+<tr><td>Metrics from the event stream</td><td>Periodic reporting extracts</td><td>Published numbers match operational reality</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: start with the decision record and event stream, because everything else (reporting, audit, provider status checks) hangs off it. Differently: bring provider-side EHR partners into testing earlier. Real Claim bundles from real ordering workflows surface mapping gaps that synthetic tests never do.</p>
+<p>If you are planning for CMS-0057-F, the <a href="/healthcare-data-architecture/">healthcare data architecture</a> page describes how I run these engagements, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>

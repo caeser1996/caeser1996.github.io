@@ -1,0 +1,87 @@
+<!--{"title": "Case study: a payments platform at 1M+ transactions a day", "description": "How a payments platform scaled past 1M+ transactions a day without double charges: idempotency keys, a transactional outbox and event-driven reconciliation.", "short": "Payments platform at 1M+ transactions a day", "h1": "Scaling a payments platform past a million transactions a day without double charges", "kicker": "Case study · Payments", "lede": "As volume grew, retries and timeouts started producing duplicate charges and a growing manual reconciliation queue. The goal was a payment path that was safe to retry at every step, published events reliably, and reconciled itself, sized for more than a million transactions a day.", "date": "2026-10-28", "datetime": "2026-10-28T01:18:00+04:00", "readtime": "8 min read", "sector": "Payments · Platform", "role": "Fractional CTO and principal engineer", "engagement": "Architecture, hands-on build and team enablement", "scope": "API idempotency, data model, eventing, ledger, reconciliation, operations", "stack": ["Postgres", "Idempotency-Key header", "Transactional outbox", "Debezium", "Kafka", "Double-entry ledger", "Kubernetes", "OpenTelemetry"], "outcomes": ["Client and provider retries made safe, so a timeout no longer risked a second charge", "Events published if and only if the payment write committed", "Reconciliation against providers automated, with exceptions routed to people", "A platform the in-house team could run and extend as volume grew past 1M+ transactions a day"], "tags": ["architecture", "streaming", "platform", "kubernetes", "observability"], "keywords": ["payments platform case study", "idempotent payments API", "transactional outbox", "double charge prevention", "payment reconciliation", "Kafka payments", "1 million transactions a day", "fractional CTO payments", "Debezium outbox"], "faq": [["What causes double charges?", "Usually a retry after an ambiguous failure: the client or a gateway times out, retries, and the original request had in fact succeeded. Without idempotency, the second request creates a second charge."], ["What is the transactional outbox pattern?", "The service writes the business change and an outbox record in the same database transaction. A relay then publishes outbox records to the message broker, so events are sent if and only if the transaction commits."], ["Why automate reconciliation?", "At high volume, manual matching of internal records to provider settlement files becomes a queue that never empties. Automated matching handles the routine cases and routes only genuine exceptions to people."]], "related": ["/fractional-cto/", "/technical-due-diligence/", "/insights/idempotent-payments-order-pipelines/"], "citations": [{"title": "The Idempotency-Key HTTP Header Field (Internet-Draft)", "url": "https://datatracker.ietf.org/doc/html/draft-ietf-httpapi-idempotency-key-header", "publisher": "IETF HTTPAPI Working Group"}, {"title": "Idempotent requests", "url": "https://docs.stripe.com/api/idempotent_requests", "publisher": "Stripe API documentation"}, {"title": "Pattern: Transactional outbox", "url": "https://microservices.io/patterns/data/transactional-outbox", "publisher": "microservices.io, Chris Richardson"}, {"title": "Outbox Event Router", "url": "https://debezium.io/documentation/reference/stable/transformations/outbox-event-router.html", "publisher": "Debezium documentation"}]}-->
+<h2>The situation</h2>
+<p>A payments platform processing card and bank transfers for merchants was growing quickly. The architecture had served it well at lower volume: a payments service writing to Postgres, calling external providers, then publishing an event for the ledger and notifications. As traffic climbed towards and past 1M+ transactions a day, the edges started to fray. Mobile clients retried on timeouts. Providers occasionally responded slowly and then succeeded anyway. Events were sometimes published for writes that rolled back, or not published for writes that committed.</p>
+<p>The symptoms were familiar: occasional duplicate charges, refunds issued by hand, and a reconciliation team matching provider settlement files to internal records in spreadsheets.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>Every step safe to retry</strong>, from the client to the provider call.</li>
+<li><strong>One source of truth per payment</strong>, with state changes that cannot be lost or invented.</li>
+<li><strong>Reliable events</strong>: published exactly when the database change commits.</li>
+<li><strong>A ledger that balances</strong>, and reconciliation that runs itself for the normal cases.</li>
+<li><strong>Operable by the in-house team</strong>, with clear signals when something drifts.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Edge</small><div class="dgm-nodes"><span>Merchant and app clients<em>send Idempotency-Key</em></span><span>API gateway<em>auth, rate limits</em></span></div></div>
+<div class="dgm-tier"><small>Payments service</small><div class="dgm-nodes"><span class="hl">Idempotency store<em>key, request hash, response</em></span><span>Payment state machine<em>explicit transitions</em></span><span>Provider adapters<em>provider-side keys</em></span></div></div>
+<div class="dgm-tier"><small>Data</small><div class="dgm-nodes"><span>Postgres<em>payments and outbox, one transaction</em></span><span class="hl">Outbox relay<em>log-based CDC</em></span></div></div>
+<div class="dgm-tier"><small>Events</small><div class="dgm-nodes"><span>Kafka<em>keyed by payment</em></span><span>Ledger service<em>double-entry, idempotent consumer</em></span><span>Notifications<em>idempotent consumer</em></span></div></div>
+<div class="dgm-tier"><small>Assure</small><div class="dgm-nodes"><span class="hl">Reconciliation<em>provider files vs ledger</em></span><span>Exception queue<em>human review</em></span><span>Tracing and SLOs<em>end to end</em></span></div></div>
+</div>
+<figcaption>Layered architecture: idempotency at the edge, a single write plus outbox, and reconciliation closing the loop.</figcaption>
+</figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li class="hl"><b>Key</b><span>Client sends an Idempotency-Key; a repeat with the same key returns the stored result</span></li>
+<li><b>Write</b><span>Payment row and outbox record written in one Postgres transaction</span></li>
+<li><b>Call</b><span>Provider called with its own idempotency key derived from the payment ID</span></li>
+<li><b>Publish</b><span>Relay reads committed outbox records from the database log and publishes to Kafka</span></li>
+<li><b>Post</b><span>Ledger consumes events idempotently and records balanced double entries</span></li>
+<li class="hl"><b>Reconcile</b><span>Provider settlement data matched to ledger entries; mismatches become exceptions</span></li>
+</ol>
+<figcaption>Each hop either deduplicates or is safe to repeat, so retries anywhere are harmless.</figcaption>
+</figure>
+<p>The edge followed the IETF Idempotency-Key header draft, which defines how clients make non-idempotent methods such as POST fault-tolerant<sup class="cite"><a href="#ref-1">1</a></sup>, and borrowed conventions familiar from established payment APIs, such as rejecting a reused key with different parameters<sup class="cite"><a href="#ref-2">2</a></sup>. The full pattern is in <a href="/insights/idempotent-payments-order-pipelines/">idempotent payments and order pipelines</a>.</p>
+
+<h2>The hard part: the ambiguous middle</h2>
+<p>Duplicates at the edge are the easy case. The hard case is a request that times out somewhere in the middle: did the provider charge or not? The design handled it explicitly:</p>
+<ul>
+<li>The payment state machine had an "unknown" state for ambiguous provider outcomes, rather than guessing success or failure.</li>
+<li>Unknown payments were resolved by querying the provider, never by blindly retrying a charge.</li>
+<li>Provider calls carried their own idempotency keys, so a retry that did happen could not create a second charge on the provider's side.</li>
+<li>Events were produced through a transactional outbox: the change and the outbox record commit together and a relay publishes afterwards, which removes the dual-write problem without distributed transactions<sup class="cite"><a href="#ref-3">3</a></sup>. The relay used Debezium's outbox event router to turn outbox rows into routed Kafka events<sup class="cite"><a href="#ref-4">4</a></sup>.</li>
+</ul>
+<p>Because the relay can deliver a message more than once, every consumer was idempotent too, keyed by event ID. CDC details are in <a href="/insights/change-data-capture-event-streams/">change data capture and event streams</a>.</p>
+<div class="callout"><p>Exactly-once is not a property you buy from a broker. It is what you get when every producer is reliable and every consumer is idempotent.</p></div>
+
+<h2>How the engagement ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Client</small><ol><li>Generates key</li><li>Retries on timeout</li><li>Gets the same result</li></ol></div>
+<div class="dgm-lane"><small>Payments service</small><ol><li class="hl">Deduplicates by key</li><li>Writes payment and outbox</li><li>Resolves unknown states</li></ol></div>
+<div class="dgm-lane"><small>Ledger and recon</small><ol><li>Consumes idempotently</li><li>Posts double entries</li><li class="hl">Matches provider data</li></ol></div>
+</div>
+<figcaption>Retries are expected at every lane; none of them changes the outcome.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Stabilise</b><ul><li>Map failure modes</li><li>Idempotency at the edge</li><li>Tracing across hops</li></ul></div>
+<div><small>Phase 2</small><b>Outbox</b><ul><li>Single write plus outbox</li><li>CDC relay</li><li>Idempotent consumers</li></ul></div>
+<div><small>Phase 3</small><b>Ledger</b><ul><li>Double-entry postings</li><li>Unknown-state handling</li><li>Provider-side keys</li></ul></div>
+<div><small>Phase 4</small><b>Reconcile and hand off</b><ul><li>Automated matching</li><li>Exception queue</li><li>SLOs and runbooks</li></ul></div>
+</div>
+<figcaption>Stop the bleeding at the edge first, then fix the event path, then close the loop.</figcaption>
+</figure>
+<p>Every hop carried a trace context, so a single payment could be followed from the client request through the provider call, the outbox, the ledger posting and reconciliation when something looked wrong.</p>
+<p>Service level objectives and alerting followed <a href="/insights/slos-error-budgets-small-teams/">SLOs and error budgets for small teams</a>.</p>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Idempotency keys at the API edge</td><td>Deduplicate downstream</td><td>Stops duplicates before any side effect happens</td></tr>
+<tr><td>Transactional outbox with CDC</td><td>Write to database then publish</td><td>Events exist if and only if the write committed</td></tr>
+<tr><td>Explicit unknown state</td><td>Treat timeouts as failures</td><td>Avoids both double charges and lost payments</td></tr>
+<tr><td>Postgres as the payment source of truth</td><td>Event-sourced payments</td><td>Familiar to the team; strong transactional guarantees</td></tr>
+<tr><td>Automated reconciliation with exceptions</td><td>Manual matching</td><td>Scales with volume; people handle only real anomalies</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: name the ambiguous states in the data model and design for them explicitly. Differently: build reconciliation earlier. It is the system that tells you whether everything else is working, and it is the first place a new failure mode shows up.</p>
+<p>If your platform is outgrowing its original design, the <a href="/fractional-cto/">fractional CTO</a> page describes how I work with teams on this, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>

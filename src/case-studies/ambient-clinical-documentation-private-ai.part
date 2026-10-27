@@ -1,0 +1,86 @@
+<!--{"title": "Case study: private ambient clinical documentation with AI", "description": "How a provider group moved an AI scribe past security review: private speech and LLM inference, SMART on FHIR scopes, clinician sign-off and a full audit trail.", "short": "Private ambient clinical documentation", "h1": "Getting an ambient AI scribe through security review and into the EHR", "kicker": "Case study · Healthcare AI", "lede": "Clinicians were finishing notes in the evening, and every AI scribe pilot had stalled in security review. The goal was a private ambient documentation pipeline that drafted notes for clinician sign-off, ran on infrastructure the organisation controlled, and could prove what happened to every recording.", "date": "2026-10-28", "datetime": "2026-10-28T01:10:00+04:00", "readtime": "8 min read", "sector": "Healthcare · Provider group", "role": "AI architect", "engagement": "Architecture, pilot build and hand-off", "scope": "Consent, speech recognition, note drafting, EHR integration, audit", "stack": ["SMART on FHIR", "FHIR R4 DocumentReference", "Whisper-class ASR", "vLLM", "Private GPU nodes", "Kubernetes", "AuditEvent log", "Evaluation harness"], "outcomes": ["A security design the review board could approve, instead of another stalled pilot", "Draft notes written into the EHR only after clinician approval", "Every recording, draft and edit traceable through one audit trail", "An evaluation set that gated model and prompt changes before release"], "tags": ["healthcare", "ai", "llm", "fhir", "security"], "keywords": ["ambient AI scribe case study", "ambient clinical documentation", "private LLM healthcare", "AI scribe security review", "SMART on FHIR AI app", "on-premises speech recognition", "vLLM healthcare", "clinical note generation", "healthcare AI architect"], "faq": [["Why run an ambient scribe on private infrastructure?", "It keeps audio and transcripts inside a boundary the organisation already governs, which shortens security and privacy review and avoids sending identifiable conversations to a third party by default."], ["Does the AI write directly into the medical record?", "No. The model drafts a note with links back to the transcript, and a clinician reviews, edits and signs it. Only the approved note is written to the EHR."], ["How do you know the drafts are good enough?", "A curated evaluation set of consented encounters, scored by clinicians, is run before every model or prompt change. Changes that regress on omissions or unsupported statements do not ship."]], "related": ["/ai-architect/", "/healthcare-data-architecture/", "/insights/ambient-ai-scribes-architecture/"], "citations": [{"title": "Robust Speech Recognition via Large-Scale Weak Supervision", "url": "https://arxiv.org/abs/2212.04356", "publisher": "Radford et al., arXiv", "date": "2022"}, {"title": "Efficient Memory Management for Large Language Model Serving with PagedAttention", "url": "https://arxiv.org/abs/2309.06180", "publisher": "Kwon et al., arXiv", "date": "2023"}, {"title": "App Launch: Scopes and Launch Context (SMART App Launch)", "url": "https://hl7.org/fhir/smart-app-launch/scopes-and-launch-context.html", "publisher": "HL7 International"}, {"title": "DocumentReference (FHIR R4)", "url": "https://hl7.org/fhir/R4/DocumentReference.html", "publisher": "HL7 International"}, {"title": "AuditEvent (FHIR R4)", "url": "https://hl7.org/fhir/R4/AuditEvent.html", "publisher": "HL7 International"}]}-->
+<h2>The situation</h2>
+<p>A multi-specialty provider group had a documentation problem everyone could describe: clinicians finishing notes after clinic, and patients getting less eye contact than they deserved. Ambient AI scribes looked like the answer, and several vendor pilots had been started. Each one stalled in the same place: security and privacy review. Reviewers could not get clear answers about where audio went, who could see transcripts, how long anything was kept, or how a wrong sentence in a note would be caught.</p>
+<p>The ask was not "pick a better vendor". It was to design a pipeline the organisation could own end to end, so those questions had answers before the first recording.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>Consent first</strong>: no recording without a recorded patient consent, and an easy way to stop.</li>
+<li><strong>Data stays inside the boundary</strong>: audio, transcripts and drafts processed on infrastructure the organisation controls.</li>
+<li><strong>A human signs every note</strong>: the model drafts, the clinician decides.</li>
+<li><strong>Least privilege into the EHR</strong>: the app sees the current patient and encounter, nothing more.</li>
+<li><strong>Provable history</strong>: who recorded, what was generated, what was changed, what was filed.</li>
+</ul>
+
+<h2>Architecture</h2>
+<p>The design split the problem into capture, private inference, review and filing, with audit running across all of them.</p>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Capture</small><div class="dgm-nodes"><span>Clinic device app<em>consent check</em></span><span>Encrypted upload<em>short-lived tokens</em></span><span>Session context<em>patient, encounter</em></span></div></div>
+<div class="dgm-tier"><small>Private inference</small><div class="dgm-nodes"><span class="hl">Speech recognition<em>Whisper-class, private GPUs</em></span><span>Diarisation<em>clinician vs patient</em></span><span class="hl">Note drafting<em>LLM on vLLM</em></span></div></div>
+<div class="dgm-tier"><small>Review</small><div class="dgm-nodes"><span>Draft with sources<em>sentence to transcript links</em></span><span>Clinician editor<em>accept, edit, reject</em></span></div></div>
+<div class="dgm-tier"><small>EHR</small><div class="dgm-nodes"><span>SMART on FHIR launch<em>scoped access</em></span><span>DocumentReference<em>signed note only</em></span></div></div>
+<div class="dgm-tier"><small>Assure</small><div class="dgm-nodes"><span class="hl">Audit trail<em>AuditEvent per action</em></span><span>Evaluation harness<em>release gate</em></span><span>Retention jobs<em>audio deleted on schedule</em></span></div></div>
+</div>
+<figcaption>Layered architecture: inference stays private, the clinician sits between the model and the record, and audit spans every tier.</figcaption>
+</figure>
+<p>Speech recognition used a Whisper-class model, a family trained on large-scale weakly supervised audio and released with open weights<sup class="cite"><a href="#ref-1">1</a></sup>, which made private hosting practical. Note drafting ran on vLLM, whose PagedAttention memory management is designed for high-throughput serving on limited GPU memory<sup class="cite"><a href="#ref-2">2</a></sup>. Serving patterns are in <a href="/insights/llm-inference-serving-vllm/">LLM inference serving with vLLM</a> and <a href="/insights/private-llm-on-prem/">private LLMs on-premises</a>.</p>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Consent</b><span>App checks recorded consent for this encounter before the microphone is enabled</span></li>
+<li><b>Capture</b><span>Audio encrypted on device and uploaded against the encounter context</span></li>
+<li><b>Transcribe</b><span>Private ASR with speaker separation; transcript stored with the session</span></li>
+<li class="hl"><b>Draft</b><span>LLM drafts the note in the specialty template, each sentence linked to transcript spans</span></li>
+<li class="hl"><b>Sign</b><span>Clinician reviews, edits and signs; unsupported sentences are flagged for attention</span></li>
+<li><b>File</b><span>Signed note written to the EHR; audio deleted on the agreed retention schedule</span></li>
+</ol>
+<figcaption>The model never writes to the record. Only a signed note crosses into the EHR.</figcaption>
+</figure>
+<p>The app launched inside the EHR using SMART on FHIR, requesting only the patient and encounter context and the narrow scopes it needed<sup class="cite"><a href="#ref-3">3</a></sup>. The signed note was filed as a FHIR DocumentReference<sup class="cite"><a href="#ref-4">4</a></sup>. More on scope design in <a href="/insights/smart-on-fhir-ai-apps-authorisation/">SMART on FHIR authorisation for AI apps</a>.</p>
+
+<h2>The hard part: trust in the draft, not the transcript</h2>
+<p>Transcription quality was rarely the argument. The concern was a fluent note that said something the patient never said. Three choices addressed it:</p>
+<ul>
+<li><strong>Grounded drafting</strong>: every sentence in the draft carries a link to the transcript span it came from, and sentences without one are highlighted.</li>
+<li><strong>Clinician-scored evaluation</strong>: a curated set of consented encounters, scored by clinicians for omissions and unsupported statements, gated every model and prompt change. See <a href="/insights/llm-evaluation-sets-that-predict-production/">evaluation sets that predict production</a>.</li>
+<li><strong>Edit capture</strong>: what clinicians changed was recorded, so recurring corrections fed back into templates and the evaluation set.</li>
+</ul>
+<div class="callout"><p>An AI scribe is approved on the strength of its failure handling. Reviewers need to see how a wrong sentence is caught, not how rarely it appears in a demo.</p></div>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Clinician</small><ol><li>Confirms consent</li><li class="hl">Reviews linked draft</li><li>Signs note</li></ol></div>
+<div class="dgm-lane"><small>Pipeline</small><ol><li>Transcribes privately</li><li>Drafts with sources</li><li>Files signed note</li></ol></div>
+<div class="dgm-lane"><small>Governance</small><ol><li>Audit every action</li><li class="hl">Gate releases on evaluation</li><li>Enforce retention</li></ol></div>
+</div>
+<figcaption>Who does what in a single encounter.</figcaption>
+</figure>
+<p>Audit records followed the shape of the FHIR AuditEvent resource (who, what, when, outcome), so the trail could be queried alongside other EHR audit data<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Review first</b><ul><li>Threat model with security</li><li>Consent and retention policy</li><li>Data flow sign-off</li></ul></div>
+<div><small>Phase 2</small><b>Private pipeline</b><ul><li>ASR and LLM on private GPUs</li><li>SMART launch and scopes</li><li>Audit trail</li></ul></div>
+<div><small>Phase 3</small><b>Clinical pilot</b><ul><li>Small clinician cohort</li><li>Evaluation set from consented visits</li><li>Template tuning</li></ul></div>
+<div><small>Phase 4</small><b>Expand and hand off</b><ul><li>More specialties</li><li>Release gate runbook</li><li>Internal ownership</li></ul></div>
+</div>
+<figcaption>Security review was the first deliverable, not the last hurdle.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Private inference</td><td>Hosted scribe API</td><td>Answers data residency and access questions directly; costs GPU operations effort</td></tr>
+<tr><td>Clinician signs every note</td><td>Auto-file low-risk notes</td><td>Keeps accountability with the clinician and the model out of the record</td></tr>
+<tr><td>Sentence-level source links</td><td>Free-text summary</td><td>Makes unsupported statements visible during review</td></tr>
+<tr><td>Narrow SMART scopes</td><td>Broad backend access</td><td>Least privilege that reviewers can verify</td></tr>
+<tr><td>Evaluation as release gate</td><td>Ad hoc spot checks</td><td>Model and prompt changes cannot silently regress</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: take the design to the security board before building anything, and treat evaluation as infrastructure. Differently: involve clinicians in template design earlier. Most edits were about structure and specialty conventions, not model accuracy, and that work is cheaper before the pilot than during it. The broader architecture patterns are in <a href="/insights/ambient-ai-scribes-architecture/">ambient AI scribe architecture</a>.</p>
+<p>If you have an AI pilot stuck in review, the <a href="/ai-architect/">AI architect</a> page describes how I approach these engagements, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>

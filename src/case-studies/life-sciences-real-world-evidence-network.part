@@ -1,0 +1,86 @@
+<!--{"title": "Case study: a real-world evidence network for a life sciences team", "description": "How a life sciences evidence team ran reproducible OMOP studies across external data partners: pre-specified designs, negative controls and packaged study code.", "short": "Life sciences real-world evidence network", "h1": "Building a reproducible real-world evidence network across external data partners", "kicker": "Case study · Life sciences", "lede": "A pharmaceutical evidence team licensed data from several partners and started every study with a new data pull and months of cleaning. The goal was a study pipeline that ran the same pre-specified design at every partner, measured its own bias, and could be re-run exactly when a regulator asked.", "date": "2026-10-28", "datetime": "2026-10-28T01:14:00+04:00", "readtime": "8 min read", "sector": "Life sciences · Pharmaceutical", "role": "Principal data architect", "engagement": "Architecture, study tooling and hand-off", "scope": "Partner onboarding, OMOP, study design, diagnostics, reproducibility", "stack": ["OMOP CDM", "OHDSI HADES", "Strategus", "CohortMethod", "ATLAS", "Data Quality Dashboard", "Spark", "renv"], "outcomes": ["Studies specified once and executed at every data partner without moving patient-level data", "Bias measured with negative controls before results were unblinded", "Each result reproducible from a pinned study package, data version and environment", "A partner onboarding path that made new data sources usable for existing studies"], "tags": ["healthcare", "omop", "data", "governance", "regulation"], "keywords": ["real-world evidence case study", "pharma RWE platform", "OMOP data partners", "negative controls", "empirical calibration", "OHDSI HADES", "Strategus", "regulatory grade RWE", "federated observational research", "life sciences data architect"], "faq": [["How is this different from a hospital research platform?", "A hospital platform standardises its own data. A life sciences evidence network works with external partners who keep their data, so the focus shifts to study design, partner-side execution, diagnostics and reproducibility across many sources."], ["What are negative controls for?", "Negative controls are exposure and outcome pairs believed to have no causal relationship. If a study design finds effects for them, that reveals systematic bias, and the estimates can be calibrated or the design rejected."], ["What does regulatory-grade reproducibility mean in practice?", "Being able to re-run a study and get the same answer: the protocol, cohort definitions, analysis code, software environment, vocabulary and data versions are all pinned and archived together."]], "related": ["/healthcare-data-architecture/", "/ai-architect/", "/insights/real-world-evidence-study-designs-omop/"], "citations": [{"title": "Framework for FDA's Real-World Evidence Program", "url": "https://fda.gov/media/120060/download", "publisher": "US Food and Drug Administration", "date": "Dec 2018"}, {"title": "HADES: Health Analytics Data-to-Evidence Suite", "url": "https://ohdsi.github.io/Hades/", "publisher": "OHDSI"}, {"title": "Method validity (The Book of OHDSI)", "url": "https://book.ohdsi.org/MethodValidity.html", "publisher": "OHDSI"}, {"title": "Strategus", "url": "https://github.com/OHDSI/Strategus", "publisher": "OHDSI (GitHub)"}]}-->
+<h2>The situation</h2>
+<p>A life sciences evidence team answered questions about treatment patterns, comparative safety and outcomes using data licensed from several external partners: claims databases, EHR-derived datasets and a disease registry. Each study started the same way: negotiate an extract, receive files in the partner's format, spend months cleaning and harmonising, then write analysis code that only worked on that one extract. When a reviewer later asked a question, re-creating the original analysis was an archaeology project.</p>
+<p>The partners were also reluctant to send patient-level data at all. The team needed a way to run studies where the data lived, with results the organisation would be comfortable defending to a regulator.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>One common model at every partner</strong>, so study code runs unchanged.</li>
+<li><strong>Design before data</strong>: protocols, cohorts and analyses pre-specified and locked before results are seen.</li>
+<li><strong>Bias measured, not assumed</strong>, using controls with a known answer.</li>
+<li><strong>Exact reproducibility</strong> of any result, months or years later.</li>
+<li><strong>Data stays with the partner</strong>; only reviewed aggregates come back.</li>
+</ul>
+<p>The FDA's framework for its real-world evidence programme frames the questions such evidence will face, including whether the data are fit for use and whether the study design can provide adequate evidence<sup class="cite"><a href="#ref-1">1</a></sup>. Those questions shaped the architecture from the start.</p>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Partners</small><div class="dgm-nodes"><span>Claims partner<em>OMOP CDM</em></span><span>EHR-derived partner<em>OMOP CDM</em></span><span>Registry partner<em>OMOP CDM</em></span></div></div>
+<div class="dgm-tier"><small>Fitness</small><div class="dgm-nodes"><span>Data Quality Dashboard<em>per release</em></span><span>Characterisation<em>feasibility counts</em></span><span>Partner data card<em>coverage, lag, gaps</em></span></div></div>
+<div class="dgm-tier"><small>Study design</small><div class="dgm-nodes"><span>Protocol<em>locked before execution</em></span><span>Cohort library<em>versioned definitions</em></span><span class="hl">Negative controls<em>outcomes with no known effect</em></span></div></div>
+<div class="dgm-tier"><small>Execution</small><div class="dgm-nodes"><span class="hl">Study package<em>Strategus spec, pinned renv</em></span><span>HADES modules<em>estimation, characterisation</em></span><span>Partner run<em>local, aggregates out</em></span></div></div>
+<div class="dgm-tier"><small>Evidence</small><div class="dgm-nodes"><span>Diagnostics review<em>before unblinding</em></span><span>Meta-analysis<em>across partners</em></span><span>Archive<em>package, versions, results</em></span></div></div>
+</div>
+<figcaption>Layered architecture: partners keep their data in OMOP; the team ships locked study packages and receives diagnostics and aggregates.</figcaption>
+</figure>
+<p>Analytics used OHDSI's HADES packages, open-source R tools for characterisation, population-level effect estimation and patient-level prediction against the OMOP CDM<sup class="cite"><a href="#ref-2">2</a></sup>. Partner conversions followed the patterns in <a href="/insights/fhir-to-omop-architecture/">FHIR to OMOP architecture</a> and <a href="/insights/clinical-terminologies-omop-vocabularies/">OMOP vocabularies</a> where partners started from scratch.</p>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Question</b><span>Research question and protocol written; estimand, cohorts and comparators fixed</span></li>
+<li><b>Feasibility</b><span>Aggregate counts from each partner confirm the question is answerable there</span></li>
+<li class="hl"><b>Package</b><span>Cohorts, analyses and negative controls bundled as one specification with a pinned environment</span></li>
+<li><b>Execute</b><span>Each partner runs the package locally against its current OMOP release</span></li>
+<li class="hl"><b>Diagnose</b><span>Balance, power and negative control results reviewed before any effect estimate is unblinded</span></li>
+<li><b>Synthesise</b><span>Calibrated estimates combined across partners; everything archived with versions</span></li>
+</ol>
+<figcaption>Diagnostics come before results. A study that fails them stops, whatever its estimate would have been.</figcaption>
+</figure>
+<p>Cohort practice is covered in <a href="/insights/omop-cohort-definitions/">OMOP cohort definitions</a>, and study design choices in <a href="/insights/real-world-evidence-study-designs-omop/">real-world evidence study designs on OMOP</a>.</p>
+
+<h2>The hard part: proving the design is not fooling you</h2>
+<p>Observational studies can produce confident, wrong answers. OHDSI's approach to method validity uses negative controls, exposure and outcome pairs believed to have no causal effect, to measure residual systematic error, and empirical calibration to adjust confidence intervals and p-values for it<sup class="cite"><a href="#ref-3">3</a></sup>. Making that routine required:</p>
+<ul>
+<li>A curated negative control list per study, reviewed by clinical scientists rather than generated and forgotten.</li>
+<li>A rule that effect estimates stay blinded until diagnostics (covariate balance, equipoise, negative control distribution) pass.</li>
+<li>Diagnostics reported per partner, because bias that appears in one data source and not another is itself a finding.</li>
+</ul>
+<div class="callout"><p>The most valuable output of a negative control analysis is permission to say "this design should not be trusted here". Building that into the process is what makes the other results credible.</p></div>
+
+<h2>How the engagement ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Evidence team</small><ol><li>Locks protocol</li><li class="hl">Builds study package</li><li>Reviews diagnostics</li></ol></div>
+<div class="dgm-lane"><small>Data partner</small><ol><li>Maintains OMOP release</li><li class="hl">Runs package locally</li><li>Releases aggregates</li></ol></div>
+<div class="dgm-lane"><small>Archive</small><ol><li>Package and environment</li><li>Data and vocabulary versions</li><li>Results and diagnostics</li></ol></div>
+</div>
+<figcaption>Study code travels to partners; diagnostics and aggregates travel back and are archived together.</figcaption>
+</figure>
+<p>Execution used Strategus, which runs HADES modules from a JSON analysis specification and restores a pinned R environment, separating study design from site-specific execution settings<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Foundations</b><ul><li>Partner OMOP readiness</li><li>Data cards and quality baselines</li><li>Governance with partners</li></ul></div>
+<div><small>Phase 2</small><b>Pilot study</b><ul><li>One question, two partners</li><li>Full diagnostics</li><li>Archive format</li></ul></div>
+<div><small>Phase 3</small><b>Library</b><ul><li>Reusable cohorts</li><li>Negative control sets</li><li>Package templates</li></ul></div>
+<div><small>Phase 4</small><b>Network</b><ul><li>More partners</li><li>Study intake process</li><li>Hand-off and training</li></ul></div>
+</div>
+<figcaption>A complete pilot study end to end before scaling partners.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>OMOP at every partner</td><td>Harmonise extracts centrally</td><td>Study code runs unchanged; data stays with the partner</td></tr>
+<tr><td>Locked, packaged studies</td><td>Analysts iterate on live data</td><td>Prevents result-driven design changes; enables exact re-runs</td></tr>
+<tr><td>Negative controls in every estimation study</td><td>Rely on adjustment alone</td><td>Measures residual bias instead of assuming it away</td></tr>
+<tr><td>Blind estimates until diagnostics pass</td><td>Review everything together</td><td>Keeps the decision to trust a design independent of its answer</td></tr>
+<tr><td>Open-source OHDSI tooling</td><td>Proprietary analytics platform</td><td>Transparent methods reviewers can inspect and partners already run</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: treat the archived study package as the deliverable, not the slide with the hazard ratio. Differently: invest earlier in partner data cards. Knowing each source's coverage, lag and coding habits up front would have saved feasibility rounds on questions some partners could never answer.</p>
+<p>If you are building evidence capability across data partners, the <a href="/healthcare-data-architecture/">healthcare data architecture</a> page describes how I run these engagements, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
