@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Case study: a curriculum-grounded AI tutor for an education platform</title>
+<meta name="description" content="How an education platform built an AI tutor grounded in its syllabus: curriculum retrieval, guided hints instead of answers, safety filters and teacher dashboards." />
+<meta name="keywords" content="AI tutor case study, curriculum grounded AI, education RAG, AI tutoring guardrails, guided hints AI, prompt caching cost, AI in schools, teacher dashboard AI, edtech LLM architecture, safe AI for students" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://asksumanta.com/case-studies/edtech-curriculum-grounded-tutor/" />
+<meta name="theme-color" content="#111214" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="Case study: a curriculum-grounded AI tutor for an education platform" />
+<meta property="og:description" content="How an education platform built an AI tutor grounded in its syllabus: curriculum retrieval, guided hints instead of answers, safety filters and teacher dashboards." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://asksumanta.com/case-studies/edtech-curriculum-grounded-tutor/" />
+<meta property="og:image" content="https://asksumanta.com/assets/og/edtech-curriculum-grounded-tutor.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Case study: a curriculum-grounded AI tutor for an education platform" />
+<meta name="twitter:description" content="How an education platform built an AI tutor grounded in its syllabus: curriculum retrieval, guided hints instead of answers, safety filters and teacher dashboards." />
+<meta name="twitter:image" content="https://asksumanta.com/assets/og/edtech-curriculum-grounded-tutor.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "Article", "headline": "Building an AI tutor that teaches the syllabus instead of doing the homework", "description": "How an education platform built an AI tutor grounded in its syllabus: curriculum retrieval, guided hints instead of answers, safety filters and teacher dashboards.", "articleSection": "Case study", "about": "Education · Digital learning", "datePublished": "2026-10-28T01:38:00+04:00", "dateModified": "2026-10-28T01:38:00+04:00", "citation": [{"@type": "CreativeWork", "name": "Guidance for generative AI in education and research", "url": "https://www.unesco.org/en/articles/guidance-generative-ai-education-and-research"}, {"@type": "CreativeWork", "name": "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks", "url": "https://arxiv.org/abs/2005.11401"}, {"@type": "CreativeWork", "name": "Prompt caching", "url": "https://docs.claude.com/en/docs/build-with-claude/prompt-caching"}, {"@type": "CreativeWork", "name": "OWASP Top 10 for LLM Applications 2025", "url": "https://genai.owasp.org/resource/owasp-top-10-for-llm-applications-2025/"}], "author": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "publisher": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "mainEntityOfPage": "https://asksumanta.com/case-studies/edtech-curriculum-grounded-tutor/", "image": "https://asksumanta.com/assets/og/edtech-curriculum-grounded-tutor.png", "keywords": "AI tutor case study, curriculum grounded AI, education RAG, AI tutoring guardrails, guided hints AI, prompt caching cost, AI in schools, teacher dashboard AI, edtech LLM architecture, safe AI for students", "wordCount": 909}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://asksumanta.com/"}, {"@type": "ListItem", "position": 2, "name": "Case studies", "item": "https://asksumanta.com/case-studies/"}, {"@type": "ListItem", "position": 3, "name": "Building an AI tutor that teaches the syllabus instead of doing the homework", "item": "https://asksumanta.com/case-studies/edtech-curriculum-grounded-tutor/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "How do you stop an AI tutor from just giving answers?", "acceptedAnswer": {"@type": "Answer", "text": "Make it a policy, not a hope. The tutoring policy decides when to hint, when to ask a question back and when a worked solution is appropriate, and evaluation checks that the model follows it."}}, {"@type": "Question", "name": "Why ground the tutor in the curriculum?", "acceptedAnswer": {"@type": "Answer", "text": "So explanations use the methods, notation and level the student is being taught. Retrieval from the platform's own content keeps the tutor aligned with the syllabus rather than the internet at large."}}, {"@type": "Question", "name": "What does prompt caching do for a tutor?", "acceptedAnswer": {"@type": "Answer", "text": "Tutoring prompts share a long, stable prefix: instructions, policy and curriculum context. Caching that prefix reduces repeated processing, which lowers cost and latency at classroom scale."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+</script>
+</head>
+<body class="sub is-post is-case">
+<div class="progress" id="progress"></div>
+<nav>
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="/#practice">Services</a>
+      <a href="/case-studies/">Case studies</a>
+      <a href="/insights/">Insights</a>
+      <a href="/#assess">Analyse</a>
+      <a href="/#connect">Connect</a>
+    </div>
+    <div class="nav-r">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/case-studies/">Case studies</a> <span>/</span> <em>Building an AI tutor that teaches the syllabus instead of doing the homework</em></div>
+    <div class="kicker">Case study · Education AI</div>
+    <h1>Building an AI tutor that teaches the syllabus instead of doing the homework</h1>
+    <p class="sub-lede">Generic chatbots gave students answers that ignored the syllabus, skipped the reasoning and pitched the language at the wrong age. The goal was a tutor grounded in the curriculum, that guides with hints rather than handing over answers, stays safe for young learners and shows teachers where students are stuck.</p>
+    <div class="ameta"><span class="fmt">Case study</span><span>Education · Digital learning</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-10-28T01:38:00+04:00">28 Oct 2026 · 01:38 GST</time><span>8 min read</span></div><div class="atags"><span class="tagp">#ai</span><span class="tagp">#llm</span><span class="tagp">#governance</span><span class="tagp">#security</span><span class="tagp">#finops</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Case study cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><line x1="937" y1="367" x2="1014" y2="336" class="cv-edge" opacity="0.45"/><line x1="937" y1="367" x2="1003" y2="349" class="cv-edge hl" opacity="0.54"/><line x1="937" y1="367" x2="854" y2="372" class="cv-edge" opacity="0.45"/><line x1="937" y1="367" x2="884" y2="354" class="cv-edge hl" opacity="0.64"/><line x1="937" y1="367" x2="888" y2="358" class="cv-edge hl" opacity="0.67"/><line x1="532" y1="135" x2="617" y2="195" class="cv-edge" opacity="0.30"/><line x1="532" y1="135" x2="545" y2="130" class="cv-edge" opacity="0.91"/><line x1="532" y1="135" x2="578" y2="252" class="cv-edge" opacity="0.17"/><line x1="532" y1="135" x2="618" y2="221" class="cv-edge hl" opacity="0.19"/><line x1="552" y1="313" x2="624" y2="330" class="cv-edge" opacity="0.51"/><line x1="552" y1="313" x2="617" y2="195" class="cv-edge" opacity="0.10"/><line x1="552" y1="313" x2="659" y2="264" class="cv-edge" opacity="0.22"/><line x1="552" y1="313" x2="578" y2="252" class="cv-edge" opacity="0.56"/><line x1="552" y1="313" x2="618" y2="221" class="cv-edge hl" opacity="0.24"/><line x1="624" y1="330" x2="617" y2="195" class="cv-edge" opacity="0.10"/><line x1="624" y1="330" x2="659" y2="264" class="cv-edge" opacity="0.50"/><line x1="624" y1="330" x2="578" y2="252" class="cv-edge" opacity="0.39"/><line x1="624" y1="330" x2="618" y2="221" class="cv-edge hl" opacity="0.27"/><line x1="1014" y1="336" x2="1003" y2="349" class="cv-edge hl" opacity="0.89"/><line x1="1014" y1="336" x2="884" y2="354" class="cv-edge hl" opacity="0.13"/><line x1="1014" y1="336" x2="888" y2="358" class="cv-edge hl" opacity="0.15"/><line x1="1014" y1="336" x2="1146" y2="326" class="cv-edge" opacity="0.12"/><line x1="710" y1="121" x2="617" y2="195" class="cv-edge" opacity="0.21"/><line x1="710" y1="121" x2="781" y2="172" class="cv-edge" opacity="0.41"/><line x1="710" y1="121" x2="838" y2="107" class="cv-edge" opacity="0.14"/><line x1="710" y1="121" x2="660" y2="39" class="cv-edge" opacity="0.36"/><line x1="710" y1="121" x2="618" y2="221" class="cv-edge hl" opacity="0.10"/><line x1="710" y1="121" x2="818" y2="89" class="cv-edge" opacity="0.25"/><line x1="617" y1="195" x2="659" y2="264" class="cv-edge" opacity="0.46"/><line x1="617" y1="195" x2="545" y2="130" class="cv-edge" opacity="0.35"/><line x1="617" y1="195" x2="578" y2="252" class="cv-edge" opacity="0.54"/><line x1="617" y1="195" x2="618" y2="221" class="cv-edge hl" opacity="0.83"/><line x1="1003" y1="349" x2="884" y2="354" class="cv-edge hl" opacity="0.21"/><line x1="1003" y1="349" x2="888" y2="358" class="cv-edge hl" opacity="0.23"/><line x1="1003" y1="349" x2="1146" y2="326" class="cv-edge hl" opacity="0.04"/><line x1="854" y1="372" x2="884" y2="354" class="cv-edge hl" opacity="0.77"/><line x1="854" y1="372" x2="888" y2="358" class="cv-edge hl" opacity="0.76"/><line x1="1077" y1="53" x2="1146" y2="75" class="cv-edge" opacity="0.52"/><line x1="1077" y1="53" x2="1104" y2="40" class="cv-edge hl" opacity="0.80"/><line x1="1077" y1="53" x2="1098" y2="122" class="cv-edge" opacity="0.52"/><line x1="1077" y1="53" x2="1069" y2="31" class="cv-edge hl" opacity="0.84"/><line x1="659" y1="264" x2="578" y2="252" class="cv-edge" opacity="0.45"/><line x1="659" y1="264" x2="618" y2="221" class="cv-edge hl" opacity="0.60"/><line x1="1146" y1="75" x2="1104" y2="40" class="cv-edge hl" opacity="0.64"/><line x1="1146" y1="75" x2="1098" y2="122" class="cv-edge" opacity="0.55"/><line x1="1146" y1="75" x2="1069" y2="31" class="cv-edge hl" opacity="0.41"/><line x1="884" y1="354" x2="888" y2="358" class="cv-edge hl" opacity="0.96"/><line x1="781" y1="172" x2="838" y2="107" class="cv-edge" opacity="0.42"/><line x1="781" y1="172" x2="890" y2="163" class="cv-edge" opacity="0.27"/><line x1="781" y1="172" x2="818" y2="89" class="cv-edge" opacity="0.40"/><line x1="1104" y1="40" x2="1098" y2="122" class="cv-edge hl" opacity="0.45"/><line x1="1104" y1="40" x2="1069" y2="31" class="cv-edge hl" opacity="0.76"/><line x1="838" y1="107" x2="890" y2="163" class="cv-edge" opacity="0.49"/><line x1="838" y1="107" x2="818" y2="89" class="cv-edge" opacity="0.82"/><line x1="890" y1="163" x2="818" y2="89" class="cv-edge" opacity="0.31"/><line x1="1098" y1="122" x2="1069" y2="31" class="cv-edge hl" opacity="0.36"/><line x1="660" y1="39" x2="545" y2="130" class="cv-edge" opacity="0.02"/><line x1="545" y1="130" x2="578" y2="252" class="cv-edge" opacity="0.16"/><line x1="545" y1="130" x2="618" y2="221" class="cv-edge hl" opacity="0.22"/><line x1="578" y1="252" x2="618" y2="221" class="cv-edge hl" opacity="0.66"/><circle cx="937" cy="367" r="3" class="cv-dot"/><circle cx="532" cy="135" r="3" class="cv-dot"/><circle cx="552" cy="313" r="3" class="cv-dot"/><circle cx="624" cy="330" r="3" class="cv-dot"/><circle cx="1014" cy="336" r="3" class="cv-dot"/><circle cx="710" cy="121" r="3" class="cv-dot"/><circle cx="617" cy="195" r="3" class="cv-dot"/><circle cx="1003" cy="349" r="6" class="cv-dot hl"/><circle cx="854" cy="372" r="3" class="cv-dot"/><circle cx="1077" cy="53" r="3" class="cv-dot"/><circle cx="659" cy="264" r="3" class="cv-dot"/><circle cx="1146" cy="75" r="3" class="cv-dot"/><circle cx="884" cy="354" r="6" class="cv-dot hl"/><circle cx="781" cy="172" r="3" class="cv-dot"/><circle cx="1104" cy="40" r="6" class="cv-dot hl"/><circle cx="838" cy="107" r="3" class="cv-dot"/><circle cx="890" cy="163" r="3" class="cv-dot"/><circle cx="888" cy="358" r="6" class="cv-dot hl"/><circle cx="1098" cy="122" r="3" class="cv-dot"/><circle cx="1146" cy="326" r="3" class="cv-dot"/><circle cx="660" cy="39" r="3" class="cv-dot"/><circle cx="545" cy="130" r="3" class="cv-dot"/><circle cx="1069" cy="31" r="6" class="cv-dot hl"/><circle cx="578" cy="252" r="3" class="cv-dot"/><circle cx="618" cy="221" r="6" class="cv-dot hl"/><circle cx="818" cy="89" r="3" class="cv-dot"/><text x="60" y="90" class="cv-k">CASE STUDY · CASE STUDY · EDUCATION AI</text><text x="60" y="350" class="cv-n">28 Oct 2026 · 01:38 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <section class="glance rise" aria-label="At a glance"><div class="kicker">At a glance</div><div class="glance-grid"><div><small>Sector</small><b>Education · Digital learning</b></div><div><small>My role</small><b>AI architect</b></div><div><small>Engagement</small><b>Architecture, pedagogy-aware design and build</b></div><div><small>Scope</small><b>Curriculum retrieval, tutoring policy, safety, cost control, teacher analytics</b></div></div><div class="glance-out"><small>What changed</small><ul><li>Tutor responses grounded in the platform&#x27;s own syllabus content and level</li><li>Hints and questions by default, with full solutions only where the teaching design allows</li><li>Safety controls on both student input and tutor output, tuned for the age range</li><li>Teachers see common misconceptions and stuck points, not raw chat transcripts</li></ul></div><div class="cs-stack"><span class="tag">LLM</span><span class="tag">Retrieval over curriculum content</span><span class="tag">Vector and keyword search</span><span class="tag">Prompt caching</span><span class="tag">Input and output guardrails</span><span class="tag">Evaluation harness</span><span class="tag">Event analytics</span><span class="tag">Teacher dashboard</span></div><p class="glance-note">Anonymised composite. Client names, identifying details and confidential figures are withheld; public facts are cited in the references.</p></section><h2 id="the-situation">The situation</h2>
+<p>An education platform served structured courses to school-age students, aligned to a defined syllabus. Students were already using general-purpose chatbots for homework help, and teachers could see the result: correct answers with methods the class had never been taught, explanations pitched at university level, and no sign the student had learned anything. The platform wanted its own tutor, built around how its courses actually teach, and one that teachers could see into and trust rather than work around.</p>
+
+<h2 id="what-had-to-be-true">What had to be true</h2>
+<ul>
+<li><strong>Grounded in the syllabus</strong>: the same methods, notation and vocabulary as the lessons.</li>
+<li><strong>Teaches, not tells</strong>: hints and questions first, with solutions only where the teaching design allows.</li>
+<li><strong>Safe for the age range</strong>, on what students type and on what the tutor says.</li>
+<li><strong>Useful to teachers</strong>, as insight into misconceptions rather than transcripts to read.</li>
+<li><strong>Affordable at classroom scale</strong>, when a whole year group logs in at once.</li>
+</ul>
+<p>UNESCO's guidance on generative AI in education calls for data privacy protections, an age limit for independent use and validation of tools for pedagogical and ethical suitability<sup class="cite"><a href="#ref-1">1</a></sup>. Those became design inputs, not an afterthought: the tutor was designed for supervised use within the platform, with schools in control of access.</p>
+
+<h2 id="architecture">Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Student</small><div class="dgm-nodes"><span>Lesson context<em>course, unit, exercise</em></span><span>Tutor chat<em>in the lesson page</em></span><span>Work shown<em>steps, attempts</em></span></div></div>
+<div class="dgm-tier"><small>Safety</small><div class="dgm-nodes"><span class="hl">Input guardrails<em>age-appropriate, PII</em></span><span>Output guardrails<em>tone, content, level</em></span><span>Escalation<em>flag to teacher</em></span></div></div>
+<div class="dgm-tier"><small>Grounding</small><div class="dgm-nodes"><span class="hl">Curriculum retrieval<em>lessons, worked examples</em></span><span>Level metadata<em>year, unit, objective</em></span><span>Misconception library<em>authored by teachers</em></span></div></div>
+<div class="dgm-tier"><small>Tutoring</small><div class="dgm-nodes"><span class="hl">Tutoring policy<em>hint, question, explain</em></span><span>LLM<em>cached stable prefix</em></span><span>Evaluation<em>policy adherence</em></span></div></div>
+<div class="dgm-tier"><small>Insight</small><div class="dgm-nodes"><span>Learning events<em>attempts, hints used</em></span><span>Teacher dashboard<em>stuck points by objective</em></span><span>Content feedback<em>to curriculum team</em></span></div></div>
+</div>
+<figcaption>Layered architecture: safety wraps everything; the tutoring policy, not the model, decides how to respond.</figcaption>
+</figure>
+<p>Grounding followed the retrieval-augmented generation pattern, combining a model with retrieval from a specific corpus<sup class="cite"><a href="#ref-2">2</a></sup>, here the platform's own lessons and worked examples filtered by the student's course and unit. See the <a href="/insights/rag-to-production-checklist/">RAG to production checklist</a>.</p>
+
+<h2 id="the-data-flow-end-to-end">The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Ask</b><span>Student question arrives with lesson, unit and attempt context</span></li>
+<li><b>Screen</b><span>Input guardrails check content and strip personal details</span></li>
+<li class="hl"><b>Ground</b><span>Retrieve lesson content and known misconceptions for this objective</span></li>
+<li class="hl"><b>Guide</b><span>Tutoring policy chooses a hint, a question back or an explanation</span></li>
+<li><b>Check</b><span>Output guardrails confirm tone, level and that no answer is leaked</span></li>
+<li><b>Learn</b><span>Event recorded against the objective for teacher insight</span></li>
+</ol>
+<figcaption>The answer to "what is the student stuck on?" is captured as structured events, not left buried in chat.</figcaption>
+</figure>
+
+<h2 id="the-hard-part-hinting-without-leaking-the-answer">The hard part: hinting without leaking the answer</h2>
+<p>Getting a model to be helpful is easy. Getting it to be helpful in the right way, and to resist a determined student asking for "just the answer" five different ways, is the real work.</p>
+<ul>
+<li>The tutoring policy was explicit and versioned: which exercise types allow worked solutions, how many hints before a fuller explanation, when to ask the student to show their step.</li>
+<li>Teachers authored a misconception library per objective, so hints targeted the likely error rather than repeating the method.</li>
+<li>An output check compared tutor responses against the exercise's answer key to catch leaked final answers.</li>
+<li>Attempts to override the tutor's instructions were treated as expected behaviour, not edge cases; prompt injection is the first entry in the OWASP Top 10 for LLM applications<sup class="cite"><a href="#ref-4">4</a></sup>. See <a href="/insights/prompt-injection-defence-for-agents/">prompt injection defence</a>.</li>
+</ul>
+<div class="callout"><p>The best tutor response is often a question. Evaluate for that explicitly, because a model left alone will optimise for being helpful in the moment.</p></div>
+
+<h2 id="how-the-engagement-ran">How the engagement ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Teachers</small><ol><li>Write misconceptions</li><li class="hl">Grade tutor transcripts</li><li>Act on dashboard insight</li></ol></div>
+<div class="dgm-lane"><small>Curriculum team</small><ol><li>Tag content by objective</li><li>Set tutoring policy per exercise</li><li>Fix gaps the tutor exposes</li></ol></div>
+<div class="dgm-lane"><small>Platform</small><ol><li>Retrieval and guardrails</li><li class="hl">Evaluation gate</li><li>Cost and latency monitoring</li></ol></div>
+</div>
+<figcaption>Educators define good tutoring; the platform measures it before release.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Pedagogy</b><ul><li>Tutoring policy</li><li>Safety requirements</li><li>Success criteria</li></ul></div>
+<div><small>Phase 2</small><b>One subject</b><ul><li>Content tagging</li><li>Retrieval and guardrails</li><li>Teacher-graded test set</li></ul></div>
+<div><small>Phase 3</small><b>Classroom pilot</b><ul><li>Supervised use</li><li>Teacher dashboard</li><li>Cost tuning</li></ul></div>
+<div><small>Phase 4</small><b>Extend</b><ul><li>Further subjects</li><li>Policy refinements</li><li>Content feedback loop</li></ul></div>
+</div>
+<figcaption>Phased delivery: one subject and a supervised pilot before broadening.</figcaption>
+</figure>
+
+<h2 id="key-decisions-and-trade-offs">Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Retrieve from own curriculum</td><td>Rely on model knowledge</td><td>Matches taught methods, notation and level</td></tr>
+<tr><td>Explicit tutoring policy</td><td>"Be a good tutor" prompt</td><td>Testable behaviour per exercise type</td></tr>
+<tr><td>Guardrails on input and output</td><td>Output filtering only</td><td>Protects students and the tutor's instructions</td></tr>
+<tr><td>Prompt caching on stable prefix</td><td>Full prompt every turn</td><td>Lower cost and latency at peak load</td></tr>
+<tr><td>Events, not transcripts, for teachers</td><td>Teachers read chats</td><td>Insight at class level; less exposure of student text</td></tr>
+</tbody>
+</table>
+<p>Tutoring prompts share a long, stable prefix of instructions, policy and lesson context. Prompt caching reuses a processed prompt prefix across requests, so only the changing tail is processed fresh, and any change to the prefix is a cache miss<sup class="cite"><a href="#ref-3">3</a></sup>. Structuring prompts so the stable parts come first made caching effective. Details in <a href="/insights/prompt-caching-llm-cost-latency/">prompt caching for cost and latency</a>.</p>
+
+<h2 id="what-i-d-do-again-and-differently">What I'd do again, and differently</h2>
+<p>Again: write the tutoring policy with teachers before writing prompts, and let teachers grade the test set. Differently: build the teacher dashboard earlier. Seeing where whole classes got stuck changed the content roadmap as much as the tutor.</p>
+<p>If you're building AI for learners, the <a href="/ai-architect/">AI architect</a> page describes how I run these engagements, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://www.unesco.org/en/articles/guidance-generative-ai-education-and-research" target="_blank" rel="noopener">Guidance for generative AI in education and research</a><small>UNESCO · 2023</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://arxiv.org/abs/2005.11401" target="_blank" rel="noopener">Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks</a><small>Lewis et al. (arXiv; NeurIPS 2020) · 2020</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://docs.claude.com/en/docs/build-with-claude/prompt-caching" target="_blank" rel="noopener">Prompt caching</a><small>Anthropic documentation</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://genai.owasp.org/resource/owasp-top-10-for-llm-applications-2025/" target="_blank" rel="noopener">OWASP Top 10 for LLM Applications 2025</a><small>OWASP GenAI Security Project</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fasksumanta.com%2Fcase-studies%2Fedtech-curriculum-grounded-tutor%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fasksumanta.com%2Fcase-studies%2Fedtech-curriculum-grounded-tutor%2F&amp;text=Building%20an%20AI%20tutor%20that%20teaches%20the%20syllabus%20instead%20of%20doing%20the%20homework" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=Building%20an%20AI%20tutor%20that%20teaches%20the%20syllabus%20instead%20of%20doing%20the%20homework%20https%3A%2F%2Fasksumanta.com%2Fcase-studies%2Fedtech-curriculum-grounded-tutor%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://asksumanta.com/case-studies/edtech-curriculum-grounded-tutor/">Copy link</button></div>
+      <div class="pnav"><a class="pn prev" href="/case-studies/legal-contract-review-ai/"><small>← Previous</small><b>Helping lawyers review contracts against the playbook without giving up the final word</b></a><a class="pn next" href="/case-studies/media-archive-metadata-enrichment/"><small>Next →</small><b>Making a decades-old media archive findable with model enrichment and a controlled vocabulary</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#the-situation">The situation</a></li><li><a href="#what-had-to-be-true">What had to be true</a></li><li><a href="#architecture">Architecture</a></li><li><a href="#the-data-flow-end-to-end">The data flow, end to end</a></li><li><a href="#the-hard-part-hinting-without-leaking-the-answer">The hard part: hinting without leaking the answer</a></li><li><a href="#how-the-engagement-ran">How the engagement ran</a></li><li><a href="#key-decisions-and-trade-offs">Key decisions and trade-offs</a></li><li><a href="#what-i-d-do-again-and-differently">What I&#x27;d do again, and differently</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>How do you stop an AI tutor from just giving answers?</summary><p>Make it a policy, not a hope. The tutoring policy decides when to hint, when to ask a question back and when a worked solution is appropriate, and evaluation checks that the model follows it.</p></details><details class="rise"><summary>Why ground the tutor in the curriculum?</summary><p>So explanations use the methods, notation and level the student is being taught. Retrieval from the platform&#x27;s own content keeps the tutor aligned with the syllabus rather than the internet at large.</p></details><details class="rise"><summary>What does prompt caching do for a tutor?</summary><p>Tutoring prompts share a long, stable prefix: instructions, policy and curriculum context. Caching that prefix reduces repeated processing, which lowers cost and latency at classroom scale.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/ai-architect/"><small>Service</small><b>AI &amp; LLM architecture</b><span>I design and build AI systems that leadership can trust: grounded in your data, measured by evaluations, governed by your rules and priced so they make sense at scale.</span><i>→</i></a><a class="rcard rise" href="/fractional-cto/"><small>Service</small><b>Fractional CTO</b><span>I work as a part-time CTO for founders, CEOs and boards who need experienced technical judgement now, and a team that can carry it on after I step back.</span><i>→</i></a><a class="rcard rise" href="/technical-due-diligence/"><small>Service</small><b>Technical due diligence</b><span>I give investors an independent, plain-language view of a company&#x27;s technology, team and AI claims, so the risks are priced in before the deal closes, not discovered after.</span><i>→</i></a><a class="rcard rise" href="/insights/terraform-secrets-out-of-state/"><small>Insight</small><b>Keeping secrets out of Terraform state: a checklist for platform teams</b><span>Most organisations using Terraform have database passwords, API keys or private keys sitting in state files, often in plaintext. For years that was simply how Terraform worked. Since versions 1.10 and 1.11 it doesn&#x27;t have to be, but the fix needs deliberate migration.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: Building an AI tutor that teaches the syllabus instead of doing the homework">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
+        <p class="floc">United States &amp; UAE · working globally</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/uae/">Fractional CTO in the UAE</a></li></ul></div>
+      <div class="fc"><h4>Case studies</h4><ul><li><a href="/case-studies/startup-fractional-cto-seed-to-series-a/">Startup fractional CTO, seed to Series A</a></li><li><a href="/case-studies/private-equity-ai-technical-due-diligence/">Private equity AI technical due diligence</a></li><li><a href="/case-studies/telecom-observability-slos/">Telecom observability and SLOs</a></li><li><a href="/case-studies/real-estate-document-intake-automation/">Real estate document intake automation</a></li><li><a href="/#work">Engagement snapshots</a></li><li><a href="/case-studies/">All case studies →</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/terraform-secrets-out-of-state/">Keeping secrets out of Terraform state: a checklist for platform teams</a></li><li><a href="/insights/slos-error-budgets-small-teams/">SLOs and error budgets for small teams: field notes on making reliability a decision, not a debate</a></li><li><a href="/insights/speculative-decoding-private-llms/">Speculative decoding for private LLMs: faster tokens without changing the answers</a></li><li><a href="/insights/real-world-evidence-study-designs-omop/">Real-world evidence on OMOP: comparing five study designs for treatment effects</a></li><li><a href="/insights/eu-ai-act-gpai-fine-tuning-provider/">Fine-tuning a foundation model? When the EU AI Act makes you a general-purpose AI provider</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>

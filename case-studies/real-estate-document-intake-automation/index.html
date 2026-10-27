@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Case study: automating document intake for a real estate operator</title>
+<meta name="description" content="How a property operator replaced manual keying of leases, IDs and invoices with schema-validated AI extraction, confidence thresholds and exception queues." />
+<meta name="keywords" content="document intake automation, lease abstraction AI, invoice extraction LLM, ID document extraction, structured outputs, JSON Schema validation, human in the loop, exception queue, proptech AI, intelligent document processing" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://asksumanta.com/case-studies/real-estate-document-intake-automation/" />
+<meta name="theme-color" content="#111214" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="Case study: automating document intake for a real estate operator" />
+<meta property="og:description" content="How a property operator replaced manual keying of leases, IDs and invoices with schema-validated AI extraction, confidence thresholds and exception queues." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://asksumanta.com/case-studies/real-estate-document-intake-automation/" />
+<meta property="og:image" content="https://asksumanta.com/assets/og/real-estate-document-intake-automation.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Case study: automating document intake for a real estate operator" />
+<meta name="twitter:description" content="How a property operator replaced manual keying of leases, IDs and invoices with schema-validated AI extraction, confidence thresholds and exception queues." />
+<meta name="twitter:image" content="https://asksumanta.com/assets/og/real-estate-document-intake-automation.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "Article", "headline": "Automating lease, ID and invoice intake without letting a model write to the ledger", "description": "How a property operator replaced manual keying of leases, IDs and invoices with schema-validated AI extraction, confidence thresholds and exception queues.", "articleSection": "Case study", "about": "Real estate · Property operator", "datePublished": "2026-10-28T01:42:00+04:00", "dateModified": "2026-10-28T01:42:00+04:00", "citation": [{"@type": "CreativeWork", "name": "JSON Schema specification", "url": "https://json-schema.org/specification"}, {"@type": "CreativeWork", "name": "LLM01:2025 Prompt Injection", "url": "https://genai.owasp.org/llmrisk/llm01-prompt-injection/"}, {"@type": "CreativeWork", "name": "Constraints (PostgreSQL documentation)", "url": "https://www.postgresql.org/docs/current/ddl-constraints.html"}, {"@type": "CreativeWork", "name": "AI Risk Management Framework", "url": "https://www.nist.gov/itl/ai-risk-management-framework"}], "author": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "publisher": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "mainEntityOfPage": "https://asksumanta.com/case-studies/real-estate-document-intake-automation/", "image": "https://asksumanta.com/assets/og/real-estate-document-intake-automation.png", "keywords": "document intake automation, lease abstraction AI, invoice extraction LLM, ID document extraction, structured outputs, JSON Schema validation, human in the loop, exception queue, proptech AI, intelligent document processing", "wordCount": 961}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://asksumanta.com/"}, {"@type": "ListItem", "position": 2, "name": "Case studies", "item": "https://asksumanta.com/case-studies/"}, {"@type": "ListItem", "position": 3, "name": "Automating lease, ID and invoice intake without letting a model write to the ledger", "item": "https://asksumanta.com/case-studies/real-estate-document-intake-automation/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Can an LLM extract data from leases and invoices reliably?", "acceptedAnswer": {"@type": "Answer", "text": "It can extract most fields well, but reliability comes from what surrounds the model: a strict output schema, deterministic validation, cross-checks against known data and a review queue for anything uncertain."}}, {"@type": "Question", "name": "Should the model post directly to the core system?", "acceptedAnswer": {"@type": "Answer", "text": "No. The model should only produce a candidate record. Deterministic code validates it and posts it, so the model never holds credentials or decides what is written."}}, {"@type": "Question", "name": "How do you set confidence thresholds?", "acceptedAnswer": {"@type": "Answer", "text": "Measure against a labelled sample of real documents, per document type and per field, and set thresholds from observed error rates rather than the model's self-reported certainty."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+</script>
+</head>
+<body class="sub is-post is-case">
+<div class="progress" id="progress"></div>
+<nav>
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="/#practice">Services</a>
+      <a href="/case-studies/">Case studies</a>
+      <a href="/insights/">Insights</a>
+      <a href="/#assess">Analyse</a>
+      <a href="/#connect">Connect</a>
+    </div>
+    <div class="nav-r">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/case-studies/">Case studies</a> <span>/</span> <em>Automating lease, ID and invoice intake without letting a model write to the ledger</em></div>
+    <div class="kicker">Case study · Real estate and applied AI</div>
+    <h1>Automating lease, ID and invoice intake without letting a model write to the ledger</h1>
+    <p class="sub-lede">Leases, identity documents and supplier invoices arrived as scans, photos and PDFs, and every one was keyed in by hand before a tenant could be onboarded or a bill paid. The goal was to automate the routine documents and make the rest faster to check, while keeping the core system&#x27;s data trustworthy.</p>
+    <div class="ameta"><span class="fmt">Case study</span><span>Real estate · Property operator</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-10-28T01:42:00+04:00">28 Oct 2026 · 01:42 GST</time><span>8 min read</span></div><div class="atags"><span class="tagp">#ai</span><span class="tagp">#llm</span><span class="tagp">#data</span><span class="tagp">#security</span><span class="tagp">#architecture</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Case study cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><line x1="1028" y1="360" x2="1156" y2="346" class="cv-edge" opacity="0.14"/><line x1="1028" y1="360" x2="1136" y2="328" class="cv-edge" opacity="0.25"/><line x1="1028" y1="360" x2="1157" y2="363" class="cv-edge" opacity="0.14"/><line x1="616" y1="254" x2="682" y2="228" class="cv-edge hl" opacity="0.53"/><line x1="616" y1="254" x2="756" y2="292" class="cv-edge" opacity="0.03"/><line x1="616" y1="254" x2="657" y2="323" class="cv-edge" opacity="0.46"/><line x1="616" y1="254" x2="567" y2="237" class="cv-edge hl" opacity="0.65"/><line x1="616" y1="254" x2="617" y2="280" class="cv-edge" opacity="0.83"/><line x1="616" y1="254" x2="552" y2="289" class="cv-edge" opacity="0.52"/><line x1="616" y1="254" x2="532" y2="354" class="cv-edge" opacity="0.13"/><line x1="616" y1="254" x2="724" y2="348" class="cv-edge hl" opacity="0.04"/><line x1="682" y1="228" x2="756" y2="292" class="cv-edge hl" opacity="0.34"/><line x1="682" y1="228" x2="657" y2="323" class="cv-edge hl" opacity="0.34"/><line x1="682" y1="228" x2="567" y2="237" class="cv-edge hl" opacity="0.23"/><line x1="682" y1="228" x2="824" y2="205" class="cv-edge hl" opacity="0.04"/><line x1="682" y1="228" x2="658" y2="98" class="cv-edge hl" opacity="0.12"/><line x1="682" y1="228" x2="617" y2="280" class="cv-edge hl" opacity="0.45"/><line x1="682" y1="228" x2="552" y2="289" class="cv-edge hl" opacity="0.04"/><line x1="682" y1="228" x2="724" y2="348" class="cv-edge hl" opacity="0.15"/><line x1="853" y1="71" x2="883" y2="53" class="cv-edge" opacity="0.77"/><line x1="853" y1="71" x2="824" y2="205" class="cv-edge" opacity="0.08"/><line x1="853" y1="71" x2="896" y2="131" class="cv-edge" opacity="0.51"/><line x1="853" y1="71" x2="800" y2="66" class="cv-edge hl" opacity="0.65"/><line x1="756" y1="292" x2="657" y2="323" class="cv-edge" opacity="0.31"/><line x1="756" y1="292" x2="824" y2="314" class="cv-edge" opacity="0.52"/><line x1="756" y1="292" x2="824" y2="205" class="cv-edge" opacity="0.26"/><line x1="756" y1="292" x2="863" y2="369" class="cv-edge" opacity="0.12"/><line x1="756" y1="292" x2="617" y2="280" class="cv-edge" opacity="0.07"/><line x1="756" y1="292" x2="724" y2="348" class="cv-edge hl" opacity="0.57"/><line x1="657" y1="323" x2="567" y2="237" class="cv-edge hl" opacity="0.17"/><line x1="657" y1="323" x2="617" y2="280" class="cv-edge" opacity="0.60"/><line x1="657" y1="323" x2="552" y2="289" class="cv-edge" opacity="0.26"/><line x1="657" y1="323" x2="532" y2="354" class="cv-edge" opacity="0.14"/><line x1="657" y1="323" x2="724" y2="348" class="cv-edge hl" opacity="0.53"/><line x1="824" y1="314" x2="889" y2="222" class="cv-edge hl" opacity="0.25"/><line x1="824" y1="314" x2="824" y2="205" class="cv-edge" opacity="0.28"/><line x1="824" y1="314" x2="863" y2="369" class="cv-edge" opacity="0.55"/><line x1="824" y1="314" x2="724" y2="348" class="cv-edge hl" opacity="0.29"/><line x1="883" y1="53" x2="896" y2="131" class="cv-edge" opacity="0.47"/><line x1="883" y1="53" x2="800" y2="66" class="cv-edge hl" opacity="0.45"/><line x1="1100" y1="51" x2="1102" y2="99" class="cv-edge" opacity="0.68"/><line x1="1100" y1="51" x2="1096" y2="181" class="cv-edge" opacity="0.13"/><line x1="1100" y1="51" x2="1067" y2="90" class="cv-edge" opacity="0.66"/><line x1="1102" y1="99" x2="1096" y2="181" class="cv-edge" opacity="0.45"/><line x1="1102" y1="99" x2="1067" y2="90" class="cv-edge" opacity="0.76"/><line x1="1156" y1="346" x2="1136" y2="328" class="cv-edge" opacity="0.82"/><line x1="1156" y1="346" x2="1157" y2="363" class="cv-edge" opacity="0.89"/><line x1="889" y1="222" x2="824" y2="205" class="cv-edge hl" opacity="0.56"/><line x1="889" y1="222" x2="863" y2="369" class="cv-edge hl" opacity="0.00"/><line x1="889" y1="222" x2="896" y2="131" class="cv-edge hl" opacity="0.39"/><line x1="567" y1="237" x2="617" y2="280" class="cv-edge hl" opacity="0.56"/><line x1="567" y1="237" x2="552" y2="289" class="cv-edge hl" opacity="0.64"/><line x1="567" y1="237" x2="532" y2="354" class="cv-edge hl" opacity="0.19"/><line x1="1096" y1="181" x2="1067" y2="90" class="cv-edge" opacity="0.36"/><line x1="824" y1="205" x2="896" y2="131" class="cv-edge" opacity="0.31"/><line x1="824" y1="205" x2="800" y2="66" class="cv-edge hl" opacity="0.06"/><line x1="658" y1="98" x2="800" y2="66" class="cv-edge hl" opacity="0.03"/><line x1="863" y1="369" x2="724" y2="348" class="cv-edge hl" opacity="0.06"/><line x1="896" y1="131" x2="800" y2="66" class="cv-edge hl" opacity="0.23"/><line x1="617" y1="280" x2="552" y2="289" class="cv-edge" opacity="0.56"/><line x1="617" y1="280" x2="532" y2="354" class="cv-edge" opacity="0.25"/><line x1="617" y1="280" x2="724" y2="348" class="cv-edge hl" opacity="0.15"/><line x1="1136" y1="328" x2="1157" y2="363" class="cv-edge" opacity="0.73"/><line x1="552" y1="289" x2="532" y2="354" class="cv-edge" opacity="0.55"/><circle cx="1028" cy="360" r="3" class="cv-dot"/><circle cx="616" cy="254" r="3" class="cv-dot"/><circle cx="682" cy="228" r="6" class="cv-dot hl"/><circle cx="853" cy="71" r="3" class="cv-dot"/><circle cx="756" cy="292" r="3" class="cv-dot"/><circle cx="657" cy="323" r="3" class="cv-dot"/><circle cx="824" cy="314" r="3" class="cv-dot"/><circle cx="883" cy="53" r="3" class="cv-dot"/><circle cx="1100" cy="51" r="3" class="cv-dot"/><circle cx="1102" cy="99" r="3" class="cv-dot"/><circle cx="1156" cy="346" r="3" class="cv-dot"/><circle cx="889" cy="222" r="6" class="cv-dot hl"/><circle cx="567" cy="237" r="6" class="cv-dot hl"/><circle cx="1096" cy="181" r="3" class="cv-dot"/><circle cx="824" cy="205" r="3" class="cv-dot"/><circle cx="658" cy="98" r="3" class="cv-dot"/><circle cx="863" cy="369" r="3" class="cv-dot"/><circle cx="1067" cy="90" r="3" class="cv-dot"/><circle cx="896" cy="131" r="3" class="cv-dot"/><circle cx="617" cy="280" r="3" class="cv-dot"/><circle cx="1136" cy="328" r="3" class="cv-dot"/><circle cx="800" cy="66" r="6" class="cv-dot hl"/><circle cx="1157" cy="363" r="3" class="cv-dot"/><circle cx="552" cy="289" r="3" class="cv-dot"/><circle cx="532" cy="354" r="3" class="cv-dot"/><circle cx="724" cy="348" r="6" class="cv-dot hl"/><text x="60" y="90" class="cv-k">CASE STUDY · CASE STUDY · REAL ESTATE AND APPLIED AI</text><text x="60" y="350" class="cv-n">28 Oct 2026 · 01:42 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <section class="glance rise" aria-label="At a glance"><div class="kicker">At a glance</div><div class="glance-grid"><div><small>Sector</small><b>Real estate · Property operator</b></div><div><small>My role</small><b>AI architect</b></div><div><small>Engagement</small><b>Architecture, build and hand-off</b></div><div><small>Scope</small><b>Extraction, validation, exception workflow, integration</b></div></div><div class="glance-out"><small>What changed</small><ul><li>Routine documents posted to the core system without manual keying</li><li>Every extracted field validated against a schema and business rules before posting</li><li>Exceptions handled in one queue with the document and the reason side by side</li><li>An audit trail from each posted value back to its source document and reviewer</li></ul></div><div class="cs-stack"><span class="tag">Vision LLM</span><span class="tag">Structured outputs</span><span class="tag">JSON Schema</span><span class="tag">Rules engine</span><span class="tag">Workflow engine</span><span class="tag">Postgres</span><span class="tag">Object storage</span><span class="tag">Review UI</span></div><p class="glance-note">Anonymised composite. Client names, identifying details and confidential figures are withheld; public facts are cited in the references.</p></section><h2 id="the-situation">The situation</h2>
+<p>A property operator onboarded tenants and paid suppliers through a core property management system. Everything that fed it arrived as documents: signed leases, identity documents, proof of address, supplier invoices and service contracts. Each was opened, read and keyed by hand. Onboarding waited on the queue, keying errors surfaced later as billing disputes, and the team spent its time transcribing rather than checking.</p>
+<p>Earlier attempts with template-based OCR had struggled because the documents varied too much: different lease templates, scanned and photographed IDs, and invoices in every layout a supplier could invent.</p>
+
+<h2 id="what-had-to-be-true">What had to be true</h2>
+<ul>
+<li><strong>Every value validated before it reaches the core system</strong>, by rules the business can read.</li>
+<li><strong>The model never writes</strong>: it proposes a record, and deterministic code decides what is posted.</li>
+<li><strong>Uncertain documents go to people</strong>, with the reason and the source region visible.</li>
+<li><strong>Personal data handled deliberately</strong>: limited access, defined retention and no identity documents in logs or prompts beyond what extraction needs.</li>
+<li><strong>Traceability</strong> from any posted value back to the page it came from.</li>
+</ul>
+
+<h2 id="architecture">Architecture</h2>
+<p>Each document type had a versioned JSON Schema describing its fields, types, formats and required properties<sup class="cite"><a href="#ref-1">1</a></sup>. The model was asked to return output conforming to that schema, and the same schema validated the response, so a malformed answer failed loudly instead of slipping through. More on the pattern in <a href="/insights/structured-outputs-reliable-llm-integration/">structured outputs for reliable LLM integration</a>.</p>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Capture</small><div class="dgm-nodes"><span>Tenant portal<em>uploads</em></span><span>Shared mailbox<em>invoices</em></span><span>Branch scanning<em>signed leases</em></span></div></div>
+<div class="dgm-tier"><small>Classify</small><div class="dgm-nodes"><span>Document classifier<em>type and pages</em></span><span>Object storage<em>original, immutable</em></span><span>PII controls<em>access and retention</em></span></div></div>
+<div class="dgm-tier"><small>Extract</small><div class="dgm-nodes"><span class="hl">Vision LLM<em>schema-constrained output</em></span><span>Schema registry<em>versioned per type</em></span><span>Source regions<em>page and box per field</em></span></div></div>
+<div class="dgm-tier"><small>Validate</small><div class="dgm-nodes"><span class="hl">Rules and cross-checks<em>totals, dates, references</em></span><span>Confidence scoring<em>per field</em></span><span class="hl">Exception queue<em>reason-coded</em></span></div></div>
+<div class="dgm-tier"><small>Post</small><div class="dgm-nodes"><span>Workflow engine<em>idempotent steps</em></span><span>Core system API<em>service account</em></span><span>Audit store<em>Postgres</em></span></div></div>
+</div>
+<figcaption>Layered architecture: the model extracts, rules decide, and only deterministic code holds the credentials to post.</figcaption>
+</figure>
+
+<h2 id="the-data-flow-end-to-end">The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Receive</b><span>Store the original unchanged; record channel, uploader and checksum</span></li>
+<li><b>Classify</b><span>Identify document type and split multi-document uploads</span></li>
+<li class="hl"><b>Extract</b><span>Vision model returns a schema-shaped record with a source region for each field</span></li>
+<li class="hl"><b>Validate</b><span>Schema check, business rules, and cross-checks against tenant, unit and supplier data</span></li>
+<li><b>Route</b><span>Auto-post when every field passes thresholds; otherwise queue with reason codes</span></li>
+<li><b>Post</b><span>Workflow engine writes to the core system once, with an idempotency key, and logs lineage</span></li>
+</ol>
+<figcaption>Each step is recorded, so a disputed value can be traced to the document, model version and reviewer.</figcaption>
+</figure>
+<p>The audit and staging tables in Postgres carried their own check, not-null and foreign key constraints, so invalid states were rejected by the database as well as by the application<sup class="cite"><a href="#ref-3">3</a></sup>. Retries were safe because posting was idempotent, the same discipline described in <a href="/insights/idempotent-payments-order-pipelines/">idempotent payment and order pipelines</a>.</p>
+
+<h2 id="the-hard-part-confidence-you-can-act-on">The hard part: confidence you can act on</h2>
+<p>Extraction quality was rarely the blocker. Deciding when to trust it was. A model's own statement of certainty is not a reliable signal, so confidence was built from evidence instead:</p>
+<ul>
+<li><strong>Arithmetic and consistency checks</strong>: invoice lines must sum to totals, lease dates must be in order, rent schedules must match the term.</li>
+<li><strong>Reference checks</strong>: the unit, tenant or supplier must exist and match what the document claims.</li>
+<li><strong>Field-level thresholds</strong> set per document type from a labelled sample, with stricter rules on fields that move money or identify people.</li>
+<li><strong>Reason codes</strong> on every exception, so the team could see which rule or field caused most reviews and fix the cause.</li>
+</ul>
+<p>Documents are also untrusted input. Text inside an uploaded file can carry instructions aimed at the model, a form of indirect prompt injection<sup class="cite"><a href="#ref-2">2</a></sup>. The defence was architectural: the extraction model had no tools and no credentials, its output was confined to the schema, and posting was done by code that ignored anything outside defined fields. See <a href="/insights/prompt-injection-defence-for-agents/">prompt injection defence</a>.</p>
+<div class="callout"><p>The model is the least trusted component in the pipeline. Design so that the worst it can do is produce a record that fails validation.</p></div>
+
+<h2 id="how-the-engagement-ran">How the engagement ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Pipeline</small><ol><li>Classify and extract</li><li class="hl">Validate and score</li><li>Auto-post or queue</li></ol></div>
+<div class="dgm-lane"><small>Operations reviewer</small><ol><li>Open queued document</li><li class="hl">Correct highlighted fields</li><li>Approve for posting</li></ol></div>
+<div class="dgm-lane"><small>Process owner</small><ol><li>Review reason-code trends</li><li>Adjust rules and thresholds</li><li>Approve schema changes</li></ol></div>
+</div>
+<figcaption>Corrections feed the evaluation set; reason-code trends feed the rules.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Discover</b><ul><li>Document inventory</li><li>Field and rule catalogue</li><li>Data protection review</li></ul></div>
+<div><small>Phase 2</small><b>One document type</b><ul><li>Schema and extraction</li><li>Labelled sample</li><li>Review UI</li></ul></div>
+<div><small>Phase 3</small><b>Harden</b><ul><li>Cross-checks and thresholds</li><li>Idempotent posting</li><li>Monitoring</li></ul></div>
+<div><small>Phase 4</small><b>Extend and hand off</b><ul><li>Further document types</li><li>Runbooks</li><li>Change process for schemas</li></ul></div>
+</div>
+<figcaption>Phased delivery: start with one high-volume document type and add others on the same rails.</figcaption>
+</figure>
+<p>Ongoing monitoring of exception rates, corrections and drift by document type followed the measure-and-manage approach of the NIST AI Risk Management Framework<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+
+<h2 id="key-decisions-and-trade-offs">Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Vision LLM with schemas</td><td>Template OCR per layout</td><td>Handles layout variety without a template for every supplier</td></tr>
+<tr><td>Deterministic posting</td><td>Agent with system access</td><td>Model holds no credentials; injection cannot cause writes</td></tr>
+<tr><td>Evidence-based confidence</td><td>Model self-reported scores</td><td>Thresholds grounded in checks and measured error rates</td></tr>
+<tr><td>Reason-coded exceptions</td><td>Generic review queue</td><td>Shows which rule or field to improve next</td></tr>
+<tr><td>Versioned schemas per type</td><td>One generic document schema</td><td>Clear validation and safe, reviewable change</td></tr>
+</tbody>
+</table>
+
+<h2 id="what-i-d-do-again-and-differently">What I'd do again, and differently</h2>
+<p>Again: keep the model away from credentials and let validation, not the model, decide what is posted. Differently: build the labelled sample before the pipeline. Every threshold discussion went faster once there was a shared set of real documents to measure against.</p>
+<p>If you're planning something similar, the <a href="/ai-architect/">AI architect</a> page describes how I run these engagements, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://json-schema.org/specification" target="_blank" rel="noopener">JSON Schema specification</a><small>JSON Schema</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://genai.owasp.org/llmrisk/llm01-prompt-injection/" target="_blank" rel="noopener">LLM01:2025 Prompt Injection</a><small>OWASP Gen AI Security Project</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://www.postgresql.org/docs/current/ddl-constraints.html" target="_blank" rel="noopener">Constraints (PostgreSQL documentation)</a><small>PostgreSQL Global Development Group</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://www.nist.gov/itl/ai-risk-management-framework" target="_blank" rel="noopener">AI Risk Management Framework</a><small>NIST</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fasksumanta.com%2Fcase-studies%2Freal-estate-document-intake-automation%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fasksumanta.com%2Fcase-studies%2Freal-estate-document-intake-automation%2F&amp;text=Automating%20lease%2C%20ID%20and%20invoice%20intake%20without%20letting%20a%20model%20write%20to%20the%20ledger" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=Automating%20lease%2C%20ID%20and%20invoice%20intake%20without%20letting%20a%20model%20write%20to%20the%20ledger%20https%3A%2F%2Fasksumanta.com%2Fcase-studies%2Freal-estate-document-intake-automation%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://asksumanta.com/case-studies/real-estate-document-intake-automation/">Copy link</button></div>
+      <div class="pnav"><a class="pn prev" href="/case-studies/media-archive-metadata-enrichment/"><small>← Previous</small><b>Making a decades-old media archive findable with model enrichment and a controlled vocabulary</b></a><a class="pn next" href="/case-studies/telecom-observability-slos/"><small>Next →</small><b>From many monitoring tools to one view of what customers experience</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#the-situation">The situation</a></li><li><a href="#what-had-to-be-true">What had to be true</a></li><li><a href="#architecture">Architecture</a></li><li><a href="#the-data-flow-end-to-end">The data flow, end to end</a></li><li><a href="#the-hard-part-confidence-you-can-act-on">The hard part: confidence you can act on</a></li><li><a href="#how-the-engagement-ran">How the engagement ran</a></li><li><a href="#key-decisions-and-trade-offs">Key decisions and trade-offs</a></li><li><a href="#what-i-d-do-again-and-differently">What I&#x27;d do again, and differently</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>Can an LLM extract data from leases and invoices reliably?</summary><p>It can extract most fields well, but reliability comes from what surrounds the model: a strict output schema, deterministic validation, cross-checks against known data and a review queue for anything uncertain.</p></details><details class="rise"><summary>Should the model post directly to the core system?</summary><p>No. The model should only produce a candidate record. Deterministic code validates it and posts it, so the model never holds credentials or decides what is written.</p></details><details class="rise"><summary>How do you set confidence thresholds?</summary><p>Measure against a labelled sample of real documents, per document type and per field, and set thresholds from observed error rates rather than the model&#x27;s self-reported certainty.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/ai-architect/"><small>Service</small><b>AI &amp; LLM architecture</b><span>I design and build AI systems that leadership can trust: grounded in your data, measured by evaluations, governed by your rules and priced so they make sense at scale.</span><i>→</i></a><a class="rcard rise" href="/insights/terraform-secrets-out-of-state/"><small>Insight</small><b>Keeping secrets out of Terraform state: a checklist for platform teams</b><span>Most organisations using Terraform have database passwords, API keys or private keys sitting in state files, often in plaintext. For years that was simply how Terraform worked. Since versions 1.10 and 1.11 it doesn&#x27;t have to be, but the fix needs deliberate migration.</span><i>→</i></a><a class="rcard rise" href="/insights/slos-error-budgets-small-teams/"><small>Insight</small><b>SLOs and error budgets for small teams: field notes on making reliability a decision, not a debate</b><span>In a small company, the argument between shipping features and fixing reliability usually gets settled by whoever is loudest that week. Service level objectives and error budgets turn it into a rule everyone agreed in advance. The Google SRE material is written for large organisations, but the core ideas scale down well.</span><i>→</i></a><a class="rcard rise" href="/insights/speculative-decoding-private-llms/"><small>Insight</small><b>Speculative decoding for private LLMs: faster tokens without changing the answers</b><span>Self-hosting a model gives you control over data and cost, and often a latency problem. Speculative decoding is one of the few optimisations that makes generation faster without changing what the model outputs. It also has a narrower sweet spot than its benchmarks suggest.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: Automating lease, ID and invoice intake without letting a model write to the ledger">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
+        <p class="floc">United States &amp; UAE · working globally</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/uae/">Fractional CTO in the UAE</a></li></ul></div>
+      <div class="fc"><h4>Case studies</h4><ul><li><a href="/case-studies/startup-fractional-cto-seed-to-series-a/">Startup fractional CTO, seed to Series A</a></li><li><a href="/case-studies/private-equity-ai-technical-due-diligence/">Private equity AI technical due diligence</a></li><li><a href="/case-studies/telecom-observability-slos/">Telecom observability and SLOs</a></li><li><a href="/case-studies/real-estate-document-intake-automation/">Real estate document intake automation</a></li><li><a href="/#work">Engagement snapshots</a></li><li><a href="/case-studies/">All case studies →</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/terraform-secrets-out-of-state/">Keeping secrets out of Terraform state: a checklist for platform teams</a></li><li><a href="/insights/slos-error-budgets-small-teams/">SLOs and error budgets for small teams: field notes on making reliability a decision, not a debate</a></li><li><a href="/insights/speculative-decoding-private-llms/">Speculative decoding for private LLMs: faster tokens without changing the answers</a></li><li><a href="/insights/real-world-evidence-study-designs-omop/">Real-world evidence on OMOP: comparing five study designs for treatment effects</a></li><li><a href="/insights/eu-ai-act-gpai-fine-tuning-provider/">Fine-tuning a foundation model? When the EU AI Act makes you a general-purpose AI provider</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>

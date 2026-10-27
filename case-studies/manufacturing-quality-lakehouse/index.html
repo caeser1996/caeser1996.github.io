@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Case study: a quality data lakehouse for a multi-plant manufacturer</title>
+<meta name="description" content="How a manufacturer joined quality, production and supplier data across plants: an Iceberg lakehouse, data contracts per plant and governed quality metrics." />
+<meta name="keywords" content="manufacturing data lakehouse, quality data platform, Apache Iceberg case study, data contracts manufacturing, ISA-95 data integration, semantic layer metrics, multi-plant data platform, supplier quality data, open table format, manufacturing analytics architecture" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://asksumanta.com/case-studies/manufacturing-quality-lakehouse/" />
+<meta name="theme-color" content="#111214" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="Case study: a quality data lakehouse for a multi-plant manufacturer" />
+<meta property="og:description" content="How a manufacturer joined quality, production and supplier data across plants: an Iceberg lakehouse, data contracts per plant and governed quality metrics." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://asksumanta.com/case-studies/manufacturing-quality-lakehouse/" />
+<meta property="og:image" content="https://asksumanta.com/assets/og/manufacturing-quality-lakehouse.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Case study: a quality data lakehouse for a multi-plant manufacturer" />
+<meta name="twitter:description" content="How a manufacturer joined quality, production and supplier data across plants: an Iceberg lakehouse, data contracts per plant and governed quality metrics." />
+<meta name="twitter:image" content="https://asksumanta.com/assets/og/manufacturing-quality-lakehouse.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "Article", "headline": "Joining quality, production and supplier data so defects surface earlier", "description": "How a manufacturer joined quality, production and supplier data across plants: an Iceberg lakehouse, data contracts per plant and governed quality metrics.", "articleSection": "Case study", "about": "Manufacturing · Multi-plant", "datePublished": "2026-10-28T01:34:00+04:00", "dateModified": "2026-10-28T01:34:00+04:00", "citation": [{"@type": "CreativeWork", "name": "ISA-95 Standard: Enterprise-Control System Integration", "url": "https://www.isa.org/standards-and-publications/isa-standards/isa-95-standard"}, {"@type": "CreativeWork", "name": "Iceberg Table Spec", "url": "https://iceberg.apache.org/spec/"}, {"@type": "CreativeWork", "name": "Open Data Contract Standard (ODCS)", "url": "https://github.com/bitol-io/open-data-contract-standard"}, {"@type": "CreativeWork", "name": "ODCS version 3: transforming data contracts with enhanced flexibility, integration and global collaboration", "url": "https://bitol.io/odcs-version-3-transforming-data-contracts-with-enhanced-flexibility-integration-and-global-collaboration/"}], "author": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "publisher": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "mainEntityOfPage": "https://asksumanta.com/case-studies/manufacturing-quality-lakehouse/", "image": "https://asksumanta.com/assets/og/manufacturing-quality-lakehouse.png", "keywords": "manufacturing data lakehouse, quality data platform, Apache Iceberg case study, data contracts manufacturing, ISA-95 data integration, semantic layer metrics, multi-plant data platform, supplier quality data, open table format, manufacturing analytics architecture", "wordCount": 933}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://asksumanta.com/"}, {"@type": "ListItem", "position": 2, "name": "Case studies", "item": "https://asksumanta.com/case-studies/"}, {"@type": "ListItem", "position": 3, "name": "Joining quality, production and supplier data so defects surface earlier", "item": "https://asksumanta.com/case-studies/manufacturing-quality-lakehouse/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Why an open table format for manufacturing data?", "acceptedAnswer": {"@type": "Answer", "text": "Plants and teams use different engines and tools. An open table format such as Apache Iceberg lets them read and write the same tables with consistent snapshots and schema evolution, without locking the data into one vendor's engine."}}, {"@type": "Question", "name": "What does a data contract add?", "acceptedAnswer": {"@type": "Answer", "text": "A contract states what a producer promises: schema, semantics, freshness and quality checks, plus an owner. It turns silent breaking changes into failed checks at the boundary, where the producing team can fix them."}}, {"@type": "Question", "name": "Do plants need to replace their MES or quality systems?", "acceptedAnswer": {"@type": "Answer", "text": "No. The lakehouse reads from existing systems through change data capture or extracts. The contract sits on the interface, not inside each plant's applications."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+</script>
+</head>
+<body class="sub is-post is-case">
+<div class="progress" id="progress"></div>
+<nav>
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="/#practice">Services</a>
+      <a href="/case-studies/">Case studies</a>
+      <a href="/insights/">Insights</a>
+      <a href="/#assess">Analyse</a>
+      <a href="/#connect">Connect</a>
+    </div>
+    <div class="nav-r">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/case-studies/">Case studies</a> <span>/</span> <em>Joining quality, production and supplier data so defects surface earlier</em></div>
+    <div class="kicker">Case study · Data platforms</div>
+    <h1>Joining quality, production and supplier data so defects surface earlier</h1>
+    <p class="sub-lede">Quality data in one system, production data in each plant&#x27;s own stack, supplier data in spreadsheets and portals. Defects were found late because nobody could join the three. The goal was an open lakehouse fed by contracted data from every plant, with quality metrics everyone agreed on.</p>
+    <div class="ameta"><span class="fmt">Case study</span><span>Manufacturing · Multi-plant</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-10-28T01:34:00+04:00">28 Oct 2026 · 01:34 GST</time><span>8 min read</span></div><div class="atags"><span class="tagp">#data</span><span class="tagp">#platform</span><span class="tagp">#governance</span><span class="tagp">#streaming</span><span class="tagp">#architecture</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Case study cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><line x1="1128" y1="253" x2="1108" y2="318" class="cv-edge hl" opacity="0.55"/><line x1="1128" y1="253" x2="1144" y2="127" class="cv-edge" opacity="0.15"/><line x1="1128" y1="253" x2="1094" y2="361" class="cv-edge" opacity="0.25"/><line x1="1128" y1="253" x2="1093" y2="387" class="cv-edge" opacity="0.08"/><line x1="1128" y1="253" x2="1038" y2="192" class="cv-edge" opacity="0.28"/><line x1="1108" y1="318" x2="1094" y2="361" class="cv-edge hl" opacity="0.70"/><line x1="1108" y1="318" x2="1093" y2="387" class="cv-edge hl" opacity="0.53"/><line x1="1108" y1="318" x2="1038" y2="192" class="cv-edge hl" opacity="0.04"/><line x1="660" y1="312" x2="690" y2="386" class="cv-edge hl" opacity="0.47"/><line x1="660" y1="312" x2="693" y2="290" class="cv-edge" opacity="0.73"/><line x1="660" y1="312" x2="713" y2="351" class="cv-edge" opacity="0.56"/><line x1="660" y1="312" x2="577" y2="200" class="cv-edge" opacity="0.07"/><line x1="660" y1="312" x2="714" y2="360" class="cv-edge" opacity="0.52"/><line x1="660" y1="312" x2="542" y2="309" class="cv-edge" opacity="0.22"/><line x1="660" y1="312" x2="661" y2="338" class="cv-edge" opacity="0.83"/><line x1="660" y1="312" x2="773" y2="324" class="cv-edge" opacity="0.24"/><line x1="690" y1="386" x2="826" y2="329" class="cv-edge hl" opacity="0.02"/><line x1="690" y1="386" x2="693" y2="290" class="cv-edge hl" opacity="0.36"/><line x1="690" y1="386" x2="713" y2="351" class="cv-edge hl" opacity="0.72"/><line x1="690" y1="386" x2="714" y2="360" class="cv-edge hl" opacity="0.76"/><line x1="690" y1="386" x2="661" y2="338" class="cv-edge hl" opacity="0.63"/><line x1="690" y1="386" x2="773" y2="324" class="cv-edge hl" opacity="0.31"/><line x1="826" y1="329" x2="693" y2="290" class="cv-edge" opacity="0.08"/><line x1="826" y1="329" x2="713" y2="351" class="cv-edge" opacity="0.24"/><line x1="826" y1="329" x2="862" y2="237" class="cv-edge" opacity="0.34"/><line x1="826" y1="329" x2="880" y2="224" class="cv-edge" opacity="0.21"/><line x1="826" y1="329" x2="859" y2="315" class="cv-edge hl" opacity="0.76"/><line x1="826" y1="329" x2="714" y2="360" class="cv-edge" opacity="0.23"/><line x1="826" y1="329" x2="773" y2="324" class="cv-edge" opacity="0.65"/><line x1="693" y1="290" x2="690" y2="152" class="cv-edge hl" opacity="0.07"/><line x1="693" y1="290" x2="713" y2="351" class="cv-edge" opacity="0.57"/><line x1="693" y1="290" x2="577" y2="200" class="cv-edge" opacity="0.02"/><line x1="693" y1="290" x2="714" y2="360" class="cv-edge" opacity="0.52"/><line x1="693" y1="290" x2="661" y2="338" class="cv-edge" opacity="0.62"/><line x1="693" y1="290" x2="773" y2="324" class="cv-edge" opacity="0.42"/><line x1="559" y1="61" x2="577" y2="200" class="cv-edge" opacity="0.07"/><line x1="690" y1="152" x2="577" y2="200" class="cv-edge hl" opacity="0.18"/><line x1="713" y1="351" x2="714" y2="360" class="cv-edge" opacity="0.94"/><line x1="713" y1="351" x2="661" y2="338" class="cv-edge" opacity="0.64"/><line x1="713" y1="351" x2="773" y2="324" class="cv-edge" opacity="0.56"/><line x1="895" y1="89" x2="880" y2="224" class="cv-edge" opacity="0.10"/><line x1="895" y1="89" x2="844" y2="116" class="cv-edge hl" opacity="0.62"/><line x1="895" y1="89" x2="1014" y2="128" class="cv-edge hl" opacity="0.17"/><line x1="895" y1="89" x2="975" y2="89" class="cv-edge hl" opacity="0.46"/><line x1="862" y1="237" x2="880" y2="224" class="cv-edge" opacity="0.85"/><line x1="862" y1="237" x2="859" y2="315" class="cv-edge hl" opacity="0.48"/><line x1="862" y1="237" x2="844" y2="116" class="cv-edge hl" opacity="0.18"/><line x1="862" y1="237" x2="773" y2="324" class="cv-edge" opacity="0.17"/><line x1="880" y1="224" x2="859" y2="315" class="cv-edge hl" opacity="0.38"/><line x1="880" y1="224" x2="844" y2="116" class="cv-edge hl" opacity="0.24"/><line x1="880" y1="224" x2="773" y2="324" class="cv-edge" opacity="0.02"/><line x1="577" y1="200" x2="542" y2="309" class="cv-edge" opacity="0.24"/><line x1="859" y1="315" x2="773" y2="324" class="cv-edge hl" opacity="0.42"/><line x1="714" y1="360" x2="661" y2="338" class="cv-edge" opacity="0.62"/><line x1="714" y1="360" x2="773" y2="324" class="cv-edge" opacity="0.54"/><line x1="1046" y1="123" x2="1014" y2="128" class="cv-edge hl" opacity="0.78"/><line x1="1046" y1="123" x2="975" y2="89" class="cv-edge hl" opacity="0.47"/><line x1="1046" y1="123" x2="1144" y2="127" class="cv-edge" opacity="0.35"/><line x1="1046" y1="123" x2="1038" y2="192" class="cv-edge" opacity="0.54"/><line x1="844" y1="116" x2="975" y2="89" class="cv-edge hl" opacity="0.11"/><line x1="1014" y1="128" x2="975" y2="89" class="cv-edge hl" opacity="0.64"/><line x1="1014" y1="128" x2="1144" y2="127" class="cv-edge hl" opacity="0.13"/><line x1="1014" y1="128" x2="1038" y2="192" class="cv-edge hl" opacity="0.54"/><line x1="542" y1="309" x2="661" y2="338" class="cv-edge" opacity="0.19"/><line x1="975" y1="89" x2="1038" y2="192" class="cv-edge hl" opacity="0.19"/><line x1="661" y1="338" x2="773" y2="324" class="cv-edge" opacity="0.24"/><line x1="1144" y1="127" x2="1038" y2="192" class="cv-edge" opacity="0.17"/><line x1="1094" y1="361" x2="1093" y2="387" class="cv-edge" opacity="0.83"/><circle cx="1128" cy="253" r="3" class="cv-dot"/><circle cx="1108" cy="318" r="6" class="cv-dot hl"/><circle cx="660" cy="312" r="3" class="cv-dot"/><circle cx="690" cy="386" r="6" class="cv-dot hl"/><circle cx="826" cy="329" r="3" class="cv-dot"/><circle cx="693" cy="290" r="3" class="cv-dot"/><circle cx="559" cy="61" r="3" class="cv-dot"/><circle cx="690" cy="152" r="6" class="cv-dot hl"/><circle cx="713" cy="351" r="3" class="cv-dot"/><circle cx="895" cy="89" r="3" class="cv-dot"/><circle cx="862" cy="237" r="3" class="cv-dot"/><circle cx="880" cy="224" r="3" class="cv-dot"/><circle cx="577" cy="200" r="3" class="cv-dot"/><circle cx="859" cy="315" r="6" class="cv-dot hl"/><circle cx="714" cy="360" r="3" class="cv-dot"/><circle cx="1046" cy="123" r="3" class="cv-dot"/><circle cx="844" cy="116" r="6" class="cv-dot hl"/><circle cx="1014" cy="128" r="6" class="cv-dot hl"/><circle cx="542" cy="309" r="3" class="cv-dot"/><circle cx="975" cy="89" r="6" class="cv-dot hl"/><circle cx="661" cy="338" r="3" class="cv-dot"/><circle cx="1144" cy="127" r="3" class="cv-dot"/><circle cx="773" cy="324" r="3" class="cv-dot"/><circle cx="1094" cy="361" r="3" class="cv-dot"/><circle cx="1093" cy="387" r="3" class="cv-dot"/><circle cx="1038" cy="192" r="3" class="cv-dot"/><text x="60" y="90" class="cv-k">CASE STUDY · CASE STUDY · DATA PLATFORMS</text><text x="60" y="350" class="cv-n">28 Oct 2026 · 01:34 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <section class="glance rise" aria-label="At a glance"><div class="kicker">At a glance</div><div class="glance-grid"><div><small>Sector</small><b>Manufacturing · Multi-plant</b></div><div><small>My role</small><b>Fractional CTO and data architect</b></div><div><small>Engagement</small><b>Architecture, platform build and operating model</b></div><div><small>Scope</small><b>Ingestion, data contracts, lakehouse, semantic layer, quality metrics</b></div></div><div class="glance-out"><small>What changed</small><ul><li>Quality, production and supplier data joinable at batch and lot level across plants</li><li>Each plant&#x27;s feed governed by a published contract with an owner</li><li>One agreed definition for each quality metric, used by dashboards and analysts alike</li><li>Breaking changes caught at the plant boundary instead of in month-end reports</li></ul></div><div class="cs-stack"><span class="tag">Apache Iceberg</span><span class="tag">Spark</span><span class="tag">Change data capture</span><span class="tag">Open Data Contract Standard</span><span class="tag">REST catalog</span><span class="tag">Semantic layer</span><span class="tag">Object storage</span><span class="tag">Orchestration</span></div><p class="glance-note">Anonymised composite. Client names, identifying details and confidential figures are withheld; public facts are cited in the references.</p></section><h2 id="the-situation">The situation</h2>
+<p>A manufacturer with several plants had good systems and poor connections. Quality inspection results lived in a central quality system. Production parameters lived in each plant's execution and historian stack, configured differently at every site. Supplier certificates and incoming inspection data arrived as spreadsheets and portal exports. When a customer complaint came in, tracing it back to a material lot, a line, a shift and a process setting took days of manual joining, and by then more product had shipped.</p>
+<p>Previous attempts at a central warehouse had stalled. Every plant change broke a pipeline, and every report defined "first-pass yield" slightly differently.</p>
+
+<h2 id="what-had-to-be-true">What had to be true</h2>
+<ul>
+<li><strong>Joinable at the right grain</strong>: batch, lot, line and time, across quality, production and supplier data.</li>
+<li><strong>Plants accountable for their feeds</strong>, with a clear owner and a written promise for each.</li>
+<li><strong>Open storage</strong>, so different teams and engines could use the same tables.</li>
+<li><strong>One definition per metric</strong>, shared by dashboards, analysts and any future AI use.</li>
+<li><strong>No rip and replace</strong> of plant systems.</li>
+</ul>
+<p>ISA-95 framed the boundaries. It addresses the interface between enterprise business systems and manufacturing operations and control<sup class="cite"><a href="#ref-1">1</a></sup>, which is exactly where the lakehouse sat: reading from plant-level systems, serving enterprise-level analysis, owning neither.</p>
+
+<h2 id="architecture">Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Plants</small><div class="dgm-nodes"><span>Execution systems<em>orders, genealogy</em></span><span>Historians<em>process parameters</em></span><span>Quality system<em>inspections, NCRs</em></span><span>Supplier data<em>certificates, incoming QC</em></span></div></div>
+<div class="dgm-tier"><small>Contract</small><div class="dgm-nodes"><span class="hl">Data contracts<em>one per feed, owned</em></span><span>Contract checks<em>schema, freshness, rules</em></span><span>Quarantine<em>failed batches</em></span></div></div>
+<div class="dgm-tier"><small>Lakehouse</small><div class="dgm-nodes"><span class="hl">Iceberg tables<em>raw, conformed, curated</em></span><span>REST catalog<em>one namespace per domain</em></span><span>Spark jobs<em>conform and join</em></span></div></div>
+<div class="dgm-tier"><small>Semantics</small><div class="dgm-nodes"><span class="hl">Semantic layer<em>governed metrics</em></span><span>Genealogy model<em>lot to product</em></span><span>Reference data<em>defect codes, sites</em></span></div></div>
+<div class="dgm-tier"><small>Use</small><div class="dgm-nodes"><span>Quality dashboards<em>per plant, per supplier</em></span><span>Alerts<em>drift and repeat defects</em></span><span>Analyst notebooks<em>root cause</em></span></div></div>
+</div>
+<figcaption>Layered architecture: contracts at the plant boundary, open tables in the middle, governed metrics on top.</figcaption>
+</figure>
+<p>Apache Iceberg tracks table state through metadata files replaced by atomic swaps, with snapshots and schema evolution defined in the specification<sup class="cite"><a href="#ref-2">2</a></sup>. That gave reproducible reads for investigations and safe schema changes when a plant added a parameter. See <a href="/insights/apache-iceberg-v3-lakehouse/">Apache Iceberg v3 for the lakehouse</a> and <a href="/insights/lakehouse-catalog-strategy-iceberg/">lakehouse catalog strategy</a>.</p>
+
+<h2 id="the-data-flow-end-to-end">The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Capture</b><span>Change data capture or scheduled extracts from each plant system</span></li>
+<li class="hl"><b>Check</b><span>Validate against the feed's contract; quarantine and notify the owner on failure</span></li>
+<li><b>Land</b><span>Append to raw Iceberg tables with source and contract version recorded</span></li>
+<li><b>Conform</b><span>Map plant codes to shared reference data; build lot genealogy</span></li>
+<li class="hl"><b>Define</b><span>Compute quality metrics once, in the semantic layer</span></li>
+<li><b>Act</b><span>Dashboards, alerts and investigations read governed metrics only</span></li>
+</ol>
+<figcaption>Every number on a dashboard traces back to a contracted feed and a table snapshot.</figcaption>
+</figure>
+<p>Capture patterns are covered in <a href="/insights/change-data-capture-event-streams/">change data capture and event streams</a>.</p>
+
+<h2 id="the-hard-part-getting-plants-to-own-a-promise">The hard part: getting plants to own a promise</h2>
+<p>The technology was well understood. The hard part was organisational: plants had never been asked to promise anything about their data, and a central team had always absorbed the breakage. Contracts changed that, but only once they were written in terms plants recognised.</p>
+<p>We used the Open Data Contract Standard, a YAML-based, platform-neutral format for agreements between data producers and consumers<sup class="cite"><a href="#ref-3">3</a></sup>; version 3 organises a contract into sections that include schema, data quality, service levels and team<sup class="cite"><a href="#ref-4">4</a></sup>. In practice:</p>
+<ul>
+<li>Contracts started small: schema, owner, freshness and a handful of rules the plant itself agreed were reasonable.</li>
+<li>A failed check went to the plant's named owner, not to the central team's backlog.</li>
+<li>Breaking changes required a new contract version and a notice period, agreed in a short change process.</li>
+<li>Plant-specific codes stayed in the feed; mapping to shared reference data was a central, versioned step.</li>
+</ul>
+<div class="callout"><p>A data contract is an organisational tool that happens to be written in YAML. Its value is the conversation it forces between producer and consumer.</p></div>
+<p>More in the <a href="/insights/data-contracts-playbook/">data contracts playbook</a>.</p>
+
+<h2 id="how-the-engagement-ran">How the engagement ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Plant data owner</small><ol><li>Agree the contract</li><li class="hl">Fix failed checks at source</li><li>Announce changes</li></ol></div>
+<div class="dgm-lane"><small>Platform team</small><ol><li>Run checks and quarantine</li><li>Conform and join</li><li>Publish curated tables</li></ol></div>
+<div class="dgm-lane"><small>Quality leads</small><ol><li>Define metrics once</li><li class="hl">Review alerts</li><li>Drive supplier actions</li></ol></div>
+</div>
+<figcaption>Ownership by role: plants own feeds, the platform owns pipes, quality owns definitions.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Trace one complaint</b><ul><li>Walk an investigation end to end</li><li>Source inventory</li><li>Metric disagreements</li></ul></div>
+<div><small>Phase 2</small><b>Pilot plant</b><ul><li>First contracts</li><li>Iceberg tables and catalog</li><li>Lot genealogy</li></ul></div>
+<div><small>Phase 3</small><b>Metrics</b><ul><li>Semantic layer</li><li>Agreed definitions</li><li>Dashboards and alerts</li></ul></div>
+<div><small>Phase 4</small><b>Roll out</b><ul><li>Further plants</li><li>Supplier feeds</li><li>Change process</li></ul></div>
+</div>
+<figcaption>Phased delivery: one plant and one real investigation before scaling.</figcaption>
+</figure>
+
+<h2 id="key-decisions-and-trade-offs">Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Apache Iceberg tables</td><td>Proprietary warehouse storage</td><td>Multiple engines on one copy; no lock-in</td></tr>
+<tr><td>Contracts at the plant boundary</td><td>Central team fixes breakages</td><td>Fixes happen where the change was made</td></tr>
+<tr><td>Metrics in a semantic layer</td><td>Definitions in each dashboard</td><td>One answer to "what is our yield?"</td></tr>
+<tr><td>Keep plant codes, map centrally</td><td>Force plants to standardise first</td><td>Delivery without waiting on every plant</td></tr>
+<tr><td>Pilot one plant end to end</td><td>All plants at once</td><td>Contract and genealogy lessons learned once</td></tr>
+</tbody>
+</table>
+<p>Why metrics belong in a semantic layer, especially if AI will query them later, is covered in <a href="/insights/text-to-sql-semantic-layer/">text-to-SQL and the semantic layer</a>.</p>
+
+<h2 id="what-i-d-do-again-and-differently">What I'd do again, and differently</h2>
+<p>Again: start by tracing one real complaint end to end, and make plants owners rather than suppliers of data. Differently: agree metric definitions with quality leads before building dashboards, not alongside them. Every disagreement found late cost a rebuild.</p>
+<p>If you're facing something similar, the <a href="/fractional-cto/">fractional CTO</a> page describes how I run these engagements, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://www.isa.org/standards-and-publications/isa-standards/isa-95-standard" target="_blank" rel="noopener">ISA-95 Standard: Enterprise-Control System Integration</a><small>International Society of Automation</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://iceberg.apache.org/spec/" target="_blank" rel="noopener">Iceberg Table Spec</a><small>Apache Iceberg</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://github.com/bitol-io/open-data-contract-standard" target="_blank" rel="noopener">Open Data Contract Standard (ODCS)</a><small>Bitol, Linux Foundation (GitHub)</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://bitol.io/odcs-version-3-transforming-data-contracts-with-enhanced-flexibility-integration-and-global-collaboration/" target="_blank" rel="noopener">ODCS version 3: transforming data contracts with enhanced flexibility, integration and global collaboration</a><small>Bitol, Linux Foundation</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fasksumanta.com%2Fcase-studies%2Fmanufacturing-quality-lakehouse%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fasksumanta.com%2Fcase-studies%2Fmanufacturing-quality-lakehouse%2F&amp;text=Joining%20quality%2C%20production%20and%20supplier%20data%20so%20defects%20surface%20earlier" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=Joining%20quality%2C%20production%20and%20supplier%20data%20so%20defects%20surface%20earlier%20https%3A%2F%2Fasksumanta.com%2Fcase-studies%2Fmanufacturing-quality-lakehouse%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://asksumanta.com/case-studies/manufacturing-quality-lakehouse/">Copy link</button></div>
+      <div class="pnav"><a class="pn prev" href="/case-studies/energy-asset-knowledge-graph/"><small>← Previous</small><b>Connecting maintenance history, sensors and drawings so engineers can find root causes faster</b></a><a class="pn next" href="/case-studies/legal-contract-review-ai/"><small>Next →</small><b>Helping lawyers review contracts against the playbook without giving up the final word</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#the-situation">The situation</a></li><li><a href="#what-had-to-be-true">What had to be true</a></li><li><a href="#architecture">Architecture</a></li><li><a href="#the-data-flow-end-to-end">The data flow, end to end</a></li><li><a href="#the-hard-part-getting-plants-to-own-a-promise">The hard part: getting plants to own a promise</a></li><li><a href="#how-the-engagement-ran">How the engagement ran</a></li><li><a href="#key-decisions-and-trade-offs">Key decisions and trade-offs</a></li><li><a href="#what-i-d-do-again-and-differently">What I&#x27;d do again, and differently</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>Why an open table format for manufacturing data?</summary><p>Plants and teams use different engines and tools. An open table format such as Apache Iceberg lets them read and write the same tables with consistent snapshots and schema evolution, without locking the data into one vendor&#x27;s engine.</p></details><details class="rise"><summary>What does a data contract add?</summary><p>A contract states what a producer promises: schema, semantics, freshness and quality checks, plus an owner. It turns silent breaking changes into failed checks at the boundary, where the producing team can fix them.</p></details><details class="rise"><summary>Do plants need to replace their MES or quality systems?</summary><p>No. The lakehouse reads from existing systems through change data capture or extracts. The contract sits on the interface, not inside each plant&#x27;s applications.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/fractional-cto/"><small>Service</small><b>Fractional CTO</b><span>I work as a part-time CTO for founders, CEOs and boards who need experienced technical judgement now, and a team that can carry it on after I step back.</span><i>→</i></a><a class="rcard rise" href="/ai-architect/"><small>Service</small><b>AI &amp; LLM architecture</b><span>I design and build AI systems that leadership can trust: grounded in your data, measured by evaluations, governed by your rules and priced so they make sense at scale.</span><i>→</i></a><a class="rcard rise" href="/technical-due-diligence/"><small>Service</small><b>Technical due diligence</b><span>I give investors an independent, plain-language view of a company&#x27;s technology, team and AI claims, so the risks are priced in before the deal closes, not discovered after.</span><i>→</i></a><a class="rcard rise" href="/insights/terraform-secrets-out-of-state/"><small>Insight</small><b>Keeping secrets out of Terraform state: a checklist for platform teams</b><span>Most organisations using Terraform have database passwords, API keys or private keys sitting in state files, often in plaintext. For years that was simply how Terraform worked. Since versions 1.10 and 1.11 it doesn&#x27;t have to be, but the fix needs deliberate migration.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: Joining quality, production and supplier data so defects surface earlier">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
+        <p class="floc">United States &amp; UAE · working globally</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/uae/">Fractional CTO in the UAE</a></li></ul></div>
+      <div class="fc"><h4>Case studies</h4><ul><li><a href="/case-studies/startup-fractional-cto-seed-to-series-a/">Startup fractional CTO, seed to Series A</a></li><li><a href="/case-studies/private-equity-ai-technical-due-diligence/">Private equity AI technical due diligence</a></li><li><a href="/case-studies/telecom-observability-slos/">Telecom observability and SLOs</a></li><li><a href="/case-studies/real-estate-document-intake-automation/">Real estate document intake automation</a></li><li><a href="/#work">Engagement snapshots</a></li><li><a href="/case-studies/">All case studies →</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/terraform-secrets-out-of-state/">Keeping secrets out of Terraform state: a checklist for platform teams</a></li><li><a href="/insights/slos-error-budgets-small-teams/">SLOs and error budgets for small teams: field notes on making reliability a decision, not a debate</a></li><li><a href="/insights/speculative-decoding-private-llms/">Speculative decoding for private LLMs: faster tokens without changing the answers</a></li><li><a href="/insights/real-world-evidence-study-designs-omop/">Real-world evidence on OMOP: comparing five study designs for treatment effects</a></li><li><a href="/insights/eu-ai-act-gpai-fine-tuning-provider/">Fine-tuning a foundation model? When the EU AI Act makes you a general-purpose AI provider</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>

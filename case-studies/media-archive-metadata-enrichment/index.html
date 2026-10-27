@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Case study: AI metadata enrichment for a media archive</title>
+<meta name="description" content="How a media archive made decades of content findable: batch model enrichment mapped to a SKOS vocabulary, human review queues and semantic search with provenance." />
+<meta name="keywords" content="media archive metadata enrichment, AI metadata tagging, SKOS controlled vocabulary, archive search, semantic search media, batch LLM inference, human in the loop review, digital asset management AI, embeddings search, taxonomy management" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://asksumanta.com/case-studies/media-archive-metadata-enrichment/" />
+<meta name="theme-color" content="#111214" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="Case study: AI metadata enrichment for a media archive" />
+<meta property="og:description" content="How a media archive made decades of content findable: batch model enrichment mapped to a SKOS vocabulary, human review queues and semantic search with provenance." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://asksumanta.com/case-studies/media-archive-metadata-enrichment/" />
+<meta property="og:image" content="https://asksumanta.com/assets/og/media-archive-metadata-enrichment.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Case study: AI metadata enrichment for a media archive" />
+<meta name="twitter:description" content="How a media archive made decades of content findable: batch model enrichment mapped to a SKOS vocabulary, human review queues and semantic search with provenance." />
+<meta name="twitter:image" content="https://asksumanta.com/assets/og/media-archive-metadata-enrichment.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "Article", "headline": "Making a decades-old media archive findable with model enrichment and a controlled vocabulary", "description": "How a media archive made decades of content findable: batch model enrichment mapped to a SKOS vocabulary, human review queues and semantic search with provenance.", "articleSection": "Case study", "about": "Media · Broadcast and publishing archive", "datePublished": "2026-10-28T01:40:00+04:00", "dateModified": "2026-10-28T01:40:00+04:00", "citation": [{"@type": "CreativeWork", "name": "SKOS Simple Knowledge Organization System Reference", "url": "https://www.w3.org/TR/skos-reference/"}, {"@type": "CreativeWork", "name": "DCMI Metadata Terms", "url": "https://www.dublincore.org/specifications/dublin-core/dcmi-terms/"}, {"@type": "CreativeWork", "name": "Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks", "url": "https://arxiv.org/abs/1908.10084"}, {"@type": "CreativeWork", "name": "Efficient and robust approximate nearest neighbor search using Hierarchical Navigable Small World graphs", "url": "https://arxiv.org/abs/1603.09320"}], "author": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "publisher": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "mainEntityOfPage": "https://asksumanta.com/case-studies/media-archive-metadata-enrichment/", "image": "https://asksumanta.com/assets/og/media-archive-metadata-enrichment.png", "keywords": "media archive metadata enrichment, AI metadata tagging, SKOS controlled vocabulary, archive search, semantic search media, batch LLM inference, human in the loop review, digital asset management AI, embeddings search, taxonomy management", "wordCount": 987}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://asksumanta.com/"}, {"@type": "ListItem", "position": 2, "name": "Case studies", "item": "https://asksumanta.com/case-studies/"}, {"@type": "ListItem", "position": 3, "name": "Making a decades-old media archive findable with model enrichment and a controlled vocabulary", "item": "https://asksumanta.com/case-studies/media-archive-metadata-enrichment/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Can a language model tag an archive on its own?", "acceptedAnswer": {"@type": "Answer", "text": "It can suggest tags quickly, but unreviewed free-text tags drift and duplicate. Mapping suggestions onto a controlled vocabulary and routing low-confidence items to people keeps the catalogue consistent and trustworthy."}}, {"@type": "Question", "name": "Why use SKOS for a media taxonomy?", "acceptedAnswer": {"@type": "Answer", "text": "SKOS is a W3C standard for thesauri and taxonomies. It gives preferred and alternative labels, broader and narrower relationships and mappings to external vocabularies, in a form that tools and search engines can reuse."}}, {"@type": "Question", "name": "Do you still need keyword search if you have embeddings?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Embeddings find items by meaning, but editors still search for exact names, dates and identifiers. A hybrid of filtered keyword search and vector similarity serves both needs."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+</script>
+</head>
+<body class="sub is-post is-case">
+<div class="progress" id="progress"></div>
+<nav>
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="/#practice">Services</a>
+      <a href="/case-studies/">Case studies</a>
+      <a href="/insights/">Insights</a>
+      <a href="/#assess">Analyse</a>
+      <a href="/#connect">Connect</a>
+    </div>
+    <div class="nav-r">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/case-studies/">Case studies</a> <span>/</span> <em>Making a decades-old media archive findable with model enrichment and a controlled vocabulary</em></div>
+    <div class="kicker">Case study · Media and knowledge graphs</div>
+    <h1>Making a decades-old media archive findable with model enrichment and a controlled vocabulary</h1>
+    <p class="sub-lede">A large archive of video, audio and photographs, catalogued under decades of changing conventions, with most items described by little more than a title and a date. The goal was consistent, searchable metadata at archive scale, without letting a model invent the catalogue.</p>
+    <div class="ameta"><span class="fmt">Case study</span><span>Media · Broadcast and publishing archive</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-10-28T01:40:00+04:00">28 Oct 2026 · 01:40 GST</time><span>8 min read</span></div><div class="atags"><span class="tagp">#ai</span><span class="tagp">#llm</span><span class="tagp">#ontology</span><span class="tagp">#knowledge-graph</span><span class="tagp">#data</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Case study cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><line x1="971" y1="116" x2="1078" y2="58" class="cv-edge" opacity="0.19"/><line x1="971" y1="116" x2="966" y2="198" class="cv-edge" opacity="0.45"/><line x1="971" y1="116" x2="892" y2="116" class="cv-edge hl" opacity="0.47"/><line x1="971" y1="116" x2="936" y2="107" class="cv-edge" opacity="0.76"/><line x1="971" y1="116" x2="1079" y2="201" class="cv-edge" opacity="0.08"/><line x1="971" y1="116" x2="1104" y2="114" class="cv-edge" opacity="0.12"/><line x1="971" y1="116" x2="967" y2="223" class="cv-edge" opacity="0.28"/><line x1="971" y1="116" x2="988" y2="232" class="cv-edge" opacity="0.22"/><line x1="865" y1="272" x2="966" y2="198" class="cv-edge" opacity="0.17"/><line x1="865" y1="272" x2="847" y2="294" class="cv-edge hl" opacity="0.81"/><line x1="865" y1="272" x2="866" y2="289" class="cv-edge" opacity="0.89"/><line x1="865" y1="272" x2="967" y2="223" class="cv-edge" opacity="0.25"/><line x1="865" y1="272" x2="988" y2="232" class="cv-edge" opacity="0.14"/><line x1="865" y1="272" x2="795" y2="290" class="cv-edge" opacity="0.52"/><line x1="1078" y1="58" x2="936" y2="107" class="cv-edge" opacity="0.00"/><line x1="1078" y1="58" x2="1079" y2="201" class="cv-edge" opacity="0.05"/><line x1="1078" y1="58" x2="1132" y2="114" class="cv-edge" opacity="0.48"/><line x1="1078" y1="58" x2="1104" y2="114" class="cv-edge" opacity="0.59"/><line x1="596" y1="344" x2="593" y2="365" class="cv-edge" opacity="0.86"/><line x1="966" y1="198" x2="892" y2="116" class="cv-edge hl" opacity="0.27"/><line x1="966" y1="198" x2="936" y2="107" class="cv-edge" opacity="0.36"/><line x1="966" y1="198" x2="866" y2="289" class="cv-edge" opacity="0.10"/><line x1="966" y1="198" x2="1079" y2="201" class="cv-edge" opacity="0.24"/><line x1="966" y1="198" x2="967" y2="223" class="cv-edge" opacity="0.83"/><line x1="966" y1="198" x2="988" y2="232" class="cv-edge" opacity="0.73"/><line x1="534" y1="131" x2="605" y2="57" class="cv-edge" opacity="0.31"/><line x1="534" y1="131" x2="525" y2="75" class="cv-edge" opacity="0.62"/><line x1="534" y1="131" x2="670" y2="83" class="cv-edge" opacity="0.04"/><line x1="534" y1="131" x2="561" y2="101" class="cv-edge" opacity="0.73"/><line x1="534" y1="131" x2="653" y2="187" class="cv-edge" opacity="0.12"/><line x1="847" y1="294" x2="866" y2="289" class="cv-edge hl" opacity="0.87"/><line x1="847" y1="294" x2="967" y2="223" class="cv-edge hl" opacity="0.08"/><line x1="847" y1="294" x2="795" y2="290" class="cv-edge hl" opacity="0.65"/><line x1="892" y1="116" x2="936" y2="107" class="cv-edge hl" opacity="0.70"/><line x1="892" y1="116" x2="806" y2="116" class="cv-edge hl" opacity="0.42"/><line x1="892" y1="116" x2="786" y2="73" class="cv-edge hl" opacity="0.24"/><line x1="892" y1="116" x2="967" y2="223" class="cv-edge hl" opacity="0.13"/><line x1="936" y1="107" x2="806" y2="116" class="cv-edge" opacity="0.13"/><line x1="936" y1="107" x2="967" y2="223" class="cv-edge" opacity="0.20"/><line x1="936" y1="107" x2="988" y2="232" class="cv-edge" opacity="0.10"/><line x1="605" y1="57" x2="525" y2="75" class="cv-edge" opacity="0.45"/><line x1="605" y1="57" x2="670" y2="83" class="cv-edge" opacity="0.54"/><line x1="605" y1="57" x2="561" y2="101" class="cv-edge" opacity="0.59"/><line x1="605" y1="57" x2="653" y2="187" class="cv-edge" opacity="0.08"/><line x1="806" y1="116" x2="670" y2="83" class="cv-edge" opacity="0.06"/><line x1="806" y1="116" x2="741" y2="125" class="cv-edge" opacity="0.56"/><line x1="806" y1="116" x2="786" y2="73" class="cv-edge" opacity="0.68"/><line x1="525" y1="75" x2="670" y2="83" class="cv-edge" opacity="0.04"/><line x1="525" y1="75" x2="561" y2="101" class="cv-edge" opacity="0.71"/><line x1="670" y1="83" x2="741" y2="125" class="cv-edge" opacity="0.45"/><line x1="670" y1="83" x2="561" y2="101" class="cv-edge" opacity="0.27"/><line x1="670" y1="83" x2="786" y2="73" class="cv-edge" opacity="0.22"/><line x1="670" y1="83" x2="653" y2="187" class="cv-edge" opacity="0.30"/><line x1="866" y1="289" x2="967" y2="223" class="cv-edge" opacity="0.20"/><line x1="866" y1="289" x2="988" y2="232" class="cv-edge" opacity="0.10"/><line x1="866" y1="289" x2="795" y2="290" class="cv-edge" opacity="0.53"/><line x1="741" y1="125" x2="786" y2="73" class="cv-edge" opacity="0.54"/><line x1="741" y1="125" x2="653" y2="187" class="cv-edge" opacity="0.29"/><line x1="561" y1="101" x2="653" y2="187" class="cv-edge" opacity="0.16"/><line x1="1103" y1="348" x2="1079" y2="201" class="cv-edge hl" opacity="0.00"/><line x1="1079" y1="201" x2="1132" y2="114" class="cv-edge" opacity="0.32"/><line x1="1079" y1="201" x2="1104" y2="114" class="cv-edge" opacity="0.40"/><line x1="1079" y1="201" x2="967" y2="223" class="cv-edge" opacity="0.24"/><line x1="1079" y1="201" x2="988" y2="232" class="cv-edge" opacity="0.36"/><line x1="1132" y1="114" x2="1104" y2="114" class="cv-edge" opacity="0.81"/><line x1="967" y1="223" x2="988" y2="232" class="cv-edge" opacity="0.85"/><circle cx="971" cy="116" r="3" class="cv-dot"/><circle cx="865" cy="272" r="3" class="cv-dot"/><circle cx="1078" cy="58" r="3" class="cv-dot"/><circle cx="596" cy="344" r="3" class="cv-dot"/><circle cx="966" cy="198" r="3" class="cv-dot"/><circle cx="534" cy="131" r="3" class="cv-dot"/><circle cx="847" cy="294" r="6" class="cv-dot hl"/><circle cx="892" cy="116" r="6" class="cv-dot hl"/><circle cx="936" cy="107" r="3" class="cv-dot"/><circle cx="605" cy="57" r="3" class="cv-dot"/><circle cx="806" cy="116" r="3" class="cv-dot"/><circle cx="525" cy="75" r="3" class="cv-dot"/><circle cx="670" cy="83" r="3" class="cv-dot"/><circle cx="866" cy="289" r="3" class="cv-dot"/><circle cx="741" cy="125" r="3" class="cv-dot"/><circle cx="561" cy="101" r="3" class="cv-dot"/><circle cx="593" cy="365" r="3" class="cv-dot"/><circle cx="1103" cy="348" r="6" class="cv-dot hl"/><circle cx="1079" cy="201" r="3" class="cv-dot"/><circle cx="786" cy="73" r="3" class="cv-dot"/><circle cx="1132" cy="114" r="3" class="cv-dot"/><circle cx="1104" cy="114" r="3" class="cv-dot"/><circle cx="967" cy="223" r="3" class="cv-dot"/><circle cx="988" cy="232" r="3" class="cv-dot"/><circle cx="795" cy="290" r="3" class="cv-dot"/><circle cx="653" cy="187" r="3" class="cv-dot"/><text x="60" y="90" class="cv-k">CASE STUDY · CASE STUDY · MEDIA AND KNOWLEDGE GRAPHS</text><text x="60" y="350" class="cv-n">28 Oct 2026 · 01:40 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <section class="glance rise" aria-label="At a glance"><div class="kicker">At a glance</div><div class="glance-grid"><div><small>Sector</small><b>Media · Broadcast and publishing archive</b></div><div><small>My role</small><b>AI architect</b></div><div><small>Engagement</small><b>Architecture, pilot and hand-off</b></div><div><small>Scope</small><b>Enrichment pipeline, vocabulary, review workflow, search</b></div></div><div class="glance-out"><small>What changed</small><ul><li>Archive items described against one controlled vocabulary instead of free-text tags</li><li>Every machine-suggested label traceable to its model, prompt and reviewer</li><li>Editors searching by meaning as well as by keyword</li><li>A taxonomy that the archive team owns and evolves without engineering help</li></ul></div><div class="cs-stack"><span class="tag">Batch LLM inference</span><span class="tag">Speech-to-text</span><span class="tag">SKOS concept scheme</span><span class="tag">DCMI Metadata Terms</span><span class="tag">Sentence embeddings</span><span class="tag">HNSW vector index</span><span class="tag">Review queue</span><span class="tag">Postgres</span><span class="tag">Object storage</span></div><p class="glance-note">Anonymised composite. Client names, identifying details and confidential figures are withheld; public facts are cited in the references.</p></section><h2 id="the-situation">The situation</h2>
+<p>A media organisation held decades of video, audio and photography. The material was valuable for new programmes, licensing and research, but most of it was hard to find. Cataloguing conventions had changed several times, many items carried only a title and a broadcast date, and the same subject was described in a dozen ways. Search worked if you already knew the exact words a cataloguer had used years earlier, and otherwise depended on a few long-serving people who remembered where things were.</p>
+<p>The organisation wanted to use AI to describe the backlog. The concern, rightly, was that a model left to itself would produce confident, inconsistent tags at a scale nobody could review.</p>
+
+<h2 id="what-had-to-be-true">What had to be true</h2>
+<ul>
+<li><strong>One controlled vocabulary</strong>, so a subject, place or person is described the same way across the archive.</li>
+<li><strong>Machine suggestions, human authority</strong>: models propose, people decide where confidence is low or the subject is sensitive.</li>
+<li><strong>Provenance on every field</strong>, so anyone can see whether a label came from a cataloguer, a model or a reviewer.</li>
+<li><strong>Search by meaning and by exact term</strong>, for editors who know what they want and for those who are exploring.</li>
+<li><strong>A taxonomy the archive team owns</strong>, not one hidden inside prompts or code.</li>
+</ul>
+
+<h2 id="architecture">Architecture</h2>
+<p>The vocabulary was modelled as a SKOS concept scheme, which gives each concept a preferred label, alternative labels and broader or narrower relationships<sup class="cite"><a href="#ref-1">1</a></sup>. Descriptive fields such as creator, date, subject and rights were aligned with DCMI Metadata Terms so that records stayed portable between systems<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Sources</small><div class="dgm-nodes"><span>Media asset store<em>video, audio, images</em></span><span>Legacy catalogue<em>sparse records</em></span><span>Rights records<em>licensing terms</em></span></div></div>
+<div class="dgm-tier"><small>Derive</small><div class="dgm-nodes"><span>Speech-to-text<em>transcripts</em></span><span>Keyframes and OCR<em>on-screen text</em></span><span>Existing metadata<em>normalised</em></span></div></div>
+<div class="dgm-tier"><small>Enrich</small><div class="dgm-nodes"><span class="hl">Batch model enrichment<em>structured suggestions</em></span><span class="hl">Vocabulary mapping<em>labels → SKOS concepts</em></span><span>Confidence scoring<em>per field</em></span></div></div>
+<div class="dgm-tier"><small>Assure</small><div class="dgm-nodes"><span class="hl">Review queue<em>low confidence, sensitive</em></span><span>Provenance log<em>model, prompt, reviewer</em></span><span>Taxonomy owner<em>new concept requests</em></span></div></div>
+<div class="dgm-tier"><small>Use</small><div class="dgm-nodes"><span>Catalogue search<em>filters, exact terms</em></span><span>Semantic search<em>embeddings</em></span><span>Reuse and licensing<em>rights-aware</em></span></div></div>
+</div>
+<figcaption>Layered architecture: models suggest, the vocabulary constrains, and people review before anything is published to search.</figcaption>
+</figure>
+
+<h2 id="the-data-flow-end-to-end">The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Select</b><span>Pick a collection batch, prioritised by editorial and licensing demand</span></li>
+<li><b>Derive</b><span>Generate transcripts, keyframes and on-screen text; keep them as versioned artefacts</span></li>
+<li><b>Enrich</b><span>Run batch inference that returns structured candidate subjects, places, people and a summary</span></li>
+<li class="hl"><b>Map</b><span>Resolve candidates to concepts in the scheme; unmatched terms become proposals, not tags</span></li>
+<li class="hl"><b>Review</b><span>Route low-confidence and sensitive items to cataloguers; record every decision</span></li>
+<li><b>Publish</b><span>Write approved metadata to the catalogue and refresh keyword and vector indexes</span></li>
+</ol>
+<figcaption>Each batch is versioned, so any published label can be traced back to the inputs, model and reviewer that produced it.</figcaption>
+</figure>
+<p>For semantic search, transcripts and summaries were embedded with a sentence-embedding model, which produces vectors that can be compared with cosine similarity<sup class="cite"><a href="#ref-3">3</a></sup>. Nearest-neighbour lookup used an HNSW index, a graph-based approximate search method that scales well to large collections<sup class="cite"><a href="#ref-4">4</a></sup>. Model choice and storage trade-offs are covered in <a href="/insights/choosing-embedding-models-rag/">choosing embedding models</a> and <a href="/insights/pgvector-or-vector-database/">pgvector or a vector database</a>.</p>
+
+<h2 id="the-hard-part-a-vocabulary-people-agree-on">The hard part: a vocabulary people agree on</h2>
+<p>Running models over the archive was the easy part. Agreeing what the labels should be took far longer. The approach that worked:</p>
+<ul>
+<li>Seed the concept scheme from the terms cataloguers already used most, then merge duplicates as alternative labels rather than deleting them, so old records still match.</li>
+<li>Use SKOS mapping properties to link local concepts to external vocabularies where they existed, instead of copying those vocabularies wholesale<sup class="cite"><a href="#ref-1">1</a></sup>.</li>
+<li>Never let the pipeline create a concept. A model suggestion with no match becomes a proposal for the taxonomy owner, with example items attached.</li>
+<li>Treat people and sensitive topics as always-reviewed fields, whatever the model's confidence.</li>
+</ul>
+<p>The taxonomy design choices are discussed further in <a href="/insights/skos-vs-owl-enterprise-taxonomies/">SKOS vs OWL for enterprise taxonomies</a>.</p>
+<div class="callout"><p>A controlled vocabulary turns a model from an author into an assistant. The model can only choose from concepts people have agreed, and everything else becomes a question for a person.</p></div>
+
+<h2 id="how-the-engagement-ran">How the engagement ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Pipeline</small><ol><li>Derive and enrich a batch</li><li class="hl">Map to concepts and score</li><li>Publish approved records</li></ol></div>
+<div class="dgm-lane"><small>Cataloguer</small><ol><li>Work the review queue</li><li class="hl">Accept, correct or reject</li><li>Flag missing concepts</li></ol></div>
+<div class="dgm-lane"><small>Taxonomy owner</small><ol><li>Review concept proposals</li><li>Version the scheme</li><li>Trigger re-mapping</li></ol></div>
+</div>
+<figcaption>Three roles, one loop: reviewer corrections and new concepts flow back into the next batch.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Discover</b><ul><li>Collection and rights inventory</li><li>Search pain points</li><li>Seed vocabulary</li></ul></div>
+<div><small>Phase 2</small><b>Pilot collection</b><ul><li>End-to-end pipeline</li><li>Review queue design</li><li>Evaluation set</li></ul></div>
+<div><small>Phase 3</small><b>Harden</b><ul><li>Confidence thresholds</li><li>Provenance and versioning</li><li>Hybrid search</li></ul></div>
+<div><small>Phase 4</small><b>Scale and hand off</b><ul><li>Further collections</li><li>Taxonomy governance</li><li>Runbooks and training</li></ul></div>
+</div>
+<figcaption>Phased delivery: one collection end to end before widening the backlog.</figcaption>
+</figure>
+<p>Thresholds were set against a hand-labelled evaluation set drawn from the pilot collection, not against the model's own sense of certainty. The method is in <a href="/insights/llm-evaluation-sets-that-predict-production/">LLM evaluation sets that predict production</a>.</p>
+
+<h2 id="key-decisions-and-trade-offs">Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>SKOS concept scheme</td><td>Free-text model tags</td><td>Consistent labels, synonyms and hierarchy; reusable outside the pipeline</td></tr>
+<tr><td>Batch enrichment</td><td>Real-time tagging on view</td><td>Predictable cost, reproducible runs and reviewable outputs</td></tr>
+<tr><td>Structured model outputs</td><td>Prose descriptions parsed later</td><td>Fields validate on arrival; failures are visible, not silent</td></tr>
+<tr><td>Review by confidence and sensitivity</td><td>Review everything, or nothing</td><td>People spend time where the model is weakest or the risk is highest</td></tr>
+<tr><td>Hybrid keyword and vector search</td><td>Vector search only</td><td>Editors still need exact names, dates and identifiers</td></tr>
+</tbody>
+</table>
+
+<h2 id="what-i-d-do-again-and-differently">What I'd do again, and differently</h2>
+<p>Again: put the vocabulary at the centre and make provenance a field, not a log file. Differently: involve the cataloguers in designing the review screen from the first week. The speed and quality of review decided the throughput of the whole system, far more than the model did.</p>
+<p>If you're planning something similar, the <a href="/ontology-knowledge-graph/">ontology and knowledge graph</a> page describes how I run these engagements, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://www.w3.org/TR/skos-reference/" target="_blank" rel="noopener">SKOS Simple Knowledge Organization System Reference</a><small>W3C · 2009-08-18</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://www.dublincore.org/specifications/dublin-core/dcmi-terms/" target="_blank" rel="noopener">DCMI Metadata Terms</a><small>Dublin Core Metadata Initiative</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://arxiv.org/abs/1908.10084" target="_blank" rel="noopener">Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks</a><small>arXiv (Reimers and Gurevych)</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://arxiv.org/abs/1603.09320" target="_blank" rel="noopener">Efficient and robust approximate nearest neighbor search using Hierarchical Navigable Small World graphs</a><small>arXiv (Malkov and Yashunin)</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fasksumanta.com%2Fcase-studies%2Fmedia-archive-metadata-enrichment%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fasksumanta.com%2Fcase-studies%2Fmedia-archive-metadata-enrichment%2F&amp;text=Making%20a%20decades-old%20media%20archive%20findable%20with%20model%20enrichment%20and%20a%20controlled%20vocabulary" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=Making%20a%20decades-old%20media%20archive%20findable%20with%20model%20enrichment%20and%20a%20controlled%20vocabulary%20https%3A%2F%2Fasksumanta.com%2Fcase-studies%2Fmedia-archive-metadata-enrichment%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://asksumanta.com/case-studies/media-archive-metadata-enrichment/">Copy link</button></div>
+      <div class="pnav"><a class="pn prev" href="/case-studies/edtech-curriculum-grounded-tutor/"><small>← Previous</small><b>Building an AI tutor that teaches the syllabus instead of doing the homework</b></a><a class="pn next" href="/case-studies/real-estate-document-intake-automation/"><small>Next →</small><b>Automating lease, ID and invoice intake without letting a model write to the ledger</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#the-situation">The situation</a></li><li><a href="#what-had-to-be-true">What had to be true</a></li><li><a href="#architecture">Architecture</a></li><li><a href="#the-data-flow-end-to-end">The data flow, end to end</a></li><li><a href="#the-hard-part-a-vocabulary-people-agree-on">The hard part: a vocabulary people agree on</a></li><li><a href="#how-the-engagement-ran">How the engagement ran</a></li><li><a href="#key-decisions-and-trade-offs">Key decisions and trade-offs</a></li><li><a href="#what-i-d-do-again-and-differently">What I&#x27;d do again, and differently</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>Can a language model tag an archive on its own?</summary><p>It can suggest tags quickly, but unreviewed free-text tags drift and duplicate. Mapping suggestions onto a controlled vocabulary and routing low-confidence items to people keeps the catalogue consistent and trustworthy.</p></details><details class="rise"><summary>Why use SKOS for a media taxonomy?</summary><p>SKOS is a W3C standard for thesauri and taxonomies. It gives preferred and alternative labels, broader and narrower relationships and mappings to external vocabularies, in a form that tools and search engines can reuse.</p></details><details class="rise"><summary>Do you still need keyword search if you have embeddings?</summary><p>Yes. Embeddings find items by meaning, but editors still search for exact names, dates and identifiers. A hybrid of filtered keyword search and vector similarity serves both needs.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/ontology-knowledge-graph/"><small>Service</small><b>Ontology &amp; knowledge graphs</b><span>I help organisations agree what their data means, write it down as an ontology and put it to work in a knowledge graph that analytics, APIs and AI agents can all rely on.</span><i>→</i></a><a class="rcard rise" href="/ai-architect/"><small>Service</small><b>AI &amp; LLM architecture</b><span>I design and build AI systems that leadership can trust: grounded in your data, measured by evaluations, governed by your rules and priced so they make sense at scale.</span><i>→</i></a><a class="rcard rise" href="/insights/terraform-secrets-out-of-state/"><small>Insight</small><b>Keeping secrets out of Terraform state: a checklist for platform teams</b><span>Most organisations using Terraform have database passwords, API keys or private keys sitting in state files, often in plaintext. For years that was simply how Terraform worked. Since versions 1.10 and 1.11 it doesn&#x27;t have to be, but the fix needs deliberate migration.</span><i>→</i></a><a class="rcard rise" href="/insights/slos-error-budgets-small-teams/"><small>Insight</small><b>SLOs and error budgets for small teams: field notes on making reliability a decision, not a debate</b><span>In a small company, the argument between shipping features and fixing reliability usually gets settled by whoever is loudest that week. Service level objectives and error budgets turn it into a rule everyone agreed in advance. The Google SRE material is written for large organisations, but the core ideas scale down well.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: Making a decades-old media archive findable with model enrichment and a controlled vocabulary">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
+        <p class="floc">United States &amp; UAE · working globally</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/uae/">Fractional CTO in the UAE</a></li></ul></div>
+      <div class="fc"><h4>Case studies</h4><ul><li><a href="/case-studies/startup-fractional-cto-seed-to-series-a/">Startup fractional CTO, seed to Series A</a></li><li><a href="/case-studies/private-equity-ai-technical-due-diligence/">Private equity AI technical due diligence</a></li><li><a href="/case-studies/telecom-observability-slos/">Telecom observability and SLOs</a></li><li><a href="/case-studies/real-estate-document-intake-automation/">Real estate document intake automation</a></li><li><a href="/#work">Engagement snapshots</a></li><li><a href="/case-studies/">All case studies →</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/terraform-secrets-out-of-state/">Keeping secrets out of Terraform state: a checklist for platform teams</a></li><li><a href="/insights/slos-error-budgets-small-teams/">SLOs and error budgets for small teams: field notes on making reliability a decision, not a debate</a></li><li><a href="/insights/speculative-decoding-private-llms/">Speculative decoding for private LLMs: faster tokens without changing the answers</a></li><li><a href="/insights/real-world-evidence-study-designs-omop/">Real-world evidence on OMOP: comparing five study designs for treatment effects</a></li><li><a href="/insights/eu-ai-act-gpai-fine-tuning-provider/">Fine-tuning a foundation model? When the EU AI Act makes you a general-purpose AI provider</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>

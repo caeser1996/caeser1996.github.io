@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Case study: real-time retail inventory with change data capture</title>
+<meta name="description" content="How a retailer replaced nightly stock syncs with change data capture and event streams, so stores, web and marketplaces read current inventory instead of last night&#x27;s." />
+<meta name="keywords" content="change data capture case study, real-time inventory architecture, Debezium Kafka inventory, retail event streaming, transactional outbox pattern, omnichannel stock sync, overselling prevention, inventory projections, Kafka compacted topics, streaming architect" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://asksumanta.com/case-studies/retail-real-time-inventory-cdc/" />
+<meta name="theme-color" content="#111214" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="Case study: real-time retail inventory with change data capture" />
+<meta property="og:description" content="How a retailer replaced nightly stock syncs with change data capture and event streams, so stores, web and marketplaces read current inventory instead of last night&#x27;s." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://asksumanta.com/case-studies/retail-real-time-inventory-cdc/" />
+<meta property="og:image" content="https://asksumanta.com/assets/og/retail-real-time-inventory-cdc.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Case study: real-time retail inventory with change data capture" />
+<meta name="twitter:description" content="How a retailer replaced nightly stock syncs with change data capture and event streams, so stores, web and marketplaces read current inventory instead of last night&#x27;s." />
+<meta name="twitter:image" content="https://asksumanta.com/assets/og/retail-real-time-inventory-cdc.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "Article", "headline": "Replacing nightly stock syncs with a live inventory stream", "description": "How a retailer replaced nightly stock syncs with change data capture and event streams, so stores, web and marketplaces read current inventory instead of last night's.", "articleSection": "Case study", "about": "Retail · Stores, web and marketplaces", "datePublished": "2026-10-28T01:24:00+04:00", "dateModified": "2026-10-28T01:24:00+04:00", "citation": [{"@type": "CreativeWork", "name": "Debezium Frequently Asked Questions", "url": "https://debezium.io/documentation/faq/"}, {"@type": "CreativeWork", "name": "Outbox Event Router", "url": "https://debezium.io/documentation/reference/transformations/outbox-event-router.html"}, {"@type": "CreativeWork", "name": "Pattern: Transactional outbox", "url": "https://microservices.io/patterns/data/transactional-outbox"}, {"@type": "CreativeWork", "name": "Kafka design: log compaction", "url": "https://kafka.apache.org/43/design/design/"}], "author": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "publisher": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "mainEntityOfPage": "https://asksumanta.com/case-studies/retail-real-time-inventory-cdc/", "image": "https://asksumanta.com/assets/og/retail-real-time-inventory-cdc.png", "keywords": "change data capture case study, real-time inventory architecture, Debezium Kafka inventory, retail event streaming, transactional outbox pattern, omnichannel stock sync, overselling prevention, inventory projections, Kafka compacted topics, streaming architect", "wordCount": 936}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://asksumanta.com/"}, {"@type": "ListItem", "position": 2, "name": "Case studies", "item": "https://asksumanta.com/case-studies/"}, {"@type": "ListItem", "position": 3, "name": "Replacing nightly stock syncs with a live inventory stream", "item": "https://asksumanta.com/case-studies/retail-real-time-inventory-cdc/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What is change data capture?", "acceptedAnswer": {"@type": "Answer", "text": "Change data capture reads committed changes from a database's transaction log and publishes them as events, so other systems can react without polling or nightly extracts."}}, {"@type": "Question", "name": "Should you stream raw table changes or domain events?", "acceptedAnswer": {"@type": "Answer", "text": "Raw table changes are quick to start but couple consumers to the source schema. The transactional outbox pattern publishes deliberate domain events in the same transaction as the change, which is safer as the number of consumers grows."}}, {"@type": "Question", "name": "Does real-time inventory remove overselling entirely?", "acceptedAnswer": {"@type": "Answer", "text": "No. It narrows the window in which channels act on stale stock. Reservations, safety buffers and clear rules for concurrent orders are still needed."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+</script>
+</head>
+<body class="sub is-post is-case">
+<div class="progress" id="progress"></div>
+<nav>
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="/#practice">Services</a>
+      <a href="/case-studies/">Case studies</a>
+      <a href="/insights/">Insights</a>
+      <a href="/#assess">Analyse</a>
+      <a href="/#connect">Connect</a>
+    </div>
+    <div class="nav-r">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/case-studies/">Case studies</a> <span>/</span> <em>Replacing nightly stock syncs with a live inventory stream</em></div>
+    <div class="kicker">Case study · Retail streaming</div>
+    <h1>Replacing nightly stock syncs with a live inventory stream</h1>
+    <p class="sub-lede">Stock moved all day in stores, warehouses and online, but channels learned about it once a night. Overselling was the predictable result. The goal was to stream every committed stock and order change from the operational databases into projections that every channel could read in near real time.</p>
+    <div class="ameta"><span class="fmt">Case study</span><span>Retail · Stores, web and marketplaces</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-10-28T01:24:00+04:00">28 Oct 2026 · 01:24 GST</time><span>8 min read</span></div><div class="atags"><span class="tagp">#streaming</span><span class="tagp">#data</span><span class="tagp">#architecture</span><span class="tagp">#platform</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Case study cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><line x1="521" y1="39" x2="668" y2="57" class="cv-edge" opacity="0.01"/><line x1="821" y1="348" x2="858" y2="274" class="cv-edge" opacity="0.45"/><line x1="821" y1="348" x2="761" y2="289" class="cv-edge" opacity="0.44"/><line x1="818" y1="56" x2="778" y2="33" class="cv-edge" opacity="0.69"/><line x1="818" y1="56" x2="967" y2="69" class="cv-edge" opacity="0.00"/><line x1="818" y1="56" x2="685" y2="89" class="cv-edge" opacity="0.09"/><line x1="818" y1="56" x2="764" y2="40" class="cv-edge" opacity="0.62"/><line x1="818" y1="56" x2="925" y2="140" class="cv-edge" opacity="0.09"/><line x1="778" y1="33" x2="685" y2="89" class="cv-edge" opacity="0.28"/><line x1="778" y1="33" x2="668" y2="57" class="cv-edge" opacity="0.25"/><line x1="778" y1="33" x2="764" y2="40" class="cv-edge" opacity="0.90"/><line x1="967" y1="69" x2="1043" y2="180" class="cv-edge" opacity="0.11"/><line x1="967" y1="69" x2="1033" y2="114" class="cv-edge" opacity="0.47"/><line x1="967" y1="69" x2="1064" y2="70" class="cv-edge" opacity="0.36"/><line x1="967" y1="69" x2="943" y2="181" class="cv-edge" opacity="0.24"/><line x1="967" y1="69" x2="925" y2="140" class="cv-edge" opacity="0.45"/><line x1="967" y1="69" x2="977" y2="69" class="cv-edge" opacity="0.94"/><line x1="1013" y1="315" x2="1100" y2="233" class="cv-edge hl" opacity="0.20"/><line x1="1013" y1="315" x2="1035" y2="206" class="cv-edge" opacity="0.26"/><line x1="1013" y1="315" x2="1043" y2="180" class="cv-edge" opacity="0.08"/><line x1="1013" y1="315" x2="1149" y2="330" class="cv-edge hl" opacity="0.08"/><line x1="1013" y1="315" x2="1098" y2="320" class="cv-edge hl" opacity="0.43"/><line x1="1013" y1="315" x2="1020" y2="375" class="cv-edge" opacity="0.59"/><line x1="542" y1="200" x2="612" y2="268" class="cv-edge hl" opacity="0.34"/><line x1="542" y1="200" x2="558" y2="326" class="cv-edge" opacity="0.15"/><line x1="1100" y1="233" x2="1035" y2="206" class="cv-edge hl" opacity="0.53"/><line x1="1100" y1="233" x2="1043" y2="180" class="cv-edge hl" opacity="0.48"/><line x1="1100" y1="233" x2="1149" y2="330" class="cv-edge hl" opacity="0.28"/><line x1="1100" y1="233" x2="1033" y2="114" class="cv-edge hl" opacity="0.09"/><line x1="1100" y1="233" x2="1098" y2="320" class="cv-edge hl" opacity="0.42"/><line x1="1035" y1="206" x2="1043" y2="180" class="cv-edge" opacity="0.82"/><line x1="1035" y1="206" x2="1033" y2="114" class="cv-edge" opacity="0.38"/><line x1="1035" y1="206" x2="1098" y2="320" class="cv-edge hl" opacity="0.13"/><line x1="1035" y1="206" x2="1064" y2="70" class="cv-edge" opacity="0.07"/><line x1="1035" y1="206" x2="943" y2="181" class="cv-edge" opacity="0.36"/><line x1="1035" y1="206" x2="925" y2="140" class="cv-edge" opacity="0.15"/><line x1="1035" y1="206" x2="977" y2="69" class="cv-edge" opacity="0.01"/><line x1="612" y1="268" x2="739" y2="210" class="cv-edge hl" opacity="0.07"/><line x1="612" y1="268" x2="558" y2="326" class="cv-edge hl" opacity="0.47"/><line x1="739" y1="210" x2="685" y2="89" class="cv-edge hl" opacity="0.12"/><line x1="739" y1="210" x2="858" y2="274" class="cv-edge hl" opacity="0.10"/><line x1="739" y1="210" x2="761" y2="289" class="cv-edge hl" opacity="0.45"/><line x1="1043" y1="180" x2="1033" y2="114" class="cv-edge" opacity="0.55"/><line x1="1043" y1="180" x2="1064" y2="70" class="cv-edge" opacity="0.25"/><line x1="1043" y1="180" x2="943" y2="181" class="cv-edge" opacity="0.33"/><line x1="1043" y1="180" x2="925" y2="140" class="cv-edge" opacity="0.17"/><line x1="1043" y1="180" x2="977" y2="69" class="cv-edge" opacity="0.14"/><line x1="1149" y1="330" x2="1098" y2="320" class="cv-edge hl" opacity="0.65"/><line x1="1149" y1="330" x2="1020" y2="375" class="cv-edge hl" opacity="0.08"/><line x1="685" y1="89" x2="668" y2="57" class="cv-edge" opacity="0.76"/><line x1="685" y1="89" x2="764" y2="40" class="cv-edge" opacity="0.39"/><line x1="1033" y1="114" x2="1064" y2="70" class="cv-edge" opacity="0.64"/><line x1="1033" y1="114" x2="943" y2="181" class="cv-edge" opacity="0.25"/><line x1="1033" y1="114" x2="925" y2="140" class="cv-edge" opacity="0.26"/><line x1="1033" y1="114" x2="977" y2="69" class="cv-edge" opacity="0.52"/><line x1="1098" y1="320" x2="1020" y2="375" class="cv-edge hl" opacity="0.36"/><line x1="1064" y1="70" x2="977" y2="69" class="cv-edge" opacity="0.42"/><line x1="858" y1="274" x2="761" y2="289" class="cv-edge" opacity="0.35"/><line x1="858" y1="274" x2="943" y2="181" class="cv-edge" opacity="0.16"/><line x1="858" y1="274" x2="925" y2="140" class="cv-edge" opacity="0.00"/><line x1="668" y1="57" x2="764" y2="40" class="cv-edge" opacity="0.35"/><line x1="943" y1="181" x2="925" y2="140" class="cv-edge" opacity="0.71"/><line x1="943" y1="181" x2="977" y2="69" class="cv-edge" opacity="0.22"/><line x1="925" y1="140" x2="977" y2="69" class="cv-edge" opacity="0.41"/><circle cx="521" cy="39" r="3" class="cv-dot"/><circle cx="821" cy="348" r="3" class="cv-dot"/><circle cx="818" cy="56" r="3" class="cv-dot"/><circle cx="778" cy="33" r="3" class="cv-dot"/><circle cx="967" cy="69" r="3" class="cv-dot"/><circle cx="1013" cy="315" r="3" class="cv-dot"/><circle cx="542" cy="200" r="3" class="cv-dot"/><circle cx="1100" cy="233" r="6" class="cv-dot hl"/><circle cx="1035" cy="206" r="3" class="cv-dot"/><circle cx="612" cy="268" r="6" class="cv-dot hl"/><circle cx="739" cy="210" r="6" class="cv-dot hl"/><circle cx="1043" cy="180" r="3" class="cv-dot"/><circle cx="1149" cy="330" r="6" class="cv-dot hl"/><circle cx="685" cy="89" r="3" class="cv-dot"/><circle cx="558" cy="326" r="3" class="cv-dot"/><circle cx="1033" cy="114" r="3" class="cv-dot"/><circle cx="1098" cy="320" r="6" class="cv-dot hl"/><circle cx="1020" cy="375" r="3" class="cv-dot"/><circle cx="1064" cy="70" r="3" class="cv-dot"/><circle cx="858" cy="274" r="3" class="cv-dot"/><circle cx="668" cy="57" r="3" class="cv-dot"/><circle cx="761" cy="289" r="3" class="cv-dot"/><circle cx="764" cy="40" r="3" class="cv-dot"/><circle cx="943" cy="181" r="3" class="cv-dot"/><circle cx="925" cy="140" r="3" class="cv-dot"/><circle cx="977" cy="69" r="3" class="cv-dot"/><text x="60" y="90" class="cv-k">CASE STUDY · CASE STUDY · RETAIL STREAMING</text><text x="60" y="350" class="cv-n">28 Oct 2026 · 01:24 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <section class="glance rise" aria-label="At a glance"><div class="kicker">At a glance</div><div class="glance-grid"><div><small>Sector</small><b>Retail · Stores, web and marketplaces</b></div><div><small>My role</small><b>Principal architect</b></div><div><small>Engagement</small><b>Architecture, build and hand-off</b></div><div><small>Scope</small><b>CDC, event streaming, inventory projections, channel integration</b></div></div><div class="glance-out"><small>What changed</small><ul><li>Channels read stock from a continuously updated view instead of a nightly snapshot</li><li>Order and stock events available to any new consumer without touching the source systems</li><li>Replayable history, so projections can be rebuilt or corrected from the log</li><li>Clear ownership of event contracts between the teams that produce and consume them</li></ul></div><div class="cs-stack"><span class="tag">Debezium</span><span class="tag">Apache Kafka</span><span class="tag">Kafka Connect</span><span class="tag">Transactional outbox</span><span class="tag">Stream processing</span><span class="tag">Compacted topics</span><span class="tag">Redis</span><span class="tag">Schema registry</span><span class="tag">OpenTelemetry</span></div><p class="glance-note">Anonymised composite. Client names, identifying details and confidential figures are withheld; public facts are cited in the references.</p></section><h2 id="the-situation">The situation</h2>
+<p>A retailer sold through physical stores, its own website and several marketplaces. Stock levels lived in a warehouse system and store systems, orders in an order management database, and each channel received a stock file once a night. During the day, the same last unit could be sold in a store, online and on a marketplace before anyone knew.</p>
+<p>The workarounds made things worse: large safety buffers that hid sellable stock, manual cancellations, and ad hoc point-to-point integrations that each team had built to get fresher data for its own channel.</p>
+
+<h2 id="what-had-to-be-true">What had to be true</h2>
+<ul>
+<li><strong>Every committed change is captured</strong>, without polling or adding load to operational databases.</li>
+<li><strong>No dual writes</strong>: an order and its event either both happen or neither does.</li>
+<li><strong>Channels read a projection</strong>, not the source systems.</li>
+<li><strong>History is replayable</strong>, so a bug in a projection can be fixed and rebuilt.</li>
+<li><strong>Contracts are explicit</strong>, so source teams can change their schemas without breaking consumers.</li>
+</ul>
+
+<h2 id="architecture">Architecture</h2>
+<p>Log-based change data capture reads committed row-level changes from the database's transaction log, so applications consume changes rather than querying the source<sup class="cite"><a href="#ref-1">1</a></sup>. That became the backbone, with a stream processing layer building inventory views for each consumer.</p>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Sources</small><div class="dgm-nodes"><span>Order management<em>relational DB</em></span><span>Warehouse system<em>stock movements</em></span><span>Store systems<em>sales, returns</em></span></div></div>
+<div class="dgm-tier"><small>Capture</small><div class="dgm-nodes"><span class="hl">Outbox tables<em>same transaction</em></span><span>Debezium<em>Kafka Connect</em></span><span>Schema registry<em>versioned contracts</em></span></div></div>
+<div class="dgm-tier"><small>Stream</small><div class="dgm-nodes"><span>Kafka topics<em>keyed by SKU and location</em></span><span>Compacted state topics<em>latest per key</em></span><span>Dead-letter topics<em>with reasons</em></span></div></div>
+<div class="dgm-tier"><small>Project</small><div class="dgm-nodes"><span class="hl">Available-to-sell<em>stream processor</em></span><span>Reservations<em>pending orders</em></span><span>Location rollups<em>store, region, online</em></span></div></div>
+<div class="dgm-tier"><small>Serve</small><div class="dgm-nodes"><span>Redis read model<em>low-latency lookups</em></span><span>Web and app<em>live stock</em></span><span>Marketplace feeds<em>incremental</em></span><span>Analytics<em>same events</em></span></div></div>
+</div>
+<figcaption>Layered architecture: capture once from the log, project many times for each consumer.</figcaption>
+</figure>
+
+<h2 id="the-data-flow-end-to-end">The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Commit</b><span>Order or stock change and its outbox event written in one database transaction</span></li>
+<li class="hl"><b>Capture</b><span>Debezium reads the log and routes outbox events to domain topics</span></li>
+<li><b>Validate</b><span>Schema checked against the registry; malformed events to dead-letter</span></li>
+<li class="hl"><b>Project</b><span>Stream processor updates available-to-sell per SKU and location</span></li>
+<li><b>Serve</b><span>Read model updated; channels query it or receive incremental updates</span></li>
+<li><b>Reconcile</b><span>Periodic comparison with source counts; drift raised, not hidden</span></li>
+</ol>
+<figcaption>Every step is idempotent and keyed, so replays and retries do not double-count stock.</figcaption>
+</figure>
+<p>More on the capture side in <a href="/insights/change-data-capture-event-streams/">change data capture and event streams</a>, and on duplicate-safe consumers in <a href="/insights/idempotent-payments-order-pipelines/">idempotent order pipelines</a>.</p>
+
+<h2 id="the-hard-part-events-that-mean-something">The hard part: events that mean something</h2>
+<p>Streaming raw table changes was quick to demonstrate and the wrong long-term contract. Consumers ended up decoding internal columns and status codes, and any schema change in the source broke them. The transactional outbox pattern addresses this: the service writes a domain event to an outbox table in the same transaction as the business change, and a relay publishes it<sup class="cite"><a href="#ref-3">3</a></sup>. Debezium's outbox event router does that relay from the log, routing events to topics by aggregate type and keying them by aggregate identifier<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<ul>
+<li>Events were designed with the consuming teams: "stock adjusted", "order allocated", "reservation released", not "row updated".</li>
+<li>Keys were chosen for ordering: everything about one SKU at one location lands in one partition, in order.</li>
+<li>Contracts went into the schema registry with compatibility rules, following a <a href="/insights/data-contracts-playbook/">data contracts</a> approach.</li>
+</ul>
+<p>For current state, compacted topics keep the latest record per key and support rebuilding state after a failure<sup class="cite"><a href="#ref-4">4</a></sup>, which let new projections bootstrap without a bulk extract from the source.</p>
+<div class="callout"><p>CDC moves data quickly; it does not decide what the data means. Design the events with the teams who will read them.</p></div>
+
+<h2 id="how-it-ran">How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Source teams</small><ol><li>Add outbox writes</li><li class="hl">Own event schemas</li><li>Keep compatibility</li></ol></div>
+<div class="dgm-lane"><small>Platform</small><ol><li>Run Connect and Kafka</li><li>Operate the registry</li><li>Monitor lag and drift</li></ol></div>
+<div class="dgm-lane"><small>Channel teams</small><ol><li>Read projections</li><li class="hl">Report mismatches</li><li>Retire old file feeds</li></ol></div>
+</div>
+<figcaption>Producers own their events, the platform owns the pipes, consumers own their projections.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Map</b><ul><li>Stock and order flows</li><li>Where overselling occurs</li><li>Event catalogue draft</li></ul></div>
+<div><small>Phase 2</small><b>Thin slice</b><ul><li>One source with outbox</li><li>One projection</li><li>One channel in shadow</li></ul></div>
+<div><small>Phase 3</small><b>Extend</b><ul><li>Remaining sources</li><li>Reservations logic</li><li>Reconciliation jobs</li></ul></div>
+<div><small>Phase 4</small><b>Switch and hand off</b><ul><li>Channels cut over</li><li>Nightly files retired</li><li>Runbooks and on-call</li></ul></div>
+</div>
+<figcaption>Each channel ran in shadow against the nightly file before cutting over.</figcaption>
+</figure>
+<p>Operationally, the signals that mattered were connector health, consumer lag per projection and the reconciliation drift report. Those went on one dashboard owned by the platform team, with alerts tied to what a channel would notice (stale stock) rather than to every broker metric. Traces carried the event identifier from commit to read model, so a disputed stock figure could be followed back to the change that produced it.</p>
+
+<h2 id="key-decisions-and-trade-offs">Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Log-based CDC</td><td>Polling or nightly extracts</td><td>Captures every committed change with little source load</td></tr>
+<tr><td>Transactional outbox</td><td>Raw table change events</td><td>Stable domain contracts; no dual writes</td></tr>
+<tr><td>Key by SKU and location</td><td>Key by order</td><td>Ordered updates for the thing being counted</td></tr>
+<tr><td>Separate read model</td><td>Channels query sources</td><td>Protects operational systems; fast reads</td></tr>
+<tr><td>Reconciliation jobs</td><td>Trust the stream</td><td>Drift is surfaced and explained, not discovered by customers</td></tr>
+</tbody>
+</table>
+
+<h2 id="what-i-d-do-again-and-differently">What I'd do again, and differently</h2>
+<p>Again: a thin slice end to end before scaling, shadow running against the old feed, and reconciliation from the start. Differently: agree the reservation and allocation rules with operations earlier. Live data exposed business rules that had never been written down, and those took longer to settle than the streaming platform.</p>
+<p>If you are planning a similar move off batch, the <a href="/fractional-cto/">fractional CTO</a> page describes how I work with teams on it, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://debezium.io/documentation/faq/" target="_blank" rel="noopener">Debezium Frequently Asked Questions</a><small>Debezium</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://debezium.io/documentation/reference/transformations/outbox-event-router.html" target="_blank" rel="noopener">Outbox Event Router</a><small>Debezium</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://microservices.io/patterns/data/transactional-outbox" target="_blank" rel="noopener">Pattern: Transactional outbox</a><small>microservices.io (Chris Richardson)</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://kafka.apache.org/43/design/design/" target="_blank" rel="noopener">Kafka design: log compaction</a><small>Apache Software Foundation</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fasksumanta.com%2Fcase-studies%2Fretail-real-time-inventory-cdc%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fasksumanta.com%2Fcase-studies%2Fretail-real-time-inventory-cdc%2F&amp;text=Replacing%20nightly%20stock%20syncs%20with%20a%20live%20inventory%20stream" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=Replacing%20nightly%20stock%20syncs%20with%20a%20live%20inventory%20stream%20https%3A%2F%2Fasksumanta.com%2Fcase-studies%2Fretail-real-time-inventory-cdc%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://asksumanta.com/case-studies/retail-real-time-inventory-cdc/">Copy link</button></div>
+      <div class="pnav"><a class="pn prev" href="/case-studies/ecommerce-product-ontology-search/"><small>← Previous</small><b>Fixing product search and AI shopping by fixing what the catalogue means</b></a><a class="pn next" href="/case-studies/logistics-exception-handling-agents/"><small>Next →</small><b>Triaging shipment exceptions with agents that ask before they act</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#the-situation">The situation</a></li><li><a href="#what-had-to-be-true">What had to be true</a></li><li><a href="#architecture">Architecture</a></li><li><a href="#the-data-flow-end-to-end">The data flow, end to end</a></li><li><a href="#the-hard-part-events-that-mean-something">The hard part: events that mean something</a></li><li><a href="#how-it-ran">How it ran</a></li><li><a href="#key-decisions-and-trade-offs">Key decisions and trade-offs</a></li><li><a href="#what-i-d-do-again-and-differently">What I&#x27;d do again, and differently</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>What is change data capture?</summary><p>Change data capture reads committed changes from a database&#x27;s transaction log and publishes them as events, so other systems can react without polling or nightly extracts.</p></details><details class="rise"><summary>Should you stream raw table changes or domain events?</summary><p>Raw table changes are quick to start but couple consumers to the source schema. The transactional outbox pattern publishes deliberate domain events in the same transaction as the change, which is safer as the number of consumers grows.</p></details><details class="rise"><summary>Does real-time inventory remove overselling entirely?</summary><p>No. It narrows the window in which channels act on stale stock. Reservations, safety buffers and clear rules for concurrent orders are still needed.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/fractional-cto/"><small>Service</small><b>Fractional CTO</b><span>I work as a part-time CTO for founders, CEOs and boards who need experienced technical judgement now, and a team that can carry it on after I step back.</span><i>→</i></a><a class="rcard rise" href="/ai-architect/"><small>Service</small><b>AI &amp; LLM architecture</b><span>I design and build AI systems that leadership can trust: grounded in your data, measured by evaluations, governed by your rules and priced so they make sense at scale.</span><i>→</i></a><a class="rcard rise" href="/technical-due-diligence/"><small>Service</small><b>Technical due diligence</b><span>I give investors an independent, plain-language view of a company&#x27;s technology, team and AI claims, so the risks are priced in before the deal closes, not discovered after.</span><i>→</i></a><a class="rcard rise" href="/insights/terraform-secrets-out-of-state/"><small>Insight</small><b>Keeping secrets out of Terraform state: a checklist for platform teams</b><span>Most organisations using Terraform have database passwords, API keys or private keys sitting in state files, often in plaintext. For years that was simply how Terraform worked. Since versions 1.10 and 1.11 it doesn&#x27;t have to be, but the fix needs deliberate migration.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: Replacing nightly stock syncs with a live inventory stream">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
+        <p class="floc">United States &amp; UAE · working globally</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/uae/">Fractional CTO in the UAE</a></li></ul></div>
+      <div class="fc"><h4>Case studies</h4><ul><li><a href="/case-studies/startup-fractional-cto-seed-to-series-a/">Startup fractional CTO, seed to Series A</a></li><li><a href="/case-studies/private-equity-ai-technical-due-diligence/">Private equity AI technical due diligence</a></li><li><a href="/case-studies/telecom-observability-slos/">Telecom observability and SLOs</a></li><li><a href="/case-studies/real-estate-document-intake-automation/">Real estate document intake automation</a></li><li><a href="/#work">Engagement snapshots</a></li><li><a href="/case-studies/">All case studies →</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/terraform-secrets-out-of-state/">Keeping secrets out of Terraform state: a checklist for platform teams</a></li><li><a href="/insights/slos-error-budgets-small-teams/">SLOs and error budgets for small teams: field notes on making reliability a decision, not a debate</a></li><li><a href="/insights/speculative-decoding-private-llms/">Speculative decoding for private LLMs: faster tokens without changing the answers</a></li><li><a href="/insights/real-world-evidence-study-designs-omop/">Real-world evidence on OMOP: comparing five study designs for treatment effects</a></li><li><a href="/insights/eu-ai-act-gpai-fine-tuning-provider/">Fine-tuning a foundation model? When the EU AI Act makes you a general-purpose AI provider</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>

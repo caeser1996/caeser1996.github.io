@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Case study: a sovereign private LLM service for UAE government</title>
+<meta name="description" content="Generative AI for a UAE government entity without data leaving national infrastructure: in-country model serving, an AI gateway, redaction and evaluation." />
+<meta name="keywords" content="sovereign LLM UAE, private LLM government, UAE PDPL AI, in-country AI hosting, AI gateway architecture, vLLM deployment, PII redaction LLM, government generative AI, data residency AI, LLM evaluation" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://asksumanta.com/case-studies/uae-government-sovereign-llm-service/" />
+<meta name="theme-color" content="#111214" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="Case study: a sovereign private LLM service for UAE government" />
+<meta property="og:description" content="Generative AI for a UAE government entity without data leaving national infrastructure: in-country model serving, an AI gateway, redaction and evaluation." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://asksumanta.com/case-studies/uae-government-sovereign-llm-service/" />
+<meta property="og:image" content="https://asksumanta.com/assets/og/uae-government-sovereign-llm-service.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Case study: a sovereign private LLM service for UAE government" />
+<meta name="twitter:description" content="Generative AI for a UAE government entity without data leaving national infrastructure: in-country model serving, an AI gateway, redaction and evaluation." />
+<meta name="twitter:image" content="https://asksumanta.com/assets/og/uae-government-sovereign-llm-service.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "Article", "headline": "Giving government teams generative AI without sending a byte out of the country", "description": "Generative AI for a UAE government entity without data leaving national infrastructure: in-country model serving, an AI gateway, redaction and evaluation.", "articleSection": "Case study", "about": "Government · UAE", "datePublished": "2026-10-28T01:30:00+04:00", "dateModified": "2026-10-28T01:30:00+04:00", "citation": [{"@type": "CreativeWork", "name": "Federal Decree by Law No. 45 of 2021 Concerning the Protection of Personal Data", "url": "https://uaelegislation.gov.ae/en/legislations/1972/download"}, {"@type": "CreativeWork", "name": "The UAE Charter for the Development and Use of Artificial Intelligence", "url": "https://u.ae/en/about-the-uae/strategies-initiatives-and-awards/policies/Ai/The-UAE-Charter-for-the-Development-and-Use-of-Artificial-Intelligence"}, {"@type": "CreativeWork", "name": "Efficient Memory Management for Large Language Model Serving with PagedAttention", "url": "https://arxiv.org/abs/2309.06180"}, {"@type": "CreativeWork", "name": "OWASP Top 10 for LLM Applications 2025", "url": "https://genai.owasp.org/resource/owasp-top-10-for-llm-applications-2025/"}, {"@type": "CreativeWork", "name": "Artificial Intelligence Risk Management Framework (AI RMF 1.0)", "url": "https://www.nist.gov/publications/artificial-intelligence-risk-management-framework-ai-rmf-10"}], "author": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "publisher": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "mainEntityOfPage": "https://asksumanta.com/case-studies/uae-government-sovereign-llm-service/", "image": "https://asksumanta.com/assets/og/uae-government-sovereign-llm-service.png", "keywords": "sovereign LLM UAE, private LLM government, UAE PDPL AI, in-country AI hosting, AI gateway architecture, vLLM deployment, PII redaction LLM, government generative AI, data residency AI, LLM evaluation", "wordCount": 957}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://asksumanta.com/"}, {"@type": "ListItem", "position": 2, "name": "Case studies", "item": "https://asksumanta.com/case-studies/"}, {"@type": "ListItem", "position": 3, "name": "Giving government teams generative AI without sending a byte out of the country", "item": "https://asksumanta.com/case-studies/uae-government-sovereign-llm-service/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Can a government entity in the UAE use generative AI without sending data abroad?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Open-weight models can be served on in-country GPU infrastructure, with an AI gateway that handles identity, redaction, routing and logging, so prompts and documents never leave national infrastructure."}}, {"@type": "Question", "name": "Does the UAE PDPL apply to government entities?", "acceptedAnswer": {"@type": "Answer", "text": "The federal PDPL excludes government data and government entities from its scope, among other categories. Government bodies follow their own data classification, emirate-level and sector rules, so confirm the applicable regime with counsel early."}}, {"@type": "Question", "name": "Why put a gateway in front of the models?", "acceptedAnswer": {"@type": "Answer", "text": "A gateway gives one place to enforce authentication, redaction, quotas, routing and audit logging, so controls do not depend on every application team implementing them correctly."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+</script>
+</head>
+<body class="sub is-post is-case">
+<div class="progress" id="progress"></div>
+<nav>
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="/#practice">Services</a>
+      <a href="/case-studies/">Case studies</a>
+      <a href="/insights/">Insights</a>
+      <a href="/#assess">Analyse</a>
+      <a href="/#connect">Connect</a>
+    </div>
+    <div class="nav-r">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/case-studies/">Case studies</a> <span>/</span> <em>Giving government teams generative AI without sending a byte out of the country</em></div>
+    <div class="kicker">Case study · Sovereign AI</div>
+    <h1>Giving government teams generative AI without sending a byte out of the country</h1>
+    <p class="sub-lede">Teams across a UAE government entity wanted generative AI for drafting, summarising and search. Public chatbots were off the table because the data could not leave national infrastructure. The goal was a shared, in-country LLM service with one front door, redaction, routing and evaluation built in.</p>
+    <div class="ameta"><span class="fmt">Case study</span><span>Government · UAE</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-10-28T01:30:00+04:00">28 Oct 2026 · 01:30 GST</time><span>8 min read</span></div><div class="atags"><span class="tagp">#uae</span><span class="tagp">#ai</span><span class="tagp">#llm</span><span class="tagp">#security</span><span class="tagp">#governance</span><span class="tagp">#platform</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Case study cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><line x1="578" y1="304" x2="586" y2="368" class="cv-edge" opacity="0.57"/><line x1="578" y1="304" x2="643" y2="338" class="cv-edge" opacity="0.51"/><line x1="578" y1="304" x2="660" y2="198" class="cv-edge" opacity="0.10"/><line x1="578" y1="304" x2="531" y2="335" class="cv-edge" opacity="0.63"/><line x1="578" y1="304" x2="681" y2="358" class="cv-edge" opacity="0.22"/><line x1="578" y1="304" x2="666" y2="248" class="cv-edge hl" opacity="0.30"/><line x1="578" y1="304" x2="533" y2="272" class="cv-edge" opacity="0.63"/><line x1="1089" y1="351" x2="1030" y2="287" class="cv-edge" opacity="0.42"/><line x1="1089" y1="351" x2="1068" y2="298" class="cv-edge" opacity="0.62"/><line x1="1089" y1="351" x2="1026" y2="272" class="cv-edge hl" opacity="0.33"/><line x1="549" y1="98" x2="660" y2="198" class="cv-edge" opacity="0.00"/><line x1="549" y1="98" x2="649" y2="128" class="cv-edge" opacity="0.30"/><line x1="549" y1="98" x2="612" y2="127" class="cv-edge" opacity="0.54"/><line x1="1146" y1="53" x2="1055" y2="112" class="cv-edge" opacity="0.28"/><line x1="586" y1="368" x2="643" y2="338" class="cv-edge" opacity="0.57"/><line x1="586" y1="368" x2="531" y2="335" class="cv-edge" opacity="0.57"/><line x1="586" y1="368" x2="681" y2="358" class="cv-edge" opacity="0.36"/><line x1="586" y1="368" x2="666" y2="248" class="cv-edge hl" opacity="0.04"/><line x1="586" y1="368" x2="533" y2="272" class="cv-edge" opacity="0.27"/><line x1="901" y1="155" x2="918" y2="192" class="cv-edge" opacity="0.73"/><line x1="901" y1="155" x2="894" y2="108" class="cv-edge" opacity="0.69"/><line x1="901" y1="155" x2="911" y2="245" class="cv-edge" opacity="0.39"/><line x1="1030" y1="287" x2="1068" y2="298" class="cv-edge" opacity="0.73"/><line x1="1030" y1="287" x2="918" y2="192" class="cv-edge" opacity="0.02"/><line x1="1030" y1="287" x2="1026" y2="272" class="cv-edge hl" opacity="0.90"/><line x1="1030" y1="287" x2="911" y2="245" class="cv-edge" opacity="0.16"/><line x1="1068" y1="298" x2="1026" y2="272" class="cv-edge hl" opacity="0.67"/><line x1="643" y1="338" x2="660" y2="198" class="cv-edge" opacity="0.06"/><line x1="643" y1="338" x2="748" y2="387" class="cv-edge" opacity="0.23"/><line x1="643" y1="338" x2="531" y2="335" class="cv-edge" opacity="0.26"/><line x1="643" y1="338" x2="726" y2="234" class="cv-edge hl" opacity="0.11"/><line x1="643" y1="338" x2="681" y2="358" class="cv-edge" opacity="0.71"/><line x1="643" y1="338" x2="666" y2="248" class="cv-edge hl" opacity="0.38"/><line x1="643" y1="338" x2="533" y2="272" class="cv-edge" opacity="0.15"/><line x1="660" y1="198" x2="726" y2="234" class="cv-edge hl" opacity="0.50"/><line x1="660" y1="198" x2="748" y2="125" class="cv-edge" opacity="0.24"/><line x1="660" y1="198" x2="666" y2="248" class="cv-edge hl" opacity="0.66"/><line x1="660" y1="198" x2="756" y2="99" class="cv-edge hl" opacity="0.08"/><line x1="660" y1="198" x2="649" y2="128" class="cv-edge" opacity="0.53"/><line x1="660" y1="198" x2="612" y2="127" class="cv-edge" opacity="0.43"/><line x1="660" y1="198" x2="533" y2="272" class="cv-edge" opacity="0.02"/><line x1="748" y1="387" x2="681" y2="358" class="cv-edge" opacity="0.52"/><line x1="531" y1="335" x2="533" y2="272" class="cv-edge" opacity="0.58"/><line x1="918" y1="192" x2="894" y2="108" class="cv-edge" opacity="0.42"/><line x1="918" y1="192" x2="1026" y2="272" class="cv-edge hl" opacity="0.10"/><line x1="918" y1="192" x2="911" y2="245" class="cv-edge" opacity="0.64"/><line x1="894" y1="108" x2="748" y2="125" class="cv-edge" opacity="0.02"/><line x1="894" y1="108" x2="752" y2="67" class="cv-edge" opacity="0.02"/><line x1="894" y1="108" x2="756" y2="99" class="cv-edge hl" opacity="0.08"/><line x1="894" y1="108" x2="911" y2="245" class="cv-edge" opacity="0.08"/><line x1="726" y1="234" x2="681" y2="358" class="cv-edge hl" opacity="0.12"/><line x1="726" y1="234" x2="748" y2="125" class="cv-edge hl" opacity="0.26"/><line x1="726" y1="234" x2="666" y2="248" class="cv-edge hl" opacity="0.59"/><line x1="726" y1="234" x2="756" y2="99" class="cv-edge hl" opacity="0.08"/><line x1="726" y1="234" x2="649" y2="128" class="cv-edge hl" opacity="0.13"/><line x1="681" y1="358" x2="666" y2="248" class="cv-edge hl" opacity="0.26"/><line x1="1026" y1="272" x2="911" y2="245" class="cv-edge hl" opacity="0.21"/><line x1="748" y1="125" x2="752" y2="67" class="cv-edge" opacity="0.61"/><line x1="748" y1="125" x2="666" y2="248" class="cv-edge hl" opacity="0.01"/><line x1="748" y1="125" x2="756" y2="99" class="cv-edge hl" opacity="0.82"/><line x1="748" y1="125" x2="649" y2="128" class="cv-edge" opacity="0.34"/><line x1="748" y1="125" x2="612" y2="127" class="cv-edge" opacity="0.09"/><line x1="752" y1="67" x2="756" y2="99" class="cv-edge hl" opacity="0.79"/><line x1="752" y1="67" x2="649" y2="128" class="cv-edge" opacity="0.20"/><line x1="666" y1="248" x2="649" y2="128" class="cv-edge hl" opacity="0.19"/><line x1="666" y1="248" x2="612" y2="127" class="cv-edge hl" opacity="0.12"/><line x1="666" y1="248" x2="533" y2="272" class="cv-edge hl" opacity="0.10"/><line x1="756" y1="99" x2="649" y2="128" class="cv-edge hl" opacity="0.26"/><line x1="756" y1="99" x2="612" y2="127" class="cv-edge hl" opacity="0.02"/><line x1="649" y1="128" x2="612" y2="127" class="cv-edge" opacity="0.75"/><circle cx="578" cy="304" r="3" class="cv-dot"/><circle cx="1089" cy="351" r="3" class="cv-dot"/><circle cx="549" cy="98" r="3" class="cv-dot"/><circle cx="1146" cy="53" r="3" class="cv-dot"/><circle cx="586" cy="368" r="3" class="cv-dot"/><circle cx="1055" cy="112" r="3" class="cv-dot"/><circle cx="901" cy="155" r="3" class="cv-dot"/><circle cx="1030" cy="287" r="3" class="cv-dot"/><circle cx="1068" cy="298" r="3" class="cv-dot"/><circle cx="643" cy="338" r="3" class="cv-dot"/><circle cx="660" cy="198" r="3" class="cv-dot"/><circle cx="748" cy="387" r="3" class="cv-dot"/><circle cx="531" cy="335" r="3" class="cv-dot"/><circle cx="918" cy="192" r="3" class="cv-dot"/><circle cx="894" cy="108" r="3" class="cv-dot"/><circle cx="726" cy="234" r="6" class="cv-dot hl"/><circle cx="681" cy="358" r="3" class="cv-dot"/><circle cx="1026" cy="272" r="6" class="cv-dot hl"/><circle cx="748" cy="125" r="3" class="cv-dot"/><circle cx="752" cy="67" r="3" class="cv-dot"/><circle cx="666" cy="248" r="6" class="cv-dot hl"/><circle cx="756" cy="99" r="6" class="cv-dot hl"/><circle cx="649" cy="128" r="3" class="cv-dot"/><circle cx="612" cy="127" r="3" class="cv-dot"/><circle cx="911" cy="245" r="3" class="cv-dot"/><circle cx="533" cy="272" r="3" class="cv-dot"/><text x="60" y="90" class="cv-k">CASE STUDY · CASE STUDY · SOVEREIGN AI</text><text x="60" y="350" class="cv-n">28 Oct 2026 · 01:30 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <section class="glance rise" aria-label="At a glance"><div class="kicker">At a glance</div><div class="glance-grid"><div><small>Sector</small><b>Government · UAE</b></div><div><small>My role</small><b>AI architect</b></div><div><small>Engagement</small><b>Architecture, platform build and hand-off</b></div><div><small>Scope</small><b>Model serving, AI gateway, data controls, evaluation, operations</b></div></div><div class="glance-out"><small>What changed</small><ul><li>One governed front door for generative AI instead of scattered pilots and shadow use</li><li>Prompts, documents and outputs kept on in-country infrastructure by design</li><li>Every request attributable to a user, a use case and a model version</li><li>New use cases onboarded through a repeatable review and evaluation path</li></ul></div><div class="cs-stack"><span class="tag">vLLM</span><span class="tag">Open-weight LLMs</span><span class="tag">GPU cluster</span><span class="tag">Kubernetes</span><span class="tag">AI gateway</span><span class="tag">PII redaction</span><span class="tag">Vector search</span><span class="tag">OpenTelemetry</span><span class="tag">Evaluation harness</span></div><p class="glance-note">Anonymised composite. Client names, identifying details and confidential figures are withheld; public facts are cited in the references.</p></section><h2 id="the-situation">The situation</h2>
+<p>A UAE government entity had the usual pattern: enthusiasm for generative AI in every department, a handful of disconnected pilots, and a security team quietly worried about staff pasting documents into public chatbots. Policy said sensitive data could not leave national infrastructure. Nobody wanted to say no to AI; they wanted a safe way to say yes.</p>
+<p>The national direction supports that stance. The UAE Charter for the Development and Use of Artificial Intelligence puts privacy, data security and compliance with local law alongside innovation as guiding principles<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+
+<h2 id="what-had-to-be-true">What had to be true</h2>
+<ul>
+<li><strong>In-country by design</strong>: models, prompts, retrieved documents, logs and evaluation data all hosted on national infrastructure.</li>
+<li><strong>One front door</strong>, so identity, redaction and audit are enforced once rather than reimplemented by each team.</li>
+<li><strong>Known applicable rules</strong>, mapped to controls before the first use case went live.</li>
+<li><strong>Measured quality</strong>: no use case in production without an evaluation set and an owner.</li>
+<li><strong>Operable by the internal team</strong> after hand-off.</li>
+</ul>
+<p>The rules question needed care. The federal Personal Data Protection Law sets aside several categories from its scope, including government data and government entities<sup class="cite"><a href="#ref-1">1</a></sup>. That does not mean anything goes: it means the entity's own data classification, emirate-level policy and sector rules carry the weight, with PDPL principles a sensible baseline. We confirmed the applicable regime with legal counsel first. More context in <a href="/insights/uae-pdpl-ai-architecture-2026/">UAE PDPL and AI architecture</a> and <a href="/insights/uae-federal-authority-ai-data/">the federal authority for AI and data</a>.</p>
+
+<h2 id="architecture">Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Consumers</small><div class="dgm-nodes"><span>Staff assistant<em>web, SSO</em></span><span>Department apps<em>API keys per use case</em></span><span>Document search<em>RAG</em></span></div></div>
+<div class="dgm-tier"><small>Gateway</small><div class="dgm-nodes"><span class="hl">AI gateway<em>auth, quotas, routing</em></span><span class="hl">Redaction<em>PII detect and mask</em></span><span>Policy checks<em>classification, use case</em></span></div></div>
+<div class="dgm-tier"><small>Serving</small><div class="dgm-nodes"><span>vLLM pools<em>open-weight models</em></span><span>Embedding service<em>in-country</em></span><span>Vector index<em>per-department collections</em></span></div></div>
+<div class="dgm-tier"><small>Assure</small><div class="dgm-nodes"><span class="hl">Evaluation harness<em>per use case</em></span><span>Audit log<em>who, what, which model</em></span><span>Traces and metrics<em>OpenTelemetry</em></span></div></div>
+<div class="dgm-tier"><small>Infrastructure</small><div class="dgm-nodes"><span>GPU cluster<em>in-country</em></span><span>Kubernetes<em>isolated namespaces</em></span><span>Key management<em>entity-held keys</em></span></div></div>
+</div>
+<figcaption>Layered architecture: every request passes the gateway; nothing reaches a model, or leaves the platform, without identity, policy and logging.</figcaption>
+</figure>
+<p>Serving used vLLM, whose PagedAttention design manages the KV cache in pages to reduce memory waste and raise throughput on shared GPUs<sup class="cite"><a href="#ref-3">3</a></sup>. That matters when a fixed, in-country GPU budget has to serve many departments. See <a href="/insights/llm-inference-serving-vllm/">LLM inference serving with vLLM</a> and <a href="/insights/uae-ai-infrastructure-where-to-run-models/">where to run models in the UAE</a>.</p>
+
+<h2 id="the-data-flow-end-to-end">The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Request</b><span>User or app calls the gateway with an identity and a registered use case</span></li>
+<li class="hl"><b>Redact</b><span>Detect and mask personal data the use case is not cleared to send</span></li>
+<li><b>Retrieve</b><span>Fetch only from collections the caller's department may read</span></li>
+<li><b>Route</b><span>Choose the model pool approved for that use case and classification</span></li>
+<li class="hl"><b>Log</b><span>Record request, model version, sources and latency in the audit store</span></li>
+<li><b>Evaluate</b><span>Sample responses into the use case's evaluation and review queue</span></li>
+</ol>
+<figcaption>One path for every request: identity, redaction, scoped retrieval, approved model, audit, evaluation.</figcaption>
+</figure>
+
+<h2 id="the-hard-part-one-platform-many-trust-levels">The hard part: one platform, many trust levels</h2>
+<p>The engineering was not the hard part. The hard part was that a single shared service had to respect different data classifications, department boundaries and risk appetites. The OWASP Top 10 for LLM applications lists prompt injection and sensitive information disclosure among the leading risks<sup class="cite"><a href="#ref-4">4</a></sup>, and on a shared platform both translate into one question: can a user see something through the model that they could not see directly?</p>
+<ul>
+<li>Retrieval inherits the caller's permissions; the model never sees a document the user couldn't open.</li>
+<li>Each use case is registered with a classification ceiling, an owner and an approved model list.</li>
+<li>Redaction is configurable per use case, not one global rule that is either too loose or too strict.</li>
+<li>Tool access for agent-style use cases is explicit and minimal. See <a href="/insights/prompt-injection-defence-for-agents/">prompt injection defence for agents</a>.</li>
+</ul>
+<div class="callout"><p>Sovereignty is not only where the GPUs sit. It is whether every prompt, document and answer can be accounted for, on infrastructure you control.</p></div>
+
+<h2 id="how-the-engagement-ran">How the engagement ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Department</small><ol><li>Propose use case</li><li class="hl">Supply evaluation examples</li><li>Own outcomes in production</li></ol></div>
+<div class="dgm-lane"><small>Platform team</small><ol><li>Register and classify</li><li>Configure redaction and routing</li><li class="hl">Run evaluation gate</li></ol></div>
+<div class="dgm-lane"><small>Risk and security</small><ol><li>Confirm applicable rules</li><li>Review controls</li><li>Approve go-live</li></ol></div>
+</div>
+<figcaption>Use case onboarding: departments own the problem and the test set; the platform owns the controls.</figcaption>
+</figure>
+<p>The governance loop followed the NIST AI RMF functions of govern, map, measure and manage<sup class="cite"><a href="#ref-5">5</a></sup>, adapted to the entity's own approval structure.</p>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Frame</b><ul><li>Applicable rules</li><li>Use case inventory</li><li>Data classification map</li></ul></div>
+<div><small>Phase 2</small><b>Foundation</b><ul><li>GPU cluster and serving</li><li>Gateway and redaction</li><li>Audit logging</li></ul></div>
+<div><small>Phase 3</small><b>First use cases</b><ul><li>Staff assistant</li><li>Document search</li><li>Evaluation sets</li></ul></div>
+<div><small>Phase 4</small><b>Scale and hand off</b><ul><li>Onboarding process</li><li>Runbooks</li><li>Capacity planning</li></ul></div>
+</div>
+<figcaption>Phased delivery: controls first, then a small number of high-value use cases.</figcaption>
+</figure>
+
+<h2 id="key-decisions-and-trade-offs">Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Open-weight models in country</td><td>Hosted frontier APIs</td><td>Data residency without exceptions; full control of versions</td></tr>
+<tr><td>Central AI gateway</td><td>Per-app integrations</td><td>Controls enforced once; consistent audit</td></tr>
+<tr><td>Permission-aware retrieval</td><td>One shared index</td><td>No leakage across department boundaries</td></tr>
+<tr><td>Evaluation gate per use case</td><td>Platform-wide benchmark</td><td>Quality depends on the task, not the model alone</td></tr>
+<tr><td>Model routing by use case</td><td>One model for everything</td><td>Right-size GPU use; smaller models for simple tasks</td></tr>
+</tbody>
+</table>
+<p>Routing and evaluation patterns are covered in <a href="/insights/llm-model-routing/">LLM model routing</a> and <a href="/insights/llm-evaluation-sets-that-predict-production/">evaluation sets that predict production</a>.</p>
+
+<h2 id="what-i-d-do-again-and-differently">What I'd do again, and differently</h2>
+<p>Again: put the gateway and the audit log in before the first use case, and make departments bring their own evaluation examples. Differently: start capacity planning earlier. In-country GPU capacity is finite and slow to expand, so demand forecasting deserves the same attention as the architecture.</p>
+<p>If you're planning sovereign AI in the region, the <a href="/uae/">UAE</a> page describes how I work there, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://uaelegislation.gov.ae/en/legislations/1972/download" target="_blank" rel="noopener">Federal Decree by Law No. 45 of 2021 Concerning the Protection of Personal Data</a><small>UAE Legislation portal</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://u.ae/en/about-the-uae/strategies-initiatives-and-awards/policies/Ai/The-UAE-Charter-for-the-Development-and-Use-of-Artificial-Intelligence" target="_blank" rel="noopener">The UAE Charter for the Development and Use of Artificial Intelligence</a><small>The UAE Government portal (u.ae)</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://arxiv.org/abs/2309.06180" target="_blank" rel="noopener">Efficient Memory Management for Large Language Model Serving with PagedAttention</a><small>Kwon et al. (arXiv; SOSP 2023) · 2023</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://genai.owasp.org/resource/owasp-top-10-for-llm-applications-2025/" target="_blank" rel="noopener">OWASP Top 10 for LLM Applications 2025</a><small>OWASP GenAI Security Project</small></div></li><li id="ref-5"><span class="rn">5</span><div><a href="https://www.nist.gov/publications/artificial-intelligence-risk-management-framework-ai-rmf-10" target="_blank" rel="noopener">Artificial Intelligence Risk Management Framework (AI RMF 1.0)</a><small>NIST · Jan 2023</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fasksumanta.com%2Fcase-studies%2Fuae-government-sovereign-llm-service%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fasksumanta.com%2Fcase-studies%2Fuae-government-sovereign-llm-service%2F&amp;text=Giving%20government%20teams%20generative%20AI%20without%20sending%20a%20byte%20out%20of%20the%20country" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=Giving%20government%20teams%20generative%20AI%20without%20sending%20a%20byte%20out%20of%20the%20country%20https%3A%2F%2Fasksumanta.com%2Fcase-studies%2Fuae-government-sovereign-llm-service%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://asksumanta.com/case-studies/uae-government-sovereign-llm-service/">Copy link</button></div>
+      <div class="pnav"><a class="pn prev" href="/case-studies/saas-multi-tenant-re-architecture/"><small>← Previous</small><b>Re-architecting a SaaS platform so one tenant can&#x27;t slow down the rest</b></a><a class="pn next" href="/case-studies/energy-asset-knowledge-graph/"><small>Next →</small><b>Connecting maintenance history, sensors and drawings so engineers can find root causes faster</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#the-situation">The situation</a></li><li><a href="#what-had-to-be-true">What had to be true</a></li><li><a href="#architecture">Architecture</a></li><li><a href="#the-data-flow-end-to-end">The data flow, end to end</a></li><li><a href="#the-hard-part-one-platform-many-trust-levels">The hard part: one platform, many trust levels</a></li><li><a href="#how-the-engagement-ran">How the engagement ran</a></li><li><a href="#key-decisions-and-trade-offs">Key decisions and trade-offs</a></li><li><a href="#what-i-d-do-again-and-differently">What I&#x27;d do again, and differently</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>Can a government entity in the UAE use generative AI without sending data abroad?</summary><p>Yes. Open-weight models can be served on in-country GPU infrastructure, with an AI gateway that handles identity, redaction, routing and logging, so prompts and documents never leave national infrastructure.</p></details><details class="rise"><summary>Does the UAE PDPL apply to government entities?</summary><p>The federal PDPL excludes government data and government entities from its scope, among other categories. Government bodies follow their own data classification, emirate-level and sector rules, so confirm the applicable regime with counsel early.</p></details><details class="rise"><summary>Why put a gateway in front of the models?</summary><p>A gateway gives one place to enforce authentication, redaction, quotas, routing and audit logging, so controls do not depend on every application team implementing them correctly.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/uae/"><small>Service</small><b>Fractional CTO in the UAE</b><span>I work with founders, enterprises and investors across the UAE and the Gulf on AI, data and technology leadership, with an eye on local data-protection rules and residency from day one.</span><i>→</i></a><a class="rcard rise" href="/ai-architect/"><small>Service</small><b>AI &amp; LLM architecture</b><span>I design and build AI systems that leadership can trust: grounded in your data, measured by evaluations, governed by your rules and priced so they make sense at scale.</span><i>→</i></a><a class="rcard rise" href="/fractional-cto/"><small>Service</small><b>Fractional CTO</b><span>I work as a part-time CTO for founders, CEOs and boards who need experienced technical judgement now, and a team that can carry it on after I step back.</span><i>→</i></a><a class="rcard rise" href="/insights/terraform-secrets-out-of-state/"><small>Insight</small><b>Keeping secrets out of Terraform state: a checklist for platform teams</b><span>Most organisations using Terraform have database passwords, API keys or private keys sitting in state files, often in plaintext. For years that was simply how Terraform worked. Since versions 1.10 and 1.11 it doesn&#x27;t have to be, but the fix needs deliberate migration.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: Giving government teams generative AI without sending a byte out of the country">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
+        <p class="floc">United States &amp; UAE · working globally</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/uae/">Fractional CTO in the UAE</a></li></ul></div>
+      <div class="fc"><h4>Case studies</h4><ul><li><a href="/case-studies/startup-fractional-cto-seed-to-series-a/">Startup fractional CTO, seed to Series A</a></li><li><a href="/case-studies/private-equity-ai-technical-due-diligence/">Private equity AI technical due diligence</a></li><li><a href="/case-studies/telecom-observability-slos/">Telecom observability and SLOs</a></li><li><a href="/case-studies/real-estate-document-intake-automation/">Real estate document intake automation</a></li><li><a href="/#work">Engagement snapshots</a></li><li><a href="/case-studies/">All case studies →</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/terraform-secrets-out-of-state/">Keeping secrets out of Terraform state: a checklist for platform teams</a></li><li><a href="/insights/slos-error-budgets-small-teams/">SLOs and error budgets for small teams: field notes on making reliability a decision, not a debate</a></li><li><a href="/insights/speculative-decoding-private-llms/">Speculative decoding for private LLMs: faster tokens without changing the answers</a></li><li><a href="/insights/real-world-evidence-study-designs-omop/">Real-world evidence on OMOP: comparing five study designs for treatment effects</a></li><li><a href="/insights/eu-ai-act-gpai-fine-tuning-provider/">Fine-tuning a foundation model? When the EU AI Act makes you a general-purpose AI provider</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>

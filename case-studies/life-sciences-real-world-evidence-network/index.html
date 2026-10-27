@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Case study: a real-world evidence network for a life sciences team</title>
+<meta name="description" content="How a life sciences evidence team ran reproducible OMOP studies across external data partners: pre-specified designs, negative controls and packaged study code." />
+<meta name="keywords" content="real-world evidence case study, pharma RWE platform, OMOP data partners, negative controls, empirical calibration, OHDSI HADES, Strategus, regulatory grade RWE, federated observational research, life sciences data architect" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://asksumanta.com/case-studies/life-sciences-real-world-evidence-network/" />
+<meta name="theme-color" content="#111214" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="Case study: a real-world evidence network for a life sciences team" />
+<meta property="og:description" content="How a life sciences evidence team ran reproducible OMOP studies across external data partners: pre-specified designs, negative controls and packaged study code." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://asksumanta.com/case-studies/life-sciences-real-world-evidence-network/" />
+<meta property="og:image" content="https://asksumanta.com/assets/og/life-sciences-real-world-evidence-network.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Case study: a real-world evidence network for a life sciences team" />
+<meta name="twitter:description" content="How a life sciences evidence team ran reproducible OMOP studies across external data partners: pre-specified designs, negative controls and packaged study code." />
+<meta name="twitter:image" content="https://asksumanta.com/assets/og/life-sciences-real-world-evidence-network.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "Article", "headline": "Building a reproducible real-world evidence network across external data partners", "description": "How a life sciences evidence team ran reproducible OMOP studies across external data partners: pre-specified designs, negative controls and packaged study code.", "articleSection": "Case study", "about": "Life sciences · Pharmaceutical", "datePublished": "2026-10-28T01:14:00+04:00", "dateModified": "2026-10-28T01:14:00+04:00", "citation": [{"@type": "CreativeWork", "name": "Framework for FDA's Real-World Evidence Program", "url": "https://fda.gov/media/120060/download"}, {"@type": "CreativeWork", "name": "HADES: Health Analytics Data-to-Evidence Suite", "url": "https://ohdsi.github.io/Hades/"}, {"@type": "CreativeWork", "name": "Method validity (The Book of OHDSI)", "url": "https://book.ohdsi.org/MethodValidity.html"}, {"@type": "CreativeWork", "name": "Strategus", "url": "https://github.com/OHDSI/Strategus"}], "author": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "publisher": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "mainEntityOfPage": "https://asksumanta.com/case-studies/life-sciences-real-world-evidence-network/", "image": "https://asksumanta.com/assets/og/life-sciences-real-world-evidence-network.png", "keywords": "real-world evidence case study, pharma RWE platform, OMOP data partners, negative controls, empirical calibration, OHDSI HADES, Strategus, regulatory grade RWE, federated observational research, life sciences data architect", "wordCount": 909}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://asksumanta.com/"}, {"@type": "ListItem", "position": 2, "name": "Case studies", "item": "https://asksumanta.com/case-studies/"}, {"@type": "ListItem", "position": 3, "name": "Building a reproducible real-world evidence network across external data partners", "item": "https://asksumanta.com/case-studies/life-sciences-real-world-evidence-network/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "How is this different from a hospital research platform?", "acceptedAnswer": {"@type": "Answer", "text": "A hospital platform standardises its own data. A life sciences evidence network works with external partners who keep their data, so the focus shifts to study design, partner-side execution, diagnostics and reproducibility across many sources."}}, {"@type": "Question", "name": "What are negative controls for?", "acceptedAnswer": {"@type": "Answer", "text": "Negative controls are exposure and outcome pairs believed to have no causal relationship. If a study design finds effects for them, that reveals systematic bias, and the estimates can be calibrated or the design rejected."}}, {"@type": "Question", "name": "What does regulatory-grade reproducibility mean in practice?", "acceptedAnswer": {"@type": "Answer", "text": "Being able to re-run a study and get the same answer: the protocol, cohort definitions, analysis code, software environment, vocabulary and data versions are all pinned and archived together."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+</script>
+</head>
+<body class="sub is-post is-case">
+<div class="progress" id="progress"></div>
+<nav>
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="/#practice">Services</a>
+      <a href="/case-studies/">Case studies</a>
+      <a href="/insights/">Insights</a>
+      <a href="/#assess">Analyse</a>
+      <a href="/#connect">Connect</a>
+    </div>
+    <div class="nav-r">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/case-studies/">Case studies</a> <span>/</span> <em>Building a reproducible real-world evidence network across external data partners</em></div>
+    <div class="kicker">Case study · Life sciences</div>
+    <h1>Building a reproducible real-world evidence network across external data partners</h1>
+    <p class="sub-lede">A pharmaceutical evidence team licensed data from several partners and started every study with a new data pull and months of cleaning. The goal was a study pipeline that ran the same pre-specified design at every partner, measured its own bias, and could be re-run exactly when a regulator asked.</p>
+    <div class="ameta"><span class="fmt">Case study</span><span>Life sciences · Pharmaceutical</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-10-28T01:14:00+04:00">28 Oct 2026 · 01:14 GST</time><span>8 min read</span></div><div class="atags"><span class="tagp">#healthcare</span><span class="tagp">#omop</span><span class="tagp">#data</span><span class="tagp">#governance</span><span class="tagp">#regulation</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Case study cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><line x1="826" y1="215" x2="822" y2="156" class="cv-edge" opacity="0.60"/><line x1="826" y1="215" x2="863" y2="215" class="cv-edge" opacity="0.76"/><line x1="826" y1="215" x2="801" y2="273" class="cv-edge hl" opacity="0.58"/><line x1="826" y1="215" x2="926" y2="203" class="cv-edge hl" opacity="0.33"/><line x1="826" y1="215" x2="895" y2="218" class="cv-edge" opacity="0.54"/><line x1="826" y1="215" x2="892" y2="349" class="cv-edge" opacity="0.01"/><line x1="826" y1="215" x2="776" y2="340" class="cv-edge" opacity="0.11"/><line x1="826" y1="215" x2="974" y2="207" class="cv-edge" opacity="0.01"/><line x1="826" y1="215" x2="818" y2="292" class="cv-edge" opacity="0.49"/><line x1="826" y1="215" x2="962" y2="236" class="cv-edge" opacity="0.09"/><line x1="826" y1="215" x2="918" y2="164" class="cv-edge" opacity="0.30"/><line x1="822" y1="156" x2="863" y2="215" class="cv-edge" opacity="0.52"/><line x1="822" y1="156" x2="801" y2="273" class="cv-edge hl" opacity="0.21"/><line x1="822" y1="156" x2="926" y2="203" class="cv-edge hl" opacity="0.24"/><line x1="822" y1="156" x2="895" y2="218" class="cv-edge" opacity="0.37"/><line x1="822" y1="156" x2="818" y2="292" class="cv-edge" opacity="0.10"/><line x1="822" y1="156" x2="918" y2="164" class="cv-edge" opacity="0.36"/><line x1="532" y1="346" x2="613" y2="311" class="cv-edge hl" opacity="0.41"/><line x1="532" y1="346" x2="681" y2="358" class="cv-edge hl" opacity="0.01"/><line x1="532" y1="346" x2="659" y2="301" class="cv-edge" opacity="0.11"/><line x1="863" y1="215" x2="801" y2="273" class="cv-edge hl" opacity="0.43"/><line x1="863" y1="215" x2="926" y2="203" class="cv-edge hl" opacity="0.57"/><line x1="863" y1="215" x2="895" y2="218" class="cv-edge" opacity="0.79"/><line x1="863" y1="215" x2="892" y2="349" class="cv-edge" opacity="0.09"/><line x1="863" y1="215" x2="977" y2="220" class="cv-edge" opacity="0.24"/><line x1="863" y1="215" x2="974" y2="207" class="cv-edge" opacity="0.25"/><line x1="863" y1="215" x2="818" y2="292" class="cv-edge" opacity="0.41"/><line x1="863" y1="215" x2="962" y2="236" class="cv-edge" opacity="0.33"/><line x1="863" y1="215" x2="918" y2="164" class="cv-edge" opacity="0.49"/><line x1="801" y1="273" x2="926" y2="203" class="cv-edge hl" opacity="0.04"/><line x1="801" y1="273" x2="681" y2="358" class="cv-edge hl" opacity="0.02"/><line x1="801" y1="273" x2="736" y2="372" class="cv-edge hl" opacity="0.21"/><line x1="801" y1="273" x2="895" y2="218" class="cv-edge hl" opacity="0.27"/><line x1="801" y1="273" x2="892" y2="349" class="cv-edge hl" opacity="0.21"/><line x1="801" y1="273" x2="776" y2="340" class="cv-edge hl" opacity="0.53"/><line x1="801" y1="273" x2="818" y2="292" class="cv-edge hl" opacity="0.83"/><line x1="801" y1="273" x2="659" y2="301" class="cv-edge hl" opacity="0.03"/><line x1="801" y1="273" x2="745" y2="363" class="cv-edge hl" opacity="0.30"/><line x1="613" y1="311" x2="681" y2="358" class="cv-edge hl" opacity="0.45"/><line x1="613" y1="311" x2="736" y2="372" class="cv-edge hl" opacity="0.09"/><line x1="613" y1="311" x2="525" y2="191" class="cv-edge hl" opacity="0.01"/><line x1="613" y1="311" x2="659" y2="301" class="cv-edge hl" opacity="0.69"/><line x1="613" y1="311" x2="745" y2="363" class="cv-edge hl" opacity="0.06"/><line x1="566" y1="117" x2="555" y2="139" class="cv-edge" opacity="0.84"/><line x1="566" y1="117" x2="582" y2="127" class="cv-edge" opacity="0.87"/><line x1="566" y1="117" x2="525" y2="191" class="cv-edge hl" opacity="0.44"/><line x1="926" y1="203" x2="895" y2="218" class="cv-edge hl" opacity="0.77"/><line x1="926" y1="203" x2="977" y2="220" class="cv-edge hl" opacity="0.64"/><line x1="926" y1="203" x2="974" y2="207" class="cv-edge hl" opacity="0.68"/><line x1="926" y1="203" x2="818" y2="292" class="cv-edge hl" opacity="0.07"/><line x1="926" y1="203" x2="962" y2="236" class="cv-edge hl" opacity="0.68"/><line x1="926" y1="203" x2="1033" y2="189" class="cv-edge hl" opacity="0.28"/><line x1="926" y1="203" x2="918" y2="164" class="cv-edge hl" opacity="0.73"/><line x1="681" y1="358" x2="736" y2="372" class="cv-edge hl" opacity="0.62"/><line x1="681" y1="358" x2="776" y2="340" class="cv-edge hl" opacity="0.35"/><line x1="681" y1="358" x2="659" y2="301" class="cv-edge hl" opacity="0.59"/><line x1="681" y1="358" x2="745" y2="363" class="cv-edge hl" opacity="0.57"/><line x1="736" y1="372" x2="776" y2="340" class="cv-edge" opacity="0.66"/><line x1="736" y1="372" x2="818" y2="292" class="cv-edge" opacity="0.24"/><line x1="736" y1="372" x2="659" y2="301" class="cv-edge" opacity="0.30"/><line x1="736" y1="372" x2="745" y2="363" class="cv-edge" opacity="0.91"/><line x1="895" y1="218" x2="892" y2="349" class="cv-edge" opacity="0.12"/><line x1="895" y1="218" x2="977" y2="220" class="cv-edge" opacity="0.45"/><line x1="895" y1="218" x2="974" y2="207" class="cv-edge" opacity="0.47"/><line x1="895" y1="218" x2="818" y2="292" class="cv-edge" opacity="0.29"/><line x1="895" y1="218" x2="962" y2="236" class="cv-edge" opacity="0.54"/><line x1="895" y1="218" x2="1033" y2="189" class="cv-edge hl" opacity="0.06"/><line x1="895" y1="218" x2="918" y2="164" class="cv-edge" opacity="0.61"/><line x1="892" y1="349" x2="776" y2="340" class="cv-edge" opacity="0.22"/><line x1="892" y1="349" x2="818" y2="292" class="cv-edge" opacity="0.37"/><line x1="892" y1="349" x2="962" y2="236" class="cv-edge" opacity="0.11"/><line x1="892" y1="349" x2="745" y2="363" class="cv-edge" opacity="0.01"/><line x1="977" y1="220" x2="974" y2="207" class="cv-edge" opacity="0.91"/><line x1="977" y1="220" x2="962" y2="236" class="cv-edge" opacity="0.85"/><line x1="977" y1="220" x2="1033" y2="189" class="cv-edge hl" opacity="0.57"/><line x1="977" y1="220" x2="918" y2="164" class="cv-edge" opacity="0.46"/><line x1="776" y1="340" x2="818" y2="292" class="cv-edge" opacity="0.57"/><line x1="776" y1="340" x2="659" y2="301" class="cv-edge" opacity="0.18"/><line x1="776" y1="340" x2="745" y2="363" class="cv-edge" opacity="0.74"/><line x1="555" y1="139" x2="582" y2="127" class="cv-edge" opacity="0.80"/><line x1="555" y1="139" x2="525" y2="191" class="cv-edge hl" opacity="0.60"/><line x1="582" y1="127" x2="525" y2="191" class="cv-edge hl" opacity="0.43"/><line x1="1123" y1="94" x2="1033" y2="189" class="cv-edge hl" opacity="0.13"/><line x1="974" y1="207" x2="962" y2="236" class="cv-edge" opacity="0.79"/><line x1="974" y1="207" x2="1033" y2="189" class="cv-edge hl" opacity="0.59"/><line x1="974" y1="207" x2="918" y2="164" class="cv-edge" opacity="0.53"/><line x1="818" y1="292" x2="745" y2="363" class="cv-edge" opacity="0.32"/><line x1="962" y1="236" x2="1033" y2="189" class="cv-edge hl" opacity="0.43"/><line x1="962" y1="236" x2="918" y2="164" class="cv-edge" opacity="0.44"/><line x1="1033" y1="189" x2="918" y2="164" class="cv-edge hl" opacity="0.22"/><line x1="659" y1="301" x2="745" y2="363" class="cv-edge" opacity="0.29"/><circle cx="826" cy="215" r="3" class="cv-dot"/><circle cx="822" cy="156" r="3" class="cv-dot"/><circle cx="532" cy="346" r="3" class="cv-dot"/><circle cx="863" cy="215" r="3" class="cv-dot"/><circle cx="801" cy="273" r="6" class="cv-dot hl"/><circle cx="613" cy="311" r="6" class="cv-dot hl"/><circle cx="566" cy="117" r="3" class="cv-dot"/><circle cx="926" cy="203" r="6" class="cv-dot hl"/><circle cx="681" cy="358" r="6" class="cv-dot hl"/><circle cx="736" cy="372" r="3" class="cv-dot"/><circle cx="718" cy="35" r="3" class="cv-dot"/><circle cx="895" cy="218" r="3" class="cv-dot"/><circle cx="892" cy="349" r="3" class="cv-dot"/><circle cx="977" cy="220" r="3" class="cv-dot"/><circle cx="776" cy="340" r="3" class="cv-dot"/><circle cx="555" cy="139" r="3" class="cv-dot"/><circle cx="582" cy="127" r="3" class="cv-dot"/><circle cx="1123" cy="94" r="3" class="cv-dot"/><circle cx="525" cy="191" r="6" class="cv-dot hl"/><circle cx="974" cy="207" r="3" class="cv-dot"/><circle cx="818" cy="292" r="3" class="cv-dot"/><circle cx="962" cy="236" r="3" class="cv-dot"/><circle cx="1033" cy="189" r="6" class="cv-dot hl"/><circle cx="659" cy="301" r="3" class="cv-dot"/><circle cx="745" cy="363" r="3" class="cv-dot"/><circle cx="918" cy="164" r="3" class="cv-dot"/><text x="60" y="90" class="cv-k">CASE STUDY · CASE STUDY · LIFE SCIENCES</text><text x="60" y="350" class="cv-n">28 Oct 2026 · 01:14 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <section class="glance rise" aria-label="At a glance"><div class="kicker">At a glance</div><div class="glance-grid"><div><small>Sector</small><b>Life sciences · Pharmaceutical</b></div><div><small>My role</small><b>Principal data architect</b></div><div><small>Engagement</small><b>Architecture, study tooling and hand-off</b></div><div><small>Scope</small><b>Partner onboarding, OMOP, study design, diagnostics, reproducibility</b></div></div><div class="glance-out"><small>What changed</small><ul><li>Studies specified once and executed at every data partner without moving patient-level data</li><li>Bias measured with negative controls before results were unblinded</li><li>Each result reproducible from a pinned study package, data version and environment</li><li>A partner onboarding path that made new data sources usable for existing studies</li></ul></div><div class="cs-stack"><span class="tag">OMOP CDM</span><span class="tag">OHDSI HADES</span><span class="tag">Strategus</span><span class="tag">CohortMethod</span><span class="tag">ATLAS</span><span class="tag">Data Quality Dashboard</span><span class="tag">Spark</span><span class="tag">renv</span></div><p class="glance-note">Anonymised composite. Client names, identifying details and confidential figures are withheld; public facts are cited in the references.</p></section><h2 id="the-situation">The situation</h2>
+<p>A life sciences evidence team answered questions about treatment patterns, comparative safety and outcomes using data licensed from several external partners: claims databases, EHR-derived datasets and a disease registry. Each study started the same way: negotiate an extract, receive files in the partner's format, spend months cleaning and harmonising, then write analysis code that only worked on that one extract. When a reviewer later asked a question, re-creating the original analysis was an archaeology project.</p>
+<p>The partners were also reluctant to send patient-level data at all. The team needed a way to run studies where the data lived, with results the organisation would be comfortable defending to a regulator.</p>
+
+<h2 id="what-had-to-be-true">What had to be true</h2>
+<ul>
+<li><strong>One common model at every partner</strong>, so study code runs unchanged.</li>
+<li><strong>Design before data</strong>: protocols, cohorts and analyses pre-specified and locked before results are seen.</li>
+<li><strong>Bias measured, not assumed</strong>, using controls with a known answer.</li>
+<li><strong>Exact reproducibility</strong> of any result, months or years later.</li>
+<li><strong>Data stays with the partner</strong>; only reviewed aggregates come back.</li>
+</ul>
+<p>The FDA's framework for its real-world evidence programme frames the questions such evidence will face, including whether the data are fit for use and whether the study design can provide adequate evidence<sup class="cite"><a href="#ref-1">1</a></sup>. Those questions shaped the architecture from the start.</p>
+
+<h2 id="architecture">Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Partners</small><div class="dgm-nodes"><span>Claims partner<em>OMOP CDM</em></span><span>EHR-derived partner<em>OMOP CDM</em></span><span>Registry partner<em>OMOP CDM</em></span></div></div>
+<div class="dgm-tier"><small>Fitness</small><div class="dgm-nodes"><span>Data Quality Dashboard<em>per release</em></span><span>Characterisation<em>feasibility counts</em></span><span>Partner data card<em>coverage, lag, gaps</em></span></div></div>
+<div class="dgm-tier"><small>Study design</small><div class="dgm-nodes"><span>Protocol<em>locked before execution</em></span><span>Cohort library<em>versioned definitions</em></span><span class="hl">Negative controls<em>outcomes with no known effect</em></span></div></div>
+<div class="dgm-tier"><small>Execution</small><div class="dgm-nodes"><span class="hl">Study package<em>Strategus spec, pinned renv</em></span><span>HADES modules<em>estimation, characterisation</em></span><span>Partner run<em>local, aggregates out</em></span></div></div>
+<div class="dgm-tier"><small>Evidence</small><div class="dgm-nodes"><span>Diagnostics review<em>before unblinding</em></span><span>Meta-analysis<em>across partners</em></span><span>Archive<em>package, versions, results</em></span></div></div>
+</div>
+<figcaption>Layered architecture: partners keep their data in OMOP; the team ships locked study packages and receives diagnostics and aggregates.</figcaption>
+</figure>
+<p>Analytics used OHDSI's HADES packages, open-source R tools for characterisation, population-level effect estimation and patient-level prediction against the OMOP CDM<sup class="cite"><a href="#ref-2">2</a></sup>. Partner conversions followed the patterns in <a href="/insights/fhir-to-omop-architecture/">FHIR to OMOP architecture</a> and <a href="/insights/clinical-terminologies-omop-vocabularies/">OMOP vocabularies</a> where partners started from scratch.</p>
+
+<h2 id="the-data-flow-end-to-end">The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Question</b><span>Research question and protocol written; estimand, cohorts and comparators fixed</span></li>
+<li><b>Feasibility</b><span>Aggregate counts from each partner confirm the question is answerable there</span></li>
+<li class="hl"><b>Package</b><span>Cohorts, analyses and negative controls bundled as one specification with a pinned environment</span></li>
+<li><b>Execute</b><span>Each partner runs the package locally against its current OMOP release</span></li>
+<li class="hl"><b>Diagnose</b><span>Balance, power and negative control results reviewed before any effect estimate is unblinded</span></li>
+<li><b>Synthesise</b><span>Calibrated estimates combined across partners; everything archived with versions</span></li>
+</ol>
+<figcaption>Diagnostics come before results. A study that fails them stops, whatever its estimate would have been.</figcaption>
+</figure>
+<p>Cohort practice is covered in <a href="/insights/omop-cohort-definitions/">OMOP cohort definitions</a>, and study design choices in <a href="/insights/real-world-evidence-study-designs-omop/">real-world evidence study designs on OMOP</a>.</p>
+
+<h2 id="the-hard-part-proving-the-design-is-not-fooling-you">The hard part: proving the design is not fooling you</h2>
+<p>Observational studies can produce confident, wrong answers. OHDSI's approach to method validity uses negative controls, exposure and outcome pairs believed to have no causal effect, to measure residual systematic error, and empirical calibration to adjust confidence intervals and p-values for it<sup class="cite"><a href="#ref-3">3</a></sup>. Making that routine required:</p>
+<ul>
+<li>A curated negative control list per study, reviewed by clinical scientists rather than generated and forgotten.</li>
+<li>A rule that effect estimates stay blinded until diagnostics (covariate balance, equipoise, negative control distribution) pass.</li>
+<li>Diagnostics reported per partner, because bias that appears in one data source and not another is itself a finding.</li>
+</ul>
+<div class="callout"><p>The most valuable output of a negative control analysis is permission to say "this design should not be trusted here". Building that into the process is what makes the other results credible.</p></div>
+
+<h2 id="how-the-engagement-ran">How the engagement ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Evidence team</small><ol><li>Locks protocol</li><li class="hl">Builds study package</li><li>Reviews diagnostics</li></ol></div>
+<div class="dgm-lane"><small>Data partner</small><ol><li>Maintains OMOP release</li><li class="hl">Runs package locally</li><li>Releases aggregates</li></ol></div>
+<div class="dgm-lane"><small>Archive</small><ol><li>Package and environment</li><li>Data and vocabulary versions</li><li>Results and diagnostics</li></ol></div>
+</div>
+<figcaption>Study code travels to partners; diagnostics and aggregates travel back and are archived together.</figcaption>
+</figure>
+<p>Execution used Strategus, which runs HADES modules from a JSON analysis specification and restores a pinned R environment, separating study design from site-specific execution settings<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Foundations</b><ul><li>Partner OMOP readiness</li><li>Data cards and quality baselines</li><li>Governance with partners</li></ul></div>
+<div><small>Phase 2</small><b>Pilot study</b><ul><li>One question, two partners</li><li>Full diagnostics</li><li>Archive format</li></ul></div>
+<div><small>Phase 3</small><b>Library</b><ul><li>Reusable cohorts</li><li>Negative control sets</li><li>Package templates</li></ul></div>
+<div><small>Phase 4</small><b>Network</b><ul><li>More partners</li><li>Study intake process</li><li>Hand-off and training</li></ul></div>
+</div>
+<figcaption>A complete pilot study end to end before scaling partners.</figcaption>
+</figure>
+
+<h2 id="key-decisions-and-trade-offs">Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>OMOP at every partner</td><td>Harmonise extracts centrally</td><td>Study code runs unchanged; data stays with the partner</td></tr>
+<tr><td>Locked, packaged studies</td><td>Analysts iterate on live data</td><td>Prevents result-driven design changes; enables exact re-runs</td></tr>
+<tr><td>Negative controls in every estimation study</td><td>Rely on adjustment alone</td><td>Measures residual bias instead of assuming it away</td></tr>
+<tr><td>Blind estimates until diagnostics pass</td><td>Review everything together</td><td>Keeps the decision to trust a design independent of its answer</td></tr>
+<tr><td>Open-source OHDSI tooling</td><td>Proprietary analytics platform</td><td>Transparent methods reviewers can inspect and partners already run</td></tr>
+</tbody>
+</table>
+
+<h2 id="what-i-d-do-again-and-differently">What I'd do again, and differently</h2>
+<p>Again: treat the archived study package as the deliverable, not the slide with the hazard ratio. Differently: invest earlier in partner data cards. Knowing each source's coverage, lag and coding habits up front would have saved feasibility rounds on questions some partners could never answer.</p>
+<p>If you are building evidence capability across data partners, the <a href="/healthcare-data-architecture/">healthcare data architecture</a> page describes how I run these engagements, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://fda.gov/media/120060/download" target="_blank" rel="noopener">Framework for FDA&#x27;s Real-World Evidence Program</a><small>US Food and Drug Administration · Dec 2018</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://ohdsi.github.io/Hades/" target="_blank" rel="noopener">HADES: Health Analytics Data-to-Evidence Suite</a><small>OHDSI</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://book.ohdsi.org/MethodValidity.html" target="_blank" rel="noopener">Method validity (The Book of OHDSI)</a><small>OHDSI</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://github.com/OHDSI/Strategus" target="_blank" rel="noopener">Strategus</a><small>OHDSI (GitHub)</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fasksumanta.com%2Fcase-studies%2Flife-sciences-real-world-evidence-network%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fasksumanta.com%2Fcase-studies%2Flife-sciences-real-world-evidence-network%2F&amp;text=Building%20a%20reproducible%20real-world%20evidence%20network%20across%20external%20data%20partners" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=Building%20a%20reproducible%20real-world%20evidence%20network%20across%20external%20data%20partners%20https%3A%2F%2Fasksumanta.com%2Fcase-studies%2Flife-sciences-real-world-evidence-network%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://asksumanta.com/case-studies/life-sciences-real-world-evidence-network/">Copy link</button></div>
+      <div class="pnav"><a class="pn prev" href="/case-studies/payer-prior-authorisation-fhir-apis/"><small>← Previous</small><b>Putting FHIR prior authorisation APIs in front of a payer&#x27;s legacy claims systems</b></a><a class="pn next" href="/case-studies/fintech-fraud-ring-knowledge-graph/"><small>Next →</small><b>Finding coordinated fraud rings with entity resolution and a knowledge graph</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#the-situation">The situation</a></li><li><a href="#what-had-to-be-true">What had to be true</a></li><li><a href="#architecture">Architecture</a></li><li><a href="#the-data-flow-end-to-end">The data flow, end to end</a></li><li><a href="#the-hard-part-proving-the-design-is-not-fooling-you">The hard part: proving the design is not fooling you</a></li><li><a href="#how-the-engagement-ran">How the engagement ran</a></li><li><a href="#key-decisions-and-trade-offs">Key decisions and trade-offs</a></li><li><a href="#what-i-d-do-again-and-differently">What I&#x27;d do again, and differently</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>How is this different from a hospital research platform?</summary><p>A hospital platform standardises its own data. A life sciences evidence network works with external partners who keep their data, so the focus shifts to study design, partner-side execution, diagnostics and reproducibility across many sources.</p></details><details class="rise"><summary>What are negative controls for?</summary><p>Negative controls are exposure and outcome pairs believed to have no causal relationship. If a study design finds effects for them, that reveals systematic bias, and the estimates can be calibrated or the design rejected.</p></details><details class="rise"><summary>What does regulatory-grade reproducibility mean in practice?</summary><p>Being able to re-run a study and get the same answer: the protocol, cohort definitions, analysis code, software environment, vocabulary and data versions are all pinned and archived together.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/healthcare-data-architecture/"><small>Service</small><b>Healthcare data architecture</b><span>I help healthcare and life-sciences organisations turn fragmented clinical data into governed platforms for care, research and AI, using the standards the industry already agrees on.</span><i>→</i></a><a class="rcard rise" href="/ai-architect/"><small>Service</small><b>AI &amp; LLM architecture</b><span>I design and build AI systems that leadership can trust: grounded in your data, measured by evaluations, governed by your rules and priced so they make sense at scale.</span><i>→</i></a><a class="rcard rise" href="/insights/terraform-secrets-out-of-state/"><small>Insight</small><b>Keeping secrets out of Terraform state: a checklist for platform teams</b><span>Most organisations using Terraform have database passwords, API keys or private keys sitting in state files, often in plaintext. For years that was simply how Terraform worked. Since versions 1.10 and 1.11 it doesn&#x27;t have to be, but the fix needs deliberate migration.</span><i>→</i></a><a class="rcard rise" href="/insights/slos-error-budgets-small-teams/"><small>Insight</small><b>SLOs and error budgets for small teams: field notes on making reliability a decision, not a debate</b><span>In a small company, the argument between shipping features and fixing reliability usually gets settled by whoever is loudest that week. Service level objectives and error budgets turn it into a rule everyone agreed in advance. The Google SRE material is written for large organisations, but the core ideas scale down well.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: Building a reproducible real-world evidence network across external data partners">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
+        <p class="floc">United States &amp; UAE · working globally</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/uae/">Fractional CTO in the UAE</a></li></ul></div>
+      <div class="fc"><h4>Case studies</h4><ul><li><a href="/case-studies/startup-fractional-cto-seed-to-series-a/">Startup fractional CTO, seed to Series A</a></li><li><a href="/case-studies/private-equity-ai-technical-due-diligence/">Private equity AI technical due diligence</a></li><li><a href="/case-studies/telecom-observability-slos/">Telecom observability and SLOs</a></li><li><a href="/case-studies/real-estate-document-intake-automation/">Real estate document intake automation</a></li><li><a href="/#work">Engagement snapshots</a></li><li><a href="/case-studies/">All case studies →</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/terraform-secrets-out-of-state/">Keeping secrets out of Terraform state: a checklist for platform teams</a></li><li><a href="/insights/slos-error-budgets-small-teams/">SLOs and error budgets for small teams: field notes on making reliability a decision, not a debate</a></li><li><a href="/insights/speculative-decoding-private-llms/">Speculative decoding for private LLMs: faster tokens without changing the answers</a></li><li><a href="/insights/real-world-evidence-study-designs-omop/">Real-world evidence on OMOP: comparing five study designs for treatment effects</a></li><li><a href="/insights/eu-ai-act-gpai-fine-tuning-provider/">Fine-tuning a foundation model? When the EU AI Act makes you a general-purpose AI provider</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>

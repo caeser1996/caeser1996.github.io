@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Case study: FHIR prior authorisation APIs for a health payer</title>
+<meta name="description" content="How a health payer put Da Vinci CRD, DTR and PAS FHIR APIs in front of legacy claims systems, with decision tracking and metrics reporting for CMS-0057-F." />
+<meta name="keywords" content="prior authorization API case study, CMS-0057-F implementation, Da Vinci PAS, Da Vinci CRD DTR, FHIR prior authorisation, payer interoperability, electronic prior authorization, health plan FHIR API, payer architecture" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://asksumanta.com/case-studies/payer-prior-authorisation-fhir-apis/" />
+<meta name="theme-color" content="#111214" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="Case study: FHIR prior authorisation APIs for a health payer" />
+<meta property="og:description" content="How a health payer put Da Vinci CRD, DTR and PAS FHIR APIs in front of legacy claims systems, with decision tracking and metrics reporting for CMS-0057-F." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://asksumanta.com/case-studies/payer-prior-authorisation-fhir-apis/" />
+<meta property="og:image" content="https://asksumanta.com/assets/og/payer-prior-authorisation-fhir-apis.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Case study: FHIR prior authorisation APIs for a health payer" />
+<meta name="twitter:description" content="How a health payer put Da Vinci CRD, DTR and PAS FHIR APIs in front of legacy claims systems, with decision tracking and metrics reporting for CMS-0057-F." />
+<meta name="twitter:image" content="https://asksumanta.com/assets/og/payer-prior-authorisation-fhir-apis.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "Article", "headline": "Putting FHIR prior authorisation APIs in front of a payer's legacy claims systems", "description": "How a health payer put Da Vinci CRD, DTR and PAS FHIR APIs in front of legacy claims systems, with decision tracking and metrics reporting for CMS-0057-F.", "articleSection": "Case study", "about": "Health insurance · Payer", "datePublished": "2026-10-28T01:12:00+04:00", "dateModified": "2026-10-28T01:12:00+04:00", "citation": [{"@type": "CreativeWork", "name": "CMS Interoperability and Prior Authorization Final Rule (CMS-0057-F) fact sheet", "url": "https://www.cms.gov/newsroom/fact-sheets/cms-interoperability-and-prior-authorization-final-rule-cms-0057-f"}, {"@type": "CreativeWork", "name": "Da Vinci Coverage Requirements Discovery (CRD) IG", "url": "https://hl7.org/fhir/us/davinci-crd/2.2.1/en/"}, {"@type": "CreativeWork", "name": "Da Vinci Documentation Templates and Rules (DTR) IG", "url": "https://hl7.org/fhir/us/davinci-dtr"}, {"@type": "CreativeWork", "name": "Da Vinci Prior Authorization Support (PAS) IG: background", "url": "https://hl7.org/fhir/us/davinci-pas/STU2/background.html"}], "author": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "publisher": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "mainEntityOfPage": "https://asksumanta.com/case-studies/payer-prior-authorisation-fhir-apis/", "image": "https://asksumanta.com/assets/og/payer-prior-authorisation-fhir-apis.png", "keywords": "prior authorization API case study, CMS-0057-F implementation, Da Vinci PAS, Da Vinci CRD DTR, FHIR prior authorisation, payer interoperability, electronic prior authorization, health plan FHIR API, payer architecture", "wordCount": 929}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://asksumanta.com/"}, {"@type": "ListItem", "position": 2, "name": "Case studies", "item": "https://asksumanta.com/case-studies/"}, {"@type": "ListItem", "position": 3, "name": "Putting FHIR prior authorisation APIs in front of a payer's legacy claims systems", "item": "https://asksumanta.com/case-studies/payer-prior-authorisation-fhir-apis/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What are CRD, DTR and PAS?", "acceptedAnswer": {"@type": "Answer", "text": "They are HL7 Da Vinci implementation guides. CRD tells the provider at the point of care whether prior authorisation or documentation is needed, DTR gathers the documentation the payer requires, and PAS submits the request and returns the decision."}}, {"@type": "Question", "name": "Do we need to replace our claims system to meet CMS-0057-F?", "acceptedAnswer": {"@type": "Answer", "text": "Usually not. The APIs can sit in front of existing claims and utilisation management systems, translating FHIR requests into internal work items and decisions back into FHIR responses."}}, {"@type": "Question", "name": "Why build metrics from events?", "acceptedAnswer": {"@type": "Answer", "text": "The rule requires prior authorisation metrics to be reported publicly. Deriving them from the same events that drive operations means the published numbers match what actually happened."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+</script>
+</head>
+<body class="sub is-post is-case">
+<div class="progress" id="progress"></div>
+<nav>
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="/#practice">Services</a>
+      <a href="/case-studies/">Case studies</a>
+      <a href="/insights/">Insights</a>
+      <a href="/#assess">Analyse</a>
+      <a href="/#connect">Connect</a>
+    </div>
+    <div class="nav-r">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/case-studies/">Case studies</a> <span>/</span> <em>Putting FHIR prior authorisation APIs in front of a payer&#x27;s legacy claims systems</em></div>
+    <div class="kicker">Case study · Health insurance</div>
+    <h1>Putting FHIR prior authorisation APIs in front of a payer&#x27;s legacy claims systems</h1>
+    <p class="sub-lede">Prior authorisation ran on fax, phone and portals, and a federal rule had set dates for API-based exchange. The goal was standards-based FHIR APIs that providers could call, wrapped around claims and utilisation management systems that could not be replaced in time.</p>
+    <div class="ameta"><span class="fmt">Case study</span><span>Health insurance · Payer</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-10-28T01:12:00+04:00">28 Oct 2026 · 01:12 GST</time><span>8 min read</span></div><div class="atags"><span class="tagp">#healthcare</span><span class="tagp">#fhir</span><span class="tagp">#regulation</span><span class="tagp">#architecture</span><span class="tagp">#platform</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Case study cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><line x1="616" y1="143" x2="721" y2="192" class="cv-edge hl" opacity="0.23"/><line x1="616" y1="143" x2="547" y2="93" class="cv-edge" opacity="0.43"/><line x1="616" y1="143" x2="699" y2="39" class="cv-edge hl" opacity="0.11"/><line x1="616" y1="143" x2="725" y2="232" class="cv-edge" opacity="0.06"/><line x1="616" y1="143" x2="564" y2="230" class="cv-edge" opacity="0.33"/><line x1="616" y1="143" x2="706" y2="99" class="cv-edge" opacity="0.33"/><line x1="616" y1="143" x2="758" y2="117" class="cv-edge" opacity="0.04"/><line x1="616" y1="143" x2="629" y2="264" class="cv-edge hl" opacity="0.19"/><line x1="954" y1="183" x2="1000" y2="77" class="cv-edge hl" opacity="0.23"/><line x1="954" y1="183" x2="1041" y2="110" class="cv-edge" opacity="0.24"/><line x1="954" y1="183" x2="959" y2="233" class="cv-edge" opacity="0.66"/><line x1="954" y1="183" x2="943" y2="113" class="cv-edge" opacity="0.53"/><line x1="954" y1="183" x2="857" y2="214" class="cv-edge" opacity="0.32"/><line x1="954" y1="183" x2="874" y2="252" class="cv-edge hl" opacity="0.30"/><line x1="954" y1="183" x2="984" y2="64" class="cv-edge" opacity="0.18"/><line x1="721" y1="192" x2="725" y2="232" class="cv-edge hl" opacity="0.73"/><line x1="721" y1="192" x2="729" y2="264" class="cv-edge hl" opacity="0.52"/><line x1="721" y1="192" x2="706" y2="99" class="cv-edge hl" opacity="0.37"/><line x1="721" y1="192" x2="857" y2="214" class="cv-edge hl" opacity="0.08"/><line x1="721" y1="192" x2="758" y2="117" class="cv-edge hl" opacity="0.45"/><line x1="721" y1="192" x2="674" y2="320" class="cv-edge hl" opacity="0.09"/><line x1="721" y1="192" x2="629" y2="264" class="cv-edge hl" opacity="0.22"/><line x1="721" y1="192" x2="718" y2="284" class="cv-edge hl" opacity="0.39"/><line x1="824" y1="320" x2="891" y2="357" class="cv-edge" opacity="0.49"/><line x1="824" y1="320" x2="725" y2="232" class="cv-edge" opacity="0.12"/><line x1="824" y1="320" x2="729" y2="264" class="cv-edge hl" opacity="0.26"/><line x1="824" y1="320" x2="678" y2="344" class="cv-edge" opacity="0.01"/><line x1="824" y1="320" x2="857" y2="214" class="cv-edge" opacity="0.26"/><line x1="824" y1="320" x2="874" y2="252" class="cv-edge hl" opacity="0.44"/><line x1="824" y1="320" x2="718" y2="284" class="cv-edge hl" opacity="0.25"/><line x1="891" y1="357" x2="975" y2="343" class="cv-edge hl" opacity="0.43"/><line x1="891" y1="357" x2="959" y2="233" class="cv-edge" opacity="0.06"/><line x1="891" y1="357" x2="857" y2="214" class="cv-edge" opacity="0.02"/><line x1="891" y1="357" x2="874" y2="252" class="cv-edge hl" opacity="0.29"/><line x1="547" y1="93" x2="564" y2="230" class="cv-edge" opacity="0.08"/><line x1="699" y1="39" x2="706" y2="99" class="cv-edge hl" opacity="0.59"/><line x1="699" y1="39" x2="758" y2="117" class="cv-edge hl" opacity="0.35"/><line x1="975" y1="343" x2="959" y2="233" class="cv-edge hl" opacity="0.26"/><line x1="975" y1="343" x2="874" y2="252" class="cv-edge hl" opacity="0.10"/><line x1="1000" y1="77" x2="1041" y2="110" class="cv-edge hl" opacity="0.65"/><line x1="1000" y1="77" x2="943" y2="113" class="cv-edge hl" opacity="0.55"/><line x1="1000" y1="77" x2="1146" y2="77" class="cv-edge hl" opacity="0.02"/><line x1="1000" y1="77" x2="984" y2="64" class="cv-edge hl" opacity="0.86"/><line x1="1041" y1="110" x2="959" y2="233" class="cv-edge" opacity="0.01"/><line x1="1041" y1="110" x2="943" y2="113" class="cv-edge" opacity="0.34"/><line x1="1041" y1="110" x2="1146" y2="77" class="cv-edge" opacity="0.26"/><line x1="1041" y1="110" x2="984" y2="64" class="cv-edge" opacity="0.51"/><line x1="725" y1="232" x2="729" y2="264" class="cv-edge hl" opacity="0.79"/><line x1="725" y1="232" x2="678" y2="344" class="cv-edge" opacity="0.19"/><line x1="725" y1="232" x2="706" y2="99" class="cv-edge" opacity="0.10"/><line x1="725" y1="232" x2="857" y2="214" class="cv-edge" opacity="0.11"/><line x1="725" y1="232" x2="758" y2="117" class="cv-edge" opacity="0.21"/><line x1="725" y1="232" x2="674" y2="320" class="cv-edge hl" opacity="0.32"/><line x1="725" y1="232" x2="629" y2="264" class="cv-edge hl" opacity="0.33"/><line x1="725" y1="232" x2="718" y2="284" class="cv-edge hl" opacity="0.65"/><line x1="959" y1="233" x2="943" y2="113" class="cv-edge" opacity="0.19"/><line x1="959" y1="233" x2="857" y2="214" class="cv-edge" opacity="0.31"/><line x1="959" y1="233" x2="874" y2="252" class="cv-edge hl" opacity="0.42"/><line x1="729" y1="264" x2="585" y2="292" class="cv-edge hl" opacity="0.02"/><line x1="729" y1="264" x2="678" y2="344" class="cv-edge hl" opacity="0.37"/><line x1="729" y1="264" x2="857" y2="214" class="cv-edge hl" opacity="0.09"/><line x1="729" y1="264" x2="758" y2="117" class="cv-edge hl" opacity="0.01"/><line x1="729" y1="264" x2="674" y2="320" class="cv-edge hl" opacity="0.47"/><line x1="729" y1="264" x2="874" y2="252" class="cv-edge hl" opacity="0.03"/><line x1="729" y1="264" x2="629" y2="264" class="cv-edge hl" opacity="0.33"/><line x1="729" y1="264" x2="718" y2="284" class="cv-edge hl" opacity="0.85"/><line x1="943" y1="113" x2="857" y2="214" class="cv-edge" opacity="0.12"/><line x1="943" y1="113" x2="984" y2="64" class="cv-edge" opacity="0.57"/><line x1="585" y1="292" x2="564" y2="230" class="cv-edge" opacity="0.56"/><line x1="585" y1="292" x2="678" y2="344" class="cv-edge" opacity="0.29"/><line x1="585" y1="292" x2="674" y2="320" class="cv-edge hl" opacity="0.38"/><line x1="585" y1="292" x2="629" y2="264" class="cv-edge hl" opacity="0.65"/><line x1="585" y1="292" x2="718" y2="284" class="cv-edge hl" opacity="0.11"/><line x1="564" y1="230" x2="674" y2="320" class="cv-edge hl" opacity="0.05"/><line x1="564" y1="230" x2="629" y2="264" class="cv-edge hl" opacity="0.51"/><line x1="678" y1="344" x2="674" y2="320" class="cv-edge hl" opacity="0.84"/><line x1="678" y1="344" x2="629" y2="264" class="cv-edge hl" opacity="0.38"/><line x1="678" y1="344" x2="718" y2="284" class="cv-edge hl" opacity="0.52"/><line x1="706" y1="99" x2="758" y2="117" class="cv-edge" opacity="0.64"/><line x1="857" y1="214" x2="758" y2="117" class="cv-edge" opacity="0.08"/><line x1="857" y1="214" x2="874" y2="252" class="cv-edge hl" opacity="0.72"/><line x1="674" y1="320" x2="629" y2="264" class="cv-edge hl" opacity="0.52"/><line x1="674" y1="320" x2="718" y2="284" class="cv-edge hl" opacity="0.62"/><line x1="629" y1="264" x2="718" y2="284" class="cv-edge hl" opacity="0.39"/><circle cx="616" cy="143" r="3" class="cv-dot"/><circle cx="954" cy="183" r="3" class="cv-dot"/><circle cx="721" cy="192" r="6" class="cv-dot hl"/><circle cx="824" cy="320" r="3" class="cv-dot"/><circle cx="891" cy="357" r="3" class="cv-dot"/><circle cx="547" cy="93" r="3" class="cv-dot"/><circle cx="699" cy="39" r="6" class="cv-dot hl"/><circle cx="975" cy="343" r="6" class="cv-dot hl"/><circle cx="1000" cy="77" r="6" class="cv-dot hl"/><circle cx="1041" cy="110" r="3" class="cv-dot"/><circle cx="725" cy="232" r="3" class="cv-dot"/><circle cx="959" cy="233" r="3" class="cv-dot"/><circle cx="729" cy="264" r="6" class="cv-dot hl"/><circle cx="943" cy="113" r="3" class="cv-dot"/><circle cx="585" cy="292" r="3" class="cv-dot"/><circle cx="564" cy="230" r="3" class="cv-dot"/><circle cx="1146" cy="77" r="3" class="cv-dot"/><circle cx="678" cy="344" r="3" class="cv-dot"/><circle cx="706" cy="99" r="3" class="cv-dot"/><circle cx="857" cy="214" r="3" class="cv-dot"/><circle cx="758" cy="117" r="3" class="cv-dot"/><circle cx="674" cy="320" r="6" class="cv-dot hl"/><circle cx="874" cy="252" r="6" class="cv-dot hl"/><circle cx="984" cy="64" r="3" class="cv-dot"/><circle cx="629" cy="264" r="6" class="cv-dot hl"/><circle cx="718" cy="284" r="6" class="cv-dot hl"/><text x="60" y="90" class="cv-k">CASE STUDY · CASE STUDY · HEALTH INSURANCE</text><text x="60" y="350" class="cv-n">28 Oct 2026 · 01:12 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <section class="glance rise" aria-label="At a glance"><div class="kicker">At a glance</div><div class="glance-grid"><div><small>Sector</small><b>Health insurance · Payer</b></div><div><small>My role</small><b>Principal architect</b></div><div><small>Engagement</small><b>Architecture, delivery oversight and hand-off</b></div><div><small>Scope</small><b>FHIR APIs, rules, reviewer workflow, decision tracking, metrics</b></div></div><div class="glance-out"><small>What changed</small><ul><li>A standards-based prior authorisation front door without replacing core claims systems</li><li>Every request traceable from submission to decision with a recorded reason</li><li>Clear routing between automated checks and clinical reviewers</li><li>Metrics reporting built on the same event stream as operations</li></ul></div><div class="cs-stack"><span class="tag">FHIR R4</span><span class="tag">Da Vinci CRD</span><span class="tag">Da Vinci DTR</span><span class="tag">Da Vinci PAS</span><span class="tag">CDS Hooks</span><span class="tag">Rules engine</span><span class="tag">Event bus</span><span class="tag">Kubernetes</span></div><p class="glance-note">Anonymised composite. Client names, identifying details and confidential figures are withheld; public facts are cited in the references.</p></section><h2 id="the-situation">The situation</h2>
+<p>A regional health payer handled prior authorisation the way much of the industry still does: faxes, phone calls and a provider portal, feeding a utilisation management system that sat beside the core claims platform. Providers waited, reviewers re-keyed information, and nobody could easily answer how long decisions took or why requests were pended.</p>
+<p>The CMS Interoperability and Prior Authorization Final Rule (CMS-0057-F) changed the timetable. It requires impacted payers to implement a prior authorisation API, with API compliance dates from January 2027, and to publicly report prior authorisation metrics<sup class="cite"><a href="#ref-1">1</a></sup>. Replacing the claims and utilisation management systems in that window was not realistic, so the question became how to put a standards-based front door on them.</p>
+
+<h2 id="what-had-to-be-true">What had to be true</h2>
+<ul>
+<li><strong>Standards, not a bespoke API</strong>, so provider EHR vendors could integrate once.</li>
+<li><strong>No rip-and-replace</strong>: the existing systems remain the systems of record.</li>
+<li><strong>Every decision traceable</strong>, with a reason a provider could act on.</li>
+<li><strong>Humans for clinical judgement</strong>: automation handles completeness and clear-cut rules; reviewers handle the rest.</li>
+<li><strong>Metrics by construction</strong>, not by quarterly spreadsheet.</li>
+</ul>
+
+<h2 id="architecture">Architecture</h2>
+<p>The design followed the three HL7 Da Vinci guides that work together for prior authorisation: Coverage Requirements Discovery, Documentation Templates and Rules, and Prior Authorization Support.</p>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Provider</small><div class="dgm-nodes"><span>EHR order workflow<em>CDS Hooks client</em></span><span>DTR app<em>questionnaires</em></span><span>PAS client<em>Claim bundle</em></span></div></div>
+<div class="dgm-tier"><small>API edge</small><div class="dgm-nodes"><span>CRD service<em>coverage requirements</em></span><span>DTR service<em>payer rules and forms</em></span><span class="hl">PAS endpoint<em>submit and inquire</em></span></div></div>
+<div class="dgm-tier"><small>Decisioning</small><div class="dgm-nodes"><span class="hl">Rules engine<em>versioned policies</em></span><span>Reviewer queue<em>clinical judgement</em></span><span>Decision record<em>status and reason</em></span></div></div>
+<div class="dgm-tier"><small>Core systems</small><div class="dgm-nodes"><span>Utilisation management<em>system of record</em></span><span>Claims platform<em>unchanged</em></span><span>Member and coverage<em>eligibility</em></span></div></div>
+<div class="dgm-tier"><small>Observe</small><div class="dgm-nodes"><span>Event bus<em>every state change</em></span><span>Metrics store<em>reporting views</em></span><span>Audit<em>who decided what</em></span></div></div>
+</div>
+<figcaption>Layered architecture: Da Vinci APIs at the edge, a thin decisioning layer, and core systems left in place.</figcaption>
+</figure>
+<p>CRD uses CDS Hooks so the payer can return coverage requirements inside the provider's ordering workflow<sup class="cite"><a href="#ref-2">2</a></sup>. DTR lets payer documentation rules run in the provider context so the required information is gathered up front<sup class="cite"><a href="#ref-3">3</a></sup>. PAS carries the request as a bundle built around a Claim resource, aligned to the X12 278 transaction, and is designed to be used together with CRD and DTR<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+
+<h2 id="the-data-flow-end-to-end">The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Discover</b><span>Order signed in the EHR triggers a CRD call; response says whether authorisation and documentation are needed</span></li>
+<li><b>Document</b><span>DTR gathers required information, pre-filled from the record where possible</span></li>
+<li class="hl"><b>Submit</b><span>PAS bundle received, validated and mapped to an internal work item</span></li>
+<li><b>Check</b><span>Rules engine checks eligibility, completeness and clear-cut policy criteria</span></li>
+<li class="hl"><b>Review</b><span>Anything needing clinical judgement goes to a reviewer queue with the evidence attached</span></li>
+<li><b>Respond</b><span>Decision and reason returned via PAS; every state change published as an event</span></li>
+</ol>
+<figcaption>Automation decides completeness; people decide clinical questions.</figcaption>
+</figure>
+<p>Status inquiries used the same decision record, so a provider checking on a pended request saw exactly what a reviewer saw, and the answer never depended on which internal system happened to hold the case.</p>
+<p>A deeper walkthrough of the rule and the APIs is in <a href="/insights/cms-0057-prior-authorization-apis/">CMS-0057 prior authorisation APIs</a>.</p>
+
+<h2 id="the-hard-part-translating-policy-into-rules-people-trust">The hard part: translating policy into rules people trust</h2>
+<p>The FHIR plumbing was well specified. Medical policy was not. Coverage criteria lived in documents written for human reviewers, and turning them into DTR questionnaires and rules required:</p>
+<ul>
+<li>A policy backlog ranked by request volume, so the most common services were automated first.</li>
+<li>Clinical owners for every rule, with versioning so a decision could be traced to the policy text in force at the time.</li>
+<li>A firm boundary: rules could approve or route to review, but a denial on clinical grounds always went through a reviewer.</li>
+<li>Specific, actionable reasons in every pended or denied response, rather than generic codes.</li>
+</ul>
+<div class="callout"><p>An API that returns "pended" faster is not an improvement. The value is in returning the right question to the provider at the moment they can still answer it.</p></div>
+
+<h2 id="how-the-engagement-ran">How the engagement ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Provider</small><ol><li>Signs order</li><li>Completes DTR form</li><li class="hl">Receives decision and reason</li></ol></div>
+<div class="dgm-lane"><small>Payer platform</small><ol><li>Returns requirements</li><li>Validates and checks rules</li><li>Publishes events</li></ol></div>
+<div class="dgm-lane"><small>Reviewer</small><ol><li>Receives routed case</li><li class="hl">Decides with evidence</li><li>Records reason</li></ol></div>
+</div>
+<figcaption>One request, three actors, one traceable record.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Assess</b><ul><li>Rule requirements mapped</li><li>Current workflow and systems</li><li>Highest-volume services</li></ul></div>
+<div><small>Phase 2</small><b>Front door</b><ul><li>PAS endpoint and mapping</li><li>Decision record and events</li><li>Partner testing</li></ul></div>
+<div><small>Phase 3</small><b>Upstream</b><ul><li>CRD responses</li><li>DTR questionnaires</li><li>Rules for top services</li></ul></div>
+<div><small>Phase 4</small><b>Operate</b><ul><li>Metrics reporting</li><li>Policy change process</li><li>Runbooks and hand-off</li></ul></div>
+</div>
+<figcaption>PAS first, because it gives every later step a single place to record decisions.</figcaption>
+</figure>
+<p>For the security model of provider-facing apps, see <a href="/insights/smart-on-fhir-ai-apps-authorisation/">SMART on FHIR authorisation</a>; for the event backbone, <a href="/insights/change-data-capture-event-streams/">change data capture and event streams</a>.</p>
+
+<h2 id="key-decisions-and-trade-offs">Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Da Vinci CRD, DTR and PAS</td><td>Proprietary REST API</td><td>EHR vendors integrate once across payers</td></tr>
+<tr><td>Façade over existing systems</td><td>Replace utilisation management</td><td>Meets the timetable without core system risk</td></tr>
+<tr><td>Versioned, owned rules</td><td>Rules embedded in code</td><td>Policy changes are auditable and owned by clinicians</td></tr>
+<tr><td>Clinical denials always reviewed</td><td>Full automation</td><td>Keeps clinical judgement with qualified people</td></tr>
+<tr><td>Metrics from the event stream</td><td>Periodic reporting extracts</td><td>Published numbers match operational reality</td></tr>
+</tbody>
+</table>
+
+<h2 id="what-i-d-do-again-and-differently">What I'd do again, and differently</h2>
+<p>Again: start with the decision record and event stream, because everything else (reporting, audit, provider status checks) hangs off it. Differently: bring provider-side EHR partners into testing earlier. Real Claim bundles from real ordering workflows surface mapping gaps that synthetic tests never do.</p>
+<p>If you are planning for CMS-0057-F, the <a href="/healthcare-data-architecture/">healthcare data architecture</a> page describes how I run these engagements, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://www.cms.gov/newsroom/fact-sheets/cms-interoperability-and-prior-authorization-final-rule-cms-0057-f" target="_blank" rel="noopener">CMS Interoperability and Prior Authorization Final Rule (CMS-0057-F) fact sheet</a><small>Centers for Medicare &amp; Medicaid Services · 17 Jan 2024</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://hl7.org/fhir/us/davinci-crd/2.2.1/en/" target="_blank" rel="noopener">Da Vinci Coverage Requirements Discovery (CRD) IG</a><small>HL7 International</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://hl7.org/fhir/us/davinci-dtr" target="_blank" rel="noopener">Da Vinci Documentation Templates and Rules (DTR) IG</a><small>HL7 International</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://hl7.org/fhir/us/davinci-pas/STU2/background.html" target="_blank" rel="noopener">Da Vinci Prior Authorization Support (PAS) IG: background</a><small>HL7 International</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fasksumanta.com%2Fcase-studies%2Fpayer-prior-authorisation-fhir-apis%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fasksumanta.com%2Fcase-studies%2Fpayer-prior-authorisation-fhir-apis%2F&amp;text=Putting%20FHIR%20prior%20authorisation%20APIs%20in%20front%20of%20a%20payer%27s%20legacy%20claims%20systems" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=Putting%20FHIR%20prior%20authorisation%20APIs%20in%20front%20of%20a%20payer%27s%20legacy%20claims%20systems%20https%3A%2F%2Fasksumanta.com%2Fcase-studies%2Fpayer-prior-authorisation-fhir-apis%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://asksumanta.com/case-studies/payer-prior-authorisation-fhir-apis/">Copy link</button></div>
+      <div class="pnav"><a class="pn prev" href="/case-studies/ambient-clinical-documentation-private-ai/"><small>← Previous</small><b>Getting an ambient AI scribe through security review and into the EHR</b></a><a class="pn next" href="/case-studies/life-sciences-real-world-evidence-network/"><small>Next →</small><b>Building a reproducible real-world evidence network across external data partners</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#the-situation">The situation</a></li><li><a href="#what-had-to-be-true">What had to be true</a></li><li><a href="#architecture">Architecture</a></li><li><a href="#the-data-flow-end-to-end">The data flow, end to end</a></li><li><a href="#the-hard-part-translating-policy-into-rules-people-trust">The hard part: translating policy into rules people trust</a></li><li><a href="#how-the-engagement-ran">How the engagement ran</a></li><li><a href="#key-decisions-and-trade-offs">Key decisions and trade-offs</a></li><li><a href="#what-i-d-do-again-and-differently">What I&#x27;d do again, and differently</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>What are CRD, DTR and PAS?</summary><p>They are HL7 Da Vinci implementation guides. CRD tells the provider at the point of care whether prior authorisation or documentation is needed, DTR gathers the documentation the payer requires, and PAS submits the request and returns the decision.</p></details><details class="rise"><summary>Do we need to replace our claims system to meet CMS-0057-F?</summary><p>Usually not. The APIs can sit in front of existing claims and utilisation management systems, translating FHIR requests into internal work items and decisions back into FHIR responses.</p></details><details class="rise"><summary>Why build metrics from events?</summary><p>The rule requires prior authorisation metrics to be reported publicly. Deriving them from the same events that drive operations means the published numbers match what actually happened.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/healthcare-data-architecture/"><small>Service</small><b>Healthcare data architecture</b><span>I help healthcare and life-sciences organisations turn fragmented clinical data into governed platforms for care, research and AI, using the standards the industry already agrees on.</span><i>→</i></a><a class="rcard rise" href="/fractional-cto/"><small>Service</small><b>Fractional CTO</b><span>I work as a part-time CTO for founders, CEOs and boards who need experienced technical judgement now, and a team that can carry it on after I step back.</span><i>→</i></a><a class="rcard rise" href="/insights/terraform-secrets-out-of-state/"><small>Insight</small><b>Keeping secrets out of Terraform state: a checklist for platform teams</b><span>Most organisations using Terraform have database passwords, API keys or private keys sitting in state files, often in plaintext. For years that was simply how Terraform worked. Since versions 1.10 and 1.11 it doesn&#x27;t have to be, but the fix needs deliberate migration.</span><i>→</i></a><a class="rcard rise" href="/insights/slos-error-budgets-small-teams/"><small>Insight</small><b>SLOs and error budgets for small teams: field notes on making reliability a decision, not a debate</b><span>In a small company, the argument between shipping features and fixing reliability usually gets settled by whoever is loudest that week. Service level objectives and error budgets turn it into a rule everyone agreed in advance. The Google SRE material is written for large organisations, but the core ideas scale down well.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: Putting FHIR prior authorisation APIs in front of a payer&#x27;s legacy claims systems">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
+        <p class="floc">United States &amp; UAE · working globally</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/uae/">Fractional CTO in the UAE</a></li></ul></div>
+      <div class="fc"><h4>Case studies</h4><ul><li><a href="/case-studies/startup-fractional-cto-seed-to-series-a/">Startup fractional CTO, seed to Series A</a></li><li><a href="/case-studies/private-equity-ai-technical-due-diligence/">Private equity AI technical due diligence</a></li><li><a href="/case-studies/telecom-observability-slos/">Telecom observability and SLOs</a></li><li><a href="/case-studies/real-estate-document-intake-automation/">Real estate document intake automation</a></li><li><a href="/#work">Engagement snapshots</a></li><li><a href="/case-studies/">All case studies →</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/terraform-secrets-out-of-state/">Keeping secrets out of Terraform state: a checklist for platform teams</a></li><li><a href="/insights/slos-error-budgets-small-teams/">SLOs and error budgets for small teams: field notes on making reliability a decision, not a debate</a></li><li><a href="/insights/speculative-decoding-private-llms/">Speculative decoding for private LLMs: faster tokens without changing the answers</a></li><li><a href="/insights/real-world-evidence-study-designs-omop/">Real-world evidence on OMOP: comparing five study designs for treatment effects</a></li><li><a href="/insights/eu-ai-act-gpai-fine-tuning-provider/">Fine-tuning a foundation model? When the EU AI Act makes you a general-purpose AI provider</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>

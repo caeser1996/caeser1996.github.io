@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Case study: an asset knowledge graph for an energy operator</title>
+<meta name="description" content="How an energy operator linked asset registers, work orders, sensor data and drawings into one knowledge graph, with cited natural-language answers for engineers." />
+<meta name="keywords" content="asset knowledge graph, energy knowledge graph case study, maintenance data ontology, ISO 14224, GraphRAG, SHACL validation, SOSA SSN ontology, reliability engineering data, industrial knowledge graph, root cause analysis AI" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://asksumanta.com/case-studies/energy-asset-knowledge-graph/" />
+<meta name="theme-color" content="#111214" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="Case study: an asset knowledge graph for an energy operator" />
+<meta property="og:description" content="How an energy operator linked asset registers, work orders, sensor data and drawings into one knowledge graph, with cited natural-language answers for engineers." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://asksumanta.com/case-studies/energy-asset-knowledge-graph/" />
+<meta property="og:image" content="https://asksumanta.com/assets/og/energy-asset-knowledge-graph.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Case study: an asset knowledge graph for an energy operator" />
+<meta name="twitter:description" content="How an energy operator linked asset registers, work orders, sensor data and drawings into one knowledge graph, with cited natural-language answers for engineers." />
+<meta name="twitter:image" content="https://asksumanta.com/assets/og/energy-asset-knowledge-graph.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "Article", "headline": "Connecting maintenance history, sensors and drawings so engineers can find root causes faster", "description": "How an energy operator linked asset registers, work orders, sensor data and drawings into one knowledge graph, with cited natural-language answers for engineers.", "articleSection": "Case study", "about": "Energy · Asset-intensive operations", "datePublished": "2026-10-28T01:32:00+04:00", "dateModified": "2026-10-28T01:32:00+04:00", "citation": [{"@type": "CreativeWork", "name": "ISO 14224:2016 Petroleum, petrochemical and natural gas industries: collection and exchange of reliability and maintenance data for equipment", "url": "https://www.iso.org/standard/64076.html"}, {"@type": "CreativeWork", "name": "Semantic Sensor Network Ontology is a W3C Recommendation", "url": "https://www.w3.org/news/2017/semantic-sensor-network-ontology-is-a-w3c-recommendation/"}, {"@type": "CreativeWork", "name": "Shapes Constraint Language (SHACL)", "url": "https://www.w3.org/TR/2017/REC-shacl-20170720/"}, {"@type": "CreativeWork", "name": "From Local to Global: A Graph RAG Approach to Query-Focused Summarization", "url": "https://arxiv.org/abs/2404.16130"}, {"@type": "CreativeWork", "name": "Iceberg Table Spec", "url": "https://iceberg.apache.org/spec/"}], "author": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "publisher": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "mainEntityOfPage": "https://asksumanta.com/case-studies/energy-asset-knowledge-graph/", "image": "https://asksumanta.com/assets/og/energy-asset-knowledge-graph.png", "keywords": "asset knowledge graph, energy knowledge graph case study, maintenance data ontology, ISO 14224, GraphRAG, SHACL validation, SOSA SSN ontology, reliability engineering data, industrial knowledge graph, root cause analysis AI", "wordCount": 926}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://asksumanta.com/"}, {"@type": "ListItem", "position": 2, "name": "Case studies", "item": "https://asksumanta.com/case-studies/"}, {"@type": "ListItem", "position": 3, "name": "Connecting maintenance history, sensors and drawings so engineers can find root causes faster", "item": "https://asksumanta.com/case-studies/energy-asset-knowledge-graph/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Why use a knowledge graph for asset data?", "acceptedAnswer": {"@type": "Answer", "text": "Asset questions are about relationships: which components sit in which system, which work orders touched them, which sensors watch them and which drawings describe them. A graph stores those relationships directly, so they can be queried and traversed instead of rebuilt by hand."}}, {"@type": "Question", "name": "Is a knowledge graph a replacement for the CMMS or historian?", "acceptedAnswer": {"@type": "Answer", "text": "No. The systems of record stay where they are. The graph holds identifiers, relationships and summaries, and links back to the source systems for detail and high-volume time series."}}, {"@type": "Question", "name": "Where does an LLM fit?", "acceptedAnswer": {"@type": "Answer", "text": "As an interface. The assistant translates questions into graph and time series queries, then answers with citations to the records it used, so engineers can check the evidence."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+</script>
+</head>
+<body class="sub is-post is-case">
+<div class="progress" id="progress"></div>
+<nav>
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="/#practice">Services</a>
+      <a href="/case-studies/">Case studies</a>
+      <a href="/insights/">Insights</a>
+      <a href="/#assess">Analyse</a>
+      <a href="/#connect">Connect</a>
+    </div>
+    <div class="nav-r">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/case-studies/">Case studies</a> <span>/</span> <em>Connecting maintenance history, sensors and drawings so engineers can find root causes faster</em></div>
+    <div class="kicker">Case study · Knowledge graphs</div>
+    <h1>Connecting maintenance history, sensors and drawings so engineers can find root causes faster</h1>
+    <p class="sub-lede">Maintenance history in one system, sensor data in another, drawings and procedures in a document store. Every root-cause investigation started with an engineer stitching them together by hand. The goal was one asset knowledge graph that linked them, with an assistant that answers questions and shows its working.</p>
+    <div class="ameta"><span class="fmt">Case study</span><span>Energy · Asset-intensive operations</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-10-28T01:32:00+04:00">28 Oct 2026 · 01:32 GST</time><span>8 min read</span></div><div class="atags"><span class="tagp">#ontology</span><span class="tagp">#knowledge-graph</span><span class="tagp">#data</span><span class="tagp">#ai</span><span class="tagp">#llm</span><span class="tagp">#architecture</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Case study cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><line x1="996" y1="49" x2="1107" y2="149" class="cv-edge" opacity="0.00"/><line x1="996" y1="49" x2="1095" y2="79" class="cv-edge" opacity="0.30"/><line x1="996" y1="49" x2="859" y2="65" class="cv-edge" opacity="0.08"/><line x1="632" y1="184" x2="542" y2="243" class="cv-edge hl" opacity="0.28"/><line x1="632" y1="184" x2="707" y2="106" class="cv-edge hl" opacity="0.28"/><line x1="632" y1="184" x2="700" y2="59" class="cv-edge hl" opacity="0.05"/><line x1="632" y1="184" x2="554" y2="76" class="cv-edge hl" opacity="0.11"/><line x1="632" y1="184" x2="738" y2="258" class="cv-edge hl" opacity="0.14"/><line x1="632" y1="184" x2="717" y2="196" class="cv-edge hl" opacity="0.43"/><line x1="632" y1="184" x2="659" y2="43" class="cv-edge hl" opacity="0.04"/><line x1="1032" y1="319" x2="977" y2="286" class="cv-edge hl" opacity="0.57"/><line x1="1032" y1="319" x2="1044" y2="323" class="cv-edge hl" opacity="0.92"/><line x1="1032" y1="319" x2="1128" y2="309" class="cv-edge hl" opacity="0.36"/><line x1="1032" y1="319" x2="1112" y2="199" class="cv-edge hl" opacity="0.04"/><line x1="707" y1="106" x2="769" y2="109" class="cv-edge" opacity="0.59"/><line x1="707" y1="106" x2="700" y2="59" class="cv-edge hl" opacity="0.69"/><line x1="707" y1="106" x2="717" y2="196" class="cv-edge" opacity="0.39"/><line x1="707" y1="106" x2="659" y2="43" class="cv-edge" opacity="0.48"/><line x1="1156" y1="58" x2="1107" y2="149" class="cv-edge" opacity="0.31"/><line x1="1156" y1="58" x2="1153" y2="43" class="cv-edge" opacity="0.90"/><line x1="1156" y1="58" x2="1112" y2="199" class="cv-edge hl" opacity="0.01"/><line x1="1156" y1="58" x2="1095" y2="79" class="cv-edge" opacity="0.57"/><line x1="874" y1="249" x2="874" y2="158" class="cv-edge" opacity="0.39"/><line x1="874" y1="249" x2="977" y2="286" class="cv-edge" opacity="0.27"/><line x1="874" y1="249" x2="852" y2="365" class="cv-edge" opacity="0.22"/><line x1="874" y1="249" x2="878" y2="198" class="cv-edge" opacity="0.66"/><line x1="874" y1="249" x2="882" y2="230" class="cv-edge" opacity="0.86"/><line x1="874" y1="249" x2="738" y2="258" class="cv-edge" opacity="0.09"/><line x1="874" y1="249" x2="831" y2="310" class="cv-edge hl" opacity="0.50"/><line x1="769" y1="109" x2="874" y2="158" class="cv-edge" opacity="0.23"/><line x1="769" y1="109" x2="700" y2="59" class="cv-edge hl" opacity="0.43"/><line x1="769" y1="109" x2="878" y2="198" class="cv-edge" opacity="0.06"/><line x1="769" y1="109" x2="717" y2="196" class="cv-edge" opacity="0.33"/><line x1="769" y1="109" x2="659" y2="43" class="cv-edge" opacity="0.15"/><line x1="769" y1="109" x2="859" y2="65" class="cv-edge" opacity="0.33"/><line x1="1107" y1="149" x2="1153" y2="43" class="cv-edge" opacity="0.23"/><line x1="1107" y1="149" x2="1112" y2="199" class="cv-edge hl" opacity="0.66"/><line x1="1107" y1="149" x2="1095" y2="79" class="cv-edge" opacity="0.53"/><line x1="874" y1="158" x2="878" y2="198" class="cv-edge" opacity="0.73"/><line x1="874" y1="158" x2="882" y2="230" class="cv-edge" opacity="0.52"/><line x1="874" y1="158" x2="859" y2="65" class="cv-edge" opacity="0.37"/><line x1="977" y1="286" x2="1044" y2="323" class="cv-edge" opacity="0.49"/><line x1="977" y1="286" x2="852" y2="365" class="cv-edge" opacity="0.01"/><line x1="977" y1="286" x2="878" y2="198" class="cv-edge" opacity="0.12"/><line x1="977" y1="286" x2="882" y2="230" class="cv-edge" opacity="0.26"/><line x1="977" y1="286" x2="831" y2="310" class="cv-edge hl" opacity="0.01"/><line x1="1044" y1="323" x2="1128" y2="309" class="cv-edge" opacity="0.43"/><line x1="1044" y1="323" x2="1112" y2="199" class="cv-edge hl" opacity="0.06"/><line x1="700" y1="59" x2="554" y2="76" class="cv-edge hl" opacity="0.02"/><line x1="700" y1="59" x2="717" y2="196" class="cv-edge hl" opacity="0.08"/><line x1="700" y1="59" x2="659" y2="43" class="cv-edge hl" opacity="0.71"/><line x1="852" y1="365" x2="882" y2="230" class="cv-edge" opacity="0.08"/><line x1="852" y1="365" x2="831" y2="310" class="cv-edge hl" opacity="0.61"/><line x1="1128" y1="309" x2="1112" y2="199" class="cv-edge hl" opacity="0.26"/><line x1="1153" y1="43" x2="1095" y2="79" class="cv-edge" opacity="0.55"/><line x1="554" y1="76" x2="659" y2="43" class="cv-edge" opacity="0.26"/><line x1="878" y1="198" x2="882" y2="230" class="cv-edge" opacity="0.79"/><line x1="878" y1="198" x2="831" y2="310" class="cv-edge hl" opacity="0.19"/><line x1="878" y1="198" x2="859" y2="65" class="cv-edge" opacity="0.10"/><line x1="1112" y1="199" x2="1095" y2="79" class="cv-edge hl" opacity="0.19"/><line x1="882" y1="230" x2="738" y2="258" class="cv-edge" opacity="0.02"/><line x1="882" y1="230" x2="831" y2="310" class="cv-edge hl" opacity="0.37"/><line x1="738" y1="258" x2="717" y2="196" class="cv-edge" opacity="0.56"/><line x1="738" y1="258" x2="831" y2="310" class="cv-edge hl" opacity="0.29"/><circle cx="996" cy="49" r="3" class="cv-dot"/><circle cx="632" cy="184" r="6" class="cv-dot hl"/><circle cx="1032" cy="319" r="6" class="cv-dot hl"/><circle cx="542" cy="243" r="3" class="cv-dot"/><circle cx="707" cy="106" r="3" class="cv-dot"/><circle cx="1156" cy="58" r="3" class="cv-dot"/><circle cx="874" cy="249" r="3" class="cv-dot"/><circle cx="769" cy="109" r="3" class="cv-dot"/><circle cx="1107" cy="149" r="3" class="cv-dot"/><circle cx="874" cy="158" r="3" class="cv-dot"/><circle cx="977" cy="286" r="3" class="cv-dot"/><circle cx="1044" cy="323" r="3" class="cv-dot"/><circle cx="700" cy="59" r="6" class="cv-dot hl"/><circle cx="852" cy="365" r="3" class="cv-dot"/><circle cx="1128" cy="309" r="3" class="cv-dot"/><circle cx="1153" cy="43" r="3" class="cv-dot"/><circle cx="554" cy="76" r="3" class="cv-dot"/><circle cx="878" cy="198" r="3" class="cv-dot"/><circle cx="1112" cy="199" r="6" class="cv-dot hl"/><circle cx="882" cy="230" r="3" class="cv-dot"/><circle cx="1095" cy="79" r="3" class="cv-dot"/><circle cx="738" cy="258" r="3" class="cv-dot"/><circle cx="717" cy="196" r="3" class="cv-dot"/><circle cx="659" cy="43" r="3" class="cv-dot"/><circle cx="831" cy="310" r="6" class="cv-dot hl"/><circle cx="859" cy="65" r="3" class="cv-dot"/><text x="60" y="90" class="cv-k">CASE STUDY · CASE STUDY · KNOWLEDGE GRAPHS</text><text x="60" y="350" class="cv-n">28 Oct 2026 · 01:32 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <section class="glance rise" aria-label="At a glance"><div class="kicker">At a glance</div><div class="glance-grid"><div><small>Sector</small><b>Energy · Asset-intensive operations</b></div><div><small>My role</small><b>Principal architect, knowledge graphs and AI</b></div><div><small>Engagement</small><b>Architecture, ontology design and build</b></div><div><small>Scope</small><b>Asset ontology, entity resolution, graph platform, time series links, engineer assistant</b></div></div><div class="glance-out"><small>What changed</small><ul><li>One connected view of each asset: hierarchy, failures, work orders, sensors and documents</li><li>Investigations start from a linked history instead of manual cross-referencing</li><li>Answers from the assistant cite the work orders, readings and drawings they rely on</li><li>A shared asset vocabulary that engineering, reliability and data teams maintain together</li></ul></div><div class="cs-stack"><span class="tag">RDF / OWL ontology</span><span class="tag">SHACL</span><span class="tag">W3C SOSA/SSN</span><span class="tag">Graph database</span><span class="tag">Time series store</span><span class="tag">Apache Iceberg</span><span class="tag">GraphRAG</span><span class="tag">LLM with tool calls</span></div><p class="glance-note">Anonymised composite. Client names, identifying details and confidential figures are withheld; public facts are cited in the references.</p></section><h2 id="the-situation">The situation</h2>
+<p>An energy operator ran a large estate of rotating equipment, vessels, pipework and instrumentation. When something failed, the reliability team asked the obvious questions: has this happened before, on this unit or on similar ones, what did the sensors show beforehand, and what did we change last time? Answering meant searching the maintenance system, exporting historian trends, finding the right revision of a drawing and reading free-text work order notes. Each investigation rebuilt the same picture from scratch.</p>
+<p>The data existed. The connections between it did not.</p>
+
+<h2 id="what-had-to-be-true">What had to be true</h2>
+<ul>
+<li><strong>One identity per asset</strong>, reconciled across the register, the maintenance system, tag lists and documents.</li>
+<li><strong>A shared vocabulary</strong> for equipment classes, failure modes and maintenance actions, so "similar assets" and "same failure" mean something consistent.</li>
+<li><strong>Systems of record untouched</strong>: link to them, don't replace them.</li>
+<li><strong>Answers with evidence</strong>, because engineers will not act on an unexplained answer.</li>
+<li><strong>Owned by the business</strong>: reliability engineers, not just the data team, maintain the model.</li>
+</ul>
+
+<h2 id="architecture">Architecture</h2>
+<p>The ontology borrowed its structure from ISO 14224, which organises reliability and maintenance data into equipment, failure and maintenance categories with a defined equipment taxonomy<sup class="cite"><a href="#ref-1">1</a></sup>. Sensor concepts followed the W3C and OGC Semantic Sensor Network ontology, with SOSA as its lightweight core<sup class="cite"><a href="#ref-2">2</a></sup>, rather than inventing our own model of observations.</p>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Sources</small><div class="dgm-nodes"><span>Asset register<em>hierarchy, tags</em></span><span>Maintenance system<em>work orders, notes</em></span><span>Historian<em>sensor time series</em></span><span>Document store<em>drawings, procedures</em></span></div></div>
+<div class="dgm-tier"><small>Integrate</small><div class="dgm-nodes"><span class="hl">Entity resolution<em>tags, IDs, names</em></span><span>Text extraction<em>failure modes from notes</em></span><span>Lakehouse<em>Iceberg tables</em></span></div></div>
+<div class="dgm-tier"><small>Model</small><div class="dgm-nodes"><span class="hl">Asset ontology<em>ISO 14224 aligned</em></span><span>SOSA/SSN<em>sensors, observations</em></span><span>SHACL shapes<em>validation rules</em></span></div></div>
+<div class="dgm-tier"><small>Graph</small><div class="dgm-nodes"><span>Knowledge graph<em>assets, events, links</em></span><span>Time series pointers<em>no bulk copies</em></span><span>Document links<em>by revision</em></span></div></div>
+<div class="dgm-tier"><small>Use</small><div class="dgm-nodes"><span class="hl">Engineer assistant<em>cited answers</em></span><span>Graph queries<em>reliability analysis</em></span><span>Alerts<em>repeat failures</em></span></div></div>
+</div>
+<figcaption>Layered architecture: sources stay put; the graph holds identity, relationships and pointers.</figcaption>
+</figure>
+<p>Curated tables sat in Apache Iceberg, whose snapshot-based metadata gives versioned, reproducible inputs to every graph build<sup class="cite"><a href="#ref-5">5</a></sup>. See <a href="/insights/lakehouse-catalog-strategy-iceberg/">lakehouse catalog strategy</a> and <a href="/insights/ontology-vs-knowledge-graph-vs-semantic-layer/">ontology vs knowledge graph vs semantic layer</a>.</p>
+
+<h2 id="the-data-flow-end-to-end">The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Land</b><span>Register, work orders and document metadata land as versioned tables</span></li>
+<li class="hl"><b>Resolve</b><span>Match tags, IDs and names to one asset identity, with confidence scores</span></li>
+<li><b>Classify</b><span>Map equipment classes and failure modes to the shared vocabulary</span></li>
+<li class="hl"><b>Validate</b><span>SHACL shapes reject records that break the model before load</span></li>
+<li><b>Link</b><span>Attach sensor series and document revisions by reference</span></li>
+<li><b>Ask</b><span>Engineers query directly or through the assistant, with citations</span></li>
+</ol>
+<figcaption>Each graph build is reproducible from a known snapshot of the source tables.</figcaption>
+</figure>
+<p>SHACL let us express the rules ("every pump has exactly one parent system", "every work order references a resolved asset") as shapes that are validated on every build<sup class="cite"><a href="#ref-3">3</a></sup>. More in <a href="/insights/shacl-validation-knowledge-graphs/">SHACL validation for knowledge graphs</a>.</p>
+
+<h2 id="the-hard-part-deciding-that-two-things-are-the-same-asset">The hard part: deciding that two things are the same asset</h2>
+<p>Entity resolution took more effort than the graph itself. The same pump appeared under a tag number in the register, a slightly different tag in the maintenance system, a description in free-text notes and a drawing number in the document store. Some tags had been reused after equipment was replaced.</p>
+<ul>
+<li>Deterministic rules first (exact tag matches within a site), probabilistic matching second.</li>
+<li>Every match carries a confidence and a method, so low-confidence links are visible, not hidden.</li>
+<li>A review queue where reliability engineers confirm or reject uncertain matches; their decisions train the rules.</li>
+<li>Equipment replacement modelled explicitly, so history follows the functional location and the physical unit separately.</li>
+</ul>
+<p>The patterns are described in <a href="/insights/entity-resolution-knowledge-graphs/">entity resolution for knowledge graphs</a>.</p>
+<div class="callout"><p>A knowledge graph is only as good as its identities. Spend the first weeks on what counts as "the same thing", not on the database.</p></div>
+
+<h2 id="how-the-engagement-ran">How the engagement ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Reliability engineers</small><ol><li>Bring real investigations</li><li class="hl">Confirm uncertain matches</li><li>Own failure mode vocabulary</li></ol></div>
+<div class="dgm-lane"><small>Data team</small><ol><li>Land and version sources</li><li>Run resolution and validation</li><li>Publish graph builds</li></ol></div>
+<div class="dgm-lane"><small>Assistant</small><ol><li>Translate question to queries</li><li class="hl">Answer with citations</li><li>Log questions it couldn't answer</li></ol></div>
+</div>
+<figcaption>Engineers own meaning; the data team owns pipelines; the assistant exposes gaps.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Questions</b><ul><li>Investigation walkthroughs</li><li>Source inventory</li><li>Competency questions</li></ul></div>
+<div><small>Phase 2</small><b>Model</b><ul><li>Asset ontology</li><li>SHACL shapes</li><li>One unit end to end</li></ul></div>
+<div><small>Phase 3</small><b>Resolve and link</b><ul><li>Entity resolution</li><li>Sensor and document links</li><li>Review queue</li></ul></div>
+<div><small>Phase 4</small><b>Assist and hand off</b><ul><li>Engineer assistant</li><li>Further units</li><li>Ownership model</li></ul></div>
+</div>
+<figcaption>Phased delivery: start from the questions engineers actually ask.</figcaption>
+</figure>
+
+<h2 id="key-decisions-and-trade-offs">Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Align to ISO 14224 and SOSA/SSN</td><td>Bespoke model</td><td>Recognised structure; easier to extend and explain</td></tr>
+<tr><td>Pointers to time series</td><td>Copy readings into the graph</td><td>Graphs are poor at high-volume time series</td></tr>
+<tr><td>SHACL validation on every build</td><td>Trust the sources</td><td>Breakages caught before engineers see them</td></tr>
+<tr><td>Graph-first retrieval for the assistant</td><td>Vector search over documents only</td><td>Questions are about relationships, not just text</td></tr>
+<tr><td>Human review of uncertain matches</td><td>Fully automatic resolution</td><td>Wrong links destroy trust faster than missing ones</td></tr>
+</tbody>
+</table>
+<p>The assistant combined graph traversal with document retrieval. GraphRAG research shows graph-based indexes help with broad, corpus-level questions that plain vector retrieval handles poorly<sup class="cite"><a href="#ref-4">4</a></sup>; here the graph already existed, so retrieval followed its edges. See <a href="/insights/graphrag-when-it-beats-vector-rag/">when GraphRAG beats vector RAG</a>.</p>
+
+<h2 id="what-i-d-do-again-and-differently">What I'd do again, and differently</h2>
+<p>Again: write competency questions with engineers before modelling anything, and make every link explainable. Differently: put the review queue in front of engineers sooner. Their corrections improved resolution more than any tuning we did.</p>
+<p>If you're connecting operational data like this, the <a href="/ontology-knowledge-graph/">ontology and knowledge graph</a> page describes how I run these engagements, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://www.iso.org/standard/64076.html" target="_blank" rel="noopener">ISO 14224:2016 Petroleum, petrochemical and natural gas industries: collection and exchange of reliability and maintenance data for equipment</a><small>ISO · 2016</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://www.w3.org/news/2017/semantic-sensor-network-ontology-is-a-w3c-recommendation/" target="_blank" rel="noopener">Semantic Sensor Network Ontology is a W3C Recommendation</a><small>W3C · 2017</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://www.w3.org/TR/2017/REC-shacl-20170720/" target="_blank" rel="noopener">Shapes Constraint Language (SHACL)</a><small>W3C Recommendation · 20 Jul 2017</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://arxiv.org/abs/2404.16130" target="_blank" rel="noopener">From Local to Global: A Graph RAG Approach to Query-Focused Summarization</a><small>Edge et al., Microsoft Research (arXiv) · 2024</small></div></li><li id="ref-5"><span class="rn">5</span><div><a href="https://iceberg.apache.org/spec/" target="_blank" rel="noopener">Iceberg Table Spec</a><small>Apache Iceberg</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fasksumanta.com%2Fcase-studies%2Fenergy-asset-knowledge-graph%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fasksumanta.com%2Fcase-studies%2Fenergy-asset-knowledge-graph%2F&amp;text=Connecting%20maintenance%20history%2C%20sensors%20and%20drawings%20so%20engineers%20can%20find%20root%20causes%20faster" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=Connecting%20maintenance%20history%2C%20sensors%20and%20drawings%20so%20engineers%20can%20find%20root%20causes%20faster%20https%3A%2F%2Fasksumanta.com%2Fcase-studies%2Fenergy-asset-knowledge-graph%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://asksumanta.com/case-studies/energy-asset-knowledge-graph/">Copy link</button></div>
+      <div class="pnav"><a class="pn prev" href="/case-studies/uae-government-sovereign-llm-service/"><small>← Previous</small><b>Giving government teams generative AI without sending a byte out of the country</b></a><a class="pn next" href="/case-studies/manufacturing-quality-lakehouse/"><small>Next →</small><b>Joining quality, production and supplier data so defects surface earlier</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#the-situation">The situation</a></li><li><a href="#what-had-to-be-true">What had to be true</a></li><li><a href="#architecture">Architecture</a></li><li><a href="#the-data-flow-end-to-end">The data flow, end to end</a></li><li><a href="#the-hard-part-deciding-that-two-things-are-the-same-asset">The hard part: deciding that two things are the same asset</a></li><li><a href="#how-the-engagement-ran">How the engagement ran</a></li><li><a href="#key-decisions-and-trade-offs">Key decisions and trade-offs</a></li><li><a href="#what-i-d-do-again-and-differently">What I&#x27;d do again, and differently</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>Why use a knowledge graph for asset data?</summary><p>Asset questions are about relationships: which components sit in which system, which work orders touched them, which sensors watch them and which drawings describe them. A graph stores those relationships directly, so they can be queried and traversed instead of rebuilt by hand.</p></details><details class="rise"><summary>Is a knowledge graph a replacement for the CMMS or historian?</summary><p>No. The systems of record stay where they are. The graph holds identifiers, relationships and summaries, and links back to the source systems for detail and high-volume time series.</p></details><details class="rise"><summary>Where does an LLM fit?</summary><p>As an interface. The assistant translates questions into graph and time series queries, then answers with citations to the records it used, so engineers can check the evidence.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/ontology-knowledge-graph/"><small>Service</small><b>Ontology &amp; knowledge graphs</b><span>I help organisations agree what their data means, write it down as an ontology and put it to work in a knowledge graph that analytics, APIs and AI agents can all rely on.</span><i>→</i></a><a class="rcard rise" href="/ai-architect/"><small>Service</small><b>AI &amp; LLM architecture</b><span>I design and build AI systems that leadership can trust: grounded in your data, measured by evaluations, governed by your rules and priced so they make sense at scale.</span><i>→</i></a><a class="rcard rise" href="/fractional-cto/"><small>Service</small><b>Fractional CTO</b><span>I work as a part-time CTO for founders, CEOs and boards who need experienced technical judgement now, and a team that can carry it on after I step back.</span><i>→</i></a><a class="rcard rise" href="/insights/terraform-secrets-out-of-state/"><small>Insight</small><b>Keeping secrets out of Terraform state: a checklist for platform teams</b><span>Most organisations using Terraform have database passwords, API keys or private keys sitting in state files, often in plaintext. For years that was simply how Terraform worked. Since versions 1.10 and 1.11 it doesn&#x27;t have to be, but the fix needs deliberate migration.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: Connecting maintenance history, sensors and drawings so engineers can find root causes faster">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
+        <p class="floc">United States &amp; UAE · working globally</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/uae/">Fractional CTO in the UAE</a></li></ul></div>
+      <div class="fc"><h4>Case studies</h4><ul><li><a href="/case-studies/startup-fractional-cto-seed-to-series-a/">Startup fractional CTO, seed to Series A</a></li><li><a href="/case-studies/private-equity-ai-technical-due-diligence/">Private equity AI technical due diligence</a></li><li><a href="/case-studies/telecom-observability-slos/">Telecom observability and SLOs</a></li><li><a href="/case-studies/real-estate-document-intake-automation/">Real estate document intake automation</a></li><li><a href="/#work">Engagement snapshots</a></li><li><a href="/case-studies/">All case studies →</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/terraform-secrets-out-of-state/">Keeping secrets out of Terraform state: a checklist for platform teams</a></li><li><a href="/insights/slos-error-budgets-small-teams/">SLOs and error budgets for small teams: field notes on making reliability a decision, not a debate</a></li><li><a href="/insights/speculative-decoding-private-llms/">Speculative decoding for private LLMs: faster tokens without changing the answers</a></li><li><a href="/insights/real-world-evidence-study-designs-omop/">Real-world evidence on OMOP: comparing five study designs for treatment effects</a></li><li><a href="/insights/eu-ai-act-gpai-fine-tuning-provider/">Fine-tuning a foundation model? When the EU AI Act makes you a general-purpose AI provider</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>

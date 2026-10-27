@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Case study: private ambient clinical documentation with AI</title>
+<meta name="description" content="How a provider group moved an AI scribe past security review: private speech and LLM inference, SMART on FHIR scopes, clinician sign-off and a full audit trail." />
+<meta name="keywords" content="ambient AI scribe case study, ambient clinical documentation, private LLM healthcare, AI scribe security review, SMART on FHIR AI app, on-premises speech recognition, vLLM healthcare, clinical note generation, healthcare AI architect" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://asksumanta.com/case-studies/ambient-clinical-documentation-private-ai/" />
+<meta name="theme-color" content="#111214" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="Case study: private ambient clinical documentation with AI" />
+<meta property="og:description" content="How a provider group moved an AI scribe past security review: private speech and LLM inference, SMART on FHIR scopes, clinician sign-off and a full audit trail." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://asksumanta.com/case-studies/ambient-clinical-documentation-private-ai/" />
+<meta property="og:image" content="https://asksumanta.com/assets/og/ambient-clinical-documentation-private-ai.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Case study: private ambient clinical documentation with AI" />
+<meta name="twitter:description" content="How a provider group moved an AI scribe past security review: private speech and LLM inference, SMART on FHIR scopes, clinician sign-off and a full audit trail." />
+<meta name="twitter:image" content="https://asksumanta.com/assets/og/ambient-clinical-documentation-private-ai.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "Article", "headline": "Getting an ambient AI scribe through security review and into the EHR", "description": "How a provider group moved an AI scribe past security review: private speech and LLM inference, SMART on FHIR scopes, clinician sign-off and a full audit trail.", "articleSection": "Case study", "about": "Healthcare · Provider group", "datePublished": "2026-10-28T01:10:00+04:00", "dateModified": "2026-10-28T01:10:00+04:00", "citation": [{"@type": "CreativeWork", "name": "Robust Speech Recognition via Large-Scale Weak Supervision", "url": "https://arxiv.org/abs/2212.04356"}, {"@type": "CreativeWork", "name": "Efficient Memory Management for Large Language Model Serving with PagedAttention", "url": "https://arxiv.org/abs/2309.06180"}, {"@type": "CreativeWork", "name": "App Launch: Scopes and Launch Context (SMART App Launch)", "url": "https://hl7.org/fhir/smart-app-launch/scopes-and-launch-context.html"}, {"@type": "CreativeWork", "name": "DocumentReference (FHIR R4)", "url": "https://hl7.org/fhir/R4/DocumentReference.html"}, {"@type": "CreativeWork", "name": "AuditEvent (FHIR R4)", "url": "https://hl7.org/fhir/R4/AuditEvent.html"}], "author": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "publisher": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "mainEntityOfPage": "https://asksumanta.com/case-studies/ambient-clinical-documentation-private-ai/", "image": "https://asksumanta.com/assets/og/ambient-clinical-documentation-private-ai.png", "keywords": "ambient AI scribe case study, ambient clinical documentation, private LLM healthcare, AI scribe security review, SMART on FHIR AI app, on-premises speech recognition, vLLM healthcare, clinical note generation, healthcare AI architect", "wordCount": 946}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://asksumanta.com/"}, {"@type": "ListItem", "position": 2, "name": "Case studies", "item": "https://asksumanta.com/case-studies/"}, {"@type": "ListItem", "position": 3, "name": "Getting an ambient AI scribe through security review and into the EHR", "item": "https://asksumanta.com/case-studies/ambient-clinical-documentation-private-ai/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Why run an ambient scribe on private infrastructure?", "acceptedAnswer": {"@type": "Answer", "text": "It keeps audio and transcripts inside a boundary the organisation already governs, which shortens security and privacy review and avoids sending identifiable conversations to a third party by default."}}, {"@type": "Question", "name": "Does the AI write directly into the medical record?", "acceptedAnswer": {"@type": "Answer", "text": "No. The model drafts a note with links back to the transcript, and a clinician reviews, edits and signs it. Only the approved note is written to the EHR."}}, {"@type": "Question", "name": "How do you know the drafts are good enough?", "acceptedAnswer": {"@type": "Answer", "text": "A curated evaluation set of consented encounters, scored by clinicians, is run before every model or prompt change. Changes that regress on omissions or unsupported statements do not ship."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+</script>
+</head>
+<body class="sub is-post is-case">
+<div class="progress" id="progress"></div>
+<nav>
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="/#practice">Services</a>
+      <a href="/case-studies/">Case studies</a>
+      <a href="/insights/">Insights</a>
+      <a href="/#assess">Analyse</a>
+      <a href="/#connect">Connect</a>
+    </div>
+    <div class="nav-r">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/case-studies/">Case studies</a> <span>/</span> <em>Getting an ambient AI scribe through security review and into the EHR</em></div>
+    <div class="kicker">Case study · Healthcare AI</div>
+    <h1>Getting an ambient AI scribe through security review and into the EHR</h1>
+    <p class="sub-lede">Clinicians were finishing notes in the evening, and every AI scribe pilot had stalled in security review. The goal was a private ambient documentation pipeline that drafted notes for clinician sign-off, ran on infrastructure the organisation controlled, and could prove what happened to every recording.</p>
+    <div class="ameta"><span class="fmt">Case study</span><span>Healthcare · Provider group</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-10-28T01:10:00+04:00">28 Oct 2026 · 01:10 GST</time><span>8 min read</span></div><div class="atags"><span class="tagp">#healthcare</span><span class="tagp">#ai</span><span class="tagp">#llm</span><span class="tagp">#fhir</span><span class="tagp">#security</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Case study cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><line x1="781" y1="225" x2="643" y2="270" class="cv-edge hl" opacity="0.03"/><line x1="781" y1="225" x2="737" y2="359" class="cv-edge hl" opacity="0.06"/><line x1="781" y1="225" x2="862" y2="343" class="cv-edge hl" opacity="0.05"/><line x1="781" y1="225" x2="680" y2="217" class="cv-edge hl" opacity="0.33"/><line x1="781" y1="225" x2="849" y2="127" class="cv-edge hl" opacity="0.21"/><line x1="781" y1="225" x2="770" y2="246" class="cv-edge hl" opacity="0.84"/><line x1="781" y1="225" x2="750" y2="103" class="cv-edge hl" opacity="0.16"/><line x1="781" y1="225" x2="731" y2="89" class="cv-edge hl" opacity="0.03"/><line x1="781" y1="225" x2="636" y2="231" class="cv-edge hl" opacity="0.03"/><line x1="781" y1="225" x2="665" y2="241" class="cv-edge hl" opacity="0.22"/><line x1="781" y1="225" x2="676" y2="290" class="cv-edge hl" opacity="0.18"/><line x1="781" y1="225" x2="740" y2="278" class="cv-edge hl" opacity="0.55"/><line x1="643" y1="270" x2="737" y2="359" class="cv-edge" opacity="0.14"/><line x1="643" y1="270" x2="680" y2="217" class="cv-edge" opacity="0.56"/><line x1="643" y1="270" x2="770" y2="246" class="cv-edge" opacity="0.14"/><line x1="643" y1="270" x2="527" y2="178" class="cv-edge" opacity="0.01"/><line x1="643" y1="270" x2="636" y2="231" class="cv-edge hl" opacity="0.73"/><line x1="643" y1="270" x2="665" y2="241" class="cv-edge" opacity="0.75"/><line x1="643" y1="270" x2="676" y2="290" class="cv-edge" opacity="0.75"/><line x1="643" y1="270" x2="699" y2="372" class="cv-edge" opacity="0.23"/><line x1="643" y1="270" x2="740" y2="278" class="cv-edge" opacity="0.36"/><line x1="737" y1="359" x2="862" y2="343" class="cv-edge" opacity="0.16"/><line x1="737" y1="359" x2="770" y2="246" class="cv-edge" opacity="0.21"/><line x1="737" y1="359" x2="665" y2="241" class="cv-edge" opacity="0.08"/><line x1="737" y1="359" x2="676" y2="290" class="cv-edge" opacity="0.38"/><line x1="737" y1="359" x2="699" y2="372" class="cv-edge" opacity="0.73"/><line x1="737" y1="359" x2="740" y2="278" class="cv-edge" opacity="0.46"/><line x1="862" y1="343" x2="770" y2="246" class="cv-edge" opacity="0.11"/><line x1="862" y1="343" x2="964" y2="376" class="cv-edge" opacity="0.29"/><line x1="862" y1="343" x2="740" y2="278" class="cv-edge" opacity="0.08"/><line x1="541" y1="125" x2="527" y2="178" class="cv-edge" opacity="0.63"/><line x1="541" y1="125" x2="636" y2="231" class="cv-edge hl" opacity="0.05"/><line x1="680" y1="217" x2="770" y2="246" class="cv-edge" opacity="0.37"/><line x1="680" y1="217" x2="750" y2="103" class="cv-edge" opacity="0.11"/><line x1="680" y1="217" x2="731" y2="89" class="cv-edge hl" opacity="0.08"/><line x1="680" y1="217" x2="636" y2="231" class="cv-edge hl" opacity="0.69"/><line x1="680" y1="217" x2="665" y2="241" class="cv-edge" opacity="0.81"/><line x1="680" y1="217" x2="676" y2="290" class="cv-edge" opacity="0.51"/><line x1="680" y1="217" x2="740" y2="278" class="cv-edge" opacity="0.43"/><line x1="907" y1="47" x2="849" y2="127" class="cv-edge" opacity="0.34"/><line x1="907" y1="47" x2="983" y2="122" class="cv-edge" opacity="0.29"/><line x1="907" y1="47" x2="960" y2="110" class="cv-edge hl" opacity="0.45"/><line x1="907" y1="47" x2="934" y2="168" class="cv-edge hl" opacity="0.17"/><line x1="849" y1="127" x2="770" y2="246" class="cv-edge" opacity="0.05"/><line x1="849" y1="127" x2="939" y2="195" class="cv-edge hl" opacity="0.25"/><line x1="849" y1="127" x2="983" y2="122" class="cv-edge" opacity="0.10"/><line x1="849" y1="127" x2="750" y2="103" class="cv-edge" opacity="0.32"/><line x1="849" y1="127" x2="731" y2="89" class="cv-edge hl" opacity="0.18"/><line x1="849" y1="127" x2="960" y2="110" class="cv-edge hl" opacity="0.25"/><line x1="849" y1="127" x2="934" y2="168" class="cv-edge hl" opacity="0.37"/><line x1="770" y1="246" x2="750" y2="103" class="cv-edge" opacity="0.04"/><line x1="770" y1="246" x2="636" y2="231" class="cv-edge hl" opacity="0.10"/><line x1="770" y1="246" x2="665" y2="241" class="cv-edge" opacity="0.30"/><line x1="770" y1="246" x2="676" y2="290" class="cv-edge" opacity="0.31"/><line x1="770" y1="246" x2="699" y2="372" class="cv-edge" opacity="0.04"/><line x1="770" y1="246" x2="740" y2="278" class="cv-edge" opacity="0.71"/><line x1="939" y1="195" x2="983" y2="122" class="cv-edge hl" opacity="0.44"/><line x1="939" y1="195" x2="960" y2="110" class="cv-edge hl" opacity="0.42"/><line x1="939" y1="195" x2="934" y2="168" class="cv-edge hl" opacity="0.82"/><line x1="983" y1="122" x2="1118" y2="154" class="cv-edge" opacity="0.07"/><line x1="983" y1="122" x2="1104" y2="199" class="cv-edge" opacity="0.04"/><line x1="983" y1="122" x2="960" y2="110" class="cv-edge hl" opacity="0.83"/><line x1="983" y1="122" x2="934" y2="168" class="cv-edge hl" opacity="0.55"/><line x1="527" y1="178" x2="636" y2="231" class="cv-edge hl" opacity="0.19"/><line x1="1118" y1="154" x2="1104" y2="199" class="cv-edge" opacity="0.69"/><line x1="750" y1="103" x2="731" y2="89" class="cv-edge hl" opacity="0.84"/><line x1="964" y1="376" x2="1066" y2="386" class="cv-edge" opacity="0.31"/><line x1="960" y1="110" x2="934" y2="168" class="cv-edge hl" opacity="0.58"/><line x1="636" y1="231" x2="665" y2="241" class="cv-edge hl" opacity="0.79"/><line x1="636" y1="231" x2="676" y2="290" class="cv-edge hl" opacity="0.52"/><line x1="636" y1="231" x2="740" y2="278" class="cv-edge hl" opacity="0.24"/><line x1="665" y1="241" x2="676" y2="290" class="cv-edge" opacity="0.67"/><line x1="665" y1="241" x2="699" y2="372" class="cv-edge" opacity="0.10"/><line x1="665" y1="241" x2="740" y2="278" class="cv-edge" opacity="0.45"/><line x1="676" y1="290" x2="699" y2="372" class="cv-edge" opacity="0.43"/><line x1="676" y1="290" x2="740" y2="278" class="cv-edge" opacity="0.57"/><line x1="699" y1="372" x2="740" y2="278" class="cv-edge" opacity="0.32"/><circle cx="781" cy="225" r="6" class="cv-dot hl"/><circle cx="643" cy="270" r="3" class="cv-dot"/><circle cx="540" cy="385" r="3" class="cv-dot"/><circle cx="737" cy="359" r="3" class="cv-dot"/><circle cx="862" cy="343" r="3" class="cv-dot"/><circle cx="541" cy="125" r="3" class="cv-dot"/><circle cx="680" cy="217" r="3" class="cv-dot"/><circle cx="907" cy="47" r="3" class="cv-dot"/><circle cx="849" cy="127" r="3" class="cv-dot"/><circle cx="770" cy="246" r="3" class="cv-dot"/><circle cx="939" cy="195" r="6" class="cv-dot hl"/><circle cx="983" cy="122" r="3" class="cv-dot"/><circle cx="527" cy="178" r="3" class="cv-dot"/><circle cx="1118" cy="154" r="3" class="cv-dot"/><circle cx="1104" cy="199" r="3" class="cv-dot"/><circle cx="750" cy="103" r="3" class="cv-dot"/><circle cx="964" cy="376" r="3" class="cv-dot"/><circle cx="731" cy="89" r="6" class="cv-dot hl"/><circle cx="960" cy="110" r="6" class="cv-dot hl"/><circle cx="636" cy="231" r="6" class="cv-dot hl"/><circle cx="665" cy="241" r="3" class="cv-dot"/><circle cx="676" cy="290" r="3" class="cv-dot"/><circle cx="934" cy="168" r="6" class="cv-dot hl"/><circle cx="1066" cy="386" r="3" class="cv-dot"/><circle cx="699" cy="372" r="3" class="cv-dot"/><circle cx="740" cy="278" r="3" class="cv-dot"/><text x="60" y="90" class="cv-k">CASE STUDY · CASE STUDY · HEALTHCARE AI</text><text x="60" y="350" class="cv-n">28 Oct 2026 · 01:10 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <section class="glance rise" aria-label="At a glance"><div class="kicker">At a glance</div><div class="glance-grid"><div><small>Sector</small><b>Healthcare · Provider group</b></div><div><small>My role</small><b>AI architect</b></div><div><small>Engagement</small><b>Architecture, pilot build and hand-off</b></div><div><small>Scope</small><b>Consent, speech recognition, note drafting, EHR integration, audit</b></div></div><div class="glance-out"><small>What changed</small><ul><li>A security design the review board could approve, instead of another stalled pilot</li><li>Draft notes written into the EHR only after clinician approval</li><li>Every recording, draft and edit traceable through one audit trail</li><li>An evaluation set that gated model and prompt changes before release</li></ul></div><div class="cs-stack"><span class="tag">SMART on FHIR</span><span class="tag">FHIR R4 DocumentReference</span><span class="tag">Whisper-class ASR</span><span class="tag">vLLM</span><span class="tag">Private GPU nodes</span><span class="tag">Kubernetes</span><span class="tag">AuditEvent log</span><span class="tag">Evaluation harness</span></div><p class="glance-note">Anonymised composite. Client names, identifying details and confidential figures are withheld; public facts are cited in the references.</p></section><h2 id="the-situation">The situation</h2>
+<p>A multi-specialty provider group had a documentation problem everyone could describe: clinicians finishing notes after clinic, and patients getting less eye contact than they deserved. Ambient AI scribes looked like the answer, and several vendor pilots had been started. Each one stalled in the same place: security and privacy review. Reviewers could not get clear answers about where audio went, who could see transcripts, how long anything was kept, or how a wrong sentence in a note would be caught.</p>
+<p>The ask was not "pick a better vendor". It was to design a pipeline the organisation could own end to end, so those questions had answers before the first recording.</p>
+
+<h2 id="what-had-to-be-true">What had to be true</h2>
+<ul>
+<li><strong>Consent first</strong>: no recording without a recorded patient consent, and an easy way to stop.</li>
+<li><strong>Data stays inside the boundary</strong>: audio, transcripts and drafts processed on infrastructure the organisation controls.</li>
+<li><strong>A human signs every note</strong>: the model drafts, the clinician decides.</li>
+<li><strong>Least privilege into the EHR</strong>: the app sees the current patient and encounter, nothing more.</li>
+<li><strong>Provable history</strong>: who recorded, what was generated, what was changed, what was filed.</li>
+</ul>
+
+<h2 id="architecture">Architecture</h2>
+<p>The design split the problem into capture, private inference, review and filing, with audit running across all of them.</p>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Capture</small><div class="dgm-nodes"><span>Clinic device app<em>consent check</em></span><span>Encrypted upload<em>short-lived tokens</em></span><span>Session context<em>patient, encounter</em></span></div></div>
+<div class="dgm-tier"><small>Private inference</small><div class="dgm-nodes"><span class="hl">Speech recognition<em>Whisper-class, private GPUs</em></span><span>Diarisation<em>clinician vs patient</em></span><span class="hl">Note drafting<em>LLM on vLLM</em></span></div></div>
+<div class="dgm-tier"><small>Review</small><div class="dgm-nodes"><span>Draft with sources<em>sentence to transcript links</em></span><span>Clinician editor<em>accept, edit, reject</em></span></div></div>
+<div class="dgm-tier"><small>EHR</small><div class="dgm-nodes"><span>SMART on FHIR launch<em>scoped access</em></span><span>DocumentReference<em>signed note only</em></span></div></div>
+<div class="dgm-tier"><small>Assure</small><div class="dgm-nodes"><span class="hl">Audit trail<em>AuditEvent per action</em></span><span>Evaluation harness<em>release gate</em></span><span>Retention jobs<em>audio deleted on schedule</em></span></div></div>
+</div>
+<figcaption>Layered architecture: inference stays private, the clinician sits between the model and the record, and audit spans every tier.</figcaption>
+</figure>
+<p>Speech recognition used a Whisper-class model, a family trained on large-scale weakly supervised audio and released with open weights<sup class="cite"><a href="#ref-1">1</a></sup>, which made private hosting practical. Note drafting ran on vLLM, whose PagedAttention memory management is designed for high-throughput serving on limited GPU memory<sup class="cite"><a href="#ref-2">2</a></sup>. Serving patterns are in <a href="/insights/llm-inference-serving-vllm/">LLM inference serving with vLLM</a> and <a href="/insights/private-llm-on-prem/">private LLMs on-premises</a>.</p>
+
+<h2 id="the-data-flow-end-to-end">The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Consent</b><span>App checks recorded consent for this encounter before the microphone is enabled</span></li>
+<li><b>Capture</b><span>Audio encrypted on device and uploaded against the encounter context</span></li>
+<li><b>Transcribe</b><span>Private ASR with speaker separation; transcript stored with the session</span></li>
+<li class="hl"><b>Draft</b><span>LLM drafts the note in the specialty template, each sentence linked to transcript spans</span></li>
+<li class="hl"><b>Sign</b><span>Clinician reviews, edits and signs; unsupported sentences are flagged for attention</span></li>
+<li><b>File</b><span>Signed note written to the EHR; audio deleted on the agreed retention schedule</span></li>
+</ol>
+<figcaption>The model never writes to the record. Only a signed note crosses into the EHR.</figcaption>
+</figure>
+<p>The app launched inside the EHR using SMART on FHIR, requesting only the patient and encounter context and the narrow scopes it needed<sup class="cite"><a href="#ref-3">3</a></sup>. The signed note was filed as a FHIR DocumentReference<sup class="cite"><a href="#ref-4">4</a></sup>. More on scope design in <a href="/insights/smart-on-fhir-ai-apps-authorisation/">SMART on FHIR authorisation for AI apps</a>.</p>
+
+<h2 id="the-hard-part-trust-in-the-draft-not-the-transcript">The hard part: trust in the draft, not the transcript</h2>
+<p>Transcription quality was rarely the argument. The concern was a fluent note that said something the patient never said. Three choices addressed it:</p>
+<ul>
+<li><strong>Grounded drafting</strong>: every sentence in the draft carries a link to the transcript span it came from, and sentences without one are highlighted.</li>
+<li><strong>Clinician-scored evaluation</strong>: a curated set of consented encounters, scored by clinicians for omissions and unsupported statements, gated every model and prompt change. See <a href="/insights/llm-evaluation-sets-that-predict-production/">evaluation sets that predict production</a>.</li>
+<li><strong>Edit capture</strong>: what clinicians changed was recorded, so recurring corrections fed back into templates and the evaluation set.</li>
+</ul>
+<div class="callout"><p>An AI scribe is approved on the strength of its failure handling. Reviewers need to see how a wrong sentence is caught, not how rarely it appears in a demo.</p></div>
+
+<h2 id="how-it-ran">How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Clinician</small><ol><li>Confirms consent</li><li class="hl">Reviews linked draft</li><li>Signs note</li></ol></div>
+<div class="dgm-lane"><small>Pipeline</small><ol><li>Transcribes privately</li><li>Drafts with sources</li><li>Files signed note</li></ol></div>
+<div class="dgm-lane"><small>Governance</small><ol><li>Audit every action</li><li class="hl">Gate releases on evaluation</li><li>Enforce retention</li></ol></div>
+</div>
+<figcaption>Who does what in a single encounter.</figcaption>
+</figure>
+<p>Audit records followed the shape of the FHIR AuditEvent resource (who, what, when, outcome), so the trail could be queried alongside other EHR audit data<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Review first</b><ul><li>Threat model with security</li><li>Consent and retention policy</li><li>Data flow sign-off</li></ul></div>
+<div><small>Phase 2</small><b>Private pipeline</b><ul><li>ASR and LLM on private GPUs</li><li>SMART launch and scopes</li><li>Audit trail</li></ul></div>
+<div><small>Phase 3</small><b>Clinical pilot</b><ul><li>Small clinician cohort</li><li>Evaluation set from consented visits</li><li>Template tuning</li></ul></div>
+<div><small>Phase 4</small><b>Expand and hand off</b><ul><li>More specialties</li><li>Release gate runbook</li><li>Internal ownership</li></ul></div>
+</div>
+<figcaption>Security review was the first deliverable, not the last hurdle.</figcaption>
+</figure>
+
+<h2 id="key-decisions-and-trade-offs">Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Private inference</td><td>Hosted scribe API</td><td>Answers data residency and access questions directly; costs GPU operations effort</td></tr>
+<tr><td>Clinician signs every note</td><td>Auto-file low-risk notes</td><td>Keeps accountability with the clinician and the model out of the record</td></tr>
+<tr><td>Sentence-level source links</td><td>Free-text summary</td><td>Makes unsupported statements visible during review</td></tr>
+<tr><td>Narrow SMART scopes</td><td>Broad backend access</td><td>Least privilege that reviewers can verify</td></tr>
+<tr><td>Evaluation as release gate</td><td>Ad hoc spot checks</td><td>Model and prompt changes cannot silently regress</td></tr>
+</tbody>
+</table>
+
+<h2 id="what-i-d-do-again-and-differently">What I'd do again, and differently</h2>
+<p>Again: take the design to the security board before building anything, and treat evaluation as infrastructure. Differently: involve clinicians in template design earlier. Most edits were about structure and specialty conventions, not model accuracy, and that work is cheaper before the pilot than during it. The broader architecture patterns are in <a href="/insights/ambient-ai-scribes-architecture/">ambient AI scribe architecture</a>.</p>
+<p>If you have an AI pilot stuck in review, the <a href="/ai-architect/">AI architect</a> page describes how I approach these engagements, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://arxiv.org/abs/2212.04356" target="_blank" rel="noopener">Robust Speech Recognition via Large-Scale Weak Supervision</a><small>Radford et al., arXiv · 2022</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://arxiv.org/abs/2309.06180" target="_blank" rel="noopener">Efficient Memory Management for Large Language Model Serving with PagedAttention</a><small>Kwon et al., arXiv · 2023</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://hl7.org/fhir/smart-app-launch/scopes-and-launch-context.html" target="_blank" rel="noopener">App Launch: Scopes and Launch Context (SMART App Launch)</a><small>HL7 International</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://hl7.org/fhir/R4/DocumentReference.html" target="_blank" rel="noopener">DocumentReference (FHIR R4)</a><small>HL7 International</small></div></li><li id="ref-5"><span class="rn">5</span><div><a href="https://hl7.org/fhir/R4/AuditEvent.html" target="_blank" rel="noopener">AuditEvent (FHIR R4)</a><small>HL7 International</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fasksumanta.com%2Fcase-studies%2Fambient-clinical-documentation-private-ai%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fasksumanta.com%2Fcase-studies%2Fambient-clinical-documentation-private-ai%2F&amp;text=Getting%20an%20ambient%20AI%20scribe%20through%20security%20review%20and%20into%20the%20EHR" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=Getting%20an%20ambient%20AI%20scribe%20through%20security%20review%20and%20into%20the%20EHR%20https%3A%2F%2Fasksumanta.com%2Fcase-studies%2Fambient-clinical-documentation-private-ai%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://asksumanta.com/case-studies/ambient-clinical-documentation-private-ai/">Copy link</button></div>
+      <div class="pnav"><a class="pn prev" href="/case-studies/health-network-fhir-omop-evidence-platform/"><small>← Previous</small><b>Turning a hospital network&#x27;s EHR data into a governed real-world evidence platform</b></a><a class="pn next" href="/case-studies/payer-prior-authorisation-fhir-apis/"><small>Next →</small><b>Putting FHIR prior authorisation APIs in front of a payer&#x27;s legacy claims systems</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#the-situation">The situation</a></li><li><a href="#what-had-to-be-true">What had to be true</a></li><li><a href="#architecture">Architecture</a></li><li><a href="#the-data-flow-end-to-end">The data flow, end to end</a></li><li><a href="#the-hard-part-trust-in-the-draft-not-the-transcript">The hard part: trust in the draft, not the transcript</a></li><li><a href="#how-it-ran">How it ran</a></li><li><a href="#key-decisions-and-trade-offs">Key decisions and trade-offs</a></li><li><a href="#what-i-d-do-again-and-differently">What I&#x27;d do again, and differently</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>Why run an ambient scribe on private infrastructure?</summary><p>It keeps audio and transcripts inside a boundary the organisation already governs, which shortens security and privacy review and avoids sending identifiable conversations to a third party by default.</p></details><details class="rise"><summary>Does the AI write directly into the medical record?</summary><p>No. The model drafts a note with links back to the transcript, and a clinician reviews, edits and signs it. Only the approved note is written to the EHR.</p></details><details class="rise"><summary>How do you know the drafts are good enough?</summary><p>A curated evaluation set of consented encounters, scored by clinicians, is run before every model or prompt change. Changes that regress on omissions or unsupported statements do not ship.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/ai-architect/"><small>Service</small><b>AI &amp; LLM architecture</b><span>I design and build AI systems that leadership can trust: grounded in your data, measured by evaluations, governed by your rules and priced so they make sense at scale.</span><i>→</i></a><a class="rcard rise" href="/healthcare-data-architecture/"><small>Service</small><b>Healthcare data architecture</b><span>I help healthcare and life-sciences organisations turn fragmented clinical data into governed platforms for care, research and AI, using the standards the industry already agrees on.</span><i>→</i></a><a class="rcard rise" href="/insights/terraform-secrets-out-of-state/"><small>Insight</small><b>Keeping secrets out of Terraform state: a checklist for platform teams</b><span>Most organisations using Terraform have database passwords, API keys or private keys sitting in state files, often in plaintext. For years that was simply how Terraform worked. Since versions 1.10 and 1.11 it doesn&#x27;t have to be, but the fix needs deliberate migration.</span><i>→</i></a><a class="rcard rise" href="/insights/slos-error-budgets-small-teams/"><small>Insight</small><b>SLOs and error budgets for small teams: field notes on making reliability a decision, not a debate</b><span>In a small company, the argument between shipping features and fixing reliability usually gets settled by whoever is loudest that week. Service level objectives and error budgets turn it into a rule everyone agreed in advance. The Google SRE material is written for large organisations, but the core ideas scale down well.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: Getting an ambient AI scribe through security review and into the EHR">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
+        <p class="floc">United States &amp; UAE · working globally</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/uae/">Fractional CTO in the UAE</a></li></ul></div>
+      <div class="fc"><h4>Case studies</h4><ul><li><a href="/case-studies/startup-fractional-cto-seed-to-series-a/">Startup fractional CTO, seed to Series A</a></li><li><a href="/case-studies/private-equity-ai-technical-due-diligence/">Private equity AI technical due diligence</a></li><li><a href="/case-studies/telecom-observability-slos/">Telecom observability and SLOs</a></li><li><a href="/case-studies/real-estate-document-intake-automation/">Real estate document intake automation</a></li><li><a href="/#work">Engagement snapshots</a></li><li><a href="/case-studies/">All case studies →</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/terraform-secrets-out-of-state/">Keeping secrets out of Terraform state: a checklist for platform teams</a></li><li><a href="/insights/slos-error-budgets-small-teams/">SLOs and error budgets for small teams: field notes on making reliability a decision, not a debate</a></li><li><a href="/insights/speculative-decoding-private-llms/">Speculative decoding for private LLMs: faster tokens without changing the answers</a></li><li><a href="/insights/real-world-evidence-study-designs-omop/">Real-world evidence on OMOP: comparing five study designs for treatment effects</a></li><li><a href="/insights/eu-ai-act-gpai-fine-tuning-provider/">Fine-tuning a foundation model? When the EU AI Act makes you a general-purpose AI provider</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>

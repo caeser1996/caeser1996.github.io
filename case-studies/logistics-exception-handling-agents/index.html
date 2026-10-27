@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Case study: AI agents for logistics exception handling</title>
+<meta name="description" content="How a logistics operator used AI agents to triage shipment exception emails: classification, governed MCP tool calls to the TMS and human-approved actions." />
+<meta name="keywords" content="AI agents logistics case study, exception handling automation, LangGraph human in the loop, MCP tools enterprise, agentic workflow TMS, email triage LLM, structured outputs agents, AI agent governance, shipment exception management, agent evaluation" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://asksumanta.com/case-studies/logistics-exception-handling-agents/" />
+<meta name="theme-color" content="#111214" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="Case study: AI agents for logistics exception handling" />
+<meta property="og:description" content="How a logistics operator used AI agents to triage shipment exception emails: classification, governed MCP tool calls to the TMS and human-approved actions." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://asksumanta.com/case-studies/logistics-exception-handling-agents/" />
+<meta property="og:image" content="https://asksumanta.com/assets/og/logistics-exception-handling-agents.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Case study: AI agents for logistics exception handling" />
+<meta name="twitter:description" content="How a logistics operator used AI agents to triage shipment exception emails: classification, governed MCP tool calls to the TMS and human-approved actions." />
+<meta name="twitter:image" content="https://asksumanta.com/assets/og/logistics-exception-handling-agents.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "Article", "headline": "Triaging shipment exceptions with agents that ask before they act", "description": "How a logistics operator used AI agents to triage shipment exception emails: classification, governed MCP tool calls to the TMS and human-approved actions.", "articleSection": "Case study", "about": "Logistics · Freight and fulfilment", "datePublished": "2026-10-28T01:26:00+04:00", "dateModified": "2026-10-28T01:26:00+04:00", "citation": [{"@type": "CreativeWork", "name": "Building effective agents", "url": "https://www.anthropic.com/engineering/building-effective-agents"}, {"@type": "CreativeWork", "name": "Model Context Protocol specification: Tools", "url": "https://modelcontextprotocol.io/specification/2025-06-18/server/tools"}, {"@type": "CreativeWork", "name": "LangGraph interrupts", "url": "https://docs.langchain.com/oss/python/langgraph/interrupts"}, {"@type": "CreativeWork", "name": "OWASP Top 10 for LLM Applications", "url": "https://genai.owasp.org/llm-top-10/"}, {"@type": "CreativeWork", "name": "Structured outputs", "url": "https://platform.claude.com/docs/en/build-with-claude/structured-outputs"}], "author": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "publisher": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "mainEntityOfPage": "https://asksumanta.com/case-studies/logistics-exception-handling-agents/", "image": "https://asksumanta.com/assets/og/logistics-exception-handling-agents.png", "keywords": "AI agents logistics case study, exception handling automation, LangGraph human in the loop, MCP tools enterprise, agentic workflow TMS, email triage LLM, structured outputs agents, AI agent governance, shipment exception management, agent evaluation", "wordCount": 918}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://asksumanta.com/"}, {"@type": "ListItem", "position": 2, "name": "Case studies", "item": "https://asksumanta.com/case-studies/"}, {"@type": "ListItem", "position": 3, "name": "Triaging shipment exceptions with agents that ask before they act", "item": "https://asksumanta.com/case-studies/logistics-exception-handling-agents/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Should agents act autonomously on shipments?", "acceptedAnswer": {"@type": "Answer", "text": "Not at first. Read-only lookups can be automated safely; actions that change bookings, notify customers or incur cost should be drafted by the agent and approved by a person until the evaluation evidence supports more autonomy."}}, {"@type": "Question", "name": "Why use MCP for the tool layer?", "acceptedAnswer": {"@type": "Answer", "text": "MCP gives a standard way to describe and expose tools, so the same governed tools can be used by different agents and clients, with permissions and logging in one place."}}, {"@type": "Question", "name": "How do you defend against malicious instructions in inbound emails?", "acceptedAnswer": {"@type": "Answer", "text": "Treat email content as untrusted data, never as instructions; restrict which tools the agent can call from that context, and require approval for any action with side effects."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+</script>
+</head>
+<body class="sub is-post is-case">
+<div class="progress" id="progress"></div>
+<nav>
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="/#practice">Services</a>
+      <a href="/case-studies/">Case studies</a>
+      <a href="/insights/">Insights</a>
+      <a href="/#assess">Analyse</a>
+      <a href="/#connect">Connect</a>
+    </div>
+    <div class="nav-r">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/case-studies/">Case studies</a> <span>/</span> <em>Triaging shipment exceptions with agents that ask before they act</em></div>
+    <div class="kicker">Case study · Logistics AI agents</div>
+    <h1>Triaging shipment exceptions with agents that ask before they act</h1>
+    <p class="sub-lede">Every delayed shipment produced emails: carriers, customers, warehouses, customs brokers. Staff read, classified and chased each one by hand. The goal was agents that classify exceptions, look up shipment state through governed tools and draft the next action, with a person approving anything that changes the world.</p>
+    <div class="ameta"><span class="fmt">Case study</span><span>Logistics · Freight and fulfilment</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-10-28T01:26:00+04:00">28 Oct 2026 · 01:26 GST</time><span>8 min read</span></div><div class="atags"><span class="tagp">#agents</span><span class="tagp">#ai</span><span class="tagp">#llm</span><span class="tagp">#mcp</span><span class="tagp">#security</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Case study cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><line x1="1114" y1="181" x2="1040" y2="215" class="cv-edge hl" opacity="0.46"/><line x1="1114" y1="181" x2="1063" y2="297" class="cv-edge hl" opacity="0.16"/><line x1="1114" y1="181" x2="1002" y2="95" class="cv-edge hl" opacity="0.06"/><line x1="1114" y1="181" x2="1139" y2="235" class="cv-edge hl" opacity="0.60"/><line x1="1114" y1="181" x2="1049" y2="61" class="cv-edge hl" opacity="0.09"/><line x1="668" y1="133" x2="684" y2="35" class="cv-edge hl" opacity="0.34"/><line x1="668" y1="133" x2="749" y2="169" class="cv-edge hl" opacity="0.41"/><line x1="668" y1="133" x2="733" y2="138" class="cv-edge hl" opacity="0.57"/><line x1="668" y1="133" x2="677" y2="249" class="cv-edge hl" opacity="0.23"/><line x1="684" y1="35" x2="786" y2="36" class="cv-edge" opacity="0.32"/><line x1="684" y1="35" x2="749" y2="169" class="cv-edge" opacity="0.01"/><line x1="684" y1="35" x2="733" y2="138" class="cv-edge" opacity="0.24"/><line x1="786" y1="36" x2="890" y2="83" class="cv-edge" opacity="0.24"/><line x1="786" y1="36" x2="749" y2="169" class="cv-edge" opacity="0.08"/><line x1="786" y1="36" x2="733" y2="138" class="cv-edge" opacity="0.23"/><line x1="603" y1="286" x2="751" y2="297" class="cv-edge" opacity="0.01"/><line x1="603" y1="286" x2="645" y2="337" class="cv-edge" opacity="0.55"/><line x1="603" y1="286" x2="677" y2="249" class="cv-edge" opacity="0.45"/><line x1="1040" y1="215" x2="1085" y2="333" class="cv-edge hl" opacity="0.16"/><line x1="1040" y1="215" x2="1004" y2="70" class="cv-edge hl" opacity="0.01"/><line x1="1040" y1="215" x2="1063" y2="297" class="cv-edge hl" opacity="0.43"/><line x1="1040" y1="215" x2="1002" y2="95" class="cv-edge hl" opacity="0.16"/><line x1="1040" y1="215" x2="1139" y2="235" class="cv-edge hl" opacity="0.33"/><line x1="1085" y1="333" x2="1063" y2="297" class="cv-edge" opacity="0.72"/><line x1="1085" y1="333" x2="1022" y2="371" class="cv-edge" opacity="0.51"/><line x1="1085" y1="333" x2="1139" y2="235" class="cv-edge" opacity="0.26"/><line x1="1004" y1="70" x2="890" y2="83" class="cv-edge" opacity="0.24"/><line x1="1004" y1="70" x2="1002" y2="95" class="cv-edge" opacity="0.84"/><line x1="1004" y1="70" x2="941" y2="99" class="cv-edge" opacity="0.54"/><line x1="1004" y1="70" x2="938" y2="86" class="cv-edge" opacity="0.55"/><line x1="1004" y1="70" x2="1049" y2="61" class="cv-edge" opacity="0.69"/><line x1="1063" y1="297" x2="1022" y2="371" class="cv-edge" opacity="0.44"/><line x1="1063" y1="297" x2="1139" y2="235" class="cv-edge" opacity="0.35"/><line x1="890" y1="83" x2="1002" y2="95" class="cv-edge" opacity="0.25"/><line x1="890" y1="83" x2="941" y2="99" class="cv-edge" opacity="0.64"/><line x1="890" y1="83" x2="866" y2="187" class="cv-edge" opacity="0.29"/><line x1="890" y1="83" x2="874" y2="214" class="cv-edge hl" opacity="0.12"/><line x1="890" y1="83" x2="938" y2="86" class="cv-edge" opacity="0.68"/><line x1="890" y1="83" x2="888" y2="231" class="cv-edge" opacity="0.01"/><line x1="751" y1="297" x2="645" y2="337" class="cv-edge" opacity="0.25"/><line x1="751" y1="297" x2="749" y2="169" class="cv-edge" opacity="0.14"/><line x1="751" y1="297" x2="846" y2="279" class="cv-edge" opacity="0.35"/><line x1="751" y1="297" x2="874" y2="214" class="cv-edge hl" opacity="0.01"/><line x1="751" y1="297" x2="677" y2="249" class="cv-edge" opacity="0.41"/><line x1="913" y1="372" x2="846" y2="279" class="cv-edge" opacity="0.24"/><line x1="913" y1="372" x2="1022" y2="371" class="cv-edge" opacity="0.27"/><line x1="913" y1="372" x2="888" y2="231" class="cv-edge" opacity="0.05"/><line x1="1002" y1="95" x2="941" y2="99" class="cv-edge" opacity="0.59"/><line x1="1002" y1="95" x2="938" y2="86" class="cv-edge" opacity="0.57"/><line x1="1002" y1="95" x2="1049" y2="61" class="cv-edge" opacity="0.61"/><line x1="645" y1="337" x2="677" y2="249" class="cv-edge" opacity="0.37"/><line x1="749" y1="169" x2="846" y2="279" class="cv-edge" opacity="0.02"/><line x1="749" y1="169" x2="733" y2="138" class="cv-edge" opacity="0.77"/><line x1="749" y1="169" x2="866" y2="187" class="cv-edge" opacity="0.21"/><line x1="749" y1="169" x2="874" y2="214" class="cv-edge hl" opacity="0.12"/><line x1="749" y1="169" x2="677" y2="249" class="cv-edge" opacity="0.28"/><line x1="941" y1="99" x2="866" y2="187" class="cv-edge" opacity="0.23"/><line x1="941" y1="99" x2="874" y2="214" class="cv-edge hl" opacity="0.12"/><line x1="941" y1="99" x2="938" y2="86" class="cv-edge" opacity="0.91"/><line x1="941" y1="99" x2="888" y2="231" class="cv-edge" opacity="0.05"/><line x1="941" y1="99" x2="1049" y2="61" class="cv-edge" opacity="0.23"/><line x1="846" y1="279" x2="866" y2="187" class="cv-edge" opacity="0.37"/><line x1="846" y1="279" x2="874" y2="214" class="cv-edge hl" opacity="0.53"/><line x1="846" y1="279" x2="888" y2="231" class="cv-edge" opacity="0.57"/><line x1="733" y1="138" x2="866" y2="187" class="cv-edge" opacity="0.05"/><line x1="733" y1="138" x2="677" y2="249" class="cv-edge" opacity="0.18"/><line x1="866" y1="187" x2="874" y2="214" class="cv-edge hl" opacity="0.81"/><line x1="866" y1="187" x2="938" y2="86" class="cv-edge" opacity="0.18"/><line x1="866" y1="187" x2="888" y2="231" class="cv-edge" opacity="0.67"/><line x1="874" y1="214" x2="938" y2="86" class="cv-edge hl" opacity="0.05"/><line x1="874" y1="214" x2="888" y2="231" class="cv-edge hl" opacity="0.85"/><line x1="938" y1="86" x2="1049" y2="61" class="cv-edge" opacity="0.24"/><circle cx="1114" cy="181" r="6" class="cv-dot hl"/><circle cx="668" cy="133" r="6" class="cv-dot hl"/><circle cx="684" cy="35" r="3" class="cv-dot"/><circle cx="786" cy="36" r="3" class="cv-dot"/><circle cx="603" cy="286" r="3" class="cv-dot"/><circle cx="1040" cy="215" r="6" class="cv-dot hl"/><circle cx="1085" cy="333" r="3" class="cv-dot"/><circle cx="1004" cy="70" r="3" class="cv-dot"/><circle cx="1063" cy="297" r="3" class="cv-dot"/><circle cx="890" cy="83" r="3" class="cv-dot"/><circle cx="751" cy="297" r="3" class="cv-dot"/><circle cx="913" cy="372" r="3" class="cv-dot"/><circle cx="1002" cy="95" r="3" class="cv-dot"/><circle cx="645" cy="337" r="3" class="cv-dot"/><circle cx="749" cy="169" r="3" class="cv-dot"/><circle cx="941" cy="99" r="3" class="cv-dot"/><circle cx="846" cy="279" r="3" class="cv-dot"/><circle cx="733" cy="138" r="3" class="cv-dot"/><circle cx="866" cy="187" r="3" class="cv-dot"/><circle cx="874" cy="214" r="6" class="cv-dot hl"/><circle cx="1022" cy="371" r="3" class="cv-dot"/><circle cx="938" cy="86" r="3" class="cv-dot"/><circle cx="888" cy="231" r="3" class="cv-dot"/><circle cx="1139" cy="235" r="3" class="cv-dot"/><circle cx="677" cy="249" r="3" class="cv-dot"/><circle cx="1049" cy="61" r="3" class="cv-dot"/><text x="60" y="90" class="cv-k">CASE STUDY · CASE STUDY · LOGISTICS AI AGENTS</text><text x="60" y="350" class="cv-n">28 Oct 2026 · 01:26 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <section class="glance rise" aria-label="At a glance"><div class="kicker">At a glance</div><div class="glance-grid"><div><small>Sector</small><b>Logistics · Freight and fulfilment</b></div><div><small>My role</small><b>AI architect</b></div><div><small>Engagement</small><b>Architecture, build and hand-off</b></div><div><small>Scope</small><b>Agent design, tool layer, approvals, evaluation, observability</b></div></div><div class="glance-out"><small>What changed</small><ul><li>Exception emails arrive classified, with shipment context attached, instead of as raw inbox items</li><li>Read-only lookups automated; every state-changing action approved by a person</li><li>Agent behaviour measured against a labelled set before each release</li><li>Every run traceable from email to tool calls to the approved action</li></ul></div><div class="cs-stack"><span class="tag">LangGraph</span><span class="tag">Model Context Protocol</span><span class="tag">Structured outputs</span><span class="tag">Message queues</span><span class="tag">TMS APIs</span><span class="tag">Approval UI</span><span class="tag">Evaluation harness</span><span class="tag">OpenTelemetry</span></div><p class="glance-note">Anonymised composite. Client names, identifying details and confidential figures are withheld; public facts are cited in the references.</p></section><h2 id="the-situation">The situation</h2>
+<p>A logistics operator's customer service and operations teams handled shipment exceptions largely by email. A late container, a failed delivery, a missing customs document or an address query each arrived as free text, often with attachments, sometimes in a long thread. Staff read each message, worked out which shipment it concerned, looked it up in the transport management system (TMS), decided what to do and then did it, across several screens.</p>
+<p>The work was repetitive but not trivial. The hard part of each email was usually the same: identify the shipment, understand the exception, gather the facts. The decision itself was often quick once the facts were on one screen.</p>
+
+<h2 id="what-had-to-be-true">What had to be true</h2>
+<ul>
+<li><strong>Structured, not chatty</strong>: every email becomes a typed exception record, or is routed to a person as unclassifiable.</li>
+<li><strong>Governed tools</strong>: the agent reaches systems only through a defined, permissioned tool layer.</li>
+<li><strong>Read freely, write with approval</strong>: lookups are automatic; anything with side effects needs a person.</li>
+<li><strong>Inbound email is untrusted</strong> and never treated as instructions.</li>
+<li><strong>Measured and traceable</strong>: behaviour evaluated before release, every run inspectable afterwards.</li>
+</ul>
+
+<h2 id="architecture">Architecture</h2>
+<p>The design favoured a defined workflow with agentic steps over an open-ended autonomous agent. Anthropic's guidance on building agents makes the same distinction, recommending the simplest pattern that works and adding autonomy only where it earns its keep<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Intake</small><div class="dgm-nodes"><span>Shared mailboxes<em>carriers, customers</em></span><span>Queue<em>one message per job</em></span><span>Attachment parsing<em>PDF, images</em></span></div></div>
+<div class="dgm-tier"><small>Understand</small><div class="dgm-nodes"><span class="hl">Classifier<em>structured output</em></span><span>Extractor<em>references, dates, parties</em></span><span>Shipment matcher<em>confidence scored</em></span></div></div>
+<div class="dgm-tier"><small>Orchestrate</small><div class="dgm-nodes"><span>LangGraph workflow<em>per exception type</em></span><span>State checkpoint<em>durable</em></span><span>Interrupts<em>human approval</em></span></div></div>
+<div class="dgm-tier"><small>Tools</small><div class="dgm-nodes"><span class="hl">MCP servers<em>scoped tools</em></span><span>TMS read tools<em>status, events</em></span><span>TMS write tools<em>approval only</em></span><span>Messaging tools<em>drafts only</em></span></div></div>
+<div class="dgm-tier"><small>Assure</small><div class="dgm-nodes"><span>Labelled eval set<em>real exceptions</em></span><span>Traces<em>OpenTelemetry</em></span><span>Audit log<em>who approved what</em></span></div></div>
+</div>
+<figcaption>Layered architecture: a fixed workflow, typed outputs at each step, and every system reached through scoped tools.</figcaption>
+</figure>
+
+<h2 id="the-data-flow-end-to-end">The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Receive</b><span>Email lands on a queue with its thread and attachments</span></li>
+<li class="hl"><b>Classify</b><span>Exception type, shipment references and key facts as a typed record</span></li>
+<li><b>Match</b><span>References resolved to a shipment; low confidence routed to a person</span></li>
+<li><b>Look up</b><span>Read-only MCP tools fetch status, milestones and contacts from the TMS</span></li>
+<li class="hl"><b>Propose</b><span>Draft action and reply prepared; workflow pauses for approval</span></li>
+<li><b>Act</b><span>On approval, write tool executes; outcome logged and thread updated</span></li>
+</ol>
+<figcaption>The workflow pauses before any side effect, and resumes from a durable checkpoint after a person decides.</figcaption>
+</figure>
+<p>Classification and extraction used structured outputs, where the model's response is constrained to a supplied JSON schema<sup class="cite"><a href="#ref-5">5</a></sup>, so downstream steps receive valid records rather than prose. Approval pauses used LangGraph interrupts, which persist graph state while waiting for human input and resume with that input<sup class="cite"><a href="#ref-3">3</a></sup>. More in <a href="/insights/structured-outputs-reliable-llm-integration/">structured outputs for reliable LLM integration</a>.</p>
+
+<h2 id="the-hard-part-tools-you-can-trust-an-agent-with">The hard part: tools you can trust an agent with</h2>
+<p>The model was rarely the weak point. The tool layer was where safety lived. The MCP specification describes tools as model-invoked and recommends that a human can always deny a tool invocation<sup class="cite"><a href="#ref-2">2</a></sup>. The design took that literally:</p>
+<ul>
+<li><strong>Separate read and write servers</strong>, with write tools reachable only from the post-approval step of the workflow.</li>
+<li><strong>Narrow tools</strong>: "get shipment milestones" and "request redelivery", not a general API passthrough.</li>
+<li><strong>Service identity per tool</strong>, scoped to the minimum permissions in the TMS.</li>
+<li><strong>Email as data</strong>: inbound text is passed as content to classify, never as instructions, because prompt injection and excessive agency both appear in the OWASP Top 10 for LLM applications<sup class="cite"><a href="#ref-4">4</a></sup>.</li>
+</ul>
+<p>The checklist used is in <a href="/insights/securing-mcp-servers-checklist/">securing MCP servers</a> and <a href="/insights/prompt-injection-defence-for-agents/">prompt injection defence for agents</a>.</p>
+<div class="callout"><p>Give an agent the narrowest tools that do the job, and put approval in the workflow, not in the prompt.</p></div>
+
+<h2 id="how-it-ran">How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Agent</small><ol><li>Classifies and extracts</li><li>Looks up shipment state</li><li class="hl">Drafts action and reply</li></ol></div>
+<div class="dgm-lane"><small>Operator</small><ol><li>Reviews the case card</li><li class="hl">Approves, edits or rejects</li><li>Handles unclassified mail</li></ol></div>
+<div class="dgm-lane"><small>Systems</small><ol><li>TMS via MCP tools</li><li>Messaging via drafts</li><li>Traces and audit log</li></ol></div>
+</div>
+<figcaption>The operator sees one case card with facts gathered; the decision stays with them.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Understand</b><ul><li>Exception taxonomy</li><li>Labelled sample of emails</li><li>Current handling steps</li></ul></div>
+<div><small>Phase 2</small><b>Read-only</b><ul><li>Classification and matching</li><li>Lookup tools</li><li>Case cards in shadow</li></ul></div>
+<div><small>Phase 3</small><b>Assisted actions</b><ul><li>Write tools behind approval</li><li>Draft replies</li><li>Evaluation gate</li></ul></div>
+<div><small>Phase 4</small><b>Extend and hand off</b><ul><li>More exception types</li><li>Runbooks and owners</li><li>Autonomy reviews</li></ul></div>
+</div>
+<figcaption>Read-only first; write tools added only once classification and matching were measured.</figcaption>
+</figure>
+<p>Evaluation followed <a href="/insights/evaluating-ai-agents-reliability/">evaluating AI agents for reliability</a>, scoring classification, shipment matching and proposed actions separately, so a regression could be located rather than just noticed.</p>
+
+<h2 id="key-decisions-and-trade-offs">Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Fixed workflow with agentic steps</td><td>Open-ended autonomous agent</td><td>Predictable, testable paths per exception type</td></tr>
+<tr><td>MCP tool layer</td><td>Direct API calls from prompts</td><td>Standard, reusable tools with permissions in one place</td></tr>
+<tr><td>Approval before side effects</td><td>Full autonomy</td><td>Trust earned with evidence, not assumed</td></tr>
+<tr><td>Structured outputs everywhere</td><td>Free-text parsing</td><td>Typed records that downstream code can rely on</td></tr>
+<tr><td>Separate scores per step</td><td>One end-to-end score</td><td>Regressions can be traced to a step</td></tr>
+</tbody>
+</table>
+
+<h2 id="what-i-d-do-again-and-differently">What I'd do again, and differently</h2>
+<p>Again: start read-only, build the labelled set from real emails, and keep write tools behind approval. Differently: invest earlier in shipment matching. Ambiguous references caused more escalations than misclassification did, and better matching would have improved every downstream step.</p>
+<p>If you are designing agents that touch operational systems, the <a href="/ai-architect/">AI architect</a> page describes how I approach it, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://www.anthropic.com/engineering/building-effective-agents" target="_blank" rel="noopener">Building effective agents</a><small>Anthropic</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://modelcontextprotocol.io/specification/2025-06-18/server/tools" target="_blank" rel="noopener">Model Context Protocol specification: Tools</a><small>Model Context Protocol</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://docs.langchain.com/oss/python/langgraph/interrupts" target="_blank" rel="noopener">LangGraph interrupts</a><small>LangChain</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://genai.owasp.org/llm-top-10/" target="_blank" rel="noopener">OWASP Top 10 for LLM Applications</a><small>OWASP GenAI Security Project</small></div></li><li id="ref-5"><span class="rn">5</span><div><a href="https://platform.claude.com/docs/en/build-with-claude/structured-outputs" target="_blank" rel="noopener">Structured outputs</a><small>Anthropic</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fasksumanta.com%2Fcase-studies%2Flogistics-exception-handling-agents%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fasksumanta.com%2Fcase-studies%2Flogistics-exception-handling-agents%2F&amp;text=Triaging%20shipment%20exceptions%20with%20agents%20that%20ask%20before%20they%20act" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=Triaging%20shipment%20exceptions%20with%20agents%20that%20ask%20before%20they%20act%20https%3A%2F%2Fasksumanta.com%2Fcase-studies%2Flogistics-exception-handling-agents%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://asksumanta.com/case-studies/logistics-exception-handling-agents/">Copy link</button></div>
+      <div class="pnav"><a class="pn prev" href="/case-studies/retail-real-time-inventory-cdc/"><small>← Previous</small><b>Replacing nightly stock syncs with a live inventory stream</b></a><a class="pn next" href="/case-studies/saas-multi-tenant-re-architecture/"><small>Next →</small><b>Re-architecting a SaaS platform so one tenant can&#x27;t slow down the rest</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#the-situation">The situation</a></li><li><a href="#what-had-to-be-true">What had to be true</a></li><li><a href="#architecture">Architecture</a></li><li><a href="#the-data-flow-end-to-end">The data flow, end to end</a></li><li><a href="#the-hard-part-tools-you-can-trust-an-agent-with">The hard part: tools you can trust an agent with</a></li><li><a href="#how-it-ran">How it ran</a></li><li><a href="#key-decisions-and-trade-offs">Key decisions and trade-offs</a></li><li><a href="#what-i-d-do-again-and-differently">What I&#x27;d do again, and differently</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>Should agents act autonomously on shipments?</summary><p>Not at first. Read-only lookups can be automated safely; actions that change bookings, notify customers or incur cost should be drafted by the agent and approved by a person until the evaluation evidence supports more autonomy.</p></details><details class="rise"><summary>Why use MCP for the tool layer?</summary><p>MCP gives a standard way to describe and expose tools, so the same governed tools can be used by different agents and clients, with permissions and logging in one place.</p></details><details class="rise"><summary>How do you defend against malicious instructions in inbound emails?</summary><p>Treat email content as untrusted data, never as instructions; restrict which tools the agent can call from that context, and require approval for any action with side effects.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/ai-architect/"><small>Service</small><b>AI &amp; LLM architecture</b><span>I design and build AI systems that leadership can trust: grounded in your data, measured by evaluations, governed by your rules and priced so they make sense at scale.</span><i>→</i></a><a class="rcard rise" href="/fractional-cto/"><small>Service</small><b>Fractional CTO</b><span>I work as a part-time CTO for founders, CEOs and boards who need experienced technical judgement now, and a team that can carry it on after I step back.</span><i>→</i></a><a class="rcard rise" href="/technical-due-diligence/"><small>Service</small><b>Technical due diligence</b><span>I give investors an independent, plain-language view of a company&#x27;s technology, team and AI claims, so the risks are priced in before the deal closes, not discovered after.</span><i>→</i></a><a class="rcard rise" href="/insights/terraform-secrets-out-of-state/"><small>Insight</small><b>Keeping secrets out of Terraform state: a checklist for platform teams</b><span>Most organisations using Terraform have database passwords, API keys or private keys sitting in state files, often in plaintext. For years that was simply how Terraform worked. Since versions 1.10 and 1.11 it doesn&#x27;t have to be, but the fix needs deliberate migration.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: Triaging shipment exceptions with agents that ask before they act">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
+        <p class="floc">United States &amp; UAE · working globally</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/uae/">Fractional CTO in the UAE</a></li></ul></div>
+      <div class="fc"><h4>Case studies</h4><ul><li><a href="/case-studies/startup-fractional-cto-seed-to-series-a/">Startup fractional CTO, seed to Series A</a></li><li><a href="/case-studies/private-equity-ai-technical-due-diligence/">Private equity AI technical due diligence</a></li><li><a href="/case-studies/telecom-observability-slos/">Telecom observability and SLOs</a></li><li><a href="/case-studies/real-estate-document-intake-automation/">Real estate document intake automation</a></li><li><a href="/#work">Engagement snapshots</a></li><li><a href="/case-studies/">All case studies →</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/terraform-secrets-out-of-state/">Keeping secrets out of Terraform state: a checklist for platform teams</a></li><li><a href="/insights/slos-error-budgets-small-teams/">SLOs and error budgets for small teams: field notes on making reliability a decision, not a debate</a></li><li><a href="/insights/speculative-decoding-private-llms/">Speculative decoding for private LLMs: faster tokens without changing the answers</a></li><li><a href="/insights/real-world-evidence-study-designs-omop/">Real-world evidence on OMOP: comparing five study designs for treatment effects</a></li><li><a href="/insights/eu-ai-act-gpai-fine-tuning-provider/">Fine-tuning a foundation model? When the EU AI Act makes you a general-purpose AI provider</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>

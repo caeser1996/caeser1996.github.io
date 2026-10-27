@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Case study: finding fintech fraud rings with a knowledge graph</title>
+<meta name="description" content="How a fintech moved beyond row-by-row fraud rules: streaming entity resolution into a graph of customers, devices and payees, with graph features for risk scoring." />
+<meta name="keywords" content="fraud ring detection case study, knowledge graph fraud, entity resolution fintech, graph features risk scoring, connected components fraud, probabilistic record linkage, streaming fraud detection, fintech data architecture, investigator tooling" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://asksumanta.com/case-studies/fintech-fraud-ring-knowledge-graph/" />
+<meta name="theme-color" content="#111214" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="Case study: finding fintech fraud rings with a knowledge graph" />
+<meta property="og:description" content="How a fintech moved beyond row-by-row fraud rules: streaming entity resolution into a graph of customers, devices and payees, with graph features for risk scoring." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://asksumanta.com/case-studies/fintech-fraud-ring-knowledge-graph/" />
+<meta property="og:image" content="https://asksumanta.com/assets/og/fintech-fraud-ring-knowledge-graph.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Case study: finding fintech fraud rings with a knowledge graph" />
+<meta name="twitter:description" content="How a fintech moved beyond row-by-row fraud rules: streaming entity resolution into a graph of customers, devices and payees, with graph features for risk scoring." />
+<meta name="twitter:image" content="https://asksumanta.com/assets/og/fintech-fraud-ring-knowledge-graph.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "Article", "headline": "Finding coordinated fraud rings with entity resolution and a knowledge graph", "description": "How a fintech moved beyond row-by-row fraud rules: streaming entity resolution into a graph of customers, devices and payees, with graph features for risk scoring.", "articleSection": "Case study", "about": "Fintech · Digital payments and lending", "datePublished": "2026-10-28T01:16:00+04:00", "dateModified": "2026-10-28T01:16:00+04:00", "citation": [{"@type": "CreativeWork", "name": "A Survey of Blocking and Filtering Techniques for Entity Resolution", "url": "https://arxiv.org/abs/1905.06167"}, {"@type": "CreativeWork", "name": "Splink: probabilistic record linkage at scale", "url": "https://github.com/moj-analytical-services/splink"}, {"@type": "CreativeWork", "name": "Weakly Connected Components (Graph Data Science)", "url": "https://neo4j.com/docs/graph-data-science/current/algorithms/wcc/"}, {"@type": "CreativeWork", "name": "Log compaction (Kafka design)", "url": "https://docs.confluent.io/kafka/design/log_compaction.html"}], "author": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "publisher": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "mainEntityOfPage": "https://asksumanta.com/case-studies/fintech-fraud-ring-knowledge-graph/", "image": "https://asksumanta.com/assets/og/fintech-fraud-ring-knowledge-graph.png", "keywords": "fraud ring detection case study, knowledge graph fraud, entity resolution fintech, graph features risk scoring, connected components fraud, probabilistic record linkage, streaming fraud detection, fintech data architecture, investigator tooling", "wordCount": 921}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://asksumanta.com/"}, {"@type": "ListItem", "position": 2, "name": "Case studies", "item": "https://asksumanta.com/case-studies/"}, {"@type": "ListItem", "position": 3, "name": "Finding coordinated fraud rings with entity resolution and a knowledge graph", "item": "https://asksumanta.com/case-studies/fintech-fraud-ring-knowledge-graph/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Why use a graph for fraud detection?", "acceptedAnswer": {"@type": "Answer", "text": "Organised fraud shows up as relationships: many accounts sharing a device, address or payee. A graph makes those shared connections first-class, so features like ring size and proximity to known fraud can be computed directly."}}, {"@type": "Question", "name": "Why is entity resolution needed first?", "acceptedAnswer": {"@type": "Answer", "text": "The same person, device or address appears in slightly different forms across systems. Without resolving them into single entities, the graph fragments and the rings stay hidden."}}, {"@type": "Question", "name": "Does the graph replace the existing fraud model?", "acceptedAnswer": {"@type": "Answer", "text": "No. It adds network features to the existing scoring and gives investigators a view of connected cases. Rules and models still make the real-time decision."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+</script>
+</head>
+<body class="sub is-post is-case">
+<div class="progress" id="progress"></div>
+<nav>
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="/#practice">Services</a>
+      <a href="/case-studies/">Case studies</a>
+      <a href="/insights/">Insights</a>
+      <a href="/#assess">Analyse</a>
+      <a href="/#connect">Connect</a>
+    </div>
+    <div class="nav-r">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/case-studies/">Case studies</a> <span>/</span> <em>Finding coordinated fraud rings with entity resolution and a knowledge graph</em></div>
+    <div class="kicker">Case study · Fintech</div>
+    <h1>Finding coordinated fraud rings with entity resolution and a knowledge graph</h1>
+    <p class="sub-lede">Fraud rules scored one transaction or one account at a time, while organised fraud spread across many accounts sharing devices, addresses and payees. The goal was to resolve those shared entities, connect them in a graph, and give risk models and investigators the network view the rules were missing.</p>
+    <div class="ameta"><span class="fmt">Case study</span><span>Fintech · Digital payments and lending</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-10-28T01:16:00+04:00">28 Oct 2026 · 01:16 GST</time><span>8 min read</span></div><div class="atags"><span class="tagp">#knowledge-graph</span><span class="tagp">#ontology</span><span class="tagp">#streaming</span><span class="tagp">#data</span><span class="tagp">#security</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Case study cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><line x1="661" y1="51" x2="670" y2="115" class="cv-edge" opacity="0.57"/><line x1="661" y1="51" x2="615" y2="82" class="cv-edge" opacity="0.63"/><line x1="661" y1="51" x2="681" y2="119" class="cv-edge" opacity="0.53"/><line x1="661" y1="51" x2="765" y2="105" class="cv-edge hl" opacity="0.22"/><line x1="852" y1="278" x2="910" y2="340" class="cv-edge" opacity="0.44"/><line x1="852" y1="278" x2="985" y2="262" class="cv-edge" opacity="0.11"/><line x1="852" y1="278" x2="793" y2="214" class="cv-edge" opacity="0.42"/><line x1="852" y1="278" x2="744" y2="305" class="cv-edge" opacity="0.26"/><line x1="852" y1="278" x2="977" y2="215" class="cv-edge" opacity="0.07"/><line x1="852" y1="278" x2="790" y2="199" class="cv-edge hl" opacity="0.33"/><line x1="852" y1="278" x2="831" y2="232" class="cv-edge" opacity="0.66"/><line x1="852" y1="278" x2="749" y2="355" class="cv-edge" opacity="0.14"/><line x1="852" y1="278" x2="733" y2="235" class="cv-edge" opacity="0.15"/><line x1="852" y1="278" x2="937" y2="199" class="cv-edge" opacity="0.23"/><line x1="633" y1="205" x2="670" y2="115" class="cv-edge hl" opacity="0.35"/><line x1="633" y1="205" x2="744" y2="305" class="cv-edge hl" opacity="0.00"/><line x1="633" y1="205" x2="615" y2="82" class="cv-edge hl" opacity="0.17"/><line x1="633" y1="205" x2="681" y2="119" class="cv-edge hl" opacity="0.34"/><line x1="633" y1="205" x2="733" y2="235" class="cv-edge hl" opacity="0.30"/><line x1="910" y1="340" x2="985" y2="262" class="cv-edge" opacity="0.28"/><line x1="910" y1="340" x2="977" y2="215" class="cv-edge" opacity="0.05"/><line x1="910" y1="340" x2="831" y2="232" class="cv-edge" opacity="0.11"/><line x1="910" y1="340" x2="995" y2="352" class="cv-edge" opacity="0.43"/><line x1="910" y1="340" x2="937" y2="199" class="cv-edge" opacity="0.04"/><line x1="670" y1="115" x2="615" y2="82" class="cv-edge" opacity="0.57"/><line x1="670" y1="115" x2="681" y2="119" class="cv-edge" opacity="0.92"/><line x1="670" y1="115" x2="765" y2="105" class="cv-edge hl" opacity="0.36"/><line x1="670" y1="115" x2="790" y2="199" class="cv-edge hl" opacity="0.02"/><line x1="670" y1="115" x2="733" y2="235" class="cv-edge" opacity="0.09"/><line x1="819" y1="39" x2="765" y2="105" class="cv-edge hl" opacity="0.43"/><line x1="985" y1="262" x2="1046" y2="265" class="cv-edge" opacity="0.59"/><line x1="985" y1="262" x2="977" y2="215" class="cv-edge" opacity="0.69"/><line x1="985" y1="262" x2="995" y2="352" class="cv-edge" opacity="0.39"/><line x1="985" y1="262" x2="937" y2="199" class="cv-edge" opacity="0.48"/><line x1="793" y1="214" x2="744" y2="305" class="cv-edge" opacity="0.31"/><line x1="793" y1="214" x2="681" y2="119" class="cv-edge" opacity="0.02"/><line x1="793" y1="214" x2="765" y2="105" class="cv-edge hl" opacity="0.25"/><line x1="793" y1="214" x2="790" y2="199" class="cv-edge hl" opacity="0.90"/><line x1="793" y1="214" x2="831" y2="232" class="cv-edge" opacity="0.72"/><line x1="793" y1="214" x2="749" y2="355" class="cv-edge" opacity="0.01"/><line x1="793" y1="214" x2="733" y2="235" class="cv-edge" opacity="0.57"/><line x1="793" y1="214" x2="937" y2="199" class="cv-edge" opacity="0.04"/><line x1="1152" y1="45" x2="1130" y2="161" class="cv-edge hl" opacity="0.22"/><line x1="1152" y1="45" x2="1016" y2="54" class="cv-edge" opacity="0.09"/><line x1="1046" y1="265" x2="1151" y2="314" class="cv-edge hl" opacity="0.23"/><line x1="1046" y1="265" x2="977" y2="215" class="cv-edge" opacity="0.43"/><line x1="1046" y1="265" x2="1130" y2="161" class="cv-edge hl" opacity="0.11"/><line x1="1046" y1="265" x2="1156" y2="354" class="cv-edge" opacity="0.06"/><line x1="1046" y1="265" x2="995" y2="352" class="cv-edge" opacity="0.33"/><line x1="1046" y1="265" x2="937" y2="199" class="cv-edge" opacity="0.15"/><line x1="744" y1="305" x2="790" y2="199" class="cv-edge hl" opacity="0.23"/><line x1="744" y1="305" x2="831" y2="232" class="cv-edge" opacity="0.24"/><line x1="744" y1="305" x2="749" y2="355" class="cv-edge" opacity="0.66"/><line x1="744" y1="305" x2="733" y2="235" class="cv-edge" opacity="0.53"/><line x1="1151" y1="314" x2="1156" y2="354" class="cv-edge hl" opacity="0.73"/><line x1="1151" y1="314" x2="1160" y2="386" class="cv-edge hl" opacity="0.52"/><line x1="615" y1="82" x2="681" y2="119" class="cv-edge" opacity="0.49"/><line x1="681" y1="119" x2="765" y2="105" class="cv-edge hl" opacity="0.43"/><line x1="681" y1="119" x2="790" y2="199" class="cv-edge hl" opacity="0.10"/><line x1="681" y1="119" x2="733" y2="235" class="cv-edge" opacity="0.15"/><line x1="977" y1="215" x2="831" y2="232" class="cv-edge" opacity="0.02"/><line x1="977" y1="215" x2="995" y2="352" class="cv-edge" opacity="0.08"/><line x1="977" y1="215" x2="937" y2="199" class="cv-edge" opacity="0.71"/><line x1="765" y1="105" x2="790" y2="199" class="cv-edge hl" opacity="0.35"/><line x1="765" y1="105" x2="831" y2="232" class="cv-edge hl" opacity="0.05"/><line x1="765" y1="105" x2="733" y2="235" class="cv-edge hl" opacity="0.11"/><line x1="790" y1="199" x2="831" y2="232" class="cv-edge hl" opacity="0.65"/><line x1="790" y1="199" x2="733" y2="235" class="cv-edge hl" opacity="0.55"/><line x1="790" y1="199" x2="937" y2="199" class="cv-edge hl" opacity="0.02"/><line x1="831" y1="232" x2="749" y2="355" class="cv-edge" opacity="0.01"/><line x1="831" y1="232" x2="733" y2="235" class="cv-edge" opacity="0.34"/><line x1="831" y1="232" x2="937" y2="199" class="cv-edge" opacity="0.26"/><line x1="1156" y1="354" x2="1160" y2="386" class="cv-edge hl" opacity="0.79"/><line x1="749" y1="355" x2="733" y2="235" class="cv-edge" opacity="0.19"/><circle cx="661" cy="51" r="3" class="cv-dot"/><circle cx="852" cy="278" r="3" class="cv-dot"/><circle cx="633" cy="205" r="6" class="cv-dot hl"/><circle cx="910" cy="340" r="3" class="cv-dot"/><circle cx="670" cy="115" r="3" class="cv-dot"/><circle cx="819" cy="39" r="3" class="cv-dot"/><circle cx="985" cy="262" r="3" class="cv-dot"/><circle cx="793" cy="214" r="3" class="cv-dot"/><circle cx="1152" cy="45" r="3" class="cv-dot"/><circle cx="1046" cy="265" r="3" class="cv-dot"/><circle cx="744" cy="305" r="3" class="cv-dot"/><circle cx="1151" cy="314" r="6" class="cv-dot hl"/><circle cx="615" cy="82" r="3" class="cv-dot"/><circle cx="681" cy="119" r="3" class="cv-dot"/><circle cx="977" cy="215" r="3" class="cv-dot"/><circle cx="1130" cy="161" r="6" class="cv-dot hl"/><circle cx="765" cy="105" r="6" class="cv-dot hl"/><circle cx="790" cy="199" r="6" class="cv-dot hl"/><circle cx="831" cy="232" r="3" class="cv-dot"/><circle cx="1156" cy="354" r="3" class="cv-dot"/><circle cx="749" cy="355" r="3" class="cv-dot"/><circle cx="1160" cy="386" r="6" class="cv-dot hl"/><circle cx="733" cy="235" r="3" class="cv-dot"/><circle cx="1016" cy="54" r="3" class="cv-dot"/><circle cx="995" cy="352" r="3" class="cv-dot"/><circle cx="937" cy="199" r="3" class="cv-dot"/><text x="60" y="90" class="cv-k">CASE STUDY · CASE STUDY · FINTECH</text><text x="60" y="350" class="cv-n">28 Oct 2026 · 01:16 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <section class="glance rise" aria-label="At a glance"><div class="kicker">At a glance</div><div class="glance-grid"><div><small>Sector</small><b>Fintech · Digital payments and lending</b></div><div><small>My role</small><b>Principal architect</b></div><div><small>Engagement</small><b>Architecture, build and hand-off</b></div><div><small>Scope</small><b>Streaming, entity resolution, graph model, features, investigator tooling</b></div></div><div class="glance-out"><small>What changed</small><ul><li>Coordinated activity visible as connected networks rather than isolated alerts</li><li>Graph features available to existing risk models in real time</li><li>Investigators reviewing whole rings with evidence for every link</li><li>Entity matches explainable and correctable by analysts</li></ul></div><div class="cs-stack"><span class="tag">Kafka</span><span class="tag">Splink-style probabilistic matching</span><span class="tag">Graph database</span><span class="tag">Connected components</span><span class="tag">Feature store</span><span class="tag">Risk scoring service</span><span class="tag">Investigator UI</span><span class="tag">Kubernetes</span></div><p class="glance-note">Anonymised composite. Client names, identifying details and confidential figures are withheld; public facts are cited in the references.</p></section><h2 id="the-situation">The situation</h2>
+<p>A fintech offering accounts, cards and small loans had a mature rules engine and a transaction-level risk model. Both looked at one event or one account at a time. The losses that hurt most came from coordinated activity: clusters of new accounts opened from the same few devices, with addresses written slightly differently, paying out to a shared set of payees. Each account looked unremarkable alone. The pattern only appeared when someone noticed the connections by hand, usually after the money had moved.</p>
+<p>The question was how to make those connections visible automatically, fast enough to matter, without replacing the decisioning stack that already worked.</p>
+
+<h2 id="what-had-to-be-true">What had to be true</h2>
+<ul>
+<li><strong>Resolve before you connect</strong>: one entity per real person, device, address and payee.</li>
+<li><strong>Explainable links</strong>: every edge in a ring traceable to the evidence behind it.</li>
+<li><strong>Features, not a new decision engine</strong>: graph signals feed existing models and rules.</li>
+<li><strong>Fresh enough for onboarding and payouts</strong>, the two moments where stopping fraud pays.</li>
+<li><strong>Investigators in the loop</strong>, able to confirm, split or merge entities.</li>
+</ul>
+
+<h2 id="architecture">Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Events</small><div class="dgm-nodes"><span>Onboarding<em>identity, device</em></span><span>Logins<em>device, network</em></span><span>Payments<em>payer, payee</em></span><span>Case outcomes<em>confirmed fraud</em></span></div></div>
+<div class="dgm-tier"><small>Stream</small><div class="dgm-nodes"><span>Kafka topics<em>keyed by entity</em></span><span>Normalisation<em>addresses, names, devices</em></span></div></div>
+<div class="dgm-tier"><small>Resolve</small><div class="dgm-nodes"><span>Blocking<em>candidate pairs</em></span><span class="hl">Probabilistic matching<em>scored, explainable</em></span><span>Analyst overrides<em>merge, split</em></span></div></div>
+<div class="dgm-tier"><small>Graph</small><div class="dgm-nodes"><span class="hl">Entity graph<em>people, devices, addresses, payees</em></span><span>Connected components<em>ring candidates</em></span><span>Graph features<em>size, proximity to fraud</em></span></div></div>
+<div class="dgm-tier"><small>Use</small><div class="dgm-nodes"><span>Feature store<em>online lookups</em></span><span>Risk scoring<em>existing models</em></span><span>Investigator UI<em>ring view with evidence</em></span></div></div>
+</div>
+<figcaption>Layered architecture: events are resolved into entities, connected in a graph, and returned to existing scoring as features.</figcaption>
+</figure>
+<p>Confirmed fraud outcomes from closed cases were fed back as events too, so proximity to known fraud stayed current and the risk models had better labels over time.</p>
+<p>The graph model was kept deliberately small, a handful of entity and relationship types with clear definitions, following the approach in <a href="/insights/ontology-vs-knowledge-graph-vs-semantic-layer/">ontology vs knowledge graph vs semantic layer</a>.</p>
+
+<h2 id="the-data-flow-end-to-end">The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Stream</b><span>Onboarding, login and payment events published to Kafka, keyed by source identifiers</span></li>
+<li><b>Normalise</b><span>Standardise addresses, names, phone numbers and device fingerprints</span></li>
+<li class="hl"><b>Resolve</b><span>Block into candidate pairs, score matches, assign stable entity IDs with match evidence</span></li>
+<li><b>Connect</b><span>Upsert entities and relationships into the graph incrementally</span></li>
+<li class="hl"><b>Featurise</b><span>Compute component size, shared-attribute counts and distance to confirmed fraud</span></li>
+<li><b>Act</b><span>Features served to risk scoring; high-risk rings opened as investigator cases</span></li>
+</ol>
+<figcaption>Entity resolution sits before the graph, so the graph only ever connects resolved entities.</figcaption>
+</figure>
+<p>Current entity state was held in compacted topics, where Kafka retains the latest value for each key, so downstream services could rebuild their view without replaying full history<sup class="cite"><a href="#ref-4">4</a></sup>. Streaming patterns are in <a href="/insights/change-data-capture-event-streams/">change data capture and event streams</a>.</p>
+
+<h2 id="the-hard-part-entity-resolution-you-can-defend">The hard part: entity resolution you can defend</h2>
+<p>Matching everything to everything is quadratic, so resolution started with blocking: cheap keys that limit comparisons to plausible candidates, a well-studied family of techniques<sup class="cite"><a href="#ref-1">1</a></sup>. Matching then used a probabilistic, Fellegi-Sunter style model of the kind implemented in Splink, which scores each comparison field and can be trained without labelled pairs<sup class="cite"><a href="#ref-2">2</a></sup>. What made it defensible:</p>
+<ul>
+<li>Every merge stored the field-level evidence and score, so an investigator could see why two records became one entity.</li>
+<li>Thresholds were set separately for automatic merges and for "possible match" links that investigators saw but models treated with caution.</li>
+<li>Shared infrastructure entities (a popular office address, a carrier-grade NAT IP) were flagged so they did not collapse unrelated customers into giant false rings.</li>
+<li>Analyst merges and splits were written back as overrides that survived reprocessing.</li>
+</ul>
+<p>Ring candidates came from connected components over the resolved graph, which groups nodes reachable from one another regardless of edge direction<sup class="cite"><a href="#ref-3">3</a></sup>. More detail in <a href="/insights/entity-resolution-knowledge-graphs/">entity resolution for knowledge graphs</a>.</p>
+<div class="callout"><p>In fraud work a false merge is not a modelling error, it is an accusation. Explainable matches and reversible overrides are what make a graph usable by investigators.</p></div>
+
+<h2 id="how-it-ran">How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Platform</small><ol><li>Resolves entities</li><li>Updates graph</li><li class="hl">Serves ring features</li></ol></div>
+<div class="dgm-lane"><small>Risk scoring</small><ol><li>Reads features</li><li>Scores event</li><li>Opens case on high risk</li></ol></div>
+<div class="dgm-lane"><small>Investigator</small><ol><li>Reviews ring and evidence</li><li class="hl">Confirms, splits or merges</li><li>Records outcome</li></ol></div>
+</div>
+<figcaption>Investigator outcomes flow back as labels and overrides.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Model</b><ul><li>Entity and relationship types</li><li>Known fraud cases mapped</li><li>Data sources inventoried</li></ul></div>
+<div><small>Phase 2</small><b>Batch proof</b><ul><li>Historical resolution</li><li>Rings found in past cases</li><li>Investigator feedback</li></ul></div>
+<div><small>Phase 3</small><b>Streaming</b><ul><li>Incremental resolution</li><li>Online features</li><li>Model integration</li></ul></div>
+<div><small>Phase 4</small><b>Operate</b><ul><li>Investigator UI</li><li>Override workflow</li><li>Runbooks and hand-off</li></ul></div>
+</div>
+<figcaption>A batch proof on historical cases before any real-time work.</figcaption>
+</figure>
+
+<h2 id="key-decisions-and-trade-offs">Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Probabilistic, explainable matching</td><td>Exact keys only</td><td>Catches variant spellings while keeping evidence for every merge</td></tr>
+<tr><td>Graph features into existing models</td><td>Separate graph-based decision engine</td><td>Adds signal without replacing a working decision stack</td></tr>
+<tr><td>Small, defined graph model</td><td>Load every attribute as a node</td><td>Fewer false connections and simpler queries</td></tr>
+<tr><td>Batch proof before streaming</td><td>Build real-time first</td><td>Validates value on known cases before paying for latency</td></tr>
+<tr><td>Durable analyst overrides</td><td>Recompute from scratch each run</td><td>Human corrections are not lost on reprocessing</td></tr>
+</tbody>
+</table>
+
+<h2 id="what-i-d-do-again-and-differently">What I'd do again, and differently</h2>
+<p>Again: start with historical confirmed cases and show investigators the rings the graph would have surfaced. Differently: build the shared-infrastructure entity list on day one. It is the main source of false rings, and it is easier to design for than to clean up.</p>
+<p>If you are considering a knowledge graph for risk or investigations, the <a href="/ontology-knowledge-graph/">ontology and knowledge graph</a> page describes how I run these engagements, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://arxiv.org/abs/1905.06167" target="_blank" rel="noopener">A Survey of Blocking and Filtering Techniques for Entity Resolution</a><small>Papadakis et al., arXiv · 2019</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://github.com/moj-analytical-services/splink" target="_blank" rel="noopener">Splink: probabilistic record linkage at scale</a><small>UK Ministry of Justice (GitHub)</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://neo4j.com/docs/graph-data-science/current/algorithms/wcc/" target="_blank" rel="noopener">Weakly Connected Components (Graph Data Science)</a><small>Neo4j documentation</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://docs.confluent.io/kafka/design/log_compaction.html" target="_blank" rel="noopener">Log compaction (Kafka design)</a><small>Confluent documentation</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fasksumanta.com%2Fcase-studies%2Ffintech-fraud-ring-knowledge-graph%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fasksumanta.com%2Fcase-studies%2Ffintech-fraud-ring-knowledge-graph%2F&amp;text=Finding%20coordinated%20fraud%20rings%20with%20entity%20resolution%20and%20a%20knowledge%20graph" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=Finding%20coordinated%20fraud%20rings%20with%20entity%20resolution%20and%20a%20knowledge%20graph%20https%3A%2F%2Fasksumanta.com%2Fcase-studies%2Ffintech-fraud-ring-knowledge-graph%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://asksumanta.com/case-studies/fintech-fraud-ring-knowledge-graph/">Copy link</button></div>
+      <div class="pnav"><a class="pn prev" href="/case-studies/life-sciences-real-world-evidence-network/"><small>← Previous</small><b>Building a reproducible real-world evidence network across external data partners</b></a><a class="pn next" href="/case-studies/payments-platform-1m-transactions-a-day/"><small>Next →</small><b>Scaling a payments platform past a million transactions a day without double charges</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#the-situation">The situation</a></li><li><a href="#what-had-to-be-true">What had to be true</a></li><li><a href="#architecture">Architecture</a></li><li><a href="#the-data-flow-end-to-end">The data flow, end to end</a></li><li><a href="#the-hard-part-entity-resolution-you-can-defend">The hard part: entity resolution you can defend</a></li><li><a href="#how-it-ran">How it ran</a></li><li><a href="#key-decisions-and-trade-offs">Key decisions and trade-offs</a></li><li><a href="#what-i-d-do-again-and-differently">What I&#x27;d do again, and differently</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>Why use a graph for fraud detection?</summary><p>Organised fraud shows up as relationships: many accounts sharing a device, address or payee. A graph makes those shared connections first-class, so features like ring size and proximity to known fraud can be computed directly.</p></details><details class="rise"><summary>Why is entity resolution needed first?</summary><p>The same person, device or address appears in slightly different forms across systems. Without resolving them into single entities, the graph fragments and the rings stay hidden.</p></details><details class="rise"><summary>Does the graph replace the existing fraud model?</summary><p>No. It adds network features to the existing scoring and gives investigators a view of connected cases. Rules and models still make the real-time decision.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/ontology-knowledge-graph/"><small>Service</small><b>Ontology &amp; knowledge graphs</b><span>I help organisations agree what their data means, write it down as an ontology and put it to work in a knowledge graph that analytics, APIs and AI agents can all rely on.</span><i>→</i></a><a class="rcard rise" href="/fractional-cto/"><small>Service</small><b>Fractional CTO</b><span>I work as a part-time CTO for founders, CEOs and boards who need experienced technical judgement now, and a team that can carry it on after I step back.</span><i>→</i></a><a class="rcard rise" href="/insights/terraform-secrets-out-of-state/"><small>Insight</small><b>Keeping secrets out of Terraform state: a checklist for platform teams</b><span>Most organisations using Terraform have database passwords, API keys or private keys sitting in state files, often in plaintext. For years that was simply how Terraform worked. Since versions 1.10 and 1.11 it doesn&#x27;t have to be, but the fix needs deliberate migration.</span><i>→</i></a><a class="rcard rise" href="/insights/slos-error-budgets-small-teams/"><small>Insight</small><b>SLOs and error budgets for small teams: field notes on making reliability a decision, not a debate</b><span>In a small company, the argument between shipping features and fixing reliability usually gets settled by whoever is loudest that week. Service level objectives and error budgets turn it into a rule everyone agreed in advance. The Google SRE material is written for large organisations, but the core ideas scale down well.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: Finding coordinated fraud rings with entity resolution and a knowledge graph">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
+        <p class="floc">United States &amp; UAE · working globally</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/uae/">Fractional CTO in the UAE</a></li></ul></div>
+      <div class="fc"><h4>Case studies</h4><ul><li><a href="/case-studies/startup-fractional-cto-seed-to-series-a/">Startup fractional CTO, seed to Series A</a></li><li><a href="/case-studies/private-equity-ai-technical-due-diligence/">Private equity AI technical due diligence</a></li><li><a href="/case-studies/telecom-observability-slos/">Telecom observability and SLOs</a></li><li><a href="/case-studies/real-estate-document-intake-automation/">Real estate document intake automation</a></li><li><a href="/#work">Engagement snapshots</a></li><li><a href="/case-studies/">All case studies →</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/terraform-secrets-out-of-state/">Keeping secrets out of Terraform state: a checklist for platform teams</a></li><li><a href="/insights/slos-error-budgets-small-teams/">SLOs and error budgets for small teams: field notes on making reliability a decision, not a debate</a></li><li><a href="/insights/speculative-decoding-private-llms/">Speculative decoding for private LLMs: faster tokens without changing the answers</a></li><li><a href="/insights/real-world-evidence-study-designs-omop/">Real-world evidence on OMOP: comparing five study designs for treatment effects</a></li><li><a href="/insights/eu-ai-act-gpai-fine-tuning-provider/">Fine-tuning a foundation model? When the EU AI Act makes you a general-purpose AI provider</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>

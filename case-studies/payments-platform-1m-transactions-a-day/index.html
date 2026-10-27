@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Case study: a payments platform at 1M+ transactions a day</title>
+<meta name="description" content="How a payments platform scaled past 1M+ transactions a day without double charges: idempotency keys, a transactional outbox and event-driven reconciliation." />
+<meta name="keywords" content="payments platform case study, idempotent payments API, transactional outbox, double charge prevention, payment reconciliation, Kafka payments, 1 million transactions a day, fractional CTO payments, Debezium outbox" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://asksumanta.com/case-studies/payments-platform-1m-transactions-a-day/" />
+<meta name="theme-color" content="#111214" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="Case study: a payments platform at 1M+ transactions a day" />
+<meta property="og:description" content="How a payments platform scaled past 1M+ transactions a day without double charges: idempotency keys, a transactional outbox and event-driven reconciliation." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://asksumanta.com/case-studies/payments-platform-1m-transactions-a-day/" />
+<meta property="og:image" content="https://asksumanta.com/assets/og/payments-platform-1m-transactions-a-day.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Case study: a payments platform at 1M+ transactions a day" />
+<meta name="twitter:description" content="How a payments platform scaled past 1M+ transactions a day without double charges: idempotency keys, a transactional outbox and event-driven reconciliation." />
+<meta name="twitter:image" content="https://asksumanta.com/assets/og/payments-platform-1m-transactions-a-day.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "Article", "headline": "Scaling a payments platform past a million transactions a day without double charges", "description": "How a payments platform scaled past 1M+ transactions a day without double charges: idempotency keys, a transactional outbox and event-driven reconciliation.", "articleSection": "Case study", "about": "Payments · Platform", "datePublished": "2026-10-28T01:18:00+04:00", "dateModified": "2026-10-28T01:18:00+04:00", "citation": [{"@type": "CreativeWork", "name": "The Idempotency-Key HTTP Header Field (Internet-Draft)", "url": "https://datatracker.ietf.org/doc/html/draft-ietf-httpapi-idempotency-key-header"}, {"@type": "CreativeWork", "name": "Idempotent requests", "url": "https://docs.stripe.com/api/idempotent_requests"}, {"@type": "CreativeWork", "name": "Pattern: Transactional outbox", "url": "https://microservices.io/patterns/data/transactional-outbox"}, {"@type": "CreativeWork", "name": "Outbox Event Router", "url": "https://debezium.io/documentation/reference/stable/transformations/outbox-event-router.html"}], "author": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "publisher": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "mainEntityOfPage": "https://asksumanta.com/case-studies/payments-platform-1m-transactions-a-day/", "image": "https://asksumanta.com/assets/og/payments-platform-1m-transactions-a-day.png", "keywords": "payments platform case study, idempotent payments API, transactional outbox, double charge prevention, payment reconciliation, Kafka payments, 1 million transactions a day, fractional CTO payments, Debezium outbox", "wordCount": 926}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://asksumanta.com/"}, {"@type": "ListItem", "position": 2, "name": "Case studies", "item": "https://asksumanta.com/case-studies/"}, {"@type": "ListItem", "position": 3, "name": "Scaling a payments platform past a million transactions a day without double charges", "item": "https://asksumanta.com/case-studies/payments-platform-1m-transactions-a-day/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What causes double charges?", "acceptedAnswer": {"@type": "Answer", "text": "Usually a retry after an ambiguous failure: the client or a gateway times out, retries, and the original request had in fact succeeded. Without idempotency, the second request creates a second charge."}}, {"@type": "Question", "name": "What is the transactional outbox pattern?", "acceptedAnswer": {"@type": "Answer", "text": "The service writes the business change and an outbox record in the same database transaction. A relay then publishes outbox records to the message broker, so events are sent if and only if the transaction commits."}}, {"@type": "Question", "name": "Why automate reconciliation?", "acceptedAnswer": {"@type": "Answer", "text": "At high volume, manual matching of internal records to provider settlement files becomes a queue that never empties. Automated matching handles the routine cases and routes only genuine exceptions to people."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+</script>
+</head>
+<body class="sub is-post is-case">
+<div class="progress" id="progress"></div>
+<nav>
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="/#practice">Services</a>
+      <a href="/case-studies/">Case studies</a>
+      <a href="/insights/">Insights</a>
+      <a href="/#assess">Analyse</a>
+      <a href="/#connect">Connect</a>
+    </div>
+    <div class="nav-r">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/case-studies/">Case studies</a> <span>/</span> <em>Scaling a payments platform past a million transactions a day without double charges</em></div>
+    <div class="kicker">Case study · Payments</div>
+    <h1>Scaling a payments platform past a million transactions a day without double charges</h1>
+    <p class="sub-lede">As volume grew, retries and timeouts started producing duplicate charges and a growing manual reconciliation queue. The goal was a payment path that was safe to retry at every step, published events reliably, and reconciled itself, sized for more than a million transactions a day.</p>
+    <div class="ameta"><span class="fmt">Case study</span><span>Payments · Platform</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-10-28T01:18:00+04:00">28 Oct 2026 · 01:18 GST</time><span>8 min read</span></div><div class="atags"><span class="tagp">#architecture</span><span class="tagp">#streaming</span><span class="tagp">#platform</span><span class="tagp">#kubernetes</span><span class="tagp">#observability</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Case study cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><line x1="819" y1="180" x2="813" y2="226" class="cv-edge hl" opacity="0.69"/><line x1="819" y1="180" x2="760" y2="115" class="cv-edge hl" opacity="0.42"/><line x1="819" y1="180" x2="800" y2="47" class="cv-edge" opacity="0.10"/><line x1="819" y1="180" x2="711" y2="206" class="cv-edge hl" opacity="0.26"/><line x1="819" y1="180" x2="883" y2="302" class="cv-edge" opacity="0.08"/><line x1="819" y1="180" x2="913" y2="167" class="cv-edge" opacity="0.37"/><line x1="819" y1="180" x2="700" y2="137" class="cv-edge" opacity="0.15"/><line x1="819" y1="180" x2="748" y2="133" class="cv-edge" opacity="0.43"/><line x1="819" y1="180" x2="903" y2="101" class="cv-edge" opacity="0.23"/><line x1="813" y1="226" x2="760" y2="115" class="cv-edge hl" opacity="0.18"/><line x1="813" y1="226" x2="711" y2="206" class="cv-edge hl" opacity="0.31"/><line x1="813" y1="226" x2="883" y2="302" class="cv-edge hl" opacity="0.31"/><line x1="813" y1="226" x2="913" y2="167" class="cv-edge hl" opacity="0.23"/><line x1="813" y1="226" x2="700" y2="137" class="cv-edge hl" opacity="0.04"/><line x1="813" y1="226" x2="748" y2="133" class="cv-edge hl" opacity="0.25"/><line x1="663" y1="122" x2="738" y2="43" class="cv-edge hl" opacity="0.28"/><line x1="663" y1="122" x2="760" y2="115" class="cv-edge hl" opacity="0.35"/><line x1="663" y1="122" x2="692" y2="66" class="cv-edge hl" opacity="0.58"/><line x1="663" y1="122" x2="711" y2="206" class="cv-edge hl" opacity="0.35"/><line x1="663" y1="122" x2="700" y2="137" class="cv-edge hl" opacity="0.74"/><line x1="663" y1="122" x2="556" y2="76" class="cv-edge hl" opacity="0.22"/><line x1="663" y1="122" x2="748" y2="133" class="cv-edge hl" opacity="0.43"/><line x1="663" y1="122" x2="648" y2="127" class="cv-edge hl" opacity="0.90"/><line x1="636" y1="376" x2="691" y2="335" class="cv-edge" opacity="0.54"/><line x1="636" y1="376" x2="648" y2="380" class="cv-edge" opacity="0.92"/><line x1="636" y1="376" x2="732" y2="367" class="cv-edge" opacity="0.36"/><line x1="636" y1="376" x2="585" y2="373" class="cv-edge" opacity="0.66"/><line x1="999" y1="60" x2="913" y2="167" class="cv-edge" opacity="0.08"/><line x1="999" y1="60" x2="903" y2="101" class="cv-edge" opacity="0.31"/><line x1="738" y1="43" x2="760" y2="115" class="cv-edge hl" opacity="0.50"/><line x1="738" y1="43" x2="692" y2="66" class="cv-edge" opacity="0.65"/><line x1="738" y1="43" x2="800" y2="47" class="cv-edge" opacity="0.59"/><line x1="738" y1="43" x2="700" y2="137" class="cv-edge" opacity="0.32"/><line x1="738" y1="43" x2="748" y2="133" class="cv-edge" opacity="0.39"/><line x1="738" y1="43" x2="648" y2="127" class="cv-edge" opacity="0.18"/><line x1="760" y1="115" x2="692" y2="66" class="cv-edge hl" opacity="0.44"/><line x1="760" y1="115" x2="800" y2="47" class="cv-edge hl" opacity="0.47"/><line x1="760" y1="115" x2="711" y2="206" class="cv-edge hl" opacity="0.31"/><line x1="760" y1="115" x2="700" y2="137" class="cv-edge hl" opacity="0.57"/><line x1="760" y1="115" x2="748" y2="133" class="cv-edge hl" opacity="0.85"/><line x1="760" y1="115" x2="903" y2="101" class="cv-edge hl" opacity="0.04"/><line x1="760" y1="115" x2="648" y2="127" class="cv-edge hl" opacity="0.25"/><line x1="692" y1="66" x2="800" y2="47" class="cv-edge" opacity="0.27"/><line x1="692" y1="66" x2="711" y2="206" class="cv-edge hl" opacity="0.06"/><line x1="692" y1="66" x2="700" y2="137" class="cv-edge" opacity="0.53"/><line x1="692" y1="66" x2="556" y2="76" class="cv-edge hl" opacity="0.09"/><line x1="692" y1="66" x2="748" y2="133" class="cv-edge" opacity="0.42"/><line x1="692" y1="66" x2="648" y2="127" class="cv-edge" opacity="0.50"/><line x1="800" y1="47" x2="700" y2="137" class="cv-edge" opacity="0.10"/><line x1="800" y1="47" x2="748" y2="133" class="cv-edge" opacity="0.33"/><line x1="800" y1="47" x2="903" y2="101" class="cv-edge" opacity="0.22"/><line x1="711" y1="206" x2="691" y2="335" class="cv-edge hl" opacity="0.13"/><line x1="711" y1="206" x2="700" y2="137" class="cv-edge hl" opacity="0.53"/><line x1="711" y1="206" x2="748" y2="133" class="cv-edge hl" opacity="0.45"/><line x1="711" y1="206" x2="648" y2="127" class="cv-edge hl" opacity="0.33"/><line x1="691" y1="335" x2="648" y2="380" class="cv-edge" opacity="0.58"/><line x1="691" y1="335" x2="732" y2="367" class="cv-edge" opacity="0.66"/><line x1="691" y1="335" x2="585" y2="373" class="cv-edge" opacity="0.25"/><line x1="1008" y1="223" x2="1157" y2="236" class="cv-edge" opacity="0.00"/><line x1="1008" y1="223" x2="883" y2="302" class="cv-edge" opacity="0.01"/><line x1="1008" y1="223" x2="970" y2="220" class="cv-edge" opacity="0.75"/><line x1="1008" y1="223" x2="1122" y2="255" class="cv-edge hl" opacity="0.21"/><line x1="1008" y1="223" x2="913" y2="167" class="cv-edge" opacity="0.26"/><line x1="648" y1="380" x2="732" y2="367" class="cv-edge" opacity="0.43"/><line x1="648" y1="380" x2="585" y2="373" class="cv-edge" opacity="0.58"/><line x1="1157" y1="236" x2="1122" y2="255" class="cv-edge hl" opacity="0.73"/><line x1="883" y1="302" x2="970" y2="220" class="cv-edge" opacity="0.20"/><line x1="883" y1="302" x2="930" y2="377" class="cv-edge" opacity="0.41"/><line x1="883" y1="302" x2="913" y2="167" class="cv-edge" opacity="0.08"/><line x1="732" y1="367" x2="585" y2="373" class="cv-edge" opacity="0.02"/><line x1="970" y1="220" x2="913" y2="167" class="cv-edge" opacity="0.48"/><line x1="970" y1="220" x2="903" y2="101" class="cv-edge" opacity="0.09"/><line x1="913" y1="167" x2="903" y2="101" class="cv-edge" opacity="0.55"/><line x1="700" y1="137" x2="748" y2="133" class="cv-edge" opacity="0.68"/><line x1="700" y1="137" x2="648" y2="127" class="cv-edge" opacity="0.65"/><line x1="556" y1="76" x2="648" y2="127" class="cv-edge hl" opacity="0.29"/><line x1="748" y1="133" x2="648" y2="127" class="cv-edge" opacity="0.33"/><circle cx="819" cy="180" r="3" class="cv-dot"/><circle cx="813" cy="226" r="6" class="cv-dot hl"/><circle cx="663" cy="122" r="6" class="cv-dot hl"/><circle cx="636" cy="376" r="3" class="cv-dot"/><circle cx="999" cy="60" r="3" class="cv-dot"/><circle cx="738" cy="43" r="3" class="cv-dot"/><circle cx="760" cy="115" r="6" class="cv-dot hl"/><circle cx="692" cy="66" r="3" class="cv-dot"/><circle cx="800" cy="47" r="3" class="cv-dot"/><circle cx="711" cy="206" r="6" class="cv-dot hl"/><circle cx="691" cy="335" r="3" class="cv-dot"/><circle cx="1008" cy="223" r="3" class="cv-dot"/><circle cx="648" cy="380" r="3" class="cv-dot"/><circle cx="1157" cy="236" r="3" class="cv-dot"/><circle cx="883" cy="302" r="3" class="cv-dot"/><circle cx="732" cy="367" r="3" class="cv-dot"/><circle cx="970" cy="220" r="3" class="cv-dot"/><circle cx="585" cy="373" r="3" class="cv-dot"/><circle cx="1122" cy="255" r="6" class="cv-dot hl"/><circle cx="930" cy="377" r="3" class="cv-dot"/><circle cx="913" cy="167" r="3" class="cv-dot"/><circle cx="700" cy="137" r="3" class="cv-dot"/><circle cx="556" cy="76" r="6" class="cv-dot hl"/><circle cx="748" cy="133" r="3" class="cv-dot"/><circle cx="903" cy="101" r="3" class="cv-dot"/><circle cx="648" cy="127" r="3" class="cv-dot"/><text x="60" y="90" class="cv-k">CASE STUDY · CASE STUDY · PAYMENTS</text><text x="60" y="350" class="cv-n">28 Oct 2026 · 01:18 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <section class="glance rise" aria-label="At a glance"><div class="kicker">At a glance</div><div class="glance-grid"><div><small>Sector</small><b>Payments · Platform</b></div><div><small>My role</small><b>Fractional CTO and principal engineer</b></div><div><small>Engagement</small><b>Architecture, hands-on build and team enablement</b></div><div><small>Scope</small><b>API idempotency, data model, eventing, ledger, reconciliation, operations</b></div></div><div class="glance-out"><small>What changed</small><ul><li>Client and provider retries made safe, so a timeout no longer risked a second charge</li><li>Events published if and only if the payment write committed</li><li>Reconciliation against providers automated, with exceptions routed to people</li><li>A platform the in-house team could run and extend as volume grew past 1M+ transactions a day</li></ul></div><div class="cs-stack"><span class="tag">Postgres</span><span class="tag">Idempotency-Key header</span><span class="tag">Transactional outbox</span><span class="tag">Debezium</span><span class="tag">Kafka</span><span class="tag">Double-entry ledger</span><span class="tag">Kubernetes</span><span class="tag">OpenTelemetry</span></div><p class="glance-note">Anonymised composite. Client names, identifying details and confidential figures are withheld; public facts are cited in the references.</p></section><h2 id="the-situation">The situation</h2>
+<p>A payments platform processing card and bank transfers for merchants was growing quickly. The architecture had served it well at lower volume: a payments service writing to Postgres, calling external providers, then publishing an event for the ledger and notifications. As traffic climbed towards and past 1M+ transactions a day, the edges started to fray. Mobile clients retried on timeouts. Providers occasionally responded slowly and then succeeded anyway. Events were sometimes published for writes that rolled back, or not published for writes that committed.</p>
+<p>The symptoms were familiar: occasional duplicate charges, refunds issued by hand, and a reconciliation team matching provider settlement files to internal records in spreadsheets.</p>
+
+<h2 id="what-had-to-be-true">What had to be true</h2>
+<ul>
+<li><strong>Every step safe to retry</strong>, from the client to the provider call.</li>
+<li><strong>One source of truth per payment</strong>, with state changes that cannot be lost or invented.</li>
+<li><strong>Reliable events</strong>: published exactly when the database change commits.</li>
+<li><strong>A ledger that balances</strong>, and reconciliation that runs itself for the normal cases.</li>
+<li><strong>Operable by the in-house team</strong>, with clear signals when something drifts.</li>
+</ul>
+
+<h2 id="architecture">Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Edge</small><div class="dgm-nodes"><span>Merchant and app clients<em>send Idempotency-Key</em></span><span>API gateway<em>auth, rate limits</em></span></div></div>
+<div class="dgm-tier"><small>Payments service</small><div class="dgm-nodes"><span class="hl">Idempotency store<em>key, request hash, response</em></span><span>Payment state machine<em>explicit transitions</em></span><span>Provider adapters<em>provider-side keys</em></span></div></div>
+<div class="dgm-tier"><small>Data</small><div class="dgm-nodes"><span>Postgres<em>payments and outbox, one transaction</em></span><span class="hl">Outbox relay<em>log-based CDC</em></span></div></div>
+<div class="dgm-tier"><small>Events</small><div class="dgm-nodes"><span>Kafka<em>keyed by payment</em></span><span>Ledger service<em>double-entry, idempotent consumer</em></span><span>Notifications<em>idempotent consumer</em></span></div></div>
+<div class="dgm-tier"><small>Assure</small><div class="dgm-nodes"><span class="hl">Reconciliation<em>provider files vs ledger</em></span><span>Exception queue<em>human review</em></span><span>Tracing and SLOs<em>end to end</em></span></div></div>
+</div>
+<figcaption>Layered architecture: idempotency at the edge, a single write plus outbox, and reconciliation closing the loop.</figcaption>
+</figure>
+
+<h2 id="the-data-flow-end-to-end">The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li class="hl"><b>Key</b><span>Client sends an Idempotency-Key; a repeat with the same key returns the stored result</span></li>
+<li><b>Write</b><span>Payment row and outbox record written in one Postgres transaction</span></li>
+<li><b>Call</b><span>Provider called with its own idempotency key derived from the payment ID</span></li>
+<li><b>Publish</b><span>Relay reads committed outbox records from the database log and publishes to Kafka</span></li>
+<li><b>Post</b><span>Ledger consumes events idempotently and records balanced double entries</span></li>
+<li class="hl"><b>Reconcile</b><span>Provider settlement data matched to ledger entries; mismatches become exceptions</span></li>
+</ol>
+<figcaption>Each hop either deduplicates or is safe to repeat, so retries anywhere are harmless.</figcaption>
+</figure>
+<p>The edge followed the IETF Idempotency-Key header draft, which defines how clients make non-idempotent methods such as POST fault-tolerant<sup class="cite"><a href="#ref-1">1</a></sup>, and borrowed conventions familiar from established payment APIs, such as rejecting a reused key with different parameters<sup class="cite"><a href="#ref-2">2</a></sup>. The full pattern is in <a href="/insights/idempotent-payments-order-pipelines/">idempotent payments and order pipelines</a>.</p>
+
+<h2 id="the-hard-part-the-ambiguous-middle">The hard part: the ambiguous middle</h2>
+<p>Duplicates at the edge are the easy case. The hard case is a request that times out somewhere in the middle: did the provider charge or not? The design handled it explicitly:</p>
+<ul>
+<li>The payment state machine had an "unknown" state for ambiguous provider outcomes, rather than guessing success or failure.</li>
+<li>Unknown payments were resolved by querying the provider, never by blindly retrying a charge.</li>
+<li>Provider calls carried their own idempotency keys, so a retry that did happen could not create a second charge on the provider's side.</li>
+<li>Events were produced through a transactional outbox: the change and the outbox record commit together and a relay publishes afterwards, which removes the dual-write problem without distributed transactions<sup class="cite"><a href="#ref-3">3</a></sup>. The relay used Debezium's outbox event router to turn outbox rows into routed Kafka events<sup class="cite"><a href="#ref-4">4</a></sup>.</li>
+</ul>
+<p>Because the relay can deliver a message more than once, every consumer was idempotent too, keyed by event ID. CDC details are in <a href="/insights/change-data-capture-event-streams/">change data capture and event streams</a>.</p>
+<div class="callout"><p>Exactly-once is not a property you buy from a broker. It is what you get when every producer is reliable and every consumer is idempotent.</p></div>
+
+<h2 id="how-the-engagement-ran">How the engagement ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Client</small><ol><li>Generates key</li><li>Retries on timeout</li><li>Gets the same result</li></ol></div>
+<div class="dgm-lane"><small>Payments service</small><ol><li class="hl">Deduplicates by key</li><li>Writes payment and outbox</li><li>Resolves unknown states</li></ol></div>
+<div class="dgm-lane"><small>Ledger and recon</small><ol><li>Consumes idempotently</li><li>Posts double entries</li><li class="hl">Matches provider data</li></ol></div>
+</div>
+<figcaption>Retries are expected at every lane; none of them changes the outcome.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Stabilise</b><ul><li>Map failure modes</li><li>Idempotency at the edge</li><li>Tracing across hops</li></ul></div>
+<div><small>Phase 2</small><b>Outbox</b><ul><li>Single write plus outbox</li><li>CDC relay</li><li>Idempotent consumers</li></ul></div>
+<div><small>Phase 3</small><b>Ledger</b><ul><li>Double-entry postings</li><li>Unknown-state handling</li><li>Provider-side keys</li></ul></div>
+<div><small>Phase 4</small><b>Reconcile and hand off</b><ul><li>Automated matching</li><li>Exception queue</li><li>SLOs and runbooks</li></ul></div>
+</div>
+<figcaption>Stop the bleeding at the edge first, then fix the event path, then close the loop.</figcaption>
+</figure>
+<p>Every hop carried a trace context, so a single payment could be followed from the client request through the provider call, the outbox, the ledger posting and reconciliation when something looked wrong.</p>
+<p>Service level objectives and alerting followed <a href="/insights/slos-error-budgets-small-teams/">SLOs and error budgets for small teams</a>.</p>
+
+<h2 id="key-decisions-and-trade-offs">Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Idempotency keys at the API edge</td><td>Deduplicate downstream</td><td>Stops duplicates before any side effect happens</td></tr>
+<tr><td>Transactional outbox with CDC</td><td>Write to database then publish</td><td>Events exist if and only if the write committed</td></tr>
+<tr><td>Explicit unknown state</td><td>Treat timeouts as failures</td><td>Avoids both double charges and lost payments</td></tr>
+<tr><td>Postgres as the payment source of truth</td><td>Event-sourced payments</td><td>Familiar to the team; strong transactional guarantees</td></tr>
+<tr><td>Automated reconciliation with exceptions</td><td>Manual matching</td><td>Scales with volume; people handle only real anomalies</td></tr>
+</tbody>
+</table>
+
+<h2 id="what-i-d-do-again-and-differently">What I'd do again, and differently</h2>
+<p>Again: name the ambiguous states in the data model and design for them explicitly. Differently: build reconciliation earlier. It is the system that tells you whether everything else is working, and it is the first place a new failure mode shows up.</p>
+<p>If your platform is outgrowing its original design, the <a href="/fractional-cto/">fractional CTO</a> page describes how I work with teams on this, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://datatracker.ietf.org/doc/html/draft-ietf-httpapi-idempotency-key-header" target="_blank" rel="noopener">The Idempotency-Key HTTP Header Field (Internet-Draft)</a><small>IETF HTTPAPI Working Group</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://docs.stripe.com/api/idempotent_requests" target="_blank" rel="noopener">Idempotent requests</a><small>Stripe API documentation</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://microservices.io/patterns/data/transactional-outbox" target="_blank" rel="noopener">Pattern: Transactional outbox</a><small>microservices.io, Chris Richardson</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://debezium.io/documentation/reference/stable/transformations/outbox-event-router.html" target="_blank" rel="noopener">Outbox Event Router</a><small>Debezium documentation</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fasksumanta.com%2Fcase-studies%2Fpayments-platform-1m-transactions-a-day%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fasksumanta.com%2Fcase-studies%2Fpayments-platform-1m-transactions-a-day%2F&amp;text=Scaling%20a%20payments%20platform%20past%20a%20million%20transactions%20a%20day%20without%20double%20charges" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=Scaling%20a%20payments%20platform%20past%20a%20million%20transactions%20a%20day%20without%20double%20charges%20https%3A%2F%2Fasksumanta.com%2Fcase-studies%2Fpayments-platform-1m-transactions-a-day%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://asksumanta.com/case-studies/payments-platform-1m-transactions-a-day/">Copy link</button></div>
+      <div class="pnav"><a class="pn prev" href="/case-studies/fintech-fraud-ring-knowledge-graph/"><small>← Previous</small><b>Finding coordinated fraud rings with entity resolution and a knowledge graph</b></a><a class="pn next" href="/case-studies/bank-kyc-policy-assistant-rag/"><small>Next →</small><b>Giving KYC analysts cited answers from policy, without giving up control</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#the-situation">The situation</a></li><li><a href="#what-had-to-be-true">What had to be true</a></li><li><a href="#architecture">Architecture</a></li><li><a href="#the-data-flow-end-to-end">The data flow, end to end</a></li><li><a href="#the-hard-part-the-ambiguous-middle">The hard part: the ambiguous middle</a></li><li><a href="#how-the-engagement-ran">How the engagement ran</a></li><li><a href="#key-decisions-and-trade-offs">Key decisions and trade-offs</a></li><li><a href="#what-i-d-do-again-and-differently">What I&#x27;d do again, and differently</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>What causes double charges?</summary><p>Usually a retry after an ambiguous failure: the client or a gateway times out, retries, and the original request had in fact succeeded. Without idempotency, the second request creates a second charge.</p></details><details class="rise"><summary>What is the transactional outbox pattern?</summary><p>The service writes the business change and an outbox record in the same database transaction. A relay then publishes outbox records to the message broker, so events are sent if and only if the transaction commits.</p></details><details class="rise"><summary>Why automate reconciliation?</summary><p>At high volume, manual matching of internal records to provider settlement files becomes a queue that never empties. Automated matching handles the routine cases and routes only genuine exceptions to people.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/fractional-cto/"><small>Service</small><b>Fractional CTO</b><span>I work as a part-time CTO for founders, CEOs and boards who need experienced technical judgement now, and a team that can carry it on after I step back.</span><i>→</i></a><a class="rcard rise" href="/technical-due-diligence/"><small>Service</small><b>Technical due diligence</b><span>I give investors an independent, plain-language view of a company&#x27;s technology, team and AI claims, so the risks are priced in before the deal closes, not discovered after.</span><i>→</i></a><a class="rcard rise" href="/insights/terraform-secrets-out-of-state/"><small>Insight</small><b>Keeping secrets out of Terraform state: a checklist for platform teams</b><span>Most organisations using Terraform have database passwords, API keys or private keys sitting in state files, often in plaintext. For years that was simply how Terraform worked. Since versions 1.10 and 1.11 it doesn&#x27;t have to be, but the fix needs deliberate migration.</span><i>→</i></a><a class="rcard rise" href="/insights/slos-error-budgets-small-teams/"><small>Insight</small><b>SLOs and error budgets for small teams: field notes on making reliability a decision, not a debate</b><span>In a small company, the argument between shipping features and fixing reliability usually gets settled by whoever is loudest that week. Service level objectives and error budgets turn it into a rule everyone agreed in advance. The Google SRE material is written for large organisations, but the core ideas scale down well.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: Scaling a payments platform past a million transactions a day without double charges">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
+        <p class="floc">United States &amp; UAE · working globally</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/uae/">Fractional CTO in the UAE</a></li></ul></div>
+      <div class="fc"><h4>Case studies</h4><ul><li><a href="/case-studies/startup-fractional-cto-seed-to-series-a/">Startup fractional CTO, seed to Series A</a></li><li><a href="/case-studies/private-equity-ai-technical-due-diligence/">Private equity AI technical due diligence</a></li><li><a href="/case-studies/telecom-observability-slos/">Telecom observability and SLOs</a></li><li><a href="/case-studies/real-estate-document-intake-automation/">Real estate document intake automation</a></li><li><a href="/#work">Engagement snapshots</a></li><li><a href="/case-studies/">All case studies →</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/terraform-secrets-out-of-state/">Keeping secrets out of Terraform state: a checklist for platform teams</a></li><li><a href="/insights/slos-error-budgets-small-teams/">SLOs and error budgets for small teams: field notes on making reliability a decision, not a debate</a></li><li><a href="/insights/speculative-decoding-private-llms/">Speculative decoding for private LLMs: faster tokens without changing the answers</a></li><li><a href="/insights/real-world-evidence-study-designs-omop/">Real-world evidence on OMOP: comparing five study designs for treatment effects</a></li><li><a href="/insights/eu-ai-act-gpai-fine-tuning-provider/">Fine-tuning a foundation model? When the EU AI Act makes you a general-purpose AI provider</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>

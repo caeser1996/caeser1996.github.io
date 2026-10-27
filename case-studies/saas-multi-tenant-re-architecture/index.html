@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Case study: re-architecting a SaaS platform for tiered tenancy</title>
+<meta name="description" content="How a B2B SaaS platform tamed noisy neighbours and met enterprise isolation demands with pooled and dedicated tiers, per-tenant limits and tested isolation." />
+<meta name="keywords" content="multi-tenant SaaS case study, SaaS tenant isolation, noisy neighbour SaaS, pooled vs siloed tenancy, MongoDB multi-tenant, Kubernetes multi-tenancy, per-tenant quotas, Gateway API tenant routing, enterprise SaaS isolation, fractional CTO SaaS" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://asksumanta.com/case-studies/saas-multi-tenant-re-architecture/" />
+<meta name="theme-color" content="#111214" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="Case study: re-architecting a SaaS platform for tiered tenancy" />
+<meta property="og:description" content="How a B2B SaaS platform tamed noisy neighbours and met enterprise isolation demands with pooled and dedicated tiers, per-tenant limits and tested isolation." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://asksumanta.com/case-studies/saas-multi-tenant-re-architecture/" />
+<meta property="og:image" content="https://asksumanta.com/assets/og/saas-multi-tenant-re-architecture.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Case study: re-architecting a SaaS platform for tiered tenancy" />
+<meta name="twitter:description" content="How a B2B SaaS platform tamed noisy neighbours and met enterprise isolation demands with pooled and dedicated tiers, per-tenant limits and tested isolation." />
+<meta name="twitter:image" content="https://asksumanta.com/assets/og/saas-multi-tenant-re-architecture.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "Article", "headline": "Re-architecting a SaaS platform so one tenant can't slow down the rest", "description": "How a B2B SaaS platform tamed noisy neighbours and met enterprise isolation demands with pooled and dedicated tiers, per-tenant limits and tested isolation.", "articleSection": "Case study", "about": "SaaS · B2B platform", "datePublished": "2026-10-28T01:28:00+04:00", "dateModified": "2026-10-28T01:28:00+04:00", "citation": [{"@type": "CreativeWork", "name": "SaaS Tenant Isolation Strategies: core isolation concepts", "url": "https://docs.aws.amazon.com/whitepapers/latest/saas-tenant-isolation-strategies/core-isolation-concepts.html"}, {"@type": "CreativeWork", "name": "Multi-tenancy", "url": "https://kubernetes.io/docs/concepts/security/multi-tenancy/"}, {"@type": "CreativeWork", "name": "Build a Multi-Tenant Architecture", "url": "https://www.mongodb.com/docs/atlas/build-multi-tenant-arch/"}, {"@type": "CreativeWork", "name": "Baggage", "url": "https://opentelemetry.io/docs/concepts/signals/baggage/"}, {"@type": "CreativeWork", "name": "Resource Quotas", "url": "https://kubernetes.io/docs/concepts/policy/resource-quotas/"}], "author": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "publisher": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "mainEntityOfPage": "https://asksumanta.com/case-studies/saas-multi-tenant-re-architecture/", "image": "https://asksumanta.com/assets/og/saas-multi-tenant-re-architecture.png", "keywords": "multi-tenant SaaS case study, SaaS tenant isolation, noisy neighbour SaaS, pooled vs siloed tenancy, MongoDB multi-tenant, Kubernetes multi-tenancy, per-tenant quotas, Gateway API tenant routing, enterprise SaaS isolation, fractional CTO SaaS", "wordCount": 911}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://asksumanta.com/"}, {"@type": "ListItem", "position": 2, "name": "Case studies", "item": "https://asksumanta.com/case-studies/"}, {"@type": "ListItem", "position": 3, "name": "Re-architecting a SaaS platform so one tenant can't slow down the rest", "item": "https://asksumanta.com/case-studies/saas-multi-tenant-re-architecture/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Should every enterprise customer get a dedicated stack?", "acceptedAnswer": {"@type": "Answer", "text": "No. Dedicated tiers cost more to run and operate. Offer them where isolation, residency or performance requirements justify it, and keep most tenants pooled with strong logical isolation and limits."}}, {"@type": "Question", "name": "How do you prove tenant isolation to a buyer?", "acceptedAnswer": {"@type": "Answer", "text": "With automated tests that attempt cross-tenant access at each layer and fail the build if they succeed, plus the architecture and controls that explain why. Evidence from tests is more convincing than a questionnaire answer."}}, {"@type": "Question", "name": "What causes noisy neighbour problems?", "acceptedAnswer": {"@type": "Answer", "text": "Shared resources without per-tenant limits: database capacity, compute, queues and connection pools. The fix is tenant-aware limits at each shared layer and observability that shows which tenant is consuming what."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+</script>
+</head>
+<body class="sub is-post is-case">
+<div class="progress" id="progress"></div>
+<nav>
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="/#practice">Services</a>
+      <a href="/case-studies/">Case studies</a>
+      <a href="/insights/">Insights</a>
+      <a href="/#assess">Analyse</a>
+      <a href="/#connect">Connect</a>
+    </div>
+    <div class="nav-r">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/case-studies/">Case studies</a> <span>/</span> <em>Re-architecting a SaaS platform so one tenant can&#x27;t slow down the rest</em></div>
+    <div class="kicker">Case study · SaaS platform architecture</div>
+    <h1>Re-architecting a SaaS platform so one tenant can&#x27;t slow down the rest</h1>
+    <p class="sub-lede">A few heavy tenants could degrade the service for everyone, and enterprise buyers were asking for isolation guarantees the platform could not evidence. The goal was tiered tenancy: pooled by default, dedicated where it is worth paying for, with per-tenant limits and isolation proven by tests rather than asserted in a questionnaire.</p>
+    <div class="ameta"><span class="fmt">Case study</span><span>SaaS · B2B platform</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-10-28T01:28:00+04:00">28 Oct 2026 · 01:28 GST</time><span>8 min read</span></div><div class="atags"><span class="tagp">#platform</span><span class="tagp">#architecture</span><span class="tagp">#kubernetes</span><span class="tagp">#security</span><span class="tagp">#observability</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Case study cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><line x1="800" y1="139" x2="752" y2="278" class="cv-edge" opacity="0.02"/><line x1="800" y1="139" x2="888" y2="103" class="cv-edge" opacity="0.36"/><line x1="800" y1="139" x2="800" y2="182" class="cv-edge" opacity="0.71"/><line x1="800" y1="139" x2="782" y2="177" class="cv-edge" opacity="0.72"/><line x1="800" y1="139" x2="887" y2="198" class="cv-edge" opacity="0.30"/><line x1="923" y1="355" x2="992" y2="350" class="cv-edge" opacity="0.54"/><line x1="923" y1="355" x2="850" y2="281" class="cv-edge" opacity="0.31"/><line x1="923" y1="355" x2="906" y2="359" class="cv-edge" opacity="0.88"/><line x1="923" y1="355" x2="1014" y2="276" class="cv-edge" opacity="0.20"/><line x1="923" y1="355" x2="895" y2="255" class="cv-edge" opacity="0.31"/><line x1="923" y1="355" x2="1014" y2="293" class="cv-edge" opacity="0.27"/><line x1="992" y1="350" x2="906" y2="359" class="cv-edge" opacity="0.42"/><line x1="992" y1="350" x2="1014" y2="276" class="cv-edge" opacity="0.49"/><line x1="992" y1="350" x2="895" y2="255" class="cv-edge" opacity="0.09"/><line x1="992" y1="350" x2="1014" y2="293" class="cv-edge" opacity="0.59"/><line x1="992" y1="350" x2="1102" y2="249" class="cv-edge" opacity="0.00"/><line x1="633" y1="274" x2="752" y2="278" class="cv-edge hl" opacity="0.20"/><line x1="633" y1="274" x2="580" y2="253" class="cv-edge hl" opacity="0.62"/><line x1="633" y1="274" x2="531" y2="227" class="cv-edge hl" opacity="0.25"/><line x1="633" y1="274" x2="658" y2="230" class="cv-edge hl" opacity="0.66"/><line x1="633" y1="274" x2="540" y2="300" class="cv-edge hl" opacity="0.36"/><line x1="633" y1="274" x2="605" y2="326" class="cv-edge hl" opacity="0.61"/><line x1="752" y1="278" x2="850" y2="281" class="cv-edge" opacity="0.35"/><line x1="752" y1="278" x2="800" y2="182" class="cv-edge" opacity="0.29"/><line x1="752" y1="278" x2="895" y2="255" class="cv-edge" opacity="0.04"/><line x1="752" y1="278" x2="782" y2="177" class="cv-edge" opacity="0.30"/><line x1="752" y1="278" x2="658" y2="230" class="cv-edge hl" opacity="0.29"/><line x1="977" y1="150" x2="933" y2="42" class="cv-edge" opacity="0.22"/><line x1="977" y1="150" x2="888" y2="103" class="cv-edge" opacity="0.33"/><line x1="977" y1="150" x2="1108" y2="123" class="cv-edge" opacity="0.11"/><line x1="977" y1="150" x2="1014" y2="276" class="cv-edge" opacity="0.13"/><line x1="977" y1="150" x2="1114" y2="201" class="cv-edge" opacity="0.03"/><line x1="977" y1="150" x2="895" y2="255" class="cv-edge" opacity="0.12"/><line x1="977" y1="150" x2="1041" y2="119" class="cv-edge hl" opacity="0.53"/><line x1="977" y1="150" x2="954" y2="120" class="cv-edge" opacity="0.75"/><line x1="977" y1="150" x2="887" y2="198" class="cv-edge" opacity="0.32"/><line x1="977" y1="150" x2="1014" y2="293" class="cv-edge" opacity="0.02"/><line x1="933" y1="42" x2="888" y2="103" class="cv-edge" opacity="0.49"/><line x1="933" y1="42" x2="1041" y2="119" class="cv-edge hl" opacity="0.12"/><line x1="933" y1="42" x2="954" y2="120" class="cv-edge" opacity="0.46"/><line x1="888" y1="103" x2="800" y2="182" class="cv-edge" opacity="0.21"/><line x1="888" y1="103" x2="782" y2="177" class="cv-edge" opacity="0.14"/><line x1="888" y1="103" x2="954" y2="120" class="cv-edge" opacity="0.55"/><line x1="888" y1="103" x2="887" y2="198" class="cv-edge" opacity="0.37"/><line x1="1108" y1="123" x2="1114" y2="201" class="cv-edge" opacity="0.48"/><line x1="1108" y1="123" x2="1041" y2="119" class="cv-edge hl" opacity="0.55"/><line x1="1108" y1="123" x2="1102" y2="249" class="cv-edge" opacity="0.16"/><line x1="580" y1="253" x2="531" y2="227" class="cv-edge hl" opacity="0.63"/><line x1="580" y1="253" x2="658" y2="230" class="cv-edge hl" opacity="0.46"/><line x1="580" y1="253" x2="540" y2="300" class="cv-edge hl" opacity="0.58"/><line x1="580" y1="253" x2="605" y2="326" class="cv-edge hl" opacity="0.49"/><line x1="850" y1="281" x2="906" y2="359" class="cv-edge" opacity="0.36"/><line x1="850" y1="281" x2="800" y2="182" class="cv-edge" opacity="0.25"/><line x1="850" y1="281" x2="895" y2="255" class="cv-edge" opacity="0.65"/><line x1="850" y1="281" x2="782" y2="177" class="cv-edge" opacity="0.17"/><line x1="850" y1="281" x2="887" y2="198" class="cv-edge" opacity="0.40"/><line x1="906" y1="359" x2="1014" y2="276" class="cv-edge" opacity="0.09"/><line x1="906" y1="359" x2="895" y2="255" class="cv-edge" opacity="0.30"/><line x1="906" y1="359" x2="1014" y2="293" class="cv-edge" opacity="0.15"/><line x1="1014" y1="276" x2="1114" y2="201" class="cv-edge" opacity="0.17"/><line x1="1014" y1="276" x2="895" y2="255" class="cv-edge" opacity="0.20"/><line x1="1014" y1="276" x2="887" y2="198" class="cv-edge" opacity="0.01"/><line x1="1014" y1="276" x2="1014" y2="293" class="cv-edge" opacity="0.89"/><line x1="1014" y1="276" x2="1102" y2="249" class="cv-edge" opacity="0.38"/><line x1="800" y1="182" x2="895" y2="255" class="cv-edge" opacity="0.20"/><line x1="800" y1="182" x2="782" y2="177" class="cv-edge" opacity="0.88"/><line x1="800" y1="182" x2="658" y2="230" class="cv-edge hl" opacity="0.00"/><line x1="800" y1="182" x2="887" y2="198" class="cv-edge" opacity="0.41"/><line x1="531" y1="227" x2="658" y2="230" class="cv-edge hl" opacity="0.15"/><line x1="531" y1="227" x2="540" y2="300" class="cv-edge hl" opacity="0.51"/><line x1="531" y1="227" x2="605" y2="326" class="cv-edge" opacity="0.18"/><line x1="1114" y1="201" x2="1041" y2="119" class="cv-edge hl" opacity="0.27"/><line x1="1114" y1="201" x2="1014" y2="293" class="cv-edge" opacity="0.10"/><line x1="1114" y1="201" x2="1102" y2="249" class="cv-edge" opacity="0.67"/><line x1="895" y1="255" x2="782" y2="177" class="cv-edge" opacity="0.09"/><line x1="895" y1="255" x2="954" y2="120" class="cv-edge" opacity="0.02"/><line x1="895" y1="255" x2="887" y2="198" class="cv-edge" opacity="0.62"/><line x1="895" y1="255" x2="1014" y2="293" class="cv-edge" opacity="0.17"/><line x1="782" y1="177" x2="658" y2="230" class="cv-edge hl" opacity="0.10"/><line x1="782" y1="177" x2="887" y2="198" class="cv-edge" opacity="0.29"/><line x1="1041" y1="119" x2="954" y2="120" class="cv-edge hl" opacity="0.42"/><line x1="1041" y1="119" x2="1102" y2="249" class="cv-edge hl" opacity="0.04"/><line x1="658" y1="230" x2="540" y2="300" class="cv-edge hl" opacity="0.09"/><line x1="658" y1="230" x2="605" y2="326" class="cv-edge hl" opacity="0.27"/><line x1="540" y1="300" x2="605" y2="326" class="cv-edge hl" opacity="0.54"/><line x1="954" y1="120" x2="887" y2="198" class="cv-edge" opacity="0.31"/><line x1="1014" y1="293" x2="1102" y2="249" class="cv-edge" opacity="0.34"/><circle cx="800" cy="139" r="3" class="cv-dot"/><circle cx="923" cy="355" r="3" class="cv-dot"/><circle cx="992" cy="350" r="3" class="cv-dot"/><circle cx="633" cy="274" r="6" class="cv-dot hl"/><circle cx="752" cy="278" r="3" class="cv-dot"/><circle cx="977" cy="150" r="3" class="cv-dot"/><circle cx="933" cy="42" r="3" class="cv-dot"/><circle cx="888" cy="103" r="3" class="cv-dot"/><circle cx="1108" cy="123" r="3" class="cv-dot"/><circle cx="580" cy="253" r="6" class="cv-dot hl"/><circle cx="850" cy="281" r="3" class="cv-dot"/><circle cx="906" cy="359" r="3" class="cv-dot"/><circle cx="1014" cy="276" r="3" class="cv-dot"/><circle cx="800" cy="182" r="3" class="cv-dot"/><circle cx="531" cy="227" r="3" class="cv-dot"/><circle cx="1114" cy="201" r="3" class="cv-dot"/><circle cx="895" cy="255" r="3" class="cv-dot"/><circle cx="782" cy="177" r="3" class="cv-dot"/><circle cx="1041" cy="119" r="6" class="cv-dot hl"/><circle cx="658" cy="230" r="6" class="cv-dot hl"/><circle cx="540" cy="300" r="6" class="cv-dot hl"/><circle cx="954" cy="120" r="3" class="cv-dot"/><circle cx="887" cy="198" r="3" class="cv-dot"/><circle cx="605" cy="326" r="3" class="cv-dot"/><circle cx="1014" cy="293" r="3" class="cv-dot"/><circle cx="1102" cy="249" r="3" class="cv-dot"/><text x="60" y="90" class="cv-k">CASE STUDY · CASE STUDY · SAAS PLATFORM ARCHITECTURE</text><text x="60" y="350" class="cv-n">28 Oct 2026 · 01:28 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <section class="glance rise" aria-label="At a glance"><div class="kicker">At a glance</div><div class="glance-grid"><div><small>Sector</small><b>SaaS · B2B platform</b></div><div><small>My role</small><b>Fractional CTO and principal architect</b></div><div><small>Engagement</small><b>Architecture, delivery leadership and hand-off</b></div><div><small>Scope</small><b>Tenancy model, routing, data isolation, quotas, observability</b></div></div><div class="glance-out"><small>What changed</small><ul><li>A tenancy model with pooled and dedicated tiers, chosen per tenant rather than per platform</li><li>Per-tenant limits that stop one tenant&#x27;s load from degrading others</li><li>Tenant context carried end to end, so usage, cost and incidents are visible per tenant</li><li>Isolation evidence produced by automated tests, ready for enterprise security reviews</li></ul></div><div class="cs-stack"><span class="tag">MongoDB</span><span class="tag">Kubernetes</span><span class="tag">Gateway API</span><span class="tag">ResourceQuotas</span><span class="tag">OpenTelemetry</span><span class="tag">Tenant context propagation</span><span class="tag">Infrastructure as code</span><span class="tag">Isolation test suite</span></div><p class="glance-note">Anonymised composite. Client names, identifying details and confidential figures are withheld; public facts are cited in the references.</p></section><h2 id="the-situation">The situation</h2>
+<p>A B2B SaaS platform had grown on a single shared architecture: one application deployment, one database cluster, every tenant in the same collections. That served it well while tenants were similar in size. As larger customers arrived, two problems appeared together. A heavy import or reporting job from one tenant could slow the service for everyone. And enterprise prospects began asking, in security reviews, how their data was isolated and whether they could have dedicated infrastructure.</p>
+<p>The team's instinct was to give big customers their own copy of everything. That answers the sales question and creates an operations problem: many stacks to upgrade, monitor and pay for.</p>
+
+<h2 id="what-had-to-be-true">What had to be true</h2>
+<ul>
+<li><strong>Isolation as a choice per tenant</strong>, not one model forced on all.</li>
+<li><strong>One codebase and one release process</strong> across every tier.</li>
+<li><strong>Per-tenant limits</strong> at every shared resource.</li>
+<li><strong>Tenant context everywhere</strong>: in routing, data access, logs, traces and cost.</li>
+<li><strong>Isolation proven by tests</strong>, so the answer to a security review is evidence.</li>
+</ul>
+
+<h2 id="architecture">Architecture</h2>
+<p>AWS's tenant isolation guidance frames the options as silo (dedicated resources), pool (shared resources) and bridge (a mix chosen per layer)<sup class="cite"><a href="#ref-1">1</a></sup>. The design adopted that vocabulary directly: a pooled tier for most tenants and a dedicated tier for those whose requirements justify it, running the same services.</p>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Edge</small><div class="dgm-nodes"><span>Identity<em>tenant in token</em></span><span class="hl">Gateway API<em>tenant-aware routing</em></span><span>Rate limits<em>per tenant</em></span></div></div>
+<div class="dgm-tier"><small>Control plane</small><div class="dgm-nodes"><span>Tenant registry<em>tier, region, limits</em></span><span>Provisioning<em>infrastructure as code</em></span><span>Plan and quota config<em>versioned</em></span></div></div>
+<div class="dgm-tier"><small>Compute</small><div class="dgm-nodes"><span>Pooled namespace<em>shared services</em></span><span>Dedicated namespaces<em>per tenant</em></span><span>ResourceQuotas<em>per namespace</em></span></div></div>
+<div class="dgm-tier"><small>Data</small><div class="dgm-nodes"><span>Pooled cluster<em>tenantId on every document</em></span><span>Dedicated database or cluster<em>enterprise tier</em></span><span class="hl">Data access layer<em>tenant filter enforced</em></span></div></div>
+<div class="dgm-tier"><small>Assure</small><div class="dgm-nodes"><span class="hl">Isolation tests<em>every build</em></span><span>OpenTelemetry<em>tenant attributes</em></span><span>Per-tenant usage<em>cost and capacity</em></span></div></div>
+</div>
+<figcaption>Layered architecture: one control plane decides where each tenant runs; the same code serves both tiers.</figcaption>
+</figure>
+
+<h2 id="the-data-flow-end-to-end">The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Authenticate</b><span>Token carries the tenant identifier; nothing downstream trusts a header alone</span></li>
+<li class="hl"><b>Route</b><span>Gateway looks up the tenant's tier and sends the request to pooled or dedicated services</span></li>
+<li><b>Limit</b><span>Per-tenant rate and concurrency limits applied before work starts</span></li>
+<li class="hl"><b>Access data</b><span>Data layer injects the tenant filter or selects the tenant's database</span></li>
+<li><b>Observe</b><span>Tenant context propagated on traces, metrics and logs</span></li>
+<li><b>Account</b><span>Usage aggregated per tenant for capacity, cost and plan enforcement</span></li>
+</ol>
+<figcaption>Tenant context is set once at the edge and carried through every hop.</figcaption>
+</figure>
+<p>On the data side, MongoDB's guidance compares database-per-tenant with shared collections keyed by a tenant field, and notes that the shared model needs every query to filter by tenant<sup class="cite"><a href="#ref-3">3</a></sup>. That requirement was moved out of individual queries and into one data access layer. Detail in <a href="/insights/mongodb-multi-tenant-saas-patterns/">MongoDB multi-tenant SaaS patterns</a>.</p>
+
+<h2 id="the-hard-part-noisy-neighbours-at-every-layer">The hard part: noisy neighbours at every layer</h2>
+<p>Noisy neighbours are rarely one bottleneck. Limits had to exist at each shared resource, or load simply moved to the next one. The Kubernetes documentation treats noisy neighbours as a core multi-tenancy concern and points to resource quotas and node isolation as controls<sup class="cite"><a href="#ref-2">2</a></sup>; quotas cap aggregate consumption per namespace<sup class="cite"><a href="#ref-5">5</a></sup>. The layers addressed were:</p>
+<ul>
+<li><strong>Requests</strong>: per-tenant rate and concurrency limits at the gateway.</li>
+<li><strong>Background work</strong>: per-tenant queues or fair scheduling, so one tenant's bulk import cannot starve others.</li>
+<li><strong>Compute</strong>: dedicated namespaces with quotas for the dedicated tier; resource requests and limits in the pool.</li>
+<li><strong>Database</strong>: indexes that start with the tenant key, query timeouts, and heavy reporting moved off the primary path.</li>
+</ul>
+<p>None of that is manageable without seeing it per tenant. OpenTelemetry baggage carries key-value context such as a tenant identifier across service boundaries<sup class="cite"><a href="#ref-4">4</a></sup>, which let traces and metrics be broken down by tenant. More in <a href="/insights/kubernetes-multi-tenancy/">Kubernetes multi-tenancy</a>.</p>
+<div class="callout"><p>Isolation you cannot test is a claim. Isolation with a failing test when it breaks is a control.</p></div>
+
+<h2 id="how-the-engagement-ran">How the engagement ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Product and sales</small><ol><li>Define tier offers</li><li class="hl">Agree who qualifies</li><li>Use isolation evidence</li></ol></div>
+<div class="dgm-lane"><small>Engineering</small><ol><li>Tenant context and data layer</li><li>Limits at each layer</li><li class="hl">Isolation test suite</li></ol></div>
+<div class="dgm-lane"><small>Platform</small><ol><li>Provision dedicated tier</li><li>Per-tenant dashboards</li><li>Migrate tenants between tiers</li></ol></div>
+</div>
+<figcaption>Tiering is a product decision as much as an engineering one.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Assess</b><ul><li>Shared resource inventory</li><li>Noisy neighbour incidents</li><li>Enterprise requirements</li></ul></div>
+<div><small>Phase 2</small><b>Foundations</b><ul><li>Tenant context end to end</li><li>Data access layer</li><li>Per-tenant observability</li></ul></div>
+<div><small>Phase 3</small><b>Limits and tiers</b><ul><li>Gateway limits</li><li>Fair background work</li><li>Dedicated tier provisioning</li></ul></div>
+<div><small>Phase 4</small><b>Prove and hand off</b><ul><li>Isolation tests in CI</li><li>Tier migration runbook</li><li>Security review pack</li></ul></div>
+</div>
+<figcaption>Foundations first: without tenant context, neither limits nor evidence are possible.</figcaption>
+</figure>
+
+<h2 id="key-decisions-and-trade-offs">Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Pooled default, dedicated by exception</td><td>A stack per enterprise tenant</td><td>Isolation where it pays, without multiplying operations</td></tr>
+<tr><td>One codebase across tiers</td><td>Forked enterprise edition</td><td>One release process; no drift between tiers</td></tr>
+<tr><td>Tenant filter in a data access layer</td><td>Filter in each query</td><td>One place to enforce and test</td></tr>
+<tr><td>Gateway API for routing</td><td>Routing logic in each service</td><td>Tier routing declared at the edge</td></tr>
+<tr><td>Isolation tests in CI</td><td>Annual manual review</td><td>Continuous evidence; regressions caught before release</td></tr>
+</tbody>
+</table>
+
+<h2 id="what-i-d-do-again-and-differently">What I'd do again, and differently</h2>
+<p>Again: get tenant context right before anything else, and make isolation a test suite rather than a document. Differently: agree the tier definitions with product and sales earlier. The engineering was straightforward once everyone agreed what "dedicated" promised and who could buy it.</p>
+<p>If your platform is facing the same pressures, the <a href="/fractional-cto/">fractional CTO</a> page describes how I work with teams on it, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://docs.aws.amazon.com/whitepapers/latest/saas-tenant-isolation-strategies/core-isolation-concepts.html" target="_blank" rel="noopener">SaaS Tenant Isolation Strategies: core isolation concepts</a><small>Amazon Web Services</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://kubernetes.io/docs/concepts/security/multi-tenancy/" target="_blank" rel="noopener">Multi-tenancy</a><small>Kubernetes</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://www.mongodb.com/docs/atlas/build-multi-tenant-arch/" target="_blank" rel="noopener">Build a Multi-Tenant Architecture</a><small>MongoDB</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://opentelemetry.io/docs/concepts/signals/baggage/" target="_blank" rel="noopener">Baggage</a><small>OpenTelemetry</small></div></li><li id="ref-5"><span class="rn">5</span><div><a href="https://kubernetes.io/docs/concepts/policy/resource-quotas/" target="_blank" rel="noopener">Resource Quotas</a><small>Kubernetes</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fasksumanta.com%2Fcase-studies%2Fsaas-multi-tenant-re-architecture%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fasksumanta.com%2Fcase-studies%2Fsaas-multi-tenant-re-architecture%2F&amp;text=Re-architecting%20a%20SaaS%20platform%20so%20one%20tenant%20can%27t%20slow%20down%20the%20rest" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=Re-architecting%20a%20SaaS%20platform%20so%20one%20tenant%20can%27t%20slow%20down%20the%20rest%20https%3A%2F%2Fasksumanta.com%2Fcase-studies%2Fsaas-multi-tenant-re-architecture%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://asksumanta.com/case-studies/saas-multi-tenant-re-architecture/">Copy link</button></div>
+      <div class="pnav"><a class="pn prev" href="/case-studies/logistics-exception-handling-agents/"><small>← Previous</small><b>Triaging shipment exceptions with agents that ask before they act</b></a><a class="pn next" href="/case-studies/uae-government-sovereign-llm-service/"><small>Next →</small><b>Giving government teams generative AI without sending a byte out of the country</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#the-situation">The situation</a></li><li><a href="#what-had-to-be-true">What had to be true</a></li><li><a href="#architecture">Architecture</a></li><li><a href="#the-data-flow-end-to-end">The data flow, end to end</a></li><li><a href="#the-hard-part-noisy-neighbours-at-every-layer">The hard part: noisy neighbours at every layer</a></li><li><a href="#how-the-engagement-ran">How the engagement ran</a></li><li><a href="#key-decisions-and-trade-offs">Key decisions and trade-offs</a></li><li><a href="#what-i-d-do-again-and-differently">What I&#x27;d do again, and differently</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>Should every enterprise customer get a dedicated stack?</summary><p>No. Dedicated tiers cost more to run and operate. Offer them where isolation, residency or performance requirements justify it, and keep most tenants pooled with strong logical isolation and limits.</p></details><details class="rise"><summary>How do you prove tenant isolation to a buyer?</summary><p>With automated tests that attempt cross-tenant access at each layer and fail the build if they succeed, plus the architecture and controls that explain why. Evidence from tests is more convincing than a questionnaire answer.</p></details><details class="rise"><summary>What causes noisy neighbour problems?</summary><p>Shared resources without per-tenant limits: database capacity, compute, queues and connection pools. The fix is tenant-aware limits at each shared layer and observability that shows which tenant is consuming what.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/fractional-cto/"><small>Service</small><b>Fractional CTO</b><span>I work as a part-time CTO for founders, CEOs and boards who need experienced technical judgement now, and a team that can carry it on after I step back.</span><i>→</i></a><a class="rcard rise" href="/technical-due-diligence/"><small>Service</small><b>Technical due diligence</b><span>I give investors an independent, plain-language view of a company&#x27;s technology, team and AI claims, so the risks are priced in before the deal closes, not discovered after.</span><i>→</i></a><a class="rcard rise" href="/ai-architect/"><small>Service</small><b>AI &amp; LLM architecture</b><span>I design and build AI systems that leadership can trust: grounded in your data, measured by evaluations, governed by your rules and priced so they make sense at scale.</span><i>→</i></a><a class="rcard rise" href="/insights/terraform-secrets-out-of-state/"><small>Insight</small><b>Keeping secrets out of Terraform state: a checklist for platform teams</b><span>Most organisations using Terraform have database passwords, API keys or private keys sitting in state files, often in plaintext. For years that was simply how Terraform worked. Since versions 1.10 and 1.11 it doesn&#x27;t have to be, but the fix needs deliberate migration.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: Re-architecting a SaaS platform so one tenant can&#x27;t slow down the rest">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
+        <p class="floc">United States &amp; UAE · working globally</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/uae/">Fractional CTO in the UAE</a></li></ul></div>
+      <div class="fc"><h4>Case studies</h4><ul><li><a href="/case-studies/startup-fractional-cto-seed-to-series-a/">Startup fractional CTO, seed to Series A</a></li><li><a href="/case-studies/private-equity-ai-technical-due-diligence/">Private equity AI technical due diligence</a></li><li><a href="/case-studies/telecom-observability-slos/">Telecom observability and SLOs</a></li><li><a href="/case-studies/real-estate-document-intake-automation/">Real estate document intake automation</a></li><li><a href="/#work">Engagement snapshots</a></li><li><a href="/case-studies/">All case studies →</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/terraform-secrets-out-of-state/">Keeping secrets out of Terraform state: a checklist for platform teams</a></li><li><a href="/insights/slos-error-budgets-small-teams/">SLOs and error budgets for small teams: field notes on making reliability a decision, not a debate</a></li><li><a href="/insights/speculative-decoding-private-llms/">Speculative decoding for private LLMs: faster tokens without changing the answers</a></li><li><a href="/insights/real-world-evidence-study-designs-omop/">Real-world evidence on OMOP: comparing five study designs for treatment effects</a></li><li><a href="/insights/eu-ai-act-gpai-fine-tuning-provider/">Fine-tuning a foundation model? When the EU AI Act makes you a general-purpose AI provider</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>

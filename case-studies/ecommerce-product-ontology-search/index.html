@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Case study: a product ontology for e-commerce search and AI</title>
+<meta name="description" content="How an online retailer replaced inconsistent categories with a SKOS taxonomy, a small OWL core and SHACL validation, making search, filters and AI shopping reliable." />
+<meta name="keywords" content="product ontology case study, e-commerce taxonomy, SKOS product taxonomy, SHACL validation catalogue, OWL product model, product attribute normalisation, AI shopping assistant data, faceted search taxonomy, schema.org Product, ontology architect" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://asksumanta.com/case-studies/ecommerce-product-ontology-search/" />
+<meta name="theme-color" content="#111214" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="Case study: a product ontology for e-commerce search and AI" />
+<meta property="og:description" content="How an online retailer replaced inconsistent categories with a SKOS taxonomy, a small OWL core and SHACL validation, making search, filters and AI shopping reliable." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://asksumanta.com/case-studies/ecommerce-product-ontology-search/" />
+<meta property="og:image" content="https://asksumanta.com/assets/og/ecommerce-product-ontology-search.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Case study: a product ontology for e-commerce search and AI" />
+<meta name="twitter:description" content="How an online retailer replaced inconsistent categories with a SKOS taxonomy, a small OWL core and SHACL validation, making search, filters and AI shopping reliable." />
+<meta name="twitter:image" content="https://asksumanta.com/assets/og/ecommerce-product-ontology-search.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "Article", "headline": "Fixing product search and AI shopping by fixing what the catalogue means", "description": "How an online retailer replaced inconsistent categories with a SKOS taxonomy, a small OWL core and SHACL validation, making search, filters and AI shopping reliable.", "articleSection": "Case study", "about": "E-commerce · Multi-supplier marketplace", "datePublished": "2026-10-28T01:22:00+04:00", "dateModified": "2026-10-28T01:22:00+04:00", "citation": [{"@type": "CreativeWork", "name": "SKOS Simple Knowledge Organization System Reference", "url": "https://www.w3.org/TR/skos-reference/"}, {"@type": "CreativeWork", "name": "OWL 2 Web Ontology Language Document Overview (Second Edition)", "url": "https://www.w3.org/TR/owl2-overview/"}, {"@type": "CreativeWork", "name": "Shapes Constraint Language (SHACL)", "url": "https://www.w3.org/TR/2017/REC-shacl-20170720/"}, {"@type": "CreativeWork", "name": "Product", "url": "https://schema.org/Product"}], "author": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "publisher": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "mainEntityOfPage": "https://asksumanta.com/case-studies/ecommerce-product-ontology-search/", "image": "https://asksumanta.com/assets/og/ecommerce-product-ontology-search.png", "keywords": "product ontology case study, e-commerce taxonomy, SKOS product taxonomy, SHACL validation catalogue, OWL product model, product attribute normalisation, AI shopping assistant data, faceted search taxonomy, schema.org Product, ontology architect", "wordCount": 917}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://asksumanta.com/"}, {"@type": "ListItem", "position": 2, "name": "Case studies", "item": "https://asksumanta.com/case-studies/"}, {"@type": "ListItem", "position": 3, "name": "Fixing product search and AI shopping by fixing what the catalogue means", "item": "https://asksumanta.com/case-studies/ecommerce-product-ontology-search/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Why SKOS rather than OWL for a product taxonomy?", "acceptedAnswer": {"@type": "Answer", "text": "SKOS is built for concept schemes with broader and narrower relations, preferred and alternative labels, which is what categories and synonyms need. OWL is kept for the small set of classes and properties where formal semantics actually matter."}}, {"@type": "Question", "name": "What does SHACL add to a catalogue pipeline?", "acceptedAnswer": {"@type": "Answer", "text": "SHACL expresses the rules a product must meet, such as required attributes per category, allowed values and units, and produces a validation report. That turns data quality into an automated gate on every load."}}, {"@type": "Question", "name": "Does an AI shopping assistant need an ontology?", "acceptedAnswer": {"@type": "Answer", "text": "It needs consistent facts. An ontology gives the assistant normalised attributes and synonyms to filter and compare on, rather than relying on the model to interpret inconsistent supplier text."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+</script>
+</head>
+<body class="sub is-post is-case">
+<div class="progress" id="progress"></div>
+<nav>
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="/#practice">Services</a>
+      <a href="/case-studies/">Case studies</a>
+      <a href="/insights/">Insights</a>
+      <a href="/#assess">Analyse</a>
+      <a href="/#connect">Connect</a>
+    </div>
+    <div class="nav-r">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/case-studies/">Case studies</a> <span>/</span> <em>Fixing product search and AI shopping by fixing what the catalogue means</em></div>
+    <div class="kicker">Case study · E-commerce ontology</div>
+    <h1>Fixing product search and AI shopping by fixing what the catalogue means</h1>
+    <p class="sub-lede">Supplier feeds arrived with their own categories, attribute names and units. Search filters broke, facets contradicted each other and an AI shopping assistant gave confident answers from messy data. The fix was a governed product ontology that every catalogue load is mapped to and validated against.</p>
+    <div class="ameta"><span class="fmt">Case study</span><span>E-commerce · Multi-supplier marketplace</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-10-28T01:22:00+04:00">28 Oct 2026 · 01:22 GST</time><span>8 min read</span></div><div class="atags"><span class="tagp">#ontology</span><span class="tagp">#knowledge-graph</span><span class="tagp">#data</span><span class="tagp">#ai</span><span class="tagp">#governance</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Case study cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><line x1="934" y1="173" x2="1077" y2="141" class="cv-edge" opacity="0.03"/><line x1="934" y1="173" x2="1006" y2="198" class="cv-edge" opacity="0.49"/><line x1="934" y1="173" x2="1030" y2="263" class="cv-edge" opacity="0.12"/><line x1="934" y1="173" x2="1022" y2="81" class="cv-edge" opacity="0.15"/><line x1="713" y1="205" x2="614" y2="244" class="cv-edge hl" opacity="0.29"/><line x1="713" y1="205" x2="573" y2="184" class="cv-edge hl" opacity="0.06"/><line x1="713" y1="205" x2="607" y2="162" class="cv-edge hl" opacity="0.24"/><line x1="713" y1="205" x2="627" y2="222" class="cv-edge hl" opacity="0.42"/><line x1="713" y1="205" x2="794" y2="95" class="cv-edge hl" opacity="0.09"/><line x1="713" y1="205" x2="704" y2="191" class="cv-edge hl" opacity="0.89"/><line x1="713" y1="205" x2="627" y2="231" class="cv-edge hl" opacity="0.40"/><line x1="1130" y1="46" x2="1106" y2="115" class="cv-edge hl" opacity="0.51"/><line x1="1130" y1="46" x2="1077" y2="141" class="cv-edge" opacity="0.27"/><line x1="1130" y1="46" x2="1022" y2="81" class="cv-edge" opacity="0.24"/><line x1="532" y1="206" x2="559" y2="284" class="cv-edge" opacity="0.45"/><line x1="532" y1="206" x2="614" y2="244" class="cv-edge" opacity="0.39"/><line x1="532" y1="206" x2="573" y2="184" class="cv-edge" opacity="0.69"/><line x1="532" y1="206" x2="526" y2="80" class="cv-edge" opacity="0.16"/><line x1="532" y1="206" x2="607" y2="162" class="cv-edge" opacity="0.42"/><line x1="532" y1="206" x2="627" y2="222" class="cv-edge hl" opacity="0.36"/><line x1="532" y1="206" x2="562" y2="348" class="cv-edge hl" opacity="0.03"/><line x1="532" y1="206" x2="560" y2="67" class="cv-edge" opacity="0.05"/><line x1="532" y1="206" x2="627" y2="231" class="cv-edge" opacity="0.34"/><line x1="532" y1="206" x2="533" y2="114" class="cv-edge" opacity="0.39"/><line x1="532" y1="206" x2="544" y2="227" class="cv-edge" opacity="0.84"/><line x1="1106" y1="115" x2="1077" y2="141" class="cv-edge hl" opacity="0.74"/><line x1="1106" y1="115" x2="1006" y2="198" class="cv-edge hl" opacity="0.13"/><line x1="1106" y1="115" x2="1022" y2="81" class="cv-edge hl" opacity="0.39"/><line x1="559" y1="284" x2="614" y2="244" class="cv-edge" opacity="0.54"/><line x1="559" y1="284" x2="573" y2="184" class="cv-edge" opacity="0.33"/><line x1="559" y1="284" x2="607" y2="162" class="cv-edge" opacity="0.13"/><line x1="559" y1="284" x2="627" y2="222" class="cv-edge hl" opacity="0.39"/><line x1="559" y1="284" x2="562" y2="348" class="cv-edge hl" opacity="0.57"/><line x1="559" y1="284" x2="627" y2="231" class="cv-edge" opacity="0.42"/><line x1="559" y1="284" x2="544" y2="227" class="cv-edge" opacity="0.61"/><line x1="1077" y1="141" x2="1006" y2="198" class="cv-edge" opacity="0.40"/><line x1="1077" y1="141" x2="1030" y2="263" class="cv-edge" opacity="0.13"/><line x1="1077" y1="141" x2="1022" y2="81" class="cv-edge" opacity="0.45"/><line x1="1006" y1="198" x2="1030" y2="263" class="cv-edge" opacity="0.54"/><line x1="1006" y1="198" x2="1022" y2="81" class="cv-edge" opacity="0.21"/><line x1="614" y1="244" x2="573" y2="184" class="cv-edge" opacity="0.51"/><line x1="614" y1="244" x2="607" y2="162" class="cv-edge" opacity="0.45"/><line x1="614" y1="244" x2="627" y2="222" class="cv-edge hl" opacity="0.83"/><line x1="614" y1="244" x2="562" y2="348" class="cv-edge hl" opacity="0.22"/><line x1="614" y1="244" x2="704" y2="191" class="cv-edge" opacity="0.31"/><line x1="614" y1="244" x2="627" y2="231" class="cv-edge" opacity="0.88"/><line x1="614" y1="244" x2="544" y2="227" class="cv-edge" opacity="0.52"/><line x1="808" y1="69" x2="686" y2="53" class="cv-edge" opacity="0.18"/><line x1="808" y1="69" x2="794" y2="95" class="cv-edge" opacity="0.80"/><line x1="573" y1="184" x2="526" y2="80" class="cv-edge" opacity="0.24"/><line x1="573" y1="184" x2="607" y2="162" class="cv-edge" opacity="0.73"/><line x1="573" y1="184" x2="627" y2="222" class="cv-edge hl" opacity="0.56"/><line x1="573" y1="184" x2="704" y2="191" class="cv-edge" opacity="0.13"/><line x1="573" y1="184" x2="560" y2="67" class="cv-edge" opacity="0.21"/><line x1="573" y1="184" x2="627" y2="231" class="cv-edge" opacity="0.52"/><line x1="573" y1="184" x2="533" y2="114" class="cv-edge" opacity="0.47"/><line x1="573" y1="184" x2="544" y2="227" class="cv-edge" opacity="0.65"/><line x1="817" y1="377" x2="927" y2="359" class="cv-edge hl" opacity="0.25"/><line x1="526" y1="80" x2="607" y2="162" class="cv-edge" opacity="0.23"/><line x1="526" y1="80" x2="560" y2="67" class="cv-edge" opacity="0.76"/><line x1="526" y1="80" x2="533" y2="114" class="cv-edge" opacity="0.77"/><line x1="526" y1="80" x2="544" y2="227" class="cv-edge" opacity="0.01"/><line x1="607" y1="162" x2="686" y2="53" class="cv-edge" opacity="0.10"/><line x1="607" y1="162" x2="627" y2="222" class="cv-edge hl" opacity="0.57"/><line x1="607" y1="162" x2="704" y2="191" class="cv-edge" opacity="0.32"/><line x1="607" y1="162" x2="560" y2="67" class="cv-edge" opacity="0.29"/><line x1="607" y1="162" x2="627" y2="231" class="cv-edge" opacity="0.52"/><line x1="607" y1="162" x2="533" y2="114" class="cv-edge" opacity="0.42"/><line x1="607" y1="162" x2="544" y2="227" class="cv-edge" opacity="0.40"/><line x1="686" y1="53" x2="794" y2="95" class="cv-edge" opacity="0.23"/><line x1="686" y1="53" x2="704" y2="191" class="cv-edge" opacity="0.07"/><line x1="686" y1="53" x2="560" y2="67" class="cv-edge" opacity="0.15"/><line x1="1030" y1="263" x2="927" y2="359" class="cv-edge" opacity="0.06"/><line x1="627" y1="222" x2="562" y2="348" class="cv-edge hl" opacity="0.05"/><line x1="627" y1="222" x2="704" y2="191" class="cv-edge hl" opacity="0.45"/><line x1="627" y1="222" x2="627" y2="231" class="cv-edge hl" opacity="0.94"/><line x1="627" y1="222" x2="533" y2="114" class="cv-edge hl" opacity="0.05"/><line x1="627" y1="222" x2="544" y2="227" class="cv-edge hl" opacity="0.45"/><line x1="562" y1="348" x2="627" y2="231" class="cv-edge hl" opacity="0.10"/><line x1="562" y1="348" x2="544" y2="227" class="cv-edge hl" opacity="0.18"/><line x1="794" y1="95" x2="704" y2="191" class="cv-edge" opacity="0.12"/><line x1="704" y1="191" x2="627" y2="231" class="cv-edge" opacity="0.42"/><line x1="560" y1="67" x2="533" y2="114" class="cv-edge" opacity="0.64"/><line x1="627" y1="231" x2="533" y2="114" class="cv-edge" opacity="0.00"/><line x1="627" y1="231" x2="544" y2="227" class="cv-edge" opacity="0.45"/><line x1="533" y1="114" x2="544" y2="227" class="cv-edge" opacity="0.25"/><circle cx="934" cy="173" r="3" class="cv-dot"/><circle cx="713" cy="205" r="6" class="cv-dot hl"/><circle cx="1130" cy="46" r="3" class="cv-dot"/><circle cx="532" cy="206" r="3" class="cv-dot"/><circle cx="1106" cy="115" r="6" class="cv-dot hl"/><circle cx="559" cy="284" r="3" class="cv-dot"/><circle cx="1077" cy="141" r="3" class="cv-dot"/><circle cx="1006" cy="198" r="3" class="cv-dot"/><circle cx="614" cy="244" r="3" class="cv-dot"/><circle cx="808" cy="69" r="3" class="cv-dot"/><circle cx="573" cy="184" r="3" class="cv-dot"/><circle cx="817" cy="377" r="6" class="cv-dot hl"/><circle cx="526" cy="80" r="3" class="cv-dot"/><circle cx="607" cy="162" r="3" class="cv-dot"/><circle cx="686" cy="53" r="3" class="cv-dot"/><circle cx="1030" cy="263" r="3" class="cv-dot"/><circle cx="627" cy="222" r="6" class="cv-dot hl"/><circle cx="1022" cy="81" r="3" class="cv-dot"/><circle cx="562" cy="348" r="6" class="cv-dot hl"/><circle cx="794" cy="95" r="3" class="cv-dot"/><circle cx="704" cy="191" r="3" class="cv-dot"/><circle cx="560" cy="67" r="3" class="cv-dot"/><circle cx="627" cy="231" r="3" class="cv-dot"/><circle cx="533" cy="114" r="3" class="cv-dot"/><circle cx="544" cy="227" r="3" class="cv-dot"/><circle cx="927" cy="359" r="3" class="cv-dot"/><text x="60" y="90" class="cv-k">CASE STUDY · CASE STUDY · E-COMMERCE ONTOLOGY</text><text x="60" y="350" class="cv-n">28 Oct 2026 · 01:22 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <section class="glance rise" aria-label="At a glance"><div class="kicker">At a glance</div><div class="glance-grid"><div><small>Sector</small><b>E-commerce · Multi-supplier marketplace</b></div><div><small>My role</small><b>Ontology and data architect</b></div><div><small>Engagement</small><b>Architecture, modelling and hand-off</b></div><div><small>Scope</small><b>Taxonomy, attribute model, validation, search and assistant integration</b></div></div><div class="glance-out"><small>What changed</small><ul><li>One governed category and attribute model shared by search, filters, feeds and the assistant</li><li>Catalogue loads validated on every run, with failing products quarantined and explained</li><li>Synonyms and preferred labels managed once and reused by search and the assistant</li><li>Merchandisers able to change the taxonomy through review, not engineering tickets</li></ul></div><div class="cs-stack"><span class="tag">SKOS</span><span class="tag">OWL 2</span><span class="tag">SHACL</span><span class="tag">RDF triple store</span><span class="tag">schema.org</span><span class="tag">Search engine</span><span class="tag">Vector search</span><span class="tag">Data pipeline</span></div><p class="glance-note">Anonymised composite. Client names, identifying details and confidential figures are withheld; public facts are cited in the references.</p></section><h2 id="the-situation">The situation</h2>
+<p>An online retailer sold products from many suppliers. Each supplier feed brought its own category tree, attribute names and conventions: one sent "colour", another "color_name", a third put colour in the title. Sizes, materials and units varied by feed. The internal category tree had grown by accretion, with near-duplicate branches and categories that meant different things to different teams.</p>
+<p>The symptoms were familiar. Filters returned partial results because half the products lacked the attribute being filtered. Search relied on hand-maintained synonym lists. A new AI shopping assistant made the problem more visible: asked to compare products, it reasoned confidently over data that was inconsistent underneath.</p>
+
+<h2 id="what-had-to-be-true">What had to be true</h2>
+<ul>
+<li><strong>One model of meaning</strong> for categories and attributes, shared by search, filters, feeds and the assistant.</li>
+<li><strong>Mapping, not rewriting</strong>: supplier data is mapped to the model, with the original preserved.</li>
+<li><strong>Validation on every load</strong>, so bad data is caught before customers see it.</li>
+<li><strong>Business ownership</strong>: merchandisers change the taxonomy through review, without engineering in the loop for every edit.</li>
+<li><strong>Standards, not a bespoke format</strong>, so the model outlives any one tool.</li>
+</ul>
+
+<h2 id="architecture">Architecture</h2>
+<p>The taxonomy was modelled in SKOS, which is designed for concept schemes with broader and narrower relations and preferred and alternative labels<sup class="cite"><a href="#ref-1">1</a></sup>. A deliberately small OWL core covered the classes and properties that needed formal definitions<sup class="cite"><a href="#ref-2">2</a></sup>. The reasoning behind that split is in <a href="/insights/skos-vs-owl-enterprise-taxonomies/">SKOS vs OWL for enterprise taxonomies</a>.</p>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Sources</small><div class="dgm-nodes"><span>Supplier feeds<em>CSV, XML, API</em></span><span>Product master<em>internal</em></span><span>Search logs<em>queries, zero results</em></span></div></div>
+<div class="dgm-tier"><small>Model</small><div class="dgm-nodes"><span class="hl">Category scheme<em>SKOS</em></span><span>Attribute core<em>small OWL model</em></span><span>Units and value lists<em>controlled</em></span></div></div>
+<div class="dgm-tier"><small>Map</small><div class="dgm-nodes"><span>Supplier mappings<em>versioned, reviewed</em></span><span>Attribute extraction<em>rules, then ML</em></span><span>Unit normalisation<em>canonical units</em></span></div></div>
+<div class="dgm-tier"><small>Validate</small><div class="dgm-nodes"><span class="hl">SHACL shapes<em>per category</em></span><span>Quarantine<em>with reasons</em></span><span>Quality report<em>per supplier</em></span></div></div>
+<div class="dgm-tier"><small>Use</small><div class="dgm-nodes"><span>Search index<em>labels as synonyms</em></span><span>Facets and filters<em>from the model</em></span><span>AI assistant<em>structured attributes</em></span><span>Structured data<em>schema.org</em></span></div></div>
+</div>
+<figcaption>Layered architecture: one model of meaning, mapped into from every feed and published to every consumer.</figcaption>
+</figure>
+
+<h2 id="the-data-flow-end-to-end">The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Receive</b><span>Supplier feed lands raw, unchanged, with supplier and load identifiers</span></li>
+<li class="hl"><b>Map</b><span>Supplier categories and attributes mapped to concepts and properties</span></li>
+<li><b>Normalise</b><span>Units converted, values matched to controlled lists, originals kept</span></li>
+<li class="hl"><b>Validate</b><span>SHACL shapes check required attributes and values per category</span></li>
+<li><b>Publish</b><span>Valid products to search, facets and the assistant; failures quarantined</span></li>
+<li><b>Improve</b><span>Zero-result queries and quarantine reasons feed the taxonomy backlog</span></li>
+</ol>
+<figcaption>Validation is a gate: a product that fails its category's shape is held back with a readable reason.</figcaption>
+</figure>
+<p>SHACL describes the conditions data must meet and produces a validation report, which made it a natural release gate for each load<sup class="cite"><a href="#ref-3">3</a></sup>. Patterns for writing shapes are in <a href="/insights/shacl-validation-knowledge-graphs/">SHACL validation for knowledge graphs</a>.</p>
+
+<h2 id="the-hard-part-attributes-not-categories">The hard part: attributes, not categories</h2>
+<p>Agreeing a category tree was comparatively quick. Agreeing attributes was not, because attributes are where search filters and assistant answers actually come from. The work that made a difference:</p>
+<ul>
+<li><strong>Attributes defined per category</strong>, with required, recommended and optional tiers, so a shape knows what "complete" means for a sofa versus a shoe.</li>
+<li><strong>Controlled value lists</strong> with preferred and alternative labels, so "navy", "dark blue" and supplier codes resolve to one value while search still matches all of them.</li>
+<li><strong>Canonical units</strong> with conversion at load, never in the search layer.</li>
+<li><strong>Duplicate and variant handling</strong>, the same product from two suppliers, which is an entity resolution problem in its own right; see <a href="/insights/entity-resolution-knowledge-graphs/">entity resolution for knowledge graphs</a>.</li>
+</ul>
+<div class="callout"><p>An AI assistant is only as consistent as the attributes it reads. Many apparent "hallucinations" about products turn out to be faithful readings of contradictory data.</p></div>
+
+<h2 id="how-the-engagement-ran">How the engagement ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Merchandising</small><ol><li>Proposes category changes</li><li class="hl">Approves attribute rules</li><li>Owns value lists</li></ol></div>
+<div class="dgm-lane"><small>Data team</small><ol><li>Maintains supplier mappings</li><li>Runs validation</li><li>Works the quarantine</li></ol></div>
+<div class="dgm-lane"><small>Search and AI</small><ol><li>Consume published model</li><li class="hl">Report zero-result gaps</li><li>Test assistant answers</li></ol></div>
+</div>
+<figcaption>Ownership split: the business owns meaning, the data team owns mapping, consumers report gaps.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Discover</b><ul><li>Feed and attribute inventory</li><li>Search log analysis</li><li>Highest-value categories</li></ul></div>
+<div><small>Phase 2</small><b>Model</b><ul><li>SKOS category scheme</li><li>Attribute core</li><li>First SHACL shapes</li></ul></div>
+<div><small>Phase 3</small><b>Pipeline</b><ul><li>Supplier mappings</li><li>Validation gate</li><li>Quarantine and reports</li></ul></div>
+<div><small>Phase 4</small><b>Consume and hand off</b><ul><li>Search and facets</li><li>Assistant integration</li><li>Governance workflow</li></ul></div>
+</div>
+<figcaption>Phased delivery, starting with the categories that drove the most search traffic.</figcaption>
+</figure>
+<p>Product pages also emitted schema.org Product markup generated from the same model<sup class="cite"><a href="#ref-4">4</a></sup>, so structured data for external search stayed consistent with internal search. More in <a href="/insights/structured-data-for-ai-search/">structured data for AI search</a>.</p>
+
+<h2 id="key-decisions-and-trade-offs">Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>SKOS for the taxonomy</td><td>Full OWL ontology</td><td>Labels and hierarchy are what categories need; easier for the business to own</td></tr>
+<tr><td>Small OWL core</td><td>No formal model at all</td><td>Precise definitions where products are compared and filtered</td></tr>
+<tr><td>SHACL as a load gate</td><td>Ad hoc scripts in the pipeline</td><td>Declarative, standard rules with readable reports</td></tr>
+<tr><td>Keep supplier originals</td><td>Overwrite on mapping</td><td>Mappings can be corrected and replayed</td></tr>
+<tr><td>Assistant reads structured attributes</td><td>Assistant reads raw descriptions</td><td>Comparisons and filters grounded in validated facts</td></tr>
+</tbody>
+</table>
+
+<h2 id="what-i-d-do-again-and-differently">What I'd do again, and differently</h2>
+<p>Again: start from search logs and the categories that matter commercially, and make validation a gate rather than a report. Differently: put merchandising ownership and the review workflow in place before the model grows, not after. A taxonomy without a clear owner drifts back to where it started.</p>
+<p>If your catalogue or knowledge model has the same symptoms, the <a href="/ontology-knowledge-graph/">ontology and knowledge graph</a> page describes how I approach it, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://www.w3.org/TR/skos-reference/" target="_blank" rel="noopener">SKOS Simple Knowledge Organization System Reference</a><small>W3C</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://www.w3.org/TR/owl2-overview/" target="_blank" rel="noopener">OWL 2 Web Ontology Language Document Overview (Second Edition)</a><small>W3C</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://www.w3.org/TR/2017/REC-shacl-20170720/" target="_blank" rel="noopener">Shapes Constraint Language (SHACL)</a><small>W3C</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://schema.org/Product" target="_blank" rel="noopener">Product</a><small>Schema.org</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fasksumanta.com%2Fcase-studies%2Fecommerce-product-ontology-search%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fasksumanta.com%2Fcase-studies%2Fecommerce-product-ontology-search%2F&amp;text=Fixing%20product%20search%20and%20AI%20shopping%20by%20fixing%20what%20the%20catalogue%20means" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=Fixing%20product%20search%20and%20AI%20shopping%20by%20fixing%20what%20the%20catalogue%20means%20https%3A%2F%2Fasksumanta.com%2Fcase-studies%2Fecommerce-product-ontology-search%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://asksumanta.com/case-studies/ecommerce-product-ontology-search/">Copy link</button></div>
+      <div class="pnav"><a class="pn prev" href="/case-studies/bank-kyc-policy-assistant-rag/"><small>← Previous</small><b>Giving KYC analysts cited answers from policy, without giving up control</b></a><a class="pn next" href="/case-studies/retail-real-time-inventory-cdc/"><small>Next →</small><b>Replacing nightly stock syncs with a live inventory stream</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#the-situation">The situation</a></li><li><a href="#what-had-to-be-true">What had to be true</a></li><li><a href="#architecture">Architecture</a></li><li><a href="#the-data-flow-end-to-end">The data flow, end to end</a></li><li><a href="#the-hard-part-attributes-not-categories">The hard part: attributes, not categories</a></li><li><a href="#how-the-engagement-ran">How the engagement ran</a></li><li><a href="#key-decisions-and-trade-offs">Key decisions and trade-offs</a></li><li><a href="#what-i-d-do-again-and-differently">What I&#x27;d do again, and differently</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>Why SKOS rather than OWL for a product taxonomy?</summary><p>SKOS is built for concept schemes with broader and narrower relations, preferred and alternative labels, which is what categories and synonyms need. OWL is kept for the small set of classes and properties where formal semantics actually matter.</p></details><details class="rise"><summary>What does SHACL add to a catalogue pipeline?</summary><p>SHACL expresses the rules a product must meet, such as required attributes per category, allowed values and units, and produces a validation report. That turns data quality into an automated gate on every load.</p></details><details class="rise"><summary>Does an AI shopping assistant need an ontology?</summary><p>It needs consistent facts. An ontology gives the assistant normalised attributes and synonyms to filter and compare on, rather than relying on the model to interpret inconsistent supplier text.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/ontology-knowledge-graph/"><small>Service</small><b>Ontology &amp; knowledge graphs</b><span>I help organisations agree what their data means, write it down as an ontology and put it to work in a knowledge graph that analytics, APIs and AI agents can all rely on.</span><i>→</i></a><a class="rcard rise" href="/ai-architect/"><small>Service</small><b>AI &amp; LLM architecture</b><span>I design and build AI systems that leadership can trust: grounded in your data, measured by evaluations, governed by your rules and priced so they make sense at scale.</span><i>→</i></a><a class="rcard rise" href="/fractional-cto/"><small>Service</small><b>Fractional CTO</b><span>I work as a part-time CTO for founders, CEOs and boards who need experienced technical judgement now, and a team that can carry it on after I step back.</span><i>→</i></a><a class="rcard rise" href="/insights/terraform-secrets-out-of-state/"><small>Insight</small><b>Keeping secrets out of Terraform state: a checklist for platform teams</b><span>Most organisations using Terraform have database passwords, API keys or private keys sitting in state files, often in plaintext. For years that was simply how Terraform worked. Since versions 1.10 and 1.11 it doesn&#x27;t have to be, but the fix needs deliberate migration.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: Fixing product search and AI shopping by fixing what the catalogue means">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
+        <p class="floc">United States &amp; UAE · working globally</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/uae/">Fractional CTO in the UAE</a></li></ul></div>
+      <div class="fc"><h4>Case studies</h4><ul><li><a href="/case-studies/startup-fractional-cto-seed-to-series-a/">Startup fractional CTO, seed to Series A</a></li><li><a href="/case-studies/private-equity-ai-technical-due-diligence/">Private equity AI technical due diligence</a></li><li><a href="/case-studies/telecom-observability-slos/">Telecom observability and SLOs</a></li><li><a href="/case-studies/real-estate-document-intake-automation/">Real estate document intake automation</a></li><li><a href="/#work">Engagement snapshots</a></li><li><a href="/case-studies/">All case studies →</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/terraform-secrets-out-of-state/">Keeping secrets out of Terraform state: a checklist for platform teams</a></li><li><a href="/insights/slos-error-budgets-small-teams/">SLOs and error budgets for small teams: field notes on making reliability a decision, not a debate</a></li><li><a href="/insights/speculative-decoding-private-llms/">Speculative decoding for private LLMs: faster tokens without changing the answers</a></li><li><a href="/insights/real-world-evidence-study-designs-omop/">Real-world evidence on OMOP: comparing five study designs for treatment effects</a></li><li><a href="/insights/eu-ai-act-gpai-fine-tuning-provider/">Fine-tuning a foundation model? When the EU AI Act makes you a general-purpose AI provider</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>
