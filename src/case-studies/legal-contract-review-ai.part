@@ -1,0 +1,88 @@
+<!--{"title": "Case study: contract review against a playbook, with citations", "description": "How a legal team moved from manual playbook checks to AI-assisted review: structured clause extraction, playbook comparison and cited suggestions lawyers accept.", "h1": "Helping lawyers review contracts against the playbook without giving up the final word", "kicker": "Case study · Legal AI", "lede": "Every incoming contract was compared to the playbook by hand, clause by clause, under deadline. The goal was not to replace that judgement but to prepare it: extract the clauses, compare them to the playbook, and propose cited redlines a lawyer accepts, edits or rejects.", "date": "2026-10-28", "datetime": "2026-10-28T01:36:00+04:00", "readtime": "8 min read", "short": "Legal contract review with citations", "sector": "Legal · In-house and advisory", "role": "AI architect", "engagement": "Architecture, evaluation design and build", "scope": "Clause extraction, playbook modelling, comparison, review workflow, evaluation", "stack": ["LLM with structured outputs", "JSON Schema", "Long-context models", "Retrieval over playbook and precedents", "Document parsing", "Evaluation harness", "Review UI", "Audit log"], "outcomes": ["Every contract arrives with clauses extracted and mapped to the playbook before a lawyer opens it", "Suggestions cite both the contract text and the playbook position they rely on", "Lawyers accept, edit or reject each suggestion, and those decisions feed evaluation", "Playbook positions maintained as structured data rather than a document nobody updates"], "tags": ["ai", "llm", "governance", "security", "architecture"], "keywords": ["AI contract review", "legal AI case study", "contract playbook automation", "clause extraction LLM", "structured outputs", "cited redlines", "legal document AI", "long context vs RAG", "LLM evaluation legal", "human in the loop AI"], "faq": [["Can AI review contracts on its own?", "It shouldn't. The reliable pattern is AI preparing the review: extracting clauses, comparing them to the playbook and proposing cited changes, with a lawyer making every decision."], ["Why structured outputs for clause extraction?", "A schema forces the model to return the same fields every time, such as clause type, location, quoted text and playbook position, so the output can be validated, compared and displayed without fragile parsing."], ["Long context or RAG for contracts?", "Both, for different jobs. The contract under review usually fits in context and should be read whole; the playbook, fallback positions and precedents are better retrieved selectively."]], "related": ["/ai-architect/", "/fractional-cto/", "/technical-due-diligence/"], "citations": [{"title": "CUAD: An Expert-Annotated NLP Dataset for Legal Contract Review", "url": "https://arxiv.org/abs/2103.06268", "publisher": "Hendrycks et al. (arXiv; NeurIPS 2021 Datasets and Benchmarks)", "date": "2021"}, {"title": "Structured outputs", "url": "https://platform.claude.com/docs/en/build-with-claude/structured-outputs", "publisher": "Anthropic documentation"}, {"title": "Lost in the Middle: How Language Models Use Long Contexts", "url": "https://arxiv.org/abs/2307.03172", "publisher": "Liu et al. (arXiv; TACL)", "date": "2023"}, {"title": "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks", "url": "https://arxiv.org/abs/2005.11401", "publisher": "Lewis et al. (arXiv; NeurIPS 2020)", "date": "2020"}, {"title": "OWASP Top 10 for LLM Applications 2025", "url": "https://genai.owasp.org/resource/owasp-top-10-for-llm-applications-2025/", "publisher": "OWASP GenAI Security Project"}]}-->
+<h2>The situation</h2>
+<p>A legal team handled a steady flow of commercial agreements: supplier contracts, NDAs, services agreements, licences. Each one was checked against an internal playbook that set out preferred positions, acceptable fallbacks and red lines for clauses such as liability caps, indemnities, termination, governing law and data protection. The work was skilled but repetitive, and it bunched up at quarter end when everything was urgent.</p>
+<p>The team had tried generic AI chat tools. The answers sounded plausible, cited nothing, and didn't know the playbook. Nobody trusted them, rightly.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>The lawyer decides</strong>. The system prepares and proposes; it never sends a redline on its own.</li>
+<li><strong>Every suggestion is cited</strong> to the exact contract text and the playbook position it relies on.</li>
+<li><strong>Consistent structure</strong>, so outputs can be validated and compared, not just read.</li>
+<li><strong>Measured accuracy</strong> per clause type, on the team's own contracts, before anyone relies on it.</li>
+<li><strong>Confidentiality</strong>: contract text handled under the firm's existing data controls.</li>
+</ul>
+<p>Contract review is a well-studied task: the CUAD dataset, built with legal experts, frames it as finding the clauses a reviewer needs to see across dozens of categories<sup class="cite"><a href="#ref-1">1</a></sup>. That framing, extraction first and judgement second, shaped the design.</p>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Intake</small><div class="dgm-nodes"><span>Upload<em>Word, PDF</em></span><span>Parsing<em>structure, numbering</em></span><span>Contract type<em>classified, confirmed</em></span></div></div>
+<div class="dgm-tier"><small>Extract</small><div class="dgm-nodes"><span class="hl">Clause extraction<em>JSON Schema output</em></span><span>Location anchors<em>section and span</em></span><span>Validation<em>quotes must match source</em></span></div></div>
+<div class="dgm-tier"><small>Knowledge</small><div class="dgm-nodes"><span>Playbook<em>structured positions</em></span><span>Fallback library<em>approved wording</em></span><span>Precedents<em>retrieved, scoped</em></span></div></div>
+<div class="dgm-tier"><small>Compare</small><div class="dgm-nodes"><span class="hl">Playbook comparison<em>per clause</em></span><span>Suggested redline<em>with citations</em></span><span>Risk flag<em>red line breached</em></span></div></div>
+<div class="dgm-tier"><small>Review</small><div class="dgm-nodes"><span class="hl">Lawyer review UI<em>accept, edit, reject</em></span><span>Audit log<em>who decided what</em></span><span>Evaluation store<em>decisions as labels</em></span></div></div>
+</div>
+<figcaption>Layered architecture: extraction and comparison are separate, validated steps; the lawyer is the last layer, not an optional one.</figcaption>
+</figure>
+<p>Extraction used structured outputs, where the model's response is constrained to a supplied JSON Schema<sup class="cite"><a href="#ref-2">2</a></sup>. Each clause came back with its type, section reference, verbatim quote and confidence. A deterministic check then confirmed that every quote actually appeared in the source document. See <a href="/insights/structured-outputs-reliable-llm-integration/">structured outputs for reliable LLM integration</a>.</p>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Upload</b><span>Contract parsed with its numbering and structure preserved</span></li>
+<li class="hl"><b>Extract</b><span>Clauses returned as schema-valid records with verbatim quotes</span></li>
+<li><b>Verify</b><span>Quotes checked against the source; mismatches flagged, not hidden</span></li>
+<li><b>Retrieve</b><span>Relevant playbook positions and fallbacks for each clause type</span></li>
+<li class="hl"><b>Compare</b><span>Clause against playbook; propose redline citing both texts</span></li>
+<li><b>Review</b><span>Lawyer accepts, edits or rejects; decision logged for evaluation</span></li>
+</ol>
+<figcaption>Two kinds of citation travel with every suggestion: where it is in the contract, and which playbook position it applies.</figcaption>
+</figure>
+
+<h2>The hard part: long context versus retrieval</h2>
+<p>A single contract usually fits within a modern model's context window, so the temptation is to put everything in: the contract, the whole playbook, and a pile of precedents. Research on long contexts shows models use information at the start and end of the input more reliably than information in the middle<sup class="cite"><a href="#ref-3">3</a></sup>, which is a poor property when the clause that matters is on page fourteen.</p>
+<p>The design split the jobs:</p>
+<ul>
+<li><strong>The contract is read whole</strong> for extraction, because cross-references and definitions matter.</li>
+<li><strong>The playbook is retrieved per clause</strong>, in the spirit of retrieval-augmented generation<sup class="cite"><a href="#ref-4">4</a></sup>, so each comparison sees only the relevant positions.</li>
+<li><strong>Comparison runs clause by clause</strong>, with small, focused prompts that are easier to evaluate.</li>
+</ul>
+<p>The trade-offs are covered in <a href="/insights/long-context-vs-rag/">long context vs RAG</a>.</p>
+<p>Contracts from counterparties are also untrusted input. Prompt injection tops the OWASP Top 10 for LLM applications<sup class="cite"><a href="#ref-5">5</a></sup>, so contract text was always treated as data, the model had no tools that could act on it, and outputs were constrained by schema. See <a href="/insights/prompt-injection-defence-for-agents/">prompt injection defence</a>.</p>
+<div class="callout"><p>A suggestion a lawyer can verify in ten seconds is worth more than a fluent paragraph they have to check from scratch.</p></div>
+
+<h2>How the engagement ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Lawyers</small><ol><li>Turn the playbook into positions</li><li class="hl">Label a test set</li><li>Review and decide</li></ol></div>
+<div class="dgm-lane"><small>System</small><ol><li>Extract and verify</li><li>Compare and cite</li><li>Log every decision</li></ol></div>
+<div class="dgm-lane"><small>AI lead</small><ol><li>Run evaluations per clause type</li><li class="hl">Gate releases on results</li><li>Tune prompts and schema</li></ol></div>
+</div>
+<figcaption>Lawyers define correctness; the evaluation gate decides what ships.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Playbook as data</b><ul><li>Clause taxonomy</li><li>Positions and fallbacks</li><li>Red lines</li></ul></div>
+<div><small>Phase 2</small><b>Extraction</b><ul><li>Schema design</li><li>Quote verification</li><li>Labelled test set</li></ul></div>
+<div><small>Phase 3</small><b>Comparison</b><ul><li>Per-clause retrieval</li><li>Cited suggestions</li><li>Review UI</li></ul></div>
+<div><small>Phase 4</small><b>Operate</b><ul><li>Evaluation gate</li><li>Decision feedback</li><li>More contract types</li></ul></div>
+</div>
+<figcaption>Phased delivery: one contract type end to end before broadening.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Structured extraction first</td><td>Free-text review in one prompt</td><td>Validatable, comparable, displayable output</td></tr>
+<tr><td>Verbatim quotes checked in code</td><td>Trust the model's quotes</td><td>Catches fabricated or paraphrased citations</td></tr>
+<tr><td>Playbook as structured positions</td><td>Playbook document in the prompt</td><td>Precise retrieval; easier to maintain</td></tr>
+<tr><td>Evaluation per clause type</td><td>One overall accuracy figure</td><td>Strong clause types ship; weak ones wait</td></tr>
+<tr><td>Lawyer decides every suggestion</td><td>Auto-apply high-confidence redlines</td><td>Accountability stays with the profession</td></tr>
+</tbody>
+</table>
+<p>Building evaluation sets that hold up in production is covered in <a href="/insights/llm-evaluation-sets-that-predict-production/">evaluation sets that predict production</a>.</p>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: turn the playbook into data before writing a prompt, and treat lawyer decisions as the evaluation signal. Differently: involve lawyers in schema design from the start. The clause taxonomy is a legal decision, and the earlier they own it, the fewer rework cycles follow.</p>
+<p>If you're considering AI for review work like this, the <a href="/ai-architect/">AI architect</a> page describes how I run these engagements, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>

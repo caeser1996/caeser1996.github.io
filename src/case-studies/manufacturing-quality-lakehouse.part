@@ -1,0 +1,89 @@
+<!--{"title": "Case study: a quality data lakehouse for a multi-plant manufacturer", "description": "How a manufacturer joined quality, production and supplier data across plants: an Iceberg lakehouse, data contracts per plant and governed quality metrics.", "h1": "Joining quality, production and supplier data so defects surface earlier", "kicker": "Case study · Data platforms", "lede": "Quality data in one system, production data in each plant's own stack, supplier data in spreadsheets and portals. Defects were found late because nobody could join the three. The goal was an open lakehouse fed by contracted data from every plant, with quality metrics everyone agreed on.", "date": "2026-10-28", "datetime": "2026-10-28T01:34:00+04:00", "readtime": "8 min read", "short": "Manufacturing quality data lakehouse", "sector": "Manufacturing · Multi-plant", "role": "Fractional CTO and data architect", "engagement": "Architecture, platform build and operating model", "scope": "Ingestion, data contracts, lakehouse, semantic layer, quality metrics", "stack": ["Apache Iceberg", "Spark", "Change data capture", "Open Data Contract Standard", "REST catalog", "Semantic layer", "Object storage", "Orchestration"], "outcomes": ["Quality, production and supplier data joinable at batch and lot level across plants", "Each plant's feed governed by a published contract with an owner", "One agreed definition for each quality metric, used by dashboards and analysts alike", "Breaking changes caught at the plant boundary instead of in month-end reports"], "tags": ["data", "platform", "governance", "streaming", "architecture"], "keywords": ["manufacturing data lakehouse", "quality data platform", "Apache Iceberg case study", "data contracts manufacturing", "ISA-95 data integration", "semantic layer metrics", "multi-plant data platform", "supplier quality data", "open table format", "manufacturing analytics architecture"], "faq": [["Why an open table format for manufacturing data?", "Plants and teams use different engines and tools. An open table format such as Apache Iceberg lets them read and write the same tables with consistent snapshots and schema evolution, without locking the data into one vendor's engine."], ["What does a data contract add?", "A contract states what a producer promises: schema, semantics, freshness and quality checks, plus an owner. It turns silent breaking changes into failed checks at the boundary, where the producing team can fix them."], ["Do plants need to replace their MES or quality systems?", "No. The lakehouse reads from existing systems through change data capture or extracts. The contract sits on the interface, not inside each plant's applications."]], "related": ["/fractional-cto/", "/ai-architect/", "/technical-due-diligence/"], "citations": [{"title": "ISA-95 Standard: Enterprise-Control System Integration", "url": "https://www.isa.org/standards-and-publications/isa-standards/isa-95-standard", "publisher": "International Society of Automation"}, {"title": "Iceberg Table Spec", "url": "https://iceberg.apache.org/spec/", "publisher": "Apache Iceberg"}, {"title": "Open Data Contract Standard (ODCS)", "url": "https://github.com/bitol-io/open-data-contract-standard", "publisher": "Bitol, Linux Foundation (GitHub)"}, {"title": "ODCS version 3: transforming data contracts with enhanced flexibility, integration and global collaboration", "url": "https://bitol.io/odcs-version-3-transforming-data-contracts-with-enhanced-flexibility-integration-and-global-collaboration/", "publisher": "Bitol, Linux Foundation"}]}-->
+<h2>The situation</h2>
+<p>A manufacturer with several plants had good systems and poor connections. Quality inspection results lived in a central quality system. Production parameters lived in each plant's execution and historian stack, configured differently at every site. Supplier certificates and incoming inspection data arrived as spreadsheets and portal exports. When a customer complaint came in, tracing it back to a material lot, a line, a shift and a process setting took days of manual joining, and by then more product had shipped.</p>
+<p>Previous attempts at a central warehouse had stalled. Every plant change broke a pipeline, and every report defined "first-pass yield" slightly differently.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>Joinable at the right grain</strong>: batch, lot, line and time, across quality, production and supplier data.</li>
+<li><strong>Plants accountable for their feeds</strong>, with a clear owner and a written promise for each.</li>
+<li><strong>Open storage</strong>, so different teams and engines could use the same tables.</li>
+<li><strong>One definition per metric</strong>, shared by dashboards, analysts and any future AI use.</li>
+<li><strong>No rip and replace</strong> of plant systems.</li>
+</ul>
+<p>ISA-95 framed the boundaries. It addresses the interface between enterprise business systems and manufacturing operations and control<sup class="cite"><a href="#ref-1">1</a></sup>, which is exactly where the lakehouse sat: reading from plant-level systems, serving enterprise-level analysis, owning neither.</p>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Plants</small><div class="dgm-nodes"><span>Execution systems<em>orders, genealogy</em></span><span>Historians<em>process parameters</em></span><span>Quality system<em>inspections, NCRs</em></span><span>Supplier data<em>certificates, incoming QC</em></span></div></div>
+<div class="dgm-tier"><small>Contract</small><div class="dgm-nodes"><span class="hl">Data contracts<em>one per feed, owned</em></span><span>Contract checks<em>schema, freshness, rules</em></span><span>Quarantine<em>failed batches</em></span></div></div>
+<div class="dgm-tier"><small>Lakehouse</small><div class="dgm-nodes"><span class="hl">Iceberg tables<em>raw, conformed, curated</em></span><span>REST catalog<em>one namespace per domain</em></span><span>Spark jobs<em>conform and join</em></span></div></div>
+<div class="dgm-tier"><small>Semantics</small><div class="dgm-nodes"><span class="hl">Semantic layer<em>governed metrics</em></span><span>Genealogy model<em>lot to product</em></span><span>Reference data<em>defect codes, sites</em></span></div></div>
+<div class="dgm-tier"><small>Use</small><div class="dgm-nodes"><span>Quality dashboards<em>per plant, per supplier</em></span><span>Alerts<em>drift and repeat defects</em></span><span>Analyst notebooks<em>root cause</em></span></div></div>
+</div>
+<figcaption>Layered architecture: contracts at the plant boundary, open tables in the middle, governed metrics on top.</figcaption>
+</figure>
+<p>Apache Iceberg tracks table state through metadata files replaced by atomic swaps, with snapshots and schema evolution defined in the specification<sup class="cite"><a href="#ref-2">2</a></sup>. That gave reproducible reads for investigations and safe schema changes when a plant added a parameter. See <a href="/insights/apache-iceberg-v3-lakehouse/">Apache Iceberg v3 for the lakehouse</a> and <a href="/insights/lakehouse-catalog-strategy-iceberg/">lakehouse catalog strategy</a>.</p>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Capture</b><span>Change data capture or scheduled extracts from each plant system</span></li>
+<li class="hl"><b>Check</b><span>Validate against the feed's contract; quarantine and notify the owner on failure</span></li>
+<li><b>Land</b><span>Append to raw Iceberg tables with source and contract version recorded</span></li>
+<li><b>Conform</b><span>Map plant codes to shared reference data; build lot genealogy</span></li>
+<li class="hl"><b>Define</b><span>Compute quality metrics once, in the semantic layer</span></li>
+<li><b>Act</b><span>Dashboards, alerts and investigations read governed metrics only</span></li>
+</ol>
+<figcaption>Every number on a dashboard traces back to a contracted feed and a table snapshot.</figcaption>
+</figure>
+<p>Capture patterns are covered in <a href="/insights/change-data-capture-event-streams/">change data capture and event streams</a>.</p>
+
+<h2>The hard part: getting plants to own a promise</h2>
+<p>The technology was well understood. The hard part was organisational: plants had never been asked to promise anything about their data, and a central team had always absorbed the breakage. Contracts changed that, but only once they were written in terms plants recognised.</p>
+<p>We used the Open Data Contract Standard, a YAML-based, platform-neutral format for agreements between data producers and consumers<sup class="cite"><a href="#ref-3">3</a></sup>; version 3 organises a contract into sections that include schema, data quality, service levels and team<sup class="cite"><a href="#ref-4">4</a></sup>. In practice:</p>
+<ul>
+<li>Contracts started small: schema, owner, freshness and a handful of rules the plant itself agreed were reasonable.</li>
+<li>A failed check went to the plant's named owner, not to the central team's backlog.</li>
+<li>Breaking changes required a new contract version and a notice period, agreed in a short change process.</li>
+<li>Plant-specific codes stayed in the feed; mapping to shared reference data was a central, versioned step.</li>
+</ul>
+<div class="callout"><p>A data contract is an organisational tool that happens to be written in YAML. Its value is the conversation it forces between producer and consumer.</p></div>
+<p>More in the <a href="/insights/data-contracts-playbook/">data contracts playbook</a>.</p>
+
+<h2>How the engagement ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Plant data owner</small><ol><li>Agree the contract</li><li class="hl">Fix failed checks at source</li><li>Announce changes</li></ol></div>
+<div class="dgm-lane"><small>Platform team</small><ol><li>Run checks and quarantine</li><li>Conform and join</li><li>Publish curated tables</li></ol></div>
+<div class="dgm-lane"><small>Quality leads</small><ol><li>Define metrics once</li><li class="hl">Review alerts</li><li>Drive supplier actions</li></ol></div>
+</div>
+<figcaption>Ownership by role: plants own feeds, the platform owns pipes, quality owns definitions.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Trace one complaint</b><ul><li>Walk an investigation end to end</li><li>Source inventory</li><li>Metric disagreements</li></ul></div>
+<div><small>Phase 2</small><b>Pilot plant</b><ul><li>First contracts</li><li>Iceberg tables and catalog</li><li>Lot genealogy</li></ul></div>
+<div><small>Phase 3</small><b>Metrics</b><ul><li>Semantic layer</li><li>Agreed definitions</li><li>Dashboards and alerts</li></ul></div>
+<div><small>Phase 4</small><b>Roll out</b><ul><li>Further plants</li><li>Supplier feeds</li><li>Change process</li></ul></div>
+</div>
+<figcaption>Phased delivery: one plant and one real investigation before scaling.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Apache Iceberg tables</td><td>Proprietary warehouse storage</td><td>Multiple engines on one copy; no lock-in</td></tr>
+<tr><td>Contracts at the plant boundary</td><td>Central team fixes breakages</td><td>Fixes happen where the change was made</td></tr>
+<tr><td>Metrics in a semantic layer</td><td>Definitions in each dashboard</td><td>One answer to "what is our yield?"</td></tr>
+<tr><td>Keep plant codes, map centrally</td><td>Force plants to standardise first</td><td>Delivery without waiting on every plant</td></tr>
+<tr><td>Pilot one plant end to end</td><td>All plants at once</td><td>Contract and genealogy lessons learned once</td></tr>
+</tbody>
+</table>
+<p>Why metrics belong in a semantic layer, especially if AI will query them later, is covered in <a href="/insights/text-to-sql-semantic-layer/">text-to-SQL and the semantic layer</a>.</p>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: start by tracing one real complaint end to end, and make plants owners rather than suppliers of data. Differently: agree metric definitions with quality leads before building dashboards, not alongside them. Every disagreement found late cost a rebuild.</p>
+<p>If you're facing something similar, the <a href="/fractional-cto/">fractional CTO</a> page describes how I run these engagements, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>

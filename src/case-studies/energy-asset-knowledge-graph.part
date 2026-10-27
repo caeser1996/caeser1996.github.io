@@ -1,0 +1,88 @@
+<!--{"title": "Case study: an asset knowledge graph for an energy operator", "description": "How an energy operator linked asset registers, work orders, sensor data and drawings into one knowledge graph, with cited natural-language answers for engineers.", "h1": "Connecting maintenance history, sensors and drawings so engineers can find root causes faster", "kicker": "Case study · Knowledge graphs", "lede": "Maintenance history in one system, sensor data in another, drawings and procedures in a document store. Every root-cause investigation started with an engineer stitching them together by hand. The goal was one asset knowledge graph that linked them, with an assistant that answers questions and shows its working.", "date": "2026-10-28", "datetime": "2026-10-28T01:32:00+04:00", "readtime": "8 min read", "short": "Energy asset knowledge graph", "sector": "Energy · Asset-intensive operations", "role": "Principal architect, knowledge graphs and AI", "engagement": "Architecture, ontology design and build", "scope": "Asset ontology, entity resolution, graph platform, time series links, engineer assistant", "stack": ["RDF / OWL ontology", "SHACL", "W3C SOSA/SSN", "Graph database", "Time series store", "Apache Iceberg", "GraphRAG", "LLM with tool calls"], "outcomes": ["One connected view of each asset: hierarchy, failures, work orders, sensors and documents", "Investigations start from a linked history instead of manual cross-referencing", "Answers from the assistant cite the work orders, readings and drawings they rely on", "A shared asset vocabulary that engineering, reliability and data teams maintain together"], "tags": ["ontology", "knowledge-graph", "data", "ai", "llm", "architecture"], "keywords": ["asset knowledge graph", "energy knowledge graph case study", "maintenance data ontology", "ISO 14224", "GraphRAG", "SHACL validation", "SOSA SSN ontology", "reliability engineering data", "industrial knowledge graph", "root cause analysis AI"], "faq": [["Why use a knowledge graph for asset data?", "Asset questions are about relationships: which components sit in which system, which work orders touched them, which sensors watch them and which drawings describe them. A graph stores those relationships directly, so they can be queried and traversed instead of rebuilt by hand."], ["Is a knowledge graph a replacement for the CMMS or historian?", "No. The systems of record stay where they are. The graph holds identifiers, relationships and summaries, and links back to the source systems for detail and high-volume time series."], ["Where does an LLM fit?", "As an interface. The assistant translates questions into graph and time series queries, then answers with citations to the records it used, so engineers can check the evidence."]], "related": ["/ontology-knowledge-graph/", "/ai-architect/", "/fractional-cto/"], "citations": [{"title": "ISO 14224:2016 Petroleum, petrochemical and natural gas industries: collection and exchange of reliability and maintenance data for equipment", "url": "https://www.iso.org/standard/64076.html", "publisher": "ISO", "date": "2016"}, {"title": "Semantic Sensor Network Ontology is a W3C Recommendation", "url": "https://www.w3.org/news/2017/semantic-sensor-network-ontology-is-a-w3c-recommendation/", "publisher": "W3C", "date": "2017"}, {"title": "Shapes Constraint Language (SHACL)", "url": "https://www.w3.org/TR/2017/REC-shacl-20170720/", "publisher": "W3C Recommendation", "date": "20 Jul 2017"}, {"title": "From Local to Global: A Graph RAG Approach to Query-Focused Summarization", "url": "https://arxiv.org/abs/2404.16130", "publisher": "Edge et al., Microsoft Research (arXiv)", "date": "2024"}, {"title": "Iceberg Table Spec", "url": "https://iceberg.apache.org/spec/", "publisher": "Apache Iceberg"}]}-->
+<h2>The situation</h2>
+<p>An energy operator ran a large estate of rotating equipment, vessels, pipework and instrumentation. When something failed, the reliability team asked the obvious questions: has this happened before, on this unit or on similar ones, what did the sensors show beforehand, and what did we change last time? Answering meant searching the maintenance system, exporting historian trends, finding the right revision of a drawing and reading free-text work order notes. Each investigation rebuilt the same picture from scratch.</p>
+<p>The data existed. The connections between it did not.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>One identity per asset</strong>, reconciled across the register, the maintenance system, tag lists and documents.</li>
+<li><strong>A shared vocabulary</strong> for equipment classes, failure modes and maintenance actions, so "similar assets" and "same failure" mean something consistent.</li>
+<li><strong>Systems of record untouched</strong>: link to them, don't replace them.</li>
+<li><strong>Answers with evidence</strong>, because engineers will not act on an unexplained answer.</li>
+<li><strong>Owned by the business</strong>: reliability engineers, not just the data team, maintain the model.</li>
+</ul>
+
+<h2>Architecture</h2>
+<p>The ontology borrowed its structure from ISO 14224, which organises reliability and maintenance data into equipment, failure and maintenance categories with a defined equipment taxonomy<sup class="cite"><a href="#ref-1">1</a></sup>. Sensor concepts followed the W3C and OGC Semantic Sensor Network ontology, with SOSA as its lightweight core<sup class="cite"><a href="#ref-2">2</a></sup>, rather than inventing our own model of observations.</p>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Sources</small><div class="dgm-nodes"><span>Asset register<em>hierarchy, tags</em></span><span>Maintenance system<em>work orders, notes</em></span><span>Historian<em>sensor time series</em></span><span>Document store<em>drawings, procedures</em></span></div></div>
+<div class="dgm-tier"><small>Integrate</small><div class="dgm-nodes"><span class="hl">Entity resolution<em>tags, IDs, names</em></span><span>Text extraction<em>failure modes from notes</em></span><span>Lakehouse<em>Iceberg tables</em></span></div></div>
+<div class="dgm-tier"><small>Model</small><div class="dgm-nodes"><span class="hl">Asset ontology<em>ISO 14224 aligned</em></span><span>SOSA/SSN<em>sensors, observations</em></span><span>SHACL shapes<em>validation rules</em></span></div></div>
+<div class="dgm-tier"><small>Graph</small><div class="dgm-nodes"><span>Knowledge graph<em>assets, events, links</em></span><span>Time series pointers<em>no bulk copies</em></span><span>Document links<em>by revision</em></span></div></div>
+<div class="dgm-tier"><small>Use</small><div class="dgm-nodes"><span class="hl">Engineer assistant<em>cited answers</em></span><span>Graph queries<em>reliability analysis</em></span><span>Alerts<em>repeat failures</em></span></div></div>
+</div>
+<figcaption>Layered architecture: sources stay put; the graph holds identity, relationships and pointers.</figcaption>
+</figure>
+<p>Curated tables sat in Apache Iceberg, whose snapshot-based metadata gives versioned, reproducible inputs to every graph build<sup class="cite"><a href="#ref-5">5</a></sup>. See <a href="/insights/lakehouse-catalog-strategy-iceberg/">lakehouse catalog strategy</a> and <a href="/insights/ontology-vs-knowledge-graph-vs-semantic-layer/">ontology vs knowledge graph vs semantic layer</a>.</p>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Land</b><span>Register, work orders and document metadata land as versioned tables</span></li>
+<li class="hl"><b>Resolve</b><span>Match tags, IDs and names to one asset identity, with confidence scores</span></li>
+<li><b>Classify</b><span>Map equipment classes and failure modes to the shared vocabulary</span></li>
+<li class="hl"><b>Validate</b><span>SHACL shapes reject records that break the model before load</span></li>
+<li><b>Link</b><span>Attach sensor series and document revisions by reference</span></li>
+<li><b>Ask</b><span>Engineers query directly or through the assistant, with citations</span></li>
+</ol>
+<figcaption>Each graph build is reproducible from a known snapshot of the source tables.</figcaption>
+</figure>
+<p>SHACL let us express the rules ("every pump has exactly one parent system", "every work order references a resolved asset") as shapes that are validated on every build<sup class="cite"><a href="#ref-3">3</a></sup>. More in <a href="/insights/shacl-validation-knowledge-graphs/">SHACL validation for knowledge graphs</a>.</p>
+
+<h2>The hard part: deciding that two things are the same asset</h2>
+<p>Entity resolution took more effort than the graph itself. The same pump appeared under a tag number in the register, a slightly different tag in the maintenance system, a description in free-text notes and a drawing number in the document store. Some tags had been reused after equipment was replaced.</p>
+<ul>
+<li>Deterministic rules first (exact tag matches within a site), probabilistic matching second.</li>
+<li>Every match carries a confidence and a method, so low-confidence links are visible, not hidden.</li>
+<li>A review queue where reliability engineers confirm or reject uncertain matches; their decisions train the rules.</li>
+<li>Equipment replacement modelled explicitly, so history follows the functional location and the physical unit separately.</li>
+</ul>
+<p>The patterns are described in <a href="/insights/entity-resolution-knowledge-graphs/">entity resolution for knowledge graphs</a>.</p>
+<div class="callout"><p>A knowledge graph is only as good as its identities. Spend the first weeks on what counts as "the same thing", not on the database.</p></div>
+
+<h2>How the engagement ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Reliability engineers</small><ol><li>Bring real investigations</li><li class="hl">Confirm uncertain matches</li><li>Own failure mode vocabulary</li></ol></div>
+<div class="dgm-lane"><small>Data team</small><ol><li>Land and version sources</li><li>Run resolution and validation</li><li>Publish graph builds</li></ol></div>
+<div class="dgm-lane"><small>Assistant</small><ol><li>Translate question to queries</li><li class="hl">Answer with citations</li><li>Log questions it couldn't answer</li></ol></div>
+</div>
+<figcaption>Engineers own meaning; the data team owns pipelines; the assistant exposes gaps.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Questions</b><ul><li>Investigation walkthroughs</li><li>Source inventory</li><li>Competency questions</li></ul></div>
+<div><small>Phase 2</small><b>Model</b><ul><li>Asset ontology</li><li>SHACL shapes</li><li>One unit end to end</li></ul></div>
+<div><small>Phase 3</small><b>Resolve and link</b><ul><li>Entity resolution</li><li>Sensor and document links</li><li>Review queue</li></ul></div>
+<div><small>Phase 4</small><b>Assist and hand off</b><ul><li>Engineer assistant</li><li>Further units</li><li>Ownership model</li></ul></div>
+</div>
+<figcaption>Phased delivery: start from the questions engineers actually ask.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Align to ISO 14224 and SOSA/SSN</td><td>Bespoke model</td><td>Recognised structure; easier to extend and explain</td></tr>
+<tr><td>Pointers to time series</td><td>Copy readings into the graph</td><td>Graphs are poor at high-volume time series</td></tr>
+<tr><td>SHACL validation on every build</td><td>Trust the sources</td><td>Breakages caught before engineers see them</td></tr>
+<tr><td>Graph-first retrieval for the assistant</td><td>Vector search over documents only</td><td>Questions are about relationships, not just text</td></tr>
+<tr><td>Human review of uncertain matches</td><td>Fully automatic resolution</td><td>Wrong links destroy trust faster than missing ones</td></tr>
+</tbody>
+</table>
+<p>The assistant combined graph traversal with document retrieval. GraphRAG research shows graph-based indexes help with broad, corpus-level questions that plain vector retrieval handles poorly<sup class="cite"><a href="#ref-4">4</a></sup>; here the graph already existed, so retrieval followed its edges. See <a href="/insights/graphrag-when-it-beats-vector-rag/">when GraphRAG beats vector RAG</a>.</p>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: write competency questions with engineers before modelling anything, and make every link explainable. Differently: put the review queue in front of engineers sooner. Their corrections improved resolution more than any tuning we did.</p>
+<p>If you're connecting operational data like this, the <a href="/ontology-knowledge-graph/">ontology and knowledge graph</a> page describes how I run these engagements, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>

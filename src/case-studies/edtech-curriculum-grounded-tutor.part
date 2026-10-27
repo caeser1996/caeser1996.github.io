@@ -1,0 +1,85 @@
+<!--{"title": "Case study: a curriculum-grounded AI tutor for an education platform", "description": "How an education platform built an AI tutor grounded in its syllabus: curriculum retrieval, guided hints instead of answers, safety filters and teacher dashboards.", "h1": "Building an AI tutor that teaches the syllabus instead of doing the homework", "kicker": "Case study · Education AI", "lede": "Generic chatbots gave students answers that ignored the syllabus, skipped the reasoning and pitched the language at the wrong age. The goal was a tutor grounded in the curriculum, that guides with hints rather than handing over answers, stays safe for young learners and shows teachers where students are stuck.", "date": "2026-10-28", "datetime": "2026-10-28T01:38:00+04:00", "readtime": "8 min read", "short": "Curriculum-grounded AI tutor", "sector": "Education · Digital learning", "role": "AI architect", "engagement": "Architecture, pedagogy-aware design and build", "scope": "Curriculum retrieval, tutoring policy, safety, cost control, teacher analytics", "stack": ["LLM", "Retrieval over curriculum content", "Vector and keyword search", "Prompt caching", "Input and output guardrails", "Evaluation harness", "Event analytics", "Teacher dashboard"], "outcomes": ["Tutor responses grounded in the platform's own syllabus content and level", "Hints and questions by default, with full solutions only where the teaching design allows", "Safety controls on both student input and tutor output, tuned for the age range", "Teachers see common misconceptions and stuck points, not raw chat transcripts"], "tags": ["ai", "llm", "governance", "security", "finops"], "keywords": ["AI tutor case study", "curriculum grounded AI", "education RAG", "AI tutoring guardrails", "guided hints AI", "prompt caching cost", "AI in schools", "teacher dashboard AI", "edtech LLM architecture", "safe AI for students"], "faq": [["How do you stop an AI tutor from just giving answers?", "Make it a policy, not a hope. The tutoring policy decides when to hint, when to ask a question back and when a worked solution is appropriate, and evaluation checks that the model follows it."], ["Why ground the tutor in the curriculum?", "So explanations use the methods, notation and level the student is being taught. Retrieval from the platform's own content keeps the tutor aligned with the syllabus rather than the internet at large."], ["What does prompt caching do for a tutor?", "Tutoring prompts share a long, stable prefix: instructions, policy and curriculum context. Caching that prefix reduces repeated processing, which lowers cost and latency at classroom scale."]], "related": ["/ai-architect/", "/fractional-cto/", "/technical-due-diligence/"], "citations": [{"title": "Guidance for generative AI in education and research", "url": "https://www.unesco.org/en/articles/guidance-generative-ai-education-and-research", "publisher": "UNESCO", "date": "2023"}, {"title": "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks", "url": "https://arxiv.org/abs/2005.11401", "publisher": "Lewis et al. (arXiv; NeurIPS 2020)", "date": "2020"}, {"title": "Prompt caching", "url": "https://docs.claude.com/en/docs/build-with-claude/prompt-caching", "publisher": "Anthropic documentation"}, {"title": "OWASP Top 10 for LLM Applications 2025", "url": "https://genai.owasp.org/resource/owasp-top-10-for-llm-applications-2025/", "publisher": "OWASP GenAI Security Project"}]}-->
+<h2>The situation</h2>
+<p>An education platform served structured courses to school-age students, aligned to a defined syllabus. Students were already using general-purpose chatbots for homework help, and teachers could see the result: correct answers with methods the class had never been taught, explanations pitched at university level, and no sign the student had learned anything. The platform wanted its own tutor, built around how its courses actually teach, and one that teachers could see into and trust rather than work around.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>Grounded in the syllabus</strong>: the same methods, notation and vocabulary as the lessons.</li>
+<li><strong>Teaches, not tells</strong>: hints and questions first, with solutions only where the teaching design allows.</li>
+<li><strong>Safe for the age range</strong>, on what students type and on what the tutor says.</li>
+<li><strong>Useful to teachers</strong>, as insight into misconceptions rather than transcripts to read.</li>
+<li><strong>Affordable at classroom scale</strong>, when a whole year group logs in at once.</li>
+</ul>
+<p>UNESCO's guidance on generative AI in education calls for data privacy protections, an age limit for independent use and validation of tools for pedagogical and ethical suitability<sup class="cite"><a href="#ref-1">1</a></sup>. Those became design inputs, not an afterthought: the tutor was designed for supervised use within the platform, with schools in control of access.</p>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Student</small><div class="dgm-nodes"><span>Lesson context<em>course, unit, exercise</em></span><span>Tutor chat<em>in the lesson page</em></span><span>Work shown<em>steps, attempts</em></span></div></div>
+<div class="dgm-tier"><small>Safety</small><div class="dgm-nodes"><span class="hl">Input guardrails<em>age-appropriate, PII</em></span><span>Output guardrails<em>tone, content, level</em></span><span>Escalation<em>flag to teacher</em></span></div></div>
+<div class="dgm-tier"><small>Grounding</small><div class="dgm-nodes"><span class="hl">Curriculum retrieval<em>lessons, worked examples</em></span><span>Level metadata<em>year, unit, objective</em></span><span>Misconception library<em>authored by teachers</em></span></div></div>
+<div class="dgm-tier"><small>Tutoring</small><div class="dgm-nodes"><span class="hl">Tutoring policy<em>hint, question, explain</em></span><span>LLM<em>cached stable prefix</em></span><span>Evaluation<em>policy adherence</em></span></div></div>
+<div class="dgm-tier"><small>Insight</small><div class="dgm-nodes"><span>Learning events<em>attempts, hints used</em></span><span>Teacher dashboard<em>stuck points by objective</em></span><span>Content feedback<em>to curriculum team</em></span></div></div>
+</div>
+<figcaption>Layered architecture: safety wraps everything; the tutoring policy, not the model, decides how to respond.</figcaption>
+</figure>
+<p>Grounding followed the retrieval-augmented generation pattern, combining a model with retrieval from a specific corpus<sup class="cite"><a href="#ref-2">2</a></sup>, here the platform's own lessons and worked examples filtered by the student's course and unit. See the <a href="/insights/rag-to-production-checklist/">RAG to production checklist</a>.</p>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Ask</b><span>Student question arrives with lesson, unit and attempt context</span></li>
+<li><b>Screen</b><span>Input guardrails check content and strip personal details</span></li>
+<li class="hl"><b>Ground</b><span>Retrieve lesson content and known misconceptions for this objective</span></li>
+<li class="hl"><b>Guide</b><span>Tutoring policy chooses a hint, a question back or an explanation</span></li>
+<li><b>Check</b><span>Output guardrails confirm tone, level and that no answer is leaked</span></li>
+<li><b>Learn</b><span>Event recorded against the objective for teacher insight</span></li>
+</ol>
+<figcaption>The answer to "what is the student stuck on?" is captured as structured events, not left buried in chat.</figcaption>
+</figure>
+
+<h2>The hard part: hinting without leaking the answer</h2>
+<p>Getting a model to be helpful is easy. Getting it to be helpful in the right way, and to resist a determined student asking for "just the answer" five different ways, is the real work.</p>
+<ul>
+<li>The tutoring policy was explicit and versioned: which exercise types allow worked solutions, how many hints before a fuller explanation, when to ask the student to show their step.</li>
+<li>Teachers authored a misconception library per objective, so hints targeted the likely error rather than repeating the method.</li>
+<li>An output check compared tutor responses against the exercise's answer key to catch leaked final answers.</li>
+<li>Attempts to override the tutor's instructions were treated as expected behaviour, not edge cases; prompt injection is the first entry in the OWASP Top 10 for LLM applications<sup class="cite"><a href="#ref-4">4</a></sup>. See <a href="/insights/prompt-injection-defence-for-agents/">prompt injection defence</a>.</li>
+</ul>
+<div class="callout"><p>The best tutor response is often a question. Evaluate for that explicitly, because a model left alone will optimise for being helpful in the moment.</p></div>
+
+<h2>How the engagement ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Teachers</small><ol><li>Write misconceptions</li><li class="hl">Grade tutor transcripts</li><li>Act on dashboard insight</li></ol></div>
+<div class="dgm-lane"><small>Curriculum team</small><ol><li>Tag content by objective</li><li>Set tutoring policy per exercise</li><li>Fix gaps the tutor exposes</li></ol></div>
+<div class="dgm-lane"><small>Platform</small><ol><li>Retrieval and guardrails</li><li class="hl">Evaluation gate</li><li>Cost and latency monitoring</li></ol></div>
+</div>
+<figcaption>Educators define good tutoring; the platform measures it before release.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Pedagogy</b><ul><li>Tutoring policy</li><li>Safety requirements</li><li>Success criteria</li></ul></div>
+<div><small>Phase 2</small><b>One subject</b><ul><li>Content tagging</li><li>Retrieval and guardrails</li><li>Teacher-graded test set</li></ul></div>
+<div><small>Phase 3</small><b>Classroom pilot</b><ul><li>Supervised use</li><li>Teacher dashboard</li><li>Cost tuning</li></ul></div>
+<div><small>Phase 4</small><b>Extend</b><ul><li>Further subjects</li><li>Policy refinements</li><li>Content feedback loop</li></ul></div>
+</div>
+<figcaption>Phased delivery: one subject and a supervised pilot before broadening.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Retrieve from own curriculum</td><td>Rely on model knowledge</td><td>Matches taught methods, notation and level</td></tr>
+<tr><td>Explicit tutoring policy</td><td>"Be a good tutor" prompt</td><td>Testable behaviour per exercise type</td></tr>
+<tr><td>Guardrails on input and output</td><td>Output filtering only</td><td>Protects students and the tutor's instructions</td></tr>
+<tr><td>Prompt caching on stable prefix</td><td>Full prompt every turn</td><td>Lower cost and latency at peak load</td></tr>
+<tr><td>Events, not transcripts, for teachers</td><td>Teachers read chats</td><td>Insight at class level; less exposure of student text</td></tr>
+</tbody>
+</table>
+<p>Tutoring prompts share a long, stable prefix of instructions, policy and lesson context. Prompt caching reuses a processed prompt prefix across requests, so only the changing tail is processed fresh, and any change to the prefix is a cache miss<sup class="cite"><a href="#ref-3">3</a></sup>. Structuring prompts so the stable parts come first made caching effective. Details in <a href="/insights/prompt-caching-llm-cost-latency/">prompt caching for cost and latency</a>.</p>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: write the tutoring policy with teachers before writing prompts, and let teachers grade the test set. Differently: build the teacher dashboard earlier. Seeing where whole classes got stuck changed the content roadmap as much as the tutor.</p>
+<p>If you're building AI for learners, the <a href="/ai-architect/">AI architect</a> page describes how I run these engagements, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
