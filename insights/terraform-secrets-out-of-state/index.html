@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Keeping secrets out of Terraform state: a 2026 checklist</title>
+<meta name="description" content="Terraform state has long held plaintext secrets. Ephemeral values and write-only arguments now keep them out. A checklist to find exposure, migrate safely and harden state." />
+<meta name="keywords" content="Terraform secrets in state, Terraform ephemeral resources, write-only arguments, Terraform 1.11, Terraform sensitive values, Terraform state security, infrastructure as code security, secrets management, platform engineering, cloud architect" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://asksumanta.com/insights/terraform-secrets-out-of-state/" />
+<meta name="theme-color" content="#111214" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="Keeping secrets out of Terraform state: a 2026 checklist" />
+<meta property="og:description" content="Terraform state has long held plaintext secrets. Ephemeral values and write-only arguments now keep them out. A checklist to find exposure, migrate safely and harden state." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://asksumanta.com/insights/terraform-secrets-out-of-state/" />
+<meta property="og:image" content="https://asksumanta.com/assets/og/terraform-secrets-out-of-state.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Keeping secrets out of Terraform state: a 2026 checklist" />
+<meta name="twitter:description" content="Terraform state has long held plaintext secrets. Ephemeral values and write-only arguments now keep them out. A checklist to find exposure, migrate safely and harden state." />
+<meta name="twitter:image" content="https://asksumanta.com/assets/og/terraform-secrets-out-of-state.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "BlogPosting", "headline": "Keeping secrets out of Terraform state: a checklist for platform teams", "description": "Terraform state has long held plaintext secrets. Ephemeral values and write-only arguments now keep them out. A checklist to find exposure, migrate safely and harden state.", "datePublished": "2026-10-28T00:20:00+04:00", "dateModified": "2026-10-28T00:20:00+04:00", "articleSection": "Cloud · Terraform · Security", "genre": "Checklist", "citation": [{"@type": "CreativeWork", "name": "Terraform 1.10 improves handling secrets in state with ephemeral values", "url": "https://hashicorp.com/blog/terraform-1-10-improves-handling-secrets-in-state-with-ephemeral-values"}, {"@type": "CreativeWork", "name": "Terraform 1.11 brings ephemeral values to managed resources with write-only arguments", "url": "https://www.hashicorp.com/blog/terraform-1-11-ephemeral-values-managed-resources-write-only-arguments"}, {"@type": "CreativeWork", "name": "Manage sensitive data in your configuration", "url": "https://developer.hashicorp.com/terraform/language/v1.17.x/manage-sensitive-data"}, {"@type": "CreativeWork", "name": "Ephemerality in resources", "url": "https://developer.hashicorp.com/terraform/language/v1.11.x/resources/ephemeral"}, {"@type": "CreativeWork", "name": "Write-only arguments (Plugin Framework)", "url": "https://developer.hashicorp.com/terraform/plugin/framework/v1.15.x/resources/write-only-arguments"}, {"@type": "CreativeWork", "name": "Terraform 1.10 ephemeral values", "url": "https://www.infoq.com/news/2024/11/terraform-1-10-ephemeral-values"}], "author": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "publisher": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "mainEntityOfPage": "https://asksumanta.com/insights/terraform-secrets-out-of-state/", "image": "https://asksumanta.com/assets/og/terraform-secrets-out-of-state.png", "keywords": "Terraform secrets in state, Terraform ephemeral resources, write-only arguments, Terraform 1.11, Terraform sensitive values, Terraform state security, infrastructure as code security, secrets management, platform engineering, cloud architect", "wordCount": 603}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://asksumanta.com/"}, {"@type": "ListItem", "position": 2, "name": "Insights", "item": "https://asksumanta.com/insights/"}, {"@type": "ListItem", "position": 3, "name": "Keeping secrets out of Terraform state: a checklist for platform teams", "item": "https://asksumanta.com/insights/terraform-secrets-out-of-state/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Does marking a Terraform value as sensitive keep it out of state?", "acceptedAnswer": {"@type": "Answer", "text": "No. Marking a value as sensitive redacts it from plan and output display, but the value is still stored in the state file. To keep a secret out of state and plan files, use ephemeral resources and write-only arguments where providers support them."}}, {"@type": "Question", "name": "What are Terraform ephemeral resources?", "acceptedAnswer": {"@type": "Answer", "text": "Introduced in Terraform 1.10, ephemeral resource blocks fetch or generate values, such as secrets, that are available during a run but are not persisted in plan or state files. Previously, reading a secret through a data source stored it in both."}}, {"@type": "Question", "name": "What are write-only arguments?", "acceptedAnswer": {"@type": "Answer", "text": "Added in Terraform 1.11, write-only arguments on managed resources accept ephemeral values and are never stored in plan or state. Because Terraform can't see the stored value, a companion version argument is incremented to trigger an update."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+</script>
+</head>
+<body class="sub is-post">
+<div class="progress" id="progress"></div>
+<nav>
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="/#practice">Services</a>
+      <a href="/#work">Case studies</a>
+      <a href="/insights/">Insights</a>
+      <a href="/#assess">Analyse</a>
+      <a href="/#connect">Connect</a>
+    </div>
+    <div class="nav-r">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/insights/">Insights</a> <span>/</span> <em>Keeping secrets out of Terraform state: a checklist for platform teams</em></div>
+    <div class="kicker">Cloud · Terraform · Security</div>
+    <h1>Keeping secrets out of Terraform state: a checklist for platform teams</h1>
+    <p class="sub-lede">Most organisations using Terraform have database passwords, API keys or private keys sitting in state files, often in plaintext. For years that was simply how Terraform worked. Since versions 1.10 and 1.11 it doesn&#x27;t have to be, but the fix needs deliberate migration.</p>
+    <div class="ameta"><span class="fmt">Checklist</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-10-28T00:20:00+04:00">28 Oct 2026 · 00:20 GST</time><span>7 min read</span><span>6 sources</span></div><div class="atags"><span class="tagp">#cloud</span><span class="tagp">#terraform</span><span class="tagp">#security</span><span class="tagp">#platform</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Checklist cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><circle cx="560" cy="61" r="8" class="cv-dot hl"/><rect x="590" y="50" width="466" height="22" class="cv-bar hl"/><circle cx="560" cy="109" r="8" class="cv-dot"/><rect x="590" y="98" width="319" height="22" class="cv-bar"/><circle cx="560" cy="157" r="8" class="cv-dot"/><rect x="590" y="146" width="245" height="22" class="cv-bar"/><circle cx="560" cy="205" r="8" class="cv-dot hl"/><rect x="590" y="194" width="250" height="22" class="cv-bar hl"/><circle cx="560" cy="253" r="8" class="cv-dot"/><rect x="590" y="242" width="558" height="22" class="cv-bar"/><circle cx="560" cy="301" r="8" class="cv-dot"/><rect x="590" y="290" width="445" height="22" class="cv-bar"/><circle cx="560" cy="349" r="8" class="cv-dot hl"/><rect x="590" y="338" width="290" height="22" class="cv-bar hl"/><text x="60" y="90" class="cv-k">CHECKLIST · CLOUD · TERRAFORM · SECURITY</text><text x="60" y="350" class="cv-n">28 Oct 2026 · 00:20 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <p>Ask a platform team where their production database password lives and the answer is usually "in the secrets manager". Ask where else it lives and the honest answer is often "in the Terraform state file, in plaintext, readable by anyone with access to the state bucket". That was the default for years: a secret read through a data source or set on a resource ended up in both plan and state<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-6">6</a></sup>.</p>
+
+<section class="block">
+<h2 id="what-changed">What changed</h2>
+<table class="tbl">
+<thead><tr><th>Version</th><th>Feature</th><th>What it does</th></tr></thead>
+<tbody>
+<tr><td>1.10</td><td>Ephemeral values and resources</td><td>Fetch or generate values during a run without persisting them in plan or state<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-4">4</a></sup></td></tr>
+<tr><td>1.11</td><td>Write-only arguments</td><td>Pass ephemeral values to managed resources; never stored in plan or state<sup class="cite"><a href="#ref-2">2</a></sup></td></tr>
+</tbody>
+</table>
+<p>Together they close the gap: a secret can be read from a secrets manager ephemerally and handed to a resource through a write-only argument, without ever landing in state<sup class="cite"><a href="#ref-2">2</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>. There is one catch. Because Terraform never stores the value, it can't detect when it changes. Write-only arguments are paired with a version argument that you increment to trigger an update, and only the version is stored<sup class="cite"><a href="#ref-2">2</a></sup>. Support also depends on each provider, resource by resource<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<div class="callout"><p>"Sensitive" hides a value from your screen. "Ephemeral" and "write-only" keep it out of the file. Only the second protects you if the state bucket leaks.</p></div>
+</section>
+
+<section class="block">
+<h2 id="1-find-the-exposure">1. Find the exposure</h2>
+<ul>
+<li>Inventory every state file and who can read it, including CI service accounts and old backends nobody uses.</li>
+<li>Search state for secret-bearing attributes: passwords, private keys, tokens, connection strings.</li>
+<li>List data sources that read from secrets managers; each one is copying a secret into state today.</li>
+<li>Treat any secret that has ever been in state as potentially exposed to everyone with state access.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2 id="2-upgrade-the-toolchain">2. Upgrade the toolchain</h2>
+<ul>
+<li>Move to Terraform 1.11 or later so both features are available<sup class="cite"><a href="#ref-2">2</a></sup>.</li>
+<li>Upgrade providers and check their documentation for ephemeral resources and write-only arguments on the resources you use.</li>
+<li>If you run OpenTofu, check its equivalent features and version support separately; the choice is covered in <a href="/insights/opentofu-or-terraform-2026/">OpenTofu or Terraform</a>.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2 id="3-migrate-resource-by-resource">3. Migrate resource by resource</h2>
+<ul>
+<li>Replace secret-reading data sources with ephemeral resources where the provider offers them.</li>
+<li>Switch resources to write-only arguments for passwords and keys, with a version argument for rotation.</li>
+<li><strong>Rotate the secret as part of the migration.</strong> Moving to write-only stops future storage; it doesn't undo past exposure.</li>
+<li>Better still, let the platform generate and manage the secret itself, such as a managed database credential stored in the cloud's secrets manager, so Terraform never handles it.</li>
+<li>Update shared modules first, using the patterns in <a href="/insights/terraform-multi-cloud-module-design/">Terraform module design</a>, so every consumer benefits.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2 id="4-harden-state-anyway">4. Harden state anyway</h2>
+<ul>
+<li>Encrypt state at rest with customer-managed keys and restrict decrypt permissions.</li>
+<li>Limit state read access to the pipelines that need it; humans rarely do.</li>
+<li>Enable versioning and access logging on the state backend, and alert on unusual reads.</li>
+<li>Keep plan files out of CI artefacts and logs, or apply the same controls to them.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2 id="5-keep-it-from-regressing">5. Keep it from regressing</h2>
+<ul>
+<li>Add a policy check in CI that flags secret-bearing attributes set through normal arguments, and secret-reading data sources.</li>
+<li>Document the rotation process using version arguments, so it's routine rather than tribal knowledge.</li>
+<li>Include state access in access reviews and in your <a href="/insights/soc2-for-ai-startups/">SOC 2</a> evidence; it is often the broadest secret access in the company.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2 id="how-i-can-help">How I can help</h2>
+<p>I review and redesign infrastructure-as-code estates for security and maintainability, including secrets handling, state architecture and module standards. As a <a href="/fractional-cto/">fractional CTO</a> I can own that roadmap. Or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://hashicorp.com/blog/terraform-1-10-improves-handling-secrets-in-state-with-ephemeral-values" target="_blank" rel="noopener">Terraform 1.10 improves handling secrets in state with ephemeral values</a><small>HashiCorp · Nov 2024</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://www.hashicorp.com/blog/terraform-1-11-ephemeral-values-managed-resources-write-only-arguments" target="_blank" rel="noopener">Terraform 1.11 brings ephemeral values to managed resources with write-only arguments</a><small>HashiCorp · 2025</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://developer.hashicorp.com/terraform/language/v1.17.x/manage-sensitive-data" target="_blank" rel="noopener">Manage sensitive data in your configuration</a><small>HashiCorp developer documentation</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://developer.hashicorp.com/terraform/language/v1.11.x/resources/ephemeral" target="_blank" rel="noopener">Ephemerality in resources</a><small>HashiCorp developer documentation</small></div></li><li id="ref-5"><span class="rn">5</span><div><a href="https://developer.hashicorp.com/terraform/plugin/framework/v1.15.x/resources/write-only-arguments" target="_blank" rel="noopener">Write-only arguments (Plugin Framework)</a><small>HashiCorp developer documentation</small></div></li><li id="ref-6"><span class="rn">6</span><div><a href="https://www.infoq.com/news/2024/11/terraform-1-10-ephemeral-values" target="_blank" rel="noopener">Terraform 1.10 ephemeral values</a><small>InfoQ · Nov 2024</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fterraform-secrets-out-of-state%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fterraform-secrets-out-of-state%2F&amp;text=Keeping%20secrets%20out%20of%20Terraform%20state%3A%20a%20checklist%20for%20platform%20teams" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=Keeping%20secrets%20out%20of%20Terraform%20state%3A%20a%20checklist%20for%20platform%20teams%20https%3A%2F%2Fasksumanta.com%2Finsights%2Fterraform-secrets-out-of-state%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://asksumanta.com/insights/terraform-secrets-out-of-state/">Copy link</button></div>
+      <div class="pnav"><a class="pn prev" href="/insights/slos-error-budgets-small-teams/"><small>← Previous</small><b>SLOs and error budgets for small teams: field notes on making reliability a decision, not a debate</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#what-changed">What changed</a></li><li><a href="#1-find-the-exposure">1. Find the exposure</a></li><li><a href="#2-upgrade-the-toolchain">2. Upgrade the toolchain</a></li><li><a href="#3-migrate-resource-by-resource">3. Migrate resource by resource</a></li><li><a href="#4-harden-state-anyway">4. Harden state anyway</a></li><li><a href="#5-keep-it-from-regressing">5. Keep it from regressing</a></li><li><a href="#how-i-can-help">How I can help</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>Does marking a Terraform value as sensitive keep it out of state?</summary><p>No. Marking a value as sensitive redacts it from plan and output display, but the value is still stored in the state file. To keep a secret out of state and plan files, use ephemeral resources and write-only arguments where providers support them.</p></details><details class="rise"><summary>What are Terraform ephemeral resources?</summary><p>Introduced in Terraform 1.10, ephemeral resource blocks fetch or generate values, such as secrets, that are available during a run but are not persisted in plan or state files. Previously, reading a secret through a data source stored it in both.</p></details><details class="rise"><summary>What are write-only arguments?</summary><p>Added in Terraform 1.11, write-only arguments on managed resources accept ephemeral values and are never stored in plan or state. Because Terraform can&#x27;t see the stored value, a companion version argument is incremented to trigger an update.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/fractional-cto/"><small>Service</small><b>Fractional CTO</b><span>I work as a part-time CTO for founders, CEOs and boards who need experienced technical judgement now, and a team that can carry it on after I step back.</span><i>→</i></a><a class="rcard rise" href="/technical-due-diligence/"><small>Service</small><b>Technical due diligence</b><span>I give investors an independent, plain-language view of a company&#x27;s technology, team and AI claims, so the risks are priced in before the deal closes, not discovered after.</span><i>→</i></a><a class="rcard rise" href="/ai-architect/"><small>Service</small><b>AI &amp; LLM architecture</b><span>I design and build AI systems that leadership can trust: grounded in your data, measured by evaluations, governed by your rules and priced so they make sense at scale.</span><i>→</i></a><a class="rcard rise" href="/insights/slos-error-budgets-small-teams/"><small>Insight</small><b>SLOs and error budgets for small teams: field notes on making reliability a decision, not a debate</b><span>In a small company, the argument between shipping features and fixing reliability usually gets settled by whoever is loudest that week. Service level objectives and error budgets turn it into a rule everyone agreed in advance. The Google SRE material is written for large organisations, but the core ideas scale down well.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: Keeping secrets out of Terraform state: a checklist for platform teams">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
+        <p class="floc">United States &amp; UAE · working globally</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/uae/">Fractional CTO in the UAE</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/terraform-secrets-out-of-state/">Keeping secrets out of Terraform state: a checklist for platform teams</a></li><li><a href="/insights/slos-error-budgets-small-teams/">SLOs and error budgets for small teams: field notes on making reliability a decision, not a debate</a></li><li><a href="/insights/speculative-decoding-private-llms/">Speculative decoding for private LLMs: faster tokens without changing the answers</a></li><li><a href="/insights/real-world-evidence-study-designs-omop/">Real-world evidence on OMOP: comparing five study designs for treatment effects</a></li><li><a href="/insights/eu-ai-act-gpai-fine-tuning-provider/">Fine-tuning a foundation model? When the EU AI Act makes you a general-purpose AI provider</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>
