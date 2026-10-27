@@ -548,6 +548,42 @@ def home_snapshots():
     return s[i:j].strip() if i != -1 and j != -1 else ""
 
 
+def use_cases():
+    f = ROOT / "src/use-cases.json"
+    return json.loads(f.read_text()) if f.exists() else []
+
+
+def use_cases_html(ucs):
+    if not ucs:
+        return ""
+    sectors = sorted({u["sector"] for u in ucs})
+    chips = ('<div class="filters uc-filters" role="group" aria-label="Filter use cases by sector">'
+             '<button type="button" class="ucchip" aria-pressed="true" data-sector="">All sectors</button>'
+             + "".join(f'<button type="button" class="ucchip" aria-pressed="false" data-sector="{e(x)}">{e(x)}</button>'
+                       for x in sectors) + f'<span class="fcount">{len(ucs)} use cases</span></div>')
+    cards = []
+    for i, u in enumerate(ucs, 1):
+        flow = "".join(f'<li{" class=hl" if j == len(u["flow"]) - 2 else ""}>{e(st)}</li>'
+                       for j, st in enumerate(u["flow"]))
+        stack = "".join(f'<span class="tag">{e(t)}</span>' for t in u["stack"])
+        cards.append(
+            f'<article class="uc rise" id="uc-{e(u["id"])}" data-sector="{e(u["sector"])}">'
+            f'<div class="uc-top"><span class="uc-n">{i:02d}</span><span class="uc-s">{e(u["sector"])}</span></div>'
+            f'<h3>{e(u["title"])}</h3>'
+            f'<p class="uc-p"><b>Problem.</b> {e(u["problem"])}</p>'
+            f'<p class="uc-a"><b>Approach.</b> {e(u["approach"])}</p>'
+            f'<ol class="uc-flow" aria-label="Flow">{flow}</ol>'
+            f'<div class="cs-stack">{stack}</div>'
+            f'<a class="uc-more" href="{e(u["link"])}">Go deeper →</a></article>')
+    return f"""<section class="sub-sec" id="use-cases">
+    <div class="kicker">Use cases</div>
+    <h2>Twenty problems, twenty sectors, one way of working.</h2>
+    <p class="sub-lede" style="margin-bottom:24px">Typical use cases I design and build for: the problem, the approach, the flow and the stack. Pick your sector, then book a call to talk through yours.</p>
+    {chips}
+    <div class="ucs">{"".join(cards)}</div>
+  </section>"""
+
+
 def cases_index(pages, posts, cases):
     url = f"{SITE}/case-studies/"
     title = "Case studies: ontology, AI, healthcare data and scale"
@@ -557,6 +593,9 @@ def cases_index(pages, posts, cases):
         {"@type": "CollectionPage", "name": "Case studies", "url": url, "author": person_ref(), "description": desc,
          "hasPart": [{"@type": "Article", "headline": c["h1"], "url": f"{SITE}/case-studies/{c['slug']}/",
                       "datePublished": when(c)[0]} for c in cases]},
+        {"@type": "ItemList", "name": "Use cases", "itemListElement": [
+            {"@type": "ListItem", "position": i + 1, "name": u["title"], "description": u["problem"],
+             "url": f"{url}#uc-{u['id']}"} for i, u in enumerate(use_cases())]},
         crumbs([("Home", f"{SITE}/"), ("Case studies", url)])]}
     cards = "".join(case_card(c) for c in cases)
     tagset = sorted({t for c in cases for t in c.get("tags", [])})
@@ -566,6 +605,7 @@ def cases_index(pages, posts, cases):
     stack = sorted({t for c in cases for t in c.get("stack", [])})
     kw = sorted({k for c in cases for k in c["keywords"]})[:30]
     snaps = home_snapshots()
+    ucs = use_cases()
     snap_sec = f"""<section class="sub-sec" id="snapshots">
     <div class="kicker">Engagement snapshots</div>
     <h2>Five problems I'm regularly brought in to solve.</h2>
@@ -585,13 +625,13 @@ def cases_index(pages, posts, cases):
     <p class="sub-lede">Anonymised, composite case studies from the kinds of engagements I lead across healthcare, fintech, SaaS, e-commerce and AI. No logos and no confidential numbers: just how each system was designed, how the data flows, and why.</p>
     <div class="cs-stats">
       <div><b>{len(cases)}</b><small>in-depth case studies</small></div>
-      <div><b>5</b><small>engagement snapshots</small></div>
+      <div><b>{len(ucs)}</b><small>use cases</small></div>
       <div><b>{len(pages)}</b><small>practice areas</small></div>
       <div><b>{len(stack)}</b><small>technologies in play</small></div>
     </div>
     <div class="cta-row">
       <a class="btn mag" href="{CAL}" target="_blank" rel="noopener">Book a 30-min call →</a>
-      <a class="btn ghost mag" href="#snapshots">Jump to snapshots</a>
+      <a class="btn ghost mag" href="#use-cases">Browse {len(ucs)} use cases</a>
     </div>
   </header>
 
@@ -601,6 +641,8 @@ def cases_index(pages, posts, cases):
     {filt}
     <div class="posts">{cards}</div>
   </section>
+
+  {use_cases_html(ucs)}
 
   {snap_sec}
 
@@ -623,6 +665,11 @@ def cases_index(pages, posts, cases):
 {footer(pages, posts)}
 {SCRIPTS}
 <script>
+(function(){{var cs=[].slice.call(document.querySelectorAll('.ucchip')),cards=[].slice.call(document.querySelectorAll('.uc'));
+  cs.forEach(function(c){{c.addEventListener('click',function(){{var s=c.getAttribute('data-sector');
+    cs.forEach(function(x){{x.setAttribute('aria-pressed',x===c);}});
+    cards.forEach(function(k){{k.hidden=!!s&&k.getAttribute('data-sector')!==s;}});}});}});
+}})();
 (function(){{var list=document.getElementById('csTabs');if(!list)return;
   var ts=[].slice.call(list.querySelectorAll('[role=tab]'));
   function sel(i,f){{ts.forEach(function(t,j){{var on=j===i;t.setAttribute('aria-selected',on);t.tabIndex=on?0:-1;document.getElementById(t.getAttribute('aria-controls')).hidden=!on;}});if(f)ts[i].focus();}}
@@ -740,6 +787,8 @@ def main():
     if cases:
         llms += ["", "## Case studies"]
         llms += [f"- [{m['h1']}]({SITE}/case-studies/{m['slug']}/): {m['description']}" for m in cases]
+        llms += ["", "## Use cases"]
+        llms += [f"- [{u['title']} ({u['sector']})]({SITE}/case-studies/#uc-{u['id']}): {u['problem']}" for u in use_cases()]
     llms += ["", "## Profile", f"- [Home]({SITE}/): case studies, capabilities, playbook, FAQ",
              "- [GitHub](https://github.com/caeser1996)",
              "- [Publication, Science Immunology](https://doi.org/10.1126/sciimmunol.abl9165)", ""]
