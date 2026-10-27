@@ -27,6 +27,7 @@ EMAIL = "sumantamukhopadhyaywork@gmail.com"
 CAL = "https://calendar.app.google/fpARv4QHsYCLMo3a8"
 NAME = "Sumanta Mukhopadhyay"
 TODAY = datetime.date.today().isoformat()
+CASES = []  # filled in main(); used by the footer
 
 SERVICE_LABELS = {
     "fractional-cto": "Fractional CTO",
@@ -81,7 +82,7 @@ def nav():
     <a href="/" class="brand">Sumanta<span>.</span></a>
     <div class="nav-links" id="navLinks">
       <a href="/#practice">Services</a>
-      <a href="/#work">Case studies</a>
+      <a href="/case-studies/">Case studies</a>
       <a href="/insights/">Insights</a>
       <a href="/#assess">Analyse</a>
       <a href="/#connect">Connect</a>
@@ -114,6 +115,7 @@ def modal():
 def footer(pages, posts):
     svc = "".join(f'<li><a href="/{p["slug"]}/">{e(SERVICE_LABELS.get(p["slug"], p["h1"]))}</a></li>' for p in pages)
     ins = "".join(f'<li><a href="/insights/{p["slug"]}/">{e(p["h1"])}</a></li>' for p in posts[:5])
+    cs = "".join(f'<li><a href="/case-studies/{c["slug"]}/">{e(c.get("short") or c["h1"])}</a></li>' for c in CASES[:4])
     return f"""<footer class="site-foot">
   <div class="wrap">
     <div class="fcols">
@@ -123,6 +125,7 @@ def footer(pages, posts):
         <p class="floc">United States &amp; UAE · working globally</p>
       </div>
       <div class="fc"><h4>Services</h4><ul>{svc}</ul></div>
+      <div class="fc"><h4>Case studies</h4><ul>{cs}<li><a href="/#work">Engagement snapshots</a></li><li><a href="/case-studies/">All case studies →</a></li></ul></div>
       <div class="fc"><h4>Insights</h4><ul>{ins}<li><a href="/insights/">All articles →</a></li></ul></div>
       <div class="fc"><h4>Connect</h4><ul>
         <li><a href="{CAL}" target="_blank" rel="noopener">Book a 30-min call</a></li>
@@ -537,20 +540,41 @@ def insights_index(pages, posts):
 """
 
 
+def home_snapshots():
+    """The tabbed engagement snapshots from the home page, reused on /case-studies/."""
+    s = (ROOT / "index.html").read_text()
+    i = s.find('<div class="cs rise" id="cs">')
+    j = s.find('<p class="note rise">', i)
+    return s[i:j].strip() if i != -1 and j != -1 else ""
+
+
 def cases_index(pages, posts, cases):
     url = f"{SITE}/case-studies/"
     title = "Case studies: ontology, AI, healthcare data and scale"
     desc = ("Anonymised case studies by Sumanta Mukhopadhyay: the problem, the architecture, the flow and the "
             "decisions, across AI, ontology, healthcare data, data platforms and cloud.")
     ld = {"@context": "https://schema.org", "@graph": [
-        {"@type": "CollectionPage", "name": "Case studies", "url": url, "author": person_ref(),
+        {"@type": "CollectionPage", "name": "Case studies", "url": url, "author": person_ref(), "description": desc,
          "hasPart": [{"@type": "Article", "headline": c["h1"], "url": f"{SITE}/case-studies/{c['slug']}/",
                       "datePublished": when(c)[0]} for c in cases]},
         crumbs([("Home", f"{SITE}/"), ("Case studies", url)])]}
     cards = "".join(case_card(c) for c in cases)
+    tagset = sorted({t for c in cases for t in c.get("tags", [])})
+    filt = ('<div class="filters" role="group" aria-label="Filter by topic"><button type="button" class="fchip" aria-pressed="true" data-tag="">All</button>'
+            + "".join(f'<button type="button" class="fchip" aria-pressed="false" data-tag="{e(t)}">#{e(t)}</button>' for t in tagset)
+            + f'<span class="fcount">{len(cases)} in-depth</span></div>') if len(cases) > 1 else ""
+    stack = sorted({t for c in cases for t in c.get("stack", [])})
     kw = sorted({k for c in cases for k in c["keywords"]})[:30]
+    snaps = home_snapshots()
+    snap_sec = f"""<section class="sub-sec" id="snapshots">
+    <div class="kicker">Engagement snapshots</div>
+    <h2>Five problems I'm regularly brought in to solve.</h2>
+    <p class="sub-lede" style="margin-bottom:28px">Short form: the challenge, the approach, the architecture and the result, one tab each.</p>
+    {snaps}
+    <p class="note">Client names, figures and specifics are withheld under confidentiality. Detailed references available on request.</p>
+  </section>""" if snaps else ""
     return f"""{head(title + ' | Sumanta', desc, kw, url, f'{SITE}/assets/og/case-studies.png', 'website', ld)}
-<body class="sub">
+<body class="sub is-cases">
 {nav()}
 <main class="wrap">
   <header class="sub-hero">
@@ -558,14 +582,54 @@ def cases_index(pages, posts, cases):
     <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <em>Case studies</em></div>
     <div class="kicker">Case studies</div>
     <h1>The problem, the architecture, the flow, and the decisions behind it.</h1>
-    <p class="sub-lede">Anonymised, composite case studies from the kinds of engagements I lead. No logos, no confidential numbers: just how the system was designed and why.</p>
+    <p class="sub-lede">Anonymised, composite case studies from the kinds of engagements I lead across healthcare, fintech, SaaS, e-commerce and AI. No logos and no confidential numbers: just how each system was designed, how the data flows, and why.</p>
+    <div class="cs-stats">
+      <div><b>{len(cases)}</b><small>in-depth case studies</small></div>
+      <div><b>5</b><small>engagement snapshots</small></div>
+      <div><b>{len(pages)}</b><small>practice areas</small></div>
+      <div><b>{len(stack)}</b><small>technologies in play</small></div>
+    </div>
+    <div class="cta-row">
+      <a class="btn mag" href="{CAL}" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="#snapshots">Jump to snapshots</a>
+    </div>
   </header>
-  <div class="posts">{cards}</div>
+
+  <section class="sub-sec" id="in-depth">
+    <div class="kicker">In depth</div>
+    <h2>Full case studies, with architecture and flow diagrams.</h2>
+    {filt}
+    <div class="posts">{cards}</div>
+  </section>
+
+  {snap_sec}
+
+  <section class="sub-sec">
+    <div class="kicker">How engagements run</div>
+    <h2>From first call to hand-off.</h2>
+    <figure class="dgm">
+      <div class="dgm-phases">
+        <div><small>Step 1</small><b>Free 30-minute call</b><ul><li>Your goals and constraints</li><li>Whether I'm the right fit</li></ul></div>
+        <div><small>Step 2</small><b>Review</b><ul><li>Architecture and data review</li><li>Risks and quick wins</li><li>Written recommendation</li></ul></div>
+        <div><small>Step 3</small><b>Build or lead</b><ul><li>Hands-on build, or</li><li>Fractional CTO leadership</li></ul></div>
+        <div><small>Step 4</small><b>Hand-off</b><ul><li>Runbooks and decision records</li><li>Your team owns it</li></ul></div>
+      </div>
+      <figcaption>Every engagement starts with the problem, not a proposal.</figcaption>
+    </figure>
+  </section>
   {cta_html('Re: Case studies')}
 </main>
 {modal()}
 {footer(pages, posts)}
 {SCRIPTS}
+<script>
+(function(){{var list=document.getElementById('csTabs');if(!list)return;
+  var ts=[].slice.call(list.querySelectorAll('[role=tab]'));
+  function sel(i,f){{ts.forEach(function(t,j){{var on=j===i;t.setAttribute('aria-selected',on);t.tabIndex=on?0:-1;document.getElementById(t.getAttribute('aria-controls')).hidden=!on;}});if(f)ts[i].focus();}}
+  ts.forEach(function(t,i){{t.addEventListener('click',function(){{sel(i);}});
+    t.addEventListener('keydown',function(e){{var k={{ArrowRight:1,ArrowDown:1,ArrowLeft:-1,ArrowUp:-1}}[e.key];if(k){{e.preventDefault();sel((i+k+ts.length)%ts.length,true);}}}});}});
+}})();
+</script>
 </body>
 </html>
 """
@@ -629,6 +693,11 @@ def main():
     posts = [load(f) for f in sorted((ROOT / "src/insights").glob("*.part"))]
     posts.sort(key=sort_key, reverse=True)
     by_slug = {m["slug"]: m for m in pages}
+    cases = [load(f) for f in sorted((ROOT / "src/case-studies").glob("*.part"))]
+    cases.sort(key=sort_key, reverse=True)
+    CASES[:] = cases
+    for m in cases:
+        m.setdefault("format", "case-study")
 
     for m in pages:
         out = ROOT / m["slug"] / "index.html"
@@ -640,10 +709,6 @@ def main():
         out.write_text(page(m, "post", pages, posts, by_slug))
     (ROOT / "insights").mkdir(exist_ok=True)
     (ROOT / "insights/index.html").write_text(insights_index(pages, posts))
-    cases = [load(f) for f in sorted((ROOT / "src/case-studies").glob("*.part"))]
-    cases.sort(key=sort_key, reverse=True)
-    for m in cases:
-        m.setdefault("format", "case-study")
     for m in cases:
         out = ROOT / "case-studies" / m["slug"] / "index.html"
         out.parent.mkdir(parents=True, exist_ok=True)
