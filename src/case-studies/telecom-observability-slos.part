@@ -1,0 +1,87 @@
+<!--{"title": "Case study: unified observability and SLOs for a telecom operator", "description": "How a telecom operator consolidated monitoring with OpenTelemetry, a collector gateway, eBPF instrumentation and SLO burn-rate alerting tied to customer journeys.", "h1": "From many monitoring tools to one view of what customers experience", "kicker": "Case study · Telecom observability", "lede": "Many monitoring tools, each owned by a different team, and incidents still reported by customers before anyone inside noticed. The goal was one telemetry pipeline, service-level objectives tied to customer journeys, and alerts that fire because users are affected rather than because a server is busy.", "date": "2026-10-28", "datetime": "2026-10-28T01:44:00+04:00", "readtime": "8 min read", "short": "Telecom observability and SLOs", "sector": "Telecom · Digital and IT services", "role": "Principal engineer, platform and observability", "engagement": "Architecture, rollout and hand-off", "scope": "Instrumentation, collector pipeline, SLOs, alerting, on-call", "stack": ["OpenTelemetry SDKs", "OBI (eBPF)", "OpenTelemetry Collector", "OTLP", "Prometheus", "Alertmanager", "Trace and log backends", "Kubernetes"], "outcomes": ["One telemetry pipeline for traces, metrics and logs instead of tool-by-tool agents", "SLOs defined for key customer journeys and reviewed with product owners", "Pages driven by error-budget burn rather than resource thresholds", "Incidents traced across service boundaries from a single trace view"], "tags": ["observability", "platform", "kubernetes", "architecture"], "keywords": ["telecom observability", "OpenTelemetry collector gateway", "SLO burn rate alerting", "eBPF instrumentation", "OBI OpenTelemetry", "error budgets", "Prometheus SLO", "observability consolidation", "site reliability engineering", "multiwindow burn rate"], "faq": [["Why put a collector gateway between services and backends?", "A gateway gives one place to enforce sampling, filtering, enrichment and credentials, and lets you change or add backends without touching every service."], ["Can eBPF instrumentation replace SDKs?", "It is a fast way to get baseline traces and RED metrics without code changes, but it cannot see business context. Critical services still benefit from SDK instrumentation for custom attributes and spans."], ["What is a burn-rate alert?", "It alerts on how quickly a service is consuming its error budget, rather than on a raw error count. Combining a long and a short window keeps alerts both meaningful and quick to reset."]], "related": ["/fractional-cto/", "/insights/slos-error-budgets-small-teams/", "/insights/opentelemetry-collector-deployment-patterns/"], "citations": [{"title": "Gateway deployment pattern", "url": "https://opentelemetry.io/docs/collector/deploy/gateway/", "publisher": "OpenTelemetry"}, {"title": "OpenTelemetry eBPF Instrumentation", "url": "https://opentelemetry.io/docs/zero-code/obi/", "publisher": "OpenTelemetry"}, {"title": "Prometheus overview", "url": "https://prometheus.io/docs/introduction/overview/", "publisher": "Prometheus"}, {"title": "Alerting on SLOs (The Site Reliability Workbook)", "url": "https://sre.google/workbook/alerting-on-slos/", "publisher": "Google"}, {"title": "Implementing SLOs (The Site Reliability Workbook)", "url": "https://sre.google/workbook/implementing-slos/", "publisher": "Google"}]}-->
+<h2>The situation</h2>
+<p>A telecom operator ran customer-facing digital services (self-care apps, online ordering, payments and activation) on top of a mix of modern microservices and long-lived back-office systems. Monitoring had grown team by team. Each group had its own agents, dashboards and alert rules, and the same incident lit up several tools at once without any of them saying whether customers were affected.</p>
+<p>The pattern on bad days was familiar: complaints arrived through support channels first, several teams investigated in parallel from their own dashboards, and the root cause sat at a boundary nobody's tool covered.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>One vendor-neutral telemetry pipeline</strong>, so instrumentation is done once and backends can change.</li>
+<li><strong>Traces across boundaries</strong>, from the app request through the API layer to the back-office call.</li>
+<li><strong>Objectives tied to customer journeys</strong>, agreed with the people who own those journeys.</li>
+<li><strong>Alerts that mean action</strong>: page when users are being hurt, ticket when a budget is slowly eroding, and nothing else.</li>
+<li><strong>Cost under control</strong>, with sampling and cardinality managed centrally rather than service by service.</li>
+</ul>
+
+<h2>Architecture</h2>
+<p>The core was an OpenTelemetry Collector gateway: services and node-level agents send OTLP to a central endpoint per cluster or region, where processing, sampling and export happen once<sup class="cite"><a href="#ref-1">1</a></sup>. Deployment patterns are compared in <a href="/insights/opentelemetry-collector-deployment-patterns/">OpenTelemetry Collector deployment patterns</a>.</p>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Sources</small><div class="dgm-nodes"><span>Microservices<em>OTel SDKs</em></span><span>Legacy services<em>eBPF, no code change</em></span><span>Kubernetes<em>cluster and node metrics</em></span><span>Network and edge<em>existing exporters</em></span></div></div>
+<div class="dgm-tier"><small>Collect</small><div class="dgm-nodes"><span>Node agents<em>host-local data</em></span><span class="hl">OBI<em>traces and RED metrics</em></span></div></div>
+<div class="dgm-tier"><small>Gateway</small><div class="dgm-nodes"><span class="hl">Collector gateway<em>enrich, filter, sample</em></span><span>Trace-aware load balancing<em>tail sampling tier</em></span><span>Credentials<em>held centrally</em></span></div></div>
+<div class="dgm-tier"><small>Store</small><div class="dgm-nodes"><span>Prometheus<em>metrics and rules</em></span><span>Trace backend<em>sampled traces</em></span><span>Log store<em>trace-correlated</em></span></div></div>
+<div class="dgm-tier"><small>Act</small><div class="dgm-nodes"><span class="hl">SLO burn-rate alerts<em>page or ticket</em></span><span>Journey dashboards<em>per product owner</em></span><span>Incident review<em>budget impact</em></span></div></div>
+</div>
+<figcaption>Layered architecture: instrument once, process centrally, and alert on objectives rather than on components.</figcaption>
+</figure>
+<p>For older services that could not be changed quickly, OpenTelemetry eBPF Instrumentation (OBI) captured spans and rate, error and duration metrics for HTTP and gRPC traffic without code changes<sup class="cite"><a href="#ref-2">2</a></sup>. It cannot see business context, so revenue-critical services also received SDK instrumentation for custom attributes. More in <a href="/insights/opentelemetry-ebpf-instrumentation-obi/">OpenTelemetry eBPF instrumentation</a>.</p>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Instrument</b><span>SDKs on new services, OBI on legacy ones, consistent resource attributes everywhere</span></li>
+<li><b>Collect</b><span>Node agents add host and Kubernetes metadata and forward OTLP</span></li>
+<li class="hl"><b>Process</b><span>Gateway filters noise, drops high-cardinality labels and applies sampling policy</span></li>
+<li><b>Store</b><span>Metrics to Prometheus, traces and logs to their backends, linked by trace ID</span></li>
+<li class="hl"><b>Evaluate</b><span>Recording rules compute SLIs and burn rates per journey</span></li>
+<li><b>Respond</b><span>Fast burn pages on-call; slow burn opens a ticket for the owning team</span></li>
+</ol>
+<figcaption>One path for every signal, with policy applied once at the gateway.</figcaption>
+</figure>
+<p>Prometheus held the SLI time series and evaluated recording and alerting rules, which suits numeric operational data well, though not anything that needs exact per-request accounting<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+
+<h2>The hard part: deciding what to promise</h2>
+<p>The pipeline was engineering. The objectives were negotiation. Each journey (sign in, view bill, pay, activate) needed an indicator measured close to the user, a target the business could defend, and an owner who accepted the consequences of the error budget<sup class="cite"><a href="#ref-5">5</a></sup>. In practice that meant:</p>
+<ul>
+<li>Choosing indicators at the edge of the journey, not on internal components that customers never see.</li>
+<li>Starting with targets the service already met most of the time, then tightening, rather than declaring aspirational numbers nobody could hold.</li>
+<li>Writing a short error budget policy per journey that said what happens when the budget runs low.</li>
+<li>Retiring old component alerts deliberately, with each team agreeing what replaced them.</li>
+</ul>
+<p>Alerting followed the multiwindow, multi-burn-rate approach in the Google SRE Workbook, which pairs a long window for significance with a short window for fast reset<sup class="cite"><a href="#ref-4">4</a></sup>. The practical version for smaller teams is in <a href="/insights/slos-error-budgets-small-teams/">SLOs and error budgets for small teams</a>.</p>
+<div class="callout"><p>An SLO is a business decision expressed in numbers. If product owners have not agreed it, it is just another threshold.</p></div>
+
+<h2>How the engagement ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Platform team</small><ol><li>Run collectors and gateway</li><li class="hl">Own sampling and cost policy</li><li>Publish instrumentation defaults</li></ol></div>
+<div class="dgm-lane"><small>Service teams</small><ol><li>Adopt SDK or OBI</li><li>Define SLIs with platform</li><li class="hl">Own pages for their journeys</li></ol></div>
+<div class="dgm-lane"><small>Product owners</small><ol><li>Agree targets</li><li>Approve error budget policy</li><li>Review budget each cycle</li></ol></div>
+</div>
+<figcaption>Platform owns the pipes, service teams own the signals, product owners own the promise.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Assess</b><ul><li>Tool and alert inventory</li><li>Recent incident review</li><li>Journey map</li></ul></div>
+<div><small>Phase 2</small><b>Pipeline</b><ul><li>Gateway and agents</li><li>One journey traced end to end</li><li>Attribute conventions</li></ul></div>
+<div><small>Phase 3</small><b>Objectives</b><ul><li>SLIs and targets</li><li>Burn-rate alerts</li><li>Retire legacy alerts</li></ul></div>
+<div><small>Phase 4</small><b>Scale and hand off</b><ul><li>Remaining journeys</li><li>On-call runbooks</li><li>Budget reviews in planning</li></ul></div>
+</div>
+<figcaption>Phased delivery: one customer journey fully observed before widening coverage.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>OpenTelemetry and OTLP</td><td>Vendor agents per tool</td><td>Instrument once; backends become replaceable</td></tr>
+<tr><td>Collector gateway</td><td>Services export directly</td><td>Central sampling, filtering and credentials</td></tr>
+<tr><td>OBI for legacy services</td><td>Wait for code changes</td><td>Baseline traces now; SDKs where context matters</td></tr>
+<tr><td>Journey-level SLOs</td><td>Per-component thresholds</td><td>Alerts reflect customer impact, not resource noise</td></tr>
+<tr><td>Multiwindow burn-rate alerts</td><td>Static error-rate alerts</td><td>Better precision and faster reset</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: trace one journey end to end before instrumenting everything, and make product owners co-own the targets. Differently: set attribute naming and cardinality rules before the first service onboards. Cleaning up inconsistent labels later cost more than agreeing them early.</p>
+<p>If you're planning something similar, the <a href="/fractional-cto/">fractional CTO</a> page describes how I lead platform and reliability work, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
