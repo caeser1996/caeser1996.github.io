@@ -574,7 +574,10 @@ def use_cases_html(ucs):
             f'<p class="uc-a"><b>Approach.</b> {e(u["approach"])}</p>'
             f'<ol class="uc-flow" aria-label="Flow">{flow}</ol>'
             f'<div class="cs-stack">{stack}</div>'
-            f'<a class="uc-more" href="{e(u["link"])}">Go deeper →</a></article>')
+            + (f'<a class="uc-more" href="/case-studies/{e(u["case"])}/">Read the full case study →</a>'
+               if u.get("case") and (ROOT / "src/case-studies" / f'{u["case"]}.part').exists()
+               else f'<a class="uc-more" href="{e(u["link"])}">Go deeper →</a>')
+            + '</article>')
     return f"""<section class="sub-sec" id="use-cases">
     <div class="kicker">Use cases</div>
     <h2>Twenty problems, twenty sectors, one way of working.</h2>
