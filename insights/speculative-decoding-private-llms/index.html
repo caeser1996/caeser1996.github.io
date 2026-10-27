@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Speculative decoding for private LLMs: faster tokens, same answers</title>
+<meta name="description" content="Speculative decoding speeds up LLM generation without changing outputs. How it works, when it helps on self-hosted models in vLLM, which method to choose, and how to measure it." />
+<meta name="keywords" content="speculative decoding, vLLM speculative decoding, EAGLE-3, draft model, n-gram speculation, LLM inference latency, inter-token latency, private LLM, self-hosted LLM performance, AI architect" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://asksumanta.com/insights/speculative-decoding-private-llms/" />
+<meta name="theme-color" content="#111214" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="Speculative decoding for private LLMs: faster tokens, same answers" />
+<meta property="og:description" content="Speculative decoding speeds up LLM generation without changing outputs. How it works, when it helps on self-hosted models in vLLM, which method to choose, and how to measure it." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://asksumanta.com/insights/speculative-decoding-private-llms/" />
+<meta property="og:image" content="https://asksumanta.com/assets/og/speculative-decoding-private-llms.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Speculative decoding for private LLMs: faster tokens, same answers" />
+<meta name="twitter:description" content="Speculative decoding speeds up LLM generation without changing outputs. How it works, when it helps on self-hosted models in vLLM, which method to choose, and how to measure it." />
+<meta name="twitter:image" content="https://asksumanta.com/assets/og/speculative-decoding-private-llms.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "BlogPosting", "headline": "Speculative decoding for private LLMs: faster tokens without changing the answers", "description": "Speculative decoding speeds up LLM generation without changing outputs. How it works, when it helps on self-hosted models in vLLM, which method to choose, and how to measure it.", "datePublished": "2026-10-27T16:20:00+04:00", "dateModified": "2026-10-27T16:20:00+04:00", "articleSection": "AI architecture · Inference", "genre": "Explainer", "citation": [{"@type": "CreativeWork", "name": "Fast Inference from Transformers via Speculative Decoding", "url": "https://arxiv.org/abs/2211.17192"}, {"@type": "CreativeWork", "name": "EAGLE-3: Scaling up Inference Acceleration of Large Language Models via Training-Time Test", "url": "https://arxiv.org/abs/2503.01840"}, {"@type": "CreativeWork", "name": "Speculative decoding", "url": "https://docs.vllm.ai/en/latest/features/speculative_decoding/"}, {"@type": "CreativeWork", "name": "Speculators documentation", "url": "https://docs.vllm.ai/projects/speculators/en/latest/"}, {"@type": "CreativeWork", "name": "Speculative decoding (v0.9.0)", "url": "https://docs.vllm.ai/en/v0.9.0/features/spec_decode.html"}], "author": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "publisher": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "mainEntityOfPage": "https://asksumanta.com/insights/speculative-decoding-private-llms/", "image": "https://asksumanta.com/assets/og/speculative-decoding-private-llms.png", "keywords": "speculative decoding, vLLM speculative decoding, EAGLE-3, draft model, n-gram speculation, LLM inference latency, inter-token latency, private LLM, self-hosted LLM performance, AI architect", "wordCount": 657}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://asksumanta.com/"}, {"@type": "ListItem", "position": 2, "name": "Insights", "item": "https://asksumanta.com/insights/"}, {"@type": "ListItem", "position": 3, "name": "Speculative decoding for private LLMs: faster tokens without changing the answers", "item": "https://asksumanta.com/insights/speculative-decoding-private-llms/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What is speculative decoding?", "acceptedAnswer": {"@type": "Answer", "text": "A technique where a cheap proposer guesses several next tokens and the large target model verifies them in a single parallel pass. Accepted tokens are kept and the rest regenerated. The original method was shown to sample from the target model's distribution exactly, so outputs are unchanged."}}, {"@type": "Question", "name": "When does speculative decoding help?", "acceptedAnswer": {"@type": "Answer", "text": "The vLLM documentation describes it as reducing inter-token latency for memory-bound workloads at medium to low request rates. At high load the GPU is already busy, so the extra verification work can reduce or remove the gain."}}, {"@type": "Question", "name": "Which speculative decoding method should I use?", "acceptedAnswer": {"@type": "Answer", "text": "According to vLLM's documentation, model-based methods such as EAGLE, MTP and draft models give the best latency reduction, while n-gram and suffix decoding give modest speedups without adding much load at peak. Measure acceptance rate and latency on your own traffic before choosing."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+</script>
+</head>
+<body class="sub is-post">
+<div class="progress" id="progress"></div>
+<nav>
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="/#practice">Services</a>
+      <a href="/#work">Case studies</a>
+      <a href="/insights/">Insights</a>
+      <a href="/#assess">Analyse</a>
+      <a href="/#connect">Connect</a>
+    </div>
+    <div class="nav-r">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/insights/">Insights</a> <span>/</span> <em>Speculative decoding for private LLMs: faster tokens without changing the answers</em></div>
+    <div class="kicker">AI architecture · Inference</div>
+    <h1>Speculative decoding for private LLMs: faster tokens without changing the answers</h1>
+    <p class="sub-lede">Self-hosting a model gives you control over data and cost, and often a latency problem. Speculative decoding is one of the few optimisations that makes generation faster without changing what the model outputs. It also has a narrower sweet spot than its benchmarks suggest.</p>
+    <div class="ameta"><span class="fmt">Explainer</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-10-27T16:20:00+04:00">27 Oct 2026 · 16:20 GST</time><span>8 min read</span><span>5 sources</span></div><div class="atags"><span class="tagp">#ai</span><span class="tagp">#llm</span><span class="tagp">#platform</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Explainer cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><line x1="945" y1="171" x2="862" y2="77" class="cv-edge" opacity="0.17"/><line x1="945" y1="171" x2="906" y2="158" class="cv-edge" opacity="0.73"/><line x1="945" y1="171" x2="926" y2="272" class="cv-edge" opacity="0.31"/><line x1="945" y1="171" x2="975" y2="189" class="cv-edge" opacity="0.76"/><line x1="945" y1="171" x2="1025" y2="160" class="cv-edge" opacity="0.47"/><line x1="945" y1="171" x2="1029" y2="74" class="cv-edge" opacity="0.15"/><line x1="945" y1="171" x2="1035" y2="271" class="cv-edge" opacity="0.10"/><line x1="945" y1="171" x2="991" y2="161" class="cv-edge" opacity="0.69"/><line x1="945" y1="171" x2="864" y2="203" class="cv-edge hl" opacity="0.42"/><line x1="945" y1="171" x2="945" y2="221" class="cv-edge hl" opacity="0.67"/><line x1="945" y1="171" x2="899" y2="218" class="cv-edge" opacity="0.56"/><line x1="862" y1="77" x2="906" y2="158" class="cv-edge" opacity="0.39"/><line x1="862" y1="77" x2="873" y2="35" class="cv-edge" opacity="0.71"/><line x1="862" y1="77" x2="864" y2="203" class="cv-edge hl" opacity="0.16"/><line x1="862" y1="77" x2="899" y2="218" class="cv-edge" opacity="0.03"/><line x1="547" y1="263" x2="532" y2="279" class="cv-edge" opacity="0.85"/><line x1="547" y1="263" x2="523" y2="367" class="cv-edge" opacity="0.29"/><line x1="547" y1="263" x2="616" y2="212" class="cv-edge" opacity="0.43"/><line x1="547" y1="263" x2="539" y2="224" class="cv-edge" opacity="0.73"/><line x1="906" y1="158" x2="926" y2="272" class="cv-edge" opacity="0.23"/><line x1="906" y1="158" x2="873" y2="35" class="cv-edge" opacity="0.15"/><line x1="906" y1="158" x2="975" y2="189" class="cv-edge" opacity="0.49"/><line x1="906" y1="158" x2="1025" y2="160" class="cv-edge" opacity="0.21"/><line x1="906" y1="158" x2="1029" y2="74" class="cv-edge" opacity="0.01"/><line x1="906" y1="158" x2="991" y2="161" class="cv-edge" opacity="0.44"/><line x1="906" y1="158" x2="864" y2="203" class="cv-edge hl" opacity="0.59"/><line x1="906" y1="158" x2="945" y2="221" class="cv-edge hl" opacity="0.51"/><line x1="906" y1="158" x2="899" y2="218" class="cv-edge" opacity="0.60"/><line x1="926" y1="272" x2="1014" y2="318" class="cv-edge hl" opacity="0.34"/><line x1="926" y1="272" x2="975" y2="189" class="cv-edge" opacity="0.36"/><line x1="926" y1="272" x2="1025" y2="160" class="cv-edge" opacity="0.00"/><line x1="926" y1="272" x2="1035" y2="271" class="cv-edge" opacity="0.27"/><line x1="926" y1="272" x2="991" y2="161" class="cv-edge" opacity="0.14"/><line x1="926" y1="272" x2="1041" y2="323" class="cv-edge" opacity="0.16"/><line x1="926" y1="272" x2="1032" y2="374" class="cv-edge" opacity="0.02"/><line x1="926" y1="272" x2="864" y2="203" class="cv-edge hl" opacity="0.38"/><line x1="926" y1="272" x2="945" y2="221" class="cv-edge hl" opacity="0.64"/><line x1="926" y1="272" x2="899" y2="218" class="cv-edge" opacity="0.60"/><line x1="1014" y1="318" x2="975" y2="189" class="cv-edge hl" opacity="0.11"/><line x1="1014" y1="318" x2="1035" y2="271" class="cv-edge hl" opacity="0.66"/><line x1="1014" y1="318" x2="1041" y2="323" class="cv-edge hl" opacity="0.81"/><line x1="1014" y1="318" x2="1032" y2="374" class="cv-edge hl" opacity="0.61"/><line x1="1014" y1="318" x2="945" y2="221" class="cv-edge hl" opacity="0.21"/><line x1="975" y1="189" x2="1025" y2="160" class="cv-edge" opacity="0.62"/><line x1="975" y1="189" x2="1029" y2="74" class="cv-edge" opacity="0.16"/><line x1="975" y1="189" x2="1035" y2="271" class="cv-edge" opacity="0.32"/><line x1="975" y1="189" x2="991" y2="161" class="cv-edge" opacity="0.79"/><line x1="975" y1="189" x2="1041" y2="323" class="cv-edge" opacity="0.01"/><line x1="975" y1="189" x2="864" y2="203" class="cv-edge hl" opacity="0.25"/><line x1="975" y1="189" x2="945" y2="221" class="cv-edge hl" opacity="0.71"/><line x1="975" y1="189" x2="899" y2="218" class="cv-edge" opacity="0.46"/><line x1="1025" y1="160" x2="1029" y2="74" class="cv-edge" opacity="0.43"/><line x1="1025" y1="160" x2="1035" y2="271" class="cv-edge" opacity="0.26"/><line x1="1025" y1="160" x2="991" y2="161" class="cv-edge" opacity="0.77"/><line x1="1025" y1="160" x2="945" y2="221" class="cv-edge hl" opacity="0.33"/><line x1="1025" y1="160" x2="899" y2="218" class="cv-edge" opacity="0.08"/><line x1="788" y1="380" x2="809" y2="387" class="cv-edge" opacity="0.85"/><line x1="788" y1="380" x2="725" y2="256" class="cv-edge hl" opacity="0.07"/><line x1="788" y1="380" x2="761" y2="309" class="cv-edge hl" opacity="0.49"/><line x1="532" y1="279" x2="523" y2="367" class="cv-edge" opacity="0.41"/><line x1="532" y1="279" x2="616" y2="212" class="cv-edge" opacity="0.28"/><line x1="532" y1="279" x2="539" y2="224" class="cv-edge" opacity="0.63"/><line x1="523" y1="367" x2="539" y2="224" class="cv-edge" opacity="0.04"/><line x1="1029" y1="74" x2="991" y2="161" class="cv-edge" opacity="0.37"/><line x1="1035" y1="271" x2="991" y2="161" class="cv-edge" opacity="0.21"/><line x1="1035" y1="271" x2="1041" y2="323" class="cv-edge" opacity="0.65"/><line x1="1035" y1="271" x2="1032" y2="374" class="cv-edge" opacity="0.32"/><line x1="1035" y1="271" x2="945" y2="221" class="cv-edge hl" opacity="0.31"/><line x1="1035" y1="271" x2="899" y2="218" class="cv-edge" opacity="0.03"/><line x1="809" y1="387" x2="761" y2="309" class="cv-edge hl" opacity="0.39"/><line x1="616" y1="212" x2="725" y2="256" class="cv-edge hl" opacity="0.22"/><line x1="616" y1="212" x2="539" y2="224" class="cv-edge" opacity="0.48"/><line x1="725" y1="256" x2="761" y2="309" class="cv-edge hl" opacity="0.57"/><line x1="725" y1="256" x2="864" y2="203" class="cv-edge hl" opacity="0.00"/><line x1="761" y1="309" x2="864" y2="203" class="cv-edge hl" opacity="0.01"/><line x1="991" y1="161" x2="864" y2="203" class="cv-edge hl" opacity="0.11"/><line x1="991" y1="161" x2="945" y2="221" class="cv-edge hl" opacity="0.50"/><line x1="991" y1="161" x2="899" y2="218" class="cv-edge" opacity="0.28"/><line x1="1041" y1="323" x2="1032" y2="374" class="cv-edge" opacity="0.66"/><line x1="1041" y1="323" x2="945" y2="221" class="cv-edge hl" opacity="0.06"/><line x1="864" y1="203" x2="945" y2="221" class="cv-edge hl" opacity="0.45"/><line x1="864" y1="203" x2="899" y2="218" class="cv-edge hl" opacity="0.75"/><line x1="945" y1="221" x2="899" y2="218" class="cv-edge hl" opacity="0.70"/><circle cx="529" cy="33" r="6" class="cv-dot hl"/><circle cx="945" cy="171" r="3" class="cv-dot"/><circle cx="862" cy="77" r="3" class="cv-dot"/><circle cx="547" cy="263" r="3" class="cv-dot"/><circle cx="906" cy="158" r="3" class="cv-dot"/><circle cx="926" cy="272" r="3" class="cv-dot"/><circle cx="873" cy="35" r="3" class="cv-dot"/><circle cx="1014" cy="318" r="6" class="cv-dot hl"/><circle cx="975" cy="189" r="3" class="cv-dot"/><circle cx="1025" cy="160" r="3" class="cv-dot"/><circle cx="788" cy="380" r="3" class="cv-dot"/><circle cx="532" cy="279" r="3" class="cv-dot"/><circle cx="523" cy="367" r="3" class="cv-dot"/><circle cx="1029" cy="74" r="3" class="cv-dot"/><circle cx="1035" cy="271" r="3" class="cv-dot"/><circle cx="809" cy="387" r="3" class="cv-dot"/><circle cx="616" cy="212" r="3" class="cv-dot"/><circle cx="725" cy="256" r="6" class="cv-dot hl"/><circle cx="761" cy="309" r="6" class="cv-dot hl"/><circle cx="991" cy="161" r="3" class="cv-dot"/><circle cx="1041" cy="323" r="3" class="cv-dot"/><circle cx="539" cy="224" r="3" class="cv-dot"/><circle cx="1032" cy="374" r="3" class="cv-dot"/><circle cx="864" cy="203" r="6" class="cv-dot hl"/><circle cx="945" cy="221" r="6" class="cv-dot hl"/><circle cx="899" cy="218" r="3" class="cv-dot"/><text x="60" y="90" class="cv-k">EXPLAINER · AI ARCHITECTURE · INFERENCE</text><text x="60" y="350" class="cv-n">27 Oct 2026 · 16:20 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <p>A common moment in private LLM projects: the model runs on your own GPUs, quality is acceptable, and users complain that answers stream slowly. Buying more hardware raises throughput but barely changes how quickly each token appears for one user. Quantisation and smaller models change the outputs. Speculative decoding is attractive because it does neither.</p>
+
+<section class="block">
+<h2 id="how-it-works">How it works</h2>
+<p>Generating text one token at a time leaves a large model's GPU mostly waiting on memory, not compute. Speculative decoding uses that slack. A cheap proposer guesses the next few tokens; the large target model checks all of them in one parallel pass; accepted tokens are kept, and generation continues from the first rejection<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<p>The original Google Research paper showed this can sample from the target model's distribution exactly, so outputs are unchanged, and reported 2 to 3 times faster generation on T5-XXL with existing models and no retraining<sup class="cite"><a href="#ref-1">1</a></sup>. In practice, floating-point differences in batched GPU execution mean byte-identical outputs are likely rather than guaranteed.</p>
+<div class="callout"><p>Speculative decoding trades spare compute for latency. If your GPUs have no spare compute, there is nothing to trade.</p></div>
+</section>
+
+<section class="block">
+<h2 id="the-proposer-options">The proposer options</h2>
+<table class="tbl">
+<thead><tr><th>Method</th><th>How it proposes</th><th>Trade-off</th></tr></thead>
+<tbody>
+<tr><td>Draft model</td><td>A smaller model from the same family</td><td>Good acceptance; extra memory and a model to manage</td></tr>
+<tr><td>EAGLE family</td><td>A light head trained on the target model's internal features</td><td>Strong speedups; needs a head trained for your exact model</td></tr>
+<tr><td>MTP</td><td>Multi-token prediction layers built into some models</td><td>No separate model, where the base model supports it</td></tr>
+<tr><td>N-gram / suffix</td><td>Copies likely continuations from the prompt or earlier output</td><td>No training; helps most when output repeats input</td></tr>
+</tbody>
+</table>
+<p>The current vLLM documentation summarises it this way: model-based methods such as EAGLE, MTP and draft models give the best latency reduction, while n-gram and suffix decoding give modest speedups without adding much work during peak traffic<sup class="cite"><a href="#ref-3">3</a></sup>. The EAGLE-3 paper reports speedups of up to 6.5 times in its experiments and argues its design lets the draft head benefit from more training data<sup class="cite"><a href="#ref-2">2</a></sup>. The vLLM project also maintains a Speculators library for training draft models that run in vLLM<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+</section>
+
+<section class="block">
+<h2 id="when-it-helps-and-when-it-doesn-t">When it helps, and when it doesn't</h2>
+<p>vLLM describes speculative decoding as aimed at reducing inter-token latency for memory-bound workloads at medium to low request rates<sup class="cite"><a href="#ref-3">3</a></sup>. That sentence is the whole story:</p>
+<ul>
+<li><strong>Interactive assistants with modest concurrency</strong>: good fit. Each user sees faster streaming.</li>
+<li><strong>Code editing, document revision, extraction</strong>: often good for n-gram methods, because the output repeats large parts of the input.</li>
+<li><strong>High-throughput batch jobs</strong>: weak fit. The GPU is already saturated, and verification work competes with real requests.</li>
+<li><strong>Peak hours on shared clusters</strong>: gains can fall as load rises, which is why the cheaper methods appeal.</li>
+</ul>
+<p>Older vLLM releases also carried caveats, such as incompatibility with pipeline parallelism and inconsistent latency gains across datasets<sup class="cite"><a href="#ref-5">5</a></sup>. Check the documentation for your exact version rather than relying on a blog post's configuration.</p>
+</section>
+
+<section class="block">
+<h2 id="how-i-d-evaluate-it">How I'd evaluate it</h2>
+<ol>
+<li><strong>Replay real traffic</strong>, not a benchmark prompt set. Acceptance rate depends heavily on what your users ask and how your prompts are built.</li>
+<li><strong>Measure the right latencies</strong>: time to first token, inter-token latency and end-to-end time, at your real concurrency, using the telemetry in <a href="/insights/llm-observability-opentelemetry-genai/">LLM observability</a>.</li>
+<li><strong>Track acceptance rate</strong> and tune the number of speculative tokens; low acceptance means wasted verification.</li>
+<li><strong>Check outputs</strong> on your <a href="/insights/llm-evaluation-sets-that-predict-production/">evaluation set</a> to confirm nothing changed that matters.</li>
+<li><strong>Compare with alternatives.</strong> <a href="/insights/prompt-caching-llm-cost-latency/">Prompt caching</a> and <a href="/insights/llm-model-routing/">routing easy requests to smaller models</a> may deliver more for less effort.</li>
+<li><strong>Decide per workload.</strong> Enable it for interactive endpoints and leave batch endpoints alone, using the serving patterns in <a href="/insights/llm-inference-serving-vllm/">vLLM inference serving</a>.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2 id="how-i-can-help">How I can help</h2>
+<p>I design private LLM platforms that meet latency and cost targets on hardware you control, from model choice to serving configuration. See my <a href="/ai-architect/">AI architecture work</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://arxiv.org/abs/2211.17192" target="_blank" rel="noopener">Fast Inference from Transformers via Speculative Decoding</a><small>Leviathan, Kalman and Matias (arXiv; ICML 2023) · 2022</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://arxiv.org/abs/2503.01840" target="_blank" rel="noopener">EAGLE-3: Scaling up Inference Acceleration of Large Language Models via Training-Time Test</a><small>arXiv; NeurIPS 2025 · 2025</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://docs.vllm.ai/en/latest/features/speculative_decoding/" target="_blank" rel="noopener">Speculative decoding</a><small>vLLM documentation</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://docs.vllm.ai/projects/speculators/en/latest/" target="_blank" rel="noopener">Speculators documentation</a><small>vLLM project</small></div></li><li id="ref-5"><span class="rn">5</span><div><a href="https://docs.vllm.ai/en/v0.9.0/features/spec_decode.html" target="_blank" rel="noopener">Speculative decoding (v0.9.0)</a><small>vLLM documentation</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fspeculative-decoding-private-llms%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fspeculative-decoding-private-llms%2F&amp;text=Speculative%20decoding%20for%20private%20LLMs%3A%20faster%20tokens%20without%20changing%20the%20answers" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=Speculative%20decoding%20for%20private%20LLMs%3A%20faster%20tokens%20without%20changing%20the%20answers%20https%3A%2F%2Fasksumanta.com%2Finsights%2Fspeculative-decoding-private-llms%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://asksumanta.com/insights/speculative-decoding-private-llms/">Copy link</button></div>
+      <div class="pnav"><a class="pn prev" href="/insights/real-world-evidence-study-designs-omop/"><small>← Previous</small><b>Real-world evidence on OMOP: comparing five study designs for treatment effects</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#how-it-works">How it works</a></li><li><a href="#the-proposer-options">The proposer options</a></li><li><a href="#when-it-helps-and-when-it-doesn-t">When it helps, and when it doesn&#x27;t</a></li><li><a href="#how-i-d-evaluate-it">How I&#x27;d evaluate it</a></li><li><a href="#how-i-can-help">How I can help</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>What is speculative decoding?</summary><p>A technique where a cheap proposer guesses several next tokens and the large target model verifies them in a single parallel pass. Accepted tokens are kept and the rest regenerated. The original method was shown to sample from the target model&#x27;s distribution exactly, so outputs are unchanged.</p></details><details class="rise"><summary>When does speculative decoding help?</summary><p>The vLLM documentation describes it as reducing inter-token latency for memory-bound workloads at medium to low request rates. At high load the GPU is already busy, so the extra verification work can reduce or remove the gain.</p></details><details class="rise"><summary>Which speculative decoding method should I use?</summary><p>According to vLLM&#x27;s documentation, model-based methods such as EAGLE, MTP and draft models give the best latency reduction, while n-gram and suffix decoding give modest speedups without adding much load at peak. Measure acceptance rate and latency on your own traffic before choosing.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/ai-architect/"><small>Service</small><b>AI &amp; LLM architecture</b><span>I design and build AI systems that leadership can trust: grounded in your data, measured by evaluations, governed by your rules and priced so they make sense at scale.</span><i>→</i></a><a class="rcard rise" href="/fractional-cto/"><small>Service</small><b>Fractional CTO</b><span>I work as a part-time CTO for founders, CEOs and boards who need experienced technical judgement now, and a team that can carry it on after I step back.</span><i>→</i></a><a class="rcard rise" href="/technical-due-diligence/"><small>Service</small><b>Technical due diligence</b><span>I give investors an independent, plain-language view of a company&#x27;s technology, team and AI claims, so the risks are priced in before the deal closes, not discovered after.</span><i>→</i></a><a class="rcard rise" href="/insights/real-world-evidence-study-designs-omop/"><small>Insight</small><b>Real-world evidence on OMOP: comparing five study designs for treatment effects</b><span>Asking &#x27;does this drug cause that outcome?&#x27; of observational data is easy. Getting an answer you can defend is not. The OHDSI community implements five main designs for population-level estimation, each with a different way of approximating what would have happened otherwise, and each with its own blind spots.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: Speculative decoding for private LLMs: faster tokens without changing the answers">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
+        <p class="floc">United States &amp; UAE · working globally</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/uae/">Fractional CTO in the UAE</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/speculative-decoding-private-llms/">Speculative decoding for private LLMs: faster tokens without changing the answers</a></li><li><a href="/insights/real-world-evidence-study-designs-omop/">Real-world evidence on OMOP: comparing five study designs for treatment effects</a></li><li><a href="/insights/eu-ai-act-gpai-fine-tuning-provider/">Fine-tuning a foundation model? When the EU AI Act makes you a general-purpose AI provider</a></li><li><a href="/insights/kafka-queues-share-groups/">Kafka queues are production-ready: when share groups can replace a separate message broker</a></li><li><a href="/insights/mcp-registry-enterprise-subregistry/">Running an enterprise MCP registry: a playbook for governed tool discovery</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>

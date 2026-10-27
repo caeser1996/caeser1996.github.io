@@ -1,0 +1,52 @@
+<!--{"title": "Speculative decoding for private LLMs: faster tokens, same answers", "description": "Speculative decoding speeds up LLM generation without changing outputs. How it works, when it helps on self-hosted models in vLLM, which method to choose, and how to measure it.", "h1": "Speculative decoding for private LLMs: faster tokens without changing the answers", "kicker": "AI architecture · Inference", "lede": "Self-hosting a model gives you control over data and cost, and often a latency problem. Speculative decoding is one of the few optimisations that makes generation faster without changing what the model outputs. It also has a narrower sweet spot than its benchmarks suggest.", "date": "2026-10-27", "datetime": "2026-10-27T16:20:00+04:00", "readtime": "8 min read", "format": "explainer", "tags": ["ai", "llm", "platform"], "keywords": ["speculative decoding", "vLLM speculative decoding", "EAGLE-3", "draft model", "n-gram speculation", "LLM inference latency", "inter-token latency", "private LLM", "self-hosted LLM performance", "AI architect"], "faq": [["What is speculative decoding?", "A technique where a cheap proposer guesses several next tokens and the large target model verifies them in a single parallel pass. Accepted tokens are kept and the rest regenerated. The original method was shown to sample from the target model's distribution exactly, so outputs are unchanged."], ["When does speculative decoding help?", "The vLLM documentation describes it as reducing inter-token latency for memory-bound workloads at medium to low request rates. At high load the GPU is already busy, so the extra verification work can reduce or remove the gain."], ["Which speculative decoding method should I use?", "According to vLLM's documentation, model-based methods such as EAGLE, MTP and draft models give the best latency reduction, while n-gram and suffix decoding give modest speedups without adding much load at peak. Measure acceptance rate and latency on your own traffic before choosing."]], "related": ["/ai-architect/", "/fractional-cto/", "/technical-due-diligence/"], "citations": [{"title": "Fast Inference from Transformers via Speculative Decoding", "url": "https://arxiv.org/abs/2211.17192", "publisher": "Leviathan, Kalman and Matias (arXiv; ICML 2023)", "date": "2022"}, {"title": "EAGLE-3: Scaling up Inference Acceleration of Large Language Models via Training-Time Test", "url": "https://arxiv.org/abs/2503.01840", "publisher": "arXiv; NeurIPS 2025", "date": "2025"}, {"title": "Speculative decoding", "url": "https://docs.vllm.ai/en/latest/features/speculative_decoding/", "publisher": "vLLM documentation"}, {"title": "Speculators documentation", "url": "https://docs.vllm.ai/projects/speculators/en/latest/", "publisher": "vLLM project"}, {"title": "Speculative decoding (v0.9.0)", "url": "https://docs.vllm.ai/en/v0.9.0/features/spec_decode.html", "publisher": "vLLM documentation"}]}-->
+<p>A common moment in private LLM projects: the model runs on your own GPUs, quality is acceptable, and users complain that answers stream slowly. Buying more hardware raises throughput but barely changes how quickly each token appears for one user. Quantisation and smaller models change the outputs. Speculative decoding is attractive because it does neither.</p>
+
+<section class="block">
+<h2>How it works</h2>
+<p>Generating text one token at a time leaves a large model's GPU mostly waiting on memory, not compute. Speculative decoding uses that slack. A cheap proposer guesses the next few tokens; the large target model checks all of them in one parallel pass; accepted tokens are kept, and generation continues from the first rejection<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<p>The original Google Research paper showed this can sample from the target model's distribution exactly, so outputs are unchanged, and reported 2 to 3 times faster generation on T5-XXL with existing models and no retraining<sup class="cite"><a href="#ref-1">1</a></sup>. In practice, floating-point differences in batched GPU execution mean byte-identical outputs are likely rather than guaranteed.</p>
+<div class="callout"><p>Speculative decoding trades spare compute for latency. If your GPUs have no spare compute, there is nothing to trade.</p></div>
+</section>
+
+<section class="block">
+<h2>The proposer options</h2>
+<table class="tbl">
+<thead><tr><th>Method</th><th>How it proposes</th><th>Trade-off</th></tr></thead>
+<tbody>
+<tr><td>Draft model</td><td>A smaller model from the same family</td><td>Good acceptance; extra memory and a model to manage</td></tr>
+<tr><td>EAGLE family</td><td>A light head trained on the target model's internal features</td><td>Strong speedups; needs a head trained for your exact model</td></tr>
+<tr><td>MTP</td><td>Multi-token prediction layers built into some models</td><td>No separate model, where the base model supports it</td></tr>
+<tr><td>N-gram / suffix</td><td>Copies likely continuations from the prompt or earlier output</td><td>No training; helps most when output repeats input</td></tr>
+</tbody>
+</table>
+<p>The current vLLM documentation summarises it this way: model-based methods such as EAGLE, MTP and draft models give the best latency reduction, while n-gram and suffix decoding give modest speedups without adding much work during peak traffic<sup class="cite"><a href="#ref-3">3</a></sup>. The EAGLE-3 paper reports speedups of up to 6.5 times in its experiments and argues its design lets the draft head benefit from more training data<sup class="cite"><a href="#ref-2">2</a></sup>. The vLLM project also maintains a Speculators library for training draft models that run in vLLM<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+</section>
+
+<section class="block">
+<h2>When it helps, and when it doesn't</h2>
+<p>vLLM describes speculative decoding as aimed at reducing inter-token latency for memory-bound workloads at medium to low request rates<sup class="cite"><a href="#ref-3">3</a></sup>. That sentence is the whole story:</p>
+<ul>
+<li><strong>Interactive assistants with modest concurrency</strong>: good fit. Each user sees faster streaming.</li>
+<li><strong>Code editing, document revision, extraction</strong>: often good for n-gram methods, because the output repeats large parts of the input.</li>
+<li><strong>High-throughput batch jobs</strong>: weak fit. The GPU is already saturated, and verification work competes with real requests.</li>
+<li><strong>Peak hours on shared clusters</strong>: gains can fall as load rises, which is why the cheaper methods appeal.</li>
+</ul>
+<p>Older vLLM releases also carried caveats, such as incompatibility with pipeline parallelism and inconsistent latency gains across datasets<sup class="cite"><a href="#ref-5">5</a></sup>. Check the documentation for your exact version rather than relying on a blog post's configuration.</p>
+</section>
+
+<section class="block">
+<h2>How I'd evaluate it</h2>
+<ol>
+<li><strong>Replay real traffic</strong>, not a benchmark prompt set. Acceptance rate depends heavily on what your users ask and how your prompts are built.</li>
+<li><strong>Measure the right latencies</strong>: time to first token, inter-token latency and end-to-end time, at your real concurrency, using the telemetry in <a href="/insights/llm-observability-opentelemetry-genai/">LLM observability</a>.</li>
+<li><strong>Track acceptance rate</strong> and tune the number of speculative tokens; low acceptance means wasted verification.</li>
+<li><strong>Check outputs</strong> on your <a href="/insights/llm-evaluation-sets-that-predict-production/">evaluation set</a> to confirm nothing changed that matters.</li>
+<li><strong>Compare with alternatives.</strong> <a href="/insights/prompt-caching-llm-cost-latency/">Prompt caching</a> and <a href="/insights/llm-model-routing/">routing easy requests to smaller models</a> may deliver more for less effort.</li>
+<li><strong>Decide per workload.</strong> Enable it for interactive endpoints and leave batch endpoints alone, using the serving patterns in <a href="/insights/llm-inference-serving-vllm/">vLLM inference serving</a>.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I design private LLM platforms that meet latency and cost targets on hardware you control, from model choice to serving configuration. See my <a href="/ai-architect/">AI architecture work</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
