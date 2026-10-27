@@ -1,0 +1,60 @@
+<!--{"title": "Kafka queues are production-ready: when share groups replace a broker", "description": "Apache Kafka 4.2 made queues (share groups) production-ready. How they differ from consumer groups, which workloads they fit, and when a separate message broker still makes sense.", "h1": "Kafka queues are production-ready: when share groups can replace a separate message broker", "kicker": "Data platforms · Streaming", "lede": "Many platforms run Kafka for event streams and a second system for work queues, because Kafka's consumer groups tie each partition to one consumer. Kafka 4.2 made share groups, its queue semantics, production-ready. For some teams, that means one less system to run.", "date": "2026-10-27", "datetime": "2026-10-27T04:20:00+04:00", "readtime": "7 min read", "format": "explainer", "tags": ["data", "streaming", "architecture", "platform"], "keywords": ["Kafka queues", "Kafka share groups", "KIP-932", "Apache Kafka 4.2", "Kafka vs RabbitMQ", "Kafka work queue", "per-record acknowledgement", "KRaft", "event streaming architecture", "data platform consultant"], "faq": [["What are Kafka share groups?", "An alternative to consumer groups, introduced by KIP-932 as 'Queues for Kafka'. Consumers in a share group cooperatively consume records from a topic without each partition being assigned to a single consumer, and records are acknowledged individually with delivery attempts counted."], ["Are Kafka queues production-ready?", "The Apache Kafka 4.2.0 release announcement describes Kafka Queues (share groups) as production-ready. The feature appeared as early access in Kafka 4.0."], ["Should I replace RabbitMQ or SQS with Kafka share groups?", "Only where it simplifies your platform. Share groups suit work-queue workloads already flowing through Kafka. Dedicated brokers may still be the better fit for complex routing, very low-volume task queues, or teams with no Kafka operations experience."]], "related": ["/fractional-cto/", "/ai-architect/", "/technical-due-diligence/"], "citations": [{"title": "Apache Kafka 4.2.0 release announcement", "url": "https://kafka.apache.org/blog/2026/02/17/apache-kafka-4.2.0-release-announcement/", "publisher": "Apache Kafka", "date": "2026"}, {"title": "Upgrading to 4.2 (Kafka documentation)", "url": "https://kafka.apache.org/42/getting-started/upgrade/", "publisher": "Apache Kafka"}, {"title": "Apache Kafka 4.2 release", "url": "https://www.confluent.io/blog/apache-kafka-4-2-release/", "publisher": "Confluent", "date": "2026"}, {"title": "Kafka 4.0 and the KRaft architecture (news report)", "url": "https://www.infoq.com/news/2025/04/kafka-4-kraft-architecture", "publisher": "InfoQ", "date": "Apr 2025"}, {"title": "Upgrading to 4.1 (Kafka documentation)", "url": "https://kafka.apache.org/41/getting-started/upgrade/", "publisher": "Apache Kafka"}]}-->
+<p>A familiar architecture: Kafka carries business events between services and into the lakehouse, while RabbitMQ, SQS or a database-backed job table handles background work such as sending emails, generating documents or calling a model. Two systems, two sets of operational skills, two places where messages can get stuck. The reason was structural. Kafka's consumer groups assign each partition to exactly one consumer, so you cannot scale workers beyond the partition count, and one slow message holds up everything behind it.</p>
+
+<section class="block">
+<h2>What changed</h2>
+<p>KIP-932, "Queues for Kafka", introduced share groups. Kafka 4.0, the first release to run only in KRaft mode without ZooKeeper, offered them as early access<sup class="cite"><a href="#ref-4">4</a></sup><sup class="cite"><a href="#ref-5">5</a></sup>. The 4.2.0 release announcement describes Kafka Queues as production-ready, adding a RENEW acknowledgement type, adaptive batching in the share coordinator, limits on fetched record counts, and lag metrics<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+</section>
+
+<section class="block">
+<h2>Consumer groups versus share groups</h2>
+<p>The Kafka documentation describes share groups as an alternative to consumer groups: consumers share a topic's records without each partition being tied to one consumer, records are acknowledged individually, and delivery attempts are counted. It suggests them for workloads that process records one at a time rather than as an ordered stream<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<table class="tbl">
+<thead><tr><th></th><th>Consumer group</th><th>Share group</th></tr></thead>
+<tbody>
+<tr><td>Assignment</td><td>Each partition to one consumer</td><td>Records shared across consumers</td></tr>
+<tr><td>Scaling limit</td><td>Number of partitions</td><td>Not tied to partition count</td></tr>
+<tr><td>Progress tracking</td><td>Offset per partition</td><td>Acknowledgement per record</td></tr>
+<tr><td>Retries</td><td>Built by the application</td><td>Delivery attempts counted by Kafka</td></tr>
+<tr><td>Ordering</td><td>Preserved within a partition</td><td>Not the design goal</td></tr>
+<tr><td>Best for</td><td>Event streams, CDC, aggregations</td><td>Independent tasks: jobs, notifications, AI calls</td></tr>
+</tbody>
+</table>
+<div class="callout"><p>If the order of records matters, use a consumer group. If each record is an independent piece of work, a share group is now a real option.</p></div>
+</section>
+
+<section class="block">
+<h2>Where it fits well</h2>
+<ul>
+<li><strong>AI and enrichment workloads.</strong> Calling a model for each document or record is slow and variable. Share groups let you add workers to match throughput without repartitioning, and a slow call doesn't block the rest.</li>
+<li><strong>Fan-out jobs from existing events.</strong> If the events already land in Kafka, for example from <a href="/insights/change-data-capture-event-streams/">change data capture</a>, processing them as tasks without copying them to another broker removes a hop.</li>
+<li><strong>Bursty background work</strong>, where worker count needs to swing widely during the day, combined with autoscaling like that in <a href="/insights/kubernetes-finops-scale-to-zero/">Kubernetes scale-to-zero</a>.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>Where a separate broker still wins</h2>
+<ul>
+<li><strong>No Kafka today.</strong> Adopting Kafka just for a work queue is rarely worth it. A managed queue is simpler.</li>
+<li><strong>Complex routing.</strong> Topic exchanges, header-based routing and per-message priorities remain stronger in dedicated brokers.</li>
+<li><strong>Strict ordering with parallelism.</strong> If you need per-key order and parallel processing, keyed consumer groups remain the right model.</li>
+<li><strong>Small clusters.</strong> Share groups store state in an internal topic that defaults to three replicas, so clusters with fewer than three brokers must adjust internal replication settings first<sup class="cite"><a href="#ref-2">2</a></sup>.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>How I'd adopt it</h2>
+<ol>
+<li><strong>Get to a current release.</strong> Share groups need KRaft-based Kafka 4.x; plan the ZooKeeper migration first if you haven't<sup class="cite"><a href="#ref-5">5</a></sup>. Run the latest 4.2 patch release rather than 4.2.0.</li>
+<li><strong>Pick one queue workload</strong> that already consumes from Kafka and has idempotent processing, using the patterns in <a href="/insights/idempotent-payments-order-pipelines/">idempotent pipelines</a>. Per-record acknowledgement still means at-least-once delivery.</li>
+<li><strong>Decide what happens after the last attempt.</strong> Route repeatedly failing records somewhere a person will see them.</li>
+<li><strong>Monitor share-group lag</strong> with the new metrics and alert on it, as you would queue depth<sup class="cite"><a href="#ref-1">1</a></sup>.</li>
+<li><strong>Check your managed service.</strong> Hosted Kafka offerings adopt new features and metrics at different speeds.</li>
+<li><strong>Retire the old queue only after a full cycle</strong> of peak load and incident handling on the new one.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I design event and data platforms that stay simple as they scale, including when to consolidate systems and when not to. As a <a href="/fractional-cto/">fractional CTO</a> I can own that architecture. Or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
