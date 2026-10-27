@@ -1,0 +1,86 @@
+<!--{"title": "Case study: a product ontology for e-commerce search and AI", "description": "How an online retailer replaced inconsistent categories with a SKOS taxonomy, a small OWL core and SHACL validation, making search, filters and AI shopping reliable.", "short": "E-commerce product ontology for search", "h1": "Fixing product search and AI shopping by fixing what the catalogue means", "kicker": "Case study · E-commerce ontology", "lede": "Supplier feeds arrived with their own categories, attribute names and units. Search filters broke, facets contradicted each other and an AI shopping assistant gave confident answers from messy data. The fix was a governed product ontology that every catalogue load is mapped to and validated against.", "date": "2026-10-28", "datetime": "2026-10-28T01:22:00+04:00", "readtime": "8 min read", "sector": "E-commerce · Multi-supplier marketplace", "role": "Ontology and data architect", "engagement": "Architecture, modelling and hand-off", "scope": "Taxonomy, attribute model, validation, search and assistant integration", "stack": ["SKOS", "OWL 2", "SHACL", "RDF triple store", "schema.org", "Search engine", "Vector search", "Data pipeline"], "outcomes": ["One governed category and attribute model shared by search, filters, feeds and the assistant", "Catalogue loads validated on every run, with failing products quarantined and explained", "Synonyms and preferred labels managed once and reused by search and the assistant", "Merchandisers able to change the taxonomy through review, not engineering tickets"], "tags": ["ontology", "knowledge-graph", "data", "ai", "governance"], "keywords": ["product ontology case study", "e-commerce taxonomy", "SKOS product taxonomy", "SHACL validation catalogue", "OWL product model", "product attribute normalisation", "AI shopping assistant data", "faceted search taxonomy", "schema.org Product", "ontology architect"], "faq": [["Why SKOS rather than OWL for a product taxonomy?", "SKOS is built for concept schemes with broader and narrower relations, preferred and alternative labels, which is what categories and synonyms need. OWL is kept for the small set of classes and properties where formal semantics actually matter."], ["What does SHACL add to a catalogue pipeline?", "SHACL expresses the rules a product must meet, such as required attributes per category, allowed values and units, and produces a validation report. That turns data quality into an automated gate on every load."], ["Does an AI shopping assistant need an ontology?", "It needs consistent facts. An ontology gives the assistant normalised attributes and synonyms to filter and compare on, rather than relying on the model to interpret inconsistent supplier text."]], "related": ["/ontology-knowledge-graph/", "/ai-architect/", "/fractional-cto/"], "citations": [{"title": "SKOS Simple Knowledge Organization System Reference", "url": "https://www.w3.org/TR/skos-reference/", "publisher": "W3C"}, {"title": "OWL 2 Web Ontology Language Document Overview (Second Edition)", "url": "https://www.w3.org/TR/owl2-overview/", "publisher": "W3C"}, {"title": "Shapes Constraint Language (SHACL)", "url": "https://www.w3.org/TR/2017/REC-shacl-20170720/", "publisher": "W3C"}, {"title": "Product", "url": "https://schema.org/Product", "publisher": "Schema.org"}]}-->
+<h2>The situation</h2>
+<p>An online retailer sold products from many suppliers. Each supplier feed brought its own category tree, attribute names and conventions: one sent "colour", another "color_name", a third put colour in the title. Sizes, materials and units varied by feed. The internal category tree had grown by accretion, with near-duplicate branches and categories that meant different things to different teams.</p>
+<p>The symptoms were familiar. Filters returned partial results because half the products lacked the attribute being filtered. Search relied on hand-maintained synonym lists. A new AI shopping assistant made the problem more visible: asked to compare products, it reasoned confidently over data that was inconsistent underneath.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>One model of meaning</strong> for categories and attributes, shared by search, filters, feeds and the assistant.</li>
+<li><strong>Mapping, not rewriting</strong>: supplier data is mapped to the model, with the original preserved.</li>
+<li><strong>Validation on every load</strong>, so bad data is caught before customers see it.</li>
+<li><strong>Business ownership</strong>: merchandisers change the taxonomy through review, without engineering in the loop for every edit.</li>
+<li><strong>Standards, not a bespoke format</strong>, so the model outlives any one tool.</li>
+</ul>
+
+<h2>Architecture</h2>
+<p>The taxonomy was modelled in SKOS, which is designed for concept schemes with broader and narrower relations and preferred and alternative labels<sup class="cite"><a href="#ref-1">1</a></sup>. A deliberately small OWL core covered the classes and properties that needed formal definitions<sup class="cite"><a href="#ref-2">2</a></sup>. The reasoning behind that split is in <a href="/insights/skos-vs-owl-enterprise-taxonomies/">SKOS vs OWL for enterprise taxonomies</a>.</p>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Sources</small><div class="dgm-nodes"><span>Supplier feeds<em>CSV, XML, API</em></span><span>Product master<em>internal</em></span><span>Search logs<em>queries, zero results</em></span></div></div>
+<div class="dgm-tier"><small>Model</small><div class="dgm-nodes"><span class="hl">Category scheme<em>SKOS</em></span><span>Attribute core<em>small OWL model</em></span><span>Units and value lists<em>controlled</em></span></div></div>
+<div class="dgm-tier"><small>Map</small><div class="dgm-nodes"><span>Supplier mappings<em>versioned, reviewed</em></span><span>Attribute extraction<em>rules, then ML</em></span><span>Unit normalisation<em>canonical units</em></span></div></div>
+<div class="dgm-tier"><small>Validate</small><div class="dgm-nodes"><span class="hl">SHACL shapes<em>per category</em></span><span>Quarantine<em>with reasons</em></span><span>Quality report<em>per supplier</em></span></div></div>
+<div class="dgm-tier"><small>Use</small><div class="dgm-nodes"><span>Search index<em>labels as synonyms</em></span><span>Facets and filters<em>from the model</em></span><span>AI assistant<em>structured attributes</em></span><span>Structured data<em>schema.org</em></span></div></div>
+</div>
+<figcaption>Layered architecture: one model of meaning, mapped into from every feed and published to every consumer.</figcaption>
+</figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Receive</b><span>Supplier feed lands raw, unchanged, with supplier and load identifiers</span></li>
+<li class="hl"><b>Map</b><span>Supplier categories and attributes mapped to concepts and properties</span></li>
+<li><b>Normalise</b><span>Units converted, values matched to controlled lists, originals kept</span></li>
+<li class="hl"><b>Validate</b><span>SHACL shapes check required attributes and values per category</span></li>
+<li><b>Publish</b><span>Valid products to search, facets and the assistant; failures quarantined</span></li>
+<li><b>Improve</b><span>Zero-result queries and quarantine reasons feed the taxonomy backlog</span></li>
+</ol>
+<figcaption>Validation is a gate: a product that fails its category's shape is held back with a readable reason.</figcaption>
+</figure>
+<p>SHACL describes the conditions data must meet and produces a validation report, which made it a natural release gate for each load<sup class="cite"><a href="#ref-3">3</a></sup>. Patterns for writing shapes are in <a href="/insights/shacl-validation-knowledge-graphs/">SHACL validation for knowledge graphs</a>.</p>
+
+<h2>The hard part: attributes, not categories</h2>
+<p>Agreeing a category tree was comparatively quick. Agreeing attributes was not, because attributes are where search filters and assistant answers actually come from. The work that made a difference:</p>
+<ul>
+<li><strong>Attributes defined per category</strong>, with required, recommended and optional tiers, so a shape knows what "complete" means for a sofa versus a shoe.</li>
+<li><strong>Controlled value lists</strong> with preferred and alternative labels, so "navy", "dark blue" and supplier codes resolve to one value while search still matches all of them.</li>
+<li><strong>Canonical units</strong> with conversion at load, never in the search layer.</li>
+<li><strong>Duplicate and variant handling</strong>, the same product from two suppliers, which is an entity resolution problem in its own right; see <a href="/insights/entity-resolution-knowledge-graphs/">entity resolution for knowledge graphs</a>.</li>
+</ul>
+<div class="callout"><p>An AI assistant is only as consistent as the attributes it reads. Many apparent "hallucinations" about products turn out to be faithful readings of contradictory data.</p></div>
+
+<h2>How the engagement ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Merchandising</small><ol><li>Proposes category changes</li><li class="hl">Approves attribute rules</li><li>Owns value lists</li></ol></div>
+<div class="dgm-lane"><small>Data team</small><ol><li>Maintains supplier mappings</li><li>Runs validation</li><li>Works the quarantine</li></ol></div>
+<div class="dgm-lane"><small>Search and AI</small><ol><li>Consume published model</li><li class="hl">Report zero-result gaps</li><li>Test assistant answers</li></ol></div>
+</div>
+<figcaption>Ownership split: the business owns meaning, the data team owns mapping, consumers report gaps.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Discover</b><ul><li>Feed and attribute inventory</li><li>Search log analysis</li><li>Highest-value categories</li></ul></div>
+<div><small>Phase 2</small><b>Model</b><ul><li>SKOS category scheme</li><li>Attribute core</li><li>First SHACL shapes</li></ul></div>
+<div><small>Phase 3</small><b>Pipeline</b><ul><li>Supplier mappings</li><li>Validation gate</li><li>Quarantine and reports</li></ul></div>
+<div><small>Phase 4</small><b>Consume and hand off</b><ul><li>Search and facets</li><li>Assistant integration</li><li>Governance workflow</li></ul></div>
+</div>
+<figcaption>Phased delivery, starting with the categories that drove the most search traffic.</figcaption>
+</figure>
+<p>Product pages also emitted schema.org Product markup generated from the same model<sup class="cite"><a href="#ref-4">4</a></sup>, so structured data for external search stayed consistent with internal search. More in <a href="/insights/structured-data-for-ai-search/">structured data for AI search</a>.</p>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>SKOS for the taxonomy</td><td>Full OWL ontology</td><td>Labels and hierarchy are what categories need; easier for the business to own</td></tr>
+<tr><td>Small OWL core</td><td>No formal model at all</td><td>Precise definitions where products are compared and filtered</td></tr>
+<tr><td>SHACL as a load gate</td><td>Ad hoc scripts in the pipeline</td><td>Declarative, standard rules with readable reports</td></tr>
+<tr><td>Keep supplier originals</td><td>Overwrite on mapping</td><td>Mappings can be corrected and replayed</td></tr>
+<tr><td>Assistant reads structured attributes</td><td>Assistant reads raw descriptions</td><td>Comparisons and filters grounded in validated facts</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: start from search logs and the categories that matter commercially, and make validation a gate rather than a report. Differently: put merchandising ownership and the review workflow in place before the model grows, not after. A taxonomy without a clear owner drifts back to where it started.</p>
+<p>If your catalogue or knowledge model has the same symptoms, the <a href="/ontology-knowledge-graph/">ontology and knowledge graph</a> page describes how I approach it, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>

@@ -1,0 +1,87 @@
+<!--{"title": "Case study: AI agents for logistics exception handling", "description": "How a logistics operator used AI agents to triage shipment exception emails: classification, governed MCP tool calls to the TMS and human-approved actions.", "short": "Logistics exception-handling agents", "h1": "Triaging shipment exceptions with agents that ask before they act", "kicker": "Case study · Logistics AI agents", "lede": "Every delayed shipment produced emails: carriers, customers, warehouses, customs brokers. Staff read, classified and chased each one by hand. The goal was agents that classify exceptions, look up shipment state through governed tools and draft the next action, with a person approving anything that changes the world.", "date": "2026-10-28", "datetime": "2026-10-28T01:26:00+04:00", "readtime": "8 min read", "sector": "Logistics · Freight and fulfilment", "role": "AI architect", "engagement": "Architecture, build and hand-off", "scope": "Agent design, tool layer, approvals, evaluation, observability", "stack": ["LangGraph", "Model Context Protocol", "Structured outputs", "Message queues", "TMS APIs", "Approval UI", "Evaluation harness", "OpenTelemetry"], "outcomes": ["Exception emails arrive classified, with shipment context attached, instead of as raw inbox items", "Read-only lookups automated; every state-changing action approved by a person", "Agent behaviour measured against a labelled set before each release", "Every run traceable from email to tool calls to the approved action"], "tags": ["agents", "ai", "llm", "mcp", "security"], "keywords": ["AI agents logistics case study", "exception handling automation", "LangGraph human in the loop", "MCP tools enterprise", "agentic workflow TMS", "email triage LLM", "structured outputs agents", "AI agent governance", "shipment exception management", "agent evaluation"], "faq": [["Should agents act autonomously on shipments?", "Not at first. Read-only lookups can be automated safely; actions that change bookings, notify customers or incur cost should be drafted by the agent and approved by a person until the evaluation evidence supports more autonomy."], ["Why use MCP for the tool layer?", "MCP gives a standard way to describe and expose tools, so the same governed tools can be used by different agents and clients, with permissions and logging in one place."], ["How do you defend against malicious instructions in inbound emails?", "Treat email content as untrusted data, never as instructions; restrict which tools the agent can call from that context, and require approval for any action with side effects."]], "related": ["/ai-architect/", "/fractional-cto/", "/technical-due-diligence/"], "citations": [{"title": "Building effective agents", "url": "https://www.anthropic.com/engineering/building-effective-agents", "publisher": "Anthropic"}, {"title": "Model Context Protocol specification: Tools", "url": "https://modelcontextprotocol.io/specification/2025-06-18/server/tools", "publisher": "Model Context Protocol"}, {"title": "LangGraph interrupts", "url": "https://docs.langchain.com/oss/python/langgraph/interrupts", "publisher": "LangChain"}, {"title": "OWASP Top 10 for LLM Applications", "url": "https://genai.owasp.org/llm-top-10/", "publisher": "OWASP GenAI Security Project"}, {"title": "Structured outputs", "url": "https://platform.claude.com/docs/en/build-with-claude/structured-outputs", "publisher": "Anthropic"}]}-->
+<h2>The situation</h2>
+<p>A logistics operator's customer service and operations teams handled shipment exceptions largely by email. A late container, a failed delivery, a missing customs document or an address query each arrived as free text, often with attachments, sometimes in a long thread. Staff read each message, worked out which shipment it concerned, looked it up in the transport management system (TMS), decided what to do and then did it, across several screens.</p>
+<p>The work was repetitive but not trivial. The hard part of each email was usually the same: identify the shipment, understand the exception, gather the facts. The decision itself was often quick once the facts were on one screen.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>Structured, not chatty</strong>: every email becomes a typed exception record, or is routed to a person as unclassifiable.</li>
+<li><strong>Governed tools</strong>: the agent reaches systems only through a defined, permissioned tool layer.</li>
+<li><strong>Read freely, write with approval</strong>: lookups are automatic; anything with side effects needs a person.</li>
+<li><strong>Inbound email is untrusted</strong> and never treated as instructions.</li>
+<li><strong>Measured and traceable</strong>: behaviour evaluated before release, every run inspectable afterwards.</li>
+</ul>
+
+<h2>Architecture</h2>
+<p>The design favoured a defined workflow with agentic steps over an open-ended autonomous agent. Anthropic's guidance on building agents makes the same distinction, recommending the simplest pattern that works and adding autonomy only where it earns its keep<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Intake</small><div class="dgm-nodes"><span>Shared mailboxes<em>carriers, customers</em></span><span>Queue<em>one message per job</em></span><span>Attachment parsing<em>PDF, images</em></span></div></div>
+<div class="dgm-tier"><small>Understand</small><div class="dgm-nodes"><span class="hl">Classifier<em>structured output</em></span><span>Extractor<em>references, dates, parties</em></span><span>Shipment matcher<em>confidence scored</em></span></div></div>
+<div class="dgm-tier"><small>Orchestrate</small><div class="dgm-nodes"><span>LangGraph workflow<em>per exception type</em></span><span>State checkpoint<em>durable</em></span><span>Interrupts<em>human approval</em></span></div></div>
+<div class="dgm-tier"><small>Tools</small><div class="dgm-nodes"><span class="hl">MCP servers<em>scoped tools</em></span><span>TMS read tools<em>status, events</em></span><span>TMS write tools<em>approval only</em></span><span>Messaging tools<em>drafts only</em></span></div></div>
+<div class="dgm-tier"><small>Assure</small><div class="dgm-nodes"><span>Labelled eval set<em>real exceptions</em></span><span>Traces<em>OpenTelemetry</em></span><span>Audit log<em>who approved what</em></span></div></div>
+</div>
+<figcaption>Layered architecture: a fixed workflow, typed outputs at each step, and every system reached through scoped tools.</figcaption>
+</figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Receive</b><span>Email lands on a queue with its thread and attachments</span></li>
+<li class="hl"><b>Classify</b><span>Exception type, shipment references and key facts as a typed record</span></li>
+<li><b>Match</b><span>References resolved to a shipment; low confidence routed to a person</span></li>
+<li><b>Look up</b><span>Read-only MCP tools fetch status, milestones and contacts from the TMS</span></li>
+<li class="hl"><b>Propose</b><span>Draft action and reply prepared; workflow pauses for approval</span></li>
+<li><b>Act</b><span>On approval, write tool executes; outcome logged and thread updated</span></li>
+</ol>
+<figcaption>The workflow pauses before any side effect, and resumes from a durable checkpoint after a person decides.</figcaption>
+</figure>
+<p>Classification and extraction used structured outputs, where the model's response is constrained to a supplied JSON schema<sup class="cite"><a href="#ref-5">5</a></sup>, so downstream steps receive valid records rather than prose. Approval pauses used LangGraph interrupts, which persist graph state while waiting for human input and resume with that input<sup class="cite"><a href="#ref-3">3</a></sup>. More in <a href="/insights/structured-outputs-reliable-llm-integration/">structured outputs for reliable LLM integration</a>.</p>
+
+<h2>The hard part: tools you can trust an agent with</h2>
+<p>The model was rarely the weak point. The tool layer was where safety lived. The MCP specification describes tools as model-invoked and recommends that a human can always deny a tool invocation<sup class="cite"><a href="#ref-2">2</a></sup>. The design took that literally:</p>
+<ul>
+<li><strong>Separate read and write servers</strong>, with write tools reachable only from the post-approval step of the workflow.</li>
+<li><strong>Narrow tools</strong>: "get shipment milestones" and "request redelivery", not a general API passthrough.</li>
+<li><strong>Service identity per tool</strong>, scoped to the minimum permissions in the TMS.</li>
+<li><strong>Email as data</strong>: inbound text is passed as content to classify, never as instructions, because prompt injection and excessive agency both appear in the OWASP Top 10 for LLM applications<sup class="cite"><a href="#ref-4">4</a></sup>.</li>
+</ul>
+<p>The checklist used is in <a href="/insights/securing-mcp-servers-checklist/">securing MCP servers</a> and <a href="/insights/prompt-injection-defence-for-agents/">prompt injection defence for agents</a>.</p>
+<div class="callout"><p>Give an agent the narrowest tools that do the job, and put approval in the workflow, not in the prompt.</p></div>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Agent</small><ol><li>Classifies and extracts</li><li>Looks up shipment state</li><li class="hl">Drafts action and reply</li></ol></div>
+<div class="dgm-lane"><small>Operator</small><ol><li>Reviews the case card</li><li class="hl">Approves, edits or rejects</li><li>Handles unclassified mail</li></ol></div>
+<div class="dgm-lane"><small>Systems</small><ol><li>TMS via MCP tools</li><li>Messaging via drafts</li><li>Traces and audit log</li></ol></div>
+</div>
+<figcaption>The operator sees one case card with facts gathered; the decision stays with them.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Understand</b><ul><li>Exception taxonomy</li><li>Labelled sample of emails</li><li>Current handling steps</li></ul></div>
+<div><small>Phase 2</small><b>Read-only</b><ul><li>Classification and matching</li><li>Lookup tools</li><li>Case cards in shadow</li></ul></div>
+<div><small>Phase 3</small><b>Assisted actions</b><ul><li>Write tools behind approval</li><li>Draft replies</li><li>Evaluation gate</li></ul></div>
+<div><small>Phase 4</small><b>Extend and hand off</b><ul><li>More exception types</li><li>Runbooks and owners</li><li>Autonomy reviews</li></ul></div>
+</div>
+<figcaption>Read-only first; write tools added only once classification and matching were measured.</figcaption>
+</figure>
+<p>Evaluation followed <a href="/insights/evaluating-ai-agents-reliability/">evaluating AI agents for reliability</a>, scoring classification, shipment matching and proposed actions separately, so a regression could be located rather than just noticed.</p>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Fixed workflow with agentic steps</td><td>Open-ended autonomous agent</td><td>Predictable, testable paths per exception type</td></tr>
+<tr><td>MCP tool layer</td><td>Direct API calls from prompts</td><td>Standard, reusable tools with permissions in one place</td></tr>
+<tr><td>Approval before side effects</td><td>Full autonomy</td><td>Trust earned with evidence, not assumed</td></tr>
+<tr><td>Structured outputs everywhere</td><td>Free-text parsing</td><td>Typed records that downstream code can rely on</td></tr>
+<tr><td>Separate scores per step</td><td>One end-to-end score</td><td>Regressions can be traced to a step</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: start read-only, build the labelled set from real emails, and keep write tools behind approval. Differently: invest earlier in shipment matching. Ambiguous references caused more escalations than misclassification did, and better matching would have improved every downstream step.</p>
+<p>If you are designing agents that touch operational systems, the <a href="/ai-architect/">AI architect</a> page describes how I approach it, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>

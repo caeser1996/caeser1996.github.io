@@ -1,0 +1,87 @@
+<!--{"title": "Case study: a cited KYC and policy assistant for a bank", "description": "How a bank gave KYC analysts a cited, permission-aware policy assistant: hybrid retrieval, evaluation sets signed off by compliance and auditable answers.", "short": "Bank KYC and policy assistant (RAG)", "h1": "Giving KYC analysts cited answers from policy, without giving up control", "kicker": "Case study · Banking AI", "lede": "Onboarding analysts were searching hundreds of policy pages and past case notes for every decision. The goal was an assistant that answers from approved sources only, shows its citations, respects who is allowed to see what, and is measured against questions compliance has signed off.", "date": "2026-10-28", "datetime": "2026-10-28T01:20:00+04:00", "readtime": "8 min read", "sector": "Banking · Retail and corporate onboarding", "role": "AI architect", "engagement": "Architecture, build and hand-off", "scope": "Retrieval, access control, evaluation, audit, rollout", "stack": ["Hybrid search", "Vector index", "RAG", "Re-ranking", "SSO and entitlements", "Evaluation harness", "OpenTelemetry", "Audit log"], "outcomes": ["Analysts get answers that cite the exact policy clause or case note they came from", "Retrieval respects existing entitlements, so the assistant never shows what a user could not already open", "An evaluation set owned by compliance gates every prompt, model and index change", "A full audit trail of questions, sources and answers for second-line review"], "tags": ["ai", "llm", "governance", "security", "regulation"], "keywords": ["KYC assistant case study", "RAG for compliance", "policy assistant bank", "permission-aware retrieval", "hybrid search RAG", "LLM evaluation set", "AI in AML", "cited answers LLM", "banking AI architect", "RAG governance"], "faq": [["Can a RAG assistant make KYC decisions?", "It should not. In this design the assistant retrieves and cites policy and precedent; the analyst makes and records the decision, and the assistant's output is evidence in the file, not the decision itself."], ["How do you stop the assistant showing documents a user is not allowed to see?", "Filter at retrieval time using the same entitlements as the source systems, before anything reaches the model. Prompt instructions alone are not an access control."], ["How do you know the assistant is good enough to release?", "Build an evaluation set of real analyst questions with expected sources and answers, have compliance sign it off, and require every change to pass it before release."]], "related": ["/ai-architect/", "/fractional-cto/", "/technical-due-diligence/"], "citations": [{"title": "The FATF Recommendations", "url": "https://www.fatf-gafi.org/en/publications/Fatfrecommendations/Fatf-recommendations.html", "publisher": "Financial Action Task Force"}, {"title": "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks", "url": "https://arxiv.org/abs/2005.11401", "publisher": "arXiv (Lewis et al., NeurIPS 2020)"}, {"title": "OWASP Top 10 for LLM Applications", "url": "https://genai.owasp.org/llm-top-10/", "publisher": "OWASP GenAI Security Project"}, {"title": "AI Risk Management Framework", "url": "https://www.nist.gov/itl/ai-risk-management-framework", "publisher": "NIST"}]}-->
+<h2>The situation</h2>
+<p>A bank's onboarding analysts spent much of each case looking things up. Policy lived across hundreds of pages of procedures, risk appetite statements and local addenda, and the most useful guidance was often in past case notes: how a similar ownership structure or jurisdiction had been handled before. Senior analysts carried that knowledge in their heads; newer analysts asked them, or searched a document portal that matched keywords and returned whole documents.</p>
+<p>Customer due diligence obligations come from the FATF Recommendations and their national implementations, which require institutions to identify and verify customers and beneficial owners<sup class="cite"><a href="#ref-1">1</a></sup>. None of that changes because an assistant exists. The aim was narrower and more useful: help analysts find the right rule and the right precedent faster, with the evidence in front of them.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>Answers come from approved sources only</strong>, and every answer cites them.</li>
+<li><strong>Entitlements are enforced at retrieval</strong>: a user only ever sees passages they could already open in the source system.</li>
+<li><strong>The analyst decides</strong>. The assistant informs a decision; it never records one.</li>
+<li><strong>Quality is measured before release</strong>, against questions compliance agrees are representative.</li>
+<li><strong>Everything is auditable</strong>: question, retrieved sources, model version and answer.</li>
+</ul>
+
+<h2>Architecture</h2>
+<p>The pattern is retrieval-augmented generation: a retriever selects relevant passages and a generator answers conditioned on them, which keeps knowledge in an index that can be updated without retraining<sup class="cite"><a href="#ref-2">2</a></sup>. The work was in making each layer governable.</p>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Sources</small><div class="dgm-nodes"><span>Policy library<em>approved versions</em></span><span>Procedures<em>by business line</em></span><span>Case notes<em>closed cases</em></span><span>Regulatory guidance<em>curated</em></span></div></div>
+<div class="dgm-tier"><small>Index</small><div class="dgm-nodes"><span>Chunking<em>clause-aware</em></span><span>Hybrid index<em>keyword + vector</em></span><span class="hl">ACL metadata<em>per chunk</em></span></div></div>
+<div class="dgm-tier"><small>Retrieve</small><div class="dgm-nodes"><span>SSO identity<em>groups, region</em></span><span class="hl">Entitlement filter<em>before ranking</em></span><span>Re-ranker<em>top passages</em></span></div></div>
+<div class="dgm-tier"><small>Answer</small><div class="dgm-nodes"><span>Grounded prompt<em>cite or decline</em></span><span>LLM<em>pinned version</em></span><span>Citation check<em>claims to sources</em></span></div></div>
+<div class="dgm-tier"><small>Assure</small><div class="dgm-nodes"><span class="hl">Evaluation set<em>compliance-owned</em></span><span>Audit log<em>immutable</em></span><span>Traces<em>OpenTelemetry</em></span></div></div>
+</div>
+<figcaption>Layered architecture: entitlements travel with every chunk, and nothing ships without passing the evaluation set.</figcaption>
+</figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Ingest</b><span>Only published policy versions and closed case notes, with owner and effective date</span></li>
+<li><b>Index</b><span>Split on clause boundaries; attach source permissions to every chunk</span></li>
+<li class="hl"><b>Retrieve</b><span>Filter by the analyst's entitlements, then hybrid search and re-rank</span></li>
+<li><b>Answer</b><span>Generate only from retrieved passages, or say the sources do not cover it</span></li>
+<li class="hl"><b>Cite</b><span>Link each statement to a clause or case; flag unsupported sentences</span></li>
+<li><b>Learn</b><span>Analyst feedback becomes candidate evaluation cases for compliance review</span></li>
+</ol>
+<figcaption>The assistant declines rather than guesses when the retrieved sources do not answer the question.</figcaption>
+</figure>
+<p>Hybrid retrieval mattered because KYC questions mix exact terms (a form name, a jurisdiction, a document type) with paraphrase. Keyword search finds the former and vectors the latter. The detail is in <a href="/insights/mongodb-hybrid-search-rag/">hybrid search for RAG</a> and <a href="/insights/choosing-embedding-models-rag/">choosing embedding models</a>.</p>
+
+<h2>The hard part: permissions that survive retrieval</h2>
+<p>The tempting shortcut is one index for everyone and an instruction to the model not to reveal restricted material. That is not access control. OWASP's Top 10 for LLM applications lists sensitive information disclosure and vector and embedding weaknesses as distinct risks for exactly this kind of system<sup class="cite"><a href="#ref-3">3</a></sup>. The approach was:</p>
+<ul>
+<li>Carry the source system's permissions onto every chunk at index time, and re-sync them when they change.</li>
+<li>Apply the entitlement filter inside the retrieval query, so restricted passages are never ranked, let alone sent to the model.</li>
+<li>Treat case notes as more sensitive than policy by default, with access scoped by business line and region.</li>
+<li>Test it: evaluation cases that ask, as a restricted user, for content they should not see, and fail the release if anything leaks.</li>
+</ul>
+<p>The same thinking applies to retrieved text as untrusted input; see <a href="/insights/prompt-injection-defence-for-agents/">prompt injection defence</a>.</p>
+<div class="callout"><p>If a user could not open the document, the model should never read it on their behalf. Enforce that in the query, not the prompt.</p></div>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Analyst</small><ol><li>Asks in plain language</li><li class="hl">Checks cited clauses</li><li>Records own decision</li></ol></div>
+<div class="dgm-lane"><small>Assistant</small><ol><li>Filters by entitlement</li><li>Retrieves and answers</li><li>Logs sources and version</li></ol></div>
+<div class="dgm-lane"><small>Compliance</small><ol><li>Owns the evaluation set</li><li class="hl">Approves releases</li><li>Samples the audit log</li></ol></div>
+</div>
+<figcaption>The analyst stays the decision-maker; compliance owns the definition of "good enough".</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Frame</b><ul><li>Top analyst questions</li><li>Source inventory and owners</li><li>Risk and control mapping</li></ul></div>
+<div><small>Phase 2</small><b>Evaluate first</b><ul><li>Evaluation set drafted</li><li>Compliance sign-off</li><li>Baseline retrieval quality</li></ul></div>
+<div><small>Phase 3</small><b>Build</b><ul><li>Entitlement-aware index</li><li>Citation checking</li><li>Audit and tracing</li></ul></div>
+<div><small>Phase 4</small><b>Pilot and hand off</b><ul><li>One team, then more</li><li>Feedback loop into evals</li><li>Runbooks and ownership</li></ul></div>
+</div>
+<figcaption>The evaluation set came before the build, so every later change had a fixed bar to clear.</figcaption>
+</figure>
+<p>Framing the work against the NIST AI RMF's govern, map, measure and manage functions gave risk and compliance teams a familiar structure for their review<sup class="cite"><a href="#ref-4">4</a></sup>. The release checklist followed <a href="/insights/rag-to-production-checklist/">RAG to production</a>, and the evaluation design followed <a href="/insights/llm-evaluation-sets-that-predict-production/">evaluation sets that predict production</a>.</p>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Entitlement filter in the retrieval query</td><td>Prompt-level instructions</td><td>Restricted content never reaches the model; testable</td></tr>
+<tr><td>Hybrid keyword and vector search</td><td>Vector-only retrieval</td><td>KYC questions mix exact terms with paraphrase</td></tr>
+<tr><td>Cite or decline</td><td>Best-effort answers</td><td>An uncited answer is not usable as evidence</td></tr>
+<tr><td>Compliance-owned evaluation set</td><td>Engineering-owned benchmarks</td><td>The people accountable for the outcome define the bar</td></tr>
+<tr><td>Pinned model versions</td><td>Always-latest model</td><td>Changes are deliberate, evaluated and logged</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: write the evaluation set before the first prompt, and put entitlements in the data path from day one. Differently: start the source clean-up sooner. Superseded policy versions and inconsistent case notes caused more wrong answers than the model did, and fixing content is slower than fixing code.</p>
+<p>If you are weighing something similar, the <a href="/ai-architect/">AI architect</a> page describes how I run these engagements, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>

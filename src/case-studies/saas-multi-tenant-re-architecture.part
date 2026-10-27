@@ -1,0 +1,86 @@
+<!--{"title": "Case study: re-architecting a SaaS platform for tiered tenancy", "description": "How a B2B SaaS platform tamed noisy neighbours and met enterprise isolation demands with pooled and dedicated tiers, per-tenant limits and tested isolation.", "short": "SaaS multi-tenant re-architecture", "h1": "Re-architecting a SaaS platform so one tenant can't slow down the rest", "kicker": "Case study · SaaS platform architecture", "lede": "A few heavy tenants could degrade the service for everyone, and enterprise buyers were asking for isolation guarantees the platform could not evidence. The goal was tiered tenancy: pooled by default, dedicated where it is worth paying for, with per-tenant limits and isolation proven by tests rather than asserted in a questionnaire.", "date": "2026-10-28", "datetime": "2026-10-28T01:28:00+04:00", "readtime": "8 min read", "sector": "SaaS · B2B platform", "role": "Fractional CTO and principal architect", "engagement": "Architecture, delivery leadership and hand-off", "scope": "Tenancy model, routing, data isolation, quotas, observability", "stack": ["MongoDB", "Kubernetes", "Gateway API", "ResourceQuotas", "OpenTelemetry", "Tenant context propagation", "Infrastructure as code", "Isolation test suite"], "outcomes": ["A tenancy model with pooled and dedicated tiers, chosen per tenant rather than per platform", "Per-tenant limits that stop one tenant's load from degrading others", "Tenant context carried end to end, so usage, cost and incidents are visible per tenant", "Isolation evidence produced by automated tests, ready for enterprise security reviews"], "tags": ["platform", "architecture", "kubernetes", "security", "observability"], "keywords": ["multi-tenant SaaS case study", "SaaS tenant isolation", "noisy neighbour SaaS", "pooled vs siloed tenancy", "MongoDB multi-tenant", "Kubernetes multi-tenancy", "per-tenant quotas", "Gateway API tenant routing", "enterprise SaaS isolation", "fractional CTO SaaS"], "faq": [["Should every enterprise customer get a dedicated stack?", "No. Dedicated tiers cost more to run and operate. Offer them where isolation, residency or performance requirements justify it, and keep most tenants pooled with strong logical isolation and limits."], ["How do you prove tenant isolation to a buyer?", "With automated tests that attempt cross-tenant access at each layer and fail the build if they succeed, plus the architecture and controls that explain why. Evidence from tests is more convincing than a questionnaire answer."], ["What causes noisy neighbour problems?", "Shared resources without per-tenant limits: database capacity, compute, queues and connection pools. The fix is tenant-aware limits at each shared layer and observability that shows which tenant is consuming what."]], "related": ["/fractional-cto/", "/technical-due-diligence/", "/ai-architect/"], "citations": [{"title": "SaaS Tenant Isolation Strategies: core isolation concepts", "url": "https://docs.aws.amazon.com/whitepapers/latest/saas-tenant-isolation-strategies/core-isolation-concepts.html", "publisher": "Amazon Web Services"}, {"title": "Multi-tenancy", "url": "https://kubernetes.io/docs/concepts/security/multi-tenancy/", "publisher": "Kubernetes"}, {"title": "Build a Multi-Tenant Architecture", "url": "https://www.mongodb.com/docs/atlas/build-multi-tenant-arch/", "publisher": "MongoDB"}, {"title": "Baggage", "url": "https://opentelemetry.io/docs/concepts/signals/baggage/", "publisher": "OpenTelemetry"}, {"title": "Resource Quotas", "url": "https://kubernetes.io/docs/concepts/policy/resource-quotas/", "publisher": "Kubernetes"}]}-->
+<h2>The situation</h2>
+<p>A B2B SaaS platform had grown on a single shared architecture: one application deployment, one database cluster, every tenant in the same collections. That served it well while tenants were similar in size. As larger customers arrived, two problems appeared together. A heavy import or reporting job from one tenant could slow the service for everyone. And enterprise prospects began asking, in security reviews, how their data was isolated and whether they could have dedicated infrastructure.</p>
+<p>The team's instinct was to give big customers their own copy of everything. That answers the sales question and creates an operations problem: many stacks to upgrade, monitor and pay for.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>Isolation as a choice per tenant</strong>, not one model forced on all.</li>
+<li><strong>One codebase and one release process</strong> across every tier.</li>
+<li><strong>Per-tenant limits</strong> at every shared resource.</li>
+<li><strong>Tenant context everywhere</strong>: in routing, data access, logs, traces and cost.</li>
+<li><strong>Isolation proven by tests</strong>, so the answer to a security review is evidence.</li>
+</ul>
+
+<h2>Architecture</h2>
+<p>AWS's tenant isolation guidance frames the options as silo (dedicated resources), pool (shared resources) and bridge (a mix chosen per layer)<sup class="cite"><a href="#ref-1">1</a></sup>. The design adopted that vocabulary directly: a pooled tier for most tenants and a dedicated tier for those whose requirements justify it, running the same services.</p>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Edge</small><div class="dgm-nodes"><span>Identity<em>tenant in token</em></span><span class="hl">Gateway API<em>tenant-aware routing</em></span><span>Rate limits<em>per tenant</em></span></div></div>
+<div class="dgm-tier"><small>Control plane</small><div class="dgm-nodes"><span>Tenant registry<em>tier, region, limits</em></span><span>Provisioning<em>infrastructure as code</em></span><span>Plan and quota config<em>versioned</em></span></div></div>
+<div class="dgm-tier"><small>Compute</small><div class="dgm-nodes"><span>Pooled namespace<em>shared services</em></span><span>Dedicated namespaces<em>per tenant</em></span><span>ResourceQuotas<em>per namespace</em></span></div></div>
+<div class="dgm-tier"><small>Data</small><div class="dgm-nodes"><span>Pooled cluster<em>tenantId on every document</em></span><span>Dedicated database or cluster<em>enterprise tier</em></span><span class="hl">Data access layer<em>tenant filter enforced</em></span></div></div>
+<div class="dgm-tier"><small>Assure</small><div class="dgm-nodes"><span class="hl">Isolation tests<em>every build</em></span><span>OpenTelemetry<em>tenant attributes</em></span><span>Per-tenant usage<em>cost and capacity</em></span></div></div>
+</div>
+<figcaption>Layered architecture: one control plane decides where each tenant runs; the same code serves both tiers.</figcaption>
+</figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Authenticate</b><span>Token carries the tenant identifier; nothing downstream trusts a header alone</span></li>
+<li class="hl"><b>Route</b><span>Gateway looks up the tenant's tier and sends the request to pooled or dedicated services</span></li>
+<li><b>Limit</b><span>Per-tenant rate and concurrency limits applied before work starts</span></li>
+<li class="hl"><b>Access data</b><span>Data layer injects the tenant filter or selects the tenant's database</span></li>
+<li><b>Observe</b><span>Tenant context propagated on traces, metrics and logs</span></li>
+<li><b>Account</b><span>Usage aggregated per tenant for capacity, cost and plan enforcement</span></li>
+</ol>
+<figcaption>Tenant context is set once at the edge and carried through every hop.</figcaption>
+</figure>
+<p>On the data side, MongoDB's guidance compares database-per-tenant with shared collections keyed by a tenant field, and notes that the shared model needs every query to filter by tenant<sup class="cite"><a href="#ref-3">3</a></sup>. That requirement was moved out of individual queries and into one data access layer. Detail in <a href="/insights/mongodb-multi-tenant-saas-patterns/">MongoDB multi-tenant SaaS patterns</a>.</p>
+
+<h2>The hard part: noisy neighbours at every layer</h2>
+<p>Noisy neighbours are rarely one bottleneck. Limits had to exist at each shared resource, or load simply moved to the next one. The Kubernetes documentation treats noisy neighbours as a core multi-tenancy concern and points to resource quotas and node isolation as controls<sup class="cite"><a href="#ref-2">2</a></sup>; quotas cap aggregate consumption per namespace<sup class="cite"><a href="#ref-5">5</a></sup>. The layers addressed were:</p>
+<ul>
+<li><strong>Requests</strong>: per-tenant rate and concurrency limits at the gateway.</li>
+<li><strong>Background work</strong>: per-tenant queues or fair scheduling, so one tenant's bulk import cannot starve others.</li>
+<li><strong>Compute</strong>: dedicated namespaces with quotas for the dedicated tier; resource requests and limits in the pool.</li>
+<li><strong>Database</strong>: indexes that start with the tenant key, query timeouts, and heavy reporting moved off the primary path.</li>
+</ul>
+<p>None of that is manageable without seeing it per tenant. OpenTelemetry baggage carries key-value context such as a tenant identifier across service boundaries<sup class="cite"><a href="#ref-4">4</a></sup>, which let traces and metrics be broken down by tenant. More in <a href="/insights/kubernetes-multi-tenancy/">Kubernetes multi-tenancy</a>.</p>
+<div class="callout"><p>Isolation you cannot test is a claim. Isolation with a failing test when it breaks is a control.</p></div>
+
+<h2>How the engagement ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Product and sales</small><ol><li>Define tier offers</li><li class="hl">Agree who qualifies</li><li>Use isolation evidence</li></ol></div>
+<div class="dgm-lane"><small>Engineering</small><ol><li>Tenant context and data layer</li><li>Limits at each layer</li><li class="hl">Isolation test suite</li></ol></div>
+<div class="dgm-lane"><small>Platform</small><ol><li>Provision dedicated tier</li><li>Per-tenant dashboards</li><li>Migrate tenants between tiers</li></ol></div>
+</div>
+<figcaption>Tiering is a product decision as much as an engineering one.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Assess</b><ul><li>Shared resource inventory</li><li>Noisy neighbour incidents</li><li>Enterprise requirements</li></ul></div>
+<div><small>Phase 2</small><b>Foundations</b><ul><li>Tenant context end to end</li><li>Data access layer</li><li>Per-tenant observability</li></ul></div>
+<div><small>Phase 3</small><b>Limits and tiers</b><ul><li>Gateway limits</li><li>Fair background work</li><li>Dedicated tier provisioning</li></ul></div>
+<div><small>Phase 4</small><b>Prove and hand off</b><ul><li>Isolation tests in CI</li><li>Tier migration runbook</li><li>Security review pack</li></ul></div>
+</div>
+<figcaption>Foundations first: without tenant context, neither limits nor evidence are possible.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Pooled default, dedicated by exception</td><td>A stack per enterprise tenant</td><td>Isolation where it pays, without multiplying operations</td></tr>
+<tr><td>One codebase across tiers</td><td>Forked enterprise edition</td><td>One release process; no drift between tiers</td></tr>
+<tr><td>Tenant filter in a data access layer</td><td>Filter in each query</td><td>One place to enforce and test</td></tr>
+<tr><td>Gateway API for routing</td><td>Routing logic in each service</td><td>Tier routing declared at the edge</td></tr>
+<tr><td>Isolation tests in CI</td><td>Annual manual review</td><td>Continuous evidence; regressions caught before release</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: get tenant context right before anything else, and make isolation a test suite rather than a document. Differently: agree the tier definitions with product and sales earlier. The engineering was straightforward once everyone agreed what "dedicated" promised and who could buy it.</p>
+<p>If your platform is facing the same pressures, the <a href="/fractional-cto/">fractional CTO</a> page describes how I work with teams on it, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
