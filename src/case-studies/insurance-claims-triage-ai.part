@@ -1,0 +1,86 @@
+<!--{"title": "Case study: AI-assisted claims triage for a multi-line insurer", "description": "How a US insurer can triage first notice of loss with AI while keeping adjusters in control: document extraction, routing, fraud signals and an auditable AI programme.", "short": "Insurance claims triage with AI", "h1": "AI-assisted claims triage that adjusters trust and regulators can audit", "kicker": "Case study · Insurance", "lede": "Claims arrive as phone notes, emails, photos and PDFs. Triage decides which adjuster sees what, how fast, and with which flags. The goal was to use AI to do that first pass well, without letting a model decide anyone's claim, and with a governance programme ready for state regulators.", "date": "2026-10-28", "datetime": "2026-10-28T02:20:00+04:00", "readtime": "9 min read", "sector": "Insurance · Multi-line carrier", "role": "AI architect and fractional CTO", "engagement": "Architecture, build and governance", "scope": "Intake, extraction, routing, fraud signals, AI governance", "stack": ["Document AI", "Structured outputs", "Rules engine", "Graph features", "Event bus", "Model registry", "Evaluation suite", "Audit log"], "outcomes": ["Every claim gets a consistent first-pass summary and routing suggestion", "Adjusters stay the decision makers, with reasons shown for every flag", "An AI programme inventory, testing and documentation ready for regulator questions", "Fraud and complexity signals reach the right team earlier"], "tags": ["ai", "llm", "governance", "regulation", "architecture"], "keywords": ["insurance claims triage AI", "first notice of loss automation", "claims AI architecture", "NAIC AI model bulletin", "insurance AI governance", "claims fraud detection", "document extraction insurance", "AI in insurance case study", "insurtech architecture", "AI architect insurance"], "faq": [["Can AI make claims decisions on its own?", "It can, but most insurers and regulators prefer AI to assist rather than decide, especially for denials. In this design the model summarises, extracts and suggests routing; licensed adjusters make coverage and payment decisions."], ["What does the NAIC model bulletin expect from insurers using AI?", "It asks insurers to adopt and maintain a written programme for the responsible use of AI systems, with governance, risk management and testing for errors, bias and unfair discrimination. It applies in the states that have adopted it."], ["Is claims AI high-risk under the EU AI Act?", "The Act's Annex III lists AI for risk assessment and pricing of natural persons in life and health insurance. Claims triage is not named in the same way, but insurers operating in the EU should confirm classification with counsel."]], "related": ["/ai-architect/", "/fractional-cto/", "/technical-due-diligence/"], "citations": [{"title": "NAIC Model Bulletin: Use of Artificial Intelligence Systems by Insurers", "url": "https://content.naic.org/sites/default/files/inline-files/AI%20Model%20Bulletin%20-%20April%202024.pdf", "publisher": "National Association of Insurance Commissioners", "date": "Dec 2023"}, {"title": "Implementation of NAIC Model Bulletin (adoption map)", "url": "https://content.naic.org/sites/default/files/legal-adoption-map-ai-model-bulletin.pdf", "publisher": "National Association of Insurance Commissioners"}, {"title": "Nearly half of states have now adopted NAIC model bulletin on insurers' use of AI", "url": "https://quarles.com/newsroom/publications/nearly-half-of-states-have-now-adopted-naic-model-bulletin-on-insurers-use-of-ai", "publisher": "Quarles", "date": "2025"}, {"title": "AI Risk Management Framework", "url": "https://www.nist.gov/itl/ai-risk-management-framework", "publisher": "NIST"}, {"title": "Regulation (EU) 2024/1689 (Artificial Intelligence Act)", "url": "https://eur-lex.europa.eu/eli/reg/2024/1689/oj", "publisher": "EUR-Lex"}]}-->
+<h2>The situation</h2>
+<p>A multi-line insurer in the United States handled first notice of loss through a mix of call centre notes, web forms, emails with attachments and broker submissions. Triage was manual: a team read each new claim, decided its complexity, picked a queue and flagged anything suspicious. At peaks, the backlog meant simple claims waited behind complex ones, and the quality of triage depended on who happened to read the file.</p>
+<p>Leadership wanted AI in the loop. The claims and compliance teams wanted something else first: confidence that no model would quietly decide a claim, and evidence they could show a regulator about how AI was governed.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>Adjusters decide.</strong> AI summarises, extracts and suggests; coverage, payment and denial decisions stay with licensed staff.</li>
+<li><strong>Every flag has a reason</strong> a person can read and challenge.</li>
+<li><strong>Testing for error and unfair outcomes</strong> before release and on a schedule, by line of business.</li>
+<li><strong>One inventory of AI systems</strong> with owners, purpose, data and controls.</li>
+<li><strong>No change to the claims system of record</strong>; AI writes suggestions alongside it, not into it.</li>
+</ul>
+<p>These map closely to the NAIC model bulletin, which asks insurers to maintain a written programme for the responsible use of AI systems, including governance, risk management controls and testing for errors, bias and unfair discrimination<sup class="cite"><a href="#ref-1">1</a></sup>. A growing number of states have adopted it, so building to it was the safest baseline across jurisdictions<sup class="cite"><a href="#ref-2">2</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Intake</small><div class="dgm-nodes"><span>Web and app FNOL<em>structured form</em></span><span>Email and broker<em>attachments</em></span><span>Call notes<em>transcripts</em></span><span>Photos and PDFs<em>documents</em></span></div></div>
+<div class="dgm-tier"><small>Understand</small><div class="dgm-nodes"><span class="hl">Extraction<em>schema-validated fields</em></span><span>Summary<em>cited to source text</em></span><span>PII handling<em>masking, retention</em></span></div></div>
+<div class="dgm-tier"><small>Assess</small><div class="dgm-nodes"><span>Complexity rules<em>versioned, readable</em></span><span class="hl">Fraud signals<em>graph and anomaly features</em></span><span>Severity hints<em>model, with reasons</em></span></div></div>
+<div class="dgm-tier"><small>Decide</small><div class="dgm-nodes"><span>Routing suggestion<em>queue and priority</em></span><span class="hl">Adjuster review<em>accept, edit, override</em></span><span>Claims system<em>record of decision</em></span></div></div>
+<div class="dgm-tier"><small>Govern</small><div class="dgm-nodes"><span>AI system inventory<em>owners, purpose</em></span><span>Evaluation suite<em>accuracy and fairness</em></span><span>Audit log<em>inputs, versions, overrides</em></span></div></div>
+</div>
+<figcaption>AI prepares the claim; rules and people decide. Governance sits across every layer, not at the end.</figcaption>
+</figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Receive</b><span>New claim event from any channel, with attachments stored once</span></li>
+<li class="hl"><b>Extract</b><span>Model fills a validated schema: parties, dates, loss type, amounts mentioned</span></li>
+<li><b>Summarise</b><span>Short summary with links back to the source passages</span></li>
+<li><b>Score</b><span>Rules for complexity, plus fraud and severity signals with reasons</span></li>
+<li class="hl"><b>Suggest</b><span>Queue and priority proposed to a triage lead or adjuster</span></li>
+<li><b>Record</b><span>Accepted or overridden; every input, version and change logged</span></li>
+</ol>
+<figcaption>Overrides are data: they feed evaluation and show where the system is wrong.</figcaption>
+</figure>
+<p>Extraction used structured outputs validated against a schema, so a malformed response fails fast rather than reaching an adjuster, the pattern described in <a href="/insights/structured-outputs-reliable-llm-integration/">structured outputs for reliable LLM integration</a>. Fraud signals drew on relationships between parties, addresses, repairers and prior claims, using the graph approach in <a href="/insights/entity-resolution-knowledge-graphs/">entity resolution for knowledge graphs</a>.</p>
+
+<h2>The hard part: fairness and explainability, not extraction</h2>
+<p>Getting a model to read a claim form well is now the easy part. The difficult questions were about outcomes. Does a fraud signal fire more often for claims from certain postcodes for reasons unrelated to fraud? Does a severity hint systematically under-prioritise one line of business? The bulletin expects insurers to test for exactly these risks<sup class="cite"><a href="#ref-1">1</a></sup>, and the NIST AI Risk Management Framework gave a practical structure for mapping, measuring and managing them<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+<ul>
+<li>An evaluation set of historical claims with known outcomes, refreshed regularly, scored for extraction accuracy and routing agreement.</li>
+<li>Outcome comparisons across segments the compliance team defined, reviewed before each release.</li>
+<li>Fraud signals limited to features the special investigations team could explain, with every flag showing its contributing reasons.</li>
+<li>Override rates tracked by signal; a signal adjusters routinely override gets investigated, not ignored.</li>
+</ul>
+<div class="callout"><p>Adjuster overrides are the most valuable data in a claims AI programme. They show, in real time, where the model and the experts disagree.</p></div>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Claims ops</small><ol><li>Define queues and priorities</li><li class="hl">Review suggestions daily</li><li>Report overrides and edge cases</li></ol></div>
+<div class="dgm-lane"><small>Platform</small><ol><li>Build intake and extraction</li><li>Ship signals behind flags</li><li class="hl">Run evals each release</li></ol></div>
+<div class="dgm-lane"><small>Compliance</small><ol><li>Own the AI inventory</li><li>Approve fairness tests</li><li>Answer regulator queries</li></ol></div>
+</div>
+<figcaption>Three teams, one release rhythm: nothing ships without claims ops and compliance sign-off.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Govern first</b><ul><li>AI system inventory</li><li>Written AI programme</li><li>Evaluation set</li></ul></div>
+<div><small>Phase 2</small><b>Shadow mode</b><ul><li>Extraction and summaries</li><li>Suggestions not shown</li><li>Compare with human triage</li></ul></div>
+<div><small>Phase 3</small><b>Assist</b><ul><li>Suggestions visible</li><li>One line of business</li><li>Override tracking</li></ul></div>
+<div><small>Phase 4</small><b>Extend</b><ul><li>Further lines</li><li>Fraud signals</li><li>Scheduled re-testing</li></ul></div>
+</div>
+<figcaption>Shadow mode before assist mode: the system earned trust before anyone saw its suggestions.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>AI suggests, adjusters decide</td><td>Straight-through automation</td><td>Keeps accountability with licensed staff and simplifies regulatory answers</td></tr>
+<tr><td>Rules for complexity, models for reading</td><td>One end-to-end model</td><td>Routing logic stays readable and changeable by claims ops</td></tr>
+<tr><td>Shadow mode first</td><td>Launch with suggestions live</td><td>Measured agreement before influencing anyone</td></tr>
+<tr><td>Explainable fraud features</td><td>Opaque anomaly scores</td><td>Investigators can act on, and challenge, a reason</td></tr>
+<tr><td>Build to the NAIC bulletin everywhere</td><td>State-by-state variants</td><td>One programme, mapped to each state's adoption</td></tr>
+</tbody>
+</table>
+<p>For insurers with European operations, the EU AI Act adds another layer: its Annex III lists AI used for risk assessment and pricing of natural persons in life and health insurance as high-risk<sup class="cite"><a href="#ref-5">5</a></sup>. Claims triage sits next to that boundary, so classification should be confirmed with counsel; the governance described here is a strong starting point either way. See <a href="/insights/iso-42001-vs-nist-ai-rmf/">ISO 42001 vs the NIST AI RMF</a> and <a href="/insights/colorado-ai-act-2026-reset/">Colorado's AI law reset</a> for the wider landscape.</p>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: write the AI programme and the evaluation set before writing the first prompt, and run in shadow mode. Differently: involve the special investigations team in designing fraud signals from the first week. Their sense of what makes a signal actionable shaped the design more than any model choice.</p>
+<p>If you're bringing AI into claims, underwriting or service, my <a href="/ai-architect/">AI architecture work</a> covers how I approach it, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>

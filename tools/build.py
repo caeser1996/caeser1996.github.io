@@ -580,7 +580,7 @@ def use_cases_html(ucs):
             + '</article>')
     return f"""<section class="sub-sec" id="use-cases">
     <div class="kicker">Use cases</div>
-    <h2>Twenty problems, twenty sectors, one way of working.</h2>
+    <h2>{len(ucs)} problems across {len({u["sector"] for u in ucs})} sectors, one way of working.</h2>
     <p class="sub-lede" style="margin-bottom:24px">Typical use cases I design and build for: the problem, the approach, the flow and the stack. Pick your sector, then book a call to talk through yours.</p>
     {chips}
     <div class="ucs">{"".join(cards)}</div>
