@@ -137,7 +137,8 @@ def nav():
             ("/case-studies/#use-cases", "Use cases", "Problems I'm brought in to solve, by sector"),
             ("/case-studies/#snapshots", "Engagement snapshots", "Six common problems, the approach and the stack")]
     work += [(f"/case-studies/{c['slug']}/", c.get("short") or c["h1"], c.get("sector", "")) for c in CASES[:3]]
-    ins = [("/insights/", "All insights", f"{len(NAV_POSTS)} articles on AI, data, cloud and leadership")]
+    ins = [("/insights/", "All insights", f"{len(NAV_POSTS)} articles on AI, data, cloud and leadership"),
+           ("/insights/#topic-news", "Daily tech news", "A CTO's take on the day's releases, deals and rules")]
     ins += [(f"/insights/{q['slug']}/", q["h1"], "") for q in NAV_POSTS[:5]]
     about = [("/about/", "About", "Background, credentials and open-source work"),
              ("/expertise/", "Expertise", "Practice areas, reference architecture and industries"),
@@ -335,7 +336,7 @@ def faq_ld(faq):
 
 
 FORMAT_LABELS = {"essay": "Essay", "explainer": "Explainer", "checklist": "Checklist", "field-note": "Field note",
-                 "comparison": "Comparison", "playbook": "Playbook", "news-analysis": "Analysis",
+                 "comparison": "Comparison", "playbook": "Playbook", "news-analysis": "Analysis", "tech-news": "Tech news",
                  "case-study": "Case study"}
 TZ_NAMES = {"+0400": "GST", "-0400": "EDT", "-0500": "EST", "+0000": "UTC"}
 

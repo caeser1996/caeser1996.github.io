@@ -103,6 +103,9 @@
       posts.forEach(function(p){var on=!t||(' '+p.getAttribute('data-tags')+' ').indexOf(' '+t+' ')>-1;p.classList.toggle('hide',!on);if(on){n++;p.classList.add('in');}});
       if(count)count.textContent=n+(n===1?' article':' articles');
     });});
+    // deep links such as /insights/#topic-news open with that filter applied
+    var want=decodeURIComponent(location.hash.slice(1)).replace(/^topic-/,'');
+    if(want)chips.forEach(function(c){if(c.getAttribute('data-tag')===want)setTimeout(function(){c.click();},0);});
   })();
 
   // articles: copy link + table-of-contents highlight
