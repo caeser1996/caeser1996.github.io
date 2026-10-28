@@ -65,6 +65,16 @@ HEAD_FONTS = (
     '&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />'
 )
 
+GTAG = """<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-8TKBV1S98Q"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-8TKBV1S98Q');
+</script>"""
+
 THEME_INIT = """<script>
   document.documentElement.classList.add('js');
   var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
@@ -149,6 +159,7 @@ def head(title, desc, keywords, url, og_image, og_type, ld):
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
+{GTAG}
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>{e(title)}</title>
