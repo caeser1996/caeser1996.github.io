@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>An AI coding policy for your team: lessons from Kubernetes</title>
+<meta name="description" content="AI made code cheap to write and no cheaper to maintain. What the Kubernetes project&#x27;s AI contribution policy teaches engineering leaders about accountability, review and quality." />
+<meta name="keywords" content="AI coding policy, AI-assisted development policy, AI code review, engineering leadership AI, Kubernetes AI policy, developer productivity AI, DORA AI report, code ownership, fractional CTO, engineering governance" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://asksumanta.com/insights/ai-coding-policy-engineering-teams/" />
+<meta name="theme-color" content="#111214" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="An AI coding policy for your team: lessons from Kubernetes" />
+<meta property="og:description" content="AI made code cheap to write and no cheaper to maintain. What the Kubernetes project&#x27;s AI contribution policy teaches engineering leaders about accountability, review and quality." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://asksumanta.com/insights/ai-coding-policy-engineering-teams/" />
+<meta property="og:image" content="https://asksumanta.com/assets/og/ai-coding-policy-engineering-teams.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="An AI coding policy for your team: lessons from Kubernetes" />
+<meta name="twitter:description" content="AI made code cheap to write and no cheaper to maintain. What the Kubernetes project&#x27;s AI contribution policy teaches engineering leaders about accountability, review and quality." />
+<meta name="twitter:image" content="https://asksumanta.com/assets/og/ai-coding-policy-engineering-teams.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "BlogPosting", "headline": "An AI coding policy for your engineering team: lessons from how Kubernetes handles AI-assisted contributions", "description": "AI made code cheap to write and no cheaper to maintain. What the Kubernetes project's AI contribution policy teaches engineering leaders about accountability, review and quality.", "datePublished": "2026-10-28T20:25:00+04:00", "dateModified": "2026-10-28T20:25:00+04:00", "articleSection": "Leadership · Engineering", "genre": "Essay", "citation": [{"@type": "CreativeWork", "name": "Open source maintainership in the age of AI", "url": "https://kubernetes.io/blog/2026/06/26/open-source-maintainership-in-the-age-of-ai/"}, {"@type": "CreativeWork", "name": "Pull request process: AI guidance", "url": "https://www.kubernetes.dev/docs/guide/pull-requests/#ai-guidance"}, {"@type": "CreativeWork", "name": "AI code review tools", "url": "https://github.com/kubernetes/community/blob/main/github-management/ai-code-review-tools.md"}, {"@type": "CreativeWork", "name": "DORA 2025 State of AI-assisted Software Development Report", "url": "https://research.google/pubs/dora-2025-state-of-ai-assisted-software-development-report/"}], "author": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "publisher": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "mainEntityOfPage": "https://asksumanta.com/insights/ai-coding-policy-engineering-teams/", "image": "https://asksumanta.com/assets/og/ai-coding-policy-engineering-teams.png", "keywords": "AI coding policy, AI-assisted development policy, AI code review, engineering leadership AI, Kubernetes AI policy, developer productivity AI, DORA AI report, code ownership, fractional CTO, engineering governance", "wordCount": 650}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://asksumanta.com/"}, {"@type": "ListItem", "position": 2, "name": "Insights", "item": "https://asksumanta.com/insights/"}, {"@type": "ListItem", "position": 3, "name": "An AI coding policy for your engineering team: lessons from how Kubernetes handles AI-assisted contributions", "item": "https://asksumanta.com/insights/ai-coding-policy-engineering-teams/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What does the Kubernetes AI policy require?", "acceptedAnswer": {"@type": "Answer", "text": "Contributors must disclose AI assistance in the pull request, remain fully responsible for every change, verify AI-generated code through review, testing and understanding, and engage personally with reviewers. The project does not allow AI to be listed as a co-author, and pull requests whose authors cannot explain the changes are closed."}}, {"@type": "Question", "name": "Does AI make engineering teams faster?", "acceptedAnswer": {"@type": "Answer", "text": "It depends on the team. Google's 2025 DORA research described AI mainly as an amplifier: it magnifies the strengths of high-performing organisations and the dysfunctions of struggling ones. Faster code generation without stronger review and testing can increase rework."}}, {"@type": "Question", "name": "Should a company copy an open source AI policy?", "acceptedAnswer": {"@type": "Answer", "text": "Use it as a starting point. The principles of disclosure, human accountability and verification transfer well; details such as licence checks and review tooling should reflect your own risks and contracts."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+</script>
+</head>
+<body class="sub is-post">
+<div class="progress" id="progress"></div>
+<nav>
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="/#practice">Services</a>
+      <a href="/case-studies/">Case studies</a>
+      <a href="/insights/">Insights</a>
+      <a href="/#assess">Analyse</a>
+      <a href="/#connect">Connect</a>
+    </div>
+    <div class="nav-r">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/insights/">Insights</a> <span>/</span> <em>An AI coding policy for your engineering team: lessons from how Kubernetes handles AI-assisted contributions</em></div>
+    <div class="kicker">Leadership · Engineering</div>
+    <h1>An AI coding policy for your engineering team: lessons from how Kubernetes handles AI-assisted contributions</h1>
+    <p class="sub-lede">Most engineering teams now write code with AI assistants, and most have no written policy for it. The Kubernetes project, one of the largest open source codebases in the world, wrote one. Its choices translate surprisingly well to a company engineering team.</p>
+    <div class="ameta"><span class="fmt">Essay</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-10-28T20:25:00+04:00">28 Oct 2026 · 20:25 GST</time><span>7 min read</span><span>4 sources</span></div><div class="atags"><span class="tagp">#leadership</span><span class="tagp">#ai</span><span class="tagp">#governance</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Essay cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><line x1="1082" y1="248" x2="1060" y2="355" class="cv-edge" opacity="0.27"/><line x1="1082" y1="248" x2="1001" y2="290" class="cv-edge hl" opacity="0.39"/><line x1="1082" y1="248" x2="1146" y2="362" class="cv-edge" opacity="0.13"/><line x1="1082" y1="248" x2="1145" y2="270" class="cv-edge" opacity="0.55"/><line x1="1082" y1="248" x2="1035" y2="278" class="cv-edge hl" opacity="0.63"/><line x1="1082" y1="248" x2="971" y2="172" class="cv-edge" opacity="0.10"/><line x1="1082" y1="248" x2="972" y2="182" class="cv-edge" opacity="0.15"/><line x1="1082" y1="248" x2="940" y2="222" class="cv-edge" opacity="0.04"/><line x1="1082" y1="248" x2="1010" y2="371" class="cv-edge" opacity="0.05"/><line x1="1060" y1="355" x2="1001" y2="290" class="cv-edge hl" opacity="0.42"/><line x1="1060" y1="355" x2="1146" y2="362" class="cv-edge" opacity="0.42"/><line x1="1060" y1="355" x2="951" y2="382" class="cv-edge hl" opacity="0.26"/><line x1="1060" y1="355" x2="1145" y2="270" class="cv-edge" opacity="0.20"/><line x1="1060" y1="355" x2="1035" y2="278" class="cv-edge hl" opacity="0.46"/><line x1="1060" y1="355" x2="910" y2="357" class="cv-edge hl" opacity="0.00"/><line x1="1060" y1="355" x2="940" y2="312" class="cv-edge" opacity="0.15"/><line x1="1060" y1="355" x2="1010" y2="371" class="cv-edge" opacity="0.65"/><line x1="627" y1="161" x2="690" y2="177" class="cv-edge" opacity="0.56"/><line x1="627" y1="161" x2="612" y2="69" class="cv-edge" opacity="0.37"/><line x1="627" y1="161" x2="723" y2="71" class="cv-edge hl" opacity="0.12"/><line x1="690" y1="177" x2="765" y2="98" class="cv-edge" opacity="0.28"/><line x1="690" y1="177" x2="784" y2="156" class="cv-edge" opacity="0.36"/><line x1="690" y1="177" x2="612" y2="69" class="cv-edge" opacity="0.11"/><line x1="690" y1="177" x2="723" y2="71" class="cv-edge hl" opacity="0.26"/><line x1="690" y1="177" x2="744" y2="312" class="cv-edge" opacity="0.03"/><line x1="690" y1="177" x2="775" y2="189" class="cv-edge" opacity="0.43"/><line x1="877" y1="191" x2="765" y2="98" class="cv-edge hl" opacity="0.03"/><line x1="877" y1="191" x2="827" y2="102" class="cv-edge hl" opacity="0.32"/><line x1="877" y1="191" x2="889" y2="196" class="cv-edge hl" opacity="0.92"/><line x1="877" y1="191" x2="971" y2="172" class="cv-edge hl" opacity="0.36"/><line x1="877" y1="191" x2="972" y2="182" class="cv-edge hl" opacity="0.36"/><line x1="877" y1="191" x2="784" y2="156" class="cv-edge hl" opacity="0.34"/><line x1="877" y1="191" x2="940" y2="222" class="cv-edge hl" opacity="0.53"/><line x1="877" y1="191" x2="940" y2="312" class="cv-edge hl" opacity="0.09"/><line x1="877" y1="191" x2="775" y2="189" class="cv-edge hl" opacity="0.32"/><line x1="813" y1="355" x2="951" y2="382" class="cv-edge hl" opacity="0.06"/><line x1="813" y1="355" x2="910" y2="357" class="cv-edge hl" opacity="0.35"/><line x1="813" y1="355" x2="744" y2="312" class="cv-edge" opacity="0.45"/><line x1="813" y1="355" x2="940" y2="312" class="cv-edge" opacity="0.10"/><line x1="765" y1="98" x2="827" y2="102" class="cv-edge" opacity="0.59"/><line x1="765" y1="98" x2="784" y2="156" class="cv-edge" opacity="0.60"/><line x1="765" y1="98" x2="723" y2="71" class="cv-edge hl" opacity="0.66"/><line x1="765" y1="98" x2="775" y2="189" class="cv-edge" opacity="0.39"/><line x1="1001" y1="290" x2="951" y2="382" class="cv-edge hl" opacity="0.31"/><line x1="1001" y1="290" x2="1145" y2="270" class="cv-edge hl" opacity="0.03"/><line x1="1001" y1="290" x2="1035" y2="278" class="cv-edge hl" opacity="0.76"/><line x1="1001" y1="290" x2="889" y2="196" class="cv-edge hl" opacity="0.02"/><line x1="1001" y1="290" x2="971" y2="172" class="cv-edge hl" opacity="0.19"/><line x1="1001" y1="290" x2="910" y2="357" class="cv-edge hl" opacity="0.25"/><line x1="1001" y1="290" x2="972" y2="182" class="cv-edge hl" opacity="0.25"/><line x1="1001" y1="290" x2="940" y2="222" class="cv-edge hl" opacity="0.39"/><line x1="1001" y1="290" x2="940" y2="312" class="cv-edge hl" opacity="0.57"/><line x1="1001" y1="290" x2="1010" y2="371" class="cv-edge hl" opacity="0.46"/><line x1="1146" y1="362" x2="1145" y2="270" class="cv-edge" opacity="0.39"/><line x1="1146" y1="362" x2="1035" y2="278" class="cv-edge hl" opacity="0.08"/><line x1="1146" y1="362" x2="1010" y2="371" class="cv-edge" opacity="0.09"/><line x1="827" y1="102" x2="889" y2="196" class="cv-edge" opacity="0.25"/><line x1="827" y1="102" x2="784" y2="156" class="cv-edge" opacity="0.54"/><line x1="827" y1="102" x2="723" y2="71" class="cv-edge hl" opacity="0.28"/><line x1="827" y1="102" x2="775" y2="189" class="cv-edge" opacity="0.33"/><line x1="951" y1="382" x2="1035" y2="278" class="cv-edge hl" opacity="0.11"/><line x1="951" y1="382" x2="910" y2="357" class="cv-edge hl" opacity="0.68"/><line x1="951" y1="382" x2="940" y2="312" class="cv-edge hl" opacity="0.53"/><line x1="951" y1="382" x2="1010" y2="371" class="cv-edge hl" opacity="0.60"/><line x1="1145" y1="270" x2="1035" y2="278" class="cv-edge hl" opacity="0.27"/><line x1="1035" y1="278" x2="971" y2="172" class="cv-edge hl" opacity="0.17"/><line x1="1035" y1="278" x2="910" y2="357" class="cv-edge hl" opacity="0.01"/><line x1="1035" y1="278" x2="972" y2="182" class="cv-edge hl" opacity="0.23"/><line x1="1035" y1="278" x2="940" y2="222" class="cv-edge hl" opacity="0.26"/><line x1="1035" y1="278" x2="940" y2="312" class="cv-edge hl" opacity="0.33"/><line x1="1035" y1="278" x2="1010" y2="371" class="cv-edge hl" opacity="0.36"/><line x1="889" y1="196" x2="971" y2="172" class="cv-edge" opacity="0.43"/><line x1="889" y1="196" x2="972" y2="182" class="cv-edge" opacity="0.43"/><line x1="889" y1="196" x2="784" y2="156" class="cv-edge" opacity="0.25"/><line x1="889" y1="196" x2="940" y2="222" class="cv-edge" opacity="0.61"/><line x1="889" y1="196" x2="940" y2="312" class="cv-edge" opacity="0.15"/><line x1="889" y1="196" x2="775" y2="189" class="cv-edge" opacity="0.24"/><line x1="971" y1="172" x2="972" y2="182" class="cv-edge" opacity="0.93"/><line x1="971" y1="172" x2="940" y2="222" class="cv-edge" opacity="0.60"/><line x1="971" y1="172" x2="940" y2="312" class="cv-edge" opacity="0.04"/><line x1="910" y1="357" x2="940" y2="222" class="cv-edge hl" opacity="0.08"/><line x1="910" y1="357" x2="940" y2="312" class="cv-edge hl" opacity="0.64"/><line x1="910" y1="357" x2="1010" y2="371" class="cv-edge hl" opacity="0.33"/><line x1="972" y1="182" x2="940" y2="222" class="cv-edge" opacity="0.66"/><line x1="972" y1="182" x2="940" y2="312" class="cv-edge" opacity="0.11"/><line x1="784" y1="156" x2="723" y2="71" class="cv-edge hl" opacity="0.30"/><line x1="784" y1="156" x2="775" y2="189" class="cv-edge" opacity="0.77"/><line x1="612" y1="69" x2="723" y2="71" class="cv-edge hl" opacity="0.26"/><line x1="723" y1="71" x2="775" y2="189" class="cv-edge hl" opacity="0.14"/><line x1="744" y1="312" x2="775" y2="189" class="cv-edge" opacity="0.15"/><line x1="940" y1="222" x2="940" y2="312" class="cv-edge" opacity="0.40"/><line x1="940" y1="312" x2="1010" y2="371" class="cv-edge" opacity="0.39"/><circle cx="1068" cy="50" r="3" class="cv-dot"/><circle cx="1082" cy="248" r="3" class="cv-dot"/><circle cx="1060" cy="355" r="3" class="cv-dot"/><circle cx="627" cy="161" r="3" class="cv-dot"/><circle cx="690" cy="177" r="3" class="cv-dot"/><circle cx="877" cy="191" r="6" class="cv-dot hl"/><circle cx="813" cy="355" r="3" class="cv-dot"/><circle cx="765" cy="98" r="3" class="cv-dot"/><circle cx="1001" cy="290" r="6" class="cv-dot hl"/><circle cx="1146" cy="362" r="3" class="cv-dot"/><circle cx="827" cy="102" r="3" class="cv-dot"/><circle cx="951" cy="382" r="6" class="cv-dot hl"/><circle cx="1145" cy="270" r="3" class="cv-dot"/><circle cx="1035" cy="278" r="6" class="cv-dot hl"/><circle cx="889" cy="196" r="3" class="cv-dot"/><circle cx="971" cy="172" r="3" class="cv-dot"/><circle cx="910" cy="357" r="6" class="cv-dot hl"/><circle cx="972" cy="182" r="3" class="cv-dot"/><circle cx="784" cy="156" r="3" class="cv-dot"/><circle cx="612" cy="69" r="3" class="cv-dot"/><circle cx="723" cy="71" r="6" class="cv-dot hl"/><circle cx="744" cy="312" r="3" class="cv-dot"/><circle cx="940" cy="222" r="3" class="cv-dot"/><circle cx="940" cy="312" r="3" class="cv-dot"/><circle cx="1010" cy="371" r="3" class="cv-dot"/><circle cx="775" cy="189" r="3" class="cv-dot"/><text x="60" y="90" class="cv-k">ESSAY · LEADERSHIP · ENGINEERING</text><text x="60" y="350" class="cv-n">28 Oct 2026 · 20:25 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <p>The pattern is familiar in most engineering organisations by now. Engineers use AI assistants every day. Pull requests are larger and arrive faster. Reviewers are stretched, and occasionally someone merges code that nobody on the team can fully explain. There is usually no policy, just a vague sense that "we should be careful".</p>
+<p>A Kubernetes maintainer described the core problem well: AI has made generating code fast, but there has been very little improvement in maintaining codebases<sup class="cite"><a href="#ref-1">1</a></sup>. That asymmetry is exactly what a policy needs to address.</p>
+
+<section class="block">
+<h2 id="why-write-a-policy-at-all">Why write a policy at all</h2>
+<p>The Kubernetes community's first step was an AI policy. Not because policies are exciting, but because many pull requests had derailed into arguments about AI usage, and a clear stance steered those conversations<sup class="cite"><a href="#ref-1">1</a></sup>. The same happens inside companies: without a shared rule, every review becomes a debate about whether AI-written code is acceptable, instead of whether the code is good.</p>
+</section>
+
+<section class="block">
+<h2 id="what-the-kubernetes-policy-says">What the Kubernetes policy says</h2>
+<p>The project's contributor guidance and the accompanying blog set out a few clear principles<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>:</p>
+<table class="tbl">
+<thead><tr><th>Principle</th><th>In practice</th></tr></thead>
+<tbody>
+<tr><td>Transparency</td><td>Disclose in the pull request when AI tools assisted</td></tr>
+<tr><td>Human accountability</td><td>The contributor is fully responsible; AI is not listed as a co-author</td></tr>
+<tr><td>Human engagement</td><td>Reviewers engage with people, not AI; if you cannot explain the change, the pull request is closed</td></tr>
+<tr><td>Verification</td><td>Review, test and understand AI-generated changes; working is not enough, you must know why it works</td></tr>
+<tr><td>Licence checks</td><td>Contributor licence agreement checks are enforced for co-authors as well</td></tr>
+</tbody>
+</table>
+<p>The project also documented how new AI review tools are brought in, including finding maintainers willing to trial them on specific repositories before wider use<sup class="cite"><a href="#ref-3">3</a></sup>, and reported using AI reviewers as a quick first-pass quality gate so contributors get feedback without waiting for a maintainer<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<div class="callout"><p>"If you cannot explain it, you cannot merge it" is the single most useful AI rule an engineering team can adopt.</p></div>
+</section>
+
+<section class="block">
+<h2 id="translating-it-to-a-company-team">Translating it to a company team</h2>
+<p>An open source project and a company differ in important ways: employees are already accountable to their employer, and code may touch customer data and contracts. The principles still hold. A practical company policy covers:</p>
+<ol>
+<li><strong>Approved tools and data boundaries.</strong> Which assistants are allowed, under which agreements, and what code or data must never be sent to them.</li>
+<li><strong>Ownership.</strong> The engineer who opens the pull request owns every line, however it was produced.</li>
+<li><strong>Explainability in review.</strong> Reviewers can ask the author to explain any change, and "the assistant wrote it" is not an answer.</li>
+<li><strong>Proportionate scrutiny.</strong> Security-sensitive areas, authentication, payments and data handling get stricter review regardless of how the code was written.</li>
+<li><strong>Tests as the contract.</strong> AI-assisted changes come with tests that a human has read and agrees with.</li>
+<li><strong>AI reviewers as helpers, not approvers.</strong> Automated review can catch issues early; approval stays with a person.</li>
+<li><strong>Supply chain hygiene.</strong> Watch for dependencies, snippets and model files introduced without scrutiny, as discussed in <a href="/insights/ai-model-supply-chain-security/">AI model supply chain security</a>.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2 id="measure-the-outcome-not-the-usage">Measure the outcome, not the usage</h2>
+<p>Google's 2025 DORA research described AI mainly as an amplifier: it magnifies the strengths of high-performing organisations and the dysfunctions of struggling ones<sup class="cite"><a href="#ref-4">4</a></sup>. That is the right lens for leaders. Counting how much code AI produced tells you little. Watching delivery stability, rework and review load tells you whether AI is helping or merely moving work downstream, as covered in <a href="/insights/dora-metrics-ai-assisted-engineering/">DORA metrics for AI-assisted engineering</a>.</p>
+<p>Write the policy down, keep it to a page, revisit it quarterly, and pair it with the decision records described in <a href="/insights/architecture-decision-records-fractional-cto/">architecture decision records</a>, so the reasoning behind important AI-assisted changes survives the people who made them.</p>
+</section>
+
+<section class="block">
+<h2 id="how-i-can-help">How I can help</h2>
+<p>As a <a href="/fractional-cto/">fractional CTO</a>, I help teams adopt AI assistants with policies, review practices and metrics that improve quality rather than just volume. Or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://kubernetes.io/blog/2026/06/26/open-source-maintainership-in-the-age-of-ai/" target="_blank" rel="noopener">Open source maintainership in the age of AI</a><small>Kubernetes blog · 26 Jun 2026</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://www.kubernetes.dev/docs/guide/pull-requests/#ai-guidance" target="_blank" rel="noopener">Pull request process: AI guidance</a><small>Kubernetes contributor guide</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://github.com/kubernetes/community/blob/main/github-management/ai-code-review-tools.md" target="_blank" rel="noopener">AI code review tools</a><small>Kubernetes community, GitHub</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://research.google/pubs/dora-2025-state-of-ai-assisted-software-development-report/" target="_blank" rel="noopener">DORA 2025 State of AI-assisted Software Development Report</a><small>Google DORA · 2025</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fai-coding-policy-engineering-teams%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fai-coding-policy-engineering-teams%2F&amp;text=An%20AI%20coding%20policy%20for%20your%20engineering%20team%3A%20lessons%20from%20how%20Kubernetes%20handles%20AI-assisted%20contributions" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=An%20AI%20coding%20policy%20for%20your%20engineering%20team%3A%20lessons%20from%20how%20Kubernetes%20handles%20AI-assisted%20contributions%20https%3A%2F%2Fasksumanta.com%2Finsights%2Fai-coding-policy-engineering-teams%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://asksumanta.com/insights/ai-coding-policy-engineering-teams/">Copy link</button></div>
+      <div class="pnav"><a class="pn prev" href="/insights/kubernetes-pod-certificates-workload-identity/"><small>← Previous</small><b>Kubernetes workload identity: service account tokens or Pod Certificates?</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#why-write-a-policy-at-all">Why write a policy at all</a></li><li><a href="#what-the-kubernetes-policy-says">What the Kubernetes policy says</a></li><li><a href="#translating-it-to-a-company-team">Translating it to a company team</a></li><li><a href="#measure-the-outcome-not-the-usage">Measure the outcome, not the usage</a></li><li><a href="#how-i-can-help">How I can help</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>What does the Kubernetes AI policy require?</summary><p>Contributors must disclose AI assistance in the pull request, remain fully responsible for every change, verify AI-generated code through review, testing and understanding, and engage personally with reviewers. The project does not allow AI to be listed as a co-author, and pull requests whose authors cannot explain the changes are closed.</p></details><details class="rise"><summary>Does AI make engineering teams faster?</summary><p>It depends on the team. Google&#x27;s 2025 DORA research described AI mainly as an amplifier: it magnifies the strengths of high-performing organisations and the dysfunctions of struggling ones. Faster code generation without stronger review and testing can increase rework.</p></details><details class="rise"><summary>Should a company copy an open source AI policy?</summary><p>Use it as a starting point. The principles of disclosure, human accountability and verification transfer well; details such as licence checks and review tooling should reflect your own risks and contracts.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/fractional-cto/"><small>Service</small><b>Fractional CTO</b><span>I work as a part-time CTO for founders, CEOs and boards who need experienced technical judgement now, and a team that can carry it on after I step back.</span><i>→</i></a><a class="rcard rise" href="/technical-due-diligence/"><small>Service</small><b>Technical due diligence</b><span>I give investors an independent, plain-language view of a company&#x27;s technology, team and AI claims, so the risks are priced in before the deal closes, not discovered after.</span><i>→</i></a><a class="rcard rise" href="/ai-architect/"><small>Service</small><b>AI &amp; LLM architecture</b><span>I design and build AI systems that leadership can trust: grounded in your data, measured by evaluations, governed by your rules and priced so they make sense at scale.</span><i>→</i></a><a class="rcard rise" href="/insights/kubernetes-pod-certificates-workload-identity/"><small>Insight</small><b>Kubernetes workload identity: service account tokens or Pod Certificates?</b><span>For years the built-in answer to &#x27;who is this workload?&#x27; in Kubernetes was a service account token. Kubernetes 1.37 made the foundations of a second answer generally available: X.509 certificates issued to Pods. The two solve overlapping problems with different security properties.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: An AI coding policy for your engineering team: lessons from how Kubernetes handles AI-assisted contributions">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
+        <p class="floc">United States &amp; UAE · working globally</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/uae/">Fractional CTO in the UAE</a></li></ul></div>
+      <div class="fc"><h4>Case studies</h4><ul><li><a href="/case-studies/multi-cloud-terraform-estate/">Multi-cloud Terraform estate</a></li><li><a href="/case-studies/ai-governance-programme-eu-us-uae/">AI governance across EU, US and UAE</a></li><li><a href="/case-studies/clinical-trial-data-platform/">Clinical trial data platform</a></li><li><a href="/case-studies/pharmacovigilance-signal-detection-platform/">Pharmacovigilance signal platform</a></li><li><a href="/#work">Engagement snapshots</a></li><li><a href="/case-studies/">All case studies →</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/ai-coding-policy-engineering-teams/">An AI coding policy for your engineering team: lessons from how Kubernetes handles AI-assisted contributions</a></li><li><a href="/insights/kubernetes-pod-certificates-workload-identity/">Kubernetes workload identity: service account tokens or Pod Certificates?</a></li><li><a href="/insights/mcp-stateless-migration-playbook/">Migrating to stateless MCP: a playbook for the 2026-07-28 specification</a></li><li><a href="/insights/omop-characterisation-incidence/">Characterisation on OMOP: describe your population before you predict or estimate anything</a></li><li><a href="/insights/opentelemetry-declarative-configuration/">OpenTelemetry declarative configuration: a playbook for moving from environment variables to one reviewed file</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>
