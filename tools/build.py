@@ -200,7 +200,7 @@ def footer(pages, posts):
       <div class="fc fbrand">
         <a href="/" class="brand">Sumanta<span>.</span></a>
         <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
-        <p class="floc">Global, remote-first · based in the US &amp; UAE · <a href="/regions/">where I work</a></p>
+        <p class="floc">Global, remote-first · based in India, the US &amp; UAE · <a href="/regions/">where I work</a></p>
       </div>
       <div class="fc"><h4>Services</h4><ul>{svc}<li><a href="/regions/">Fractional CTO worldwide →</a></li></ul></div>
       <div class="fc"><h4>Case studies</h4><ul>{cs}<li><a href="/case-studies/#snapshots">Engagement snapshots</a></li><li><a href="/case-studies/">All case studies →</a></li></ul></div>
@@ -302,7 +302,7 @@ def related_html(paths, pages_by_slug, posts, tags=()):
 AUTHOR_BOX = f"""<aside class="author-box" aria-label="About the author">
         <div class="ab-av" aria-hidden="true">SM</div>
         <div><small>About the author</small><b>{NAME}</b>
-        <p>Fractional CTO, principal engineer and AI architect in the United States and UAE. Works across ontology and knowledge graphs, production AI, healthcare data platforms and cloud infrastructure.</p>
+        <p>Fractional CTO, principal engineer and AI architect based in India, the United States and the UAE. Works across ontology and knowledge graphs, production AI, healthcare data platforms and cloud infrastructure.</p>
         <div class="ab-l"><a href="/about/">More about me</a><a href="/how-i-work/">How I work</a><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a><a href="{CAL}" target="_blank" rel="noopener">Book a call</a></div></div>
       </aside>"""
 
@@ -929,7 +929,7 @@ HUB_PAGES = {
     "about": {
         "name": "About", "kicker": "Background",
         "title": "About Sumanta Mukhopadhyay: fractional CTO and AI architect",
-        "description": "Background, experience and credentials of Sumanta Mukhopadhyay, fractional CTO, principal engineer and AI architect in the United States and UAE.",
+        "description": "Background, experience and credentials of Sumanta Mukhopadhyay, fractional CTO, principal engineer and AI architect based in India, the United States and the UAE.",
         "h1": "About Sumanta: principal engineer, fractional CTO and AI architect",
         "lede": "Experience across AI, data and infrastructure, published research, open-source work, and the hardware I'm experimenting on right now.",
         "sections": ["experience", "credentials", "now"]},
@@ -965,7 +965,7 @@ def regions_page(pages, posts):
     wm = json.loads((ROOT / "src/world-pins.json").read_text())
     dots = '<div class="wm-dots" aria-hidden="true"></div>'
     pins = "".join(
-        f'<a class="wm-pin{" wm-l" if r["tz"] in ("Europe/London", "Asia/Riyadh", "Australia/Sydney") else ""}" href="/{r["slug"]}/" style="left:{wm["pins"][r["tz"]][0]}%;top:{wm["pins"][r["tz"]][1]}%">'
+        f'<a class="wm-pin{" wm-l" if r["tz"] in ("Europe/London", "Asia/Riyadh", "Australia/Sydney") else ""}{" wm-base" if r["tz"] in ("America/New_York", "Asia/Dubai", "Asia/Kolkata") else ""}" href="/{r["slug"]}/" style="left:{wm["pins"][r["tz"]][0]}%;top:{wm["pins"][r["tz"]][1]}%">'
         f'<i></i><span><b>{e(nm(r))}</b><em class="rg-clock" data-tz="{e(r["tz"])}">--:--</em></span></a>'
         for r in REGIONS if r["tz"] in wm["pins"])
     ld = {"@context": "https://schema.org", "@graph": [
@@ -992,7 +992,7 @@ def regions_page(pages, posts):
   </header>
   <figure class="wm" aria-label="Map of the markets I work in, with local times">
     <div class="wm-in">{dots}{pins}</div>
-    <figcaption><span><i class="wm-k"></i>Markets with a dedicated page</span><span>Times are live local time · based in the US &amp; UAE</span></figcaption>
+    <figcaption><span><i class="wm-k wm-kb"></i>Bases: India, United States, UAE <i class="wm-k"></i>Markets with a dedicated page</span><span>Times are live local time · based in India, the US &amp; UAE</span></figcaption>
   </figure>
   <section class="rg-sec" id="markets">
     <div class="sec-head"><div><div class="kicker">Markets</div><h2>Pick your region</h2></div>
@@ -1202,7 +1202,7 @@ def main():
     (ROOT / "assets/search.json").write_text(json.dumps(idx, ensure_ascii=False, separators=(",", ":")))
 
     llms = [f"# {NAME}", "",
-            "> Fractional CTO, principal engineer and AI architect based in the United States and the UAE, working with teams across North America, Europe, the Middle East and Asia-Pacific. "
+            "> Fractional CTO, principal engineer and AI architect based in India, the United States and the UAE, working with teams across North America, Europe, the Middle East and Asia-Pacific. "
             "Ontology and knowledge graphs, production RAG and agentic AI, private LLMs, healthcare data (FHIR, OMOP, "
             "HIPAA), scalable data platforms (1M+ transactions/day) and multi-cloud infrastructure.", "",
             f"Contact: {EMAIL} · Book a call: {CAL}", "", "## Services"]
