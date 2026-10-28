@@ -1,0 +1,61 @@
+<!--{"title": "Characterisation on OMOP: describe before you predict", "description": "Database profiles, cohort characterisation, treatment pathways and incidence rates on OMOP: what each tells you, how to compute them, and why they come before AI.", "h1": "Characterisation on OMOP: describe your population before you predict or estimate anything", "kicker": "Healthcare · Real-world data", "lede": "Health data teams are under pressure to jump straight to prediction models and causal studies. The most useful first step is less glamorous: describing the data and the people in it. OHDSI's characterisation methods turn that into a repeatable, shareable discipline.", "date": "2026-10-28", "datetime": "2026-10-28T08:20:00+04:00", "readtime": "7 min read", "format": "explainer", "tags": ["healthcare", "omop", "data"], "keywords": ["OMOP characterisation", "cohort characterisation", "incidence rate", "incidence proportion", "treatment pathways", "drug utilisation study", "OHDSI ATLAS", "FeatureExtraction", "real-world data", "healthcare data architect"], "faq": [["What is cohort characterisation?", "A description of a population, defined as a cohort with an index date, in terms of its demographics and medical history before the index date (baseline) and what happens after it (post-index). OHDSI does this with descriptive statistics across all conditions, drugs, procedures and other observations."], ["What is the difference between incidence proportion and incidence rate?", "Incidence proportion is the share of people in a cohort who develop a new outcome during the time at risk. Incidence rate divides the number of people with a new outcome by the total person-time at risk, with each person's time stopping when the outcome occurs."], ["Why characterise before building a model?", "Because characterisation shows what the data can and cannot support: missing domains, short observation periods, unusual coding and populations that differ from what you assumed. Problems found there are much cheaper to fix than problems found after a model fails."]], "related": ["/healthcare-data-architecture/", "/ai-architect/", "/fractional-cto/"], "citations": [{"title": "Characterization (The Book of OHDSI)", "url": "https://ohdsi.github.io/TheBookOfOhdsi/Characterization.html", "publisher": "OHDSI"}, {"title": "Characterizing treatment pathways at scale using the OHDSI network", "url": "https://doi.org/10.1073/pnas.1510502113", "publisher": "Hripcsak et al., PNAS 113(27)", "date": "2016"}, {"title": "The Strengthening the Reporting of Observational Studies in Epidemiology (STROBE) statement", "url": "https://doi.org/10.1016/j.jclinepi.2007.11.008", "publisher": "von Elm et al., Journal of Clinical Epidemiology", "date": "2008"}, {"title": "FeatureExtraction R package", "url": "https://ohdsi.github.io/FeatureExtraction/", "publisher": "OHDSI"}]}-->
+<p>A familiar pattern in health data projects: the team gets access to a new OMOP database, and within a week someone is training a risk model. A month later the model behaves strangely, and the cause turns out to be something basic. Half the patients have under a year of observation, a whole drug class is missing from one source, or the "new users" are mostly people transferring in from another system.</p>
+<p>Characterisation is how you find those things first. The Book of OHDSI describes four methods, each answering a different question<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+
+<section class="block">
+<h2>Four kinds of characterisation</h2>
+<table class="tbl">
+<thead><tr><th>Method</th><th>Question it answers</th><th>Typical use</th></tr></thead>
+<tbody>
+<tr><td>Database-level</td><td>What is in this database at all?</td><td>Fitness for purpose, data quality, spotting gaps</td></tr>
+<tr><td>Cohort characterisation</td><td>Who are these people, before and after the index date?</td><td>Natural history, drug utilisation, study feasibility</td></tr>
+<tr><td>Treatment pathways</td><td>What sequence of treatments do people receive?</td><td>Treatment patterns, switching, guideline adherence</td></tr>
+<tr><td>Incidence</td><td>How often does a new outcome occur in a population?</td><td>Disease burden, safety signals, baselines for models</td></tr>
+</tbody>
+</table>
+<p>All except database-level characterisation describe a population relative to an index date defined by a cohort. Time before the index date is baseline; the index date and after is post-index<sup class="cite"><a href="#ref-1">1</a></sup>. That is why good <a href="/insights/omop-cohort-definitions/">cohort definitions</a> come first.</p>
+</section>
+
+<section class="block">
+<h2>Start with the database</h2>
+<p>Before any population question, describe the database: how many people, their age distribution, how long they are observed, and how the recording of treatments, conditions and procedures changes over time. These summaries also reveal what may be missing<sup class="cite"><a href="#ref-1">1</a></sup>, which is why they pair naturally with <a href="/insights/omop-data-quality-checks/">OMOP data quality checks</a>.</p>
+</section>
+
+<section class="block">
+<h2>Characterise the cohort broadly</h2>
+<p>OHDSI's approach to cohort characterisation is deliberately broad: descriptive statistics across all conditions, drug and device exposures, procedures and other observations in a person's history, plus demographics at the index date. That gives a complete picture of the population and helps surface variation and missing values<sup class="cite"><a href="#ref-1">1</a></sup>. The FeatureExtraction package produces these features in a standard way, so the same characterisation runs at every site<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+<p>The book notes that disseminating this kind of characterisation is recommended practice in the STROBE guidelines for reporting observational studies<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>. Practically, a baseline table is also the fastest way to check your cohort is the population you think it is.</p>
+<div class="callout"><p>If the baseline table surprises you, stop. The surprise is either a finding or a data problem, and both matter more than the model you were about to train.</p></div>
+</section>
+
+<section class="block">
+<h2>Treatment pathways</h2>
+<p>Pathway analysis summarises the sequence of treatments people receive after a starting event, such as a diagnosis or first prescription. In a landmark study across the OHDSI network, Hripcsak and colleagues used standardised pathway analyses for type 2 diabetes, hypertension and depression, running the same analysis across many databases<sup class="cite"><a href="#ref-2">2</a></sup>. The book reports that they found metformin to be the most common diabetes medication, consistent with first-line guidance, and that 10% of diabetes patients, 24% of hypertension patients and 11% of depression patients followed a treatment pathway shared with no one else in any of the data sources<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<p>That last finding is a useful reminder for anyone designing clinical AI: real-world care is far more varied than guidelines suggest.</p>
+</section>
+
+<section class="block">
+<h2>Incidence, defined precisely</h2>
+<p>Incidence measures new occurrences of an outcome in a population during a time at risk. The book defines two metrics<sup class="cite"><a href="#ref-1">1</a></sup>:</p>
+<ul>
+<li><strong>Incidence proportion</strong>: people in the cohort with a new outcome during the time at risk, divided by people in the cohort with time at risk.</li>
+<li><strong>Incidence rate</strong>: people with a new outcome divided by the total person-time at risk, where each person's time stops when the outcome occurs.</li>
+</ul>
+<figure class="fig"><div class="im"><img src="/assets/img/omop-characterisation-incidence/incidence-timeline.webp" alt="Timeline for one person showing observation period start and end, cohort start and end, a time-at-risk window starting one day after cohort start and ending at cohort end, and an outcome occurring within the time at risk" width="1090" height="307" loading="lazy"></div><figcaption>The components of an incidence calculation for one person. <span class="credit">Source: <a href="https://ohdsi.github.io/TheBookOfOhdsi/Characterization.html" target="_blank" rel="noopener">The Book of OHDSI, Characterization</a> · CC0 1.0</span></figcaption></figure>
+<p>Most disagreements about "the rate" of something trace back to different choices of cohort, time at risk or outcome definition. Writing those down explicitly is what makes incidence comparable across sites and studies.</p>
+</section>
+
+<section class="block">
+<h2>Where characterisation fits</h2>
+<ol>
+<li><strong>Database characterisation</strong> when a source joins the platform, and after every major load.</li>
+<li><strong>Cohort characterisation</strong> before any study or model, to confirm feasibility and population.</li>
+<li><strong>Pathways and incidence</strong> to understand current practice and baselines.</li>
+<li><strong>Then</strong> <a href="/insights/clinical-prediction-models-omop/">prediction</a> or <a href="/insights/real-world-evidence-study-designs-omop/">effect estimation</a>, with the characterisation published alongside the results.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I design OMOP platforms where characterisation runs automatically on every load and every new cohort, so analysts and AI teams start from facts rather than assumptions. See <a href="/healthcare-data-architecture/">healthcare data architecture</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>

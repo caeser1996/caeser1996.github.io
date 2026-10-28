@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Characterisation on OMOP: describe before you predict</title>
+<meta name="description" content="Database profiles, cohort characterisation, treatment pathways and incidence rates on OMOP: what each tells you, how to compute them, and why they come before AI." />
+<meta name="keywords" content="OMOP characterisation, cohort characterisation, incidence rate, incidence proportion, treatment pathways, drug utilisation study, OHDSI ATLAS, FeatureExtraction, real-world data, healthcare data architect" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://asksumanta.com/insights/omop-characterisation-incidence/" />
+<meta name="theme-color" content="#111214" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="Characterisation on OMOP: describe before you predict" />
+<meta property="og:description" content="Database profiles, cohort characterisation, treatment pathways and incidence rates on OMOP: what each tells you, how to compute them, and why they come before AI." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://asksumanta.com/insights/omop-characterisation-incidence/" />
+<meta property="og:image" content="https://asksumanta.com/assets/og/omop-characterisation-incidence.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Characterisation on OMOP: describe before you predict" />
+<meta name="twitter:description" content="Database profiles, cohort characterisation, treatment pathways and incidence rates on OMOP: what each tells you, how to compute them, and why they come before AI." />
+<meta name="twitter:image" content="https://asksumanta.com/assets/og/omop-characterisation-incidence.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "BlogPosting", "headline": "Characterisation on OMOP: describe your population before you predict or estimate anything", "description": "Database profiles, cohort characterisation, treatment pathways and incidence rates on OMOP: what each tells you, how to compute them, and why they come before AI.", "datePublished": "2026-10-28T08:20:00+04:00", "dateModified": "2026-10-28T08:20:00+04:00", "articleSection": "Healthcare · Real-world data", "genre": "Explainer", "citation": [{"@type": "CreativeWork", "name": "Characterization (The Book of OHDSI)", "url": "https://ohdsi.github.io/TheBookOfOhdsi/Characterization.html"}, {"@type": "CreativeWork", "name": "Characterizing treatment pathways at scale using the OHDSI network", "url": "https://doi.org/10.1073/pnas.1510502113"}, {"@type": "CreativeWork", "name": "The Strengthening the Reporting of Observational Studies in Epidemiology (STROBE) statement", "url": "https://doi.org/10.1016/j.jclinepi.2007.11.008"}, {"@type": "CreativeWork", "name": "FeatureExtraction R package", "url": "https://ohdsi.github.io/FeatureExtraction/"}], "author": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "publisher": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "mainEntityOfPage": "https://asksumanta.com/insights/omop-characterisation-incidence/", "image": "https://asksumanta.com/assets/og/omop-characterisation-incidence.png", "keywords": "OMOP characterisation, cohort characterisation, incidence rate, incidence proportion, treatment pathways, drug utilisation study, OHDSI ATLAS, FeatureExtraction, real-world data, healthcare data architect", "wordCount": 755}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://asksumanta.com/"}, {"@type": "ListItem", "position": 2, "name": "Insights", "item": "https://asksumanta.com/insights/"}, {"@type": "ListItem", "position": 3, "name": "Characterisation on OMOP: describe your population before you predict or estimate anything", "item": "https://asksumanta.com/insights/omop-characterisation-incidence/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What is cohort characterisation?", "acceptedAnswer": {"@type": "Answer", "text": "A description of a population, defined as a cohort with an index date, in terms of its demographics and medical history before the index date (baseline) and what happens after it (post-index). OHDSI does this with descriptive statistics across all conditions, drugs, procedures and other observations."}}, {"@type": "Question", "name": "What is the difference between incidence proportion and incidence rate?", "acceptedAnswer": {"@type": "Answer", "text": "Incidence proportion is the share of people in a cohort who develop a new outcome during the time at risk. Incidence rate divides the number of people with a new outcome by the total person-time at risk, with each person's time stopping when the outcome occurs."}}, {"@type": "Question", "name": "Why characterise before building a model?", "acceptedAnswer": {"@type": "Answer", "text": "Because characterisation shows what the data can and cannot support: missing domains, short observation periods, unusual coding and populations that differ from what you assumed. Problems found there are much cheaper to fix than problems found after a model fails."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+</script>
+</head>
+<body class="sub is-post">
+<div class="progress" id="progress"></div>
+<nav>
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="/#practice">Services</a>
+      <a href="/case-studies/">Case studies</a>
+      <a href="/insights/">Insights</a>
+      <a href="/#assess">Analyse</a>
+      <a href="/#connect">Connect</a>
+    </div>
+    <div class="nav-r">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/insights/">Insights</a> <span>/</span> <em>Characterisation on OMOP: describe your population before you predict or estimate anything</em></div>
+    <div class="kicker">Healthcare · Real-world data</div>
+    <h1>Characterisation on OMOP: describe your population before you predict or estimate anything</h1>
+    <p class="sub-lede">Health data teams are under pressure to jump straight to prediction models and causal studies. The most useful first step is less glamorous: describing the data and the people in it. OHDSI&#x27;s characterisation methods turn that into a repeatable, shareable discipline.</p>
+    <div class="ameta"><span class="fmt">Explainer</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-10-28T08:20:00+04:00">28 Oct 2026 · 08:20 GST</time><span>7 min read</span><span>4 sources</span></div><div class="atags"><span class="tagp">#healthcare</span><span class="tagp">#omop</span><span class="tagp">#data</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Explainer cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><line x1="690" y1="203" x2="760" y2="272" class="cv-edge hl" opacity="0.34"/><line x1="690" y1="203" x2="658" y2="333" class="cv-edge hl" opacity="0.11"/><line x1="690" y1="203" x2="603" y2="300" class="cv-edge" opacity="0.13"/><line x1="690" y1="203" x2="698" y2="192" class="cv-edge" opacity="0.91"/><line x1="690" y1="203" x2="737" y2="214" class="cv-edge" opacity="0.67"/><line x1="690" y1="203" x2="748" y2="199" class="cv-edge" opacity="0.61"/><line x1="690" y1="203" x2="764" y2="317" class="cv-edge" opacity="0.09"/><line x1="821" y1="357" x2="760" y2="272" class="cv-edge hl" opacity="0.30"/><line x1="821" y1="357" x2="909" y2="292" class="cv-edge" opacity="0.27"/><line x1="821" y1="357" x2="764" y2="317" class="cv-edge" opacity="0.53"/><line x1="969" y1="90" x2="978" y2="63" class="cv-edge hl" opacity="0.82"/><line x1="969" y1="90" x2="1047" y2="212" class="cv-edge hl" opacity="0.03"/><line x1="969" y1="90" x2="820" y2="83" class="cv-edge hl" opacity="0.00"/><line x1="969" y1="90" x2="878" y2="64" class="cv-edge hl" opacity="0.36"/><line x1="969" y1="90" x2="1073" y2="143" class="cv-edge hl" opacity="0.22"/><line x1="969" y1="90" x2="881" y2="184" class="cv-edge hl" opacity="0.14"/><line x1="760" y1="272" x2="658" y2="333" class="cv-edge hl" opacity="0.20"/><line x1="760" y1="272" x2="698" y2="192" class="cv-edge hl" opacity="0.33"/><line x1="760" y1="272" x2="659" y2="360" class="cv-edge hl" opacity="0.10"/><line x1="760" y1="272" x2="737" y2="214" class="cv-edge hl" opacity="0.58"/><line x1="760" y1="272" x2="748" y2="199" class="cv-edge hl" opacity="0.51"/><line x1="760" y1="272" x2="881" y2="184" class="cv-edge hl" opacity="0.01"/><line x1="760" y1="272" x2="764" y2="317" class="cv-edge hl" opacity="0.69"/><line x1="1101" y1="333" x2="1047" y2="212" class="cv-edge" opacity="0.12"/><line x1="1101" y1="333" x2="1133" y2="210" class="cv-edge" opacity="0.15"/><line x1="978" y1="63" x2="878" y2="64" class="cv-edge" opacity="0.33"/><line x1="978" y1="63" x2="1073" y2="143" class="cv-edge" opacity="0.17"/><line x1="658" y1="333" x2="603" y2="300" class="cv-edge hl" opacity="0.57"/><line x1="658" y1="333" x2="698" y2="192" class="cv-edge hl" opacity="0.02"/><line x1="658" y1="333" x2="659" y2="360" class="cv-edge hl" opacity="0.82"/><line x1="658" y1="333" x2="737" y2="214" class="cv-edge hl" opacity="0.04"/><line x1="658" y1="333" x2="764" y2="317" class="cv-edge hl" opacity="0.29"/><line x1="1047" y1="212" x2="1133" y2="210" class="cv-edge" opacity="0.43"/><line x1="1047" y1="212" x2="954" y2="259" class="cv-edge" opacity="0.31"/><line x1="1047" y1="212" x2="1125" y2="163" class="cv-edge" opacity="0.39"/><line x1="1047" y1="212" x2="1073" y2="143" class="cv-edge" opacity="0.51"/><line x1="1133" y1="210" x2="1125" y2="163" class="cv-edge" opacity="0.69"/><line x1="1133" y1="210" x2="1073" y2="143" class="cv-edge" opacity="0.41"/><line x1="541" y1="117" x2="572" y2="73" class="cv-edge" opacity="0.64"/><line x1="541" y1="117" x2="579" y2="37" class="cv-edge hl" opacity="0.41"/><line x1="541" y1="117" x2="584" y2="77" class="cv-edge hl" opacity="0.61"/><line x1="820" y1="83" x2="878" y2="64" class="cv-edge" opacity="0.59"/><line x1="820" y1="83" x2="748" y2="199" class="cv-edge" opacity="0.09"/><line x1="820" y1="83" x2="881" y2="184" class="cv-edge" opacity="0.22"/><line x1="954" y1="259" x2="909" y2="292" class="cv-edge" opacity="0.63"/><line x1="954" y1="259" x2="881" y2="184" class="cv-edge" opacity="0.30"/><line x1="572" y1="73" x2="579" y2="37" class="cv-edge hl" opacity="0.75"/><line x1="572" y1="73" x2="584" y2="77" class="cv-edge hl" opacity="0.92"/><line x1="579" y1="37" x2="584" y2="77" class="cv-edge hl" opacity="0.73"/><line x1="603" y1="300" x2="698" y2="192" class="cv-edge" opacity="0.04"/><line x1="603" y1="300" x2="659" y2="360" class="cv-edge" opacity="0.45"/><line x1="909" y1="292" x2="881" y2="184" class="cv-edge" opacity="0.25"/><line x1="909" y1="292" x2="764" y2="317" class="cv-edge" opacity="0.01"/><line x1="1125" y1="163" x2="1073" y2="143" class="cv-edge" opacity="0.63"/><line x1="878" y1="64" x2="881" y2="184" class="cv-edge" opacity="0.20"/><line x1="698" y1="192" x2="737" y2="214" class="cv-edge" opacity="0.70"/><line x1="698" y1="192" x2="748" y2="199" class="cv-edge" opacity="0.67"/><line x1="698" y1="192" x2="764" y2="317" class="cv-edge" opacity="0.06"/><line x1="659" y1="360" x2="764" y2="317" class="cv-edge" opacity="0.25"/><line x1="737" y1="214" x2="748" y2="199" class="cv-edge" opacity="0.88"/><line x1="737" y1="214" x2="881" y2="184" class="cv-edge" opacity="0.02"/><line x1="737" y1="214" x2="764" y2="317" class="cv-edge" opacity="0.29"/><line x1="748" y1="199" x2="881" y2="184" class="cv-edge" opacity="0.11"/><line x1="748" y1="199" x2="764" y2="317" class="cv-edge" opacity="0.20"/><circle cx="690" cy="203" r="3" class="cv-dot"/><circle cx="821" cy="357" r="3" class="cv-dot"/><circle cx="969" cy="90" r="6" class="cv-dot hl"/><circle cx="760" cy="272" r="6" class="cv-dot hl"/><circle cx="1101" cy="333" r="3" class="cv-dot"/><circle cx="978" cy="63" r="3" class="cv-dot"/><circle cx="658" cy="333" r="6" class="cv-dot hl"/><circle cx="1047" cy="212" r="3" class="cv-dot"/><circle cx="1133" cy="210" r="3" class="cv-dot"/><circle cx="541" cy="117" r="3" class="cv-dot"/><circle cx="820" cy="83" r="3" class="cv-dot"/><circle cx="954" cy="259" r="3" class="cv-dot"/><circle cx="572" cy="73" r="3" class="cv-dot"/><circle cx="579" cy="37" r="6" class="cv-dot hl"/><circle cx="603" cy="300" r="3" class="cv-dot"/><circle cx="909" cy="292" r="3" class="cv-dot"/><circle cx="1125" cy="163" r="3" class="cv-dot"/><circle cx="878" cy="64" r="3" class="cv-dot"/><circle cx="1073" cy="143" r="3" class="cv-dot"/><circle cx="698" cy="192" r="3" class="cv-dot"/><circle cx="659" cy="360" r="3" class="cv-dot"/><circle cx="584" cy="77" r="6" class="cv-dot hl"/><circle cx="737" cy="214" r="3" class="cv-dot"/><circle cx="748" cy="199" r="3" class="cv-dot"/><circle cx="881" cy="184" r="3" class="cv-dot"/><circle cx="764" cy="317" r="3" class="cv-dot"/><text x="60" y="90" class="cv-k">EXPLAINER · HEALTHCARE · REAL-WORLD DATA</text><text x="60" y="350" class="cv-n">28 Oct 2026 · 08:20 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <p>A familiar pattern in health data projects: the team gets access to a new OMOP database, and within a week someone is training a risk model. A month later the model behaves strangely, and the cause turns out to be something basic. Half the patients have under a year of observation, a whole drug class is missing from one source, or the "new users" are mostly people transferring in from another system.</p>
+<p>Characterisation is how you find those things first. The Book of OHDSI describes four methods, each answering a different question<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+
+<section class="block">
+<h2 id="four-kinds-of-characterisation">Four kinds of characterisation</h2>
+<table class="tbl">
+<thead><tr><th>Method</th><th>Question it answers</th><th>Typical use</th></tr></thead>
+<tbody>
+<tr><td>Database-level</td><td>What is in this database at all?</td><td>Fitness for purpose, data quality, spotting gaps</td></tr>
+<tr><td>Cohort characterisation</td><td>Who are these people, before and after the index date?</td><td>Natural history, drug utilisation, study feasibility</td></tr>
+<tr><td>Treatment pathways</td><td>What sequence of treatments do people receive?</td><td>Treatment patterns, switching, guideline adherence</td></tr>
+<tr><td>Incidence</td><td>How often does a new outcome occur in a population?</td><td>Disease burden, safety signals, baselines for models</td></tr>
+</tbody>
+</table>
+<p>All except database-level characterisation describe a population relative to an index date defined by a cohort. Time before the index date is baseline; the index date and after is post-index<sup class="cite"><a href="#ref-1">1</a></sup>. That is why good <a href="/insights/omop-cohort-definitions/">cohort definitions</a> come first.</p>
+</section>
+
+<section class="block">
+<h2 id="start-with-the-database">Start with the database</h2>
+<p>Before any population question, describe the database: how many people, their age distribution, how long they are observed, and how the recording of treatments, conditions and procedures changes over time. These summaries also reveal what may be missing<sup class="cite"><a href="#ref-1">1</a></sup>, which is why they pair naturally with <a href="/insights/omop-data-quality-checks/">OMOP data quality checks</a>.</p>
+</section>
+
+<section class="block">
+<h2 id="characterise-the-cohort-broadly">Characterise the cohort broadly</h2>
+<p>OHDSI's approach to cohort characterisation is deliberately broad: descriptive statistics across all conditions, drug and device exposures, procedures and other observations in a person's history, plus demographics at the index date. That gives a complete picture of the population and helps surface variation and missing values<sup class="cite"><a href="#ref-1">1</a></sup>. The FeatureExtraction package produces these features in a standard way, so the same characterisation runs at every site<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+<p>The book notes that disseminating this kind of characterisation is recommended practice in the STROBE guidelines for reporting observational studies<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>. Practically, a baseline table is also the fastest way to check your cohort is the population you think it is.</p>
+<div class="callout"><p>If the baseline table surprises you, stop. The surprise is either a finding or a data problem, and both matter more than the model you were about to train.</p></div>
+</section>
+
+<section class="block">
+<h2 id="treatment-pathways">Treatment pathways</h2>
+<p>Pathway analysis summarises the sequence of treatments people receive after a starting event, such as a diagnosis or first prescription. In a landmark study across the OHDSI network, Hripcsak and colleagues used standardised pathway analyses for type 2 diabetes, hypertension and depression, running the same analysis across many databases<sup class="cite"><a href="#ref-2">2</a></sup>. The book reports that they found metformin to be the most common diabetes medication, consistent with first-line guidance, and that 10% of diabetes patients, 24% of hypertension patients and 11% of depression patients followed a treatment pathway shared with no one else in any of the data sources<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<p>That last finding is a useful reminder for anyone designing clinical AI: real-world care is far more varied than guidelines suggest.</p>
+</section>
+
+<section class="block">
+<h2 id="incidence-defined-precisely">Incidence, defined precisely</h2>
+<p>Incidence measures new occurrences of an outcome in a population during a time at risk. The book defines two metrics<sup class="cite"><a href="#ref-1">1</a></sup>:</p>
+<ul>
+<li><strong>Incidence proportion</strong>: people in the cohort with a new outcome during the time at risk, divided by people in the cohort with time at risk.</li>
+<li><strong>Incidence rate</strong>: people with a new outcome divided by the total person-time at risk, where each person's time stops when the outcome occurs.</li>
+</ul>
+<figure class="fig"><div class="im"><img src="/assets/img/omop-characterisation-incidence/incidence-timeline.webp" alt="Timeline for one person showing observation period start and end, cohort start and end, a time-at-risk window starting one day after cohort start and ending at cohort end, and an outcome occurring within the time at risk" width="1090" height="307" loading="lazy"></div><figcaption>The components of an incidence calculation for one person. <span class="credit">Source: <a href="https://ohdsi.github.io/TheBookOfOhdsi/Characterization.html" target="_blank" rel="noopener">The Book of OHDSI, Characterization</a> · CC0 1.0</span></figcaption></figure>
+<p>Most disagreements about "the rate" of something trace back to different choices of cohort, time at risk or outcome definition. Writing those down explicitly is what makes incidence comparable across sites and studies.</p>
+</section>
+
+<section class="block">
+<h2 id="where-characterisation-fits">Where characterisation fits</h2>
+<ol>
+<li><strong>Database characterisation</strong> when a source joins the platform, and after every major load.</li>
+<li><strong>Cohort characterisation</strong> before any study or model, to confirm feasibility and population.</li>
+<li><strong>Pathways and incidence</strong> to understand current practice and baselines.</li>
+<li><strong>Then</strong> <a href="/insights/clinical-prediction-models-omop/">prediction</a> or <a href="/insights/real-world-evidence-study-designs-omop/">effect estimation</a>, with the characterisation published alongside the results.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2 id="how-i-can-help">How I can help</h2>
+<p>I design OMOP platforms where characterisation runs automatically on every load and every new cohort, so analysts and AI teams start from facts rather than assumptions. See <a href="/healthcare-data-architecture/">healthcare data architecture</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://ohdsi.github.io/TheBookOfOhdsi/Characterization.html" target="_blank" rel="noopener">Characterization (The Book of OHDSI)</a><small>OHDSI</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://doi.org/10.1073/pnas.1510502113" target="_blank" rel="noopener">Characterizing treatment pathways at scale using the OHDSI network</a><small>Hripcsak et al., PNAS 113(27) · 2016</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://doi.org/10.1016/j.jclinepi.2007.11.008" target="_blank" rel="noopener">The Strengthening the Reporting of Observational Studies in Epidemiology (STROBE) statement</a><small>von Elm et al., Journal of Clinical Epidemiology · 2008</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://ohdsi.github.io/FeatureExtraction/" target="_blank" rel="noopener">FeatureExtraction R package</a><small>OHDSI</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fomop-characterisation-incidence%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fomop-characterisation-incidence%2F&amp;text=Characterisation%20on%20OMOP%3A%20describe%20your%20population%20before%20you%20predict%20or%20estimate%20anything" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=Characterisation%20on%20OMOP%3A%20describe%20your%20population%20before%20you%20predict%20or%20estimate%20anything%20https%3A%2F%2Fasksumanta.com%2Finsights%2Fomop-characterisation-incidence%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://asksumanta.com/insights/omop-characterisation-incidence/">Copy link</button></div>
+      <div class="pnav"><a class="pn prev" href="/insights/opentelemetry-declarative-configuration/"><small>← Previous</small><b>OpenTelemetry declarative configuration: a playbook for moving from environment variables to one reviewed file</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#four-kinds-of-characterisation">Four kinds of characterisation</a></li><li><a href="#start-with-the-database">Start with the database</a></li><li><a href="#characterise-the-cohort-broadly">Characterise the cohort broadly</a></li><li><a href="#treatment-pathways">Treatment pathways</a></li><li><a href="#incidence-defined-precisely">Incidence, defined precisely</a></li><li><a href="#where-characterisation-fits">Where characterisation fits</a></li><li><a href="#how-i-can-help">How I can help</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>What is cohort characterisation?</summary><p>A description of a population, defined as a cohort with an index date, in terms of its demographics and medical history before the index date (baseline) and what happens after it (post-index). OHDSI does this with descriptive statistics across all conditions, drugs, procedures and other observations.</p></details><details class="rise"><summary>What is the difference between incidence proportion and incidence rate?</summary><p>Incidence proportion is the share of people in a cohort who develop a new outcome during the time at risk. Incidence rate divides the number of people with a new outcome by the total person-time at risk, with each person&#x27;s time stopping when the outcome occurs.</p></details><details class="rise"><summary>Why characterise before building a model?</summary><p>Because characterisation shows what the data can and cannot support: missing domains, short observation periods, unusual coding and populations that differ from what you assumed. Problems found there are much cheaper to fix than problems found after a model fails.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/healthcare-data-architecture/"><small>Service</small><b>Healthcare data architecture</b><span>I help healthcare and life-sciences organisations turn fragmented clinical data into governed platforms for care, research and AI, using the standards the industry already agrees on.</span><i>→</i></a><a class="rcard rise" href="/ai-architect/"><small>Service</small><b>AI &amp; LLM architecture</b><span>I design and build AI systems that leadership can trust: grounded in your data, measured by evaluations, governed by your rules and priced so they make sense at scale.</span><i>→</i></a><a class="rcard rise" href="/fractional-cto/"><small>Service</small><b>Fractional CTO</b><span>I work as a part-time CTO for founders, CEOs and boards who need experienced technical judgement now, and a team that can carry it on after I step back.</span><i>→</i></a><a class="rcard rise" href="/insights/opentelemetry-declarative-configuration/"><small>Insight</small><b>OpenTelemetry declarative configuration: a playbook for moving from environment variables to one reviewed file</b><span>For years, configuring OpenTelemetry SDKs meant a growing list of OTEL_ environment variables, plus code for anything they couldn&#x27;t express. The declarative configuration schema is now stable. It turns telemetry setup into a versioned file that platform teams can standardise, review and roll out.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: Characterisation on OMOP: describe your population before you predict or estimate anything">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
+        <p class="floc">United States &amp; UAE · working globally</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/uae/">Fractional CTO in the UAE</a></li></ul></div>
+      <div class="fc"><h4>Case studies</h4><ul><li><a href="/case-studies/kubernetes-finops-platform-engineering/">Kubernetes FinOps and platform engineering</a></li><li><a href="/case-studies/enterprise-mcp-agent-platform/">Enterprise MCP agent platform</a></li><li><a href="/case-studies/insurance-claims-triage-ai/">Insurance claims triage with AI</a></li><li><a href="/case-studies/startup-fractional-cto-seed-to-series-a/">Startup fractional CTO, seed to Series A</a></li><li><a href="/#work">Engagement snapshots</a></li><li><a href="/case-studies/">All case studies →</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/omop-characterisation-incidence/">Characterisation on OMOP: describe your population before you predict or estimate anything</a></li><li><a href="/insights/opentelemetry-declarative-configuration/">OpenTelemetry declarative configuration: a playbook for moving from environment variables to one reviewed file</a></li><li><a href="/insights/terraform-secrets-out-of-state/">Keeping secrets out of Terraform state: a checklist for platform teams</a></li><li><a href="/insights/slos-error-budgets-small-teams/">SLOs and error budgets for small teams: field notes on making reliability a decision, not a debate</a></li><li><a href="/insights/speculative-decoding-private-llms/">Speculative decoding for private LLMs: faster tokens without changing the answers</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>
