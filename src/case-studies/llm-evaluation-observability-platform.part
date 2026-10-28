@@ -1,0 +1,86 @@
+<!--{"title": "Case study: an LLM evaluation and observability platform", "description": "How a software company with many AI features can ship model and prompt changes safely: shared eval sets, release gates, OpenTelemetry GenAI tracing and cost per feature.", "short": "LLM evaluation and observability platform", "h1": "Shipping AI features with evidence: a shared evaluation and observability platform", "kicker": "Case study · AI engineering", "lede": "Several product teams had shipped AI features, each with its own prompts, its own vendor calls and its own idea of 'good'. Model upgrades were risky, regressions were found by customers, and nobody could say what an AI feature cost to run. The goal was one platform for evaluating, releasing and observing every LLM feature.", "date": "2026-10-28", "datetime": "2026-10-28T10:25:00+04:00", "readtime": "9 min read", "sector": "Software · B2B SaaS", "role": "AI architect", "engagement": "Platform design, build and enablement", "scope": "Evaluation sets, release gates, tracing, cost and quality dashboards", "stack": ["OpenTelemetry GenAI conventions", "OTel Collector", "Evaluation harness", "LLM-as-judge", "Prompt registry", "Model gateway", "Feature flags", "Data warehouse"], "outcomes": ["Every AI feature has an owned evaluation set that runs before release", "Model and prompt changes ship behind gates with a clear pass or fail", "Traces show each model call, tool call and token count in one view", "Cost and quality are reported per feature, not just per vendor invoice"], "tags": ["ai", "llm", "observability", "platform"], "keywords": ["LLM evaluation platform", "LLM observability", "OpenTelemetry GenAI", "LLM release gates", "LLM-as-judge", "prompt regression testing", "AI feature cost tracking", "GenAI semantic conventions", "AI engineering case study", "AI architect"], "faq": [["What should an LLM evaluation set contain?", "Real examples of what users ask, with known good answers or clear grading criteria, covering common cases, known failure modes and sensitive edge cases. It should be owned by the feature team and refreshed from production feedback."], ["Can LLMs grade other LLMs reliably?", "Research on LLM-as-a-judge found strong models can agree with human preferences at a level comparable to agreement between humans, but also documented biases such as position and verbosity bias. Use judges with calibration against human labels, not as the only signal."], ["Does tracing LLM calls capture prompts and user data?", "Not by default in the OpenTelemetry GenAI conventions: content capture is opt-in because prompts and tool arguments can contain sensitive data. Metadata such as model, token counts and durations is captured without content."]], "related": ["/ai-architect/", "/fractional-cto/", "/technical-due-diligence/"], "citations": [{"title": "Inside the LLM Call: GenAI Observability with OpenTelemetry", "url": "https://opentelemetry.io/blog/2026/genai-observability/", "publisher": "OpenTelemetry blog", "date": "14 May 2026"}, {"title": "Semantic conventions for generative client AI spans", "url": "https://opentelemetry.io/docs/specs/semconv/gen-ai/gen-ai-spans/", "publisher": "OpenTelemetry"}, {"title": "Semantic conventions for generative AI metrics", "url": "https://opentelemetry.io/docs/specs/semconv/gen-ai/gen-ai-metrics/", "publisher": "OpenTelemetry"}, {"title": "Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena", "url": "https://arxiv.org/abs/2306.05685", "publisher": "Zheng et al. (arXiv; NeurIPS 2023)", "date": "2023"}, {"title": "Artificial Intelligence Risk Management Framework: Generative Artificial Intelligence Profile (NIST AI 600-1)", "url": "https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.600-1.pdf", "publisher": "NIST", "date": "Jul 2024"}]}-->
+<h2>The situation</h2>
+<p>A software company had moved quickly on AI. Support had an answer assistant, sales had an email drafter, the core product had a summariser and a natural-language search box. Each team had picked prompts, vendors and settings independently. When a model provider released a new version, nobody knew which features would get better and which would quietly break. Quality problems surfaced as customer tickets. Finance saw one large model invoice and could not split it by feature.</p>
+<p>Leadership did not want to slow the teams down. They wanted the same confidence in AI releases that they already had in ordinary code releases.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>Every AI feature has an evaluation set</strong> that reflects real use, owned by the team that ships it.</li>
+<li><strong>Changes ship through gates</strong>: a prompt, model or retrieval change runs the evals before it reaches customers.</li>
+<li><strong>Every model and tool call is traceable</strong>, with latency, tokens and errors, using an open standard rather than a vendor format.</li>
+<li><strong>Sensitive content is not logged by default.</strong></li>
+<li><strong>Cost and quality are visible per feature</strong>, so product managers can make trade-offs.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Features</small><div class="dgm-nodes"><span>Support assistant<em>RAG</em></span><span>Email drafter<em>generation</em></span><span>Summariser<em>long context</em></span><span>Search box<em>text to query</em></span></div></div>
+<div class="dgm-tier"><small>Runtime</small><div class="dgm-nodes"><span class="hl">Model gateway<em>routing, keys, limits</em></span><span>Prompt registry<em>versioned prompts</em></span><span>Feature flags<em>gradual rollout</em></span></div></div>
+<div class="dgm-tier"><small>Evaluate</small><div class="dgm-nodes"><span class="hl">Eval sets per feature<em>owned, versioned</em></span><span>Graders<em>exact, rubric, judge</em></span><span>Release gate<em>CI pass or fail</em></span></div></div>
+<div class="dgm-tier"><small>Observe</small><div class="dgm-nodes"><span class="hl">GenAI traces<em>OpenTelemetry</em></span><span>Token and latency metrics<em>per feature</em></span><span>Feedback signals<em>thumbs, edits, escalations</em></span></div></div>
+<div class="dgm-tier"><small>Decide</small><div class="dgm-nodes"><span>Quality dashboard<em>per feature and version</em></span><span>Cost dashboard<em>per feature and customer tier</em></span><span>Eval refresh<em>from production misses</em></span></div></div>
+</div>
+<figcaption>Evaluation before release, observation after it, and a loop that feeds production misses back into the eval sets.</figcaption>
+</figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Propose</b><span>Team changes a prompt, model or retrieval setting in a branch</span></li>
+<li class="hl"><b>Evaluate</b><span>CI runs the feature's eval set through the gateway and graders</span></li>
+<li><b>Gate</b><span>Scores compared with the current version; regressions block the merge</span></li>
+<li><b>Roll out</b><span>Change enabled for a slice of traffic behind a flag</span></li>
+<li class="hl"><b>Observe</b><span>Traces and metrics compared between old and new versions</span></li>
+<li><b>Learn</b><span>Production failures become new eval cases</span></li>
+</ol>
+<figcaption>The same eval set gates the release and measures the rollout, so offline and online quality stay connected.</figcaption>
+</figure>
+<p>Tracing followed the OpenTelemetry semantic conventions for generative AI, which standardise how model calls are recorded, including the model, input and output token counts and, when explicitly enabled, prompt and completion content<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. Standard metrics for token usage and operation duration made cost and latency comparable across features and vendors<sup class="cite"><a href="#ref-3">3</a></sup>. The detail is in <a href="/insights/llm-observability-opentelemetry-genai/">LLM observability with OpenTelemetry</a>.</p>
+
+<h2>The hard part: evaluation sets that predict production</h2>
+<p>Building the pipeline was straightforward. Building evaluation sets that actually predicted how features behaved for customers was not. Generic benchmarks said little about whether the support assistant would answer a specific customer's question correctly.</p>
+<ul>
+<li>Cases drawn from real, anonymised usage, grouped by intent, with a slice of known hard and sensitive cases.</li>
+<li>Deterministic checks wherever possible: format, required fields, citations present, forbidden content absent.</li>
+<li>Rubric-based model graders only where judgement was needed, calibrated against human labels. Research on LLM-as-a-judge found strong models can match human preference agreement, but also documented position and verbosity biases that need controlling<sup class="cite"><a href="#ref-4">4</a></sup>.</li>
+<li>Regular refresh from production misses, so the set evolves with the product.</li>
+</ul>
+<p>More on this in <a href="/insights/llm-evaluation-sets-that-predict-production/">evaluation sets that predict production</a> and, for agentic features, <a href="/insights/evaluating-ai-agents-reliability/">evaluating AI agents</a>.</p>
+<div class="callout"><p>An eval set is a product artefact, not a test fixture. The team that owns the feature owns its definition of good.</p></div>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Platform</small><ol><li>Gateway and tracing</li><li class="hl">Eval harness in CI</li><li>Dashboards</li></ol></div>
+<div class="dgm-lane"><small>Feature teams</small><ol><li>Build eval sets</li><li>Define pass criteria</li><li class="hl">Ship behind gates</li></ol></div>
+<div class="dgm-lane"><small>Risk and privacy</small><ol><li>Content capture policy</li><li>Sensitive-case review</li><li>Map to risk framework</li></ol></div>
+</div>
+<figcaption>Platform supplies the machinery; teams define quality; risk sets the boundaries.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Observe</b><ul><li>Route calls via gateway</li><li>GenAI tracing</li><li>Cost per feature</li></ul></div>
+<div><small>Phase 2</small><b>Evaluate</b><ul><li>First eval sets</li><li>Graders and calibration</li><li>Baseline scores</li></ul></div>
+<div><small>Phase 3</small><b>Gate</b><ul><li>CI release gates</li><li>Flagged rollouts</li><li>Version comparison</li></ul></div>
+<div><small>Phase 4</small><b>Loop</b><ul><li>Production misses to evals</li><li>Model upgrade playbook</li><li>Quarterly review</li></ul></div>
+</div>
+<figcaption>Observability first gave teams a reason to want evaluation; gates came once eval sets were trusted.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>OpenTelemetry GenAI conventions</td><td>A vendor-specific tracing SDK</td><td>Portable across vendors and backends, fits existing observability</td></tr>
+<tr><td>Content capture off by default</td><td>Log everything for debugging</td><td>Prompts and tool arguments can hold sensitive data</td></tr>
+<tr><td>Deterministic checks before judges</td><td>Judge every output with a model</td><td>Cheaper, faster and free of judge bias</td></tr>
+<tr><td>Eval sets owned by feature teams</td><td>Central QA writes all evals</td><td>Teams know what good looks like for their users</td></tr>
+<tr><td>Gateway for all model calls</td><td>Each team calls vendors directly</td><td>One place for keys, routing, limits and cost attribution</td></tr>
+</tbody>
+</table>
+<p>The programme was mapped to the NIST Generative AI Profile, which gave the risk team a recognised structure for issues such as confabulation, information security and data privacy<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: start with tracing and cost per feature, because visibility creates demand for evaluation. Differently: write a model upgrade playbook in the first phase. Provider version changes arrive on their schedule, not yours, and a rehearsed path from new model to gated rollout takes the drama out of them.</p>
+<p>If your AI features are multiplying faster than your confidence in them, my <a href="/ai-architect/">AI architecture work</a> covers evaluation and observability platforms, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>

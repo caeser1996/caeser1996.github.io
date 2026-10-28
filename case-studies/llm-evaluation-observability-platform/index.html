@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Case study: an LLM evaluation and observability platform</title>
+<meta name="description" content="How a software company with many AI features can ship model and prompt changes safely: shared eval sets, release gates, OpenTelemetry GenAI tracing and cost per feature." />
+<meta name="keywords" content="LLM evaluation platform, LLM observability, OpenTelemetry GenAI, LLM release gates, LLM-as-judge, prompt regression testing, AI feature cost tracking, GenAI semantic conventions, AI engineering case study, AI architect" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://asksumanta.com/case-studies/llm-evaluation-observability-platform/" />
+<meta name="theme-color" content="#111214" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="Case study: an LLM evaluation and observability platform" />
+<meta property="og:description" content="How a software company with many AI features can ship model and prompt changes safely: shared eval sets, release gates, OpenTelemetry GenAI tracing and cost per feature." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://asksumanta.com/case-studies/llm-evaluation-observability-platform/" />
+<meta property="og:image" content="https://asksumanta.com/assets/og/llm-evaluation-observability-platform.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Case study: an LLM evaluation and observability platform" />
+<meta name="twitter:description" content="How a software company with many AI features can ship model and prompt changes safely: shared eval sets, release gates, OpenTelemetry GenAI tracing and cost per feature." />
+<meta name="twitter:image" content="https://asksumanta.com/assets/og/llm-evaluation-observability-platform.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "Article", "headline": "Shipping AI features with evidence: a shared evaluation and observability platform", "description": "How a software company with many AI features can ship model and prompt changes safely: shared eval sets, release gates, OpenTelemetry GenAI tracing and cost per feature.", "articleSection": "Case study", "about": "Software · B2B SaaS", "datePublished": "2026-10-28T10:25:00+04:00", "dateModified": "2026-10-28T10:25:00+04:00", "citation": [{"@type": "CreativeWork", "name": "Inside the LLM Call: GenAI Observability with OpenTelemetry", "url": "https://opentelemetry.io/blog/2026/genai-observability/"}, {"@type": "CreativeWork", "name": "Semantic conventions for generative client AI spans", "url": "https://opentelemetry.io/docs/specs/semconv/gen-ai/gen-ai-spans/"}, {"@type": "CreativeWork", "name": "Semantic conventions for generative AI metrics", "url": "https://opentelemetry.io/docs/specs/semconv/gen-ai/gen-ai-metrics/"}, {"@type": "CreativeWork", "name": "Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena", "url": "https://arxiv.org/abs/2306.05685"}, {"@type": "CreativeWork", "name": "Artificial Intelligence Risk Management Framework: Generative Artificial Intelligence Profile (NIST AI 600-1)", "url": "https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.600-1.pdf"}], "author": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "publisher": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "mainEntityOfPage": "https://asksumanta.com/case-studies/llm-evaluation-observability-platform/", "image": "https://asksumanta.com/assets/og/llm-evaluation-observability-platform.png", "keywords": "LLM evaluation platform, LLM observability, OpenTelemetry GenAI, LLM release gates, LLM-as-judge, prompt regression testing, AI feature cost tracking, GenAI semantic conventions, AI engineering case study, AI architect", "wordCount": 915}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://asksumanta.com/"}, {"@type": "ListItem", "position": 2, "name": "Case studies", "item": "https://asksumanta.com/case-studies/"}, {"@type": "ListItem", "position": 3, "name": "Shipping AI features with evidence: a shared evaluation and observability platform", "item": "https://asksumanta.com/case-studies/llm-evaluation-observability-platform/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What should an LLM evaluation set contain?", "acceptedAnswer": {"@type": "Answer", "text": "Real examples of what users ask, with known good answers or clear grading criteria, covering common cases, known failure modes and sensitive edge cases. It should be owned by the feature team and refreshed from production feedback."}}, {"@type": "Question", "name": "Can LLMs grade other LLMs reliably?", "acceptedAnswer": {"@type": "Answer", "text": "Research on LLM-as-a-judge found strong models can agree with human preferences at a level comparable to agreement between humans, but also documented biases such as position and verbosity bias. Use judges with calibration against human labels, not as the only signal."}}, {"@type": "Question", "name": "Does tracing LLM calls capture prompts and user data?", "acceptedAnswer": {"@type": "Answer", "text": "Not by default in the OpenTelemetry GenAI conventions: content capture is opt-in because prompts and tool arguments can contain sensitive data. Metadata such as model, token counts and durations is captured without content."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+</script>
+</head>
+<body class="sub is-post is-case">
+<div class="progress" id="progress"></div>
+<nav>
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="/#practice">Services</a>
+      <a href="/case-studies/">Case studies</a>
+      <a href="/insights/">Insights</a>
+      <a href="/#assess">Analyse</a>
+      <a href="/#connect">Connect</a>
+    </div>
+    <div class="nav-r">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/case-studies/">Case studies</a> <span>/</span> <em>Shipping AI features with evidence: a shared evaluation and observability platform</em></div>
+    <div class="kicker">Case study · AI engineering</div>
+    <h1>Shipping AI features with evidence: a shared evaluation and observability platform</h1>
+    <p class="sub-lede">Several product teams had shipped AI features, each with its own prompts, its own vendor calls and its own idea of &#x27;good&#x27;. Model upgrades were risky, regressions were found by customers, and nobody could say what an AI feature cost to run. The goal was one platform for evaluating, releasing and observing every LLM feature.</p>
+    <div class="ameta"><span class="fmt">Case study</span><span>Software · B2B SaaS</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-10-28T10:25:00+04:00">28 Oct 2026 · 10:25 GST</time><span>9 min read</span></div><div class="atags"><span class="tagp">#ai</span><span class="tagp">#llm</span><span class="tagp">#observability</span><span class="tagp">#platform</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Case study cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><line x1="625" y1="96" x2="561" y2="87" class="cv-edge hl" opacity="0.57"/><line x1="625" y1="96" x2="690" y2="76" class="cv-edge" opacity="0.54"/><line x1="625" y1="96" x2="530" y2="102" class="cv-edge" opacity="0.36"/><line x1="625" y1="96" x2="609" y2="91" class="cv-edge" opacity="0.89"/><line x1="553" y1="258" x2="568" y2="375" class="cv-edge" opacity="0.21"/><line x1="553" y1="258" x2="570" y2="314" class="cv-edge" opacity="0.61"/><line x1="553" y1="258" x2="697" y2="281" class="cv-edge" opacity="0.02"/><line x1="941" y1="370" x2="967" y2="320" class="cv-edge" opacity="0.63"/><line x1="941" y1="370" x2="932" y2="284" class="cv-edge" opacity="0.43"/><line x1="941" y1="370" x2="830" y2="383" class="cv-edge" opacity="0.25"/><line x1="941" y1="370" x2="916" y2="300" class="cv-edge" opacity="0.51"/><line x1="777" y1="221" x2="795" y2="152" class="cv-edge" opacity="0.53"/><line x1="777" y1="221" x2="697" y2="281" class="cv-edge" opacity="0.33"/><line x1="777" y1="221" x2="828" y2="163" class="cv-edge hl" opacity="0.49"/><line x1="967" y1="320" x2="932" y2="284" class="cv-edge" opacity="0.66"/><line x1="967" y1="320" x2="916" y2="300" class="cv-edge" opacity="0.64"/><line x1="967" y1="320" x2="933" y2="186" class="cv-edge" opacity="0.07"/><line x1="1137" y1="100" x2="1001" y2="92" class="cv-edge" opacity="0.09"/><line x1="1137" y1="100" x2="1007" y2="144" class="cv-edge" opacity="0.08"/><line x1="1137" y1="100" x2="1078" y2="159" class="cv-edge" opacity="0.44"/><line x1="916" y1="68" x2="1001" y2="92" class="cv-edge" opacity="0.41"/><line x1="916" y1="68" x2="795" y2="152" class="cv-edge" opacity="0.02"/><line x1="916" y1="68" x2="1007" y2="144" class="cv-edge" opacity="0.21"/><line x1="916" y1="68" x2="960" y2="165" class="cv-edge" opacity="0.29"/><line x1="916" y1="68" x2="932" y2="86" class="cv-edge" opacity="0.83"/><line x1="916" y1="68" x2="828" y2="163" class="cv-edge hl" opacity="0.13"/><line x1="916" y1="68" x2="933" y2="186" class="cv-edge" opacity="0.20"/><line x1="568" y1="375" x2="570" y2="314" class="cv-edge" opacity="0.59"/><line x1="1001" y1="92" x2="1007" y2="144" class="cv-edge" opacity="0.65"/><line x1="1001" y1="92" x2="1078" y2="159" class="cv-edge" opacity="0.32"/><line x1="1001" y1="92" x2="960" y2="165" class="cv-edge" opacity="0.44"/><line x1="1001" y1="92" x2="932" y2="86" class="cv-edge" opacity="0.54"/><line x1="1001" y1="92" x2="933" y2="186" class="cv-edge" opacity="0.23"/><line x1="561" y1="87" x2="690" y2="76" class="cv-edge hl" opacity="0.13"/><line x1="561" y1="87" x2="530" y2="102" class="cv-edge hl" opacity="0.77"/><line x1="561" y1="87" x2="609" y2="91" class="cv-edge hl" opacity="0.68"/><line x1="795" y1="152" x2="690" y2="76" class="cv-edge" opacity="0.14"/><line x1="795" y1="152" x2="828" y2="163" class="cv-edge hl" opacity="0.77"/><line x1="795" y1="152" x2="933" y2="186" class="cv-edge" opacity="0.05"/><line x1="690" y1="76" x2="609" y2="91" class="cv-edge" opacity="0.45"/><line x1="530" y1="102" x2="609" y2="91" class="cv-edge" opacity="0.47"/><line x1="1007" y1="144" x2="1078" y2="159" class="cv-edge" opacity="0.51"/><line x1="1007" y1="144" x2="960" y2="165" class="cv-edge" opacity="0.65"/><line x1="1007" y1="144" x2="932" y2="86" class="cv-edge" opacity="0.37"/><line x1="1007" y1="144" x2="933" y2="186" class="cv-edge" opacity="0.43"/><line x1="932" y1="284" x2="830" y2="383" class="cv-edge" opacity="0.05"/><line x1="932" y1="284" x2="960" y2="165" class="cv-edge" opacity="0.19"/><line x1="932" y1="284" x2="916" y2="300" class="cv-edge" opacity="0.85"/><line x1="932" y1="284" x2="933" y2="186" class="cv-edge" opacity="0.34"/><line x1="570" y1="314" x2="697" y2="281" class="cv-edge" opacity="0.13"/><line x1="830" y1="383" x2="916" y2="300" class="cv-edge" opacity="0.20"/><line x1="1078" y1="159" x2="960" y2="165" class="cv-edge" opacity="0.21"/><line x1="1078" y1="159" x2="933" y2="186" class="cv-edge" opacity="0.02"/><line x1="960" y1="165" x2="932" y2="86" class="cv-edge" opacity="0.44"/><line x1="960" y1="165" x2="916" y2="300" class="cv-edge" opacity="0.06"/><line x1="960" y1="165" x2="828" y2="163" class="cv-edge hl" opacity="0.12"/><line x1="960" y1="165" x2="933" y2="186" class="cv-edge" opacity="0.78"/><line x1="932" y1="86" x2="828" y2="163" class="cv-edge hl" opacity="0.13"/><line x1="932" y1="86" x2="933" y2="186" class="cv-edge" opacity="0.34"/><line x1="916" y1="300" x2="933" y2="186" class="cv-edge" opacity="0.23"/><line x1="828" y1="163" x2="933" y2="186" class="cv-edge hl" opacity="0.28"/><circle cx="625" cy="96" r="3" class="cv-dot"/><circle cx="553" cy="258" r="3" class="cv-dot"/><circle cx="941" cy="370" r="3" class="cv-dot"/><circle cx="777" cy="221" r="3" class="cv-dot"/><circle cx="967" cy="320" r="3" class="cv-dot"/><circle cx="1137" cy="100" r="3" class="cv-dot"/><circle cx="916" cy="68" r="3" class="cv-dot"/><circle cx="568" cy="375" r="3" class="cv-dot"/><circle cx="1001" cy="92" r="3" class="cv-dot"/><circle cx="561" cy="87" r="6" class="cv-dot hl"/><circle cx="795" cy="152" r="3" class="cv-dot"/><circle cx="690" cy="76" r="3" class="cv-dot"/><circle cx="1153" cy="370" r="3" class="cv-dot"/><circle cx="530" cy="102" r="3" class="cv-dot"/><circle cx="1007" cy="144" r="3" class="cv-dot"/><circle cx="932" cy="284" r="3" class="cv-dot"/><circle cx="570" cy="314" r="3" class="cv-dot"/><circle cx="830" cy="383" r="3" class="cv-dot"/><circle cx="697" cy="281" r="3" class="cv-dot"/><circle cx="1078" cy="159" r="3" class="cv-dot"/><circle cx="960" cy="165" r="3" class="cv-dot"/><circle cx="609" cy="91" r="3" class="cv-dot"/><circle cx="932" cy="86" r="3" class="cv-dot"/><circle cx="916" cy="300" r="3" class="cv-dot"/><circle cx="828" cy="163" r="6" class="cv-dot hl"/><circle cx="933" cy="186" r="3" class="cv-dot"/><text x="60" y="90" class="cv-k">CASE STUDY · CASE STUDY · AI ENGINEERING</text><text x="60" y="350" class="cv-n">28 Oct 2026 · 10:25 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <section class="glance rise" aria-label="At a glance"><div class="kicker">At a glance</div><div class="glance-grid"><div><small>Sector</small><b>Software · B2B SaaS</b></div><div><small>My role</small><b>AI architect</b></div><div><small>Engagement</small><b>Platform design, build and enablement</b></div><div><small>Scope</small><b>Evaluation sets, release gates, tracing, cost and quality dashboards</b></div></div><div class="glance-out"><small>What changed</small><ul><li>Every AI feature has an owned evaluation set that runs before release</li><li>Model and prompt changes ship behind gates with a clear pass or fail</li><li>Traces show each model call, tool call and token count in one view</li><li>Cost and quality are reported per feature, not just per vendor invoice</li></ul></div><div class="cs-stack"><span class="tag">OpenTelemetry GenAI conventions</span><span class="tag">OTel Collector</span><span class="tag">Evaluation harness</span><span class="tag">LLM-as-judge</span><span class="tag">Prompt registry</span><span class="tag">Model gateway</span><span class="tag">Feature flags</span><span class="tag">Data warehouse</span></div><p class="glance-note">Anonymised composite. Client names, identifying details and confidential figures are withheld; public facts are cited in the references.</p></section><h2 id="the-situation">The situation</h2>
+<p>A software company had moved quickly on AI. Support had an answer assistant, sales had an email drafter, the core product had a summariser and a natural-language search box. Each team had picked prompts, vendors and settings independently. When a model provider released a new version, nobody knew which features would get better and which would quietly break. Quality problems surfaced as customer tickets. Finance saw one large model invoice and could not split it by feature.</p>
+<p>Leadership did not want to slow the teams down. They wanted the same confidence in AI releases that they already had in ordinary code releases.</p>
+
+<h2 id="what-had-to-be-true">What had to be true</h2>
+<ul>
+<li><strong>Every AI feature has an evaluation set</strong> that reflects real use, owned by the team that ships it.</li>
+<li><strong>Changes ship through gates</strong>: a prompt, model or retrieval change runs the evals before it reaches customers.</li>
+<li><strong>Every model and tool call is traceable</strong>, with latency, tokens and errors, using an open standard rather than a vendor format.</li>
+<li><strong>Sensitive content is not logged by default.</strong></li>
+<li><strong>Cost and quality are visible per feature</strong>, so product managers can make trade-offs.</li>
+</ul>
+
+<h2 id="architecture">Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Features</small><div class="dgm-nodes"><span>Support assistant<em>RAG</em></span><span>Email drafter<em>generation</em></span><span>Summariser<em>long context</em></span><span>Search box<em>text to query</em></span></div></div>
+<div class="dgm-tier"><small>Runtime</small><div class="dgm-nodes"><span class="hl">Model gateway<em>routing, keys, limits</em></span><span>Prompt registry<em>versioned prompts</em></span><span>Feature flags<em>gradual rollout</em></span></div></div>
+<div class="dgm-tier"><small>Evaluate</small><div class="dgm-nodes"><span class="hl">Eval sets per feature<em>owned, versioned</em></span><span>Graders<em>exact, rubric, judge</em></span><span>Release gate<em>CI pass or fail</em></span></div></div>
+<div class="dgm-tier"><small>Observe</small><div class="dgm-nodes"><span class="hl">GenAI traces<em>OpenTelemetry</em></span><span>Token and latency metrics<em>per feature</em></span><span>Feedback signals<em>thumbs, edits, escalations</em></span></div></div>
+<div class="dgm-tier"><small>Decide</small><div class="dgm-nodes"><span>Quality dashboard<em>per feature and version</em></span><span>Cost dashboard<em>per feature and customer tier</em></span><span>Eval refresh<em>from production misses</em></span></div></div>
+</div>
+<figcaption>Evaluation before release, observation after it, and a loop that feeds production misses back into the eval sets.</figcaption>
+</figure>
+
+<h2 id="the-data-flow-end-to-end">The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Propose</b><span>Team changes a prompt, model or retrieval setting in a branch</span></li>
+<li class="hl"><b>Evaluate</b><span>CI runs the feature's eval set through the gateway and graders</span></li>
+<li><b>Gate</b><span>Scores compared with the current version; regressions block the merge</span></li>
+<li><b>Roll out</b><span>Change enabled for a slice of traffic behind a flag</span></li>
+<li class="hl"><b>Observe</b><span>Traces and metrics compared between old and new versions</span></li>
+<li><b>Learn</b><span>Production failures become new eval cases</span></li>
+</ol>
+<figcaption>The same eval set gates the release and measures the rollout, so offline and online quality stay connected.</figcaption>
+</figure>
+<p>Tracing followed the OpenTelemetry semantic conventions for generative AI, which standardise how model calls are recorded, including the model, input and output token counts and, when explicitly enabled, prompt and completion content<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. Standard metrics for token usage and operation duration made cost and latency comparable across features and vendors<sup class="cite"><a href="#ref-3">3</a></sup>. The detail is in <a href="/insights/llm-observability-opentelemetry-genai/">LLM observability with OpenTelemetry</a>.</p>
+
+<h2 id="the-hard-part-evaluation-sets-that-predict-production">The hard part: evaluation sets that predict production</h2>
+<p>Building the pipeline was straightforward. Building evaluation sets that actually predicted how features behaved for customers was not. Generic benchmarks said little about whether the support assistant would answer a specific customer's question correctly.</p>
+<ul>
+<li>Cases drawn from real, anonymised usage, grouped by intent, with a slice of known hard and sensitive cases.</li>
+<li>Deterministic checks wherever possible: format, required fields, citations present, forbidden content absent.</li>
+<li>Rubric-based model graders only where judgement was needed, calibrated against human labels. Research on LLM-as-a-judge found strong models can match human preference agreement, but also documented position and verbosity biases that need controlling<sup class="cite"><a href="#ref-4">4</a></sup>.</li>
+<li>Regular refresh from production misses, so the set evolves with the product.</li>
+</ul>
+<p>More on this in <a href="/insights/llm-evaluation-sets-that-predict-production/">evaluation sets that predict production</a> and, for agentic features, <a href="/insights/evaluating-ai-agents-reliability/">evaluating AI agents</a>.</p>
+<div class="callout"><p>An eval set is a product artefact, not a test fixture. The team that owns the feature owns its definition of good.</p></div>
+
+<h2 id="how-it-ran">How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Platform</small><ol><li>Gateway and tracing</li><li class="hl">Eval harness in CI</li><li>Dashboards</li></ol></div>
+<div class="dgm-lane"><small>Feature teams</small><ol><li>Build eval sets</li><li>Define pass criteria</li><li class="hl">Ship behind gates</li></ol></div>
+<div class="dgm-lane"><small>Risk and privacy</small><ol><li>Content capture policy</li><li>Sensitive-case review</li><li>Map to risk framework</li></ol></div>
+</div>
+<figcaption>Platform supplies the machinery; teams define quality; risk sets the boundaries.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Observe</b><ul><li>Route calls via gateway</li><li>GenAI tracing</li><li>Cost per feature</li></ul></div>
+<div><small>Phase 2</small><b>Evaluate</b><ul><li>First eval sets</li><li>Graders and calibration</li><li>Baseline scores</li></ul></div>
+<div><small>Phase 3</small><b>Gate</b><ul><li>CI release gates</li><li>Flagged rollouts</li><li>Version comparison</li></ul></div>
+<div><small>Phase 4</small><b>Loop</b><ul><li>Production misses to evals</li><li>Model upgrade playbook</li><li>Quarterly review</li></ul></div>
+</div>
+<figcaption>Observability first gave teams a reason to want evaluation; gates came once eval sets were trusted.</figcaption>
+</figure>
+
+<h2 id="key-decisions-and-trade-offs">Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>OpenTelemetry GenAI conventions</td><td>A vendor-specific tracing SDK</td><td>Portable across vendors and backends, fits existing observability</td></tr>
+<tr><td>Content capture off by default</td><td>Log everything for debugging</td><td>Prompts and tool arguments can hold sensitive data</td></tr>
+<tr><td>Deterministic checks before judges</td><td>Judge every output with a model</td><td>Cheaper, faster and free of judge bias</td></tr>
+<tr><td>Eval sets owned by feature teams</td><td>Central QA writes all evals</td><td>Teams know what good looks like for their users</td></tr>
+<tr><td>Gateway for all model calls</td><td>Each team calls vendors directly</td><td>One place for keys, routing, limits and cost attribution</td></tr>
+</tbody>
+</table>
+<p>The programme was mapped to the NIST Generative AI Profile, which gave the risk team a recognised structure for issues such as confabulation, information security and data privacy<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+
+<h2 id="what-i-d-do-again-and-differently">What I'd do again, and differently</h2>
+<p>Again: start with tracing and cost per feature, because visibility creates demand for evaluation. Differently: write a model upgrade playbook in the first phase. Provider version changes arrive on their schedule, not yours, and a rehearsed path from new model to gated rollout takes the drama out of them.</p>
+<p>If your AI features are multiplying faster than your confidence in them, my <a href="/ai-architect/">AI architecture work</a> covers evaluation and observability platforms, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://opentelemetry.io/blog/2026/genai-observability/" target="_blank" rel="noopener">Inside the LLM Call: GenAI Observability with OpenTelemetry</a><small>OpenTelemetry blog · 14 May 2026</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://opentelemetry.io/docs/specs/semconv/gen-ai/gen-ai-spans/" target="_blank" rel="noopener">Semantic conventions for generative client AI spans</a><small>OpenTelemetry</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://opentelemetry.io/docs/specs/semconv/gen-ai/gen-ai-metrics/" target="_blank" rel="noopener">Semantic conventions for generative AI metrics</a><small>OpenTelemetry</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://arxiv.org/abs/2306.05685" target="_blank" rel="noopener">Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena</a><small>Zheng et al. (arXiv; NeurIPS 2023) · 2023</small></div></li><li id="ref-5"><span class="rn">5</span><div><a href="https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.600-1.pdf" target="_blank" rel="noopener">Artificial Intelligence Risk Management Framework: Generative Artificial Intelligence Profile (NIST AI 600-1)</a><small>NIST · Jul 2024</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fasksumanta.com%2Fcase-studies%2Fllm-evaluation-observability-platform%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fasksumanta.com%2Fcase-studies%2Fllm-evaluation-observability-platform%2F&amp;text=Shipping%20AI%20features%20with%20evidence%3A%20a%20shared%20evaluation%20and%20observability%20platform" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=Shipping%20AI%20features%20with%20evidence%3A%20a%20shared%20evaluation%20and%20observability%20platform%20https%3A%2F%2Fasksumanta.com%2Fcase-studies%2Fllm-evaluation-observability-platform%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://asksumanta.com/case-studies/llm-evaluation-observability-platform/">Copy link</button></div>
+      <div class="pnav"><a class="pn prev" href="/case-studies/kubernetes-finops-platform-engineering/"><small>← Previous</small><b>Making Kubernetes spend visible, owned and controllable, without slowing teams down</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#the-situation">The situation</a></li><li><a href="#what-had-to-be-true">What had to be true</a></li><li><a href="#architecture">Architecture</a></li><li><a href="#the-data-flow-end-to-end">The data flow, end to end</a></li><li><a href="#the-hard-part-evaluation-sets-that-predict-production">The hard part: evaluation sets that predict production</a></li><li><a href="#how-it-ran">How it ran</a></li><li><a href="#key-decisions-and-trade-offs">Key decisions and trade-offs</a></li><li><a href="#what-i-d-do-again-and-differently">What I&#x27;d do again, and differently</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>What should an LLM evaluation set contain?</summary><p>Real examples of what users ask, with known good answers or clear grading criteria, covering common cases, known failure modes and sensitive edge cases. It should be owned by the feature team and refreshed from production feedback.</p></details><details class="rise"><summary>Can LLMs grade other LLMs reliably?</summary><p>Research on LLM-as-a-judge found strong models can agree with human preferences at a level comparable to agreement between humans, but also documented biases such as position and verbosity bias. Use judges with calibration against human labels, not as the only signal.</p></details><details class="rise"><summary>Does tracing LLM calls capture prompts and user data?</summary><p>Not by default in the OpenTelemetry GenAI conventions: content capture is opt-in because prompts and tool arguments can contain sensitive data. Metadata such as model, token counts and durations is captured without content.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/ai-architect/"><small>Service</small><b>AI &amp; LLM architecture</b><span>I design and build AI systems that leadership can trust: grounded in your data, measured by evaluations, governed by your rules and priced so they make sense at scale.</span><i>→</i></a><a class="rcard rise" href="/fractional-cto/"><small>Service</small><b>Fractional CTO</b><span>I work as a part-time CTO for founders, CEOs and boards who need experienced technical judgement now, and a team that can carry it on after I step back.</span><i>→</i></a><a class="rcard rise" href="/technical-due-diligence/"><small>Service</small><b>Technical due diligence</b><span>I give investors an independent, plain-language view of a company&#x27;s technology, team and AI claims, so the risks are priced in before the deal closes, not discovered after.</span><i>→</i></a><a class="rcard rise" href="/insights/omop-characterisation-incidence/"><small>Insight</small><b>Characterisation on OMOP: describe your population before you predict or estimate anything</b><span>Health data teams are under pressure to jump straight to prediction models and causal studies. The most useful first step is less glamorous: describing the data and the people in it. OHDSI&#x27;s characterisation methods turn that into a repeatable, shareable discipline.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: Shipping AI features with evidence: a shared evaluation and observability platform">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
+        <p class="floc">United States &amp; UAE · working globally</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/uae/">Fractional CTO in the UAE</a></li></ul></div>
+      <div class="fc"><h4>Case studies</h4><ul><li><a href="/case-studies/llm-evaluation-observability-platform/">LLM evaluation and observability platform</a></li><li><a href="/case-studies/kubernetes-finops-platform-engineering/">Kubernetes FinOps and platform engineering</a></li><li><a href="/case-studies/enterprise-mcp-agent-platform/">Enterprise MCP agent platform</a></li><li><a href="/case-studies/insurance-claims-triage-ai/">Insurance claims triage with AI</a></li><li><a href="/#work">Engagement snapshots</a></li><li><a href="/case-studies/">All case studies →</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/omop-characterisation-incidence/">Characterisation on OMOP: describe your population before you predict or estimate anything</a></li><li><a href="/insights/opentelemetry-declarative-configuration/">OpenTelemetry declarative configuration: a playbook for moving from environment variables to one reviewed file</a></li><li><a href="/insights/terraform-secrets-out-of-state/">Keeping secrets out of Terraform state: a checklist for platform teams</a></li><li><a href="/insights/slos-error-budgets-small-teams/">SLOs and error budgets for small teams: field notes on making reliability a decision, not a debate</a></li><li><a href="/insights/speculative-decoding-private-llms/">Speculative decoding for private LLMs: faster tokens without changing the answers</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>
