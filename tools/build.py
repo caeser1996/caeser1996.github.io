@@ -1025,6 +1025,21 @@ def update_home(pages, posts, cases=()):
     p.write_text(s)
 
 
+def stamp_assets():
+    """Append a content hash to CSS/JS URLs in every page so browsers never mix new HTML with cached old assets."""
+    import hashlib
+    names = ["site.css", "site.js", "home.js", "arcade.js"]
+    ver = {n: hashlib.sha1((ROOT / "assets" / n).read_bytes()).hexdigest()[:10] for n in names if (ROOT / "assets" / n).exists()}
+    pat = re.compile(r'/assets/(' + "|".join(re.escape(n) for n in ver) + r')(\?v=[0-9a-f]+)?"')
+    for f in ROOT.rglob("*.html"):
+        if any(part.startswith(".") or part in ("node_modules", "src") for part in f.relative_to(ROOT).parts):
+            continue
+        t = f.read_text()
+        n = pat.sub(lambda m: f'/assets/{m.group(1)}?v={ver[m.group(1)]}"', t)
+        if n != t:
+            f.write_text(n)
+
+
 def main():
     pages = [load(f) for f in sorted((ROOT / "src/pages").glob("*.part"))]
     order = list(SERVICE_LABELS)
@@ -1107,6 +1122,8 @@ def main():
              "- [GitHub](https://github.com/caeser1996)",
              "- [Publication, Science Immunology](https://doi.org/10.1126/sciimmunol.abl9165)", ""]
     (ROOT / "llms.txt").write_text("\n".join(llms))
+
+    stamp_assets()
 
     for m in pages + posts + cases:
         print(f"{m['slug']:45} {words(m['body']):5} words  title {len(m['title'])}c  desc {len(m['description'])}c")
