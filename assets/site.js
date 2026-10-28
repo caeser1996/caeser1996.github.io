@@ -340,3 +340,5 @@
         if(first){var h=last[last.length-1].getBoundingClientRect().bottom-first.getBoundingClientRect().top;n.style.setProperty('--h',h+'px');}}}
     tick();setInterval(tick,30000);addEventListener('resize',tick);
   })();
+  document.addEventListener('click',function(e){var b=e.target.closest('[data-copy]');if(!b)return;copyText(b.getAttribute('data-copy'));toast('Feed URL copied');
+    try{if(window.gtag)gtag('event','rss_copy',{link_url:b.getAttribute('data-copy')});}catch(_){}});

@@ -138,7 +138,8 @@ def nav():
             ("/case-studies/#snapshots", "Engagement snapshots", "Six common problems, the approach and the stack")]
     work += [(f"/case-studies/{c['slug']}/", c.get("short") or c["h1"], c.get("sector", "")) for c in CASES[:3]]
     ins = [("/insights/", "All insights", f"{len(NAV_POSTS)} articles on AI, data, cloud and leadership"),
-           ("/insights/#topic-news", "Daily tech news", "A CTO's take on the day's releases, deals and rules")]
+           ("/insights/#topic-news", "Daily tech news", "A CTO's take on the day's releases, deals and rules"),
+           ("/subscribe/", "Subscribe via RSS", "Get every new post in Feedly, Inoreader or any reader")]
     ins += [(f"/insights/{q['slug']}/", q["h1"], "") for q in NAV_POSTS[:5]]
     about = [("/about/", "About", "Background, credentials and open-source work"),
              ("/expertise/", "Expertise", "Practice areas, reference architecture and industries"),
@@ -217,7 +218,7 @@ def footer(pages, posts):
         <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
       </ul></div>
     </div>
-    <div class="fbot"><span>© <span id="yr">{TODAY[:4]}</span> {NAME}</span><span class="sp"></span><a href="/privacy/">Privacy &amp; cookies</a><button type="button" class="cookie-link" data-cookie-settings>Cookie settings</button><a href="/sitemap.xml">Sitemap</a></div>
+    <div class="fbot"><span>© <span id="yr">{TODAY[:4]}</span> {NAME}</span><span class="sp"></span><a href="/privacy/">Privacy &amp; cookies</a><button type="button" class="cookie-link" data-cookie-settings>Cookie settings</button><a href="/subscribe/">RSS</a><a href="/sitemap.xml">Sitemap</a></div>
   </div>
 </footer>"""
 
@@ -245,6 +246,8 @@ def head(title, desc, keywords, url, og_image, og_type, ld):
 <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
 <link rel="manifest" href="/site.webmanifest" />
+<link rel="alternate" type="application/rss+xml" title="Sumanta Mukhopadhyay: insights and case studies" href="/feed.xml" />
+<link rel="alternate" type="application/rss+xml" title="Sumanta Mukhopadhyay: daily tech news" href="/insights/news.xml" />
 <meta property="og:site_name" content="{NAME}" />
 <meta property="og:title" content="{e(title)}" />
 <meta property="og:description" content="{e(desc)}" />
@@ -624,6 +627,7 @@ def insights_index(pages, posts):
     <div class="kicker">Insights</div>
     <h1>Notes from the work: AI, ontology, healthcare data and technical leadership.</h1>
     <p class="sub-lede">Practical writing from real architecture problems. No hype, just what I've seen work, what doesn't, and why.</p>
+    <p class="rss-line"><a href="/subscribe/"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="19" r="2.5"/><path d="M3 10.5v3a7.5 7.5 0 0 1 7.5 7.5h3A10.5 10.5 0 0 0 3 10.5zm0-7v3A14.5 14.5 0 0 1 17.5 21h3A17.5 17.5 0 0 0 3 3.5z"/></svg>Subscribe via RSS</a> · new posts in Feedly, Inoreader or any reader</p>
   </header>
   {series_html(posts)}
   {filt}
@@ -1115,6 +1119,87 @@ def update_home(pages, posts, cases=()):
     p.write_text(s)
 
 
+FEEDS = [("/feed.xml", "Everything", "All insights and case studies"),
+         ("/insights/feed.xml", "Insights", "Articles on AI, data, cloud and technology leadership"),
+         ("/insights/news.xml", "Daily tech news", "A CTO's take on the day's releases, deals and rules"),
+         ("/case-studies/feed.xml", "Case studies", "Anonymised engagements with architecture and flow diagrams")]
+
+
+def rfc822(meta):
+    iso = meta.get("datetime") or (meta.get("date", TODAY) + "T09:00:00+04:00")
+    return datetime.datetime.fromisoformat(iso).strftime("%a, %d %b %Y %H:%M:%S %z")
+
+
+def write_feed(path, title, desc, items):
+    """RSS 2.0 with full content, absolute links and a browser-friendly stylesheet."""
+    url = f"{SITE}{path}"
+    def item(m, base):
+        link = f"{SITE}/{base}/{m['slug']}/"
+        body = re.sub(r'(href|src)="/', rf'\1="{SITE}/', m["body"]).replace("]]>", "]]&gt;")
+        cats = "".join(f"<category>{e(t)}</category>" for t in m.get("tags", []))
+        return (f"<item><title>{e(m['h1'])}</title><link>{link}</link><guid isPermaLink=\"true\">{link}</guid>"
+                f"<pubDate>{rfc822(m)}</pubDate><dc:creator>{NAME}</dc:creator>{cats}"
+                f"<description>{e(m['description'])}</description>"
+                f"<content:encoded><![CDATA[<p><em>{e(m['lede'])}</em></p>{body}"
+                f"<p><a href=\"{link}\">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item>")
+    latest = rfc822(items[0][0]) if items else rfc822({})
+    xml = ('<?xml version="1.0" encoding="UTF-8"?>\n<?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>\n'
+           '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" '
+           'xmlns:dc="http://purl.org/dc/elements/1.1/"><channel>'
+           f'<title>{e(NAME)}: {e(title)}</title><link>{SITE}/</link><description>{e(desc)}</description>'
+           f'<language>en-gb</language><lastBuildDate>{latest}</lastBuildDate>'
+           f'<atom:link href="{url}" rel="self" type="application/rss+xml"/>'
+           f'<image><url>{SITE}/assets/apple-touch-icon.png</url><title>{e(NAME)}: {e(title)}</title><link>{SITE}/</link></image>'
+           + "".join(item(m, b) for m, b in items[:50]) + "</channel></rss>\n")
+    out = ROOT / path.lstrip("/")
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(xml)
+
+
+def subscribe_page(pages, posts):
+    url = f"{SITE}/subscribe/"
+    title = "Subscribe via RSS | Sumanta Mukhopadhyay"
+    desc = "Follow new insights, case studies and the daily tech news in any RSS reader, such as Feedly, Inoreader or NetNewsWire. Free, private, no email needed."
+    rows = "".join(
+        f'<div class="feed rise"><div><b>{e(t)}</b><span>{e(d)}</span><code>{SITE}{p}</code></div>'
+        f'<div class="feed-a"><button type="button" class="btn sm" data-copy="{SITE}{p}">Copy URL</button>'
+        f'<a class="btn ghost sm" href="https://feedly.com/i/subscription/feed/{quote(SITE + p, safe="")}" target="_blank" rel="noopener">Feedly</a>'
+        f'<a class="btn ghost sm" href="https://www.inoreader.com/?add_feed={quote(SITE + p, safe="")}" target="_blank" rel="noopener">Inoreader</a>'
+        f'<a class="btn ghost sm" href="{p}">View</a></div></div>' for p, t, d in FEEDS)
+    ld = {"@context": "https://schema.org", "@graph": [
+        {"@type": "WebPage", "@id": url, "url": url, "name": title, "description": desc, "dateModified": TODAY},
+        crumbs([("Home", f"{SITE}/"), ("Subscribe", url)])]}
+    return f"""{head(title, desc, ["RSS feed", "subscribe", "tech news RSS", "AI news feed", "CTO blog RSS"], url, f"{SITE}/assets/og/insights.png", "website", ld)}
+<body class="sub">
+{nav()}
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <em>Subscribe</em></div>
+    <div class="kicker">Subscribe · RSS</div>
+    <h1>Get every new post in your feed reader</h1>
+    <p class="sub-lede">Free, private and instant: no email address, no tracking, unsubscribe any time. Pick a feed below and add it to the reader you already use.</p>
+  </header>
+  <section class="feeds">{rows}</section>
+  <article class="prose">
+    <h2>How to subscribe</h2>
+    <ol>
+      <li><strong>Choose a reader.</strong> Feedly and Inoreader work in any browser and on phones. NetNewsWire (Mac and iPhone), Reeder and Thunderbird are good apps; Outlook can also read RSS.</li>
+      <li><strong>Add the feed.</strong> Use the Feedly or Inoreader button, or press <em>Copy URL</em> and paste it into your reader's "Add feed" or "Follow" box.</li>
+      <li><strong>Done.</strong> New insights, case studies and the daily tech news appear automatically as they are published.</li>
+    </ol>
+    <p>Most readers will also find the feeds if you paste in <code>{SITE}</code> itself. Each feed carries the full text of the latest 50 posts; diagrams and references are best viewed on the site.</p>
+  </article>
+  {cta_html('Subscribe')}
+</main>
+{modal()}
+{footer(pages, posts)}
+{SCRIPTS}
+</body>
+</html>
+"""
+
+
 def stamp_assets():
     """Append a content hash to CSS/JS URLs in every page so browsers never mix new HTML with cached old assets."""
     import hashlib
@@ -1176,7 +1261,7 @@ def main():
     (ROOT / "play/index.html").write_text(play_page(pages, posts))
 
     urls = [("/", "1.0", "monthly"), ("/insights/", "0.8", "weekly"), ("/privacy/", "0.2", "yearly"), ("/play/", "0.5", "monthly")]
-    urls += [(f"/{k}/", "0.8", "monthly") for k in HUB_PAGES] + [("/regions/", "0.8", "monthly")]
+    urls += [(f"/{k}/", "0.8", "monthly") for k in HUB_PAGES] + [("/regions/", "0.8", "monthly"), ("/subscribe/", "0.4", "monthly")]
     urls += [(f"/{m['slug']}/", "0.8", "monthly") for m in regions]
     urls += [(f"/{m['slug']}/", "0.9", "monthly") for m in pages]
     urls += [(f"/insights/{m['slug']}/", "0.7", "yearly") for m in posts]
@@ -1223,6 +1308,14 @@ def main():
              "- [Publication, Science Immunology](https://doi.org/10.1126/sciimmunol.abl9165)", ""]
     (ROOT / "llms.txt").write_text("\n".join(llms))
 
+    news = [m for m in posts if m.get("format") == "tech-news" or "news" in m.get("tags", [])]
+    allitems = sorted([(m, "insights") for m in posts] + [(m, "case-studies") for m in cases], key=lambda x: sort_key(x[0]), reverse=True)
+    write_feed("/feed.xml", "Insights and case studies", "Fractional CTO and AI architect: insights, case studies and daily tech news.", allitems)
+    write_feed("/insights/feed.xml", "Insights", FEEDS[1][2], [(m, "insights") for m in posts])
+    write_feed("/insights/news.xml", "Daily tech news", FEEDS[2][2], [(m, "insights") for m in news])
+    write_feed("/case-studies/feed.xml", "Case studies", FEEDS[3][2], [(m, "case-studies") for m in cases])
+    (ROOT / "subscribe").mkdir(exist_ok=True)
+    (ROOT / "subscribe/index.html").write_text(subscribe_page(pages, posts))
     stamp_assets()
 
     for m in pages + regions + posts + cases:
