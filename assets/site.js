@@ -123,3 +123,49 @@
     document.addEventListener('keydown',function(e){if(e.key==='Escape')set(false);});
     document.addEventListener('click',function(e){if(!n.contains(e.target))set(false);});
   })();
+
+  // analytics: anonymous interaction events for Google Analytics (no personal data is ever sent)
+  (function(){
+    function track(name,params){try{if(window.gtag)gtag('event',name,params||{});}catch(e){}}
+    var P=location.pathname,TYPE=P==='/'?'home':P.indexOf('/insights/')===0?(P==='/insights/'?'insights_index':'insight'):P.indexOf('/case-studies/')===0?(P==='/case-studies/'?'case_studies_index':'case_study'):'service';
+    function where(el){var s=el.closest('section[id],header,nav,footer,dialog,aside');return s?(s.id||s.tagName.toLowerCase()):'page';}
+    function label(el){return (el.getAttribute('aria-label')||el.innerText||el.textContent||'').replace(/\s+/g,' ').trim().slice(0,80);}
+    function slug(h){return h.replace(/^\/|\/$/g,'').split('/').pop()||'/';}
+    var answered={};
+    document.addEventListener('click',function(e){
+      var el=e.target.closest('a,button,summary,[role=tab]');if(!el)return;
+      var h=el.getAttribute('href')||'',base={page_type:TYPE,location:where(el),link_text:label(el)};
+      if(h.indexOf('calendar.app.google')>-1)return track('book_call',base);
+      if(el.id==='cmGmail')return track('contact_method',{method:'gmail',page_type:TYPE});
+      if(el.id==='cmMailto')return track('contact_method',{method:'mail_app',page_type:TYPE});
+      if(el.id==='cmCopy'||el.id==='copyMail')return track('contact_method',{method:'copy_email',page_type:TYPE});
+      if(el.hasAttribute('data-contact'))return track('contact_open',Object.assign({subject:el.getAttribute('data-contact').slice(0,80)},base));
+      if(h.indexOf('mailto:')===0)return track('contact_method',{method:'mailto_link',page_type:TYPE});
+      if(el.closest('.share'))return track('share',{method:el.classList.contains('copy-link')?'copy_link':label(el).toLowerCase(),content_id:slug(P),page_type:TYPE});
+      var qg=el.closest('[data-q]');if(qg&&el.dataset&&el.dataset.v){answered[qg.dataset.q]=1;track('assess_answer',{question:qg.dataset.q,answer:el.dataset.v});
+        if(Object.keys(answered).length===4&&!answered._done){answered._done=1;track('assess_complete',{page_type:TYPE});}return;}
+      if(el.classList.contains('fchip'))return track('filter_topic',{value:el.getAttribute('data-tag')||'all',page_type:TYPE});
+      if(el.classList.contains('ucchip'))return track('filter_sector',{value:el.getAttribute('data-sector')||'all'});
+      if(el.getAttribute('role')==='tab')return track('tab_view',{tab:label(el),location:where(el),page_type:TYPE});
+      if(el.tagName==='SUMMARY')return track('faq_open',{question:label(el),page_type:TYPE});
+      if(el.id==='themeBtn')return track('theme_toggle',{});
+      if(el.id==='menuBtn')return track('menu_toggle',{});
+      if(el.closest('.toc'))return track('toc_click',{section:label(el),content_id:slug(P)});
+      if(h.indexOf('/case-studies/')===0&&h.length>15)return track('select_content',Object.assign({content_type:'case_study',content_id:slug(h)},base));
+      if(h.indexOf('/insights/')===0&&h.length>11)return track('select_content',Object.assign({content_type:'insight',content_id:slug(h)},base));
+      if(h.indexOf('#uc-')>-1||el.classList.contains('uc-more'))return track('select_content',Object.assign({content_type:'use_case',content_id:slug(h)},base));
+      if(/^\/(fractional-cto|ai-architect|ontology-knowledge-graph|healthcare-data-architecture|technical-due-diligence|uae)\/$/.test(h))return track('select_content',Object.assign({content_type:'service',content_id:slug(h)},base));
+      if(h==='/#assess'||h==='#assess')return track('assess_start_click',base);
+      if(el.classList.contains('btn'))return track('cta_click',Object.assign({link_url:h},base));
+    },true);
+    // scroll depth milestones and read completion
+    var marks=[25,50,75,100],hit={};
+    addEventListener('scroll',function(){var m=document.documentElement.scrollHeight-innerHeight;if(m<=0)return;var pct=scrollY/m*100;
+      marks.forEach(function(k){if(pct>=k-1&&!hit[k]){hit[k]=1;track('scroll_depth',{percent:k,page_type:TYPE,content_id:slug(P)});}});},{passive:true});
+    var end=document.querySelector('#references,.refs,.pnav,.sub-cta');
+    if(end&&'IntersectionObserver' in window&&(TYPE==='insight'||TYPE==='case_study')){
+      var t0=Date.now(),o=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){o.disconnect();
+        track('read_complete',{content_type:TYPE,content_id:slug(P),seconds:Math.round((Date.now()-t0)/1000)});}});});o.observe(end);}
+    // copying text from articles (what people find worth keeping)
+    document.addEventListener('copy',function(){var s=String(getSelection()||'').trim();if(s.length>20)track('text_copy',{content_id:slug(P),page_type:TYPE,length:s.length});});
+  })();
