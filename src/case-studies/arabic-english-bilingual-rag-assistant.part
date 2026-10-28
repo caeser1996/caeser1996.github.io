@@ -1,0 +1,86 @@
+<!--{"title": "Case study: an Arabic and English knowledge assistant for UAE customers", "description": "How a UAE service organisation can answer customers in Arabic and English from one knowledge base: bilingual retrieval, dialect handling, citations and data residency.", "short": "Arabic and English RAG assistant", "h1": "One knowledge base, two languages: a bilingual Arabic and English assistant for UAE customers", "kicker": "Case study · Multilingual AI", "lede": "A UAE utility's customers asked the same questions in Gulf Arabic, Modern Standard Arabic, English and a mix of all three. Its knowledge lived in policies written in one language or the other. The goal was an assistant that answers in the customer's language, from the right source, with a citation, and keeps personal data in the country.", "date": "2026-10-29", "datetime": "2026-10-29T00:50:00+04:00", "readtime": "9 min read", "sector": "Utilities · UAE", "role": "AI architect", "engagement": "Architecture, evaluation and build", "scope": "Bilingual retrieval, generation, evaluation, data handling", "stack": ["Multilingual embeddings", "Hybrid search", "Arabic text normalisation", "Arabic-capable LLM", "Retrieval-augmented generation", "Evaluation set (AR and EN)", "PII redaction", "In-country hosting"], "outcomes": ["Customers answered in the language they used, with links to the source policy", "One knowledge base serving both languages instead of parallel content sets", "Quality measured separately for Arabic, English and mixed queries", "Personal data handled under UAE data protection requirements, hosted in the country"], "tags": ["ai", "llm", "uae", "data"], "keywords": ["Arabic RAG", "bilingual chatbot UAE", "Arabic English retrieval", "multilingual embeddings", "Arabic LLM", "Gulf Arabic dialect", "UAE PDPL AI", "customer service AI UAE", "AI architect UAE", "multilingual knowledge assistant"], "faq": [["Do you need separate Arabic and English knowledge bases?", "Not necessarily. Multilingual embedding models map text in different languages into a shared space, so an Arabic question can retrieve an English passage and the reverse. Many teams still keep official translations of key documents and evaluate each language separately."], ["Which language model should answer Arabic questions?", "One with strong Arabic capability, tested on your own questions. Arabic-centric models such as Jais were trained specifically to improve Arabic performance while remaining competitive in English; general models vary widely. The evaluation set decides."], ["How does UAE data protection affect an AI assistant?", "The federal Personal Data Protection Law governs processing of personal data in the UAE, with exclusions such as the DIFC and ADGM free zones and health data under its own law, and restricts transfers abroad to jurisdictions with adequate protection. Keeping processing in the country and minimising personal data simplifies compliance."]], "related": ["/ai-architect/", "/uae/", "/fractional-cto/"], "citations": [{"title": "Jais and Jais-chat: Arabic-Centric Foundation and Instruction-Tuned Open Generative Large Language Models", "url": "https://arxiv.org/abs/2308.16149", "publisher": "arXiv", "date": "2023"}, {"title": "Multilingual E5 Text Embeddings: A Technical Report", "url": "https://arxiv.org/abs/2402.05672", "publisher": "arXiv", "date": "Feb 2024"}, {"title": "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks", "url": "https://arxiv.org/abs/2005.11401", "publisher": "Lewis et al. (arXiv; NeurIPS 2020)", "date": "2020"}, {"title": "Federal Decree by Law No. (45) of 2021 Concerning the Protection of Personal Data", "url": "https://uaelegislation.gov.ae/en/legislations/1972/download", "publisher": "UAE Legislation"}, {"title": "New data protection law introduced in the UAE: 10 key takeaways", "url": "https://www.herbertsmithfreehills.com/latest-thinking/new-data-protection-law-introduced-in-the-uae-%E2%80%93-10-key-takeaways", "publisher": "Herbert Smith Freehills"}]}-->
+<h2>The situation</h2>
+<p>A UAE utility handled a large volume of customer questions about bills, connections, moving home and service interruptions. Customers wrote in Modern Standard Arabic, Gulf Arabic, English, and frequently a mix of Arabic and English in the same message, sometimes in Latin script. The knowledge base was inconsistent: some policies existed only in English, some only in Arabic, and translations drifted out of date.</p>
+<p>An earlier chatbot pilot had worked well in English and poorly in Arabic. Leadership wanted an assistant that treated Arabic speakers as first-class users, answered from current policy and never exposed customer data outside the country.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>Answer in the customer's language</strong>, whichever language the source document was written in.</li>
+<li><strong>Cite the policy</strong> behind every answer, so agents and customers can check it.</li>
+<li><strong>Handle real Arabic</strong>: dialect, spelling variation, diacritics and code-switching.</li>
+<li><strong>Measure quality per language</strong>, not as one blended score that hides Arabic failures.</li>
+<li><strong>Keep personal data in the country</strong> and out of prompts where it isn't needed.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Channels</small><div class="dgm-nodes"><span>Web chat<em>AR and EN</em></span><span>Mobile app<em>AR and EN</em></span><span>Agent assist<em>contact centre</em></span></div></div>
+<div class="dgm-tier"><small>Understand</small><div class="dgm-nodes"><span>Language detection<em>including mixed text</em></span><span class="hl">Arabic normalisation<em>letter variants, diacritics</em></span><span>PII redaction<em>account numbers, IDs</em></span></div></div>
+<div class="dgm-tier"><small>Retrieve</small><div class="dgm-nodes"><span class="hl">Multilingual embeddings<em>shared vector space</em></span><span>Keyword search<em>per language</em></span><span>Reranking<em>top passages</em></span></div></div>
+<div class="dgm-tier"><small>Answer</small><div class="dgm-nodes"><span>Arabic-capable LLM<em>in-country hosting</em></span><span>Answer in user language<em>with citations</em></span><span>Fallback to agent<em>low confidence</em></span></div></div>
+<div class="dgm-tier"><small>Assure</small><div class="dgm-nodes"><span class="hl">Bilingual eval set<em>AR, EN, mixed</em></span><span>Feedback loop<em>agent corrections</em></span><span>Audit log<em>no raw PII</em></span></div></div>
+</div>
+<figcaption>Language handling happens before retrieval, retrieval works across languages, and evaluation is split by language.</figcaption>
+</figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Receive</b><span>Customer message arrives; language and script detected</span></li>
+<li><b>Clean</b><span>Arabic normalised for search; personal identifiers redacted</span></li>
+<li class="hl"><b>Retrieve</b><span>Hybrid search across Arabic and English passages in one index</span></li>
+<li><b>Rerank</b><span>Best passages selected regardless of source language</span></li>
+<li class="hl"><b>Answer</b><span>Response generated in the customer's language with citations</span></li>
+<li><b>Escalate</b><span>Low-confidence or account-specific questions routed to an agent</span></li>
+</ol>
+<figcaption>The source language of a policy never limits who can be answered from it.</figcaption>
+</figure>
+<p>Retrieval-augmented generation grounds answers in retrieved documents rather than the model's memory, which is what makes citations possible<sup class="cite"><a href="#ref-3">3</a></sup>. Multilingual embedding models make the cross-language part work: models such as multilingual E5 were trained on large collections of multilingual text pairs so that equivalent meaning in different languages lands close together<sup class="cite"><a href="#ref-2">2</a></sup>. Embedding choice is covered in <a href="/insights/choosing-embedding-models-rag/">choosing embedding models</a> and hybrid search in <a href="/insights/mongodb-hybrid-search-rag/">hybrid search for RAG</a>.</p>
+
+<h2>The hard part: Arabic that real customers write</h2>
+<p>Benchmarks use clean Modern Standard Arabic. Customers don't. The work that made the difference was unglamorous:</p>
+<ul>
+<li>Normalising letter variants and removing diacritics for keyword search, while keeping the original text for display.</li>
+<li>Adding a keyword index alongside vector search, because product names, area names and account terms are often written inconsistently.</li>
+<li>Building the evaluation set from real anonymised questions in Gulf Arabic, Modern Standard Arabic, English and mixed messages, scored separately.</li>
+<li>Choosing the answering model on that evaluation set. Arabic-centric models such as Jais were developed precisely because Arabic is underserved, with training that combined a large Arabic corpus with English data<sup class="cite"><a href="#ref-1">1</a></sup>; the right choice is whichever performs best on your own questions.</li>
+</ul>
+<div class="callout"><p>A bilingual assistant is only as good as its worst language. Report Arabic and English quality separately, or the average will hide the problem.</p></div>
+<p>The general approach to evaluation is in <a href="/insights/llm-evaluation-sets-that-predict-production/">evaluation sets that predict production</a>.</p>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Customer service</small><ol><li>Top questions per language</li><li class="hl">Review answers in both languages</li><li>Escalation rules</li></ol></div>
+<div class="dgm-lane"><small>Content owners</small><ol><li>Fix outdated policies</li><li>Approve translations of key documents</li><li>Own freshness</li></ol></div>
+<div class="dgm-lane"><small>AI platform</small><ol><li>Retrieval and normalisation</li><li class="hl">Bilingual evaluation</li><li>In-country deployment</li></ol></div>
+</div>
+<figcaption>Customer service judged quality in both languages; the platform team optimised against their judgements.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Content</b><ul><li>Inventory policies</li><li>Fix gaps and conflicts</li><li>Question set per language</li></ul></div>
+<div><small>Phase 2</small><b>Retrieval</b><ul><li>Hybrid bilingual index</li><li>Arabic normalisation</li><li>Retrieval evaluation</li></ul></div>
+<div><small>Phase 3</small><b>Agent assist</b><ul><li>Answers for staff first</li><li>Corrections captured</li><li>Model selection</li></ul></div>
+<div><small>Phase 4</small><b>Customer-facing</b><ul><li>Web and app</li><li>Escalation paths</li><li>Ongoing evaluation</li></ul></div>
+</div>
+<figcaption>Staff used it first, so Arabic quality was proven before customers saw it.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>One bilingual index</td><td>Separate Arabic and English systems</td><td>No content gaps when a policy exists in only one language</td></tr>
+<tr><td>Hybrid search with normalisation</td><td>Vector search only</td><td>Catches inconsistent spellings of names and terms</td></tr>
+<tr><td>Model chosen on own eval set</td><td>Pick the most popular model</td><td>Arabic quality varies widely between models</td></tr>
+<tr><td>Agent assist before customer launch</td><td>Launch to customers directly</td><td>Staff corrections improved Arabic answers safely</td></tr>
+<tr><td>Redact before the model, host in country</td><td>Send full messages to a foreign API</td><td>Simplifies data protection and transfer obligations</td></tr>
+</tbody>
+</table>
+<p>The federal Personal Data Protection Law governs personal data processing in the UAE<sup class="cite"><a href="#ref-4">4</a></sup>. Commentary notes it does not apply in the DIFC and ADGM free zones or to health data covered by separate law, and that transfers abroad are generally limited to jurisdictions with adequate protection<sup class="cite"><a href="#ref-5">5</a></sup>. Redaction and in-country hosting kept the design simple under those rules; see <a href="/insights/uae-pdpl-ai-architecture-2026/">UAE PDPL and AI architecture</a>.</p>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: build the bilingual evaluation set first and launch to agents before customers. Differently: involve content owners earlier. Many "Arabic quality" problems were really missing or outdated Arabic source content, not model weaknesses.</p>
+<p>If you serve customers in Arabic and English, my <a href="/ai-architect/">AI architecture work</a> and the <a href="/uae/">fractional CTO in the UAE</a> page describe how I approach it, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
