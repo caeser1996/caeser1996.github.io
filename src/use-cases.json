@@ -1,32 +1,653 @@
 [
-  {"id": "ambient-scribe", "sector": "Healthcare", "title": "Ambient clinical documentation", "problem": "Clinicians spend evenings on notes; AI scribe pilots stall in security review.", "approach": "Private speech and LLM pipeline that drafts notes into the EHR for clinician sign-off, with SMART on FHIR scopes and full audit.", "flow": ["Consented audio", "Transcribe on private GPUs", "Draft note with sources", "Clinician approves into EHR"], "stack": ["SMART on FHIR", "Whisper-class ASR", "vLLM", "Audit log"], "link": "/insights/ambient-ai-scribes-architecture/", "case": "ambient-clinical-documentation-private-ai"},
-  {"id": "prior-auth", "sector": "Health insurance", "title": "Prior authorisation APIs", "problem": "Faxes and portals slow approvals while new interoperability rules set API deadlines.", "approach": "FHIR prior authorisation and coverage APIs in front of existing claims systems, with decision tracking and metrics reporting.", "flow": ["Provider request via FHIR", "Rules and documentation check", "Reviewer queue for edge cases", "Decision and reason returned"], "stack": ["FHIR R4", "Da Vinci PAS", "Event bus", "Rules engine"], "link": "/insights/cms-0057-prior-authorization-apis/", "case": "payer-prior-authorisation-fhir-apis"},
-  {"id": "rwe-cohorts", "sector": "Life sciences", "title": "Real-world evidence studies", "problem": "Each study needs a new data pull and months of cleaning before the first result.", "approach": "OMOP-standardised data with reusable cohort definitions and study packages that run across data partners.", "flow": ["Source data to OMOP", "Quality checks", "Shared cohort definitions", "Federated study results"], "stack": ["OMOP CDM", "OHDSI HADES", "ATLAS", "Spark"], "link": "/insights/real-world-evidence-study-designs-omop/", "case": "life-sciences-real-world-evidence-network"},
-  {"id": "fraud-graph", "sector": "Fintech", "title": "Fraud rings on a knowledge graph", "problem": "Row-by-row fraud rules miss coordinated accounts sharing devices, addresses and payees.", "approach": "Entity resolution into a graph of customers, devices and payments, with graph features feeding risk scoring and investigator tools.", "flow": ["Stream transactions", "Resolve entities", "Graph features and scores", "Investigator review"], "stack": ["Kafka", "Graph database", "Entity resolution", "Feature store"], "link": "/insights/entity-resolution-knowledge-graphs/", "case": "fintech-fraud-ring-knowledge-graph"},
-  {"id": "payments-scale", "sector": "Payments", "title": "1M+ transactions a day without double charges", "problem": "Retries and timeouts cause duplicate payments and manual reconciliation as volume grows.", "approach": "Idempotent APIs, an outbox pattern and event-driven reconciliation sized for more than a million transactions a day.", "flow": ["Idempotency key at the edge", "Single write plus outbox", "Events to ledger", "Automated reconciliation"], "stack": ["Postgres", "Outbox", "Kafka", "Kubernetes"], "link": "/insights/idempotent-payments-order-pipelines/", "case": "payments-platform-1m-transactions-a-day"},
-  {"id": "kyc-assistant", "sector": "Banking", "title": "KYC and policy assistant", "problem": "Analysts search hundreds of policy pages and past cases for every onboarding decision.", "approach": "Retrieval over approved policy and case notes with citations, permission-aware access and an evaluation set signed off by compliance.", "flow": ["Analyst question", "Permission-filtered retrieval", "Cited answer", "Feedback into evals"], "stack": ["Hybrid search", "RAG", "Evals", "SSO"], "link": "/insights/rag-to-production-checklist/", "case": "bank-kyc-policy-assistant-rag"},
-  {"id": "catalogue-ontology", "sector": "E-commerce", "title": "Product ontology for search and AI", "problem": "Inconsistent categories and attributes make search, filters and AI shopping assistants unreliable.", "approach": "A product taxonomy in SKOS with a small OWL core, synonyms for search, and validation on every catalogue load.", "flow": ["Supplier feeds", "Map to taxonomy", "Validate with SHACL", "Search and assistant"], "stack": ["SKOS", "OWL", "SHACL", "Vector search"], "link": "/insights/skos-vs-owl-enterprise-taxonomies/", "case": "ecommerce-product-ontology-search"},
-  {"id": "order-events", "sector": "Retail", "title": "Real-time inventory and orders", "problem": "Nightly batch syncs oversell stock across stores and online channels.", "approach": "Change data capture from operational databases into an event stream that keeps inventory views current everywhere.", "flow": ["Database changes", "CDC to event stream", "Inventory projections", "Channels read live stock"], "stack": ["Debezium", "Kafka", "Stream processing", "Redis"], "link": "/insights/change-data-capture-event-streams/", "case": "retail-real-time-inventory-cdc"},
-  {"id": "logistics-agents", "sector": "Logistics", "title": "Exception-handling agents", "problem": "Delayed shipments generate thousands of emails that staff triage by hand.", "approach": "Agents that classify exceptions, look up shipment state through governed tools and draft actions for approval.", "flow": ["Exception email", "Classify and extract", "Tool calls to TMS", "Human-approved action"], "stack": ["LangGraph", "MCP", "Structured outputs", "Queues"], "link": "/insights/evaluating-ai-agents-reliability/", "case": "logistics-exception-handling-agents"},
-  {"id": "saas-tenancy", "sector": "SaaS", "title": "Multi-tenant platform re-architecture", "problem": "Noisy tenants slow everyone down and enterprise buyers ask for isolation guarantees.", "approach": "Tiered tenancy with pooled and dedicated options, per-tenant limits, and data isolation proven in tests.", "flow": ["Tenant routing", "Pooled or dedicated tier", "Per-tenant quotas", "Isolation evidence"], "stack": ["MongoDB", "Kubernetes", "Gateway API", "OpenTelemetry"], "link": "/insights/mongodb-multi-tenant-saas-patterns/", "case": "saas-multi-tenant-re-architecture"},
-  {"id": "gov-private-llm", "sector": "Government (UAE)", "title": "Sovereign private LLM service", "problem": "Teams want generative AI but data cannot leave national infrastructure.", "approach": "In-country model serving with an AI gateway, PII redaction, routing and evaluation, aligned to UAE data rules.", "flow": ["User request", "Gateway: auth and redaction", "In-country model", "Logged, evaluated response"], "stack": ["vLLM", "GPU cluster", "AI gateway", "UAE PDPL"], "link": "/insights/uae-ai-infrastructure-where-to-run-models/", "case": "uae-government-sovereign-llm-service"},
-  {"id": "energy-assets", "sector": "Energy", "title": "Asset knowledge graph", "problem": "Maintenance history, sensor data and drawings live in separate systems, so root causes take weeks.", "approach": "A graph linking assets, components, work orders and sensor streams, with natural-language questions over it.", "flow": ["Asset registers and sensors", "Link into asset graph", "Graph queries and alerts", "Engineer assistant"], "stack": ["Knowledge graph", "Time series", "GraphRAG", "Iceberg"], "link": "/insights/graphrag-when-it-beats-vector-rag/", "case": "energy-asset-knowledge-graph"},
-  {"id": "manufacturing-quality", "sector": "Manufacturing", "title": "Quality data lakehouse", "problem": "Quality, production and supplier data cannot be joined, so defects are found late.", "approach": "An open-table-format lakehouse with data contracts from each plant and governed metrics for quality.", "flow": ["Plant systems", "Contracted ingestion", "Iceberg tables", "Quality metrics and alerts"], "stack": ["Apache Iceberg", "Data contracts", "Spark", "Semantic layer"], "link": "/insights/apache-iceberg-v3-lakehouse/", "case": "manufacturing-quality-lakehouse"},
-  {"id": "legal-review", "sector": "Legal", "title": "Contract review with citations", "problem": "Reviewers compare every contract to playbooks by hand under deadline.", "approach": "Clause extraction to a structured schema, comparison against the playbook, and cited suggestions a lawyer accepts or rejects.", "flow": ["Upload contract", "Extract clauses", "Compare to playbook", "Cited redlines for review"], "stack": ["Structured outputs", "Long context", "RAG", "Evals"], "link": "/insights/structured-outputs-reliable-llm-integration/", "case": "legal-contract-review-ai"},
-  {"id": "edtech-tutor", "sector": "Education", "title": "Curriculum-grounded tutor", "problem": "Generic chatbots give answers that don't match the syllabus or age group.", "approach": "A tutor grounded in the curriculum with safety filters, guided hints instead of answers, and teacher dashboards.", "flow": ["Student question", "Curriculum retrieval", "Guided hint", "Teacher insight"], "stack": ["RAG", "Prompt caching", "Guardrails", "Analytics"], "link": "/insights/prompt-caching-llm-cost-latency/", "case": "edtech-curriculum-grounded-tutor"},
-  {"id": "media-metadata", "sector": "Media", "title": "Archive metadata enrichment", "problem": "Decades of content are hard to find because metadata is sparse and inconsistent.", "approach": "Batch enrichment with models into a controlled vocabulary, human review queues and searchable embeddings.", "flow": ["Archive items", "Model enrichment", "Map to vocabulary", "Search and reuse"], "stack": ["Batch inference", "SKOS", "Embeddings", "Review queue"], "link": "/insights/choosing-embedding-models-rag/", "case": "media-archive-metadata-enrichment"},
-  {"id": "proptech-docs", "sector": "Real estate", "title": "Document intake automation", "problem": "Leases, IDs and invoices are keyed in by hand, slowing onboarding.", "approach": "Extraction to validated schemas with confidence thresholds and exception queues, feeding the core system.", "flow": ["Document upload", "Extract to schema", "Validate and score", "Auto-post or review"], "stack": ["Vision LLM", "Structured outputs", "Workflow engine", "Postgres"], "link": "/insights/structured-outputs-reliable-llm-integration/", "case": "real-estate-document-intake-automation"},
-  {"id": "telco-observability", "sector": "Telecom", "title": "Unified observability and SLOs", "problem": "Many monitoring tools, no shared view, and incidents found by customers first.", "approach": "OpenTelemetry end to end with a collector gateway, service-level objectives and burn-rate alerting.", "flow": ["Services and eBPF", "Collector gateway", "Traces, metrics, logs", "SLO alerts"], "stack": ["OpenTelemetry", "OBI", "Prometheus", "SLOs"], "link": "/insights/slos-error-budgets-small-teams/", "case": "telecom-observability-slos"},
-  {"id": "pe-due-diligence", "sector": "Private equity", "title": "Technical due diligence on an AI company", "problem": "Investors need to know whether the AI, the data rights and the team are what the deck says.", "approach": "A structured review of architecture, model and data provenance, security, costs and team, with a risk-rated report.", "flow": ["Data room and interviews", "Architecture and code review", "AI and data rights check", "Risk-rated report"], "stack": ["Code review", "Cost model", "AI governance", "Security review"], "link": "/insights/ai-startup-technical-due-diligence-checklist/", "case": "private-equity-ai-technical-due-diligence"},
-  {"id": "startup-cto", "sector": "Startups", "title": "Fractional CTO for a seed to Series A team", "problem": "Founders are shipping fast but architecture, hiring and security are falling behind investor expectations.", "approach": "A part-time CTO who sets the technical roadmap, decision records, delivery metrics and the first senior hires.", "flow": ["Assess the stack", "Roadmap and ADRs", "Delivery and SLOs", "Hire and hand off"], "stack": ["ADRs", "DORA metrics", "SOC 2", "Hiring plan"], "link": "/fractional-cto/", "case": "startup-fractional-cto-seed-to-series-a"},
-  {"id": "claims-triage", "sector": "Insurance", "title": "AI-assisted claims triage", "problem": "Manual first-pass triage leaves simple claims queued behind complex ones and depends on who reads the file.", "approach": "Schema-validated extraction, cited summaries and explainable signals that suggest routing for adjusters to accept or override, under a written AI programme.", "flow": ["First notice of loss", "Extract and summarise", "Rules and fraud signals", "Adjuster decides"], "stack": ["Structured outputs", "Rules engine", "Graph features", "Audit log"], "link": "/insights/structured-outputs-reliable-llm-integration/", "case": "insurance-claims-triage-ai"},
-  {"id": "mcp-platform", "sector": "Enterprise IT", "title": "Governed MCP agent platform", "problem": "Assistants connect to unreviewed MCP servers with broad personal tokens and no audit trail.", "approach": "A private MCP registry, a gateway tied to the identity provider, progressive scopes and audit for every tool call.", "flow": ["Discover in registry", "Authorise via SSO", "Gateway checks policy", "Audited tool call"], "stack": ["MCP", "Private registry", "OAuth 2.1", "OpenTelemetry"], "link": "/insights/mcp-registry-enterprise-subregistry/", "case": "enterprise-mcp-agent-platform"},
-  {"id": "k8s-finops", "sector": "Technology", "title": "Kubernetes FinOps and a paved road", "problem": "Cloud spend grows faster than the business and nobody can say which team or product drives it.", "approach": "Enforced ownership labels, workload cost allocation joined to FOCUS billing, in-place right-sizing and queue-driven scale to zero in service templates.", "flow": ["Deploy from template", "Allocate cost per workload", "Report per team and product", "Right-size automatically"], "stack": ["Kubernetes", "OpenCost", "FOCUS", "VPA and HPA"], "link": "/insights/kubernetes-finops-scale-to-zero/", "case": "kubernetes-finops-platform-engineering"},
-  {"id": "llm-evals", "sector": "B2B SaaS", "title": "LLM evaluation and observability platform", "problem": "Many AI features, no shared definition of good, and model upgrades that break things customers notice first.", "approach": "Owned evaluation sets as CI release gates, a model gateway, OpenTelemetry GenAI tracing and cost and quality per feature.", "flow": ["Change prompt or model", "Run eval gate", "Flagged rollout", "Trace and compare"], "stack": ["OpenTelemetry GenAI", "Eval harness", "Model gateway", "Feature flags"], "link": "/insights/llm-evaluation-sets-that-predict-production/", "case": "llm-evaluation-observability-platform"},
-  {"id": "pv-signals", "sector": "Drug safety", "title": "Pharmacovigilance signal platform", "problem": "Potential safety signals tracked in spreadsheets, with slow bespoke evaluations and no audit trail.", "approach": "One tracked record per signal, scheduled screening of reports, physician validation and real-world data evaluation on OMOP with negative controls.", "flow": ["Screen reports", "Physician validates", "Evaluate on OMOP", "Record decision"], "stack": ["Signal tracker", "Disproportionality", "OMOP CDM", "OHDSI HADES"], "link": "/insights/real-world-evidence-study-designs-omop/", "case": "pharmacovigilance-signal-detection-platform"},
-  {"id": "trial-data", "sector": "Biotech", "title": "Clinical trial data platform", "problem": "Each study rebuilds vendor pipelines, and the path from raw data to submission datasets is undocumented.", "approach": "An immutable raw zone, versioned SDTM mappings in a shared library, checks on every load and lineage with audit trails designed for validation.", "flow": ["Vendor transfer", "Validate and map to SDTM", "Data review in study", "Traceable submission datasets"], "stack": ["CDISC SDTM", "Lineage catalogue", "Validation rules", "Audit trail"], "link": "/insights/data-contracts-playbook/", "case": "clinical-trial-data-platform"},
-  {"id": "ai-governance", "sector": "AI software", "title": "One AI governance programme for three markets", "problem": "Every enterprise deal stalls on AI and security questionnaires while EU, US and Gulf rules keep moving.", "approach": "One AI inventory, a unified control set mapped to the EU AI Act, ISO 42001, NIST AI RMF and SOC 2, and evidence generated by delivery pipelines.", "flow": ["Register AI feature", "Classify risk and role", "Gate with evals", "Answer from evidence"], "stack": ["ISO 42001", "NIST AI RMF", "SOC 2", "Evidence store"], "link": "/insights/iso-42001-vs-nist-ai-rmf/", "case": "ai-governance-programme-eu-us-uae"},
-  {"id": "terraform-estate", "sector": "Multi-cloud enterprise", "title": "Taming a multi-cloud Terraform estate", "problem": "Copied modules, giant state files and secrets in state across three clouds make every change slow and risky.", "approach": "Composed provider-specific modules, state split by blast radius, secrets kept out of state, and pipeline-only applies with policy checks.", "flow": ["Change from template", "Plan per stack", "Policy check", "Pipeline apply"], "stack": ["Terraform or OpenTofu", "Module registry", "Policy as code", "Secrets manager"], "link": "/insights/terraform-multi-cloud-module-design/", "case": "multi-cloud-terraform-estate"},
-  {"id": "uae-open-finance", "sector": "Fintech (UAE)", "title": "Re-platforming onto UAE Open Finance", "problem": "Screen scraping and one-off bank integrations break often and fail security reviews.", "approach": "A consent service at the core, a FAPI-grade connector to the Central Bank's API hub, isolated tokens and data minimised at ingestion.", "flow": ["Customer consents", "Token in vault", "Fetch via API hub", "Minimise and expire"], "stack": ["Open Finance API hub", "FAPI 2.0", "Consent service", "Event bus"], "link": "/insights/uae-pdpl-ai-architecture-2026/", "case": "uae-open-finance-fintech-platform"},
-  {"id": "arabic-rag", "sector": "Utilities (UAE)", "title": "Arabic and English knowledge assistant", "problem": "Customers write in Gulf Arabic, MSA, English and mixed text, while policies exist in only one language.", "approach": "One bilingual index with multilingual embeddings, Arabic normalisation, answers in the customer's language with citations, and in-country hosting.", "flow": ["Detect language", "Normalise and redact", "Retrieve across languages", "Answer with citation"], "stack": ["Multilingual embeddings", "Hybrid search", "Arabic-capable LLM", "PII redaction"], "link": "/insights/choosing-embedding-models-rag/", "case": "arabic-english-bilingual-rag-assistant"}
+  {
+    "id": "ambient-scribe",
+    "sector": "Healthcare",
+    "title": "Ambient clinical documentation",
+    "problem": "Clinicians spend evenings on notes; AI scribe pilots stall in security review.",
+    "approach": "Private speech and LLM pipeline that drafts notes into the EHR for clinician sign-off, with SMART on FHIR scopes and full audit.",
+    "flow": [
+      "Consented audio",
+      "Transcribe on private GPUs",
+      "Draft note with sources",
+      "Clinician approves into EHR"
+    ],
+    "stack": [
+      "SMART on FHIR",
+      "Whisper-class ASR",
+      "vLLM",
+      "Audit log"
+    ],
+    "link": "/insights/ambient-ai-scribes-architecture/",
+    "case": "ambient-clinical-documentation-private-ai"
+  },
+  {
+    "id": "prior-auth",
+    "sector": "Health insurance",
+    "title": "Prior authorisation APIs",
+    "problem": "Faxes and portals slow approvals while new interoperability rules set API deadlines.",
+    "approach": "FHIR prior authorisation and coverage APIs in front of existing claims systems, with decision tracking and metrics reporting.",
+    "flow": [
+      "Provider request via FHIR",
+      "Rules and documentation check",
+      "Reviewer queue for edge cases",
+      "Decision and reason returned"
+    ],
+    "stack": [
+      "FHIR R4",
+      "Da Vinci PAS",
+      "Event bus",
+      "Rules engine"
+    ],
+    "link": "/insights/cms-0057-prior-authorization-apis/",
+    "case": "payer-prior-authorisation-fhir-apis"
+  },
+  {
+    "id": "rwe-cohorts",
+    "sector": "Life sciences",
+    "title": "Real-world evidence studies",
+    "problem": "Each study needs a new data pull and months of cleaning before the first result.",
+    "approach": "OMOP-standardised data with reusable cohort definitions and study packages that run across data partners.",
+    "flow": [
+      "Source data to OMOP",
+      "Quality checks",
+      "Shared cohort definitions",
+      "Federated study results"
+    ],
+    "stack": [
+      "OMOP CDM",
+      "OHDSI HADES",
+      "ATLAS",
+      "Spark"
+    ],
+    "link": "/insights/real-world-evidence-study-designs-omop/",
+    "case": "life-sciences-real-world-evidence-network"
+  },
+  {
+    "id": "fraud-graph",
+    "sector": "Fintech",
+    "title": "Fraud rings on a knowledge graph",
+    "problem": "Row-by-row fraud rules miss coordinated accounts sharing devices, addresses and payees.",
+    "approach": "Entity resolution into a graph of customers, devices and payments, with graph features feeding risk scoring and investigator tools.",
+    "flow": [
+      "Stream transactions",
+      "Resolve entities",
+      "Graph features and scores",
+      "Investigator review"
+    ],
+    "stack": [
+      "Kafka",
+      "Graph database",
+      "Entity resolution",
+      "Feature store"
+    ],
+    "link": "/insights/entity-resolution-knowledge-graphs/",
+    "case": "fintech-fraud-ring-knowledge-graph"
+  },
+  {
+    "id": "payments-scale",
+    "sector": "Payments",
+    "title": "1M+ transactions a day without double charges",
+    "problem": "Retries and timeouts cause duplicate payments and manual reconciliation as volume grows.",
+    "approach": "Idempotent APIs, an outbox pattern and event-driven reconciliation sized for more than a million transactions a day.",
+    "flow": [
+      "Idempotency key at the edge",
+      "Single write plus outbox",
+      "Events to ledger",
+      "Automated reconciliation"
+    ],
+    "stack": [
+      "Postgres",
+      "Outbox",
+      "Kafka",
+      "Kubernetes"
+    ],
+    "link": "/insights/idempotent-payments-order-pipelines/",
+    "case": "payments-platform-1m-transactions-a-day"
+  },
+  {
+    "id": "kyc-assistant",
+    "sector": "Banking",
+    "title": "KYC and policy assistant",
+    "problem": "Analysts search hundreds of policy pages and past cases for every onboarding decision.",
+    "approach": "Retrieval over approved policy and case notes with citations, permission-aware access and an evaluation set signed off by compliance.",
+    "flow": [
+      "Analyst question",
+      "Permission-filtered retrieval",
+      "Cited answer",
+      "Feedback into evals"
+    ],
+    "stack": [
+      "Hybrid search",
+      "RAG",
+      "Evals",
+      "SSO"
+    ],
+    "link": "/insights/rag-to-production-checklist/",
+    "case": "bank-kyc-policy-assistant-rag"
+  },
+  {
+    "id": "catalogue-ontology",
+    "sector": "E-commerce",
+    "title": "Product ontology for search and AI",
+    "problem": "Inconsistent categories and attributes make search, filters and AI shopping assistants unreliable.",
+    "approach": "A product taxonomy in SKOS with a small OWL core, synonyms for search, and validation on every catalogue load.",
+    "flow": [
+      "Supplier feeds",
+      "Map to taxonomy",
+      "Validate with SHACL",
+      "Search and assistant"
+    ],
+    "stack": [
+      "SKOS",
+      "OWL",
+      "SHACL",
+      "Vector search"
+    ],
+    "link": "/insights/skos-vs-owl-enterprise-taxonomies/",
+    "case": "ecommerce-product-ontology-search"
+  },
+  {
+    "id": "order-events",
+    "sector": "Retail",
+    "title": "Real-time inventory and orders",
+    "problem": "Nightly batch syncs oversell stock across stores and online channels.",
+    "approach": "Change data capture from operational databases into an event stream that keeps inventory views current everywhere.",
+    "flow": [
+      "Database changes",
+      "CDC to event stream",
+      "Inventory projections",
+      "Channels read live stock"
+    ],
+    "stack": [
+      "Debezium",
+      "Kafka",
+      "Stream processing",
+      "Redis"
+    ],
+    "link": "/insights/change-data-capture-event-streams/",
+    "case": "retail-real-time-inventory-cdc"
+  },
+  {
+    "id": "logistics-agents",
+    "sector": "Logistics",
+    "title": "Exception-handling agents",
+    "problem": "Delayed shipments generate thousands of emails that staff triage by hand.",
+    "approach": "Agents that classify exceptions, look up shipment state through governed tools and draft actions for approval.",
+    "flow": [
+      "Exception email",
+      "Classify and extract",
+      "Tool calls to TMS",
+      "Human-approved action"
+    ],
+    "stack": [
+      "LangGraph",
+      "MCP",
+      "Structured outputs",
+      "Queues"
+    ],
+    "link": "/insights/evaluating-ai-agents-reliability/",
+    "case": "logistics-exception-handling-agents"
+  },
+  {
+    "id": "saas-tenancy",
+    "sector": "SaaS",
+    "title": "Multi-tenant platform re-architecture",
+    "problem": "Noisy tenants slow everyone down and enterprise buyers ask for isolation guarantees.",
+    "approach": "Tiered tenancy with pooled and dedicated options, per-tenant limits, and data isolation proven in tests.",
+    "flow": [
+      "Tenant routing",
+      "Pooled or dedicated tier",
+      "Per-tenant quotas",
+      "Isolation evidence"
+    ],
+    "stack": [
+      "MongoDB",
+      "Kubernetes",
+      "Gateway API",
+      "OpenTelemetry"
+    ],
+    "link": "/insights/mongodb-multi-tenant-saas-patterns/",
+    "case": "saas-multi-tenant-re-architecture"
+  },
+  {
+    "id": "gov-private-llm",
+    "sector": "Government (UAE)",
+    "title": "Sovereign private LLM service",
+    "problem": "Teams want generative AI but data cannot leave national infrastructure.",
+    "approach": "In-country model serving with an AI gateway, PII redaction, routing and evaluation, aligned to UAE data rules.",
+    "flow": [
+      "User request",
+      "Gateway: auth and redaction",
+      "In-country model",
+      "Logged, evaluated response"
+    ],
+    "stack": [
+      "vLLM",
+      "GPU cluster",
+      "AI gateway",
+      "UAE PDPL"
+    ],
+    "link": "/insights/uae-ai-infrastructure-where-to-run-models/",
+    "case": "uae-government-sovereign-llm-service"
+  },
+  {
+    "id": "energy-assets",
+    "sector": "Energy",
+    "title": "Asset knowledge graph",
+    "problem": "Maintenance history, sensor data and drawings live in separate systems, so root causes take weeks.",
+    "approach": "A graph linking assets, components, work orders and sensor streams, with natural-language questions over it.",
+    "flow": [
+      "Asset registers and sensors",
+      "Link into asset graph",
+      "Graph queries and alerts",
+      "Engineer assistant"
+    ],
+    "stack": [
+      "Knowledge graph",
+      "Time series",
+      "GraphRAG",
+      "Iceberg"
+    ],
+    "link": "/insights/graphrag-when-it-beats-vector-rag/",
+    "case": "energy-asset-knowledge-graph"
+  },
+  {
+    "id": "manufacturing-quality",
+    "sector": "Manufacturing",
+    "title": "Quality data lakehouse",
+    "problem": "Quality, production and supplier data cannot be joined, so defects are found late.",
+    "approach": "An open-table-format lakehouse with data contracts from each plant and governed metrics for quality.",
+    "flow": [
+      "Plant systems",
+      "Contracted ingestion",
+      "Iceberg tables",
+      "Quality metrics and alerts"
+    ],
+    "stack": [
+      "Apache Iceberg",
+      "Data contracts",
+      "Spark",
+      "Semantic layer"
+    ],
+    "link": "/insights/apache-iceberg-v3-lakehouse/",
+    "case": "manufacturing-quality-lakehouse"
+  },
+  {
+    "id": "legal-review",
+    "sector": "Legal",
+    "title": "Contract review with citations",
+    "problem": "Reviewers compare every contract to playbooks by hand under deadline.",
+    "approach": "Clause extraction to a structured schema, comparison against the playbook, and cited suggestions a lawyer accepts or rejects.",
+    "flow": [
+      "Upload contract",
+      "Extract clauses",
+      "Compare to playbook",
+      "Cited redlines for review"
+    ],
+    "stack": [
+      "Structured outputs",
+      "Long context",
+      "RAG",
+      "Evals"
+    ],
+    "link": "/insights/structured-outputs-reliable-llm-integration/",
+    "case": "legal-contract-review-ai"
+  },
+  {
+    "id": "edtech-tutor",
+    "sector": "Education",
+    "title": "Curriculum-grounded tutor",
+    "problem": "Generic chatbots give answers that don't match the syllabus or age group.",
+    "approach": "A tutor grounded in the curriculum with safety filters, guided hints instead of answers, and teacher dashboards.",
+    "flow": [
+      "Student question",
+      "Curriculum retrieval",
+      "Guided hint",
+      "Teacher insight"
+    ],
+    "stack": [
+      "RAG",
+      "Prompt caching",
+      "Guardrails",
+      "Analytics"
+    ],
+    "link": "/insights/prompt-caching-llm-cost-latency/",
+    "case": "edtech-curriculum-grounded-tutor"
+  },
+  {
+    "id": "media-metadata",
+    "sector": "Media",
+    "title": "Archive metadata enrichment",
+    "problem": "Decades of content are hard to find because metadata is sparse and inconsistent.",
+    "approach": "Batch enrichment with models into a controlled vocabulary, human review queues and searchable embeddings.",
+    "flow": [
+      "Archive items",
+      "Model enrichment",
+      "Map to vocabulary",
+      "Search and reuse"
+    ],
+    "stack": [
+      "Batch inference",
+      "SKOS",
+      "Embeddings",
+      "Review queue"
+    ],
+    "link": "/insights/choosing-embedding-models-rag/",
+    "case": "media-archive-metadata-enrichment"
+  },
+  {
+    "id": "proptech-docs",
+    "sector": "Real estate",
+    "title": "Document intake automation",
+    "problem": "Leases, IDs and invoices are keyed in by hand, slowing onboarding.",
+    "approach": "Extraction to validated schemas with confidence thresholds and exception queues, feeding the core system.",
+    "flow": [
+      "Document upload",
+      "Extract to schema",
+      "Validate and score",
+      "Auto-post or review"
+    ],
+    "stack": [
+      "Vision LLM",
+      "Structured outputs",
+      "Workflow engine",
+      "Postgres"
+    ],
+    "link": "/insights/structured-outputs-reliable-llm-integration/",
+    "case": "real-estate-document-intake-automation"
+  },
+  {
+    "id": "telco-observability",
+    "sector": "Telecom",
+    "title": "Unified observability and SLOs",
+    "problem": "Many monitoring tools, no shared view, and incidents found by customers first.",
+    "approach": "OpenTelemetry end to end with a collector gateway, service-level objectives and burn-rate alerting.",
+    "flow": [
+      "Services and eBPF",
+      "Collector gateway",
+      "Traces, metrics, logs",
+      "SLO alerts"
+    ],
+    "stack": [
+      "OpenTelemetry",
+      "OBI",
+      "Prometheus",
+      "SLOs"
+    ],
+    "link": "/insights/slos-error-budgets-small-teams/",
+    "case": "telecom-observability-slos"
+  },
+  {
+    "id": "pe-due-diligence",
+    "sector": "Private equity",
+    "title": "Technical due diligence on an AI company",
+    "problem": "Investors need to know whether the AI, the data rights and the team are what the deck says.",
+    "approach": "A structured review of architecture, model and data provenance, security, costs and team, with a risk-rated report.",
+    "flow": [
+      "Data room and interviews",
+      "Architecture and code review",
+      "AI and data rights check",
+      "Risk-rated report"
+    ],
+    "stack": [
+      "Code review",
+      "Cost model",
+      "AI governance",
+      "Security review"
+    ],
+    "link": "/insights/ai-startup-technical-due-diligence-checklist/",
+    "case": "private-equity-ai-technical-due-diligence"
+  },
+  {
+    "id": "startup-cto",
+    "sector": "Startups",
+    "title": "Fractional CTO for a seed to Series A team",
+    "problem": "Founders are shipping fast but architecture, hiring and security are falling behind investor expectations.",
+    "approach": "A part-time CTO who sets the technical roadmap, decision records, delivery metrics and the first senior hires.",
+    "flow": [
+      "Assess the stack",
+      "Roadmap and ADRs",
+      "Delivery and SLOs",
+      "Hire and hand off"
+    ],
+    "stack": [
+      "ADRs",
+      "DORA metrics",
+      "SOC 2",
+      "Hiring plan"
+    ],
+    "link": "/fractional-cto/",
+    "case": "startup-fractional-cto-seed-to-series-a"
+  },
+  {
+    "id": "claims-triage",
+    "sector": "Insurance",
+    "title": "AI-assisted claims triage",
+    "problem": "Manual first-pass triage leaves simple claims queued behind complex ones and depends on who reads the file.",
+    "approach": "Schema-validated extraction, cited summaries and explainable signals that suggest routing for adjusters to accept or override, under a written AI programme.",
+    "flow": [
+      "First notice of loss",
+      "Extract and summarise",
+      "Rules and fraud signals",
+      "Adjuster decides"
+    ],
+    "stack": [
+      "Structured outputs",
+      "Rules engine",
+      "Graph features",
+      "Audit log"
+    ],
+    "link": "/insights/structured-outputs-reliable-llm-integration/",
+    "case": "insurance-claims-triage-ai"
+  },
+  {
+    "id": "mcp-platform",
+    "sector": "Enterprise IT",
+    "title": "Governed MCP agent platform",
+    "problem": "Assistants connect to unreviewed MCP servers with broad personal tokens and no audit trail.",
+    "approach": "A private MCP registry, a gateway tied to the identity provider, progressive scopes and audit for every tool call.",
+    "flow": [
+      "Discover in registry",
+      "Authorise via SSO",
+      "Gateway checks policy",
+      "Audited tool call"
+    ],
+    "stack": [
+      "MCP",
+      "Private registry",
+      "OAuth 2.1",
+      "OpenTelemetry"
+    ],
+    "link": "/insights/mcp-registry-enterprise-subregistry/",
+    "case": "enterprise-mcp-agent-platform"
+  },
+  {
+    "id": "k8s-finops",
+    "sector": "Technology",
+    "title": "Kubernetes FinOps and a paved road",
+    "problem": "Cloud spend grows faster than the business and nobody can say which team or product drives it.",
+    "approach": "Enforced ownership labels, workload cost allocation joined to FOCUS billing, in-place right-sizing and queue-driven scale to zero in service templates.",
+    "flow": [
+      "Deploy from template",
+      "Allocate cost per workload",
+      "Report per team and product",
+      "Right-size automatically"
+    ],
+    "stack": [
+      "Kubernetes",
+      "OpenCost",
+      "FOCUS",
+      "VPA and HPA"
+    ],
+    "link": "/insights/kubernetes-finops-scale-to-zero/",
+    "case": "kubernetes-finops-platform-engineering"
+  },
+  {
+    "id": "llm-evals",
+    "sector": "B2B SaaS",
+    "title": "LLM evaluation and observability platform",
+    "problem": "Many AI features, no shared definition of good, and model upgrades that break things customers notice first.",
+    "approach": "Owned evaluation sets as CI release gates, a model gateway, OpenTelemetry GenAI tracing and cost and quality per feature.",
+    "flow": [
+      "Change prompt or model",
+      "Run eval gate",
+      "Flagged rollout",
+      "Trace and compare"
+    ],
+    "stack": [
+      "OpenTelemetry GenAI",
+      "Eval harness",
+      "Model gateway",
+      "Feature flags"
+    ],
+    "link": "/insights/llm-evaluation-sets-that-predict-production/",
+    "case": "llm-evaluation-observability-platform"
+  },
+  {
+    "id": "pv-signals",
+    "sector": "Drug safety",
+    "title": "Pharmacovigilance signal platform",
+    "problem": "Potential safety signals tracked in spreadsheets, with slow bespoke evaluations and no audit trail.",
+    "approach": "One tracked record per signal, scheduled screening of reports, physician validation and real-world data evaluation on OMOP with negative controls.",
+    "flow": [
+      "Screen reports",
+      "Physician validates",
+      "Evaluate on OMOP",
+      "Record decision"
+    ],
+    "stack": [
+      "Signal tracker",
+      "Disproportionality",
+      "OMOP CDM",
+      "OHDSI HADES"
+    ],
+    "link": "/insights/real-world-evidence-study-designs-omop/",
+    "case": "pharmacovigilance-signal-detection-platform"
+  },
+  {
+    "id": "trial-data",
+    "sector": "Biotech",
+    "title": "Clinical trial data platform",
+    "problem": "Each study rebuilds vendor pipelines, and the path from raw data to submission datasets is undocumented.",
+    "approach": "An immutable raw zone, versioned SDTM mappings in a shared library, checks on every load and lineage with audit trails designed for validation.",
+    "flow": [
+      "Vendor transfer",
+      "Validate and map to SDTM",
+      "Data review in study",
+      "Traceable submission datasets"
+    ],
+    "stack": [
+      "CDISC SDTM",
+      "Lineage catalogue",
+      "Validation rules",
+      "Audit trail"
+    ],
+    "link": "/insights/data-contracts-playbook/",
+    "case": "clinical-trial-data-platform"
+  },
+  {
+    "id": "ai-governance",
+    "sector": "AI software",
+    "title": "One AI governance programme for three markets",
+    "problem": "Every enterprise deal stalls on AI and security questionnaires while EU, US and Gulf rules keep moving.",
+    "approach": "One AI inventory, a unified control set mapped to the EU AI Act, ISO 42001, NIST AI RMF and SOC 2, and evidence generated by delivery pipelines.",
+    "flow": [
+      "Register AI feature",
+      "Classify risk and role",
+      "Gate with evals",
+      "Answer from evidence"
+    ],
+    "stack": [
+      "ISO 42001",
+      "NIST AI RMF",
+      "SOC 2",
+      "Evidence store"
+    ],
+    "link": "/insights/iso-42001-vs-nist-ai-rmf/",
+    "case": "ai-governance-programme-eu-us-uae"
+  },
+  {
+    "id": "terraform-estate",
+    "sector": "Multi-cloud enterprise",
+    "title": "Taming a multi-cloud Terraform estate",
+    "problem": "Copied modules, giant state files and secrets in state across three clouds make every change slow and risky.",
+    "approach": "Composed provider-specific modules, state split by blast radius, secrets kept out of state, and pipeline-only applies with policy checks.",
+    "flow": [
+      "Change from template",
+      "Plan per stack",
+      "Policy check",
+      "Pipeline apply"
+    ],
+    "stack": [
+      "Terraform or OpenTofu",
+      "Module registry",
+      "Policy as code",
+      "Secrets manager"
+    ],
+    "link": "/insights/terraform-multi-cloud-module-design/",
+    "case": "multi-cloud-terraform-estate"
+  },
+  {
+    "id": "uae-open-finance",
+    "sector": "Fintech (UAE)",
+    "title": "Re-platforming onto UAE Open Finance",
+    "problem": "Screen scraping and one-off bank integrations break often and fail security reviews.",
+    "approach": "A consent service at the core, a FAPI-grade connector to the Central Bank's API hub, isolated tokens and data minimised at ingestion.",
+    "flow": [
+      "Customer consents",
+      "Token in vault",
+      "Fetch via API hub",
+      "Minimise and expire"
+    ],
+    "stack": [
+      "Open Finance API hub",
+      "FAPI 2.0",
+      "Consent service",
+      "Event bus"
+    ],
+    "link": "/insights/uae-pdpl-ai-architecture-2026/",
+    "case": "uae-open-finance-fintech-platform"
+  },
+  {
+    "id": "arabic-rag",
+    "sector": "Utilities (UAE)",
+    "title": "Arabic and English knowledge assistant",
+    "problem": "Customers write in Gulf Arabic, MSA, English and mixed text, while policies exist in only one language.",
+    "approach": "One bilingual index with multilingual embeddings, Arabic normalisation, answers in the customer's language with citations, and in-country hosting.",
+    "flow": [
+      "Detect language",
+      "Normalise and redact",
+      "Retrieve across languages",
+      "Answer with citation"
+    ],
+    "stack": [
+      "Multilingual embeddings",
+      "Hybrid search",
+      "Arabic-capable LLM",
+      "PII redaction"
+    ],
+    "link": "/insights/choosing-embedding-models-rag/",
+    "case": "arabic-english-bilingual-rag-assistant"
+  },
+  {
+    "id": "soc-copilot",
+    "sector": "Security operations",
+    "title": "An AI copilot that triages security alerts without acting alone",
+    "problem": "Too many alerts across tools with different data formats, and analysts wary of AI that invents findings or acts on its own.",
+    "approach": "Normalise events to OCSF, add ATT&CK and runbook context, and let a read-only copilot draft cited triage summaries and propose actions for analyst approval.",
+    "flow": [
+      "Ingest and normalise",
+      "Enrich with context",
+      "Cited triage summary",
+      "Analyst-approved action"
+    ],
+    "stack": [
+      "OCSF",
+      "MITRE ATT&CK",
+      "LLM with tools",
+      "SOAR"
+    ],
+    "link": "/insights/prompt-injection-defence-for-agents/",
+    "case": "security-operations-ai-copilot"
+  }
 ]

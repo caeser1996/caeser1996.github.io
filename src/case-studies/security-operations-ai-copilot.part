@@ -1,0 +1,87 @@
+<!--{"title": "Case study: an AI copilot for a security operations centre", "description": "How a security team can use AI to triage alerts faster without handing it the keys: normalised OCSF data, ATT&CK context, cited summaries and human-approved response.", "short": "Security operations AI copilot", "h1": "An AI copilot for the security operations centre that analysts trust", "kicker": "Case study · Cyber security", "lede": "A security operations team faced more alerts than analysts, from tools that each spoke their own data format. Leadership wanted AI to help. Analysts wanted it not to invent things or take actions on its own. The goal was a copilot that speeds up triage and investigation while every response stays a human decision.", "date": "2026-10-29", "datetime": "2026-10-29T02:20:00+04:00", "readtime": "9 min read", "sector": "Financial services · Security operations", "role": "AI architect", "engagement": "Architecture, build and evaluation", "scope": "Data normalisation, triage assistant, investigation tools, guardrails", "stack": ["OCSF event schema", "SIEM and data lake", "MITRE ATT&CK mapping", "LLM with tool calling", "Retrieval over runbooks", "SOAR playbooks", "Approval workflow", "Audit log"], "outcomes": ["Alerts arrive with a cited summary, related events and likely ATT&CK techniques", "Analysts query telemetry in plain language with the generated query shown", "Response actions proposed by AI and executed only after analyst approval", "Incident records aligned with the organisation's incident response framework"], "tags": ["ai", "security", "agents", "governance"], "keywords": ["SOC AI copilot", "security operations AI", "alert triage AI", "OCSF", "MITRE ATT&CK", "NIST SP 800-61 Rev 3", "LLM security operations", "AI incident response", "prompt injection security tools", "AI architect"], "faq": [["Should AI take automated response actions in a SOC?", "Only for well-understood, low-risk actions with clear rollback, and even then with logging and review. In this design the copilot proposes actions such as isolating a host or disabling an account, and an analyst approves before a playbook runs."], ["Why normalise security data before adding AI?", "Because an assistant reasoning over a dozen vendor formats will make mistakes a consistent schema avoids. OCSF provides a vendor-agnostic schema for security events, so queries, correlations and summaries work the same way across sources."], ["How do you stop attackers manipulating a SOC copilot?", "Treat everything in alerts and logs as untrusted data, never as instructions. Attackers control content in emails, file names and command lines, so prompt injection is a real risk; tools are read-only by default and any action needs human approval."]], "related": ["/ai-architect/", "/fractional-cto/", "/technical-due-diligence/"], "citations": [{"title": "SP 800-61 Rev. 3: Incident Response Recommendations and Considerations for Cybersecurity Risk Management", "url": "https://csrc.nist.gov/pubs/sp/800/61/r3/final", "publisher": "NIST", "date": "Apr 2025"}, {"title": "Open Cybersecurity Schema Framework (OCSF)", "url": "https://github.com/ocsf/", "publisher": "OCSF, GitHub"}, {"title": "Open Cybersecurity Schema Framework (OCSF) joins the Linux Foundation to optimize critical security data", "url": "https://www.linuxfoundation.org/press/open-cybersecurity-schema-framework-ocsf-joins-the-linux-foundation-to-optimize-critical-security-data", "publisher": "Linux Foundation", "date": "Nov 2024"}, {"title": "MITRE ATT&CK", "url": "https://attack.mitre.org/", "publisher": "MITRE"}, {"title": "OWASP Top 10 for LLM Applications", "url": "https://genai.owasp.org/llm-top-10/", "publisher": "OWASP GenAI Security Project"}]}-->
+<h2>The situation</h2>
+<p>A financial services group ran a security operations centre that took alerts from endpoint protection, identity providers, cloud platforms, email security and network tools. Each tool had its own data format and console. Analysts spent much of their time gathering context: which user, which host, what else happened nearby, has this been seen before. Experienced analysts carried that knowledge in their heads; newer ones escalated more than they needed to.</p>
+<p>Leadership wanted to apply AI. The security team's concerns were specific: an assistant that invents findings, one that attackers can manipulate through the very logs it reads, and anything that acts on production systems without a person deciding.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>Every statement cited</strong> to the events, alerts or runbooks it came from.</li>
+<li><strong>Read-only by default</strong>: the copilot investigates; it does not change systems.</li>
+<li><strong>Human approval for every response action</strong>, with the action and its reason logged.</li>
+<li><strong>Consistent data</strong> across sources, so the same question gives the same kind of answer.</li>
+<li><strong>Aligned with the incident response process</strong> the organisation already followed and was audited against.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Sources</small><div class="dgm-nodes"><span>Endpoint<em>EDR alerts</em></span><span>Identity<em>sign-ins, MFA</em></span><span>Cloud<em>audit logs</em></span><span>Email and network<em>detections</em></span></div></div>
+<div class="dgm-tier"><small>Normalise</small><div class="dgm-nodes"><span class="hl">OCSF mapping<em>one event schema</em></span><span>Entity resolution<em>users, hosts, IPs</em></span><span>Security data lake<em>queryable history</em></span></div></div>
+<div class="dgm-tier"><small>Context</small><div class="dgm-nodes"><span>ATT&amp;CK mapping<em>techniques per detection</em></span><span>Runbooks<em>retrieval with citations</em></span><span>Asset and owner data<em>criticality</em></span></div></div>
+<div class="dgm-tier"><small>Copilot</small><div class="dgm-nodes"><span class="hl">Triage summary<em>cited, structured</em></span><span>Investigation tools<em>read-only queries</em></span><span>Action proposals<em>for approval</em></span></div></div>
+<div class="dgm-tier"><small>Control</small><div class="dgm-nodes"><span class="hl">Analyst approval<em>before any action</em></span><span>SOAR playbooks<em>execute approved steps</em></span><span>Audit log<em>prompts, tools, decisions</em></span></div></div>
+</div>
+<figcaption>Normalise first, add context second, let the copilot reason third, and keep humans on the only path to action.</figcaption>
+</figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Ingest</b><span>Alerts and events mapped to the common schema and linked to entities</span></li>
+<li><b>Enrich</b><span>Related events, asset criticality and likely ATT&amp;CK techniques attached</span></li>
+<li class="hl"><b>Summarise</b><span>Copilot drafts a triage summary citing each underlying event</span></li>
+<li><b>Investigate</b><span>Analyst asks follow-ups; copilot runs read-only queries and shows them</span></li>
+<li class="hl"><b>Propose</b><span>Copilot suggests containment steps from approved runbooks</span></li>
+<li><b>Approve</b><span>Analyst approves or edits; playbook runs; incident record updated</span></li>
+</ol>
+<figcaption>The copilot never executes; it prepares, and the analyst decides.</figcaption>
+</figure>
+<p>Normalisation made the rest possible. OCSF is an open, vendor-agnostic schema for security events, with a framework of data types, an attribute dictionary and a taxonomy<sup class="cite"><a href="#ref-2">2</a></sup>, and it moved under Linux Foundation governance in 2024<sup class="cite"><a href="#ref-3">3</a></sup>. MITRE ATT&amp;CK supplied a shared vocabulary for adversary behaviour, so summaries described detections in terms analysts already used<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+
+<h2>The hard part: an assistant that reads attacker-controlled text</h2>
+<p>Most AI copilots read trusted documents. A security copilot reads email subjects, file names, command lines and web requests, many written by attackers. Prompt injection, listed in the OWASP Top 10 for LLM applications<sup class="cite"><a href="#ref-5">5</a></sup>, is not a theoretical risk here. The design assumed it would be attempted:</p>
+<ul>
+<li>All event content treated as untrusted data, clearly separated from instructions in every prompt.</li>
+<li>Tools read-only by default, with narrow scopes; no tool able to change a system directly.</li>
+<li>Action proposals limited to steps from approved runbooks, and every proposal approved by an analyst.</li>
+<li>Generated queries shown to the analyst, so the reasoning can be checked rather than trusted.</li>
+<li>An evaluation set of past incidents, including deliberately manipulated log content, run before each change.</li>
+</ul>
+<div class="callout"><p>In a SOC, the AI's input is partly written by the adversary. Design as if every log line is trying to give your copilot orders.</p></div>
+<p>The general controls are covered in <a href="/insights/prompt-injection-defence-for-agents/">prompt injection defence for agents</a> and <a href="/insights/evaluating-ai-agents-reliability/">evaluating AI agents</a>.</p>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>SOC analysts</small><ol><li>Define triage questions</li><li class="hl">Rate summaries and proposals</li><li>Approve all actions</li></ol></div>
+<div class="dgm-lane"><small>Detection engineering</small><ol><li>OCSF mappings</li><li>ATT&amp;CK tagging</li><li>Runbook clean-up</li></ol></div>
+<div class="dgm-lane"><small>AI platform</small><ol><li>Copilot and tools</li><li class="hl">Injection-aware evaluation</li><li>Audit and monitoring</li></ol></div>
+</div>
+<figcaption>Analysts judged every output during the pilot; their ratings became the evaluation set.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Data</b><ul><li>Map top sources to OCSF</li><li>Entity resolution</li><li>Runbook inventory</li></ul></div>
+<div><small>Phase 2</small><b>Summarise</b><ul><li>Cited triage summaries</li><li>Shadow mode with analysts</li><li>Evaluation set</li></ul></div>
+<div><small>Phase 3</small><b>Investigate</b><ul><li>Read-only query tools</li><li>Queries shown to analysts</li><li>Injection testing</li></ul></div>
+<div><small>Phase 4</small><b>Respond</b><ul><li>Action proposals</li><li>Approval workflow</li><li>Incident record integration</li></ul></div>
+</div>
+<figcaption>Read before write: summaries and investigation proved trustworthy before any action path existed.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Normalise to OCSF first</td><td>Let the model read raw vendor formats</td><td>Consistent answers and reusable queries across sources</td></tr>
+<tr><td>Read-only tools by default</td><td>Give the copilot SOAR access</td><td>Limits the damage from errors or manipulation</td></tr>
+<tr><td>Approval for every action</td><td>Auto-contain high-confidence alerts</td><td>Keeps accountability with analysts while trust is built</td></tr>
+<tr><td>Show generated queries</td><td>Show only the answer</td><td>Analysts can verify reasoning and learn the data</td></tr>
+<tr><td>Map to the IR framework</td><td>Copilot-specific workflow</td><td>Fits existing audits and reporting</td></tr>
+</tbody>
+</table>
+<p>Incident records and handoffs were aligned with NIST SP 800-61 Revision 3, which organises incident response recommendations around the Cybersecurity Framework 2.0 functions<sup class="cite"><a href="#ref-1">1</a></sup>, so the copilot fitted the process auditors already expected. Lessons from incidents fed the approach in <a href="/insights/ai-incident-postmortems/">AI incident postmortems</a>.</p>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: normalise data and build the evaluation set from real incidents before writing prompts. Differently: start runbook clean-up earlier. Many proposals were only as good as the runbooks behind them, and some runbooks were out of date.</p>
+<p>If you're considering AI in security operations, my <a href="/ai-architect/">AI architecture work</a> covers how I approach it, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
