@@ -29,6 +29,8 @@ NAME = "Sumanta Mukhopadhyay"
 TODAY = datetime.date.today().isoformat()
 CASES = []  # filled in main(); used by the footer
 
+AREAS_SERVED = ["United States", "Canada", "United Kingdom", "European Union", "United Arab Emirates", "Saudi Arabia", "Qatar", "India", "Singapore", "Australia", "Worldwide"]
+
 SERVICE_LABELS = {
     "fractional-cto": "Fractional CTO",
     "ai-architect": "AI & LLM architecture",
@@ -93,23 +95,68 @@ MOON = ('<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="cur
         '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>')
 
 
+NAV_POSTS = []  # filled in main(); latest insights for the menu
+SERVICE_BLURBS = {
+    "fractional-cto": "Part-time technology leadership for startups and scale-ups",
+    "ai-architect": "RAG, agents and private LLMs that make it to production",
+    "ontology-knowledge-graph": "Shared meaning for your data, analytics and AI",
+    "healthcare-data-architecture": "FHIR, OMOP and HIPAA-aligned data platforms",
+    "technical-due-diligence": "Independent technology assessment for investors",
+    "uae": "Technology leadership on the ground in the UAE",
+}
+CHEV = '<svg class="chev" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 3.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>'
+SEARCH_BTN = ('<button type="button" class="kbtn" data-search aria-label="Search the site" title="Search (Ctrl K)">'
+              '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>'
+              '<kbd>⌘K</kbd></button>')
+
+
+def nav_item(i, a):
+    return f'<a class="nd-i" href="{a[0]}"><b>{e(a[1])}</b>' + (f'<span>{e(a[2])}</span>' if len(a) > 2 and a[2] else "") + "</a>"
+
+
+def nav_drop(key, label, items, side):
+    return (f'<div class="nd"><button type="button" class="nd-b" aria-expanded="false" aria-controls="nd-{key}">{label}{CHEV}</button>'
+            f'<div class="nd-p" id="nd-{key}"><div class="nd-grid">{"".join(nav_item(i, a) for i, a in enumerate(items))}</div>'
+            f'<div class="nd-side">{side}</div></div></div>')
+
+
 def nav():
+    svc = [(f"/{k}/", v, SERVICE_BLURBS.get(k, "")) for k, v in SERVICE_LABELS.items()]
+    work = [("/case-studies/", "All case studies", f"{len(CASES)} anonymised engagements with architecture and flow diagrams"),
+            ("/case-studies/#use-cases", "Use cases", "Problems I'm brought in to solve, by sector"),
+            ("/case-studies/#snapshots", "Engagement snapshots", "Six common problems, the approach and the stack")]
+    work += [(f"/case-studies/{c['slug']}/", c.get("short") or c["h1"], c.get("sector", "")) for c in CASES[:3]]
+    ins = [("/insights/", "All insights", f"{len(NAV_POSTS)} articles on AI, data, cloud and leadership")]
+    ins += [(f"/insights/{q['slug']}/", q["h1"], "") for q in NAV_POSTS[:5]]
+    about = [("/about/", "About", "Background, credentials and open-source work"),
+             ("/expertise/", "Expertise", "Practice areas, reference architecture and industries"),
+             ("/how-i-work/", "How I work", "Playbook, principles and engagement models"),
+             ("/how-i-work/#faq", "FAQ", "Common questions about working together"),
+             ("/#contact", "Contact", "Book a call or send a message")]
+    side_svc = ('<small>Not sure where to start?</small><p>Answer four questions and get a first diagnosis of your challenge.</p>'
+                '<a class="lnk" href="/#assess">Analyse your challenge →</a>')
+    side_work = ('<small>Confidential by default</small><p>Every case study is an anonymised composite, cited to public sources.</p>'
+                 '<a class="lnk" href="/case-studies/">Browse all →</a>')
+    side_ins = ('<small>New every week</small><p>Explainers, playbooks and analysis of new standards and regulation.</p>'
+                '<a class="lnk" href="/insights/">Read the latest →</a>')
+    side_about = ('<small>Take a break</small><p>Defend production from incoming incidents in Orbital Ops, a free sci-fi browser game.</p>'
+                  '<a class="lnk" href="/play/">Play now →</a>')
     return f"""<div class="progress" id="progress"></div>
-<nav>
+<nav class="topnav">
   <div class="nav-in">
     <a href="/" class="brand">Sumanta<span>.</span></a>
     <div class="nav-links" id="navLinks">
-      <a href="/#practice">Services</a>
-      <a href="/case-studies/">Case studies</a>
-      <a href="/insights/">Insights</a>
-      <a href="/how-i-work/">How I work</a>
-      <a href="/about/">About</a>
-      <a href="/play/">Play</a>
+      {nav_drop("services", "Services", svc, side_svc)}
+      {nav_drop("work", "Work", work, side_work)}
+      {nav_drop("insights", "Insights", ins, side_ins)}
+      {nav_drop("about", "About", about, side_about)}
+      <a class="nd-l" href="/play/">Play <em>new</em></a>
     </div>
     <div class="nav-r">
-      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      {SEARCH_BTN}
       {SOUND}
       <button class="theme" id="themeBtn" aria-label="Toggle colour theme">{MOON}</button>
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
       <a href="{CAL}" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
     </div>
   </div>
@@ -127,7 +174,7 @@ def modal():
     <a class="cm-o" id="cmMailto" href="mailto:{EMAIL}"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
     <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>{EMAIL}</span><i>⧉</i></button>
   </div>
-  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+  <p class="cm-foot">I reply personally within two business days. Time zones from the Americas and Europe to the Middle East and Asia-Pacific.</p>
 </dialog>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>"""
 
@@ -142,7 +189,7 @@ def footer(pages, posts):
       <div class="fc fbrand">
         <a href="/" class="brand">Sumanta<span>.</span></a>
         <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
-        <p class="floc">United States &amp; UAE · working globally</p>
+        <p class="floc">Based in the United States &amp; UAE · working with teams across North America, Europe, the Middle East and Asia-Pacific</p>
       </div>
       <div class="fc"><h4>Services</h4><ul>{svc}</ul></div>
       <div class="fc"><h4>Case studies</h4><ul>{cs}<li><a href="/case-studies/#snapshots">Engagement snapshots</a></li><li><a href="/case-studies/">All case studies →</a></li></ul></div>
@@ -182,7 +229,7 @@ def head(title, desc, keywords, url, og_image, og_type, ld):
 <meta name="author" content="{NAME}" />
 <meta name="robots" content="index, follow, max-image-preview:large" />
 <link rel="canonical" href="{url}" />
-<meta name="theme-color" content="#0a0d17" />
+<meta name="theme-color" content="#09090b" />
 <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
 <link rel="manifest" href="/site.webmanifest" />
@@ -216,8 +263,11 @@ def faq_html(faq):
     </section>"""
 
 
-def related_html(paths, pages_by_slug, posts):
+def related_html(paths, pages_by_slug, posts, tags=()):
     cards = []
+    if tags:  # most shared tags first, newest wins ties (posts are already newest first)
+        tags = set(tags)
+        posts = sorted(posts, key=lambda q: -len(tags & set(q.get("tags", []))))
     for path in paths:
         slug = path.strip("/")
         if slug in pages_by_slug:
@@ -236,6 +286,14 @@ def related_html(paths, pages_by_slug, posts):
       <h2>Related</h2>
       <div class="rgrid">{inner}</div>
     </section>"""
+
+
+AUTHOR_BOX = f"""<aside class="author-box" aria-label="About the author">
+        <div class="ab-av" aria-hidden="true">SM</div>
+        <div><small>About the author</small><b>{NAME}</b>
+        <p>Fractional CTO, principal engineer and AI architect in the United States and UAE. Works across ontology and knowledge graphs, production AI, healthcare data platforms and cloud infrastructure.</p>
+        <div class="ab-l"><a href="/about/">More about me</a><a href="/how-i-work/">How I work</a><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a><a href="{CAL}" target="_blank" rel="noopener">Book a call</a></div></div>
+      </aside>"""
 
 
 def cta_html(subject):
@@ -407,7 +465,7 @@ def page(meta, kind, pages, posts, pages_by_slug, cases=()):
         crumb = [("Home", f"{SITE}/"), (SERVICE_LABELS.get(slug, meta["h1"]), url)]
         main_ld = {"@type": "Service", "name": SERVICE_LABELS.get(slug, meta["h1"]), "description": meta["description"],
                    "provider": person_ref(), "url": url,
-                   "areaServed": ["United States", "United Arab Emirates", "Worldwide"]}
+                   "areaServed": AREAS_SERVED}
         og_type = "website"
         meta_line = ""
     elif kind == "case":
@@ -474,6 +532,7 @@ def page(meta, kind, pages, posts, pages_by_slug, cases=()):
       {body}
       {refs_html(meta.get("citations"))}
       {share_html(url, meta["h1"])}
+      {AUTHOR_BOX}
       <div class="pnav">{pn}</div>
     </article>
     <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol>{toc_html}</ol>
@@ -502,7 +561,7 @@ def page(meta, kind, pages, posts, pages_by_slug, cases=()):
   {body_html}
 
   {faq_html(meta.get('faq'))}
-  {related_html(meta.get('related', []), pages_by_slug, [p for p in posts if p['slug'] != slug])}
+  {related_html(meta.get('related', []), pages_by_slug, [p for p in posts if p['slug'] != slug], meta.get('tags', []))}
   {cta_html(subject)}
 </main>
 
@@ -765,11 +824,11 @@ PLAY_FAQ = [
 
 PLAY_GUIDE = [
     ("latency", "Latency spike", "#ffcf5a", "Fast and fragile. In production, you catch these with service level objectives and error budgets.", "/insights/slos-error-budgets-small-teams/", "SLOs and error budgets"),
-    ("leak", "Memory leak", "#b48cff", "Slow, tough and grows the longer you ignore it. Right-sizing workloads helps.", "/insights/kubernetes-in-place-pod-resize/", "In-place pod resize"),
+    ("leak", "Memory leak", "#8ab8ff", "Slow, tough and grows the longer you ignore it. Right-sizing workloads helps.", "/insights/kubernetes-in-place-pod-resize/", "In-place pod resize"),
     ("drift", "Schema drift", "#5ae0ff", "Zigzags unpredictably, like an upstream schema nobody agreed. Contracts stop it.", "/insights/data-contracts-playbook/", "Data contracts"),
     ("ddos", "Traffic flood", "#ff7a59", "Splits into fragments when hit. Gateways and rate limits keep floods manageable.", "/insights/kubernetes-inference-gateway/", "Inference gateways"),
     ("inject", "Prompt injection", "#ff4f8b", "Homes in on you, the way hostile input targets an AI agent's tools.", "/insights/prompt-injection-defence-for-agents/", "Prompt injection defence"),
-    ("mono", "Legacy monolith", "#7c8bff", "The boss every fifth wave. Heavily armoured and fires back. Decisions, not heroics, retire it.", "/insights/architecture-decision-records-fractional-cto/", "Architecture decision records"),
+    ("mono", "Legacy monolith", "#4c8dff", "The boss every fifth wave. Heavily armoured and fires back. Decisions, not heroics, retire it.", "/insights/architecture-decision-records-fractional-cto/", "Architecture decision records"),
 ]
 
 
@@ -864,6 +923,12 @@ HUB_PAGES = {
 }
 
 
+SECTION_LABELS = {"playbook": "Playbook", "approach": "Principles", "engage": "Engagement models", "connect": "How to connect",
+                  "faq": "FAQ", "practice": "Practice areas", "architecture": "Reference architecture", "scale": "At scale",
+                  "industries": "Industries", "capabilities": "The stack", "languages": "Languages",
+                  "experience": "Experience", "credentials": "Credentials", "now": "Now"}
+
+
 def hub_page(slug, pages, posts):
     m = HUB_PAGES[slug]
     url = f"{SITE}/{slug}/"
@@ -881,7 +946,9 @@ def hub_page(slug, pages, posts):
     if faq:
         graph.append(faq_ld([(html.unescape(q), html.unescape(a)) for q, a in faq]))
     ld = {"@context": "https://schema.org", "@graph": graph}
-    hubs = "".join(f'<a href="/{k}/"{" aria-current=\"page\"" if k == slug else ""}>{e(v["name"])}</a>' for k, v in HUB_PAGES.items())
+    secnav = "".join(f'<a href="#{k}">{SECTION_LABELS.get(k, k.title())}</a>' for k in m["sections"])
+    cur = ' aria-current="page"'
+    hubs = "".join(f'<a href="/{k}/"{cur if k == slug else ""}>{e(v["name"])}</a>' for k, v in HUB_PAGES.items())
     return f"""{head(m["title"], m["description"], [], url, f"{SITE}/assets/og/{slug}.png", "website", ld)}
 <body class="sub hub">
 {nav()}
@@ -894,6 +961,7 @@ def hub_page(slug, pages, posts):
     <p class="sub-lede">{e(m["lede"])}</p>
     <div class="hub-nav" aria-label="More about this practice">{hubs}<a href="/case-studies/">Case studies</a><a href="/play/">Play</a></div>
   </header>
+  <div class="subnav" aria-label="On this page"><div class="subnav-in"><span class="subnav-k">On this page</span>{secnav}</div></div>
 {body}
   {cta_html(m["name"])}
 </main>
@@ -942,7 +1010,7 @@ def update_home(pages, posts, cases=()):
     svc = "".join(
         f'<a class="svc rise" href="/{q["slug"]}/"><b>{e(SERVICE_LABELS.get(q["slug"], q["h1"]))}</b><i>→</i></a>'
         for q in pages)
-    blocks = {"INSIGHTS": f'<div class="posts">{cards}</div>', "SERVICES": f'<div class="svcs">{svc}</div>',
+    blocks = {"NAV": nav(), "INSIGHTS": f'<div class="posts">{cards}</div>', "SERVICES": f'<div class="svcs">{svc}</div>',
               "FOOTER": footer(pages, posts)}
     if cases:
         ccards = "".join(case_card(c, "h3") for c in list(cases)[:4])
@@ -967,6 +1035,7 @@ def main():
     cases = [load(f) for f in sorted((ROOT / "src/case-studies").glob("*.part"))]
     cases.sort(key=sort_key, reverse=True)
     CASES[:] = cases
+    NAV_POSTS[:] = posts
     for m in cases:
         m.setdefault("format", "case-study")
 
@@ -1008,8 +1077,20 @@ def main():
         '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
         + sm + "</urlset>\n")
 
+    idx = [{"t": "Home", "u": "/", "k": "Page", "d": "Fractional CTO, principal engineer and AI architect"}]
+    idx += [{"t": v["name"], "u": f"/{k}/", "k": "Page", "d": v["lede"]} for k, v in HUB_PAGES.items()]
+    idx += [{"t": "Orbital Ops", "u": "/play/", "k": "Game", "d": "Free sci-fi browser game: defend production from incidents"},
+            {"t": "Analyse your challenge", "u": "/#assess", "k": "Tool", "d": "Four questions, a first diagnosis"},
+            {"t": "Case studies", "u": "/case-studies/", "k": "Page", "d": "All case studies"},
+            {"t": "Insights", "u": "/insights/", "k": "Page", "d": "All articles"},
+            {"t": "Book a call", "u": CAL, "k": "Contact", "d": "Free 30-minute introductory call"}]
+    idx += [{"t": SERVICE_LABELS.get(m["slug"], m["h1"]), "u": f"/{m['slug']}/", "k": "Service", "d": m["description"]} for m in pages]
+    idx += [{"t": m["h1"], "u": f"/case-studies/{m['slug']}/", "k": "Case study", "d": m["description"], "g": " ".join(m.get("tags", []))} for m in cases]
+    idx += [{"t": m["h1"], "u": f"/insights/{m['slug']}/", "k": "Insight", "d": m["description"], "g": " ".join(m.get("tags", []))} for m in posts]
+    (ROOT / "assets/search.json").write_text(json.dumps(idx, ensure_ascii=False, separators=(",", ":")))
+
     llms = [f"# {NAME}", "",
-            "> Fractional CTO, principal engineer and AI architect based in the United States and the UAE. "
+            "> Fractional CTO, principal engineer and AI architect based in the United States and the UAE, working with teams across North America, Europe, the Middle East and Asia-Pacific. "
             "Ontology and knowledge graphs, production RAG and agentic AI, private LLMs, healthcare data (FHIR, OMOP, "
             "HIPAA), scalable data platforms (1M+ transactions/day) and multi-cloud infrastructure.", "",
             f"Contact: {EMAIL} · Book a call: {CAL}", "", "## Services"]

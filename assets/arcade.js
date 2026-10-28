@@ -21,12 +21,12 @@
   // incident catalogue: what you shoot, and where to read how to handle it for real
   var TYPES={
     latency:{name:'Latency spike',hp:1,r:13,sp:1.7,pts:100,col:'#ffcf5a',read:['/insights/slos-error-budgets-small-teams/','SLOs and error budgets']},
-    leak:{name:'Memory leak',hp:3,r:16,sp:.8,pts:150,col:'#b48cff',grow:1,read:['/insights/kubernetes-in-place-pod-resize/','In-place pod resize']},
+    leak:{name:'Memory leak',hp:3,r:16,sp:.8,pts:150,col:'#8ab8ff',grow:1,read:['/insights/kubernetes-in-place-pod-resize/','In-place pod resize']},
     drift:{name:'Schema drift',hp:2,r:15,sp:1.1,pts:150,col:'#5ae0ff',zig:1,read:['/insights/data-contracts-playbook/','Data contracts']},
     ddos:{name:'Traffic flood',hp:2,r:18,sp:1,pts:120,col:'#ff7a59',split:1,read:['/insights/kubernetes-inference-gateway/','Inference gateways']},
     shard:{name:'Flood fragment',hp:1,r:8,sp:1.9,pts:40,col:'#ff9f80',read:['/insights/kubernetes-inference-gateway/','Inference gateways']},
     inject:{name:'Prompt injection',hp:2,r:14,sp:1.2,pts:200,col:'#ff4f8b',home:1,read:['/insights/prompt-injection-defence-for-agents/','Prompt injection defence']},
-    mono:{name:'Legacy monolith',hp:40,r:46,sp:.35,pts:2500,col:'#7c8bff',boss:1,read:['/insights/architecture-decision-records-fractional-cto/','Architecture decision records']}
+    mono:{name:'Legacy monolith',hp:40,r:46,sp:.35,pts:2500,col:'#4c8dff',boss:1,read:['/insights/architecture-decision-records-fractional-cto/','Architecture decision records']}
   };
   Object.keys(TYPES).forEach(function(k){TYPES[k].label=TYPES[k].name.toUpperCase();});
   var POWERS=[['autoscale','Autoscale','#7dffb0'],['observe','Observability','#5ae0ff'],['breaker','Circuit breaker','#ffcf5a'],['rollback','Rollback','#ff7ab6']];
@@ -59,7 +59,7 @@
     // background painted once: gradient sky and two nebulae
     bg.width=cv.width;bg.height=cv.height;bgx.setTransform(dpr,0,0,dpr,0,0);
     var g=bgx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#05060f');g.addColorStop(1,'#0c0a1f');bgx.fillStyle=g;bgx.fillRect(0,0,W,H);
-    [[.75,.2,.5,'rgba(120,70,255,.16)'],[.15,.8,.4,'rgba(124,139,255,.12)']].forEach(function(n){
+    [[.75,.2,.5,'rgba(60,110,255,.16)'],[.15,.8,.4,'rgba(76,141,255,.12)']].forEach(function(n){
       var rg=bgx.createRadialGradient(W*n[0],H*n[1],0,W*n[0],H*n[1],W*n[2]);rg.addColorStop(0,n[3]);rg.addColorStop(1,'rgba(0,0,0,0)');bgx.fillStyle=rg;bgx.fillRect(0,0,W,H);});
     // stars in typed arrays (struct of arrays keeps the update loop tight)
     NS=Math.min(500,Math.round(W*H/2600*quality));starX=new Float32Array(NS);starY=new Float32Array(NS);starZ=new Float32Array(NS);
@@ -224,13 +224,13 @@
     if(S.state!=='over'&&!(p.inv>0&&(p.inv|0)%10<5)){var s=U*1.1;cx.drawImage(glow('#5ae0ff'),p.x-30*s,p.y-30*s,60*s,60*s);
       cx.fillStyle='#e9fbff';cx.beginPath();cx.moveTo(p.x,p.y-20*s);cx.lineTo(p.x+13*s,p.y+14*s);cx.lineTo(p.x+4*s,p.y+9*s);cx.lineTo(p.x,p.y+14*s);
       cx.lineTo(p.x-4*s,p.y+9*s);cx.lineTo(p.x-13*s,p.y+14*s);cx.closePath();cx.fill();
-      cx.fillStyle='#7c8bff';cx.beginPath();cx.arc(p.x,p.y-2*s,3.2*s,0,TAU);cx.fill();
+      cx.fillStyle='#4c8dff';cx.beginPath();cx.arc(p.x,p.y-2*s,3.2*s,0,TAU);cx.fill();
       if(p.shield){cx.strokeStyle='rgba(255,207,90,.8)';cx.lineWidth=2;cx.beginPath();cx.arc(p.x,p.y,26*s,0,TAU);cx.stroke();}}
     if(S.slow>0){cx.fillStyle='rgba(90,224,255,.06)';cx.fillRect(0,0,W,H);}
-    for(i=0;i<texts.n;i++){var x=texts.a[i];cx.globalAlpha=x.life>30?1:x.life/30;cx.fillStyle=x.big?'#fff':'#e3e7ff';
+    for(i=0;i<texts.n;i++){var x=texts.a[i];cx.globalAlpha=x.life>30?1:x.life/30;cx.fillStyle=x.big?'#fff':'#e0ecff';
       cx.font=x.big?'500 '+Math.round(26*U+6)+'px Newsreader,Georgia,serif':'600 '+Math.round(10*U+3)+'px '+MONO;cx.fillText(x.s,x.x,x.y);}cx.globalAlpha=1;
     if(S.state==='title'){var tt=S.t*.03;cx.strokeStyle='rgba(90,224,255,.35)';cx.lineWidth=1.5;cx.beginPath();cx.ellipse(W/2,H*.62,90*U,26*U,0,0,TAU);cx.stroke();
-      cx.fillStyle='#7c8bff';cx.beginPath();cx.arc(W/2+Math.cos(tt)*90*U,H*.62+Math.sin(tt)*26*U,5*U,0,TAU);cx.fill();}}
+      cx.fillStyle='#4c8dff';cx.beginPath();cx.arc(W/2+Math.cos(tt)*90*U,H*.62+Math.sin(tt)*26*U,5*U,0,TAU);cx.fill();}}
 
   // adaptive quality: if the average frame is slow, drop the pixel ratio and particle budget once
   var acc=0,frames=0,downgraded=false;

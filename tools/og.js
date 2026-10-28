@@ -22,17 +22,17 @@ for (const dir of ['src/pages', 'src/insights', 'src/case-studies']) {
 const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
 const tpl = it => `<!doctype html><html><head><meta charset="utf-8">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500&family=IBM+Plex+Mono&display=swap" rel="stylesheet">
-<style>*{margin:0;box-sizing:border-box}body{width:1200px;height:630px;background:#0a0d17;color:#e8ecf6;font-family:Newsreader,Georgia,serif;position:relative;overflow:hidden}
-.k{position:absolute;left:80px;top:84px;font:500 20px "IBM Plex Mono",monospace;letter-spacing:.16em;text-transform:uppercase;color:#7c8bff;display:flex;gap:16px;align-items:center}
-.k:before{content:"";width:44px;height:2px;background:#7c8bff}
+<style>*{margin:0;box-sizing:border-box}body{width:1200px;height:630px;background:#09090b;color:#fafafa;font-family:Newsreader,Georgia,serif;position:relative;overflow:hidden}
+.k{position:absolute;left:80px;top:84px;font:500 20px "IBM Plex Mono",monospace;letter-spacing:.16em;text-transform:uppercase;color:#4c8dff;display:flex;gap:16px;align-items:center}
+.k:before{content:"";width:44px;height:2px;background:#4c8dff}
 h1{position:absolute;left:80px;right:300px;top:150px;font-weight:450;font-size:${it.h1.length > 60 ? 62 : 74}px;line-height:1.04;letter-spacing:-.02em}
-.f{position:absolute;left:80px;right:80px;bottom:64px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid rgba(232,236,246,.18);padding-top:26px;font:22px "IBM Plex Mono",monospace;color:#a6afc6}
-.f b{font:500 30px Newsreader,serif;color:#e8ecf6}.f b span{color:#7c8bff}
+.f{position:absolute;left:80px;right:80px;bottom:64px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid rgba(250,250,250,.18);padding-top:26px;font:22px "IBM Plex Mono",monospace;color:#a1a1aa}
+.f b{font:500 30px Newsreader,serif;color:#fafafa}.f b span{color:#4c8dff}
 svg{position:absolute;right:-40px;top:40px;opacity:.9}</style></head><body>
 <svg width="420" height="420" viewBox="0 0 420 420">${(() => { let s = '', pts = []; let seed = it.slug.length * 7 + 3; const r = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
   for (let i = 0; i < 18; i++) pts.push([40 + r() * 340, 40 + r() * 340, r() < .3]);
-  pts.forEach((a, i) => pts.forEach((b, j) => { if (j > i) { const d = Math.hypot(a[0] - b[0], a[1] - b[1]); if (d < 120) s += `<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="${a[2] || b[2] ? '#7c8bff' : '#e8ecf6'}" stroke-opacity="${(1 - d / 120) * .45}"/>`; } }));
-  pts.forEach(a => s += `<circle cx="${a[0]}" cy="${a[1]}" r="${a[2] ? 5 : 2.6}" fill="${a[2] ? '#7c8bff' : '#e8ecf6'}" fill-opacity="${a[2] ? 1 : .6}"/>`); return s; })()}</svg>
+  pts.forEach((a, i) => pts.forEach((b, j) => { if (j > i) { const d = Math.hypot(a[0] - b[0], a[1] - b[1]); if (d < 120) s += `<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="${a[2] || b[2] ? '#4c8dff' : '#fafafa'}" stroke-opacity="${(1 - d / 120) * .45}"/>`; } }));
+  pts.forEach(a => s += `<circle cx="${a[0]}" cy="${a[1]}" r="${a[2] ? 5 : 2.6}" fill="${a[2] ? '#4c8dff' : '#fafafa'}" fill-opacity="${a[2] ? 1 : .6}"/>`); return s; })()}</svg>
 <div class="k">${esc(it.kicker)}</div><h1>${esc(it.h1)}</h1>
 <div class="f"><b>Sumanta<span>.</span></b><span>asksumanta.com</span></div></body></html>`;
 (async () => {
