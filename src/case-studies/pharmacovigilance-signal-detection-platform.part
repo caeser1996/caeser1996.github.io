@@ -1,0 +1,84 @@
+<!--{"title": "Case study: a pharmacovigilance signal detection and evaluation platform", "description": "How a pharma safety team can combine spontaneous reports, literature and real-world data on OMOP to detect, prioritise and evaluate safety signals with an audit trail.", "short": "Pharmacovigilance signal platform", "h1": "From spreadsheets to an auditable pharmacovigilance signal platform", "kicker": "Case study · Life sciences", "lede": "A drug safety team tracked potential signals across spreadsheets, email and slide decks. Each evaluation meant a bespoke data request and weeks of analysis. The goal was one platform that detects candidate signals, keeps the reasoning auditable and lets the team test them quickly against real-world data.", "date": "2026-10-28", "datetime": "2026-10-28T12:50:00+04:00", "readtime": "9 min read", "sector": "Life sciences · Drug safety", "role": "Principal data architect", "engagement": "Architecture, build and validation", "scope": "Case intake, disproportionality screening, signal tracking, RWD evaluation", "stack": ["Safety database extracts", "MedDRA-coded events", "Disproportionality analysis", "OMOP CDM", "OHDSI HADES", "Signal tracker", "Workflow engine", "Audit trail"], "outcomes": ["One tracked record per signal, from detection to decision, with an audit trail", "Candidate signals screened consistently on a regular schedule", "Real-world data evaluations run from reusable study packages", "Clear separation between signal detection, evaluation and decision"], "tags": ["healthcare", "omop", "data", "governance"], "keywords": ["pharmacovigilance signal detection", "signal management platform", "GVP Module IX", "FAERS analysis", "disproportionality analysis", "real-world evidence safety", "OMOP pharmacovigilance", "self-controlled case series", "drug safety data platform", "healthcare data architect"], "faq": [["What is a safety signal?", "Information suggesting a new potentially causal association, or a new aspect of a known association, between a medicine and an event, that warrants further investigation. Signal management covers detecting, validating, analysing, prioritising and assessing those signals."], ["Can spontaneous reports show how often an adverse event happens?", "No. The FDA notes that counts of reports in FAERS do not establish how often an event occurs and that a report does not mean the product caused the event. Spontaneous reports are for detection; incidence and causality need other data and designs."], ["How does real-world data help evaluate a signal?", "Standardised data such as OMOP lets teams run designed studies, for example self-controlled designs for acute events, with diagnostics and negative controls, to see whether a signal holds up in a population."]], "related": ["/healthcare-data-architecture/", "/ai-architect/", "/technical-due-diligence/"], "citations": [{"title": "Good pharmacovigilance practice Module IX: signal management (presentation)", "url": "https://www.ema.europa.eu/en/documents/presentation/presentation-good-pharmacovigilance-practice-module-ix-signal-management_en.pdf", "publisher": "European Medicines Agency"}, {"title": "FDA Adverse Event Reporting System (FAERS) Public Dashboard: FAQ", "url": "https://fis.fda.gov/extensions/FPD-FAQ/FPD-FAQ.html", "publisher": "US Food and Drug Administration"}, {"title": "Population-level estimation (The Book of OHDSI)", "url": "https://ohdsi.github.io/TheBookOfOhdsi/PopulationLevelEstimation.html", "publisher": "OHDSI"}, {"title": "Method validity (The Book of OHDSI)", "url": "https://ohdsi.github.io/TheBookOfOhdsi/MethodValidity.html", "publisher": "OHDSI"}]}-->
+<h2>The situation</h2>
+<p>A pharmaceutical company's drug safety team handled case processing well; their safety database and regulatory reporting were mature. Signal management was not. Potential signals arrived from periodic report reviews, literature, partners and occasional regulator queries, and were tracked in a spreadsheet. Evaluating one meant a custom data request, an analyst working for weeks, and conclusions summarised in slides that did not record which data or method they came from.</p>
+<p>The head of safety wanted three things: consistent screening, faster evaluation and a record any inspector could follow from first observation to final decision.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>Every signal has one record</strong>, from source to decision, with who did what and why.</li>
+<li><strong>Screening is consistent</strong>: the same methods on the same schedule, not ad hoc queries.</li>
+<li><strong>Detection is not confused with evidence.</strong> Report counts start investigations; they don't conclude them.</li>
+<li><strong>Evaluation is fast and reproducible</strong>, using standardised real-world data and versioned study code.</li>
+<li><strong>Validated where it matters</strong>, with the computerised system controls a regulated safety function expects.</li>
+</ul>
+<p>The EU's good pharmacovigilance practice guidance on signal management frames the lifecycle the platform needed to support, and EMA presentations on it emphasise that marketing authorisation holders should keep an audit trail of their signal management activities<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Sources</small><div class="dgm-nodes"><span>Safety database<em>individual case reports</em></span><span>Public reports<em>e.g. FAERS</em></span><span>Literature<em>screened articles</em></span><span>Real-world data<em>claims and EHR</em></span></div></div>
+<div class="dgm-tier"><small>Standardise</small><div class="dgm-nodes"><span>Coded events<em>MedDRA terms</em></span><span>Product mapping<em>ingredients, brands</em></span><span class="hl">OMOP CDM<em>RWD partners</em></span></div></div>
+<div class="dgm-tier"><small>Detect</small><div class="dgm-nodes"><span class="hl">Disproportionality screen<em>scheduled runs</em></span><span>Change detection<em>new or rising pairs</em></span><span>Literature triage<em>flagged articles</em></span></div></div>
+<div class="dgm-tier"><small>Manage</small><div class="dgm-nodes"><span class="hl">Signal tracker<em>one record per signal</em></span><span>Workflow<em>validate, prioritise, assess</em></span><span>Audit trail<em>every action and version</em></span></div></div>
+<div class="dgm-tier"><small>Evaluate</small><div class="dgm-nodes"><span>Study packages<em>HADES, versioned</em></span><span>Diagnostics<em>negative controls</em></span><span>Assessment report<em>linked to data and code</em></span></div></div>
+</div>
+<figcaption>Detection, management and evaluation are separate layers, so a statistical flag never becomes a conclusion by accident.</figcaption>
+</figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Ingest</b><span>Case extracts, public reports and literature flags loaded on schedule</span></li>
+<li><b>Screen</b><span>Disproportionality and change detection for product and event pairs</span></li>
+<li class="hl"><b>Validate</b><span>Safety physician reviews cases behind each flag and opens or closes a signal</span></li>
+<li><b>Prioritise</b><span>Seriousness, novelty and public health impact recorded with reasons</span></li>
+<li class="hl"><b>Evaluate</b><span>Study package run on OMOP data with diagnostics</span></li>
+<li><b>Decide</b><span>Assessment and action recorded, linked to the evidence used</span></li>
+</ol>
+<figcaption>Each step leaves a record, so the path from first flag to final decision can be replayed.</figcaption>
+</figure>
+
+<h2>The hard part: not over-reading spontaneous reports</h2>
+<p>Spontaneous reports are the backbone of signal detection and also easy to misuse. The FDA states plainly that a report does not mean the product caused the event, that report counts cannot establish how often an event occurs, and that reports can be duplicated, incomplete or stimulated by publicity<sup class="cite"><a href="#ref-2">2</a></sup>. The platform's design reflected that:</p>
+<ul>
+<li>Disproportionality scores were labelled as screening statistics, never as risk estimates, everywhere they appeared.</li>
+<li>Every flag required case-level review by a safety physician before becoming a validated signal.</li>
+<li>Evaluation used designed studies on population data, not more report counting.</li>
+</ul>
+<p>For evaluation, self-controlled designs suited many acute safety questions because they compare time periods within the same people, removing confounding by stable characteristics<sup class="cite"><a href="#ref-3">3</a></sup>. Negative control outcomes and empirical calibration showed whether residual bias could explain a result<sup class="cite"><a href="#ref-4">4</a></sup>. The designs are compared in <a href="/insights/real-world-evidence-study-designs-omop/">real-world evidence study designs</a>.</p>
+<div class="callout"><p>A signal platform's most important feature is the line it draws between "worth investigating" and "evidence of harm". Blur that line and you get both false alarms and false reassurance.</p></div>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Safety physicians</small><ol><li>Define screening scope</li><li class="hl">Validate and assess signals</li><li>Record decisions</li></ol></div>
+<div class="dgm-lane"><small>Epidemiology</small><ol><li>Design study templates</li><li class="hl">Run evaluations on OMOP</li><li>Interpret diagnostics</li></ol></div>
+<div class="dgm-lane"><small>Data platform</small><ol><li>Ingest and standardise</li><li>Scheduled screening</li><li>Validation and audit</li></ol></div>
+</div>
+<figcaption>Clinical judgement stays with safety physicians; the platform makes their work faster and traceable.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Tracker</b><ul><li>One record per signal</li><li>Workflow and audit</li><li>Migrate open signals</li></ul></div>
+<div><small>Phase 2</small><b>Screening</b><ul><li>Scheduled disproportionality</li><li>Change detection</li><li>Review queues</li></ul></div>
+<div><small>Phase 3</small><b>Evaluation</b><ul><li>OMOP data partners</li><li>Study templates</li><li>Negative controls</li></ul></div>
+<div><small>Phase 4</small><b>Validate</b><ul><li>System validation</li><li>SOP updates</li><li>Inspection readiness</li></ul></div>
+</div>
+<figcaption>The tracker came first because it fixed the audit problem immediately, before any new analytics existed.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Tracker before analytics</td><td>Start with detection algorithms</td><td>Audit trail and consistency were the biggest gaps</td></tr>
+<tr><td>Physician validation of every flag</td><td>Auto-open signals above a threshold</td><td>Screening statistics are not evidence of harm</td></tr>
+<tr><td>OMOP for evaluation data</td><td>Bespoke extracts per question</td><td>Reusable study packages across data partners</td></tr>
+<tr><td>Negative controls by default</td><td>Report estimates alone</td><td>Shows when bias could explain a result</td></tr>
+<tr><td>Separate detection and evaluation layers</td><td>One combined risk score</td><td>Keeps the reasoning legible to inspectors</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: fix the record-keeping first, then add analytics. Differently: agree data access with real-world data partners at the start. Contracts and governance for external data take longer than building the screening pipeline, and evaluations wait on them. The data side is described in <a href="/insights/federated-health-analytics-ohdsi/">federated health analytics</a> and <a href="/insights/omop-data-quality-checks/">OMOP data quality checks</a>.</p>
+<p>If your safety, evidence or medical teams need a platform like this, the <a href="/healthcare-data-architecture/">healthcare data architecture</a> page describes how I approach it, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
