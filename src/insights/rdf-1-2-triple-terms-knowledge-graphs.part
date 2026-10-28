@@ -1,0 +1,50 @@
+<!--{"title": "RDF 1.2 explained: statements about statements in knowledge graphs", "description": "RDF 1.2 adds triple terms and a standard way to describe statements: provenance, confidence and time on any fact. What changed, how it compares with property graphs, and when to adopt.", "h1": "RDF 1.2 explained: how triple terms let knowledge graphs describe their own statements", "kicker": "Ontology · Knowledge graphs", "lede": "Enterprise knowledge graphs constantly need to say things about facts: where a fact came from, when it was true, how confident a model was when it extracted it. RDF has always made that awkward. RDF 1.2 makes it a first-class feature, and narrows one of the big gaps with property graphs.", "date": "2026-10-29", "datetime": "2026-10-29T00:20:00+04:00", "readtime": "7 min read", "format": "explainer", "tags": ["ontology", "knowledge-graph", "data", "architecture"], "keywords": ["RDF 1.2", "triple terms", "RDF reification", "RDF-star", "SPARQL 1.2", "statement-level metadata", "provenance knowledge graph", "property graph vs RDF", "GQL ISO 39075", "ontology consultant"], "faq": [["What is new in RDF 1.2?", "RDF 1.2 adds triple terms: an RDF triple that can itself be used as a term in another triple. Statements about statements are made through a reifying triple whose predicate is rdf:reifies and whose object is a triple term. This standardises work that began as RDF-star."], ["Is RDF 1.2 a W3C Recommendation?", "RDF 1.2 Concepts reached Candidate Recommendation in April 2026, the stage before Recommendation. Check the W3C technical reports index for its current status before depending on it in production."], ["Does RDF 1.2 make RDF the same as a property graph?", "No, but it closes a practical gap. Property graphs attach properties to edges natively; RDF 1.2 gives RDF a standard way to attach metadata to individual statements. The data models, query languages and tooling still differ."]], "related": ["/ontology-knowledge-graph/", "/ai-architect/", "/fractional-cto/"], "citations": [{"title": "RDF 1.2 Concepts and Abstract Data Model", "url": "https://www.w3.org/TR/rdf12-concepts/", "publisher": "W3C"}, {"title": "RDF 1.2 Concepts and Abstract Data Model (Candidate Recommendation snapshot)", "url": "https://www.w3.org/TR/2026/CR-rdf12-concepts-20260407/", "publisher": "W3C", "date": "7 Apr 2026"}, {"title": "SPARQL 1.2 Query Language", "url": "https://www.w3.org/TR/sparql12-query/", "publisher": "W3C"}, {"title": "RDF-star and SPARQL-star (Community Group report)", "url": "https://w3c.github.io/rdf-star/cg-spec/", "publisher": "W3C RDF-DEV Community Group"}, {"title": "ISO/IEC 39075:2024 Information technology: Database languages: GQL", "url": "https://www.iso.org/standard/76120.html", "publisher": "ISO"}]}-->
+<p>Most real knowledge graph questions are not just "is this true?" but "according to whom, since when, and how sure are we?". A supplier relationship came from a contract system; a diagnosis came from a coded record; a link between two companies was extracted by a language model with some confidence. In classic RDF, attaching that context to a single fact meant reification patterns that were verbose, inconsistent between teams and awkward to query.</p>
+
+<section class="block">
+<h2>What RDF 1.2 adds</h2>
+<p>RDF 1.2 introduces <strong>triple terms</strong>: an RDF triple that can itself appear as a term inside another triple<sup class="cite"><a href="#ref-1">1</a></sup>. To say something about a statement, you use a <strong>reifying triple</strong>, whose predicate is <code>rdf:reifies</code> and whose object is the triple term; the reifier then carries whatever metadata you need<sup class="cite"><a href="#ref-1">1</a></sup>. This standardises ideas first explored in the RDF-star community work<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+<p>In Turtle 1.2's annotation syntax, a fact and its metadata can be written together, along these lines:</p>
+<pre><code>:acme :supplies :globex {| :source :contractSystem ;
+                           :since "2024-03-01"^^xsd:date ;
+                           :confidence 0.92 |} .</code></pre>
+<p>The base fact remains an ordinary triple that existing queries can use, while the annotation hangs off a reifier that refers to it.</p>
+<p>The RDF 1.2 Concepts specification reached Candidate Recommendation on 7 April 2026<sup class="cite"><a href="#ref-2">2</a></sup>, part of a wider set of RDF 1.2 and SPARQL 1.2 specifications from the working group. SPARQL 1.2 adds the matching query support<sup class="cite"><a href="#ref-3">3</a></sup>. Check the current W3C status before committing production systems to it.</p>
+</section>
+
+<section class="block">
+<h2>Why it matters for enterprise graphs</h2>
+<table class="tbl">
+<thead><tr><th>Need</th><th>Before RDF 1.2</th><th>With RDF 1.2</th></tr></thead>
+<tbody>
+<tr><td>Provenance per fact</td><td>Named graphs or custom reification patterns</td><td>Standard reifier with source metadata</td></tr>
+<tr><td>Time validity</td><td>Extra intermediate nodes</td><td>Annotations on the statement itself</td></tr>
+<tr><td>AI-extracted facts with confidence</td><td>Separate staging graphs</td><td>Confidence and model version on each fact</td></tr>
+<tr><td>Interchange between tools</td><td>Vendor-specific RDF-star variants</td><td>One standard model and syntax</td></tr>
+</tbody>
+</table>
+<p>The AI case is the most pressing. When a model extracts relationships from documents for <a href="/insights/graphrag-when-it-beats-vector-rag/">GraphRAG</a> or <a href="/insights/entity-resolution-knowledge-graphs/">entity resolution</a>, every new edge should carry where it came from, which model produced it and how confident it was, so curators can review and agents can weigh it.</p>
+<div class="callout"><p>A fact without provenance is a liability in an enterprise graph. RDF 1.2 makes the responsible way to store facts also the standard way.</p></div>
+</section>
+
+<section class="block">
+<h2>RDF 1.2 and property graphs</h2>
+<p>Property graph databases have always allowed properties on edges, and they now have an international query language standard, ISO/IEC 39075 GQL<sup class="cite"><a href="#ref-5">5</a></sup>. Edge properties were one of the main reasons teams chose property graphs over RDF. RDF 1.2 narrows that gap with statement-level metadata, while RDF keeps its strengths: global identifiers, ontologies and validation with <a href="/insights/shacl-validation-knowledge-graphs/">SHACL</a>, and taxonomies in <a href="/insights/skos-vs-owl-enterprise-taxonomies/">SKOS</a>.</p>
+<p>The choice is still about workload and ecosystem, as discussed in <a href="/insights/ontology-vs-knowledge-graph-vs-semantic-layer/">ontology vs knowledge graph vs semantic layer</a>. What changes is that "we need properties on relationships" is no longer a reason on its own to leave RDF.</p>
+</section>
+
+<section class="block">
+<h2>How I'd adopt it</h2>
+<ol>
+<li><strong>Check tool support.</strong> Triple stores, parsers and SHACL engines adopt new specifications at different speeds; test the features you need in your own stack.</li>
+<li><strong>Define a provenance vocabulary</strong> before modelling: source system, extraction method, model version, confidence, validity period.</li>
+<li><strong>Annotate new facts first</strong>, especially AI-extracted ones, rather than migrating everything at once.</li>
+<li><strong>Keep base triples queryable</strong>, so existing applications keep working while new ones use annotations.</li>
+<li><strong>Write shapes for annotations</strong>, so required provenance is validated, not just encouraged.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I design ontology and knowledge graph programmes where every fact can be traced and trusted, including graphs that AI systems both read from and write to. See <a href="/ontology-knowledge-graph/">ontology and knowledge graphs</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
