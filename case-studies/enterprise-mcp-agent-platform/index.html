@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Case study: an enterprise MCP platform for governed AI agents</title>
+<meta name="description" content="How an enterprise can move from ad hoc MCP servers on laptops to a governed agent platform: a private registry, central identity, scoped tokens, gateways and audit." />
+<meta name="keywords" content="enterprise MCP platform, MCP registry enterprise, MCP gateway, MCP security, AI agent governance, token passthrough MCP, MCP authorization, agent platform architecture, MCP case study, AI architect" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://asksumanta.com/case-studies/enterprise-mcp-agent-platform/" />
+<meta name="theme-color" content="#111214" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="Case study: an enterprise MCP platform for governed AI agents" />
+<meta property="og:description" content="How an enterprise can move from ad hoc MCP servers on laptops to a governed agent platform: a private registry, central identity, scoped tokens, gateways and audit." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://asksumanta.com/case-studies/enterprise-mcp-agent-platform/" />
+<meta property="og:image" content="https://asksumanta.com/assets/og/enterprise-mcp-agent-platform.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Case study: an enterprise MCP platform for governed AI agents" />
+<meta name="twitter:description" content="How an enterprise can move from ad hoc MCP servers on laptops to a governed agent platform: a private registry, central identity, scoped tokens, gateways and audit." />
+<meta name="twitter:image" content="https://asksumanta.com/assets/og/enterprise-mcp-agent-platform.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "Article", "headline": "From MCP servers on laptops to a governed enterprise agent platform", "description": "How an enterprise can move from ad hoc MCP servers on laptops to a governed agent platform: a private registry, central identity, scoped tokens, gateways and audit.", "articleSection": "Case study", "about": "Enterprise · Software and services", "datePublished": "2026-10-28T05:20:00+04:00", "dateModified": "2026-10-28T05:20:00+04:00", "citation": [{"@type": "CreativeWork", "name": "Security best practices", "url": "https://modelcontextprotocol.io/docs/2026-07-28/tutorials/security/security_best_practices"}, {"@type": "CreativeWork", "name": "Authorization: security considerations", "url": "https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization/security-considerations"}, {"@type": "CreativeWork", "name": "The MCP Registry", "url": "https://modelcontextprotocol.io/registry/about"}, {"@type": "CreativeWork", "name": "Authorization extensions overview", "url": "https://modelcontextprotocol.io/extensions/auth/overview"}, {"@type": "CreativeWork", "name": "OWASP Top 10 for LLM Applications", "url": "https://genai.owasp.org/llm-top-10/"}], "author": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "publisher": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "mainEntityOfPage": "https://asksumanta.com/case-studies/enterprise-mcp-agent-platform/", "image": "https://asksumanta.com/assets/og/enterprise-mcp-agent-platform.png", "keywords": "enterprise MCP platform, MCP registry enterprise, MCP gateway, MCP security, AI agent governance, token passthrough MCP, MCP authorization, agent platform architecture, MCP case study, AI architect", "wordCount": 997}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://asksumanta.com/"}, {"@type": "ListItem", "position": 2, "name": "Case studies", "item": "https://asksumanta.com/case-studies/"}, {"@type": "ListItem", "position": 3, "name": "From MCP servers on laptops to a governed enterprise agent platform", "item": "https://asksumanta.com/case-studies/enterprise-mcp-agent-platform/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Why not just let teams install any MCP server?", "acceptedAnswer": {"@type": "Answer", "text": "MCP servers can read data and take actions with the user's access. Unreviewed servers, broad tokens and no audit trail turn a productivity tool into an unmanaged integration layer. A registry and gateway keep the convenience while adding control."}}, {"@type": "Question", "name": "What is token passthrough and why is it forbidden?", "acceptedAnswer": {"@type": "Answer", "text": "It is when an MCP server accepts a token not issued for it and forwards it to a downstream API. The MCP security guidance describes it as an anti-pattern that breaks OAuth security boundaries, and the authorisation specification forbids it."}}, {"@type": "Question", "name": "Does a private registry replace security review?", "acceptedAnswer": {"@type": "Answer", "text": "No. The registry is where approved servers are listed and discovered. Review, version pinning and policy decide what gets listed; the registry makes the decision visible and enforceable."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+</script>
+</head>
+<body class="sub is-post is-case">
+<div class="progress" id="progress"></div>
+<nav>
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="/#practice">Services</a>
+      <a href="/case-studies/">Case studies</a>
+      <a href="/insights/">Insights</a>
+      <a href="/#assess">Analyse</a>
+      <a href="/#connect">Connect</a>
+    </div>
+    <div class="nav-r">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/case-studies/">Case studies</a> <span>/</span> <em>From MCP servers on laptops to a governed enterprise agent platform</em></div>
+    <div class="kicker">Case study · AI agents</div>
+    <h1>From MCP servers on laptops to a governed enterprise agent platform</h1>
+    <p class="sub-lede">Engineers had connected assistants to dozens of MCP servers, some internal, some from the internet, most with broad tokens. Security wanted to stop it; product teams wanted more of it. The goal was a platform that made the approved path the easiest one.</p>
+    <div class="ameta"><span class="fmt">Case study</span><span>Enterprise · Software and services</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-10-28T05:20:00+04:00">28 Oct 2026 · 05:20 GST</time><span>9 min read</span></div><div class="atags"><span class="tagp">#ai</span><span class="tagp">#agents</span><span class="tagp">#mcp</span><span class="tagp">#security</span><span class="tagp">#platform</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Case study cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><line x1="1107" y1="100" x2="1097" y2="60" class="cv-edge" opacity="0.72"/><line x1="1107" y1="100" x2="1138" y2="218" class="cv-edge hl" opacity="0.19"/><line x1="1107" y1="100" x2="1014" y2="181" class="cv-edge hl" opacity="0.18"/><line x1="909" y1="242" x2="1041" y2="252" class="cv-edge" opacity="0.11"/><line x1="909" y1="242" x2="902" y2="169" class="cv-edge" opacity="0.52"/><line x1="909" y1="242" x2="1014" y2="181" class="cv-edge hl" opacity="0.19"/><line x1="909" y1="242" x2="975" y2="375" class="cv-edge hl" opacity="0.01"/><line x1="909" y1="242" x2="953" y2="186" class="cv-edge hl" opacity="0.53"/><line x1="909" y1="242" x2="958" y2="345" class="cv-edge" opacity="0.24"/><line x1="909" y1="242" x2="878" y2="273" class="cv-edge" opacity="0.71"/><line x1="909" y1="242" x2="950" y2="173" class="cv-edge" opacity="0.47"/><line x1="798" y1="122" x2="802" y2="37" class="cv-edge" opacity="0.43"/><line x1="798" y1="122" x2="902" y2="169" class="cv-edge" opacity="0.24"/><line x1="798" y1="122" x2="672" y2="181" class="cv-edge" opacity="0.08"/><line x1="798" y1="122" x2="687" y2="198" class="cv-edge" opacity="0.10"/><line x1="798" y1="122" x2="724" y2="82" class="cv-edge" opacity="0.44"/><line x1="1041" y1="252" x2="1138" y2="218" class="cv-edge hl" opacity="0.31"/><line x1="1041" y1="252" x2="1014" y2="181" class="cv-edge hl" opacity="0.49"/><line x1="1041" y1="252" x2="1084" y2="304" class="cv-edge" opacity="0.55"/><line x1="1041" y1="252" x2="975" y2="375" class="cv-edge hl" opacity="0.07"/><line x1="1041" y1="252" x2="953" y2="186" class="cv-edge hl" opacity="0.26"/><line x1="1041" y1="252" x2="958" y2="345" class="cv-edge" opacity="0.17"/><line x1="1041" y1="252" x2="950" y2="173" class="cv-edge" opacity="0.19"/><line x1="625" y1="61" x2="648" y2="144" class="cv-edge" opacity="0.43"/><line x1="625" y1="61" x2="672" y2="181" class="cv-edge" opacity="0.14"/><line x1="625" y1="61" x2="687" y2="198" class="cv-edge" opacity="0.00"/><line x1="625" y1="61" x2="724" y2="82" class="cv-edge" opacity="0.33"/><line x1="1097" y1="60" x2="1014" y2="181" class="cv-edge hl" opacity="0.02"/><line x1="802" y1="37" x2="724" y2="82" class="cv-edge" opacity="0.40"/><line x1="648" y1="144" x2="645" y2="246" class="cv-edge" opacity="0.32"/><line x1="648" y1="144" x2="672" y2="181" class="cv-edge" opacity="0.70"/><line x1="648" y1="144" x2="608" y2="217" class="cv-edge" opacity="0.44"/><line x1="648" y1="144" x2="687" y2="198" class="cv-edge" opacity="0.56"/><line x1="648" y1="144" x2="724" y2="82" class="cv-edge" opacity="0.35"/><line x1="902" y1="169" x2="1014" y2="181" class="cv-edge hl" opacity="0.25"/><line x1="902" y1="169" x2="953" y2="186" class="cv-edge hl" opacity="0.64"/><line x1="902" y1="169" x2="878" y2="273" class="cv-edge" opacity="0.29"/><line x1="902" y1="169" x2="950" y2="173" class="cv-edge" opacity="0.68"/><line x1="550" y1="264" x2="645" y2="246" class="cv-edge hl" opacity="0.35"/><line x1="550" y1="264" x2="672" y2="181" class="cv-edge hl" opacity="0.01"/><line x1="550" y1="264" x2="608" y2="217" class="cv-edge hl" opacity="0.50"/><line x1="1138" y1="218" x2="1014" y2="181" class="cv-edge hl" opacity="0.14"/><line x1="1138" y1="218" x2="1084" y2="304" class="cv-edge hl" opacity="0.32"/><line x1="1014" y1="181" x2="1084" y2="304" class="cv-edge hl" opacity="0.06"/><line x1="1014" y1="181" x2="953" y2="186" class="cv-edge hl" opacity="0.59"/><line x1="1014" y1="181" x2="950" y2="173" class="cv-edge hl" opacity="0.57"/><line x1="1084" y1="304" x2="975" y2="375" class="cv-edge hl" opacity="0.13"/><line x1="1084" y1="304" x2="958" y2="345" class="cv-edge" opacity="0.11"/><line x1="975" y1="375" x2="958" y2="345" class="cv-edge hl" opacity="0.77"/><line x1="975" y1="375" x2="878" y2="273" class="cv-edge hl" opacity="0.06"/><line x1="975" y1="375" x2="848" y2="388" class="cv-edge hl" opacity="0.15"/><line x1="975" y1="375" x2="827" y2="389" class="cv-edge hl" opacity="0.01"/><line x1="953" y1="186" x2="878" y2="273" class="cv-edge hl" opacity="0.23"/><line x1="953" y1="186" x2="950" y2="173" class="cv-edge hl" opacity="0.91"/><line x1="645" y1="246" x2="672" y2="181" class="cv-edge" opacity="0.53"/><line x1="645" y1="246" x2="608" y2="217" class="cv-edge" opacity="0.69"/><line x1="645" y1="246" x2="687" y2="198" class="cv-edge" opacity="0.57"/><line x1="645" y1="246" x2="689" y2="335" class="cv-edge" opacity="0.34"/><line x1="958" y1="345" x2="878" y2="273" class="cv-edge" opacity="0.28"/><line x1="958" y1="345" x2="848" y2="388" class="cv-edge" opacity="0.21"/><line x1="958" y1="345" x2="827" y2="389" class="cv-edge" opacity="0.08"/><line x1="878" y1="273" x2="950" y2="173" class="cv-edge" opacity="0.18"/><line x1="878" y1="273" x2="848" y2="388" class="cv-edge" opacity="0.21"/><line x1="878" y1="273" x2="827" y2="389" class="cv-edge" opacity="0.16"/><line x1="672" y1="181" x2="608" y2="217" class="cv-edge" opacity="0.50"/><line x1="672" y1="181" x2="687" y2="198" class="cv-edge" opacity="0.85"/><line x1="672" y1="181" x2="724" y2="82" class="cv-edge" opacity="0.26"/><line x1="608" y1="217" x2="687" y2="198" class="cv-edge" opacity="0.46"/><line x1="608" y1="217" x2="689" y2="335" class="cv-edge" opacity="0.05"/><line x1="687" y1="198" x2="724" y2="82" class="cv-edge" opacity="0.19"/><line x1="687" y1="198" x2="689" y2="335" class="cv-edge" opacity="0.08"/><line x1="689" y1="335" x2="827" y2="389" class="cv-edge" opacity="0.01"/><line x1="848" y1="388" x2="827" y2="389" class="cv-edge" opacity="0.86"/><circle cx="1107" cy="100" r="3" class="cv-dot"/><circle cx="909" cy="242" r="3" class="cv-dot"/><circle cx="798" cy="122" r="3" class="cv-dot"/><circle cx="1041" cy="252" r="3" class="cv-dot"/><circle cx="625" cy="61" r="3" class="cv-dot"/><circle cx="1097" cy="60" r="3" class="cv-dot"/><circle cx="802" cy="37" r="3" class="cv-dot"/><circle cx="648" cy="144" r="3" class="cv-dot"/><circle cx="902" cy="169" r="3" class="cv-dot"/><circle cx="550" cy="264" r="6" class="cv-dot hl"/><circle cx="1138" cy="218" r="6" class="cv-dot hl"/><circle cx="1014" cy="181" r="6" class="cv-dot hl"/><circle cx="1084" cy="304" r="3" class="cv-dot"/><circle cx="975" cy="375" r="6" class="cv-dot hl"/><circle cx="953" cy="186" r="6" class="cv-dot hl"/><circle cx="645" cy="246" r="3" class="cv-dot"/><circle cx="958" cy="345" r="3" class="cv-dot"/><circle cx="878" cy="273" r="3" class="cv-dot"/><circle cx="672" cy="181" r="3" class="cv-dot"/><circle cx="608" cy="217" r="3" class="cv-dot"/><circle cx="950" cy="173" r="3" class="cv-dot"/><circle cx="687" cy="198" r="3" class="cv-dot"/><circle cx="724" cy="82" r="3" class="cv-dot"/><circle cx="689" cy="335" r="3" class="cv-dot"/><circle cx="848" cy="388" r="3" class="cv-dot"/><circle cx="827" cy="389" r="3" class="cv-dot"/><text x="60" y="90" class="cv-k">CASE STUDY · CASE STUDY · AI AGENTS</text><text x="60" y="350" class="cv-n">28 Oct 2026 · 05:20 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <section class="glance rise" aria-label="At a glance"><div class="kicker">At a glance</div><div class="glance-grid"><div><small>Sector</small><b>Enterprise · Software and services</b></div><div><small>My role</small><b>AI architect</b></div><div><small>Engagement</small><b>Platform design, build and hand-off</b></div><div><small>Scope</small><b>Registry, identity, gateway, server standards, audit</b></div></div><div class="glance-out"><small>What changed</small><ul><li>One catalogue of approved MCP servers that clients discover automatically</li><li>No shared or long-lived tokens: access goes through the identity provider with narrow scopes</li><li>Every tool call attributable to a user, an agent and a server version</li><li>A paved road that lets teams publish new internal servers without a security exception</li></ul></div><div class="cs-stack"><span class="tag">Model Context Protocol</span><span class="tag">Private MCP registry</span><span class="tag">OAuth 2.1</span><span class="tag">Identity provider</span><span class="tag">MCP gateway</span><span class="tag">Policy as code</span><span class="tag">OpenTelemetry</span><span class="tag">Kubernetes</span></div><p class="glance-note">Anonymised composite. Client names, identifying details and confidential figures are withheld; public facts are cited in the references.</p></section><h2 id="the-situation">The situation</h2>
+<p>An organisation had embraced AI assistants faster than it had governed them. Developers connected IDE assistants to MCP servers for the code host, the ticketing system and the data warehouse. Some servers were built internally in an afternoon; others were installed from public repositories. Many used personal access tokens with wide permissions, stored in local configuration files. Nobody could say which servers were in use, who had approved them, or what they had done.</p>
+<p>Security's first instinct was to block MCP outright. Leadership's instinct was the opposite: agents were becoming central to engineering and operations, and a ban would simply push usage further out of sight.</p>
+
+<h2 id="what-had-to-be-true">What had to be true</h2>
+<ul>
+<li><strong>One place to find approved servers</strong>, discoverable by the clients people already use.</li>
+<li><strong>No long-lived shared tokens.</strong> Access flows through the identity provider, per user, with the narrowest scopes that work.</li>
+<li><strong>Every tool call is attributable</strong> to a person, an agent, a server and a version.</li>
+<li><strong>Writes and destructive actions need explicit, visible consent.</strong></li>
+<li><strong>Publishing a new internal server is easy</strong> if it follows the standard; exceptions are rare and visible.</li>
+</ul>
+
+<h2 id="architecture">Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Clients</small><div class="dgm-nodes"><span>IDE assistants<em>developer tools</em></span><span>Chat assistants<em>knowledge work</em></span><span>Agent runtime<em>background jobs</em></span></div></div>
+<div class="dgm-tier"><small>Discover</small><div class="dgm-nodes"><span class="hl">Private MCP registry<em>approved, pinned versions</em></span><span>Server metadata<em>owner, data class, scopes</em></span></div></div>
+<div class="dgm-tier"><small>Control</small><div class="dgm-nodes"><span class="hl">MCP gateway<em>authn, policy, rate limits</em></span><span>Identity provider<em>SSO, scoped tokens</em></span><span>Policy as code<em>who, which tools, which data</em></span></div></div>
+<div class="dgm-tier"><small>Servers</small><div class="dgm-nodes"><span>Code and tickets<em>internal servers</em></span><span>Data warehouse<em>read-only views</em></span><span>Docs and search<em>permission-aware</em></span><span>Vetted public servers<em>mirrored, pinned</em></span></div></div>
+<div class="dgm-tier"><small>Observe</small><div class="dgm-nodes"><span class="hl">Audit log<em>user, agent, tool, args hash</em></span><span>Traces and metrics<em>OpenTelemetry</em></span><span>Usage reports<em>prune unused servers</em></span></div></div>
+</div>
+<figcaption>The registry decides what exists; the gateway decides who can use it; the audit trail shows what happened.</figcaption>
+</figure>
+<p>The design followed the ecosystem's own shape: the official MCP Registry is intended as an upstream that organisations build private subregistries on, adding internal servers that should never appear publicly<sup class="cite"><a href="#ref-3">3</a></sup>. The approach is described in more depth in <a href="/insights/mcp-registry-enterprise-subregistry/">running an enterprise MCP registry</a>.</p>
+
+<h2 id="the-data-flow-end-to-end">The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Discover</b><span>Client lists servers from the private registry, filtered by the user's groups</span></li>
+<li class="hl"><b>Authorise</b><span>User signs in through the identity provider; token issued for that server only</span></li>
+<li><b>Connect</b><span>Client reaches the server through the gateway, which checks token audience and policy</span></li>
+<li><b>Call a tool</b><span>Read tools run directly; write tools trigger a consent prompt</span></li>
+<li class="hl"><b>Act downstream</b><span>Server uses its own credentials or a token exchange, never the client's token</span></li>
+<li><b>Record</b><span>Call, result status and versions logged and traced</span></li>
+</ol>
+<figcaption>Each hop has one job, so a failure at any step is easy to see and explain.</figcaption>
+</figure>
+<p>Step five matters most. The MCP security guidance names token passthrough, where a server forwards a token it received from the client to a downstream API, as an anti-pattern that breaks OAuth security boundaries, and the authorisation specification forbids it<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. Every server on the platform validates that tokens were issued for it, and calls downstream systems with its own, separately scoped credentials.</p>
+
+<h2 id="the-hard-part-scopes-people-would-actually-accept">The hard part: scopes people would actually accept</h2>
+<p>The technical controls were well understood. The difficult part was scope design. The MCP guidance warns that over-broad scopes granted up front expand the blast radius of a stolen token, make revocation disruptive and create consent dialogs that users abandon; it recommends a progressive, least-privilege model starting with a minimal read-only set<sup class="cite"><a href="#ref-1">1</a></sup>. In practice that meant:</p>
+<ul>
+<li>A small, named set of scopes per server, starting with read-only discovery.</li>
+<li>Write and admin scopes requested only when a user first invokes a tool that needs them.</li>
+<li>Central control through the identity provider using the authorisation extensions, so administrators can grant and revoke access in one place<sup class="cite"><a href="#ref-4">4</a></sup>.</li>
+<li>Metrics on which scopes are requested and used, so creep is visible.</li>
+</ul>
+<div class="callout"><p>Least privilege only works if the least-privilege path is also the least-friction path. Otherwise people find a personal token and work around it.</p></div>
+
+<h2 id="how-it-ran">How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Platform</small><ol><li>Registry and gateway</li><li class="hl">Server template and CI checks</li><li>Usage and audit reporting</li></ol></div>
+<div class="dgm-lane"><small>Security</small><ol><li>Review criteria</li><li>Scope and policy design</li><li class="hl">Approve and pin versions</li></ol></div>
+<div class="dgm-lane"><small>Server teams</small><ol><li>Build from the template</li><li>Declare scopes and data class</li><li>Own and patch their server</li></ol></div>
+</div>
+<figcaption>Platform builds the road, security sets the rules, teams own what they publish.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Inventory</b><ul><li>Find servers in use</li><li>Classify by data and risk</li><li>Agree review criteria</li></ul></div>
+<div><small>Phase 2</small><b>Paved road</b><ul><li>Private registry</li><li>Gateway and SSO</li><li>Server template</li></ul></div>
+<div><small>Phase 3</small><b>Migrate</b><ul><li>Top servers first</li><li>Retire personal tokens</li><li>Point clients at registry</li></ul></div>
+<div><small>Phase 4</small><b>Enforce</b><ul><li>Block unregistered sources</li><li>Usage-based pruning</li><li>Regular re-review</li></ul></div>
+</div>
+<figcaption>Enforcement came last, once the approved path was already the convenient one.</figcaption>
+</figure>
+
+<h2 id="key-decisions-and-trade-offs">Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Private registry mirroring the public one</td><td>Allow-list in a wiki</td><td>Clients can discover from it, and versions can be pinned</td></tr>
+<tr><td>Gateway in front of remote servers</td><td>Each server enforces policy alone</td><td>One place for authentication, policy, rate limits and audit</td></tr>
+<tr><td>Servers use their own downstream credentials</td><td>Pass client tokens through</td><td>Token passthrough is forbidden and breaks audit and audience checks</td></tr>
+<tr><td>Progressive scopes</td><td>Grant everything at first login</td><td>Smaller blast radius and consent people actually read</td></tr>
+<tr><td>Enforce after migration</td><td>Block first, build later</td><td>Avoids pushing usage underground</td></tr>
+</tbody>
+</table>
+<p>The prompt injection and excessive agency risks in the OWASP Top 10 for LLM applications shaped the server template, with tool descriptions treated as untrusted and write tools gated by consent<sup class="cite"><a href="#ref-5">5</a></sup>. The detailed controls are in <a href="/insights/securing-mcp-servers-checklist/">securing MCP servers</a>, <a href="/insights/prompt-injection-defence-for-agents/">prompt injection defence for agents</a> and <a href="/insights/mcp-extensions-enterprise-strategy/">MCP extensions strategy</a>.</p>
+
+<h2 id="what-i-d-do-again-and-differently">What I'd do again, and differently</h2>
+<p>Again: start with an inventory and make the approved path faster than the unapproved one before enforcing anything. Differently: publish the server template and its CI checks in the first phase. Teams wanted to build compliant servers early, and every week without a template produced another one-off that later needed migrating.</p>
+<p>If agents are spreading faster than your controls, my <a href="/ai-architect/">AI architecture work</a> describes how I approach agent platforms, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://modelcontextprotocol.io/docs/2026-07-28/tutorials/security/security_best_practices" target="_blank" rel="noopener">Security best practices</a><small>Model Context Protocol documentation</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization/security-considerations" target="_blank" rel="noopener">Authorization: security considerations</a><small>Model Context Protocol specification</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://modelcontextprotocol.io/registry/about" target="_blank" rel="noopener">The MCP Registry</a><small>Model Context Protocol documentation</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://modelcontextprotocol.io/extensions/auth/overview" target="_blank" rel="noopener">Authorization extensions overview</a><small>Model Context Protocol documentation</small></div></li><li id="ref-5"><span class="rn">5</span><div><a href="https://genai.owasp.org/llm-top-10/" target="_blank" rel="noopener">OWASP Top 10 for LLM Applications</a><small>OWASP GenAI Security Project</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fasksumanta.com%2Fcase-studies%2Fenterprise-mcp-agent-platform%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fasksumanta.com%2Fcase-studies%2Fenterprise-mcp-agent-platform%2F&amp;text=From%20MCP%20servers%20on%20laptops%20to%20a%20governed%20enterprise%20agent%20platform" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=From%20MCP%20servers%20on%20laptops%20to%20a%20governed%20enterprise%20agent%20platform%20https%3A%2F%2Fasksumanta.com%2Fcase-studies%2Fenterprise-mcp-agent-platform%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://asksumanta.com/case-studies/enterprise-mcp-agent-platform/">Copy link</button></div>
+      <div class="pnav"><a class="pn prev" href="/case-studies/insurance-claims-triage-ai/"><small>← Previous</small><b>AI-assisted claims triage that adjusters trust and regulators can audit</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#the-situation">The situation</a></li><li><a href="#what-had-to-be-true">What had to be true</a></li><li><a href="#architecture">Architecture</a></li><li><a href="#the-data-flow-end-to-end">The data flow, end to end</a></li><li><a href="#the-hard-part-scopes-people-would-actually-accept">The hard part: scopes people would actually accept</a></li><li><a href="#how-it-ran">How it ran</a></li><li><a href="#key-decisions-and-trade-offs">Key decisions and trade-offs</a></li><li><a href="#what-i-d-do-again-and-differently">What I&#x27;d do again, and differently</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>Why not just let teams install any MCP server?</summary><p>MCP servers can read data and take actions with the user&#x27;s access. Unreviewed servers, broad tokens and no audit trail turn a productivity tool into an unmanaged integration layer. A registry and gateway keep the convenience while adding control.</p></details><details class="rise"><summary>What is token passthrough and why is it forbidden?</summary><p>It is when an MCP server accepts a token not issued for it and forwards it to a downstream API. The MCP security guidance describes it as an anti-pattern that breaks OAuth security boundaries, and the authorisation specification forbids it.</p></details><details class="rise"><summary>Does a private registry replace security review?</summary><p>No. The registry is where approved servers are listed and discovered. Review, version pinning and policy decide what gets listed; the registry makes the decision visible and enforceable.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/ai-architect/"><small>Service</small><b>AI &amp; LLM architecture</b><span>I design and build AI systems that leadership can trust: grounded in your data, measured by evaluations, governed by your rules and priced so they make sense at scale.</span><i>→</i></a><a class="rcard rise" href="/fractional-cto/"><small>Service</small><b>Fractional CTO</b><span>I work as a part-time CTO for founders, CEOs and boards who need experienced technical judgement now, and a team that can carry it on after I step back.</span><i>→</i></a><a class="rcard rise" href="/technical-due-diligence/"><small>Service</small><b>Technical due diligence</b><span>I give investors an independent, plain-language view of a company&#x27;s technology, team and AI claims, so the risks are priced in before the deal closes, not discovered after.</span><i>→</i></a><a class="rcard rise" href="/insights/opentelemetry-declarative-configuration/"><small>Insight</small><b>OpenTelemetry declarative configuration: a playbook for moving from environment variables to one reviewed file</b><span>For years, configuring OpenTelemetry SDKs meant a growing list of OTEL_ environment variables, plus code for anything they couldn&#x27;t express. The declarative configuration schema is now stable. It turns telemetry setup into a versioned file that platform teams can standardise, review and roll out.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: From MCP servers on laptops to a governed enterprise agent platform">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
+        <p class="floc">United States &amp; UAE · working globally</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/uae/">Fractional CTO in the UAE</a></li></ul></div>
+      <div class="fc"><h4>Case studies</h4><ul><li><a href="/case-studies/enterprise-mcp-agent-platform/">Enterprise MCP agent platform</a></li><li><a href="/case-studies/insurance-claims-triage-ai/">Insurance claims triage with AI</a></li><li><a href="/case-studies/startup-fractional-cto-seed-to-series-a/">Startup fractional CTO, seed to Series A</a></li><li><a href="/case-studies/private-equity-ai-technical-due-diligence/">Private equity AI technical due diligence</a></li><li><a href="/#work">Engagement snapshots</a></li><li><a href="/case-studies/">All case studies →</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/opentelemetry-declarative-configuration/">OpenTelemetry declarative configuration: a playbook for moving from environment variables to one reviewed file</a></li><li><a href="/insights/terraform-secrets-out-of-state/">Keeping secrets out of Terraform state: a checklist for platform teams</a></li><li><a href="/insights/slos-error-budgets-small-teams/">SLOs and error budgets for small teams: field notes on making reliability a decision, not a debate</a></li><li><a href="/insights/speculative-decoding-private-llms/">Speculative decoding for private LLMs: faster tokens without changing the answers</a></li><li><a href="/insights/real-world-evidence-study-designs-omop/">Real-world evidence on OMOP: comparing five study designs for treatment effects</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>

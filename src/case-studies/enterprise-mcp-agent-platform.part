@@ -1,0 +1,86 @@
+<!--{"title": "Case study: an enterprise MCP platform for governed AI agents", "description": "How an enterprise can move from ad hoc MCP servers on laptops to a governed agent platform: a private registry, central identity, scoped tokens, gateways and audit.", "short": "Enterprise MCP agent platform", "h1": "From MCP servers on laptops to a governed enterprise agent platform", "kicker": "Case study · AI agents", "lede": "Engineers had connected assistants to dozens of MCP servers, some internal, some from the internet, most with broad tokens. Security wanted to stop it; product teams wanted more of it. The goal was a platform that made the approved path the easiest one.", "date": "2026-10-28", "datetime": "2026-10-28T05:20:00+04:00", "readtime": "9 min read", "sector": "Enterprise · Software and services", "role": "AI architect", "engagement": "Platform design, build and hand-off", "scope": "Registry, identity, gateway, server standards, audit", "stack": ["Model Context Protocol", "Private MCP registry", "OAuth 2.1", "Identity provider", "MCP gateway", "Policy as code", "OpenTelemetry", "Kubernetes"], "outcomes": ["One catalogue of approved MCP servers that clients discover automatically", "No shared or long-lived tokens: access goes through the identity provider with narrow scopes", "Every tool call attributable to a user, an agent and a server version", "A paved road that lets teams publish new internal servers without a security exception"], "tags": ["ai", "agents", "mcp", "security", "platform"], "keywords": ["enterprise MCP platform", "MCP registry enterprise", "MCP gateway", "MCP security", "AI agent governance", "token passthrough MCP", "MCP authorization", "agent platform architecture", "MCP case study", "AI architect"], "faq": [["Why not just let teams install any MCP server?", "MCP servers can read data and take actions with the user's access. Unreviewed servers, broad tokens and no audit trail turn a productivity tool into an unmanaged integration layer. A registry and gateway keep the convenience while adding control."], ["What is token passthrough and why is it forbidden?", "It is when an MCP server accepts a token not issued for it and forwards it to a downstream API. The MCP security guidance describes it as an anti-pattern that breaks OAuth security boundaries, and the authorisation specification forbids it."], ["Does a private registry replace security review?", "No. The registry is where approved servers are listed and discovered. Review, version pinning and policy decide what gets listed; the registry makes the decision visible and enforceable."]], "related": ["/ai-architect/", "/fractional-cto/", "/technical-due-diligence/"], "citations": [{"title": "Security best practices", "url": "https://modelcontextprotocol.io/docs/2026-07-28/tutorials/security/security_best_practices", "publisher": "Model Context Protocol documentation"}, {"title": "Authorization: security considerations", "url": "https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization/security-considerations", "publisher": "Model Context Protocol specification"}, {"title": "The MCP Registry", "url": "https://modelcontextprotocol.io/registry/about", "publisher": "Model Context Protocol documentation"}, {"title": "Authorization extensions overview", "url": "https://modelcontextprotocol.io/extensions/auth/overview", "publisher": "Model Context Protocol documentation"}, {"title": "OWASP Top 10 for LLM Applications", "url": "https://genai.owasp.org/llm-top-10/", "publisher": "OWASP GenAI Security Project"}]}-->
+<h2>The situation</h2>
+<p>An organisation had embraced AI assistants faster than it had governed them. Developers connected IDE assistants to MCP servers for the code host, the ticketing system and the data warehouse. Some servers were built internally in an afternoon; others were installed from public repositories. Many used personal access tokens with wide permissions, stored in local configuration files. Nobody could say which servers were in use, who had approved them, or what they had done.</p>
+<p>Security's first instinct was to block MCP outright. Leadership's instinct was the opposite: agents were becoming central to engineering and operations, and a ban would simply push usage further out of sight.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>One place to find approved servers</strong>, discoverable by the clients people already use.</li>
+<li><strong>No long-lived shared tokens.</strong> Access flows through the identity provider, per user, with the narrowest scopes that work.</li>
+<li><strong>Every tool call is attributable</strong> to a person, an agent, a server and a version.</li>
+<li><strong>Writes and destructive actions need explicit, visible consent.</strong></li>
+<li><strong>Publishing a new internal server is easy</strong> if it follows the standard; exceptions are rare and visible.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Clients</small><div class="dgm-nodes"><span>IDE assistants<em>developer tools</em></span><span>Chat assistants<em>knowledge work</em></span><span>Agent runtime<em>background jobs</em></span></div></div>
+<div class="dgm-tier"><small>Discover</small><div class="dgm-nodes"><span class="hl">Private MCP registry<em>approved, pinned versions</em></span><span>Server metadata<em>owner, data class, scopes</em></span></div></div>
+<div class="dgm-tier"><small>Control</small><div class="dgm-nodes"><span class="hl">MCP gateway<em>authn, policy, rate limits</em></span><span>Identity provider<em>SSO, scoped tokens</em></span><span>Policy as code<em>who, which tools, which data</em></span></div></div>
+<div class="dgm-tier"><small>Servers</small><div class="dgm-nodes"><span>Code and tickets<em>internal servers</em></span><span>Data warehouse<em>read-only views</em></span><span>Docs and search<em>permission-aware</em></span><span>Vetted public servers<em>mirrored, pinned</em></span></div></div>
+<div class="dgm-tier"><small>Observe</small><div class="dgm-nodes"><span class="hl">Audit log<em>user, agent, tool, args hash</em></span><span>Traces and metrics<em>OpenTelemetry</em></span><span>Usage reports<em>prune unused servers</em></span></div></div>
+</div>
+<figcaption>The registry decides what exists; the gateway decides who can use it; the audit trail shows what happened.</figcaption>
+</figure>
+<p>The design followed the ecosystem's own shape: the official MCP Registry is intended as an upstream that organisations build private subregistries on, adding internal servers that should never appear publicly<sup class="cite"><a href="#ref-3">3</a></sup>. The approach is described in more depth in <a href="/insights/mcp-registry-enterprise-subregistry/">running an enterprise MCP registry</a>.</p>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Discover</b><span>Client lists servers from the private registry, filtered by the user's groups</span></li>
+<li class="hl"><b>Authorise</b><span>User signs in through the identity provider; token issued for that server only</span></li>
+<li><b>Connect</b><span>Client reaches the server through the gateway, which checks token audience and policy</span></li>
+<li><b>Call a tool</b><span>Read tools run directly; write tools trigger a consent prompt</span></li>
+<li class="hl"><b>Act downstream</b><span>Server uses its own credentials or a token exchange, never the client's token</span></li>
+<li><b>Record</b><span>Call, result status and versions logged and traced</span></li>
+</ol>
+<figcaption>Each hop has one job, so a failure at any step is easy to see and explain.</figcaption>
+</figure>
+<p>Step five matters most. The MCP security guidance names token passthrough, where a server forwards a token it received from the client to a downstream API, as an anti-pattern that breaks OAuth security boundaries, and the authorisation specification forbids it<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. Every server on the platform validates that tokens were issued for it, and calls downstream systems with its own, separately scoped credentials.</p>
+
+<h2>The hard part: scopes people would actually accept</h2>
+<p>The technical controls were well understood. The difficult part was scope design. The MCP guidance warns that over-broad scopes granted up front expand the blast radius of a stolen token, make revocation disruptive and create consent dialogs that users abandon; it recommends a progressive, least-privilege model starting with a minimal read-only set<sup class="cite"><a href="#ref-1">1</a></sup>. In practice that meant:</p>
+<ul>
+<li>A small, named set of scopes per server, starting with read-only discovery.</li>
+<li>Write and admin scopes requested only when a user first invokes a tool that needs them.</li>
+<li>Central control through the identity provider using the authorisation extensions, so administrators can grant and revoke access in one place<sup class="cite"><a href="#ref-4">4</a></sup>.</li>
+<li>Metrics on which scopes are requested and used, so creep is visible.</li>
+</ul>
+<div class="callout"><p>Least privilege only works if the least-privilege path is also the least-friction path. Otherwise people find a personal token and work around it.</p></div>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Platform</small><ol><li>Registry and gateway</li><li class="hl">Server template and CI checks</li><li>Usage and audit reporting</li></ol></div>
+<div class="dgm-lane"><small>Security</small><ol><li>Review criteria</li><li>Scope and policy design</li><li class="hl">Approve and pin versions</li></ol></div>
+<div class="dgm-lane"><small>Server teams</small><ol><li>Build from the template</li><li>Declare scopes and data class</li><li>Own and patch their server</li></ol></div>
+</div>
+<figcaption>Platform builds the road, security sets the rules, teams own what they publish.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Inventory</b><ul><li>Find servers in use</li><li>Classify by data and risk</li><li>Agree review criteria</li></ul></div>
+<div><small>Phase 2</small><b>Paved road</b><ul><li>Private registry</li><li>Gateway and SSO</li><li>Server template</li></ul></div>
+<div><small>Phase 3</small><b>Migrate</b><ul><li>Top servers first</li><li>Retire personal tokens</li><li>Point clients at registry</li></ul></div>
+<div><small>Phase 4</small><b>Enforce</b><ul><li>Block unregistered sources</li><li>Usage-based pruning</li><li>Regular re-review</li></ul></div>
+</div>
+<figcaption>Enforcement came last, once the approved path was already the convenient one.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Private registry mirroring the public one</td><td>Allow-list in a wiki</td><td>Clients can discover from it, and versions can be pinned</td></tr>
+<tr><td>Gateway in front of remote servers</td><td>Each server enforces policy alone</td><td>One place for authentication, policy, rate limits and audit</td></tr>
+<tr><td>Servers use their own downstream credentials</td><td>Pass client tokens through</td><td>Token passthrough is forbidden and breaks audit and audience checks</td></tr>
+<tr><td>Progressive scopes</td><td>Grant everything at first login</td><td>Smaller blast radius and consent people actually read</td></tr>
+<tr><td>Enforce after migration</td><td>Block first, build later</td><td>Avoids pushing usage underground</td></tr>
+</tbody>
+</table>
+<p>The prompt injection and excessive agency risks in the OWASP Top 10 for LLM applications shaped the server template, with tool descriptions treated as untrusted and write tools gated by consent<sup class="cite"><a href="#ref-5">5</a></sup>. The detailed controls are in <a href="/insights/securing-mcp-servers-checklist/">securing MCP servers</a>, <a href="/insights/prompt-injection-defence-for-agents/">prompt injection defence for agents</a> and <a href="/insights/mcp-extensions-enterprise-strategy/">MCP extensions strategy</a>.</p>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: start with an inventory and make the approved path faster than the unapproved one before enforcing anything. Differently: publish the server template and its CI checks in the first phase. Teams wanted to build compliant servers early, and every week without a template produced another one-off that later needed migrating.</p>
+<p>If agents are spreading faster than your controls, my <a href="/ai-architect/">AI architecture work</a> describes how I approach agent platforms, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
