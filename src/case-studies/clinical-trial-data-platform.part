@@ -1,0 +1,86 @@
+<!--{"title": "Case study: a clinical trial data platform built for GCP and submissions", "description": "How a biotech can unify trial data from EDC, labs and devices into one governed platform, with lineage to SDTM submissions and audit trails for GCP and Part 11.", "short": "Clinical trial data platform", "h1": "One governed clinical trial data platform, from site data to submission datasets", "kicker": "Case study · Clinical development", "lede": "A growing biotech ran several trials through different vendors: an EDC system, central labs, eCOA, wearables and imaging. Each study rebuilt its data pipelines from scratch, and the path from raw data to submission datasets lived in programmers' heads. The goal was one platform with lineage, quality and audit trails built in.", "date": "2026-10-28", "datetime": "2026-10-28T14:20:00+04:00", "readtime": "9 min read", "sector": "Life sciences · Biotech", "role": "Principal data architect and fractional CTO", "engagement": "Architecture, build and validation", "scope": "Ingestion, standardisation, SDTM, lineage, quality, audit", "stack": ["EDC and vendor feeds", "CDISC SDTM", "Controlled terminology", "Data lakehouse", "Lineage catalogue", "Validation rules", "Audit trail", "Statistical computing environment"], "outcomes": ["Every submission dataset traceable back to its source records", "New studies start from shared ingestion and mapping patterns", "Data quality checks run on every load, visible to data managers", "Audit trails and access controls designed in, ready for validation"], "tags": ["healthcare", "data", "governance", "regulation", "architecture"], "keywords": ["clinical trial data platform", "SDTM pipeline", "CDISC standards", "ICH E6(R3) data governance", "21 CFR Part 11 audit trail", "clinical data lineage", "eClinical integration", "biotech data architecture", "statistical computing environment", "healthcare data architect"], "faq": [["What changed in ICH E6(R3)?", "The revised Good Clinical Practice guideline was finalised by ICH in January 2025, with the EU applying the principles and Annex 1 from 23 July 2025. Commentary highlights a stronger focus on risk-proportionate quality and a dedicated data governance section that acknowledges digital trial data handling."], ["Why build lineage from source data to SDTM?", "Because reviewers, auditors and your own statisticians need to know where every value in a submission dataset came from and what transformed it. Lineage turns that from tribal knowledge into something you can show."], ["Does a platform like this need validation?", "Systems that create or modify records required by FDA regulations fall under 21 CFR Part 11, which expects secure, computer-generated, time-stamped audit trails among other controls. Validation scope should be agreed with quality early."]], "related": ["/healthcare-data-architecture/", "/fractional-cto/", "/technical-due-diligence/"], "citations": [{"title": "ICH releases final version of E6(R3) Good Clinical Practice guideline", "url": "https://about.citiprogram.org/blog/ich-releases-final-version-of-e6r3-good-clinical-practice-guideline/", "publisher": "CITI Program", "date": "Jan 2025"}, {"title": "Introduction of the ICH GCP E6(R3) guideline", "url": "https://www.swissmedic.ch/swissmedic/en/home/news/mitteilungen/einfuehrung-leitlinie-ich-gcp-e6-r3.html", "publisher": "Swissmedic"}, {"title": "Electronic study data submission; data standards; support and requirement begin for study data tabulation model version 1.8", "url": "https://www.federalregister.gov/documents/2020/03/11/2020-04898/electronic-study-data-submission-data-standards-support-and-requirement-begin-for-study-data", "publisher": "Federal Register (FDA)", "date": "11 Mar 2020"}, {"title": "21 CFR Part 11: Electronic records; electronic signatures", "url": "https://www.ecfr.gov/current/title-21/chapter-I/subchapter-A/part-11", "publisher": "eCFR"}]}-->
+<h2>The situation</h2>
+<p>A biotech with several programmes in clinical development worked, like most of its peers, through vendors: one for electronic data capture, others for central labs, patient-reported outcomes, wearable devices and imaging. Each study's data team built its own transfers, mappings and checks. Submission datasets were produced by statistical programmers working from extracts, and the reasoning behind many transformations existed only in their code and memory.</p>
+<p>As the pipeline grew, leadership saw the risk: every new study cost the same effort as the last, and an inspection question about where a value came from could take days to answer.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>Traceability</strong> from every submission value back to its source record and every transformation in between.</li>
+<li><strong>Reuse across studies</strong>: shared ingestion, mapping patterns and checks, not bespoke pipelines per protocol.</li>
+<li><strong>Quality visible early</strong>, to data managers during the study, not at database lock.</li>
+<li><strong>Audit trails and access control by design</strong>, suitable for computerised system validation.</li>
+<li><strong>Vendor independence</strong>: changing an EDC or lab vendor should not mean rebuilding the platform.</li>
+</ul>
+<p>The regulatory direction supported this. ICH finalised the revised Good Clinical Practice guideline, E6(R3), in January 2025, and commentary highlights its risk-proportionate approach and a new data governance section that acknowledges digital trial data handling<sup class="cite"><a href="#ref-1">1</a></sup>. In the EU, the principles and Annex 1 applied from 23 July 2025<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Sources</small><div class="dgm-nodes"><span>EDC<em>case report forms</em></span><span>Central labs<em>results and ranges</em></span><span>eCOA<em>patient-reported outcomes</em></span><span>Devices and imaging<em>streams and reads</em></span></div></div>
+<div class="dgm-tier"><small>Land</small><div class="dgm-nodes"><span>Raw zone<em>immutable, per transfer</em></span><span>Transfer agreements<em>versioned specs</em></span><span>Access control<em>blinded and unblinded</em></span></div></div>
+<div class="dgm-tier"><small>Standardise</small><div class="dgm-nodes"><span class="hl">Mapping to SDTM<em>versioned, reviewed</em></span><span>Controlled terminology<em>managed centrally</em></span><span>Derivations<em>shared library</em></span></div></div>
+<div class="dgm-tier"><small>Assure</small><div class="dgm-nodes"><span class="hl">Validation rules<em>every load</em></span><span>Data review<em>data managers</em></span><span class="hl">Lineage and audit<em>who, what, when, why</em></span></div></div>
+<div class="dgm-tier"><small>Use</small><div class="dgm-nodes"><span>Statistical computing<em>analysis datasets</em></span><span>Submission package<em>datasets, define, guides</em></span><span>Cross-study analytics<em>governed access</em></span></div></div>
+</div>
+<figcaption>Raw data never changes; every transformation above it is versioned, checked and traceable.</figcaption>
+</figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Receive</b><span>Vendor transfers land as-is in the raw zone, checked against the transfer agreement</span></li>
+<li><b>Validate</b><span>Structural and content checks; failures returned to the vendor with reasons</span></li>
+<li class="hl"><b>Map</b><span>Versioned mappings produce SDTM domains with controlled terminology</span></li>
+<li><b>Review</b><span>Data managers work issues in a shared review queue during the study</span></li>
+<li class="hl"><b>Trace</b><span>Lineage records each value's source and transformations</span></li>
+<li><b>Deliver</b><span>Analysis and submission datasets built from locked, traceable versions</span></li>
+</ol>
+<figcaption>Quality problems are found while the study runs, when they are cheap to fix at the site.</figcaption>
+</figure>
+<p>Submission requirements anchored the design. The FDA lists the study data standards it supports and requires, including SDTM versions, with dates from which each version is supported and then required<sup class="cite"><a href="#ref-3">3</a></sup>. Building SDTM mappings as versioned, reviewable assets meant a standards update became a controlled change rather than a scramble.</p>
+
+<h2>The hard part: one mapping layer for many protocols</h2>
+<p>Every protocol is different, and the temptation is to treat every study as a special case. The platform separated what genuinely varies by study, such as visit schedules, endpoints and specific forms, from what doesn't, such as demographics, adverse events, concomitant medications and lab structures.</p>
+<ul>
+<li>A shared library of mappings and derivations for common domains, with study-level extensions rather than copies.</li>
+<li>Controlled terminology managed centrally, so the same concept is coded the same way across studies.</li>
+<li>Mapping specifications stored with the code, reviewed like code and versioned with each data cut.</li>
+<li>Blinded and unblinded data separated by access control and environment, not convention.</li>
+</ul>
+<div class="callout"><p>The question an inspector asks is simple: where did this number come from? A platform is ready when anyone on the team can answer it in minutes.</p></div>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Data management</small><ol><li>Transfer agreements</li><li class="hl">Ongoing data review</li><li>Database lock</li></ol></div>
+<div class="dgm-lane"><small>Platform</small><ol><li>Ingestion and checks</li><li class="hl">Mapping library and lineage</li><li>Environments and access</li></ol></div>
+<div class="dgm-lane"><small>Quality</small><ol><li>Validation plan</li><li>Audit trail review</li><li>Inspection readiness</li></ol></div>
+</div>
+<figcaption>Quality involved from the start, so validation followed the build rather than chasing it.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Foundations</b><ul><li>Raw zone and access model</li><li>Transfer agreements</li><li>Validation plan</li></ul></div>
+<div><small>Phase 2</small><b>Pilot study</b><ul><li>Core SDTM domains</li><li>Checks on every load</li><li>Lineage captured</li></ul></div>
+<div><small>Phase 3</small><b>Shared library</b><ul><li>Common mappings</li><li>Central terminology</li><li>Second study onboarded</li></ul></div>
+<div><small>Phase 4</small><b>Validate and scale</b><ul><li>System validation</li><li>SOPs and training</li><li>Portfolio onboarding</li></ul></div>
+</div>
+<figcaption>A single study end to end before generalising, so the shared library was based on real needs.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Immutable raw zone per transfer</td><td>Overwrite with latest vendor file</td><td>Any result can be reproduced from the exact data received</td></tr>
+<tr><td>Mappings as versioned code</td><td>Specifications in spreadsheets</td><td>Reviewable, testable and traceable changes</td></tr>
+<tr><td>Shared library with study extensions</td><td>Copy and modify per study</td><td>Fixes and standards updates apply everywhere</td></tr>
+<tr><td>Checks during the study</td><td>Clean-up before lock</td><td>Issues resolved with sites while they are fresh</td></tr>
+<tr><td>Audit trail designed in</td><td>Rely on system logs</td><td>Part 11 expects secure, time-stamped audit trails of record changes</td></tr>
+</tbody>
+</table>
+<p>For systems that create or modify records required by FDA regulations, 21 CFR Part 11 sets expectations for electronic records, including secure, computer-generated, time-stamped audit trails<sup class="cite"><a href="#ref-4">4</a></sup>. Designing those in from the first phase was far cheaper than retrofitting them.</p>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: one study end to end before building the shared library, and quality at the table from the first week. Differently: negotiate transfer agreements with vendors as part of platform work, not study start-up. Consistent vendor formats are what make shared mappings possible. Related approaches are in <a href="/insights/data-contracts-playbook/">data contracts</a> and <a href="/insights/fhir-to-omop-architecture/">FHIR to OMOP architecture</a>.</p>
+<p>If your clinical data is growing faster than your ability to trace it, the <a href="/healthcare-data-architecture/">healthcare data architecture</a> page describes how I work, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
