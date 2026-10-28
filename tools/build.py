@@ -950,43 +950,59 @@ def regions_page(pages, posts):
     title = "Fractional CTO & AI Architect Worldwide | Sumanta Mukhopadhyay"
     desc = ("Fractional CTO and AI architect for teams in the US, UK, Europe, UAE, Saudi Arabia, India, Singapore and "
             "Australia: remote-first, with the local rules built in.")
-    groups = []
-    for g in REGION_ORDER:
-        rs = [r for r in REGIONS if r["region"] == g]
-        if not rs:
-            continue
-        cards = "".join(
-            f'<a class="rg rise" href="/{r["slug"]}/"><div class="rg-top"><b>{e(r["country"] if r["country"] != "European Union" else "Europe (EU)")}</b>'
-            f'<span class="rg-clock" data-tz="{e(r["tz"])}" data-city="{e(r["city"])}">{e(r["city"])}</span></div>'
-            f'<p>{e(r["lede"])}</p><div class="rg-chips">{"".join(f"<i>{e(c)}</i>" for c in r.get("chips", []))}</div>'
-            f'<span class="rg-go">Fractional CTO in {e(r["country"] if r["country"] != "European Union" else "Europe")} →</span></a>' for r in rs)
-        groups.append(f'<section class="rg-group" id="{g.lower().replace(" ", "-")}"><div class="kicker">{e(g)}</div><div class="rg-grid">{cards}</div></section>')
+
+    def nm(r):
+        return "Europe (EU)" if r["country"] == "European Union" else r["country"]
+    cards = "".join(
+        f'<a class="rg rise" href="/{r["slug"]}/"><div class="rg-meta"><span>{e(r["region"])}</span>'
+        f'<span class="rg-clock" data-tz="{e(r["tz"])}">--:--</span></div>'
+        f'<b>{e(nm(r))}</b><p>{e(r["description"])}</p>'
+        f'<div class="rg-chips">{"".join(f"<i>{e(c)}</i>" for c in r.get("chips", []))}</div>'
+        f'<span class="rg-go">Explore {e(nm(r))} <em>→</em></span></a>' for r in REGIONS)
+    zones = "".join(f'<div class="tz-row"><span class="tz-c">{e(r["city"])}</span><div class="tz-bar" data-tz="{e(r["tz"])}">'
+                    f'<i class="tz-on"></i><i class="tz-on tz-w"></i></div></div>' for r in REGIONS)
+    ticks = "".join(f'<span style="left:{h / 24 * 100:.4f}%">{h:02d}:00</span>' for h in range(0, 24, 3))
+    wm = json.loads((ROOT / "src/world-pins.json").read_text())
+    dots = '<div class="wm-dots" aria-hidden="true"></div>'
+    pins = "".join(
+        f'<a class="wm-pin{" wm-l" if r["tz"] in ("Europe/London", "Asia/Riyadh", "Australia/Sydney") else ""}" href="/{r["slug"]}/" style="left:{wm["pins"][r["tz"]][0]}%;top:{wm["pins"][r["tz"]][1]}%">'
+        f'<i></i><span><b>{e(nm(r))}</b><em class="rg-clock" data-tz="{e(r["tz"])}">--:--</em></span></a>'
+        for r in REGIONS if r["tz"] in wm["pins"])
     ld = {"@context": "https://schema.org", "@graph": [
         {"@type": "CollectionPage", "@id": url, "url": url, "name": title, "description": desc, "dateModified": TODAY,
          "hasPart": [{"@type": "WebPage", "name": label(r["slug"]), "url": f"{SITE}/{r['slug']}/"} for r in REGIONS]},
         {"@type": "ProfessionalService", "name": f"{NAME}: Fractional CTO & AI Architecture", "url": url,
          "provider": person_ref(), "areaServed": AREAS_SERVED},
         crumbs([("Home", f"{SITE}/"), ("Worldwide", url)])]}
-    zones = "".join(f'<div class="tz-row"><span>{e(r["city"])}</span><div class="tz-bar" data-tz="{e(r["tz"])}"><i></i></div></div>'
-                    for r in REGIONS)
-    return f"""{head(title, desc, ["fractional CTO worldwide", "global fractional CTO", "remote fractional CTO", "AI architect worldwide", "fractional CTO USA", "fractional CTO UK", "fractional CTO Europe", "fractional CTO India", "fractional CTO Dubai", "fractional CTO Singapore", "fractional CTO Australia"], url, f"{SITE}/assets/og/regions.png", "website", ld)}
+    kw = ["fractional CTO worldwide", "global fractional CTO", "remote fractional CTO", "AI architect worldwide",
+          "fractional CTO USA", "fractional CTO UK", "fractional CTO Europe", "fractional CTO India",
+          "fractional CTO Dubai", "fractional CTO Singapore", "fractional CTO Australia"]
+    return f"""{head(title, desc, kw, url, f"{SITE}/assets/og/regions.png", "website", ld)}
 <body class="sub hub">
 {nav()}
 <main class="wrap">
-  <header class="sub-hero">
-    <canvas class="sub-graph" aria-hidden="true"></canvas>
-    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <em>Worldwide</em></div>
-    <div class="kicker">Worldwide · remote-first</div>
-    <h1>A fractional CTO and AI architect for teams anywhere</h1>
-    <p class="sub-lede">I work with founders, enterprises and investors across {len(REGIONS)} regions. The engineering is the same everywhere; the rules, time zones and buyers are not. Each page below covers what changes in that market.</p>
-    <div class="subnav-in rg-jump">{"".join(f'<a href="#{g.lower().replace(" ", "-")}">{e(g)}</a>' for g in REGION_ORDER if any(r["region"] == g for r in REGIONS))}</div>
+  <header class="sub-hero rg-hero">
+    <div class="rg-hero-t">
+      <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <em>Worldwide</em></div>
+      <div class="kicker">Worldwide · remote-first</div>
+      <h1>A fractional CTO and AI architect for teams anywhere</h1>
+      <p class="sub-lede">The engineering is the same everywhere. The rules, time zones and buyers are not. I work with founders, enterprises and investors across {len(REGIONS)} markets, with each market's regulation built into the architecture from day one.</p>
+      <div class="cta-row"><a class="btn mag" href="{CAL}" target="_blank" rel="noopener">Book a 30-min call →</a><a class="btn ghost mag" href="#markets">Find your region</a></div>
+    </div>
   </header>
-  {"".join(groups)}
-  <section class="rg-tz rise" aria-labelledby="tzh">
-    <div class="kicker">Live working hours</div>
-    <h2 id="tzh">Where it's office hours right now</h2>
-    <p>Bars show 9:00 to 18:00 in each city; the marker is the current local time. Most regions share several hours a day with my working day in the Gulf.</p>
-    <div class="tz">{zones}</div>
+  <figure class="wm" aria-label="Map of the markets I work in, with local times">
+    <div class="wm-in">{dots}{pins}</div>
+    <figcaption><span><i class="wm-k"></i>Markets with a dedicated page</span><span>Times are live local time · based in the US &amp; UAE</span></figcaption>
+  </figure>
+  <section class="rg-sec" id="markets">
+    <div class="sec-head"><div><div class="kicker">Markets</div><h2>Pick your region</h2></div>
+    <p>Each page covers who I work with there, the rules that shape the architecture, typical first projects and how time zones work.</p></div>
+    <div class="rg-grid">{cards}</div>
+  </section>
+  <section class="rg-sec rise" aria-labelledby="tzh">
+    <div class="sec-head"><div><div class="kicker">Live working hours</div><h2 id="tzh">Where it's office hours right now</h2></div>
+    <p>Office hours (9:00 to 18:00) in each city, shown on your own clock. The red line is now. Most markets share several hours a day with each other.</p></div>
+    <div class="tz"><div class="tz-axis"><span class="tz-c"></span><div class="tz-ticks">{ticks}</div></div>{zones}<div class="tz-nowrow"><span class="tz-c"></span><div class="tz-track"><i class="tz-now"></i></div></div></div>
   </section>
   {cta_html("Worldwide enquiry")}
 </main>
