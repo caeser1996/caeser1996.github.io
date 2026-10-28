@@ -84,7 +84,10 @@ THEME_INIT = """<script>
   document.documentElement.classList.add('js');
   var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
   document.documentElement.setAttribute('data-theme',t);
+  try{if(!sessionStorage.getItem('booted')&&!/bot|crawl|spider|slurp|lighthouse|headless/i.test(navigator.userAgent)&&!matchMedia('(prefers-reduced-motion: reduce)').matches){document.documentElement.classList.add('boot');sessionStorage.setItem('booted','1');}}catch(e){}
 </script>"""
+
+SOUND = '<button type="button" class="snd" aria-pressed="false" aria-label="Turn ambient sound on" title="Ambient sound"><span class="eq"><i></i><i></i><i></i><i></i></span></button>'
 
 MOON = ('<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">'
         '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>')
@@ -100,10 +103,12 @@ def nav():
       <a href="/case-studies/">Case studies</a>
       <a href="/insights/">Insights</a>
       <a href="/#assess">Analyse</a>
+      <a href="/play/">Play</a>
       <a href="/#connect">Connect</a>
     </div>
     <div class="nav-r">
       <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      {SOUND}
       <button class="theme" id="themeBtn" aria-label="Toggle colour theme">{MOON}</button>
       <a href="{CAL}" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
     </div>
@@ -146,6 +151,7 @@ def footer(pages, posts):
         <li><a href="{CAL}" target="_blank" rel="noopener">Book a 30-min call</a></li>
         <li><a href="mailto:{EMAIL}?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
         <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="/play/">Play Orbital Ops</a></li>
         <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
       </ul></div>
     </div>
@@ -749,6 +755,89 @@ def privacy_page(pages, posts):
 """
 
 
+PLAY_FAQ = [
+    ("What is Orbital Ops?", "A free browser arcade game on this site. You pilot a ship defending a production system from incidents such as latency spikes, memory leaks, schema drift, traffic floods and prompt injections, with a legacy monolith boss every fifth wave."),
+    ("How do I play?", "Move with the mouse, a finger, the arrow keys or WASD. Firing is automatic. Collect power-ups, keep your streak for a higher multiplier and protect your error budget of three hits. Press P to pause."),
+    ("Does it work on phones?", "Yes. It runs in any modern browser on desktop, tablet or phone, with touch controls. Nothing is installed and no account is needed; your best score is kept only in your own browser."),
+    ("Is the music real?", "The ambient soundtrack is generated live in your browser with the Web Audio API, so there is nothing to download. It stays off until you switch it on with the sound button."),
+]
+
+PLAY_GUIDE = [
+    ("latency", "Latency spike", "#ffcf5a", "Fast and fragile. In production, you catch these with service level objectives and error budgets.", "/insights/slos-error-budgets-small-teams/", "SLOs and error budgets"),
+    ("leak", "Memory leak", "#b48cff", "Slow, tough and grows the longer you ignore it. Right-sizing workloads helps.", "/insights/kubernetes-in-place-pod-resize/", "In-place pod resize"),
+    ("drift", "Schema drift", "#5ae0ff", "Zigzags unpredictably, like an upstream schema nobody agreed. Contracts stop it.", "/insights/data-contracts-playbook/", "Data contracts"),
+    ("ddos", "Traffic flood", "#ff7a59", "Splits into fragments when hit. Gateways and rate limits keep floods manageable.", "/insights/kubernetes-inference-gateway/", "Inference gateways"),
+    ("inject", "Prompt injection", "#ff4f8b", "Homes in on you, the way hostile input targets an AI agent's tools.", "/insights/prompt-injection-defence-for-agents/", "Prompt injection defence"),
+    ("mono", "Legacy monolith", "#e08a63", "The boss every fifth wave. Heavily armoured and fires back. Decisions, not heroics, retire it.", "/insights/architecture-decision-records-fractional-cto/", "Architecture decision records"),
+]
+
+
+def play_page(pages, posts):
+    url = f"{SITE}/play/"
+    title = "Orbital Ops: a free space arcade game about production incidents"
+    desc = "Play Orbital Ops, a free sci-fi browser game: defend production from latency spikes, memory leaks and prompt injections. Works on desktop and mobile."
+    ld = {"@context": "https://schema.org", "@graph": [
+        {"@type": ["VideoGame", "WebApplication"], "@id": f"{url}#game", "name": "Orbital Ops", "url": url, "description": desc,
+         "image": f"{SITE}/assets/og/play.png", "genre": ["Arcade", "Shoot 'em up", "Science fiction"], "gamePlatform": "Web browser",
+         "applicationCategory": "GameApplication", "operatingSystem": "Any", "playMode": "SinglePlayer", "inLanguage": "en-GB",
+         "isAccessibleForFree": True, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"},
+         "author": person_ref(), "publisher": person_ref()},
+        {"@type": "WebPage", "@id": url, "url": url, "name": title, "description": desc, "mainEntity": {"@id": f"{url}#game"},
+         "isPartOf": {"@type": "WebSite", "url": f"{SITE}/", "name": NAME}, "dateModified": TODAY},
+        crumbs([("Home", f"{SITE}/"), ("Play", url)]), faq_ld(PLAY_FAQ)]}
+    guide = "".join(f'<div><b><i style="--c:{c}"></i>{e(n)}</b><p>{e(d)}</p><a href="{u}">{e(l)} →</a></div>'
+                    for _, n, c, d, u, l in PLAY_GUIDE)
+    h = head(title, desc, ["browser game", "free online space game", "sci-fi arcade game", "HTML5 canvas game", "developer game",
+                           "SRE game", "incident response game", "play online no download"], url, f"{SITE}/assets/og/play.png", "website", ld)
+    return f"""{h}
+<body class="sub">
+{nav()}
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <em>Play</em></div>
+    <div class="kicker">Arcade · Orbital Ops</div>
+    <h1>Orbital Ops: defend production from incoming incidents</h1>
+    <p class="sub-lede">A free sci-fi arcade game that runs in your browser. Shoot down latency spikes, memory leaks and prompt injections, survive the legacy monolith, and protect your error budget. Switch on the ambient soundtrack with the sound button.</p>
+  </header>
+  <section class="arc" aria-label="Orbital Ops game">
+    <div class="arc-hud">
+      <span>Score<b id="arcScore">0</b></span><span>Wave<b id="arcWave">0</b></span><span>Streak<b id="arcMult">×1</b></span>
+      <span>Error budget<i class="arc-bud" id="arcBudget" role="img" aria-label="Error budget 3 of 3"></i></span>
+      <span class="sp"></span><span>Best<b id="arcBest">0</b></span>
+      <button type="button" id="arcPause" aria-pressed="false">Pause</button>{SOUND}
+    </div>
+    <div class="arc-stage" id="arcStage" data-cal="{CAL}">
+      <canvas role="img" aria-label="Orbital Ops play area: a ship at the bottom shoots incidents falling from the top"></canvas>
+      <div class="arc-screen" id="arcScreen" aria-live="polite"></div>
+    </div>
+  </section>
+  <article class="prose">
+    <h2>How to play</h2>
+    <p>Move your ship with the mouse, a finger, the arrow keys or WASD. Firing is automatic, so you can focus on dodging. Every eight incidents you clear without letting one escape raises your streak multiplier, up to eight times. Each hit spends one point of your error budget; lose all three and the game ends. Press P to pause at any time.</p>
+    <h2>Power-ups</h2>
+    <ul>
+      <li><strong>Autoscale</strong>: triple shot for a few seconds.</li>
+      <li><strong>Observability</strong>: slows incoming incidents so you can see what is happening.</li>
+      <li><strong>Circuit breaker</strong>: a shield that absorbs one hit.</li>
+      <li><strong>Rollback</strong>: restores one point of error budget.</li>
+    </ul>
+    <h2>Incident field guide</h2>
+    <p>Every enemy is a real class of production problem. When one takes you down, the game links to how to handle it for real.</p>
+  </article>
+  <div class="arc-guide">{guide}</div>
+  {faq_html(PLAY_FAQ)}
+  {cta_html('Orbital Ops')}
+</main>
+{modal()}
+{footer(pages, posts)}
+{SCRIPTS}
+<script src="/assets/arcade.js" defer></script>
+</body>
+</html>
+"""
+
+
 def not_found(pages, posts):
     ld = {"@context": "https://schema.org", "@type": "WebPage", "name": "Page not found"}
     links = "".join(f'<a class="svc" href="/{p["slug"]}/"><b>{e(SERVICE_LABELS.get(p["slug"], p["h1"]))}</b><i>→</i></a>'
@@ -833,8 +922,10 @@ def main():
     (ROOT / "404.html").write_text(not_found(pages, posts))
     (ROOT / "privacy").mkdir(exist_ok=True)
     (ROOT / "privacy/index.html").write_text(privacy_page(pages, posts))
+    (ROOT / "play").mkdir(exist_ok=True)
+    (ROOT / "play/index.html").write_text(play_page(pages, posts))
 
-    urls = [("/", "1.0", "monthly"), ("/insights/", "0.8", "weekly"), ("/privacy/", "0.2", "yearly")]
+    urls = [("/", "1.0", "monthly"), ("/insights/", "0.8", "weekly"), ("/privacy/", "0.2", "yearly"), ("/play/", "0.5", "monthly")]
     urls += [(f"/{m['slug']}/", "0.9", "monthly") for m in pages]
     urls += [(f"/insights/{m['slug']}/", "0.7", "yearly") for m in posts]
     if cases:
@@ -858,7 +949,7 @@ def main():
         llms += [f"- [{m['h1']}]({SITE}/case-studies/{m['slug']}/): {m['description']}" for m in cases]
         llms += ["", "## Use cases"]
         llms += [f"- [{u['title']} ({u['sector']})]({SITE}/case-studies/#uc-{u['id']}): {u['problem']}" for u in use_cases()]
-    llms += ["", "## Profile", f"- [Home]({SITE}/): case studies, capabilities, playbook, FAQ",
+    llms += ["", "## Play", f"- [Orbital Ops]({SITE}/play/): a free sci-fi browser arcade game about defending production from incidents", "", "## Profile", f"- [Home]({SITE}/): case studies, capabilities, playbook, FAQ",
              "- [GitHub](https://github.com/caeser1996)",
              "- [Publication, Science Immunology](https://doi.org/10.1126/sciimmunol.abl9165)", ""]
     (ROOT / "llms.txt").write_text("\n".join(llms))

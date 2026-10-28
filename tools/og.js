@@ -8,6 +8,7 @@ const items = [
   { slug: 'home', kicker: 'Fractional CTO · AI Architect · US & UAE', h1: 'From the ontology to the infrastructure it runs on.' },
   { slug: 'insights', kicker: 'Insights', h1: 'Notes on AI, ontology, healthcare data and technical leadership.' },
   { slug: 'case-studies', kicker: 'Case studies', h1: 'The problem, the architecture, the flow and the decisions.' },
+  { slug: 'play', kicker: 'Arcade · Orbital Ops', h1: 'Defend production from incoming incidents.' },
 ];
 for (const dir of ['src/pages', 'src/insights', 'src/case-studies']) {
   const d = path.join(ROOT, dir); if (!fs.existsSync(d)) continue;

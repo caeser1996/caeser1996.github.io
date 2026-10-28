@@ -193,3 +193,66 @@
     document.addEventListener('click',function(e){if(e.target.closest('[data-cookie-settings]')){e.preventDefault();show();}});
     if(!get())setTimeout(show,800);
   })();
+
+  // space loader: shown once per session, removed as soon as the page is ready
+  (function(){
+    var h=document.documentElement;if(!h.classList.contains('boot'))return;
+    var el=document.createElement('div');el.className='boot-ui';el.setAttribute('aria-hidden','true');
+    el.innerHTML='<div class="boot-orb"><i></i><i></i><i></i></div><div class="boot-txt"><span>Initialising systems</span><b>000%</b></div>';
+    document.body.appendChild(el);var b=el.querySelector('b'),n=0,t0=Date.now(),done=0;
+    var tick=setInterval(function(){n=Math.min(done?100:96,n+(done?14:Math.random()*11+3));b.textContent=('00'+Math.floor(n)).slice(-3)+'%';
+      if(n>=100){clearInterval(tick);h.classList.add('boot-out');setTimeout(function(){h.classList.remove('boot','boot-out');el.remove();},450);}},60);
+    function ready(){setTimeout(function(){done=1;},Math.max(0,700-(Date.now()-t0)));}
+    if(document.readyState==='complete')ready();else addEventListener('load',ready);
+    setTimeout(function(){done=1;},1600);
+  })();
+
+  // ambient sound: generated live with Web Audio, off until the visitor switches it on
+  (function(){
+    var AC=window.AudioContext||window.webkitAudioContext,ctx,master,fx,on=false,timers=[],chordIx=0,voices=[];
+    function pref(v){try{if(v===undefined)return localStorage.getItem('sound');localStorage.setItem('sound',v);}catch(e){return null;}}
+    var CH=[[220,261.63,329.63,392,493.88],[174.61,220,261.63,329.63,392],[130.81,196,246.94,329.63,392],[164.81,196,246.94,293.66,369.99]];
+    var PENT=[440,523.25,587.33,659.25,783.99,880,1046.5,1174.66];
+    function build(){ctx=new AC();master=ctx.createGain();master.gain.value=0;
+      var comp=ctx.createDynamicsCompressor();master.connect(comp);comp.connect(ctx.destination);
+      // reverb from a decaying noise impulse
+      var len=ctx.sampleRate*3.2,ir=ctx.createBuffer(2,len,ctx.sampleRate);
+      for(var c=0;c<2;c++){var d=ir.getChannelData(c);for(var i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,2.6);}
+      var rev=ctx.createConvolver();rev.buffer=ir;var wet=ctx.createGain();wet.gain.value=.55;rev.connect(wet);wet.connect(master);
+      var dl=ctx.createDelay(1);dl.delayTime.value=.42;var fb=ctx.createGain();fb.gain.value=.38;dl.connect(fb);fb.connect(dl);dl.connect(rev);
+      fx={rev:rev,dl:dl};
+      // pad: detuned saws through a slowly breathing low-pass filter
+      var lp=ctx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=700;lp.Q.value=.7;
+      var lfo=ctx.createOscillator(),lg=ctx.createGain();lfo.frequency.value=.05;lg.gain.value=380;lfo.connect(lg);lg.connect(lp.frequency);lfo.start();
+      var padG=ctx.createGain();padG.gain.value=.05;lp.connect(padG);padG.connect(master);padG.connect(rev);
+      for(var v=0;v<5;v++){var g=ctx.createGain();g.gain.value=0;g.connect(lp);var oo=[];
+        [-7,7].forEach(function(dt){var o=ctx.createOscillator();o.type='sawtooth';o.detune.value=dt;o.connect(g);o.start();oo.push(o);});voices.push({g:g,o:oo});}
+      var sub=ctx.createOscillator(),sg=ctx.createGain();sub.type='sine';sub.frequency.value=55;sg.gain.value=.09;sub.connect(sg);sg.connect(master);sub.start();fx.sub=sub;}
+    function chord(){var c=CH[chordIx++%CH.length],t=ctx.currentTime;
+      voices.forEach(function(v,i){v.o.forEach(function(o){o.frequency.setTargetAtTime(c[i],t,1.2);});v.g.gain.setTargetAtTime(i<3?.5:.3,t,1.5);});
+      fx.sub.frequency.setTargetAtTime(c[0]/4,t,2);}
+    function ping(){if(!on)return;var t=ctx.currentTime,o=ctx.createOscillator(),g=ctx.createGain();o.type=Math.random()<.5?'sine':'triangle';
+      o.frequency.value=PENT[Math.random()*PENT.length|0]*(Math.random()<.3?.5:1);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.05,t+.02);
+      g.gain.exponentialRampToValueAtTime(.0001,t+2.4);o.connect(g);g.connect(fx.dl);g.connect(master);o.start(t);o.stop(t+2.5);
+      timers.push(setTimeout(ping,1400+Math.random()*3200));}
+    function start(){if(!AC)return;if(!ctx)build();ctx.resume();on=true;master.gain.setTargetAtTime(.5,ctx.currentTime,1.5);
+      chord();timers.push(setInterval(chord,9000));ping();ui();}
+    function stop(){on=false;timers.forEach(function(t){clearTimeout(t);clearInterval(t);});timers=[];if(ctx)master.gain.setTargetAtTime(0,ctx.currentTime,.4);ui();}
+    function ui(){document.querySelectorAll('.snd').forEach(function(b){b.setAttribute('aria-pressed',on);b.classList.toggle('on',on);
+      b.setAttribute('aria-label',on?'Turn ambient sound off':'Turn ambient sound on');});}
+    // short effects for the arcade, only while sound is on
+    function sfx(k){if(!on||!ctx)return;var t=ctx.currentTime,o=ctx.createOscillator(),g=ctx.createGain(),P={
+      laser:['square',880,220,.08,.012],boom:['sawtooth',160,40,.35,.06],bigboom:['sawtooth',90,25,1.1,.12],hit:['sawtooth',300,60,.5,.09],
+      power:['triangle',440,1320,.35,.06],mult:['triangle',660,990,.2,.05],shield:['sine',600,200,.3,.06],enemy:['square',300,180,.12,.015],over:['triangle',440,110,1.4,.08]}[k];
+      if(!P)return;o.type=P[0];o.frequency.setValueAtTime(P[1],t);o.frequency.exponentialRampToValueAtTime(P[2],t+P[3]);
+      g.gain.setValueAtTime(P[4],t);g.gain.exponentialRampToValueAtTime(.0001,t+P[3]);o.connect(g);g.connect(master);g.connect(fx.rev);o.start(t);o.stop(t+P[3]+.05);}
+    window.SiteSound={sfx:sfx,wake:function(){if(pref()==='on'&&!on)start();}};
+    document.addEventListener('click',function(e){var b=e.target.closest('.snd');if(!b)return;
+      if(on){stop();pref('off');}else{start();pref('on');}try{if(window.gtag)gtag('event','sound_toggle',{state:on?'on':'off'});}catch(_){}});
+    // browsers only allow audio after a gesture, so resume a saved preference on the first interaction
+    if(pref()==='on'){var go=function(e){if(e.target.closest&&e.target.closest('.snd'))return;removeEventListener('pointerdown',go,true);removeEventListener('keydown',go,true);if(!on)start();};
+      addEventListener('pointerdown',go,true);addEventListener('keydown',go,true);}
+    document.addEventListener('visibilitychange',function(){if(ctx&&on){document.hidden?ctx.suspend():ctx.resume();}});
+    ui();
+  })();
+  (function(){var b=document.querySelector('[data-arc-best]');if(!b)return;try{var v=+localStorage.getItem('arcBest');if(v)b.textContent=v.toLocaleString('en-GB');}catch(e){}})();
