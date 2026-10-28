@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Migrating to stateless MCP: a 2026-07-28 playbook</title>
+<meta name="description" content="The MCP 2026-07-28 spec removed sessions and the handshake. A playbook for migrating servers, gateways and clients: state handles, MRTR, headers, caching and auth changes." />
+<meta name="keywords" content="MCP 2026-07-28, stateless MCP, MCP migration, Multi Round-Trip Requests, MRTR, Mcp-Method header, MCP gateway routing, server/discover, MCP deprecations, AI architect" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://asksumanta.com/insights/mcp-stateless-migration-playbook/" />
+<meta name="theme-color" content="#111214" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="Migrating to stateless MCP: a 2026-07-28 playbook" />
+<meta property="og:description" content="The MCP 2026-07-28 spec removed sessions and the handshake. A playbook for migrating servers, gateways and clients: state handles, MRTR, headers, caching and auth changes." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://asksumanta.com/insights/mcp-stateless-migration-playbook/" />
+<meta property="og:image" content="https://asksumanta.com/assets/og/mcp-stateless-migration-playbook.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Migrating to stateless MCP: a 2026-07-28 playbook" />
+<meta name="twitter:description" content="The MCP 2026-07-28 spec removed sessions and the handshake. A playbook for migrating servers, gateways and clients: state handles, MRTR, headers, caching and auth changes." />
+<meta name="twitter:image" content="https://asksumanta.com/assets/og/mcp-stateless-migration-playbook.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "BlogPosting", "headline": "Migrating to stateless MCP: a playbook for the 2026-07-28 specification", "description": "The MCP 2026-07-28 spec removed sessions and the handshake. A playbook for migrating servers, gateways and clients: state handles, MRTR, headers, caching and auth changes.", "datePublished": "2026-10-28T12:20:00+04:00", "dateModified": "2026-10-28T12:20:00+04:00", "articleSection": "AI architecture · MCP", "genre": "Playbook", "citation": [{"@type": "CreativeWork", "name": "The 2026-07-28 Specification", "url": "https://blog.modelcontextprotocol.io/posts/2026-07-28/"}, {"@type": "CreativeWork", "name": "Key changes (2026-07-28 changelog)", "url": "https://modelcontextprotocol.io/specification/2026-07-28/changelog"}, {"@type": "CreativeWork", "name": "Multi Round-Trip Requests", "url": "https://modelcontextprotocol.io/specification/2026-07-28/basic/patterns/mrtr"}, {"@type": "CreativeWork", "name": "Streamable HTTP transport", "url": "https://modelcontextprotocol.io/specification/2026-07-28/basic/transports/streamable-http"}, {"@type": "CreativeWork", "name": "Deprecated features", "url": "https://modelcontextprotocol.io/specification/2026-07-28/deprecated"}], "author": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "publisher": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "mainEntityOfPage": "https://asksumanta.com/insights/mcp-stateless-migration-playbook/", "image": "https://asksumanta.com/assets/og/mcp-stateless-migration-playbook.png", "keywords": "MCP 2026-07-28, stateless MCP, MCP migration, Multi Round-Trip Requests, MRTR, Mcp-Method header, MCP gateway routing, server/discover, MCP deprecations, AI architect", "wordCount": 745}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://asksumanta.com/"}, {"@type": "ListItem", "position": 2, "name": "Insights", "item": "https://asksumanta.com/insights/"}, {"@type": "ListItem", "position": 3, "name": "Migrating to stateless MCP: a playbook for the 2026-07-28 specification", "item": "https://asksumanta.com/insights/mcp-stateless-migration-playbook/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What changed in MCP 2026-07-28?", "acceptedAnswer": {"@type": "Answer", "text": "The initialize handshake and protocol-level sessions were removed, so every request carries its own protocol version and client capabilities. Server-initiated requests such as elicitation and sampling moved to Multi Round-Trip Requests, list results became cacheable, and Streamable HTTP requests must carry Mcp-Method and Mcp-Name headers."}}, {"@type": "Question", "name": "Does stateless MCP mean my server cannot keep state?", "acceptedAnswer": {"@type": "Answer", "text": "No. The specification removes state hidden in the transport. Servers that need state across calls mint an explicit handle from a tool and the model passes it back as an ordinary argument."}}, {"@type": "Question", "name": "How long do deprecated MCP features keep working?", "acceptedAnswer": {"@type": "Answer", "text": "The 2026-07-28 release introduced a formal deprecation policy with a twelve-month minimum window. Roots, Sampling and Logging were deprecated, and remain functional during that window."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+</script>
+</head>
+<body class="sub is-post">
+<div class="progress" id="progress"></div>
+<nav>
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="/#practice">Services</a>
+      <a href="/case-studies/">Case studies</a>
+      <a href="/insights/">Insights</a>
+      <a href="/#assess">Analyse</a>
+      <a href="/#connect">Connect</a>
+    </div>
+    <div class="nav-r">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/insights/">Insights</a> <span>/</span> <em>Migrating to stateless MCP: a playbook for the 2026-07-28 specification</em></div>
+    <div class="kicker">AI architecture · MCP</div>
+    <h1>Migrating to stateless MCP: a playbook for the 2026-07-28 specification</h1>
+    <p class="sub-lede">The 2026-07-28 Model Context Protocol specification turned a stateful, bidirectional protocol into a stateless request and response one. That is good news for anyone running MCP servers at scale, and a real migration for anyone who built on sessions, server-initiated requests or long-lived streams.</p>
+    <div class="ameta"><span class="fmt">Playbook</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-10-28T12:20:00+04:00">28 Oct 2026 · 12:20 GST</time><span>8 min read</span><span>5 sources</span></div><div class="atags"><span class="tagp">#ai</span><span class="tagp">#mcp</span><span class="tagp">#agents</span><span class="tagp">#platform</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Playbook cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><circle cx="560" cy="61" r="8" class="cv-dot hl"/><rect x="590" y="50" width="578" height="22" class="cv-bar hl"/><circle cx="560" cy="109" r="8" class="cv-dot"/><rect x="590" y="98" width="345" height="22" class="cv-bar"/><circle cx="560" cy="157" r="8" class="cv-dot"/><rect x="590" y="146" width="451" height="22" class="cv-bar"/><circle cx="560" cy="205" r="8" class="cv-dot hl"/><rect x="590" y="194" width="468" height="22" class="cv-bar hl"/><circle cx="560" cy="253" r="8" class="cv-dot"/><rect x="590" y="242" width="417" height="22" class="cv-bar"/><circle cx="560" cy="301" r="8" class="cv-dot"/><rect x="590" y="290" width="306" height="22" class="cv-bar"/><circle cx="560" cy="349" r="8" class="cv-dot hl"/><rect x="590" y="338" width="357" height="22" class="cv-bar hl"/><text x="60" y="90" class="cv-k">PLAYBOOK · AI ARCHITECTURE · MCP</text><text x="60" y="350" class="cv-n">28 Oct 2026 · 12:20 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <p>Most early MCP servers were built like chat connections: a client connected, shook hands, held a session open and the server pushed requests back when it needed something. That worked on a laptop. It worked less well behind a load balancer, in serverless runtimes, or anywhere a connection could drop. The 2026-07-28 specification addresses that head on<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+
+<section class="block">
+<h2 id="what-changed-in-one-table">What changed, in one table</h2>
+<table class="tbl">
+<thead><tr><th>Before</th><th>From 2026-07-28</th><th>Why it matters</th></tr></thead>
+<tbody>
+<tr><td><code>initialize</code> handshake and <code>Mcp-Session-Id</code></td><td>Removed; each request carries protocol version and client capabilities in <code>_meta</code></td><td>Any request can land on any instance<sup class="cite"><a href="#ref-2">2</a></sup></td></tr>
+<tr><td>Capabilities learned at connect time</td><td>Optional <code>server/discover</code> call that servers must implement</td><td>Up-front version selection when clients want it<sup class="cite"><a href="#ref-2">2</a></sup></td></tr>
+<tr><td>Server-initiated elicitation, sampling and roots requests</td><td>Multi Round-Trip Requests: the server returns <code>input_required</code> and the client retries with answers</td><td>No held-open bidirectional stream<sup class="cite"><a href="#ref-3">3</a></sup></td></tr>
+<tr><td>Method and tool names only in the JSON body</td><td><code>Mcp-Method</code> and <code>Mcp-Name</code> headers required on Streamable HTTP</td><td>Gateways route and authorise on headers<sup class="cite"><a href="#ref-4">4</a></sup></td></tr>
+<tr><td>List results with no freshness hints</td><td><code>ttlMs</code> and <code>cacheScope</code>, plus deterministic tool order</td><td>Client caching and stable prompt caches<sup class="cite"><a href="#ref-2">2</a></sup></td></tr>
+<tr><td>SSE resumability with <code>Last-Event-ID</code></td><td>Removed; a broken stream means re-issuing the request</td><td>Simpler transport, but retries must be safe<sup class="cite"><a href="#ref-2">2</a></sup></td></tr>
+</tbody>
+</table>
+<p>The release also moved Tasks into an official extension, hardened authorisation with RFC 9207 issuer validation, deprecated Dynamic Client Registration in favour of client metadata documents, and introduced a formal deprecation policy with a twelve-month minimum window<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+</section>
+
+<section class="block">
+<h2 id="the-playbook">The playbook</h2>
+<h3>1. Inventory what depends on sessions</h3>
+<p>List every server and find where it relies on connection state: per-session caches, "current project" set at connect time, server-pushed requests, resumable streams. Those are your migration items. Servers that only expose stateless tools usually need little more than an SDK upgrade.</p>
+
+<h3>2. Replace hidden state with explicit handles</h3>
+<p>The specification's answer to cross-call state is an explicit, server-minted handle returned by a tool and passed back as an ordinary argument<sup class="cite"><a href="#ref-2">2</a></sup>. The maintainers note this works better than transport-hidden state because the model can see the handle and thread it between tools<sup class="cite"><a href="#ref-1">1</a></sup>. Store the state behind the handle in a shared store, scoped to the user, with an expiry.</p>
+
+<h3>3. Rework interactive tools with MRTR</h3>
+<p>Tools that asked the user for confirmation or a missing parameter mid-call now return an interim result with <code>resultType: "input_required"</code>; the client gathers the answers and retries the original request with them<sup class="cite"><a href="#ref-3">3</a></sup>. Design these tools so a retry is safe, and keep any correlation data in the request state rather than server memory.</p>
+
+<h3>4. Make retries safe everywhere</h3>
+<p>Without stream resumability, a dropped response stream means the client re-issues the request with a new ID<sup class="cite"><a href="#ref-2">2</a></sup>. Any tool with side effects needs idempotency, the same discipline as in <a href="/insights/idempotent-payments-order-pipelines/">idempotent payment pipelines</a>.</p>
+
+<h3>5. Move routing and policy to the gateway</h3>
+<p>With <code>Mcp-Method</code> and <code>Mcp-Name</code> on every Streamable HTTP request<sup class="cite"><a href="#ref-4">4</a></sup>, a gateway can rate-limit, authorise and meter per tool without parsing bodies. Plain round-robin load balancing now works. This is the natural place to enforce the controls in <a href="/insights/securing-mcp-servers-checklist/">securing MCP servers</a>.</p>
+
+<h3>6. Use the cache hints</h3>
+<p>Return a deterministic tool order and sensible <code>ttlMs</code> values. Stable tool lists help clients cache catalogues and keep upstream prompt caches warm, which matters for cost, as covered in <a href="/insights/prompt-caching-llm-cost-latency/">prompt caching</a>.</p>
+
+<h3>7. Plan the deprecations</h3>
+<p>Roots, Sampling and Logging are deprecated, with suggested migrations: pass paths through tool parameters or configuration instead of Roots, call model providers directly instead of Sampling, and use stderr or OpenTelemetry instead of protocol Logging<sup class="cite"><a href="#ref-2">2</a></sup><sup class="cite"><a href="#ref-5">5</a></sup>. Trace context now has documented conventions in <code>_meta</code>, which fits the approach in <a href="/insights/llm-observability-opentelemetry-genai/">LLM observability</a>.</p>
+<div class="callout"><p>Stateless MCP doesn't make your system stateless. It makes your state visible, which is exactly where an auditor, an SRE and the model all need it to be.</p></div>
+</section>
+
+<section class="block">
+<h2 id="sequencing-for-an-enterprise-estate">Sequencing for an enterprise estate</h2>
+<ol>
+<li><strong>Gateway first</strong>, so routing and policy work for both old and new protocol versions during the transition.</li>
+<li><strong>High-traffic, stateless servers next</strong>: the easiest wins for scalability.</li>
+<li><strong>Interactive and stateful servers last</strong>, with handles and MRTR designed and tested properly.</li>
+<li><strong>Registry metadata updated</strong> to show which protocol versions each server supports, as in <a href="/insights/mcp-registry-enterprise-subregistry/">an enterprise MCP registry</a>.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2 id="how-i-can-help">How I can help</h2>
+<p>I design and migrate enterprise MCP estates, from gateways and registries to server patterns that survive load balancers and retries. See my <a href="/ai-architect/">AI architecture work</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://blog.modelcontextprotocol.io/posts/2026-07-28/" target="_blank" rel="noopener">The 2026-07-28 Specification</a><small>Model Context Protocol blog · 28 Jul 2026</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://modelcontextprotocol.io/specification/2026-07-28/changelog" target="_blank" rel="noopener">Key changes (2026-07-28 changelog)</a><small>Model Context Protocol specification</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://modelcontextprotocol.io/specification/2026-07-28/basic/patterns/mrtr" target="_blank" rel="noopener">Multi Round-Trip Requests</a><small>Model Context Protocol specification</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://modelcontextprotocol.io/specification/2026-07-28/basic/transports/streamable-http" target="_blank" rel="noopener">Streamable HTTP transport</a><small>Model Context Protocol specification</small></div></li><li id="ref-5"><span class="rn">5</span><div><a href="https://modelcontextprotocol.io/specification/2026-07-28/deprecated" target="_blank" rel="noopener">Deprecated features</a><small>Model Context Protocol specification</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fmcp-stateless-migration-playbook%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fmcp-stateless-migration-playbook%2F&amp;text=Migrating%20to%20stateless%20MCP%3A%20a%20playbook%20for%20the%202026-07-28%20specification" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=Migrating%20to%20stateless%20MCP%3A%20a%20playbook%20for%20the%202026-07-28%20specification%20https%3A%2F%2Fasksumanta.com%2Finsights%2Fmcp-stateless-migration-playbook%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://asksumanta.com/insights/mcp-stateless-migration-playbook/">Copy link</button></div>
+      <div class="pnav"><a class="pn prev" href="/insights/omop-characterisation-incidence/"><small>← Previous</small><b>Characterisation on OMOP: describe your population before you predict or estimate anything</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#what-changed-in-one-table">What changed, in one table</a></li><li><a href="#the-playbook">The playbook</a></li><li><a href="#sequencing-for-an-enterprise-estate">Sequencing for an enterprise estate</a></li><li><a href="#how-i-can-help">How I can help</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>What changed in MCP 2026-07-28?</summary><p>The initialize handshake and protocol-level sessions were removed, so every request carries its own protocol version and client capabilities. Server-initiated requests such as elicitation and sampling moved to Multi Round-Trip Requests, list results became cacheable, and Streamable HTTP requests must carry Mcp-Method and Mcp-Name headers.</p></details><details class="rise"><summary>Does stateless MCP mean my server cannot keep state?</summary><p>No. The specification removes state hidden in the transport. Servers that need state across calls mint an explicit handle from a tool and the model passes it back as an ordinary argument.</p></details><details class="rise"><summary>How long do deprecated MCP features keep working?</summary><p>The 2026-07-28 release introduced a formal deprecation policy with a twelve-month minimum window. Roots, Sampling and Logging were deprecated, and remain functional during that window.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/ai-architect/"><small>Service</small><b>AI &amp; LLM architecture</b><span>I design and build AI systems that leadership can trust: grounded in your data, measured by evaluations, governed by your rules and priced so they make sense at scale.</span><i>→</i></a><a class="rcard rise" href="/fractional-cto/"><small>Service</small><b>Fractional CTO</b><span>I work as a part-time CTO for founders, CEOs and boards who need experienced technical judgement now, and a team that can carry it on after I step back.</span><i>→</i></a><a class="rcard rise" href="/technical-due-diligence/"><small>Service</small><b>Technical due diligence</b><span>I give investors an independent, plain-language view of a company&#x27;s technology, team and AI claims, so the risks are priced in before the deal closes, not discovered after.</span><i>→</i></a><a class="rcard rise" href="/insights/omop-characterisation-incidence/"><small>Insight</small><b>Characterisation on OMOP: describe your population before you predict or estimate anything</b><span>Health data teams are under pressure to jump straight to prediction models and causal studies. The most useful first step is less glamorous: describing the data and the people in it. OHDSI&#x27;s characterisation methods turn that into a repeatable, shareable discipline.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: Migrating to stateless MCP: a playbook for the 2026-07-28 specification">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
+        <p class="floc">United States &amp; UAE · working globally</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/uae/">Fractional CTO in the UAE</a></li></ul></div>
+      <div class="fc"><h4>Case studies</h4><ul><li><a href="/case-studies/llm-evaluation-observability-platform/">LLM evaluation and observability platform</a></li><li><a href="/case-studies/kubernetes-finops-platform-engineering/">Kubernetes FinOps and platform engineering</a></li><li><a href="/case-studies/enterprise-mcp-agent-platform/">Enterprise MCP agent platform</a></li><li><a href="/case-studies/insurance-claims-triage-ai/">Insurance claims triage with AI</a></li><li><a href="/#work">Engagement snapshots</a></li><li><a href="/case-studies/">All case studies →</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/mcp-stateless-migration-playbook/">Migrating to stateless MCP: a playbook for the 2026-07-28 specification</a></li><li><a href="/insights/omop-characterisation-incidence/">Characterisation on OMOP: describe your population before you predict or estimate anything</a></li><li><a href="/insights/opentelemetry-declarative-configuration/">OpenTelemetry declarative configuration: a playbook for moving from environment variables to one reviewed file</a></li><li><a href="/insights/terraform-secrets-out-of-state/">Keeping secrets out of Terraform state: a checklist for platform teams</a></li><li><a href="/insights/slos-error-budgets-small-teams/">SLOs and error budgets for small teams: field notes on making reliability a decision, not a debate</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>
