@@ -1,0 +1,49 @@
+<!--{"title": "Kubernetes workload identity: tokens or Pod Certificates?", "description": "Kubernetes 1.37 made Pod Certificates and Cluster Trust Bundles GA. How they compare with service account tokens, when to use each, and how to roll out mTLS identity.", "h1": "Kubernetes workload identity: service account tokens or Pod Certificates?", "kicker": "Cloud · Kubernetes · Security", "lede": "For years the built-in answer to 'who is this workload?' in Kubernetes was a service account token. Kubernetes 1.37 made the foundations of a second answer generally available: X.509 certificates issued to Pods. The two solve overlapping problems with different security properties.", "date": "2026-10-28", "datetime": "2026-10-28T16:30:00+04:00", "readtime": "7 min read", "format": "comparison", "tags": ["kubernetes", "security", "platform", "cloud"], "keywords": ["Kubernetes Pod Certificates", "ClusterTrustBundle", "PodCertificateRequest", "service account token", "workload identity", "mTLS Kubernetes", "SPIFFE", "bearer token risk", "Kubernetes 1.37", "platform security"], "faq": [["What are Kubernetes Pod Certificates?", "A built-in way for Pods to receive X.509 certificates. The kubelet generates a private key, creates a PodCertificateRequest addressed to a signer, and writes the issued certificate and key to the container filesystem, refreshing them automatically. Cluster Trust Bundles distribute the trust anchors needed to verify peers."], ["Why not just use service account tokens?", "Service account JWTs are convenient and widely supported, but they are bearer tokens: anyone holding a copy can present it. Certificates used in TLS are proof-of-possession credentials, because the private key never has to leave the workload."], ["Does Kubernetes include a Pod Certificate signer?", "As of the 1.37 announcement, the project did not yet ship signers in core, so a third-party or custom signer is needed. The author expected built-in signers for service TLS certificates and SPIFFE client certificates in time."]], "related": ["/fractional-cto/", "/technical-due-diligence/", "/ai-architect/"], "citations": [{"title": "Kubernetes v1.37: Pod Certificates and Cluster Trust Bundles", "url": "https://kubernetes.io/blog/2026/08/28/kubernetes-v1-37-pod-certificates-and-cluster-trust-bundles/", "publisher": "Kubernetes blog", "date": "28 Aug 2026"}, {"title": "Service accounts", "url": "https://kubernetes.io/docs/concepts/security/service-accounts/", "publisher": "Kubernetes documentation"}, {"title": "Projected volumes", "url": "https://kubernetes.io/docs/concepts/storage/projected-volumes/", "publisher": "Kubernetes documentation"}, {"title": "SPIFFE concepts", "url": "https://spiffe.io/docs/latest/spiffe-about/spiffe-concepts/", "publisher": "SPIFFE project"}]}-->
+<p>Every service that calls another service has to prove who it is. Inside Kubernetes, the default proof has been a service account token, a signed JWT that the kubelet mounts into the Pod and keeps fresh<sup class="cite"><a href="#ref-2">2</a></sup>. It works well, which is why it underpins workload identity federation with the major cloud providers<sup class="cite"><a href="#ref-1">1</a></sup>. It also has one structural weakness, and Kubernetes 1.37 shipped a GA foundation for addressing it.</p>
+
+<section class="block">
+<h2>The problem with bearer tokens</h2>
+<p>Service account JWTs are bearer tokens: whoever has the token is the identity it names. To authenticate to a peer you must hand it a copy, which means the peer could replay it. Kubernetes reduces the risk by binding tokens to time, audience and objects, but the Kubernetes blog is candid that none of these are complete defences<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<p>The alternative is a proof-of-possession credential, where you prove you hold a secret without sending it. The most widely deployed form is the X.509 certificate used in TLS: the private key stays in the workload, and only a signature and the certificate cross the wire<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+</section>
+
+<section class="block">
+<h2>How Pod Certificates work</h2>
+<p>A Pod requests certificates through projected volume sources in its spec<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>. When the Pod is scheduled, the kubelet generates a private key, creates a PodCertificateRequest addressed to a named signer, and waits for the signer controller to issue a certificate chain. The kubelet writes the key and certificate into the container, alongside trust anchors collected from matching Cluster Trust Bundles, and refreshes everything before it expires<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/kubernetes-pod-certificates-workload-identity/architecture.webp" alt="Architecture diagram: a signer controller issues PodCertificateRequests and publishes ClusterTrustBundles; the kubelet on the node creates requests and reads trust bundles, then writes a credential bundle and a trust bundle file into the Pod, which the application reads" width="900" height="1009" loading="lazy"></div><figcaption>Pod Certificates architecture: the signer issues, the kubelet delivers, the application reads files. <span class="credit">Source: <a href="https://kubernetes.io/blog/2026/08/28/kubernetes-v1-37-pod-certificates-and-cluster-trust-bundles/" target="_blank" rel="noopener">Kubernetes blog</a> · CC BY 4.0</span></figcaption></figure>
+<p>Two details matter in practice. Rotation is automatic and frequent: signers eventually shipped in core are expected to issue certificates with a maximum lifetime of 24 hours, and other signers are capped at 91 days, so applications must reload credentials when files change. And security checks sit in the API server, where node restriction stops a compromised node requesting certificates for Pods not scheduled to it<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+</section>
+
+<section class="block">
+<h2>Side by side</h2>
+<table class="tbl">
+<thead><tr><th></th><th>Service account tokens</th><th>Pod Certificates</th></tr></thead>
+<tbody>
+<tr><td>Credential type</td><td>Bearer JWT</td><td>X.509 certificate with a private key kept in the Pod</td></tr>
+<tr><td>Replay if intercepted</td><td>Possible within the token's bindings</td><td>Not without the private key</td></tr>
+<tr><td>Best for</td><td>Calling cloud APIs and services that accept federated JWTs</td><td>Service-to-service mTLS inside and across clusters</td></tr>
+<tr><td>Ecosystem support</td><td>Very broad today</td><td>Growing; signers are pluggable</td></tr>
+<tr><td>Signer</td><td>Built into the control plane</td><td>Third-party or custom at 1.37; built-in signers expected later</td></tr>
+<tr><td>Application effort</td><td>Read a file, send a header</td><td>Configure TLS and handle frequent rotation</td></tr>
+</tbody>
+</table>
+<p>The blog expects at least two built-in signers over time: one for server TLS certificates matching Service DNS names, and one for SPIFFE client certificates that fill the role service account tokens play today<sup class="cite"><a href="#ref-1">1</a></sup>. SPIFFE defines a standard identity format and verifiable identity documents for workloads, which makes these identities portable across platforms<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+<div class="callout"><p>Use tokens to talk to clouds and APIs that expect them. Use certificates for service-to-service trust you control. Most platforms will run both for years.</p></div>
+</section>
+
+<section class="block">
+<h2>How I'd roll it out</h2>
+<ol>
+<li><strong>Map current identity flows</strong>: which services call which, with what credential, and where tokens are forwarded rather than validated.</li>
+<li><strong>Pick a signer strategy.</strong> Until built-in signers arrive, choose a maintained signer or your existing PKI, and decide who owns the root of trust.</li>
+<li><strong>Start with internal mTLS</strong> between a few high-value services, using credential bundles so rotation is a single file reload.</li>
+<li><strong>Test rotation deliberately.</strong> With lifetimes as short as a day, an application that only reads its certificate at start-up will fail.</li>
+<li><strong>Enforce with policy</strong>: require certificate sources for services that handle sensitive data, using <a href="/insights/kubernetes-admission-policies-cel/">admission policies</a> and the isolation model in <a href="/insights/kubernetes-multi-tenancy/">Kubernetes multi-tenancy</a>.</li>
+<li><strong>Keep tokens where they fit</strong>, especially for cloud federation, and stop forwarding them between services, the same anti-pattern described in <a href="/insights/securing-mcp-servers-checklist/">securing MCP servers</a>.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I design Kubernetes platforms with identity, policy and isolation built in, so security reviews become a walkthrough rather than a negotiation. As a <a href="/fractional-cto/">fractional CTO</a> I can own that roadmap. Or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
