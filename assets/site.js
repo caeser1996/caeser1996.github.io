@@ -321,3 +321,16 @@
       else if(e.key==='/'&&!/INPUT|TEXTAREA|SELECT/.test((document.activeElement||{}).tagName||'')&&!(box&&box.classList.contains('on'))){e.preventDefault();open();}});
     if(/Mac|iPhone|iPad/.test(navigator.platform||''))return;document.querySelectorAll('.kbtn kbd').forEach(function(k){k.textContent='Ctrl K';});
   })();
+  // regions: live local clocks and working-hour bars (bars are drawn on a 24-hour UTC axis)
+  (function(){
+    var cl=document.querySelectorAll('.rg-clock'),bars=document.querySelectorAll('.tz-bar');if(!cl.length&&!bars.length)return;
+    function offsetMin(tz){var d=new Date(),p=new Intl.DateTimeFormat('en-GB',{timeZone:tz,hourCycle:'h23',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}).formatToParts(d),o={};
+      p.forEach(function(x){o[x.type]=x.value;});return Math.round((Date.UTC(+o.year,+o.month-1,+o.day,+o.hour,+o.minute)-d.getTime())/60000);}
+    function tick(){var now=new Date();
+      cl.forEach(function(c){try{c.textContent=c.dataset.city+' · '+now.toLocaleTimeString('en-GB',{timeZone:c.dataset.tz,hour:'2-digit',minute:'2-digit'});}catch(e){}});
+      var u=now.getUTCHours()*60+now.getUTCMinutes();
+      bars.forEach(function(b){try{var off=offsetMin(b.dataset.tz),start=((9*60-off)%1440+1440)%1440;
+        b.style.setProperty('--s',(start/1440*100)+'%');b.style.setProperty('--n',(u/1440*100)+'%');
+        var loc=((u+off)%1440+1440)%1440;b.title=Math.floor(loc/60)+':'+('0'+loc%60).slice(-2)+' local';}catch(e){}});}
+    tick();setInterval(tick,30000);
+  })();

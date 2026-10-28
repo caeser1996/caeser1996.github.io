@@ -84,7 +84,7 @@ GTAG = """<!-- Google tag (gtag.js) with Consent Mode v2 -->
 
 THEME_INIT = """<script>
   document.documentElement.classList.add('js');
-  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  var t='light';try{t=localStorage.getItem('theme')||'light';}catch(e){}
   document.documentElement.setAttribute('data-theme',t);
   try{if(!sessionStorage.getItem('booted')&&!/bot|crawl|spider|slurp|lighthouse|headless/i.test(navigator.userAgent)&&!matchMedia('(prefers-reduced-motion: reduce)').matches){document.documentElement.classList.add('boot');sessionStorage.setItem('booted','1');}}catch(e){}
 </script>"""
@@ -96,6 +96,16 @@ MOON = ('<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="cur
 
 
 NAV_POSTS = []  # filled in main(); latest insights for the menu
+REGIONS = []  # filled in main(); regional landing pages
+
+
+def label(slug, meta=None):
+    if slug in SERVICE_LABELS:
+        return SERVICE_LABELS[slug]
+    for r in REGIONS:
+        if r["slug"] == slug:
+            return f"Fractional CTO in {r['country'] if r['country'] != 'European Union' else 'Europe'}"
+    return (meta or {}).get("h1", slug)
 SERVICE_BLURBS = {
     "fractional-cto": "Part-time technology leadership for startups and scale-ups",
     "ai-architect": "RAG, agents and private LLMs that make it to production",
@@ -121,7 +131,8 @@ def nav_drop(key, label, items, side):
 
 
 def nav():
-    svc = [(f"/{k}/", v, SERVICE_BLURBS.get(k, "")) for k, v in SERVICE_LABELS.items()]
+    svc = [(f"/{k}/", v, SERVICE_BLURBS.get(k, "")) for k, v in SERVICE_LABELS.items() if k != "uae"]
+    svc.append(("/regions/", "Fractional CTO worldwide", "US, UK, Europe, Middle East, India, Singapore and Australia"))
     work = [("/case-studies/", "All case studies", f"{len(CASES)} anonymised engagements with architecture and flow diagrams"),
             ("/case-studies/#use-cases", "Use cases", "Problems I'm brought in to solve, by sector"),
             ("/case-studies/#snapshots", "Engagement snapshots", "Six common problems, the approach and the stack")]
@@ -180,7 +191,7 @@ def modal():
 
 
 def footer(pages, posts):
-    svc = "".join(f'<li><a href="/{p["slug"]}/">{e(SERVICE_LABELS.get(p["slug"], p["h1"]))}</a></li>' for p in pages)
+    svc = "".join(f'<li><a href="/{p["slug"]}/">{e(SERVICE_LABELS.get(p["slug"], p["h1"]))}</a></li>' for p in pages if p["slug"] != "uae")
     ins = "".join(f'<li><a href="/insights/{p["slug"]}/">{e(p["h1"])}</a></li>' for p in posts[:5])
     cs = "".join(f'<li><a href="/case-studies/{c["slug"]}/">{e(c.get("short") or c["h1"])}</a></li>' for c in CASES[:4])
     return f"""<footer class="site-foot">
@@ -189,9 +200,9 @@ def footer(pages, posts):
       <div class="fc fbrand">
         <a href="/" class="brand">Sumanta<span>.</span></a>
         <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
-        <p class="floc">Based in the United States &amp; UAE · working with teams across North America, Europe, the Middle East and Asia-Pacific</p>
+        <p class="floc">Global, remote-first · based in the US &amp; UAE · <a href="/regions/">where I work</a></p>
       </div>
-      <div class="fc"><h4>Services</h4><ul>{svc}</ul></div>
+      <div class="fc"><h4>Services</h4><ul>{svc}<li><a href="/regions/">Fractional CTO worldwide →</a></li></ul></div>
       <div class="fc"><h4>Case studies</h4><ul>{cs}<li><a href="/case-studies/#snapshots">Engagement snapshots</a></li><li><a href="/case-studies/">All case studies →</a></li></ul></div>
       <div class="fc"><h4>Insights</h4><ul>{ins}<li><a href="/insights/">All articles →</a></li></ul></div>
       <div class="fc"><h4>Connect</h4><ul>
@@ -229,7 +240,7 @@ def head(title, desc, keywords, url, og_image, og_type, ld):
 <meta name="author" content="{NAME}" />
 <meta name="robots" content="index, follow, max-image-preview:large" />
 <link rel="canonical" href="{url}" />
-<meta name="theme-color" content="#09090b" />
+<meta name="theme-color" content="#fafafa" />
 <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
 <link rel="manifest" href="/site.webmanifest" />
@@ -462,10 +473,12 @@ def page(meta, kind, pages, posts, pages_by_slug, cases=()):
     slug = meta["slug"]
     if kind == "service":
         url = f"{SITE}/{slug}/"
-        crumb = [("Home", f"{SITE}/"), (SERVICE_LABELS.get(slug, meta["h1"]), url)]
-        main_ld = {"@type": "Service", "name": SERVICE_LABELS.get(slug, meta["h1"]), "description": meta["description"],
-                   "provider": person_ref(), "url": url,
-                   "areaServed": AREAS_SERVED}
+        crumb = [("Home", f"{SITE}/"), (label(slug, meta), url)]
+        if meta.get("country"):
+            crumb.insert(1, ("Worldwide", f"{SITE}/regions/"))
+        main_ld = {"@type": "Service", "name": label(slug, meta), "description": meta["description"],
+                   "provider": person_ref(), "url": url, "serviceType": "Fractional CTO and AI architecture",
+                   "areaServed": meta.get("country") or AREAS_SERVED}
         og_type = "website"
         meta_line = ""
     elif kind == "case":
@@ -513,7 +526,7 @@ def page(meta, kind, pages, posts, pages_by_slug, cases=()):
     bc = " <span>/</span> ".join(
         (f'<a href="{u.replace(SITE, "") or "/"}">{e(n)}</a>' if i < len(crumb) - 1 else f"<em>{e(n)}</em>")
         for i, (n, u) in enumerate(crumb))
-    subject = SERVICE_LABELS.get(slug, meta["h1"]) if kind == "service" else f"Re: {meta['h1']}"
+    subject = label(slug, meta) if kind == "service" else f"Re: {meta['h1']}"
     if kind in ("post", "case"):
         body, toc = add_heading_ids(meta["body"])
         seq, base = (posts, "insights") if kind == "post" else (list(cases), "case-studies")
@@ -539,7 +552,7 @@ def page(meta, kind, pages, posts, pages_by_slug, cases=()):
       <a class="toc-cta" href="{CAL}" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
   </div>"""
     else:
-        body_html = f'<article class="prose">\n    {meta["body"]}\n  </article>'
+        body_html = f'<article class="prose">\n    {meta["body"]}\n    {refs_html(meta.get("citations"))}\n  </article>'
     return f"""{head(meta['title'], meta['description'], meta['keywords'], url, og, og_type, ld)}
 <body class="sub {'is-post' if kind in ('post', 'case') else 'is-service'}{' is-case' if kind == 'case' else ''}">
 {nav()}
@@ -929,6 +942,62 @@ SECTION_LABELS = {"playbook": "Playbook", "approach": "Principles", "engage": "E
                   "experience": "Experience", "credentials": "Credentials", "now": "Now"}
 
 
+REGION_ORDER = ["North America", "Europe", "Middle East", "Asia", "Asia-Pacific"]
+
+
+def regions_page(pages, posts):
+    url = f"{SITE}/regions/"
+    title = "Fractional CTO & AI Architect Worldwide | Sumanta Mukhopadhyay"
+    desc = ("Fractional CTO and AI architect for teams in the US, UK, Europe, UAE, Saudi Arabia, India, Singapore and "
+            "Australia: remote-first, with the local rules built in.")
+    groups = []
+    for g in REGION_ORDER:
+        rs = [r for r in REGIONS if r["region"] == g]
+        if not rs:
+            continue
+        cards = "".join(
+            f'<a class="rg rise" href="/{r["slug"]}/"><div class="rg-top"><b>{e(r["country"] if r["country"] != "European Union" else "Europe (EU)")}</b>'
+            f'<span class="rg-clock" data-tz="{e(r["tz"])}" data-city="{e(r["city"])}">{e(r["city"])}</span></div>'
+            f'<p>{e(r["lede"])}</p><div class="rg-chips">{"".join(f"<i>{e(c)}</i>" for c in r.get("chips", []))}</div>'
+            f'<span class="rg-go">Fractional CTO in {e(r["country"] if r["country"] != "European Union" else "Europe")} →</span></a>' for r in rs)
+        groups.append(f'<section class="rg-group" id="{g.lower().replace(" ", "-")}"><div class="kicker">{e(g)}</div><div class="rg-grid">{cards}</div></section>')
+    ld = {"@context": "https://schema.org", "@graph": [
+        {"@type": "CollectionPage", "@id": url, "url": url, "name": title, "description": desc, "dateModified": TODAY,
+         "hasPart": [{"@type": "WebPage", "name": label(r["slug"]), "url": f"{SITE}/{r['slug']}/"} for r in REGIONS]},
+        {"@type": "ProfessionalService", "name": f"{NAME}: Fractional CTO & AI Architecture", "url": url,
+         "provider": person_ref(), "areaServed": AREAS_SERVED},
+        crumbs([("Home", f"{SITE}/"), ("Worldwide", url)])]}
+    zones = "".join(f'<div class="tz-row"><span>{e(r["city"])}</span><div class="tz-bar" data-tz="{e(r["tz"])}"><i></i></div></div>'
+                    for r in REGIONS)
+    return f"""{head(title, desc, ["fractional CTO worldwide", "global fractional CTO", "remote fractional CTO", "AI architect worldwide", "fractional CTO USA", "fractional CTO UK", "fractional CTO Europe", "fractional CTO India", "fractional CTO Dubai", "fractional CTO Singapore", "fractional CTO Australia"], url, f"{SITE}/assets/og/regions.png", "website", ld)}
+<body class="sub hub">
+{nav()}
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <em>Worldwide</em></div>
+    <div class="kicker">Worldwide · remote-first</div>
+    <h1>A fractional CTO and AI architect for teams anywhere</h1>
+    <p class="sub-lede">I work with founders, enterprises and investors across {len(REGIONS)} regions. The engineering is the same everywhere; the rules, time zones and buyers are not. Each page below covers what changes in that market.</p>
+    <div class="subnav-in rg-jump">{"".join(f'<a href="#{g.lower().replace(" ", "-")}">{e(g)}</a>' for g in REGION_ORDER if any(r["region"] == g for r in REGIONS))}</div>
+  </header>
+  {"".join(groups)}
+  <section class="rg-tz rise" aria-labelledby="tzh">
+    <div class="kicker">Live working hours</div>
+    <h2 id="tzh">Where it's office hours right now</h2>
+    <p>Bars show 9:00 to 18:00 in each city; the marker is the current local time. Most regions share several hours a day with my working day in the Gulf.</p>
+    <div class="tz">{zones}</div>
+  </section>
+  {cta_html("Worldwide enquiry")}
+</main>
+{modal()}
+{footer(pages, posts)}
+{SCRIPTS}
+</body>
+</html>
+"""
+
+
 def hub_page(slug, pages, posts):
     m = HUB_PAGES[slug]
     url = f"{SITE}/{slug}/"
@@ -1009,8 +1078,12 @@ def update_home(pages, posts, cases=()):
     cards = "".join(post_card(q, "h3") for q in posts[:4])
     svc = "".join(
         f'<a class="svc rise" href="/{q["slug"]}/"><b>{e(SERVICE_LABELS.get(q["slug"], q["h1"]))}</b><i>→</i></a>'
-        for q in pages)
-    blocks = {"NAV": nav(), "INSIGHTS": f'<div class="posts">{cards}</div>', "SERVICES": f'<div class="svcs">{svc}</div>',
+        for q in pages if q["slug"] != "uae")
+    svc += '<a class="svc rise" href="/regions/"><b>Fractional CTO worldwide</b><i>→</i></a>'
+    strip = ('<div class="rstrip rise"><span>Working with teams in</span>'
+             + "".join(f'<a href="/{r["slug"]}/">{e(r["country"] if r["country"] != "European Union" else "Europe")}</a>' for r in REGIONS)
+             + "</div>")
+    blocks = {"NAV": nav(), "INSIGHTS": f'<div class="posts">{cards}</div>', "SERVICES": f'<div class="svcs">{svc}</div>{strip}',
               "FOOTER": footer(pages, posts)}
     if cases:
         ccards = "".join(case_card(c, "h3") for c in list(cases)[:4])
@@ -1046,7 +1119,10 @@ def main():
     pages.sort(key=lambda m: order.index(m["slug"]) if m["slug"] in order else 99)
     posts = [load(f) for f in sorted((ROOT / "src/insights").glob("*.part"))]
     posts.sort(key=sort_key, reverse=True)
-    by_slug = {m["slug"]: m for m in pages}
+    regions = [load(f) for f in sorted((ROOT / "src/regions").glob("*.part"))]
+    REGIONS[:] = sorted([m for m in pages if m.get("country")] + regions,
+                        key=lambda r: (REGION_ORDER.index(r["region"]), r["country"]))
+    by_slug = {m["slug"]: m for m in pages + regions}
     cases = [load(f) for f in sorted((ROOT / "src/case-studies").glob("*.part"))]
     cases.sort(key=sort_key, reverse=True)
     CASES[:] = cases
@@ -1054,7 +1130,7 @@ def main():
     for m in cases:
         m.setdefault("format", "case-study")
 
-    for m in pages:
+    for m in pages + regions:
         out = ROOT / m["slug"] / "index.html"
         out.parent.mkdir(exist_ok=True)
         out.write_text(page(m, "service", pages, posts, by_slug))
@@ -1074,6 +1150,8 @@ def main():
     (ROOT / "404.html").write_text(not_found(pages, posts))
     (ROOT / "privacy").mkdir(exist_ok=True)
     (ROOT / "privacy/index.html").write_text(privacy_page(pages, posts))
+    (ROOT / "regions").mkdir(exist_ok=True)
+    (ROOT / "regions/index.html").write_text(regions_page(pages, posts))
     for k in HUB_PAGES:
         (ROOT / k).mkdir(exist_ok=True)
         (ROOT / k / "index.html").write_text(hub_page(k, pages, posts))
@@ -1081,7 +1159,8 @@ def main():
     (ROOT / "play/index.html").write_text(play_page(pages, posts))
 
     urls = [("/", "1.0", "monthly"), ("/insights/", "0.8", "weekly"), ("/privacy/", "0.2", "yearly"), ("/play/", "0.5", "monthly")]
-    urls += [(f"/{k}/", "0.8", "monthly") for k in HUB_PAGES]
+    urls += [(f"/{k}/", "0.8", "monthly") for k in HUB_PAGES] + [("/regions/", "0.8", "monthly")]
+    urls += [(f"/{m['slug']}/", "0.8", "monthly") for m in regions]
     urls += [(f"/{m['slug']}/", "0.9", "monthly") for m in pages]
     urls += [(f"/insights/{m['slug']}/", "0.7", "yearly") for m in posts]
     if cases:
@@ -1100,6 +1179,8 @@ def main():
             {"t": "Insights", "u": "/insights/", "k": "Page", "d": "All articles"},
             {"t": "Book a call", "u": CAL, "k": "Contact", "d": "Free 30-minute introductory call"}]
     idx += [{"t": SERVICE_LABELS.get(m["slug"], m["h1"]), "u": f"/{m['slug']}/", "k": "Service", "d": m["description"]} for m in pages]
+    idx += [{"t": "Fractional CTO worldwide", "u": "/regions/", "k": "Region", "d": "All regions and live working hours"}]
+    idx += [{"t": label(m["slug"]), "u": f"/{m['slug']}/", "k": "Region", "d": m["description"], "g": " ".join(m.get("chips", []) + m.get("keywords", []))} for m in regions]
     idx += [{"t": m["h1"], "u": f"/case-studies/{m['slug']}/", "k": "Case study", "d": m["description"], "g": " ".join(m.get("tags", []))} for m in cases]
     idx += [{"t": m["h1"], "u": f"/insights/{m['slug']}/", "k": "Insight", "d": m["description"], "g": " ".join(m.get("tags", []))} for m in posts]
     (ROOT / "assets/search.json").write_text(json.dumps(idx, ensure_ascii=False, separators=(",", ":")))
@@ -1117,6 +1198,8 @@ def main():
         llms += [f"- [{m['h1']}]({SITE}/case-studies/{m['slug']}/): {m['description']}" for m in cases]
         llms += ["", "## Use cases"]
         llms += [f"- [{u['title']} ({u['sector']})]({SITE}/case-studies/#uc-{u['id']}): {u['problem']}" for u in use_cases()]
+    llms += ["", "## Worldwide", f"- [Fractional CTO worldwide]({SITE}/regions/): regional pages and live working hours"]
+    llms += [f"- [{label(m['slug'])}]({SITE}/{m['slug']}/): {m['description']}" for m in REGIONS]
     llms += ["", "## About and approach"] + [f"- [{v['name']}]({SITE}/{k}/): {v['description']}" for k, v in HUB_PAGES.items()]
     llms += ["", "## Play", f"- [Orbital Ops]({SITE}/play/): a free sci-fi browser arcade game about defending production from incidents", "", "## Profile", f"- [Home]({SITE}/): case studies, capabilities, playbook, FAQ",
              "- [GitHub](https://github.com/caeser1996)",
@@ -1125,7 +1208,7 @@ def main():
 
     stamp_assets()
 
-    for m in pages + posts + cases:
+    for m in pages + regions + posts + cases:
         print(f"{m['slug']:45} {words(m['body']):5} words  title {len(m['title'])}c  desc {len(m['description'])}c")
 
 

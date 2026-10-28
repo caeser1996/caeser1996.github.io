@@ -12,8 +12,9 @@ const items = [
   { slug: 'how-i-work', kicker: 'How I work', h1: 'From first conversation to a team that runs it.' },
   { slug: 'expertise', kicker: 'Expertise', h1: 'From the ontology to the infrastructure it runs on.' },
   { slug: 'about', kicker: 'About', h1: 'Principal engineer, fractional CTO and AI architect.' },
+  { slug: 'regions', kicker: 'Worldwide · remote-first', h1: 'A fractional CTO and AI architect for teams anywhere.' },
 ];
-for (const dir of ['src/pages', 'src/insights', 'src/case-studies']) {
+for (const dir of ['src/pages', 'src/regions', 'src/insights', 'src/case-studies']) {
   const d = path.join(ROOT, dir); if (!fs.existsSync(d)) continue;
   for (const f of fs.readdirSync(d).filter(f => f.endsWith('.part'))) {
     const m = meta(path.join(d, f)); items.push({ slug: f.replace('.part', ''), kicker: m.kicker, h1: m.h1 });
