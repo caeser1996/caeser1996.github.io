@@ -102,9 +102,9 @@ def nav():
       <a href="/#practice">Services</a>
       <a href="/case-studies/">Case studies</a>
       <a href="/insights/">Insights</a>
-      <a href="/#assess">Analyse</a>
+      <a href="/how-i-work/">How I work</a>
+      <a href="/about/">About</a>
       <a href="/play/">Play</a>
-      <a href="/#connect">Connect</a>
     </div>
     <div class="nav-r">
       <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
@@ -145,12 +145,15 @@ def footer(pages, posts):
         <p class="floc">United States &amp; UAE · working globally</p>
       </div>
       <div class="fc"><h4>Services</h4><ul>{svc}</ul></div>
-      <div class="fc"><h4>Case studies</h4><ul>{cs}<li><a href="/#work">Engagement snapshots</a></li><li><a href="/case-studies/">All case studies →</a></li></ul></div>
+      <div class="fc"><h4>Case studies</h4><ul>{cs}<li><a href="/case-studies/#snapshots">Engagement snapshots</a></li><li><a href="/case-studies/">All case studies →</a></li></ul></div>
       <div class="fc"><h4>Insights</h4><ul>{ins}<li><a href="/insights/">All articles →</a></li></ul></div>
       <div class="fc"><h4>Connect</h4><ul>
         <li><a href="{CAL}" target="_blank" rel="noopener">Book a 30-min call</a></li>
         <li><a href="mailto:{EMAIL}?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
         <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="/how-i-work/">How I work</a></li>
+        <li><a href="/expertise/">Expertise</a></li>
+        <li><a href="/about/">About</a></li>
         <li><a href="/play/">Play Orbital Ops</a></li>
         <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
       </ul></div>
@@ -179,7 +182,7 @@ def head(title, desc, keywords, url, og_image, og_type, ld):
 <meta name="author" content="{NAME}" />
 <meta name="robots" content="index, follow, max-image-preview:large" />
 <link rel="canonical" href="{url}" />
-<meta name="theme-color" content="#111214" />
+<meta name="theme-color" content="#0a0d17" />
 <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
 <link rel="manifest" href="/site.webmanifest" />
@@ -564,10 +567,8 @@ def insights_index(pages, posts):
 
 def home_snapshots():
     """The tabbed engagement snapshots from the home page, reused on /case-studies/."""
-    s = (ROOT / "index.html").read_text()
-    i = s.find('<div class="cs rise" id="cs">')
-    j = s.find('<p class="note rise">', i)
-    return s[i:j].strip() if i != -1 and j != -1 else ""
+    f = ROOT / "src/sections/snapshots.html"
+    return f.read_text().strip() if f.exists() else ""
 
 
 def use_cases():
@@ -768,7 +769,7 @@ PLAY_GUIDE = [
     ("drift", "Schema drift", "#5ae0ff", "Zigzags unpredictably, like an upstream schema nobody agreed. Contracts stop it.", "/insights/data-contracts-playbook/", "Data contracts"),
     ("ddos", "Traffic flood", "#ff7a59", "Splits into fragments when hit. Gateways and rate limits keep floods manageable.", "/insights/kubernetes-inference-gateway/", "Inference gateways"),
     ("inject", "Prompt injection", "#ff4f8b", "Homes in on you, the way hostile input targets an AI agent's tools.", "/insights/prompt-injection-defence-for-agents/", "Prompt injection defence"),
-    ("mono", "Legacy monolith", "#e08a63", "The boss every fifth wave. Heavily armoured and fires back. Decisions, not heroics, retire it.", "/insights/architecture-decision-records-fractional-cto/", "Architecture decision records"),
+    ("mono", "Legacy monolith", "#7c8bff", "The boss every fifth wave. Heavily armoured and fires back. Decisions, not heroics, retire it.", "/insights/architecture-decision-records-fractional-cto/", "Architecture decision records"),
 ]
 
 
@@ -833,6 +834,73 @@ def play_page(pages, posts):
 {footer(pages, posts)}
 {SCRIPTS}
 <script src="/assets/arcade.js" defer></script>
+</body>
+</html>
+"""
+
+
+HUB_PAGES = {
+    "how-i-work": {
+        "name": "How I work", "kicker": "Process",
+        "title": "How I work: engagement models and approach | Sumanta Mukhopadhyay",
+        "description": "How a fractional CTO and AI architect engagement runs: a playbook for common problems, working principles, engagement models, how to connect, and FAQs.",
+        "h1": "How I work: from first conversation to a team that runs it",
+        "lede": "The problems I'm usually brought in to solve, how I approach them, the ways we can work together, and what happens after you get in touch.",
+        "sections": ["playbook", "approach", "engage", "connect", "faq"]},
+    "expertise": {
+        "name": "Expertise", "kicker": "Practice",
+        "title": "Expertise: AI, ontology, data platforms and cloud | Sumanta Mukhopadhyay",
+        "description": "Six practice areas, a reference architecture, systems built for scale, industries served and the nine-layer stack I work across, from ontology to infrastructure.",
+        "h1": "Expertise across the whole stack, from the ontology to the infrastructure",
+        "lede": "Strategy, applied AI, semantic architecture, data platforms, cloud and product engineering, with the reference architecture and industries behind them.",
+        "sections": ["practice", "architecture", "scale", "industries", "capabilities", "languages"]},
+    "about": {
+        "name": "About", "kicker": "Background",
+        "title": "About Sumanta Mukhopadhyay: fractional CTO and AI architect",
+        "description": "Background, experience and credentials of Sumanta Mukhopadhyay, fractional CTO, principal engineer and AI architect in the United States and UAE.",
+        "h1": "About Sumanta: principal engineer, fractional CTO and AI architect",
+        "lede": "Experience across AI, data and infrastructure, published research, open-source work, and the hardware I'm experimenting on right now.",
+        "sections": ["experience", "credentials", "now"]},
+}
+
+
+def hub_page(slug, pages, posts):
+    m = HUB_PAGES[slug]
+    url = f"{SITE}/{slug}/"
+    body = "\n".join((ROOT / f"src/sections/{k}.html").read_text() for k in m["sections"])
+    body = body.replace('href="#assess"', 'href="/#assess"')
+    graph = [{"@type": "WebPage", "@id": url, "url": url, "name": m["title"], "description": m["description"],
+              "isPartOf": {"@type": "WebSite", "url": f"{SITE}/", "name": NAME}, "dateModified": TODAY,
+              "about": person_ref()},
+             crumbs([("Home", f"{SITE}/"), (m["name"], url)])]
+    if slug == "about":
+        graph[0]["@type"] = "AboutPage"
+        graph[0]["mainEntity"] = person_ref()
+    faq = [(re.sub(r"<[^>]+>", "", q), re.sub(r"<[^>]+>", "", a)) for q, a in
+           re.findall(r"<summary>(.*?)</summary>\s*<p>(.*?)</p>", body, re.S)]
+    if faq:
+        graph.append(faq_ld([(html.unescape(q), html.unescape(a)) for q, a in faq]))
+    ld = {"@context": "https://schema.org", "@graph": graph}
+    hubs = "".join(f'<a href="/{k}/"{" aria-current=\"page\"" if k == slug else ""}>{e(v["name"])}</a>' for k, v in HUB_PAGES.items())
+    return f"""{head(m["title"], m["description"], [], url, f"{SITE}/assets/og/{slug}.png", "website", ld)}
+<body class="sub hub">
+{nav()}
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <em>{e(m["name"])}</em></div>
+    <div class="kicker">{e(m["kicker"])}</div>
+    <h1>{e(m["h1"])}</h1>
+    <p class="sub-lede">{e(m["lede"])}</p>
+    <div class="hub-nav" aria-label="More about this practice">{hubs}<a href="/case-studies/">Case studies</a><a href="/play/">Play</a></div>
+  </header>
+{body}
+  {cta_html(m["name"])}
+</main>
+{modal()}
+{footer(pages, posts)}
+{SCRIPTS}
+<script src="/assets/home.js" defer></script>
 </body>
 </html>
 """
@@ -922,10 +990,14 @@ def main():
     (ROOT / "404.html").write_text(not_found(pages, posts))
     (ROOT / "privacy").mkdir(exist_ok=True)
     (ROOT / "privacy/index.html").write_text(privacy_page(pages, posts))
+    for k in HUB_PAGES:
+        (ROOT / k).mkdir(exist_ok=True)
+        (ROOT / k / "index.html").write_text(hub_page(k, pages, posts))
     (ROOT / "play").mkdir(exist_ok=True)
     (ROOT / "play/index.html").write_text(play_page(pages, posts))
 
     urls = [("/", "1.0", "monthly"), ("/insights/", "0.8", "weekly"), ("/privacy/", "0.2", "yearly"), ("/play/", "0.5", "monthly")]
+    urls += [(f"/{k}/", "0.8", "monthly") for k in HUB_PAGES]
     urls += [(f"/{m['slug']}/", "0.9", "monthly") for m in pages]
     urls += [(f"/insights/{m['slug']}/", "0.7", "yearly") for m in posts]
     if cases:
@@ -949,6 +1021,7 @@ def main():
         llms += [f"- [{m['h1']}]({SITE}/case-studies/{m['slug']}/): {m['description']}" for m in cases]
         llms += ["", "## Use cases"]
         llms += [f"- [{u['title']} ({u['sector']})]({SITE}/case-studies/#uc-{u['id']}): {u['problem']}" for u in use_cases()]
+    llms += ["", "## About and approach"] + [f"- [{v['name']}]({SITE}/{k}/): {v['description']}" for k, v in HUB_PAGES.items()]
     llms += ["", "## Play", f"- [Orbital Ops]({SITE}/play/): a free sci-fi browser arcade game about defending production from incidents", "", "## Profile", f"- [Home]({SITE}/): case studies, capabilities, playbook, FAQ",
              "- [GitHub](https://github.com/caeser1996)",
              "- [Publication, Science Immunology](https://doi.org/10.1126/sciimmunol.abl9165)", ""]

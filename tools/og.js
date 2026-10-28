@@ -9,6 +9,9 @@ const items = [
   { slug: 'insights', kicker: 'Insights', h1: 'Notes on AI, ontology, healthcare data and technical leadership.' },
   { slug: 'case-studies', kicker: 'Case studies', h1: 'The problem, the architecture, the flow and the decisions.' },
   { slug: 'play', kicker: 'Arcade · Orbital Ops', h1: 'Defend production from incoming incidents.' },
+  { slug: 'how-i-work', kicker: 'How I work', h1: 'From first conversation to a team that runs it.' },
+  { slug: 'expertise', kicker: 'Expertise', h1: 'From the ontology to the infrastructure it runs on.' },
+  { slug: 'about', kicker: 'About', h1: 'Principal engineer, fractional CTO and AI architect.' },
 ];
 for (const dir of ['src/pages', 'src/insights', 'src/case-studies']) {
   const d = path.join(ROOT, dir); if (!fs.existsSync(d)) continue;
@@ -19,17 +22,17 @@ for (const dir of ['src/pages', 'src/insights', 'src/case-studies']) {
 const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
 const tpl = it => `<!doctype html><html><head><meta charset="utf-8">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500&family=IBM+Plex+Mono&display=swap" rel="stylesheet">
-<style>*{margin:0;box-sizing:border-box}body{width:1200px;height:630px;background:#111214;color:#f0ede6;font-family:Newsreader,Georgia,serif;position:relative;overflow:hidden}
-.k{position:absolute;left:80px;top:84px;font:500 20px "IBM Plex Mono",monospace;letter-spacing:.16em;text-transform:uppercase;color:#e08a63;display:flex;gap:16px;align-items:center}
-.k:before{content:"";width:44px;height:2px;background:#e08a63}
+<style>*{margin:0;box-sizing:border-box}body{width:1200px;height:630px;background:#0a0d17;color:#e8ecf6;font-family:Newsreader,Georgia,serif;position:relative;overflow:hidden}
+.k{position:absolute;left:80px;top:84px;font:500 20px "IBM Plex Mono",monospace;letter-spacing:.16em;text-transform:uppercase;color:#7c8bff;display:flex;gap:16px;align-items:center}
+.k:before{content:"";width:44px;height:2px;background:#7c8bff}
 h1{position:absolute;left:80px;right:300px;top:150px;font-weight:450;font-size:${it.h1.length > 60 ? 62 : 74}px;line-height:1.04;letter-spacing:-.02em}
-.f{position:absolute;left:80px;right:80px;bottom:64px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid rgba(240,237,230,.18);padding-top:26px;font:22px "IBM Plex Mono",monospace;color:#b4b1aa}
-.f b{font:500 30px Newsreader,serif;color:#f0ede6}.f b span{color:#e08a63}
+.f{position:absolute;left:80px;right:80px;bottom:64px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid rgba(232,236,246,.18);padding-top:26px;font:22px "IBM Plex Mono",monospace;color:#a6afc6}
+.f b{font:500 30px Newsreader,serif;color:#e8ecf6}.f b span{color:#7c8bff}
 svg{position:absolute;right:-40px;top:40px;opacity:.9}</style></head><body>
 <svg width="420" height="420" viewBox="0 0 420 420">${(() => { let s = '', pts = []; let seed = it.slug.length * 7 + 3; const r = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
   for (let i = 0; i < 18; i++) pts.push([40 + r() * 340, 40 + r() * 340, r() < .3]);
-  pts.forEach((a, i) => pts.forEach((b, j) => { if (j > i) { const d = Math.hypot(a[0] - b[0], a[1] - b[1]); if (d < 120) s += `<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="${a[2] || b[2] ? '#e08a63' : '#f0ede6'}" stroke-opacity="${(1 - d / 120) * .45}"/>`; } }));
-  pts.forEach(a => s += `<circle cx="${a[0]}" cy="${a[1]}" r="${a[2] ? 5 : 2.6}" fill="${a[2] ? '#e08a63' : '#f0ede6'}" fill-opacity="${a[2] ? 1 : .6}"/>`); return s; })()}</svg>
+  pts.forEach((a, i) => pts.forEach((b, j) => { if (j > i) { const d = Math.hypot(a[0] - b[0], a[1] - b[1]); if (d < 120) s += `<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="${a[2] || b[2] ? '#7c8bff' : '#e8ecf6'}" stroke-opacity="${(1 - d / 120) * .45}"/>`; } }));
+  pts.forEach(a => s += `<circle cx="${a[0]}" cy="${a[1]}" r="${a[2] ? 5 : 2.6}" fill="${a[2] ? '#7c8bff' : '#e8ecf6'}" fill-opacity="${a[2] ? 1 : .6}"/>`); return s; })()}</svg>
 <div class="k">${esc(it.kicker)}</div><h1>${esc(it.h1)}</h1>
 <div class="f"><b>Sumanta<span>.</span></b><span>asksumanta.com</span></div></body></html>`;
 (async () => {
