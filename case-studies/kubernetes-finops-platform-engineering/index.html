@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Case study: Kubernetes FinOps and a paved road for product teams</title>
+<meta name="description" content="How a scale-up can make Kubernetes spend visible and controllable per team: cost allocation, right-sizing without restarts, scale to zero, quotas and a paved road." />
+<meta name="keywords" content="Kubernetes FinOps case study, Kubernetes cost allocation, OpenCost, FOCUS specification, platform engineering golden path, Kubernetes right-sizing, in-place pod resize, HPA scale to zero, cloud cost optimisation, fractional CTO" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://asksumanta.com/case-studies/kubernetes-finops-platform-engineering/" />
+<meta name="theme-color" content="#111214" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="Case study: Kubernetes FinOps and a paved road for product teams" />
+<meta property="og:description" content="How a scale-up can make Kubernetes spend visible and controllable per team: cost allocation, right-sizing without restarts, scale to zero, quotas and a paved road." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://asksumanta.com/case-studies/kubernetes-finops-platform-engineering/" />
+<meta property="og:image" content="https://asksumanta.com/assets/og/kubernetes-finops-platform-engineering.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Case study: Kubernetes FinOps and a paved road for product teams" />
+<meta name="twitter:description" content="How a scale-up can make Kubernetes spend visible and controllable per team: cost allocation, right-sizing without restarts, scale to zero, quotas and a paved road." />
+<meta name="twitter:image" content="https://asksumanta.com/assets/og/kubernetes-finops-platform-engineering.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "Article", "headline": "Making Kubernetes spend visible, owned and controllable, without slowing teams down", "description": "How a scale-up can make Kubernetes spend visible and controllable per team: cost allocation, right-sizing without restarts, scale to zero, quotas and a paved road.", "articleSection": "Case study", "about": "Technology · Scale-up", "datePublished": "2026-10-28T07:50:00+04:00", "dateModified": "2026-10-28T07:50:00+04:00", "citation": [{"@type": "CreativeWork", "name": "OpenCost FAQ", "url": "https://opencost.io/docs/FAQ"}, {"@type": "CreativeWork", "name": "FOCUS specification", "url": "https://focus.finops.org/focus-specification/"}, {"@type": "CreativeWork", "name": "Kubernetes 1.35: In-Place Pod Resize Graduates to Stable", "url": "https://kubernetes.io/blog/2025/12/19/kubernetes-v1-35-in-place-pod-resize-ga/"}, {"@type": "CreativeWork", "name": "Kubernetes v1.37: Scale Workloads to Zero with HorizontalPodAutoscaler", "url": "https://kubernetes.io/blog/2026/09/02/kubernetes-v1-37-hpa-scale-to-zero-beta/"}, {"@type": "CreativeWork", "name": "Resource Quotas", "url": "https://kubernetes.io/docs/concepts/policy/resource-quotas/"}], "author": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "publisher": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "mainEntityOfPage": "https://asksumanta.com/case-studies/kubernetes-finops-platform-engineering/", "image": "https://asksumanta.com/assets/og/kubernetes-finops-platform-engineering.png", "keywords": "Kubernetes FinOps case study, Kubernetes cost allocation, OpenCost, FOCUS specification, platform engineering golden path, Kubernetes right-sizing, in-place pod resize, HPA scale to zero, cloud cost optimisation, fractional CTO", "wordCount": 872}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://asksumanta.com/"}, {"@type": "ListItem", "position": 2, "name": "Case studies", "item": "https://asksumanta.com/case-studies/"}, {"@type": "ListItem", "position": 3, "name": "Making Kubernetes spend visible, owned and controllable, without slowing teams down", "item": "https://asksumanta.com/case-studies/kubernetes-finops-platform-engineering/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "How do you allocate Kubernetes costs to teams?", "acceptedAnswer": {"@type": "Answer", "text": "Label every workload with its owning team and product, enforce the labels at admission, and use a cost allocation tool such as OpenCost to apportion node and shared costs to workloads. Then report it alongside the cloud bill in a common format such as FOCUS."}}, {"@type": "Question", "name": "Can right-sizing be done without restarting pods?", "acceptedAnswer": {"@type": "Answer", "text": "Since Kubernetes 1.35, in-place Pod resize is stable, so CPU and memory can be changed on running Pods. Combined with the Vertical Pod Autoscaler's in-place mode, recommendations can be applied with fewer restarts."}}, {"@type": "Question", "name": "Is cost optimisation a one-off project?", "acceptedAnswer": {"@type": "Answer", "text": "It shouldn't be. One-off clean-ups decay within months. Defaults, ownership, autoscaling and regular reporting make efficient usage the normal state of the platform."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+</script>
+</head>
+<body class="sub is-post is-case">
+<div class="progress" id="progress"></div>
+<nav>
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="/#practice">Services</a>
+      <a href="/case-studies/">Case studies</a>
+      <a href="/insights/">Insights</a>
+      <a href="/#assess">Analyse</a>
+      <a href="/#connect">Connect</a>
+    </div>
+    <div class="nav-r">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/case-studies/">Case studies</a> <span>/</span> <em>Making Kubernetes spend visible, owned and controllable, without slowing teams down</em></div>
+    <div class="kicker">Case study · Platform engineering</div>
+    <h1>Making Kubernetes spend visible, owned and controllable, without slowing teams down</h1>
+    <p class="sub-lede">Cloud bills were growing faster than the business, and nobody could say which team or product drove the increase. The goal was a platform where every workload has an owner, a cost, sensible defaults and a cheap way to shrink, so cost becomes a product decision rather than a quarterly panic.</p>
+    <div class="ameta"><span class="fmt">Case study</span><span>Technology · Scale-up</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-10-28T07:50:00+04:00">28 Oct 2026 · 07:50 GST</time><span>9 min read</span></div><div class="atags"><span class="tagp">#kubernetes</span><span class="tagp">#finops</span><span class="tagp">#platform</span><span class="tagp">#cloud</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Case study cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><line x1="733" y1="32" x2="850" y2="86" class="cv-edge" opacity="0.14"/><line x1="733" y1="32" x2="712" y2="166" class="cv-edge hl" opacity="0.09"/><line x1="733" y1="32" x2="636" y2="63" class="cv-edge hl" opacity="0.32"/><line x1="785" y1="321" x2="883" y2="326" class="cv-edge" opacity="0.34"/><line x1="785" y1="321" x2="824" y2="342" class="cv-edge" opacity="0.70"/><line x1="785" y1="321" x2="841" y2="388" class="cv-edge" opacity="0.42"/><line x1="785" y1="321" x2="821" y2="246" class="cv-edge" opacity="0.45"/><line x1="785" y1="321" x2="867" y2="222" class="cv-edge hl" opacity="0.14"/><line x1="785" y1="321" x2="924" y2="373" class="cv-edge" opacity="0.01"/><line x1="785" y1="321" x2="727" y2="282" class="cv-edge" opacity="0.53"/><line x1="533" y1="369" x2="528" y2="353" class="cv-edge" opacity="0.89"/><line x1="533" y1="369" x2="621" y2="313" class="cv-edge" opacity="0.30"/><line x1="883" y1="326" x2="824" y2="342" class="cv-edge" opacity="0.59"/><line x1="883" y1="326" x2="1023" y2="362" class="cv-edge hl" opacity="0.04"/><line x1="883" y1="326" x2="862" y2="181" class="cv-edge" opacity="0.03"/><line x1="883" y1="326" x2="841" y2="388" class="cv-edge" opacity="0.50"/><line x1="883" y1="326" x2="821" y2="246" class="cv-edge" opacity="0.33"/><line x1="883" y1="326" x2="1022" y2="369" class="cv-edge" opacity="0.03"/><line x1="883" y1="326" x2="867" y2="222" class="cv-edge hl" opacity="0.29"/><line x1="883" y1="326" x2="924" y2="373" class="cv-edge" opacity="0.59"/><line x1="824" y1="342" x2="841" y2="388" class="cv-edge" opacity="0.67"/><line x1="824" y1="342" x2="821" y2="246" class="cv-edge" opacity="0.36"/><line x1="824" y1="342" x2="867" y2="222" class="cv-edge hl" opacity="0.15"/><line x1="824" y1="342" x2="924" y2="373" class="cv-edge" opacity="0.30"/><line x1="824" y1="342" x2="727" y2="282" class="cv-edge" opacity="0.24"/><line x1="621" y1="208" x2="712" y2="166" class="cv-edge hl" opacity="0.33"/><line x1="621" y1="208" x2="636" y2="63" class="cv-edge hl" opacity="0.03"/><line x1="621" y1="208" x2="621" y2="313" class="cv-edge hl" opacity="0.30"/><line x1="621" y1="208" x2="727" y2="282" class="cv-edge hl" opacity="0.14"/><line x1="541" y1="72" x2="536" y2="39" class="cv-edge" opacity="0.78"/><line x1="541" y1="72" x2="636" y2="63" class="cv-edge hl" opacity="0.36"/><line x1="541" y1="72" x2="551" y2="73" class="cv-edge" opacity="0.93"/><line x1="850" y1="86" x2="935" y2="83" class="cv-edge" opacity="0.43"/><line x1="850" y1="86" x2="862" y2="181" class="cv-edge" opacity="0.36"/><line x1="850" y1="86" x2="867" y2="222" class="cv-edge hl" opacity="0.09"/><line x1="536" y1="39" x2="636" y2="63" class="cv-edge hl" opacity="0.31"/><line x1="536" y1="39" x2="551" y2="73" class="cv-edge" opacity="0.75"/><line x1="1145" y1="81" x2="1126" y2="39" class="cv-edge" opacity="0.69"/><line x1="1023" y1="362" x2="1077" y2="313" class="cv-edge hl" opacity="0.51"/><line x1="1023" y1="362" x2="1022" y2="369" class="cv-edge hl" opacity="0.95"/><line x1="1023" y1="362" x2="924" y2="373" class="cv-edge hl" opacity="0.34"/><line x1="1077" y1="313" x2="1022" y2="369" class="cv-edge hl" opacity="0.47"/><line x1="935" y1="83" x2="862" y2="181" class="cv-edge" opacity="0.18"/><line x1="862" y1="181" x2="821" y2="246" class="cv-edge" opacity="0.49"/><line x1="862" y1="181" x2="867" y2="222" class="cv-edge hl" opacity="0.73"/><line x1="712" y1="166" x2="636" y2="63" class="cv-edge hl" opacity="0.14"/><line x1="712" y1="166" x2="821" y2="246" class="cv-edge hl" opacity="0.10"/><line x1="712" y1="166" x2="727" y2="282" class="cv-edge hl" opacity="0.23"/><line x1="528" y1="353" x2="621" y2="313" class="cv-edge" opacity="0.33"/><line x1="841" y1="388" x2="821" y2="246" class="cv-edge" opacity="0.05"/><line x1="841" y1="388" x2="924" y2="373" class="cv-edge" opacity="0.44"/><line x1="636" y1="63" x2="551" y2="73" class="cv-edge hl" opacity="0.43"/><line x1="821" y1="246" x2="867" y2="222" class="cv-edge hl" opacity="0.65"/><line x1="821" y1="246" x2="727" y2="282" class="cv-edge" opacity="0.33"/><line x1="1022" y1="369" x2="924" y2="373" class="cv-edge" opacity="0.34"/><line x1="621" y1="313" x2="727" y2="282" class="cv-edge" opacity="0.26"/><circle cx="733" cy="32" r="3" class="cv-dot"/><circle cx="785" cy="321" r="3" class="cv-dot"/><circle cx="533" cy="369" r="3" class="cv-dot"/><circle cx="883" cy="326" r="3" class="cv-dot"/><circle cx="824" cy="342" r="3" class="cv-dot"/><circle cx="621" cy="208" r="6" class="cv-dot hl"/><circle cx="541" cy="72" r="3" class="cv-dot"/><circle cx="850" cy="86" r="3" class="cv-dot"/><circle cx="536" cy="39" r="3" class="cv-dot"/><circle cx="1145" cy="81" r="3" class="cv-dot"/><circle cx="1023" cy="362" r="6" class="cv-dot hl"/><circle cx="1077" cy="313" r="6" class="cv-dot hl"/><circle cx="935" cy="83" r="3" class="cv-dot"/><circle cx="862" cy="181" r="3" class="cv-dot"/><circle cx="1126" cy="39" r="3" class="cv-dot"/><circle cx="712" cy="166" r="6" class="cv-dot hl"/><circle cx="528" cy="353" r="3" class="cv-dot"/><circle cx="841" cy="388" r="3" class="cv-dot"/><circle cx="636" cy="63" r="6" class="cv-dot hl"/><circle cx="821" cy="246" r="3" class="cv-dot"/><circle cx="1022" cy="369" r="3" class="cv-dot"/><circle cx="867" cy="222" r="6" class="cv-dot hl"/><circle cx="621" cy="313" r="3" class="cv-dot"/><circle cx="551" cy="73" r="3" class="cv-dot"/><circle cx="924" cy="373" r="3" class="cv-dot"/><circle cx="727" cy="282" r="3" class="cv-dot"/><text x="60" y="90" class="cv-k">CASE STUDY · CASE STUDY · PLATFORM ENGINEERING</text><text x="60" y="350" class="cv-n">28 Oct 2026 · 07:50 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <section class="glance rise" aria-label="At a glance"><div class="kicker">At a glance</div><div class="glance-grid"><div><small>Sector</small><b>Technology · Scale-up</b></div><div><small>My role</small><b>Fractional CTO and platform architect</b></div><div><small>Engagement</small><b>Assessment, platform build and enablement</b></div><div><small>Scope</small><b>Cost allocation, autoscaling, quotas, golden paths, reporting</b></div></div><div class="glance-out"><small>What changed</small><ul><li>Every namespace and workload mapped to an owning team and product</li><li>Cost per team and per product reported in the same format finance uses</li><li>Right-sizing applied continuously instead of in occasional clean-up projects</li><li>New services start with sensible requests, limits and autoscaling by default</li></ul></div><div class="cs-stack"><span class="tag">Kubernetes</span><span class="tag">OpenCost</span><span class="tag">FOCUS billing data</span><span class="tag">HorizontalPodAutoscaler</span><span class="tag">Vertical Pod Autoscaler</span><span class="tag">ResourceQuota</span><span class="tag">Terraform</span><span class="tag">OpenTelemetry</span></div><p class="glance-note">Anonymised composite. Client names, identifying details and confidential figures are withheld; public facts are cited in the references.</p></section><h2 id="the-situation">The situation</h2>
+<p>A fast-growing technology company ran most of its products on a handful of shared Kubernetes clusters. Teams shipped quickly, which was the point. But cloud spend had become one of the largest lines in the budget, and the monthly review was a guessing game: the bill showed compute, storage and network by account, while the organisation thought in teams and products. Requests and limits had been copied between services for years. Some workloads ran around the clock for jobs that happened once a day.</p>
+<p>A previous clean-up project had cut costs for a quarter, then spend crept back. The leadership question was simple: how do we make this stay fixed?</p>
+
+<h2 id="what-had-to-be-true">What had to be true</h2>
+<ul>
+<li><strong>Every workload has an owner</strong>: a team and a product, enforced, not hoped for.</li>
+<li><strong>Cost is visible where decisions are made</strong>: per team, per product, in a format finance accepts.</li>
+<li><strong>Efficiency is the default</strong>: new services start right-sized and autoscaled without teams becoming Kubernetes experts.</li>
+<li><strong>Shrinking is cheap and safe</strong>, so teams actually do it.</li>
+<li><strong>No slowdown in delivery</strong>; controls live in the paved road, not in tickets.</li>
+</ul>
+
+<h2 id="architecture">Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Golden path</small><div class="dgm-nodes"><span>Service templates<em>requests, limits, autoscaling</em></span><span class="hl">Ownership labels<em>team, product, environment</em></span><span>Terraform modules<em>namespaces, quotas</em></span></div></div>
+<div class="dgm-tier"><small>Guardrails</small><div class="dgm-nodes"><span>Admission policies<em>labels required</em></span><span>ResourceQuota<em>per namespace</em></span><span>LimitRange<em>sane defaults</em></span></div></div>
+<div class="dgm-tier"><small>Elasticity</small><div class="dgm-nodes"><span>HPA<em>traffic and queues</em></span><span class="hl">VPA in-place<em>right-size running pods</em></span><span>Scale to zero<em>queue-driven workers</em></span><span>Node autoscaling<em>bin packing</em></span></div></div>
+<div class="dgm-tier"><small>Measure</small><div class="dgm-nodes"><span class="hl">OpenCost<em>allocation per workload</em></span><span>Cloud billing in FOCUS<em>one schema</em></span><span>Usage telemetry<em>OpenTelemetry</em></span></div></div>
+<div class="dgm-tier"><small>Decide</small><div class="dgm-nodes"><span>Team cost reports<em>weekly</em></span><span>Product unit costs<em>cost per customer action</em></span><span>Budget alerts<em>per team</em></span></div></div>
+</div>
+<figcaption>Ownership at the top, measurement at the bottom; elasticity in the middle turns insight into savings automatically.</figcaption>
+</figure>
+
+<h2 id="the-data-flow-end-to-end">The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Deploy</b><span>Service created from a template with owner labels and default autoscaling</span></li>
+<li><b>Admit</b><span>Policies reject workloads without labels; quotas cap each namespace</span></li>
+<li class="hl"><b>Allocate</b><span>OpenCost apportions node, storage and shared costs to each workload</span></li>
+<li><b>Join</b><span>Allocations joined with cloud billing in a common FOCUS format</span></li>
+<li class="hl"><b>Report</b><span>Cost per team and product, with recommendations, sent to owners</span></li>
+<li><b>Act</b><span>Right-sizing and scaling changes applied through the same templates</span></li>
+</ol>
+<figcaption>The loop closes in the template: improvements land once and every service inherits them.</figcaption>
+</figure>
+<p>OpenCost provides workload-level cost allocation for Kubernetes, attributing cluster costs to namespaces, labels and workloads<sup class="cite"><a href="#ref-1">1</a></sup>. Joining those allocations with billing data in the FinOps Foundation's FOCUS format gave finance and engineering one view of the same numbers<sup class="cite"><a href="#ref-2">2</a></sup>; the reasoning is in <a href="/insights/focus-finops-ai-cost-allocation/">FOCUS and AI spend</a>.</p>
+
+<h2 id="the-hard-part-making-shrinking-safe">The hard part: making shrinking safe</h2>
+<p>Visibility alone rarely changes behaviour. Teams knew some services were over-provisioned; they left them because changing requests meant restarts, and restarts meant risk. Two Kubernetes changes removed most of that friction:</p>
+<ul>
+<li><strong>In-place Pod resize</strong>, stable since Kubernetes 1.35, lets CPU and memory change on running Pods, and the Vertical Pod Autoscaler's in-place mode uses it<sup class="cite"><a href="#ref-3">3</a></sup>. Recommendations could finally be applied continuously, starting with CPU on stateless services. Details in <a href="/insights/kubernetes-in-place-pod-resize/">in-place Pod resize</a>.</li>
+<li><strong>Scale to zero with the HorizontalPodAutoscaler</strong>, available from Kubernetes 1.37 for workloads driven by suitable object or external metrics such as queue length<sup class="cite"><a href="#ref-4">4</a></sup>. Workers that waited idle most of the day stopped costing anything while idle. See <a href="/insights/kubernetes-finops-scale-to-zero/">Kubernetes FinOps and scale to zero</a>.</li>
+</ul>
+<p>Namespace quotas then capped the total each team could request, which turned capacity into a visible, negotiable budget rather than an unlimited pool<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<div class="callout"><p>Cost programmes fail when saving money is risky and spending it is free. Flip both: make shrinking safe and automatic, and make every request visible to its owner.</p></div>
+
+<h2 id="how-it-ran">How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Platform team</small><ol><li>Templates and policies</li><li class="hl">Allocation and reporting</li><li>Autoscaling defaults</li></ol></div>
+<div class="dgm-lane"><small>Product teams</small><ol><li>Adopt templates</li><li>Review weekly cost report</li><li class="hl">Accept right-sizing</li></ol></div>
+<div class="dgm-lane"><small>Finance</small><ol><li>Agree allocation rules</li><li>Set team budgets</li><li>Track unit costs</li></ol></div>
+</div>
+<figcaption>Platform provides the tools, teams own their spend, finance owns the budget conversation.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>See</b><ul><li>Ownership labels</li><li>Allocation running</li><li>First team reports</li></ul></div>
+<div><small>Phase 2</small><b>Default</b><ul><li>Service templates</li><li>Admission policies</li><li>Quotas per namespace</li></ul></div>
+<div><small>Phase 3</small><b>Automate</b><ul><li>VPA in-place for CPU</li><li>Queue-driven scale to zero</li><li>Node bin packing</li></ul></div>
+<div><small>Phase 4</small><b>Sustain</b><ul><li>Unit cost metrics</li><li>Budget alerts</li><li>Quarterly review</li></ul></div>
+</div>
+<figcaption>Visibility first, then defaults, then automation, then a rhythm that keeps it working.</figcaption>
+</figure>
+
+<h2 id="key-decisions-and-trade-offs">Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Enforce ownership labels at admission</td><td>Tag clean-up campaigns</td><td>Unowned workloads can't appear in the first place</td></tr>
+<tr><td>Open-source allocation plus FOCUS</td><td>A separate cost tool per cloud</td><td>One allocation model and one billing schema across providers</td></tr>
+<tr><td>Right-size in place, CPU first</td><td>Rolling restarts for every change</td><td>Lower risk, so recommendations actually get applied</td></tr>
+<tr><td>Scale to zero only for queue-backed work</td><td>Scale everything to zero</td><td>User-facing services need warm capacity</td></tr>
+<tr><td>Quotas as team budgets</td><td>Unlimited shared pool</td><td>Makes capacity a visible, negotiated decision</td></tr>
+</tbody>
+</table>
+
+<h2 id="what-i-d-do-again-and-differently">What I'd do again, and differently</h2>
+<p>Again: start with ownership and allocation, and put every improvement into the templates so it spreads automatically. Differently: agree unit cost metrics with product leaders earlier. Cost per team tells you who spends; cost per customer action tells you whether the spend is worth it.</p>
+<p>If cloud costs are outgrowing the business, my <a href="/fractional-cto/">fractional CTO</a> work covers platform and FinOps programmes like this, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://opencost.io/docs/FAQ" target="_blank" rel="noopener">OpenCost FAQ</a><small>OpenCost project</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://focus.finops.org/focus-specification/" target="_blank" rel="noopener">FOCUS specification</a><small>FinOps Foundation</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://kubernetes.io/blog/2025/12/19/kubernetes-v1-35-in-place-pod-resize-ga/" target="_blank" rel="noopener">Kubernetes 1.35: In-Place Pod Resize Graduates to Stable</a><small>Kubernetes blog · 19 Dec 2025</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://kubernetes.io/blog/2026/09/02/kubernetes-v1-37-hpa-scale-to-zero-beta/" target="_blank" rel="noopener">Kubernetes v1.37: Scale Workloads to Zero with HorizontalPodAutoscaler</a><small>Kubernetes blog · 2 Sep 2026</small></div></li><li id="ref-5"><span class="rn">5</span><div><a href="https://kubernetes.io/docs/concepts/policy/resource-quotas/" target="_blank" rel="noopener">Resource Quotas</a><small>Kubernetes documentation</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fasksumanta.com%2Fcase-studies%2Fkubernetes-finops-platform-engineering%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fasksumanta.com%2Fcase-studies%2Fkubernetes-finops-platform-engineering%2F&amp;text=Making%20Kubernetes%20spend%20visible%2C%20owned%20and%20controllable%2C%20without%20slowing%20teams%20down" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=Making%20Kubernetes%20spend%20visible%2C%20owned%20and%20controllable%2C%20without%20slowing%20teams%20down%20https%3A%2F%2Fasksumanta.com%2Fcase-studies%2Fkubernetes-finops-platform-engineering%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://asksumanta.com/case-studies/kubernetes-finops-platform-engineering/">Copy link</button></div>
+      <div class="pnav"><a class="pn prev" href="/case-studies/enterprise-mcp-agent-platform/"><small>← Previous</small><b>From MCP servers on laptops to a governed enterprise agent platform</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#the-situation">The situation</a></li><li><a href="#what-had-to-be-true">What had to be true</a></li><li><a href="#architecture">Architecture</a></li><li><a href="#the-data-flow-end-to-end">The data flow, end to end</a></li><li><a href="#the-hard-part-making-shrinking-safe">The hard part: making shrinking safe</a></li><li><a href="#how-it-ran">How it ran</a></li><li><a href="#key-decisions-and-trade-offs">Key decisions and trade-offs</a></li><li><a href="#what-i-d-do-again-and-differently">What I&#x27;d do again, and differently</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>How do you allocate Kubernetes costs to teams?</summary><p>Label every workload with its owning team and product, enforce the labels at admission, and use a cost allocation tool such as OpenCost to apportion node and shared costs to workloads. Then report it alongside the cloud bill in a common format such as FOCUS.</p></details><details class="rise"><summary>Can right-sizing be done without restarting pods?</summary><p>Since Kubernetes 1.35, in-place Pod resize is stable, so CPU and memory can be changed on running Pods. Combined with the Vertical Pod Autoscaler&#x27;s in-place mode, recommendations can be applied with fewer restarts.</p></details><details class="rise"><summary>Is cost optimisation a one-off project?</summary><p>It shouldn&#x27;t be. One-off clean-ups decay within months. Defaults, ownership, autoscaling and regular reporting make efficient usage the normal state of the platform.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/fractional-cto/"><small>Service</small><b>Fractional CTO</b><span>I work as a part-time CTO for founders, CEOs and boards who need experienced technical judgement now, and a team that can carry it on after I step back.</span><i>→</i></a><a class="rcard rise" href="/technical-due-diligence/"><small>Service</small><b>Technical due diligence</b><span>I give investors an independent, plain-language view of a company&#x27;s technology, team and AI claims, so the risks are priced in before the deal closes, not discovered after.</span><i>→</i></a><a class="rcard rise" href="/ai-architect/"><small>Service</small><b>AI &amp; LLM architecture</b><span>I design and build AI systems that leadership can trust: grounded in your data, measured by evaluations, governed by your rules and priced so they make sense at scale.</span><i>→</i></a><a class="rcard rise" href="/insights/opentelemetry-declarative-configuration/"><small>Insight</small><b>OpenTelemetry declarative configuration: a playbook for moving from environment variables to one reviewed file</b><span>For years, configuring OpenTelemetry SDKs meant a growing list of OTEL_ environment variables, plus code for anything they couldn&#x27;t express. The declarative configuration schema is now stable. It turns telemetry setup into a versioned file that platform teams can standardise, review and roll out.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: Making Kubernetes spend visible, owned and controllable, without slowing teams down">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
+        <p class="floc">United States &amp; UAE · working globally</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/uae/">Fractional CTO in the UAE</a></li></ul></div>
+      <div class="fc"><h4>Case studies</h4><ul><li><a href="/case-studies/kubernetes-finops-platform-engineering/">Kubernetes FinOps and platform engineering</a></li><li><a href="/case-studies/enterprise-mcp-agent-platform/">Enterprise MCP agent platform</a></li><li><a href="/case-studies/insurance-claims-triage-ai/">Insurance claims triage with AI</a></li><li><a href="/case-studies/startup-fractional-cto-seed-to-series-a/">Startup fractional CTO, seed to Series A</a></li><li><a href="/#work">Engagement snapshots</a></li><li><a href="/case-studies/">All case studies →</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/opentelemetry-declarative-configuration/">OpenTelemetry declarative configuration: a playbook for moving from environment variables to one reviewed file</a></li><li><a href="/insights/terraform-secrets-out-of-state/">Keeping secrets out of Terraform state: a checklist for platform teams</a></li><li><a href="/insights/slos-error-budgets-small-teams/">SLOs and error budgets for small teams: field notes on making reliability a decision, not a debate</a></li><li><a href="/insights/speculative-decoding-private-llms/">Speculative decoding for private LLMs: faster tokens without changing the answers</a></li><li><a href="/insights/real-world-evidence-study-designs-omop/">Real-world evidence on OMOP: comparing five study designs for treatment effects</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>

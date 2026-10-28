@@ -1,0 +1,83 @@
+<!--{"title": "Case study: Kubernetes FinOps and a paved road for product teams", "description": "How a scale-up can make Kubernetes spend visible and controllable per team: cost allocation, right-sizing without restarts, scale to zero, quotas and a paved road.", "short": "Kubernetes FinOps and platform engineering", "h1": "Making Kubernetes spend visible, owned and controllable, without slowing teams down", "kicker": "Case study · Platform engineering", "lede": "Cloud bills were growing faster than the business, and nobody could say which team or product drove the increase. The goal was a platform where every workload has an owner, a cost, sensible defaults and a cheap way to shrink, so cost becomes a product decision rather than a quarterly panic.", "date": "2026-10-28", "datetime": "2026-10-28T07:50:00+04:00", "readtime": "9 min read", "sector": "Technology · Scale-up", "role": "Fractional CTO and platform architect", "engagement": "Assessment, platform build and enablement", "scope": "Cost allocation, autoscaling, quotas, golden paths, reporting", "stack": ["Kubernetes", "OpenCost", "FOCUS billing data", "HorizontalPodAutoscaler", "Vertical Pod Autoscaler", "ResourceQuota", "Terraform", "OpenTelemetry"], "outcomes": ["Every namespace and workload mapped to an owning team and product", "Cost per team and per product reported in the same format finance uses", "Right-sizing applied continuously instead of in occasional clean-up projects", "New services start with sensible requests, limits and autoscaling by default"], "tags": ["kubernetes", "finops", "platform", "cloud"], "keywords": ["Kubernetes FinOps case study", "Kubernetes cost allocation", "OpenCost", "FOCUS specification", "platform engineering golden path", "Kubernetes right-sizing", "in-place pod resize", "HPA scale to zero", "cloud cost optimisation", "fractional CTO"], "faq": [["How do you allocate Kubernetes costs to teams?", "Label every workload with its owning team and product, enforce the labels at admission, and use a cost allocation tool such as OpenCost to apportion node and shared costs to workloads. Then report it alongside the cloud bill in a common format such as FOCUS."], ["Can right-sizing be done without restarting pods?", "Since Kubernetes 1.35, in-place Pod resize is stable, so CPU and memory can be changed on running Pods. Combined with the Vertical Pod Autoscaler's in-place mode, recommendations can be applied with fewer restarts."], ["Is cost optimisation a one-off project?", "It shouldn't be. One-off clean-ups decay within months. Defaults, ownership, autoscaling and regular reporting make efficient usage the normal state of the platform."]], "related": ["/fractional-cto/", "/technical-due-diligence/", "/ai-architect/"], "citations": [{"title": "OpenCost FAQ", "url": "https://opencost.io/docs/FAQ", "publisher": "OpenCost project"}, {"title": "FOCUS specification", "url": "https://focus.finops.org/focus-specification/", "publisher": "FinOps Foundation"}, {"title": "Kubernetes 1.35: In-Place Pod Resize Graduates to Stable", "url": "https://kubernetes.io/blog/2025/12/19/kubernetes-v1-35-in-place-pod-resize-ga/", "publisher": "Kubernetes blog", "date": "19 Dec 2025"}, {"title": "Kubernetes v1.37: Scale Workloads to Zero with HorizontalPodAutoscaler", "url": "https://kubernetes.io/blog/2026/09/02/kubernetes-v1-37-hpa-scale-to-zero-beta/", "publisher": "Kubernetes blog", "date": "2 Sep 2026"}, {"title": "Resource Quotas", "url": "https://kubernetes.io/docs/concepts/policy/resource-quotas/", "publisher": "Kubernetes documentation"}]}-->
+<h2>The situation</h2>
+<p>A fast-growing technology company ran most of its products on a handful of shared Kubernetes clusters. Teams shipped quickly, which was the point. But cloud spend had become one of the largest lines in the budget, and the monthly review was a guessing game: the bill showed compute, storage and network by account, while the organisation thought in teams and products. Requests and limits had been copied between services for years. Some workloads ran around the clock for jobs that happened once a day.</p>
+<p>A previous clean-up project had cut costs for a quarter, then spend crept back. The leadership question was simple: how do we make this stay fixed?</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>Every workload has an owner</strong>: a team and a product, enforced, not hoped for.</li>
+<li><strong>Cost is visible where decisions are made</strong>: per team, per product, in a format finance accepts.</li>
+<li><strong>Efficiency is the default</strong>: new services start right-sized and autoscaled without teams becoming Kubernetes experts.</li>
+<li><strong>Shrinking is cheap and safe</strong>, so teams actually do it.</li>
+<li><strong>No slowdown in delivery</strong>; controls live in the paved road, not in tickets.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Golden path</small><div class="dgm-nodes"><span>Service templates<em>requests, limits, autoscaling</em></span><span class="hl">Ownership labels<em>team, product, environment</em></span><span>Terraform modules<em>namespaces, quotas</em></span></div></div>
+<div class="dgm-tier"><small>Guardrails</small><div class="dgm-nodes"><span>Admission policies<em>labels required</em></span><span>ResourceQuota<em>per namespace</em></span><span>LimitRange<em>sane defaults</em></span></div></div>
+<div class="dgm-tier"><small>Elasticity</small><div class="dgm-nodes"><span>HPA<em>traffic and queues</em></span><span class="hl">VPA in-place<em>right-size running pods</em></span><span>Scale to zero<em>queue-driven workers</em></span><span>Node autoscaling<em>bin packing</em></span></div></div>
+<div class="dgm-tier"><small>Measure</small><div class="dgm-nodes"><span class="hl">OpenCost<em>allocation per workload</em></span><span>Cloud billing in FOCUS<em>one schema</em></span><span>Usage telemetry<em>OpenTelemetry</em></span></div></div>
+<div class="dgm-tier"><small>Decide</small><div class="dgm-nodes"><span>Team cost reports<em>weekly</em></span><span>Product unit costs<em>cost per customer action</em></span><span>Budget alerts<em>per team</em></span></div></div>
+</div>
+<figcaption>Ownership at the top, measurement at the bottom; elasticity in the middle turns insight into savings automatically.</figcaption>
+</figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Deploy</b><span>Service created from a template with owner labels and default autoscaling</span></li>
+<li><b>Admit</b><span>Policies reject workloads without labels; quotas cap each namespace</span></li>
+<li class="hl"><b>Allocate</b><span>OpenCost apportions node, storage and shared costs to each workload</span></li>
+<li><b>Join</b><span>Allocations joined with cloud billing in a common FOCUS format</span></li>
+<li class="hl"><b>Report</b><span>Cost per team and product, with recommendations, sent to owners</span></li>
+<li><b>Act</b><span>Right-sizing and scaling changes applied through the same templates</span></li>
+</ol>
+<figcaption>The loop closes in the template: improvements land once and every service inherits them.</figcaption>
+</figure>
+<p>OpenCost provides workload-level cost allocation for Kubernetes, attributing cluster costs to namespaces, labels and workloads<sup class="cite"><a href="#ref-1">1</a></sup>. Joining those allocations with billing data in the FinOps Foundation's FOCUS format gave finance and engineering one view of the same numbers<sup class="cite"><a href="#ref-2">2</a></sup>; the reasoning is in <a href="/insights/focus-finops-ai-cost-allocation/">FOCUS and AI spend</a>.</p>
+
+<h2>The hard part: making shrinking safe</h2>
+<p>Visibility alone rarely changes behaviour. Teams knew some services were over-provisioned; they left them because changing requests meant restarts, and restarts meant risk. Two Kubernetes changes removed most of that friction:</p>
+<ul>
+<li><strong>In-place Pod resize</strong>, stable since Kubernetes 1.35, lets CPU and memory change on running Pods, and the Vertical Pod Autoscaler's in-place mode uses it<sup class="cite"><a href="#ref-3">3</a></sup>. Recommendations could finally be applied continuously, starting with CPU on stateless services. Details in <a href="/insights/kubernetes-in-place-pod-resize/">in-place Pod resize</a>.</li>
+<li><strong>Scale to zero with the HorizontalPodAutoscaler</strong>, available from Kubernetes 1.37 for workloads driven by suitable object or external metrics such as queue length<sup class="cite"><a href="#ref-4">4</a></sup>. Workers that waited idle most of the day stopped costing anything while idle. See <a href="/insights/kubernetes-finops-scale-to-zero/">Kubernetes FinOps and scale to zero</a>.</li>
+</ul>
+<p>Namespace quotas then capped the total each team could request, which turned capacity into a visible, negotiable budget rather than an unlimited pool<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<div class="callout"><p>Cost programmes fail when saving money is risky and spending it is free. Flip both: make shrinking safe and automatic, and make every request visible to its owner.</p></div>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Platform team</small><ol><li>Templates and policies</li><li class="hl">Allocation and reporting</li><li>Autoscaling defaults</li></ol></div>
+<div class="dgm-lane"><small>Product teams</small><ol><li>Adopt templates</li><li>Review weekly cost report</li><li class="hl">Accept right-sizing</li></ol></div>
+<div class="dgm-lane"><small>Finance</small><ol><li>Agree allocation rules</li><li>Set team budgets</li><li>Track unit costs</li></ol></div>
+</div>
+<figcaption>Platform provides the tools, teams own their spend, finance owns the budget conversation.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>See</b><ul><li>Ownership labels</li><li>Allocation running</li><li>First team reports</li></ul></div>
+<div><small>Phase 2</small><b>Default</b><ul><li>Service templates</li><li>Admission policies</li><li>Quotas per namespace</li></ul></div>
+<div><small>Phase 3</small><b>Automate</b><ul><li>VPA in-place for CPU</li><li>Queue-driven scale to zero</li><li>Node bin packing</li></ul></div>
+<div><small>Phase 4</small><b>Sustain</b><ul><li>Unit cost metrics</li><li>Budget alerts</li><li>Quarterly review</li></ul></div>
+</div>
+<figcaption>Visibility first, then defaults, then automation, then a rhythm that keeps it working.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Enforce ownership labels at admission</td><td>Tag clean-up campaigns</td><td>Unowned workloads can't appear in the first place</td></tr>
+<tr><td>Open-source allocation plus FOCUS</td><td>A separate cost tool per cloud</td><td>One allocation model and one billing schema across providers</td></tr>
+<tr><td>Right-size in place, CPU first</td><td>Rolling restarts for every change</td><td>Lower risk, so recommendations actually get applied</td></tr>
+<tr><td>Scale to zero only for queue-backed work</td><td>Scale everything to zero</td><td>User-facing services need warm capacity</td></tr>
+<tr><td>Quotas as team budgets</td><td>Unlimited shared pool</td><td>Makes capacity a visible, negotiated decision</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: start with ownership and allocation, and put every improvement into the templates so it spreads automatically. Differently: agree unit cost metrics with product leaders earlier. Cost per team tells you who spends; cost per customer action tells you whether the spend is worth it.</p>
+<p>If cloud costs are outgrowing the business, my <a href="/fractional-cto/">fractional CTO</a> work covers platform and FinOps programmes like this, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
