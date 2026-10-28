@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Case study: taming a multi-cloud Terraform estate</title>
+<meta name="description" content="How a company running AWS, Azure and GCP can turn sprawling Terraform into composed modules, small state, safe secrets, policy checks and a paved road for teams." />
+<meta name="keywords" content="multi-cloud Terraform, Terraform module composition, Terraform state strategy, Terraform secrets in state, OpenTofu vs Terraform, infrastructure as code case study, platform engineering, policy as code Terraform, cloud architect, fractional CTO" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://asksumanta.com/case-studies/multi-cloud-terraform-estate/" />
+<meta name="theme-color" content="#111214" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="Case study: taming a multi-cloud Terraform estate" />
+<meta property="og:description" content="How a company running AWS, Azure and GCP can turn sprawling Terraform into composed modules, small state, safe secrets, policy checks and a paved road for teams." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://asksumanta.com/case-studies/multi-cloud-terraform-estate/" />
+<meta property="og:image" content="https://asksumanta.com/assets/og/multi-cloud-terraform-estate.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Case study: taming a multi-cloud Terraform estate" />
+<meta name="twitter:description" content="How a company running AWS, Azure and GCP can turn sprawling Terraform into composed modules, small state, safe secrets, policy checks and a paved road for teams." />
+<meta name="twitter:image" content="https://asksumanta.com/assets/og/multi-cloud-terraform-estate.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "Article", "headline": "Taming a multi-cloud Terraform estate: modules, state, secrets and a paved road", "description": "How a company running AWS, Azure and GCP can turn sprawling Terraform into composed modules, small state, safe secrets, policy checks and a paved road for teams.", "articleSection": "Case study", "about": "Technology · Multi-cloud enterprise", "datePublished": "2026-10-28T18:30:00+04:00", "dateModified": "2026-10-28T18:30:00+04:00", "citation": [{"@type": "CreativeWork", "name": "Module composition", "url": "https://developer.hashicorp.com/terraform/language/modules/develop/composition"}, {"@type": "CreativeWork", "name": "Terraform 1.10 improves handling secrets in state with ephemeral values", "url": "https://hashicorp.com/blog/terraform-1-10-improves-handling-secrets-in-state-with-ephemeral-values"}, {"@type": "CreativeWork", "name": "Terraform 1.11 brings ephemeral values to managed resources with write-only arguments", "url": "https://www.hashicorp.com/blog/terraform-1-11-ephemeral-values-managed-resources-write-only-arguments"}, {"@type": "CreativeWork", "name": "Linux Foundation joins OpenTF to fork Terraform into OpenTofu", "url": "https://thenewstack.io/linux-foundation-joins-opentf-to-fork-for-terraform-into-opentofu/"}], "author": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "publisher": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "mainEntityOfPage": "https://asksumanta.com/case-studies/multi-cloud-terraform-estate/", "image": "https://asksumanta.com/assets/og/multi-cloud-terraform-estate.png", "keywords": "multi-cloud Terraform, Terraform module composition, Terraform state strategy, Terraform secrets in state, OpenTofu vs Terraform, infrastructure as code case study, platform engineering, policy as code Terraform, cloud architect, fractional CTO", "wordCount": 935}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://asksumanta.com/"}, {"@type": "ListItem", "position": 2, "name": "Case studies", "item": "https://asksumanta.com/case-studies/"}, {"@type": "ListItem", "position": 3, "name": "Taming a multi-cloud Terraform estate: modules, state, secrets and a paved road", "item": "https://asksumanta.com/case-studies/multi-cloud-terraform-estate/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Should one Terraform module work on every cloud?", "acceptedAnswer": {"@type": "Answer", "text": "Usually not. Terraform deliberately doesn't abstract over providers, and a lowest-common-denominator module hides the features that make each service worth using. Compose small provider-specific modules behind a shared interface instead."}}, {"@type": "Question", "name": "How should Terraform state be split?", "acceptedAnswer": {"@type": "Answer", "text": "By blast radius and ownership: separate states for foundations, shared services and each application environment, so a mistake in one cannot destroy another, and access can follow ownership."}}, {"@type": "Question", "name": "Should we move from Terraform to OpenTofu?", "acceptedAnswer": {"@type": "Answer", "text": "Both remain viable. OpenTofu is an MPL-licensed fork under the Linux Foundation, created after HashiCorp moved Terraform to the Business Source License in 2023. Decide on licensing, ecosystem and features, and keep modules compatible while you decide."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+</script>
+</head>
+<body class="sub is-post is-case">
+<div class="progress" id="progress"></div>
+<nav>
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="/#practice">Services</a>
+      <a href="/case-studies/">Case studies</a>
+      <a href="/insights/">Insights</a>
+      <a href="/#assess">Analyse</a>
+      <a href="/#connect">Connect</a>
+    </div>
+    <div class="nav-r">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/case-studies/">Case studies</a> <span>/</span> <em>Taming a multi-cloud Terraform estate: modules, state, secrets and a paved road</em></div>
+    <div class="kicker">Case study · Cloud infrastructure</div>
+    <h1>Taming a multi-cloud Terraform estate: modules, state, secrets and a paved road</h1>
+    <p class="sub-lede">Years of acquisitions and team autonomy had left infrastructure across three clouds, described by hundreds of Terraform folders with copied modules, giant state files and secrets in plaintext. Changes were slow and frightening. The goal was an estate that teams could change quickly and safely, without a central bottleneck.</p>
+    <div class="ameta"><span class="fmt">Case study</span><span>Technology · Multi-cloud enterprise</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-10-28T18:30:00+04:00">28 Oct 2026 · 18:30 GST</time><span>9 min read</span></div><div class="atags"><span class="tagp">#cloud</span><span class="tagp">#terraform</span><span class="tagp">#platform</span><span class="tagp">#security</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Case study cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><line x1="838" y1="371" x2="773" y2="263" class="cv-edge" opacity="0.16"/><line x1="838" y1="371" x2="842" y2="294" class="cv-edge" opacity="0.49"/><line x1="838" y1="371" x2="902" y2="376" class="cv-edge" opacity="0.57"/><line x1="813" y1="160" x2="729" y2="182" class="cv-edge" opacity="0.42"/><line x1="813" y1="160" x2="734" y2="188" class="cv-edge" opacity="0.44"/><line x1="813" y1="160" x2="773" y2="263" class="cv-edge" opacity="0.26"/><line x1="813" y1="160" x2="739" y2="140" class="cv-edge hl" opacity="0.49"/><line x1="813" y1="160" x2="842" y2="294" class="cv-edge" opacity="0.09"/><line x1="813" y1="160" x2="719" y2="204" class="cv-edge hl" opacity="0.31"/><line x1="813" y1="160" x2="911" y2="181" class="cv-edge" opacity="0.33"/><line x1="813" y1="160" x2="908" y2="68" class="cv-edge" opacity="0.12"/><line x1="813" y1="160" x2="726" y2="149" class="cv-edge hl" opacity="0.42"/><line x1="813" y1="160" x2="898" y2="119" class="cv-edge" opacity="0.37"/><line x1="1035" y1="138" x2="1132" y2="96" class="cv-edge hl" opacity="0.30"/><line x1="1035" y1="138" x2="1112" y2="197" class="cv-edge hl" opacity="0.35"/><line x1="1035" y1="138" x2="1030" y2="112" class="cv-edge hl" opacity="0.82"/><line x1="1035" y1="138" x2="911" y2="181" class="cv-edge hl" opacity="0.13"/><line x1="1035" y1="138" x2="908" y2="68" class="cv-edge hl" opacity="0.03"/><line x1="1035" y1="138" x2="898" y2="119" class="cv-edge hl" opacity="0.08"/><line x1="1035" y1="138" x2="1051" y2="128" class="cv-edge hl" opacity="0.87"/><line x1="1132" y1="96" x2="1112" y2="197" class="cv-edge hl" opacity="0.31"/><line x1="1132" y1="96" x2="1030" y2="112" class="cv-edge hl" opacity="0.31"/><line x1="1132" y1="96" x2="1051" y2="128" class="cv-edge hl" opacity="0.42"/><line x1="729" y1="182" x2="734" y2="188" class="cv-edge" opacity="0.95"/><line x1="729" y1="182" x2="773" y2="263" class="cv-edge" opacity="0.39"/><line x1="729" y1="182" x2="739" y2="140" class="cv-edge hl" opacity="0.71"/><line x1="729" y1="182" x2="655" y2="125" class="cv-edge" opacity="0.37"/><line x1="729" y1="182" x2="719" y2="204" class="cv-edge hl" opacity="0.84"/><line x1="729" y1="182" x2="726" y2="149" class="cv-edge hl" opacity="0.77"/><line x1="734" y1="188" x2="773" y2="263" class="cv-edge" opacity="0.44"/><line x1="734" y1="188" x2="739" y2="140" class="cv-edge hl" opacity="0.68"/><line x1="734" y1="188" x2="655" y2="125" class="cv-edge" opacity="0.32"/><line x1="734" y1="188" x2="719" y2="204" class="cv-edge hl" opacity="0.85"/><line x1="734" y1="188" x2="726" y2="149" class="cv-edge hl" opacity="0.73"/><line x1="773" y1="263" x2="739" y2="140" class="cv-edge hl" opacity="0.15"/><line x1="773" y1="263" x2="842" y2="294" class="cv-edge" opacity="0.49"/><line x1="773" y1="263" x2="719" y2="204" class="cv-edge hl" opacity="0.47"/><line x1="773" y1="263" x2="726" y2="149" class="cv-edge hl" opacity="0.18"/><line x1="1112" y1="197" x2="1030" y2="112" class="cv-edge hl" opacity="0.21"/><line x1="1112" y1="197" x2="1123" y2="317" class="cv-edge" opacity="0.20"/><line x1="1112" y1="197" x2="1051" y2="128" class="cv-edge" opacity="0.38"/><line x1="739" y1="140" x2="655" y2="125" class="cv-edge hl" opacity="0.43"/><line x1="739" y1="140" x2="719" y2="204" class="cv-edge hl" opacity="0.55"/><line x1="739" y1="140" x2="627" y2="54" class="cv-edge hl" opacity="0.06"/><line x1="739" y1="140" x2="726" y2="149" class="cv-edge hl" opacity="0.90"/><line x1="560" y1="243" x2="575" y2="359" class="cv-edge" opacity="0.21"/><line x1="842" y1="294" x2="902" y2="376" class="cv-edge" opacity="0.32"/><line x1="842" y1="294" x2="911" y2="181" class="cv-edge" opacity="0.11"/><line x1="571" y1="85" x2="655" y2="125" class="cv-edge" opacity="0.38"/><line x1="571" y1="85" x2="627" y2="54" class="cv-edge hl" opacity="0.57"/><line x1="571" y1="85" x2="537" y2="86" class="cv-edge" opacity="0.77"/><line x1="655" y1="125" x2="719" y2="204" class="cv-edge hl" opacity="0.32"/><line x1="655" y1="125" x2="627" y2="54" class="cv-edge hl" opacity="0.49"/><line x1="655" y1="125" x2="537" y2="86" class="cv-edge" opacity="0.18"/><line x1="655" y1="125" x2="726" y2="149" class="cv-edge hl" opacity="0.50"/><line x1="719" y1="204" x2="726" y2="149" class="cv-edge hl" opacity="0.63"/><line x1="1030" y1="112" x2="911" y2="181" class="cv-edge hl" opacity="0.09"/><line x1="1030" y1="112" x2="908" y2="68" class="cv-edge hl" opacity="0.13"/><line x1="1030" y1="112" x2="898" y2="119" class="cv-edge hl" opacity="0.12"/><line x1="1030" y1="112" x2="1051" y2="128" class="cv-edge hl" opacity="0.83"/><line x1="902" y1="376" x2="995" y2="312" class="cv-edge hl" opacity="0.24"/><line x1="995" y1="312" x2="1123" y2="317" class="cv-edge hl" opacity="0.15"/><line x1="911" y1="181" x2="908" y2="68" class="cv-edge" opacity="0.25"/><line x1="911" y1="181" x2="898" y2="119" class="cv-edge" opacity="0.58"/><line x1="911" y1="181" x2="1051" y2="128" class="cv-edge" opacity="0.00"/><line x1="627" y1="54" x2="537" y2="86" class="cv-edge hl" opacity="0.36"/><line x1="627" y1="54" x2="726" y2="149" class="cv-edge hl" opacity="0.09"/><line x1="908" y1="68" x2="898" y2="119" class="cv-edge" opacity="0.66"/><circle cx="838" cy="371" r="3" class="cv-dot"/><circle cx="813" cy="160" r="3" class="cv-dot"/><circle cx="1035" cy="138" r="6" class="cv-dot hl"/><circle cx="1132" cy="96" r="6" class="cv-dot hl"/><circle cx="729" cy="182" r="3" class="cv-dot"/><circle cx="734" cy="188" r="3" class="cv-dot"/><circle cx="773" cy="263" r="3" class="cv-dot"/><circle cx="1112" cy="197" r="3" class="cv-dot"/><circle cx="739" cy="140" r="6" class="cv-dot hl"/><circle cx="560" cy="243" r="3" class="cv-dot"/><circle cx="842" cy="294" r="3" class="cv-dot"/><circle cx="571" cy="85" r="3" class="cv-dot"/><circle cx="655" cy="125" r="3" class="cv-dot"/><circle cx="719" cy="204" r="6" class="cv-dot hl"/><circle cx="1030" cy="112" r="6" class="cv-dot hl"/><circle cx="575" cy="359" r="3" class="cv-dot"/><circle cx="902" cy="376" r="3" class="cv-dot"/><circle cx="995" cy="312" r="6" class="cv-dot hl"/><circle cx="1123" cy="317" r="3" class="cv-dot"/><circle cx="911" cy="181" r="3" class="cv-dot"/><circle cx="627" cy="54" r="6" class="cv-dot hl"/><circle cx="537" cy="86" r="3" class="cv-dot"/><circle cx="908" cy="68" r="3" class="cv-dot"/><circle cx="726" cy="149" r="6" class="cv-dot hl"/><circle cx="898" cy="119" r="3" class="cv-dot"/><circle cx="1051" cy="128" r="3" class="cv-dot"/><text x="60" y="90" class="cv-k">CASE STUDY · CASE STUDY · CLOUD INFRASTRUCTURE</text><text x="60" y="350" class="cv-n">28 Oct 2026 · 18:30 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <section class="glance rise" aria-label="At a glance"><div class="kicker">At a glance</div><div class="glance-grid"><div><small>Sector</small><b>Technology · Multi-cloud enterprise</b></div><div><small>My role</small><b>Fractional CTO and cloud architect</b></div><div><small>Engagement</small><b>Assessment, refactor and enablement</b></div><div><small>Scope</small><b>Module library, state layout, secrets, policy, pipelines, tooling choice</b></div></div><div class="glance-out"><small>What changed</small><ul><li>A small library of composed, versioned modules per cloud</li><li>State split by blast radius, with locking and restricted access</li><li>Secrets moved out of state using ephemeral values and write-only arguments</li><li>Every change planned, policy-checked and applied through pipelines</li></ul></div><div class="cs-stack"><span class="tag">Terraform or OpenTofu</span><span class="tag">AWS</span><span class="tag">Azure</span><span class="tag">GCP</span><span class="tag">Module registry</span><span class="tag">Remote state with locking</span><span class="tag">Policy as code</span><span class="tag">CI pipelines</span></div><p class="glance-note">Anonymised composite. Client names, identifying details and confidential figures are withheld; public facts are cited in the references.</p></section><h2 id="the-situation">The situation</h2>
+<p>A company had grown partly through acquisitions, and each acquired team had brought its own cloud and its own way of using Terraform. The result was infrastructure across AWS, Azure and GCP, described by hundreds of folders. Modules had been copied rather than shared, so fixes landed in one place and not the others. Some state files described entire environments, so a careless plan could touch hundreds of resources. Database passwords and keys sat in state, readable by anyone with access to the bucket.</p>
+<p>Engineers had learned to avoid infrastructure changes. That was the real cost: features waited on a handful of people brave enough to run <code>apply</code>.</p>
+
+<h2 id="what-had-to-be-true">What had to be true</h2>
+<ul>
+<li><strong>Small, composable modules</strong> per cloud, versioned and shared, rather than copies.</li>
+<li><strong>Small blast radius</strong>: no single plan able to damage unrelated systems.</li>
+<li><strong>No plaintext secrets in state</strong>, and narrow access to state that remains.</li>
+<li><strong>Every change through a pipeline</strong>, with plan review and policy checks; no laptop applies to production.</li>
+<li><strong>Teams self-serve</strong> common infrastructure through a paved road, with the platform team owning the road, not every change.</li>
+</ul>
+
+<h2 id="architecture">Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Consumers</small><div class="dgm-nodes"><span>Product teams<em>service stacks</em></span><span>Data teams<em>pipelines and stores</em></span><span>Platform team<em>foundations</em></span></div></div>
+<div class="dgm-tier"><small>Paved road</small><div class="dgm-nodes"><span class="hl">Service templates<em>compose modules</em></span><span>Module registry<em>versioned releases</em></span><span>Docs and examples<em>per pattern</em></span></div></div>
+<div class="dgm-tier"><small>Modules</small><div class="dgm-nodes"><span>AWS building blocks<em>network, compute, data</em></span><span>Azure building blocks<em>network, compute, data</em></span><span>GCP building blocks<em>network, compute, data</em></span><span>Shared interfaces<em>naming, tags, outputs</em></span></div></div>
+<div class="dgm-tier"><small>Delivery</small><div class="dgm-nodes"><span class="hl">CI plan and policy<em>every change</em></span><span>Approved apply<em>pipeline identity only</em></span><span>Drift detection<em>scheduled plans</em></span></div></div>
+<div class="dgm-tier"><small>State and secrets</small><div class="dgm-nodes"><span class="hl">State per blast radius<em>locked, encrypted</em></span><span>Secrets manager<em>ephemeral reads</em></span><span>Access reviews<em>state readers</em></span></div></div>
+</div>
+<figcaption>Teams compose modules through templates; pipelines are the only path to production; state is small and guarded.</figcaption>
+</figure>
+
+<h2 id="the-data-flow-end-to-end">The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Change</b><span>Team edits a stack built from a template, pinned to module versions</span></li>
+<li><b>Plan</b><span>CI runs a plan against that stack's own state only</span></li>
+<li class="hl"><b>Check</b><span>Policy checks: tags, encryption, public exposure, secrets in arguments</span></li>
+<li><b>Review</b><span>Plan output reviewed in the pull request by the owning team</span></li>
+<li class="hl"><b>Apply</b><span>Pipeline identity applies after approval; humans cannot apply to production</span></li>
+<li><b>Watch</b><span>Scheduled plans detect drift and open issues for the owners</span></li>
+</ol>
+<figcaption>The same path for every change, so reviewers know exactly what they are approving.</figcaption>
+</figure>
+
+<h2 id="the-hard-part-resisting-the-universal-module">The hard part: resisting the universal module</h2>
+<p>The first instinct was a set of cloud-agnostic modules: one "database" module that worked on all three clouds. It would have hidden the features that made each managed service worth using and created a large abstraction nobody could debug. HashiCorp's guidance favours composition instead: a root module assembling small building blocks and passing dependencies between them as inputs and outputs<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<ul>
+<li>Building blocks were provider-specific, thin and opinionated about security defaults.</li>
+<li>Shared interfaces covered what really is common: naming, tagging, ownership labels and output shapes.</li>
+<li>Templates composed blocks into patterns teams actually use, such as "service with database and queue".</li>
+<li>Each block had examples and tests, and was released with semantic versions.</li>
+</ul>
+<p>Secrets were the other urgent fix. Terraform 1.10 introduced ephemeral values that are not persisted in plan or state, and 1.11 added write-only arguments on managed resources, so secrets can flow from a secrets manager into resources without landing in state<sup class="cite"><a href="#ref-2">2</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>. Every secret that had ever been in state was rotated as part of the move. The checklist is in <a href="/insights/terraform-secrets-out-of-state/">keeping secrets out of Terraform state</a>.</p>
+<div class="callout"><p>Multi-cloud doesn't need multi-cloud modules. It needs consistent interfaces, good building blocks for each cloud, and one way to ship changes.</p></div>
+
+<h2 id="how-it-ran">How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Platform team</small><ol><li>Module library and registry</li><li class="hl">Pipelines and policy</li><li>Templates and docs</li></ol></div>
+<div class="dgm-lane"><small>Product teams</small><ol><li>Migrate stacks to templates</li><li>Own plans and reviews</li><li class="hl">Self-serve new services</li></ol></div>
+<div class="dgm-lane"><small>Security</small><ol><li>Policy rules</li><li>State access model</li><li>Secret rotation</li></ol></div>
+</div>
+<figcaption>The platform team builds the road; product teams drive on it; security sets the speed limits.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Assess</b><ul><li>Inventory stacks and state</li><li>Find secrets in state</li><li>Map ownership</li></ul></div>
+<div><small>Phase 2</small><b>Foundations</b><ul><li>Pipelines and policy</li><li>State per blast radius</li><li>First building blocks</li></ul></div>
+<div><small>Phase 3</small><b>Migrate</b><ul><li>Highest-risk stacks first</li><li>Secrets out of state</li><li>Templates for common patterns</li></ul></div>
+<div><small>Phase 4</small><b>Hand over</b><ul><li>Team self-service</li><li>Drift detection</li><li>Module release process</li></ul></div>
+</div>
+<figcaption>Safety controls first, then migration, then self-service.</figcaption>
+</figure>
+
+<h2 id="key-decisions-and-trade-offs">Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Provider-specific building blocks</td><td>Universal cross-cloud modules</td><td>Keeps each service's strengths and stays debuggable</td></tr>
+<tr><td>State split by blast radius and owner</td><td>One state per environment</td><td>Limits damage and lets access follow ownership</td></tr>
+<tr><td>Pipeline-only applies</td><td>Engineers apply from laptops</td><td>Consistent, reviewed and auditable changes</td></tr>
+<tr><td>Ephemeral values and write-only secrets</td><td>Mark secrets as sensitive</td><td>Sensitive hides values from output; it doesn't keep them out of state</td></tr>
+<tr><td>Modules compatible with Terraform and OpenTofu</td><td>Commit to one tool now</td><td>Keeps the licensing decision open without blocking work</td></tr>
+</tbody>
+</table>
+<p>The tooling question came up early. OpenTofu was forked from Terraform under the Linux Foundation after HashiCorp's 2023 licence change<sup class="cite"><a href="#ref-4">4</a></sup>. Rather than let that decision block the refactor, modules were kept compatible with both while legal and procurement reached a view; the trade-offs are in <a href="/insights/opentofu-or-terraform-2026/">OpenTofu or Terraform in 2026</a>.</p>
+
+<h2 id="what-i-d-do-again-and-differently">What I'd do again, and differently</h2>
+<p>Again: put pipelines, policy and state boundaries in place before migrating anything, and rotate every secret that touched state. Differently: publish the module interface conventions (names, tags and outputs) in the first week. Teams started writing new stacks immediately, and every one written before the conventions existed needed rework. More on structure in <a href="/insights/terraform-multi-cloud-module-design/">Terraform module design for multi-cloud</a>.</p>
+<p>If your infrastructure code has become something people avoid touching, my <a href="/fractional-cto/">fractional CTO</a> work covers estates like this, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://developer.hashicorp.com/terraform/language/modules/develop/composition" target="_blank" rel="noopener">Module composition</a><small>HashiCorp developer documentation</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://hashicorp.com/blog/terraform-1-10-improves-handling-secrets-in-state-with-ephemeral-values" target="_blank" rel="noopener">Terraform 1.10 improves handling secrets in state with ephemeral values</a><small>HashiCorp · Nov 2024</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://www.hashicorp.com/blog/terraform-1-11-ephemeral-values-managed-resources-write-only-arguments" target="_blank" rel="noopener">Terraform 1.11 brings ephemeral values to managed resources with write-only arguments</a><small>HashiCorp · 2025</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://thenewstack.io/linux-foundation-joins-opentf-to-fork-for-terraform-into-opentofu/" target="_blank" rel="noopener">Linux Foundation joins OpenTF to fork Terraform into OpenTofu</a><small>The New Stack · Sep 2023</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fasksumanta.com%2Fcase-studies%2Fmulti-cloud-terraform-estate%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fasksumanta.com%2Fcase-studies%2Fmulti-cloud-terraform-estate%2F&amp;text=Taming%20a%20multi-cloud%20Terraform%20estate%3A%20modules%2C%20state%2C%20secrets%20and%20a%20paved%20road" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=Taming%20a%20multi-cloud%20Terraform%20estate%3A%20modules%2C%20state%2C%20secrets%20and%20a%20paved%20road%20https%3A%2F%2Fasksumanta.com%2Fcase-studies%2Fmulti-cloud-terraform-estate%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://asksumanta.com/case-studies/multi-cloud-terraform-estate/">Copy link</button></div>
+      <div class="pnav"><a class="pn prev" href="/case-studies/ai-governance-programme-eu-us-uae/"><small>← Previous</small><b>One AI governance programme that answers buyers in the EU, US and UAE</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#the-situation">The situation</a></li><li><a href="#what-had-to-be-true">What had to be true</a></li><li><a href="#architecture">Architecture</a></li><li><a href="#the-data-flow-end-to-end">The data flow, end to end</a></li><li><a href="#the-hard-part-resisting-the-universal-module">The hard part: resisting the universal module</a></li><li><a href="#how-it-ran">How it ran</a></li><li><a href="#key-decisions-and-trade-offs">Key decisions and trade-offs</a></li><li><a href="#what-i-d-do-again-and-differently">What I&#x27;d do again, and differently</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>Should one Terraform module work on every cloud?</summary><p>Usually not. Terraform deliberately doesn&#x27;t abstract over providers, and a lowest-common-denominator module hides the features that make each service worth using. Compose small provider-specific modules behind a shared interface instead.</p></details><details class="rise"><summary>How should Terraform state be split?</summary><p>By blast radius and ownership: separate states for foundations, shared services and each application environment, so a mistake in one cannot destroy another, and access can follow ownership.</p></details><details class="rise"><summary>Should we move from Terraform to OpenTofu?</summary><p>Both remain viable. OpenTofu is an MPL-licensed fork under the Linux Foundation, created after HashiCorp moved Terraform to the Business Source License in 2023. Decide on licensing, ecosystem and features, and keep modules compatible while you decide.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/fractional-cto/"><small>Service</small><b>Fractional CTO</b><span>I work as a part-time CTO for founders, CEOs and boards who need experienced technical judgement now, and a team that can carry it on after I step back.</span><i>→</i></a><a class="rcard rise" href="/technical-due-diligence/"><small>Service</small><b>Technical due diligence</b><span>I give investors an independent, plain-language view of a company&#x27;s technology, team and AI claims, so the risks are priced in before the deal closes, not discovered after.</span><i>→</i></a><a class="rcard rise" href="/ai-architect/"><small>Service</small><b>AI &amp; LLM architecture</b><span>I design and build AI systems that leadership can trust: grounded in your data, measured by evaluations, governed by your rules and priced so they make sense at scale.</span><i>→</i></a><a class="rcard rise" href="/insights/kubernetes-pod-certificates-workload-identity/"><small>Insight</small><b>Kubernetes workload identity: service account tokens or Pod Certificates?</b><span>For years the built-in answer to &#x27;who is this workload?&#x27; in Kubernetes was a service account token. Kubernetes 1.37 made the foundations of a second answer generally available: X.509 certificates issued to Pods. The two solve overlapping problems with different security properties.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: Taming a multi-cloud Terraform estate: modules, state, secrets and a paved road">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
+        <p class="floc">United States &amp; UAE · working globally</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/uae/">Fractional CTO in the UAE</a></li></ul></div>
+      <div class="fc"><h4>Case studies</h4><ul><li><a href="/case-studies/multi-cloud-terraform-estate/">Multi-cloud Terraform estate</a></li><li><a href="/case-studies/ai-governance-programme-eu-us-uae/">AI governance across EU, US and UAE</a></li><li><a href="/case-studies/clinical-trial-data-platform/">Clinical trial data platform</a></li><li><a href="/case-studies/pharmacovigilance-signal-detection-platform/">Pharmacovigilance signal platform</a></li><li><a href="/#work">Engagement snapshots</a></li><li><a href="/case-studies/">All case studies →</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/kubernetes-pod-certificates-workload-identity/">Kubernetes workload identity: service account tokens or Pod Certificates?</a></li><li><a href="/insights/mcp-stateless-migration-playbook/">Migrating to stateless MCP: a playbook for the 2026-07-28 specification</a></li><li><a href="/insights/omop-characterisation-incidence/">Characterisation on OMOP: describe your population before you predict or estimate anything</a></li><li><a href="/insights/opentelemetry-declarative-configuration/">OpenTelemetry declarative configuration: a playbook for moving from environment variables to one reviewed file</a></li><li><a href="/insights/terraform-secrets-out-of-state/">Keeping secrets out of Terraform state: a checklist for platform teams</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>
