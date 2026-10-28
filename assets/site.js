@@ -169,3 +169,27 @@
     // copying text from articles (what people find worth keeping)
     document.addEventListener('copy',function(){var s=String(getSelection()||'').trim();if(s.length>20)track('text_copy',{content_id:slug(P),page_type:TYPE,length:s.length});});
   })();
+
+  // cookie and analytics consent banner (Google Consent Mode v2)
+  (function(){
+    function get(){try{return localStorage.getItem('consent');}catch(e){return null;}}
+    function clearGa(){document.cookie.split(';').forEach(function(c){var n=c.split('=')[0].trim();
+      if(n.indexOf('_ga')===0){var d=location.hostname.replace(/^www\./,'');
+        ['', ';domain=.'+d, ';domain='+d].forEach(function(x){document.cookie=n+'=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/'+x;});}});}
+    function apply(v){try{localStorage.setItem('consent',v);}catch(e){}
+      try{if(window.gtag){gtag('consent','update',{analytics_storage:v});if(v==='granted')gtag('event','consent_update',{analytics:'granted'});}}catch(e){}
+      if(v==='denied')clearGa();}
+    var bar;
+    function show(){
+      if(!bar){bar=document.createElement('div');bar.className='cookie-bar';bar.setAttribute('role','dialog');bar.setAttribute('aria-live','polite');bar.setAttribute('aria-label','Cookie consent');
+        bar.innerHTML='<div class="cookie-in"><p><b>Cookies and analytics.</b> I use Google Analytics cookies to understand which pages and case studies are useful. No names or emails are collected, and there is no advertising. <a href="/privacy/">Privacy and cookies</a></p>'+
+          '<div class="cookie-btns"><button type="button" class="btn ghost sm" data-c="denied">Reject</button><button type="button" class="btn sm" data-c="granted">Accept analytics</button></div></div>';
+        document.body.appendChild(bar);
+        bar.addEventListener('click',function(e){var b=e.target.closest('[data-c]');if(!b)return;apply(b.getAttribute('data-c'));hide();});}
+      requestAnimationFrame(function(){bar.classList.add('on');});
+      var cur=get();bar.querySelectorAll('[data-c]').forEach(function(b){b.setAttribute('aria-pressed',b.getAttribute('data-c')===cur);});
+    }
+    function hide(){if(bar)bar.classList.remove('on');}
+    document.addEventListener('click',function(e){if(e.target.closest('[data-cookie-settings]')){e.preventDefault();show();}});
+    if(!get())setTimeout(show,800);
+  })();

@@ -65,11 +65,16 @@ HEAD_FONTS = (
     '&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />'
 )
 
-GTAG = """<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-8TKBV1S98Q"></script>
+GTAG = """<!-- Google tag (gtag.js) with Consent Mode v2 -->
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
+  gtag('consent', 'default', {ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied', analytics_storage: 'granted'});
+  gtag('consent', 'default', {analytics_storage: 'denied', region: ['AT','BE','BG','HR','CY','CZ','DK','EE','FI','FR','DE','GR','HU','IS','IE','IT','LV','LI','LT','LU','MT','NL','NO','PL','PT','RO','SK','SI','ES','SE','GB','CH'], wait_for_update: 500});
+  try { var c = localStorage.getItem('consent'); if (c === 'granted' || c === 'denied') gtag('consent', 'update', {analytics_storage: c}); } catch (e) {}
+</script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-8TKBV1S98Q"></script>
+<script>
   gtag('js', new Date());
 
   gtag('config', 'G-8TKBV1S98Q', {content_group: (function(p){return p==='/'?'Home':p.indexOf('/insights/')===0?'Insights':p.indexOf('/case-studies/')===0?'Case studies':'Services';})(location.pathname)});
@@ -144,7 +149,7 @@ def footer(pages, posts):
         <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
       </ul></div>
     </div>
-    <div class="fbot"><span>© <span id="yr">{TODAY[:4]}</span> {NAME}</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+    <div class="fbot"><span>© <span id="yr">{TODAY[:4]}</span> {NAME}</span><span class="sp"></span><a href="/privacy/">Privacy &amp; cookies</a><button type="button" class="cookie-link" data-cookie-settings>Cookie settings</button><a href="/sitemap.xml">Sitemap</a></div>
   </div>
 </footer>"""
 
@@ -696,6 +701,54 @@ def cases_index(pages, posts, cases):
 """
 
 
+def privacy_page(pages, posts):
+    url = f"{SITE}/privacy/"
+    ld = {"@context": "https://schema.org", "@graph": [
+        {"@type": "WebPage", "name": "Privacy and cookies", "url": url, "dateModified": "2026-10-28"},
+        crumbs([("Home", f"{SITE}/"), ("Privacy and cookies", url)])]}
+    return f"""{head("Privacy and cookies | Sumanta Mukhopadhyay", "How asksumanta.com uses cookies and Google Analytics, what is collected, and how to change your choice.", [], url, f"{SITE}/assets/og/home.png", "website", ld)}
+<body class="sub">
+{nav()}
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <em>Privacy and cookies</em></div>
+    <div class="kicker">Privacy</div>
+    <h1>Privacy and cookies</h1>
+    <p class="sub-lede">This site is a personal portfolio. It has no accounts and no forms, and it never asks for or stores your name or email. Last updated 28 October 2026.</p>
+  </header>
+  <article class="prose">
+    <h2>What is collected</h2>
+    <p>With your consent, the site uses Google Analytics 4 to understand how it is used: pages viewed, how far you scroll, which links and buttons you use (for example booking a call, opening an article or answering the challenge assessor), approximate location at country or city level, device and browser type, and how you arrived. This data is anonymous to me: I cannot see who you are.</p>
+    <p>No personal information such as names, email addresses or phone numbers is sent to Google Analytics. Advertising features and ad personalisation are switched off.</p>
+    <h2>Cookies and local storage</h2>
+    <table class="tbl">
+      <thead><tr><th>Name</th><th>Set by</th><th>Purpose</th><th>Duration</th></tr></thead>
+      <tbody>
+        <tr><td><code>_ga</code></td><td>Google Analytics</td><td>Distinguishes anonymous visitors</td><td>Up to 2 years</td></tr>
+        <tr><td><code>_ga_8TKBV1S98Q</code></td><td>Google Analytics</td><td>Keeps session state</td><td>Up to 2 years</td></tr>
+        <tr><td><code>consent</code> (local storage)</td><td>This site</td><td>Remembers your cookie choice</td><td>Until you clear it</td></tr>
+        <tr><td><code>theme</code> (local storage)</td><td>This site</td><td>Remembers light or dark mode</td><td>Until you clear it</td></tr>
+      </tbody>
+    </table>
+    <p>Analytics cookies are only set after you accept them. If you are in the European Economic Area, the United Kingdom or Switzerland, analytics is off until you choose to allow it. Elsewhere it is on by default and you can switch it off at any time.</p>
+    <h2>Your choice</h2>
+    <p>You can change your choice whenever you like: <button type="button" class="lnk cookie-link" data-cookie-settings>open cookie settings</button>. Rejecting analytics has no effect on how the site works.</p>
+    <h2>Third parties</h2>
+    <p>Booking a call takes you to Google Calendar's appointment page, and writing to me opens your own email client or Gmail. Those services have their own privacy policies. Fonts are loaded from Google Fonts and scripts from public CDNs, which may see your IP address when they deliver files.</p>
+    <h2>Contact</h2>
+    <p>Questions about privacy: <a href="mailto:{EMAIL}">{EMAIL}</a>.</p>
+  </article>
+  {cta_html('Privacy question')}
+</main>
+{modal()}
+{footer(pages, posts)}
+{SCRIPTS}
+</body>
+</html>
+"""
+
+
 def not_found(pages, posts):
     ld = {"@context": "https://schema.org", "@type": "WebPage", "name": "Page not found"}
     links = "".join(f'<a class="svc" href="/{p["slug"]}/"><b>{e(SERVICE_LABELS.get(p["slug"], p["h1"]))}</b><i>→</i></a>'
@@ -778,8 +831,10 @@ def main():
         (ROOT / "case-studies/index.html").write_text(cases_index(pages, posts, cases))
     update_home(pages, posts, cases)
     (ROOT / "404.html").write_text(not_found(pages, posts))
+    (ROOT / "privacy").mkdir(exist_ok=True)
+    (ROOT / "privacy/index.html").write_text(privacy_page(pages, posts))
 
-    urls = [("/", "1.0", "monthly"), ("/insights/", "0.8", "weekly")]
+    urls = [("/", "1.0", "monthly"), ("/insights/", "0.8", "weekly"), ("/privacy/", "0.2", "yearly")]
     urls += [(f"/{m['slug']}/", "0.9", "monthly") for m in pages]
     urls += [(f"/insights/{m['slug']}/", "0.7", "yearly") for m in posts]
     if cases:
