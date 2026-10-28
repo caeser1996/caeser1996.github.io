@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>OpenTelemetry declarative config: from env vars to one file</title>
+<meta name="description" content="OpenTelemetry&#x27;s declarative configuration schema is stable. What changed, which languages support it, and a playbook for moving SDK setup from env vars to one reviewed file." />
+<meta name="keywords" content="OpenTelemetry declarative configuration, OTEL_CONFIG_FILE, opentelemetry-configuration, OpenTelemetry YAML config, OpenTelemetry SDK configuration, OpenTelemetry Spring Boot starter, observability platform engineering, telemetry configuration as code, OpenTelemetry environment variables, observability consultant" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://asksumanta.com/insights/opentelemetry-declarative-configuration/" />
+<meta name="theme-color" content="#111214" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="OpenTelemetry declarative config: from env vars to one file" />
+<meta property="og:description" content="OpenTelemetry&#x27;s declarative configuration schema is stable. What changed, which languages support it, and a playbook for moving SDK setup from env vars to one reviewed file." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://asksumanta.com/insights/opentelemetry-declarative-configuration/" />
+<meta property="og:image" content="https://asksumanta.com/assets/og/opentelemetry-declarative-configuration.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="OpenTelemetry declarative config: from env vars to one file" />
+<meta name="twitter:description" content="OpenTelemetry&#x27;s declarative configuration schema is stable. What changed, which languages support it, and a playbook for moving SDK setup from env vars to one reviewed file." />
+<meta name="twitter:image" content="https://asksumanta.com/assets/og/opentelemetry-declarative-configuration.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "BlogPosting", "headline": "OpenTelemetry declarative configuration: a playbook for moving from environment variables to one reviewed file", "description": "OpenTelemetry's declarative configuration schema is stable. What changed, which languages support it, and a playbook for moving SDK setup from env vars to one reviewed file.", "datePublished": "2026-10-28T04:20:00+04:00", "dateModified": "2026-10-28T04:20:00+04:00", "articleSection": "Cloud · Observability", "genre": "Playbook", "citation": [{"@type": "CreativeWork", "name": "Declarative configuration is stable!", "url": "https://opentelemetry.io/blog/2026/stable-declarative-config/"}, {"@type": "CreativeWork", "name": "Configuration (OpenTelemetry specification)", "url": "https://opentelemetry.io/docs/specs/otel/configuration/"}, {"@type": "CreativeWork", "name": "opentelemetry-configuration", "url": "https://github.com/open-telemetry/opentelemetry-configuration"}, {"@type": "CreativeWork", "name": "The voyage of a small environment variable", "url": "https://opentelemetry.io/blog/2026/spring-boot-declarative-config/"}, {"@type": "CreativeWork", "name": "Declarative configuration (SDK configuration docs)", "url": "https://opentelemetry.io/docs/languages/sdk-configuration/declarative-configuration/"}, {"@type": "CreativeWork", "name": "Deprecate environment variables which don't interoperate with declarative config (tracking issue)", "url": "https://github.com/open-telemetry/opentelemetry-specification/issues/3967"}], "author": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "publisher": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "mainEntityOfPage": "https://asksumanta.com/insights/opentelemetry-declarative-configuration/", "image": "https://asksumanta.com/assets/og/opentelemetry-declarative-configuration.png", "keywords": "OpenTelemetry declarative configuration, OTEL_CONFIG_FILE, opentelemetry-configuration, OpenTelemetry YAML config, OpenTelemetry SDK configuration, OpenTelemetry Spring Boot starter, observability platform engineering, telemetry configuration as code, OpenTelemetry environment variables, observability consultant", "wordCount": 725}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://asksumanta.com/"}, {"@type": "ListItem", "position": 2, "name": "Insights", "item": "https://asksumanta.com/insights/"}, {"@type": "ListItem", "position": 3, "name": "OpenTelemetry declarative configuration: a playbook for moving from environment variables to one reviewed file", "item": "https://asksumanta.com/insights/opentelemetry-declarative-configuration/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What is OpenTelemetry declarative configuration?", "acceptedAnswer": {"@type": "Answer", "text": "A standard data model, with a YAML file format, for configuring OpenTelemetry SDKs: resources, processors, exporters, samplers and more. A single environment variable, OTEL_CONFIG_FILE, points the SDK at the file."}}, {"@type": "Question", "name": "Is it stable?", "acceptedAnswer": {"@type": "Answer", "text": "Key parts of the specification were marked stable in March 2026, including the JSON schema released as opentelemetry-configuration 1.0.0, the YAML file format and the SDK operations to parse and create components. Language implementations stabilise on their own timelines."}}, {"@type": "Question", "name": "Do environment variables still work?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. The project has said it intends to deprecate environment variables that don't interoperate well, but deprecation does not mean deletion. Declarative configuration is the preferred path where it is available."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='dark';try{t=localStorage.getItem('theme')||'dark';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+</script>
+</head>
+<body class="sub is-post">
+<div class="progress" id="progress"></div>
+<nav>
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="/#practice">Services</a>
+      <a href="/case-studies/">Case studies</a>
+      <a href="/insights/">Insights</a>
+      <a href="/#assess">Analyse</a>
+      <a href="/#connect">Connect</a>
+    </div>
+    <div class="nav-r">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/insights/">Insights</a> <span>/</span> <em>OpenTelemetry declarative configuration: a playbook for moving from environment variables to one reviewed file</em></div>
+    <div class="kicker">Cloud · Observability</div>
+    <h1>OpenTelemetry declarative configuration: a playbook for moving from environment variables to one reviewed file</h1>
+    <p class="sub-lede">For years, configuring OpenTelemetry SDKs meant a growing list of OTEL_ environment variables, plus code for anything they couldn&#x27;t express. The declarative configuration schema is now stable. It turns telemetry setup into a versioned file that platform teams can standardise, review and roll out.</p>
+    <div class="ameta"><span class="fmt">Playbook</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-10-28T04:20:00+04:00">28 Oct 2026 · 04:20 GST</time><span>7 min read</span><span>6 sources</span></div><div class="atags"><span class="tagp">#observability</span><span class="tagp">#opentelemetry</span><span class="tagp">#platform</span><span class="tagp">#cloud</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Playbook cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><circle cx="560" cy="61" r="8" class="cv-dot hl"/><rect x="590" y="50" width="379" height="22" class="cv-bar hl"/><circle cx="560" cy="109" r="8" class="cv-dot"/><rect x="590" y="98" width="418" height="22" class="cv-bar"/><circle cx="560" cy="157" r="8" class="cv-dot"/><rect x="590" y="146" width="432" height="22" class="cv-bar"/><circle cx="560" cy="205" r="8" class="cv-dot hl"/><rect x="590" y="194" width="224" height="22" class="cv-bar hl"/><circle cx="560" cy="253" r="8" class="cv-dot"/><rect x="590" y="242" width="329" height="22" class="cv-bar"/><circle cx="560" cy="301" r="8" class="cv-dot"/><rect x="590" y="290" width="288" height="22" class="cv-bar"/><circle cx="560" cy="349" r="8" class="cv-dot hl"/><rect x="590" y="338" width="558" height="22" class="cv-bar hl"/><text x="60" y="90" class="cv-k">PLAYBOOK · CLOUD · OBSERVABILITY</text><text x="60" y="350" class="cv-n">28 Oct 2026 · 04:20 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <p>Ask a platform team how their services configure OpenTelemetry and the honest answer is usually "it depends on the service". One team sets a dozen <code>OTEL_</code> variables in a Helm chart, another wires exporters in code, a third copied a sampler setting from a blog post two years ago. The result is telemetry that differs in quality across services for no good reason, and changes that require touching every repository.</p>
+<p>OpenTelemetry's declarative configuration is designed to fix that, and the core of it is now stable.</p>
+
+<section class="block">
+<h2 id="what-changed">What changed</h2>
+<p>In March 2026 the project marked key portions of the declarative configuration specification stable<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>:</p>
+<ul>
+<li>The JSON schema for the data model, released as <code>opentelemetry-configuration</code> 1.0.0<sup class="cite"><a href="#ref-3">3</a></sup>.</li>
+<li>The YAML file format and the in-memory representation of the model.</li>
+<li>The SDK operations to parse a file and create SDK components from it.</li>
+<li>A standard environment variable, <code>OTEL_CONFIG_FILE</code>, to point the SDK at the file.</li>
+</ul>
+<p>At the time, implementations existed in C++, Go, Java, JavaScript and PHP, with .NET and Python under way, and the Collector used the Go implementation for its own internal telemetry<sup class="cite"><a href="#ref-1">1</a></sup>. Since then, the Java Spring Boot starter has added support from version 2.26.0, embedding the same schema in <code>application.yaml</code><sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+</section>
+
+<section class="block">
+<h2 id="why-it-matters">Why it matters</h2>
+<p>Environment variables are flat. They can name an exporter endpoint, but struggle with a pipeline: several processors, different exporters per signal, views that drop noisy attributes, a sampler with rules. Anything beyond them meant code, or for the Java agent a separate extension jar<sup class="cite"><a href="#ref-4">4</a></sup>. The declarative schema describes the whole SDK pipeline as a tree, in the same shape the SDK runs<sup class="cite"><a href="#ref-5">5</a></sup>:</p>
+<pre><code>file_format: "1.0"
+resource:
+  attributes:
+    - name: service.name
+      value: checkout
+tracer_provider:
+  processors:
+    - batch:
+        exporter:
+          otlp_http:
+            endpoint: ${OTEL_EXPORTER_OTLP_TRACES_ENDPOINT:-http://collector:4318/v1/traces}</code></pre>
+<p>Environment variable substitution keeps the parts that genuinely vary per environment out of the file, while everything else becomes a reviewable artefact.</p>
+<div class="callout"><p>Telemetry configuration is platform policy. It belongs in one reviewed file per service type, not scattered across Helm values and application code.</p></div>
+</section>
+
+<section class="block">
+<h2 id="the-playbook">The playbook</h2>
+<h3>1. Inventory what you have</h3>
+<p>List how each service configures its SDK today: environment variables, code, agent flags. You will usually find a few patterns that cover most services, and a long tail of one-offs.</p>
+<h3>2. Check language support</h3>
+<p>Support varies by language and by feature. The project tracks it in the specification compliance matrix and the configuration repository's language support status<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>. Start with the languages where support is mature in your stack.</p>
+<h3>3. Write a small set of standard files</h3>
+<p>Create a baseline per service type, such as web API, worker and batch job, covering resource attributes, exporters to your <a href="/insights/opentelemetry-collector-deployment-patterns/">Collector gateway</a>, batching, sampling and views. Keep secrets and endpoints as substitutions.</p>
+<h3>4. Ship the file with the platform, not the app</h3>
+<p>Mount it from a ConfigMap or bake it into base images, and set <code>OTEL_CONFIG_FILE</code> in your deployment templates. Teams inherit good defaults without copying settings.</p>
+<h3>5. Validate in CI</h3>
+<p>The model is defined by a JSON schema, so files can be validated before they ship<sup class="cite"><a href="#ref-3">3</a></sup>. Add the check to the same pipeline that enforces <a href="/insights/kubernetes-admission-policies-cel/">admission policies</a>.</p>
+<h3>6. Migrate service by service</h3>
+<p>Run the declarative file alongside existing settings in a non-production environment, compare the telemetry produced, then switch. Pay attention to resource attributes and sampling, where small differences change dashboards and costs.</p>
+<h3>7. Plan for deprecations</h3>
+<p>The project intends to deprecate environment variables that don't interoperate well with declarative configuration, while making clear that deprecation is not deletion<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-6">6</a></sup>. Moving now avoids a rushed migration later.</p>
+</section>
+
+<section class="block">
+<h2 id="where-to-be-careful">Where to be careful</h2>
+<ul>
+<li><strong>Precedence.</strong> Understand how the file interacts with remaining environment variables in each language before assuming one wins.</li>
+<li><strong>Instrumentation configuration.</strong> The API for configuring instrumentation through the model was out of scope for the initial stabilisation<sup class="cite"><a href="#ref-1">1</a></sup>; check what your language supports.</li>
+<li><strong>Runtime changes.</strong> Dynamic configuration, changing telemetry without a restart, is still being designed<sup class="cite"><a href="#ref-1">1</a></sup>.</li>
+<li><strong>Stability is per language.</strong> A stable schema doesn't mean every SDK implementation is stable yet; follow the same approach as <a href="/insights/opentelemetry-stable-by-default-kubernetes/">stable by default</a>.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2 id="how-i-can-help">How I can help</h2>
+<p>I design observability platforms where telemetry is configured once, centrally and consistently, from SDK to Collector to backend. As a <a href="/fractional-cto/">fractional CTO</a> I can own that roadmap. Or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://opentelemetry.io/blog/2026/stable-declarative-config/" target="_blank" rel="noopener">Declarative configuration is stable!</a><small>OpenTelemetry blog · 5 Mar 2026</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://opentelemetry.io/docs/specs/otel/configuration/" target="_blank" rel="noopener">Configuration (OpenTelemetry specification)</a><small>OpenTelemetry</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://github.com/open-telemetry/opentelemetry-configuration" target="_blank" rel="noopener">opentelemetry-configuration</a><small>OpenTelemetry, GitHub</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://opentelemetry.io/blog/2026/spring-boot-declarative-config/" target="_blank" rel="noopener">The voyage of a small environment variable</a><small>OpenTelemetry blog · 14 Jul 2026</small></div></li><li id="ref-5"><span class="rn">5</span><div><a href="https://opentelemetry.io/docs/languages/sdk-configuration/declarative-configuration/" target="_blank" rel="noopener">Declarative configuration (SDK configuration docs)</a><small>OpenTelemetry documentation</small></div></li><li id="ref-6"><span class="rn">6</span><div><a href="https://github.com/open-telemetry/opentelemetry-specification/issues/3967" target="_blank" rel="noopener">Deprecate environment variables which don&#x27;t interoperate with declarative config (tracking issue)</a><small>OpenTelemetry specification, GitHub</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fopentelemetry-declarative-configuration%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fopentelemetry-declarative-configuration%2F&amp;text=OpenTelemetry%20declarative%20configuration%3A%20a%20playbook%20for%20moving%20from%20environment%20variables%20to%20one%20reviewed%20file" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=OpenTelemetry%20declarative%20configuration%3A%20a%20playbook%20for%20moving%20from%20environment%20variables%20to%20one%20reviewed%20file%20https%3A%2F%2Fasksumanta.com%2Finsights%2Fopentelemetry-declarative-configuration%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://asksumanta.com/insights/opentelemetry-declarative-configuration/">Copy link</button></div>
+      <div class="pnav"><a class="pn prev" href="/insights/terraform-secrets-out-of-state/"><small>← Previous</small><b>Keeping secrets out of Terraform state: a checklist for platform teams</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#what-changed">What changed</a></li><li><a href="#why-it-matters">Why it matters</a></li><li><a href="#the-playbook">The playbook</a></li><li><a href="#where-to-be-careful">Where to be careful</a></li><li><a href="#how-i-can-help">How I can help</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>What is OpenTelemetry declarative configuration?</summary><p>A standard data model, with a YAML file format, for configuring OpenTelemetry SDKs: resources, processors, exporters, samplers and more. A single environment variable, OTEL_CONFIG_FILE, points the SDK at the file.</p></details><details class="rise"><summary>Is it stable?</summary><p>Key parts of the specification were marked stable in March 2026, including the JSON schema released as opentelemetry-configuration 1.0.0, the YAML file format and the SDK operations to parse and create components. Language implementations stabilise on their own timelines.</p></details><details class="rise"><summary>Do environment variables still work?</summary><p>Yes. The project has said it intends to deprecate environment variables that don&#x27;t interoperate well, but deprecation does not mean deletion. Declarative configuration is the preferred path where it is available.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/fractional-cto/"><small>Service</small><b>Fractional CTO</b><span>I work as a part-time CTO for founders, CEOs and boards who need experienced technical judgement now, and a team that can carry it on after I step back.</span><i>→</i></a><a class="rcard rise" href="/ai-architect/"><small>Service</small><b>AI &amp; LLM architecture</b><span>I design and build AI systems that leadership can trust: grounded in your data, measured by evaluations, governed by your rules and priced so they make sense at scale.</span><i>→</i></a><a class="rcard rise" href="/technical-due-diligence/"><small>Service</small><b>Technical due diligence</b><span>I give investors an independent, plain-language view of a company&#x27;s technology, team and AI claims, so the risks are priced in before the deal closes, not discovered after.</span><i>→</i></a><a class="rcard rise" href="/insights/terraform-secrets-out-of-state/"><small>Insight</small><b>Keeping secrets out of Terraform state: a checklist for platform teams</b><span>Most organisations using Terraform have database passwords, API keys or private keys sitting in state files, often in plaintext. For years that was simply how Terraform worked. Since versions 1.10 and 1.11 it doesn&#x27;t have to be, but the fix needs deliberate migration.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: OpenTelemetry declarative configuration: a playbook for moving from environment variables to one reviewed file">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. US &amp; UAE time zones.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
+        <p class="floc">United States &amp; UAE · working globally</p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/uae/">Fractional CTO in the UAE</a></li></ul></div>
+      <div class="fc"><h4>Case studies</h4><ul><li><a href="/case-studies/insurance-claims-triage-ai/">Insurance claims triage with AI</a></li><li><a href="/case-studies/startup-fractional-cto-seed-to-series-a/">Startup fractional CTO, seed to Series A</a></li><li><a href="/case-studies/private-equity-ai-technical-due-diligence/">Private equity AI technical due diligence</a></li><li><a href="/case-studies/telecom-observability-slos/">Telecom observability and SLOs</a></li><li><a href="/#work">Engagement snapshots</a></li><li><a href="/case-studies/">All case studies →</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/opentelemetry-declarative-configuration/">OpenTelemetry declarative configuration: a playbook for moving from environment variables to one reviewed file</a></li><li><a href="/insights/terraform-secrets-out-of-state/">Keeping secrets out of Terraform state: a checklist for platform teams</a></li><li><a href="/insights/slos-error-budgets-small-teams/">SLOs and error budgets for small teams: field notes on making reliability a decision, not a debate</a></li><li><a href="/insights/speculative-decoding-private-llms/">Speculative decoding for private LLMs: faster tokens without changing the answers</a></li><li><a href="/insights/real-world-evidence-study-designs-omop/">Real-world evidence on OMOP: comparing five study designs for treatment effects</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>
