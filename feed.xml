@@ -1,6 +1,83 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link><description>Fractional CTO and AI architect: insights, case studies and daily tech news.</description><language>en-gb</language><lastBuildDate>Thu, 29 Oct 2026 20:30:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link></image><item><title>Same model, two ways to buy it: what Anthropic-managed Claude on Google Cloud changes for platform teams</title><link>https://asksumanta.com/insights/claude-google-cloud-anthropic-managed-choice/</link><guid isPermaLink="true">https://asksumanta.com/insights/claude-google-cloud-anthropic-managed-choice/</guid><pubDate>Thu, 29 Oct 2026 20:30:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>llm</category><category>platform</category><category>governance</category><description>Claude&#x27;s full platform is now available through Google Cloud, run by Anthropic. A CTO&#x27;s take on data processors, regions, feature timing and procurement.</description><content:encoded><![CDATA[<p><em>Since 22 October, Google Cloud customers can use the full Claude Platform run by Anthropic, billed and authenticated through Google Cloud, alongside the existing Google-managed option. That is more than a procurement detail: who processes your data, where, and how quickly features arrive now differ by which door you use.</em></p><section class="block">
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link><description>Fractional CTO and AI architect: insights, case studies and daily tech news.</description><language>en-gb</language><lastBuildDate>Thu, 29 Oct 2026 23:05:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link></image><item><title>Raising the cost of a fake face: deepfake-resistant customer onboarding for a Saudi digital bank</title><link>https://asksumanta.com/case-studies/saudi-bank-deepfake-resistant-onboarding/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/saudi-bank-deepfake-resistant-onboarding/</guid><pubDate>Thu, 29 Oct 2026 23:05:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>security</category><category>ai</category><category>architecture</category><description>How a Saudi digital bank can harden remote onboarding against deepfakes: device attestation, liveness, layered risk signals, PDPL-aware data handling and human review.</description><content:encoded><![CDATA[<p><em>A Saudi digital bank onboarded customers entirely through its app, using a selfie video matched to an ID document. Deepfake tools were making that check cheaper to beat. The goal was to raise the cost of a fake identity well above the cost of the defences, without making genuine customers suffer.</em></p><h2>The situation</h2>
+<p>A digital bank in Saudi Arabia opened accounts entirely in its app: the customer photographed their ID, recorded a short selfie video, and a vendor's model compared the two. It worked well for genuine customers. Fraud teams were seeing more attempts that looked like synthetic faces and replayed or injected video, and the existing check had one weak point: if the video was convincing, the account opened.</p>
+<p><strong>Why now.</strong> On 15 October 2026, SDAIA and the Communications, Space and Technology Commission launched the "It's AI" campaign on the risks of deepfakes, including fraud and identity theft, as part of Saudi Arabia's Year of AI<sup class="cite"><a href="#ref-1">1</a></sup>. The CST's guidance lists countermeasures including labelling AI-generated content, detection tools and international provenance standards such as C2PA<sup class="cite"><a href="#ref-2">2</a></sup>. For a bank whose front door is a camera, the message was clear: assume faces and voices can be faked.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>No single check decides</strong>: several independent signals combine into a risk score.</li>
+<li><strong>Trust the capture, not just the content</strong>: prove video came from a genuine camera on a genuine device.</li>
+<li><strong>Genuine customers barely notice</strong>; friction rises only with risk.</li>
+<li><strong>Personal and biometric data handled under the PDPL</strong>, processed in the Kingdom and kept briefly<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>.</li>
+<li><strong>People in the loop</strong> for the hard cases, with good tools and guidance.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Capture</small><div class="dgm-nodes"><span class="hl">Device attestation<em>genuine device and app</em></span><span>Camera integrity<em>detect injected video</em></span><span>Guided capture<em>ID and selfie</em></span></div></div>
+<div class="dgm-tier"><small>Verify</small><div class="dgm-nodes"><span>Liveness<em>active and passive</em></span><span>Face match<em>selfie to document</em></span><span>Document checks<em>security features</em></span><span>Provenance<em>content credentials where present</em></span></div></div>
+<div class="dgm-tier"><small>Decide</small><div class="dgm-nodes"><span class="hl">Risk scoring<em>signals combined</em></span><span>Step-up<em>extra checks by risk</em></span><span>Reviewer queue<em>hard cases</em></span></div></div>
+<div class="dgm-tier"><small>Data</small><div class="dgm-nodes"><span class="hl">In-Kingdom processing<em>vendor and bank</em></span><span>Short retention<em>biometrics deleted promptly</em></span><span>Audit trail<em>decisions and reasons</em></span></div></div>
+<div class="dgm-tier"><small>Learn</small><div class="dgm-nodes"><span>Fraud feedback<em>confirmed cases</em></span><span>Telemetry<em>signal performance</em></span></div></div>
+</div>
+<figcaption>The capture layer protects everything above it: if the camera feed is fake, no model downstream can be trusted.</figcaption>
+</figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Attest</b><span>The app proves it runs unmodified on a genuine device</span></li>
+<li><b>Capture</b><span>ID and selfie video captured with camera integrity checks</span></li>
+<li><b>Verify</b><span>Liveness, face match and document checks run in parallel</span></li>
+<li class="hl"><b>Score</b><span>Signals combined with device, network and behavioural context</span></li>
+<li class="hl"><b>Route</b><span>Low risk opens; medium steps up; high goes to a reviewer</span></li>
+<li><b>Learn</b><span>Confirmed fraud updates rules and thresholds</span></li>
+</ol>
+<figcaption>Friction follows risk: most genuine customers never see the extra steps.</figcaption>
+</figure>
+
+<h2>The hard part: attacks that never touch the camera</h2>
+<p>The most dangerous attacks skip the camera altogether, feeding generated or replayed video into a tampered app or emulator. Better face models do not help if the input is fake. The answer was to raise the attacker's cost at the capture step: device and app attestation, plus camera integrity checks, so injected video fails before any face comparison runs. The same reasoning appears in security design elsewhere: in the Model Context Protocol's analysis of client impersonation, adding attestation moves an attack from cheap to costly<sup class="cite"><a href="#ref-6">6</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/saudi-bank-deepfake-resistant-onboarding/attack-cost.webp" alt="Chart plotting attacker cost against mitigation cost: an attacker-controlled web callback is cheap to attack and cheap to mitigate, a local callback costs more, and a local callback with attestation sits highest for attacker cost" width="1000" height="609" loading="lazy"></div><figcaption>Attestation raises attacker cost more than any downstream check: the same principle applies to onboarding video. <span class="credit">Source: <a href="https://blog.modelcontextprotocol.io/posts/client_registration/" target="_blank" rel="noopener">Model Context Protocol blog, Paul Carleton</a> · CC BY 4.0</span></figcaption></figure>
+<div class="callout"><p>Do not try to out-detect every deepfake. Make faking the capture expensive, and combine enough independent signals that no single fake is enough.</p></div>
+<p>Where documents or media carried content credentials, the platform recorded them as one more signal; provenance standards such as C2PA are designed to show how content was created and edited<sup class="cite"><a href="#ref-5">5</a></sup>. Their absence was never treated as proof of fraud. Related reading: <a href="https://asksumanta.com/insights/defender-first-ai-models-vulnerability-management/">defender-first AI and patch cycles</a> and <a href="https://asksumanta.com/case-studies/fintech-fraud-ring-knowledge-graph/">detecting fraud rings with a knowledge graph</a>.</p>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Fraud and risk</small><ol><li>Attack scenarios</li><li class="hl">Risk thresholds</li><li>Reviewer guidance</li></ol></div>
+<div class="dgm-lane"><small>Engineering</small><ol><li>Attestation and capture</li><li class="hl">Risk scoring service</li><li>Telemetry and feedback</li></ol></div>
+<div class="dgm-lane"><small>Compliance and vendors</small><ol><li>PDPL and retention</li><li>In-Kingdom processing</li><li>Vendor testing evidence</li></ol></div>
+</div>
+<figcaption>Fraud set thresholds from real attempts; engineering made every signal measurable.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Threats</b><ul><li>Red-team the flow</li><li>Injected and replayed video</li><li>Document fraud</li></ul></div>
+<div><small>Phase 2</small><b>Capture</b><ul><li>Device attestation</li><li>Camera integrity</li><li>Guided capture</li></ul></div>
+<div><small>Phase 3</small><b>Decide</b><ul><li>Risk scoring</li><li>Step-up flows</li><li>Reviewer tools</li></ul></div>
+<div><small>Phase 4</small><b>Improve</b><ul><li>Fraud feedback loop</li><li>Retention tuning</li><li>Quarterly red-teaming</li></ul></div>
+</div>
+<figcaption>Red-team first: the tests showed where the real weakness was, at capture.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Secure the capture step first</td><td>Buy a better deepfake detector</td><td>Injected video bypasses any detector downstream</td></tr>
+<tr><td>Combine independent signals</td><td>One strong biometric check</td><td>An attacker must defeat several things at once</td></tr>
+<tr><td>Risk-based step-up</td><td>Extra checks for everyone</td><td>Genuine customers keep a fast journey</td></tr>
+<tr><td>Human review for high risk</td><td>Automatic rejection</td><td>Fewer false rejections, better fraud learning</td></tr>
+<tr><td>In-Kingdom processing, short retention</td><td>Vendor processing abroad</td><td>Simpler under PDPL transfer rules and less to lose</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: red-team the onboarding flow before buying anything; it showed the weak point was capture, not matching. Differently: build reviewer tooling earlier. The quality of human decisions on hard cases depended more on the tools than on the guidance. See also <a href="https://asksumanta.com/insights/saudi-pdpl-cross-border-ai/">Saudi PDPL and cross-border AI</a>.</p>
+<p>If you run digital onboarding in Saudi Arabia or the Gulf, my <a href="https://asksumanta.com/fractional-cto-saudi-arabia/">work with Saudi companies</a> explains how I approach it, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/saudi-bank-deepfake-resistant-onboarding/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Same model, two ways to buy it: what Anthropic-managed Claude on Google Cloud changes for platform teams</title><link>https://asksumanta.com/insights/claude-google-cloud-anthropic-managed-choice/</link><guid isPermaLink="true">https://asksumanta.com/insights/claude-google-cloud-anthropic-managed-choice/</guid><pubDate>Thu, 29 Oct 2026 20:30:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>llm</category><category>platform</category><category>governance</category><description>Claude&#x27;s full platform is now available through Google Cloud, run by Anthropic. A CTO&#x27;s take on data processors, regions, feature timing and procurement.</description><content:encoded><![CDATA[<p><em>Since 22 October, Google Cloud customers can use the full Claude Platform run by Anthropic, billed and authenticated through Google Cloud, alongside the existing Google-managed option. That is more than a procurement detail: who processes your data, where, and how quickly features arrive now differ by which door you use.</em></p><section class="block">
 <h2>What changed</h2>
 <p>Anthropic made its managed Claude Platform generally available on Google Cloud on 22 October 2026: Google Cloud customers can use the full platform with Google Cloud IAM credentials, billing and commitment retirement<sup class="cite"><a href="#ref-1">1</a></sup>. Coverage notes that new platform features arrive on the same day as Anthropic's own API<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>, that Anthropic is the data processor for this option while Google remains the processor for the existing Google-managed option, and that it launched with US and global endpoints<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
 </section>
@@ -3709,90 +3786,4 @@ tracer_provider:
 
 <h2>What I'd do again, and differently</h2>
 <p>Again: treat the archived study package as the deliverable, not the slide with the hazard ratio. Differently: invest earlier in partner data cards. Knowing each source's coverage, lag and coding habits up front would have saved feasibility rounds on questions some partners could never answer.</p>
-<p>If you are building evidence capability across data partners, the <a href="https://asksumanta.com/healthcare-data-architecture/">healthcare data architecture</a> page describes how I run these engagements, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/life-sciences-real-world-evidence-network/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Putting FHIR prior authorisation APIs in front of a payer&#x27;s legacy claims systems</title><link>https://asksumanta.com/case-studies/payer-prior-authorisation-fhir-apis/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/payer-prior-authorisation-fhir-apis/</guid><pubDate>Wed, 28 Oct 2026 01:12:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>healthcare</category><category>fhir</category><category>regulation</category><category>architecture</category><category>platform</category><description>How a health payer put Da Vinci CRD, DTR and PAS FHIR APIs in front of legacy claims systems, with decision tracking and metrics reporting for CMS-0057-F.</description><content:encoded><![CDATA[<p><em>Prior authorisation ran on fax, phone and portals, and a federal rule had set dates for API-based exchange. The goal was standards-based FHIR APIs that providers could call, wrapped around claims and utilisation management systems that could not be replaced in time.</em></p><h2>The situation</h2>
-<p>A regional health payer handled prior authorisation the way much of the industry still does: faxes, phone calls and a provider portal, feeding a utilisation management system that sat beside the core claims platform. Providers waited, reviewers re-keyed information, and nobody could easily answer how long decisions took or why requests were pended.</p>
-<p>The CMS Interoperability and Prior Authorization Final Rule (CMS-0057-F) changed the timetable. It requires impacted payers to implement a prior authorisation API, with API compliance dates from January 2027, and to publicly report prior authorisation metrics<sup class="cite"><a href="#ref-1">1</a></sup>. Replacing the claims and utilisation management systems in that window was not realistic, so the question became how to put a standards-based front door on them.</p>
-
-<h2>What had to be true</h2>
-<ul>
-<li><strong>Standards, not a bespoke API</strong>, so provider EHR vendors could integrate once.</li>
-<li><strong>No rip-and-replace</strong>: the existing systems remain the systems of record.</li>
-<li><strong>Every decision traceable</strong>, with a reason a provider could act on.</li>
-<li><strong>Humans for clinical judgement</strong>: automation handles completeness and clear-cut rules; reviewers handle the rest.</li>
-<li><strong>Metrics by construction</strong>, not by quarterly spreadsheet.</li>
-</ul>
-
-<h2>Architecture</h2>
-<p>The design followed the three HL7 Da Vinci guides that work together for prior authorisation: Coverage Requirements Discovery, Documentation Templates and Rules, and Prior Authorization Support.</p>
-<figure class="dgm">
-<div class="dgm-stack">
-<div class="dgm-tier"><small>Provider</small><div class="dgm-nodes"><span>EHR order workflow<em>CDS Hooks client</em></span><span>DTR app<em>questionnaires</em></span><span>PAS client<em>Claim bundle</em></span></div></div>
-<div class="dgm-tier"><small>API edge</small><div class="dgm-nodes"><span>CRD service<em>coverage requirements</em></span><span>DTR service<em>payer rules and forms</em></span><span class="hl">PAS endpoint<em>submit and inquire</em></span></div></div>
-<div class="dgm-tier"><small>Decisioning</small><div class="dgm-nodes"><span class="hl">Rules engine<em>versioned policies</em></span><span>Reviewer queue<em>clinical judgement</em></span><span>Decision record<em>status and reason</em></span></div></div>
-<div class="dgm-tier"><small>Core systems</small><div class="dgm-nodes"><span>Utilisation management<em>system of record</em></span><span>Claims platform<em>unchanged</em></span><span>Member and coverage<em>eligibility</em></span></div></div>
-<div class="dgm-tier"><small>Observe</small><div class="dgm-nodes"><span>Event bus<em>every state change</em></span><span>Metrics store<em>reporting views</em></span><span>Audit<em>who decided what</em></span></div></div>
-</div>
-<figcaption>Layered architecture: Da Vinci APIs at the edge, a thin decisioning layer, and core systems left in place.</figcaption>
-</figure>
-<p>CRD uses CDS Hooks so the payer can return coverage requirements inside the provider's ordering workflow<sup class="cite"><a href="#ref-2">2</a></sup>. DTR lets payer documentation rules run in the provider context so the required information is gathered up front<sup class="cite"><a href="#ref-3">3</a></sup>. PAS carries the request as a bundle built around a Claim resource, aligned to the X12 278 transaction, and is designed to be used together with CRD and DTR<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
-
-<h2>The data flow, end to end</h2>
-<figure class="dgm">
-<ol class="dgm-flow g3">
-<li><b>Discover</b><span>Order signed in the EHR triggers a CRD call; response says whether authorisation and documentation are needed</span></li>
-<li><b>Document</b><span>DTR gathers required information, pre-filled from the record where possible</span></li>
-<li class="hl"><b>Submit</b><span>PAS bundle received, validated and mapped to an internal work item</span></li>
-<li><b>Check</b><span>Rules engine checks eligibility, completeness and clear-cut policy criteria</span></li>
-<li class="hl"><b>Review</b><span>Anything needing clinical judgement goes to a reviewer queue with the evidence attached</span></li>
-<li><b>Respond</b><span>Decision and reason returned via PAS; every state change published as an event</span></li>
-</ol>
-<figcaption>Automation decides completeness; people decide clinical questions.</figcaption>
-</figure>
-<p>Status inquiries used the same decision record, so a provider checking on a pended request saw exactly what a reviewer saw, and the answer never depended on which internal system happened to hold the case.</p>
-<p>A deeper walkthrough of the rule and the APIs is in <a href="https://asksumanta.com/insights/cms-0057-prior-authorization-apis/">CMS-0057 prior authorisation APIs</a>.</p>
-
-<h2>The hard part: translating policy into rules people trust</h2>
-<p>The FHIR plumbing was well specified. Medical policy was not. Coverage criteria lived in documents written for human reviewers, and turning them into DTR questionnaires and rules required:</p>
-<ul>
-<li>A policy backlog ranked by request volume, so the most common services were automated first.</li>
-<li>Clinical owners for every rule, with versioning so a decision could be traced to the policy text in force at the time.</li>
-<li>A firm boundary: rules could approve or route to review, but a denial on clinical grounds always went through a reviewer.</li>
-<li>Specific, actionable reasons in every pended or denied response, rather than generic codes.</li>
-</ul>
-<div class="callout"><p>An API that returns "pended" faster is not an improvement. The value is in returning the right question to the provider at the moment they can still answer it.</p></div>
-
-<h2>How the engagement ran</h2>
-<figure class="dgm">
-<div class="dgm-lanes">
-<div class="dgm-lane"><small>Provider</small><ol><li>Signs order</li><li>Completes DTR form</li><li class="hl">Receives decision and reason</li></ol></div>
-<div class="dgm-lane"><small>Payer platform</small><ol><li>Returns requirements</li><li>Validates and checks rules</li><li>Publishes events</li></ol></div>
-<div class="dgm-lane"><small>Reviewer</small><ol><li>Receives routed case</li><li class="hl">Decides with evidence</li><li>Records reason</li></ol></div>
-</div>
-<figcaption>One request, three actors, one traceable record.</figcaption>
-</figure>
-<figure class="dgm">
-<div class="dgm-phases">
-<div><small>Phase 1</small><b>Assess</b><ul><li>Rule requirements mapped</li><li>Current workflow and systems</li><li>Highest-volume services</li></ul></div>
-<div><small>Phase 2</small><b>Front door</b><ul><li>PAS endpoint and mapping</li><li>Decision record and events</li><li>Partner testing</li></ul></div>
-<div><small>Phase 3</small><b>Upstream</b><ul><li>CRD responses</li><li>DTR questionnaires</li><li>Rules for top services</li></ul></div>
-<div><small>Phase 4</small><b>Operate</b><ul><li>Metrics reporting</li><li>Policy change process</li><li>Runbooks and hand-off</li></ul></div>
-</div>
-<figcaption>PAS first, because it gives every later step a single place to record decisions.</figcaption>
-</figure>
-<p>For the security model of provider-facing apps, see <a href="https://asksumanta.com/insights/smart-on-fhir-ai-apps-authorisation/">SMART on FHIR authorisation</a>; for the event backbone, <a href="https://asksumanta.com/insights/change-data-capture-event-streams/">change data capture and event streams</a>.</p>
-
-<h2>Key decisions and trade-offs</h2>
-<table class="tbl">
-<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
-<tbody>
-<tr><td>Da Vinci CRD, DTR and PAS</td><td>Proprietary REST API</td><td>EHR vendors integrate once across payers</td></tr>
-<tr><td>Façade over existing systems</td><td>Replace utilisation management</td><td>Meets the timetable without core system risk</td></tr>
-<tr><td>Versioned, owned rules</td><td>Rules embedded in code</td><td>Policy changes are auditable and owned by clinicians</td></tr>
-<tr><td>Clinical denials always reviewed</td><td>Full automation</td><td>Keeps clinical judgement with qualified people</td></tr>
-<tr><td>Metrics from the event stream</td><td>Periodic reporting extracts</td><td>Published numbers match operational reality</td></tr>
-</tbody>
-</table>
-
-<h2>What I'd do again, and differently</h2>
-<p>Again: start with the decision record and event stream, because everything else (reporting, audit, provider status checks) hangs off it. Differently: bring provider-side EHR partners into testing earlier. Real Claim bundles from real ordering workflows surface mapping gaps that synthetic tests never do.</p>
-<p>If you are planning for CMS-0057-F, the <a href="https://asksumanta.com/healthcare-data-architecture/">healthcare data architecture</a> page describes how I run these engagements, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/payer-prior-authorisation-fhir-apis/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
+<p>If you are building evidence capability across data partners, the <a href="https://asksumanta.com/healthcare-data-architecture/">healthcare data architecture</a> page describes how I run these engagements, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/life-sciences-real-world-evidence-network/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>

@@ -1,0 +1,79 @@
+<!--{"title": "Case study: deepfake-resistant onboarding for a Saudi digital bank", "description": "How a Saudi digital bank can harden remote onboarding against deepfakes: device attestation, liveness, layered risk signals, PDPL-aware data handling and human review.", "short": "Deepfake-resistant onboarding in Saudi Arabia", "h1": "Raising the cost of a fake face: deepfake-resistant customer onboarding for a Saudi digital bank", "kicker": "Case study · Identity and fraud", "lede": "A Saudi digital bank onboarded customers entirely through its app, using a selfie video matched to an ID document. Deepfake tools were making that check cheaper to beat. The goal was to raise the cost of a fake identity well above the cost of the defences, without making genuine customers suffer.", "date": "2026-10-29", "datetime": "2026-10-29T23:05:00+04:00", "readtime": "9 min read", "sector": "Banking · Saudi Arabia", "role": "Fractional CTO and security architect", "engagement": "Threat assessment, architecture and delivery leadership", "scope": "Remote onboarding, device integrity, liveness, risk scoring, data handling, review operations", "stack": ["Mobile app with device attestation", "Liveness detection", "Document verification", "Risk scoring service", "Case management for reviewers", "Content provenance checks", "In-Kingdom data processing", "OpenTelemetry"], "outcomes": ["Onboarding sessions bound to genuine devices and cameras, not injected video", "Several independent signals combined, so no single check decides", "Higher-risk applications routed to trained reviewers with clear guidance", "Biometric and identity data processed in the Kingdom with tight retention", "Fraud patterns fed back into rules and models continuously"], "tags": ["security", "ai", "architecture"], "keywords": ["deepfake onboarding fraud", "eKYC deepfake", "liveness detection", "device attestation", "injection attack", "Saudi digital bank", "PDPL biometric data", "SDAIA deepfake campaign", "fractional CTO Saudi Arabia", "identity verification architecture"], "faq": [["Can liveness detection alone stop deepfakes?", "No single check is enough. Attackers can inject pre-recorded or generated video directly into the app, bypassing the camera, so liveness should be combined with device and camera integrity, document checks and behavioural risk signals."], ["What is device attestation in onboarding?", "A way for the app to prove it is running unmodified on a genuine device, so the bank can trust that video and images came from the real camera rather than being injected by an emulator or tampered app."], ["How does Saudi data protection law affect biometric onboarding?", "Biometric and identity data are personal data under the PDPL, and transfers outside the Kingdom need an appropriate basis and safeguards. Processing in the Kingdom and keeping retention short simplifies compliance; legal interpretation stays with counsel."]], "related": ["/fractional-cto-saudi-arabia/", "/fractional-cto/", "/technical-due-diligence/"], "citations": [{"title": "SDAIA and CST launch 'It's AI' campaign to raise awareness of fake clips and deepfake risks", "url": "https://www.spa.gov.sa/en/w2702185", "publisher": "Saudi Press Agency", "date": "15 Oct 2026"}, {"title": "It's AI: deepfake awareness", "url": "https://www.cst.gov.sa/en/knowledge-center/user-awareness/deepfake", "publisher": "Communications, Space and Technology Commission"}, {"title": "Saudi Arabia's Personal Data Protection Law becomes enforceable: essential insights for businesses", "url": "https://www.clydeco.com/en/insights/2024/09/saudi-arabia-s-personal-data-protection-law-become", "publisher": "Clyde & Co", "date": "Sep 2024"}, {"title": "A close-up on Saudi Arabia's personal data transfer regulations", "url": "https://turtl.tamimi.com/story/a-close-up-on-saudi-arabias-personal-data-transfer-regulations/page/1", "publisher": "Al Tamimi & Company"}, {"title": "C2PA specifications", "url": "https://c2pa.org/specifications/", "publisher": "Coalition for Content Provenance and Authenticity"}, {"title": "Evolving OAuth client registration in the Model Context Protocol", "url": "https://blog.modelcontextprotocol.io/posts/client_registration/", "publisher": "Model Context Protocol blog (Paul Carleton)", "date": "22 Aug 2025"}]}-->
+<h2>The situation</h2>
+<p>A digital bank in Saudi Arabia opened accounts entirely in its app: the customer photographed their ID, recorded a short selfie video, and a vendor's model compared the two. It worked well for genuine customers. Fraud teams were seeing more attempts that looked like synthetic faces and replayed or injected video, and the existing check had one weak point: if the video was convincing, the account opened.</p>
+<p><strong>Why now.</strong> On 15 October 2026, SDAIA and the Communications, Space and Technology Commission launched the "It's AI" campaign on the risks of deepfakes, including fraud and identity theft, as part of Saudi Arabia's Year of AI<sup class="cite"><a href="#ref-1">1</a></sup>. The CST's guidance lists countermeasures including labelling AI-generated content, detection tools and international provenance standards such as C2PA<sup class="cite"><a href="#ref-2">2</a></sup>. For a bank whose front door is a camera, the message was clear: assume faces and voices can be faked.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>No single check decides</strong>: several independent signals combine into a risk score.</li>
+<li><strong>Trust the capture, not just the content</strong>: prove video came from a genuine camera on a genuine device.</li>
+<li><strong>Genuine customers barely notice</strong>; friction rises only with risk.</li>
+<li><strong>Personal and biometric data handled under the PDPL</strong>, processed in the Kingdom and kept briefly<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>.</li>
+<li><strong>People in the loop</strong> for the hard cases, with good tools and guidance.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Capture</small><div class="dgm-nodes"><span class="hl">Device attestation<em>genuine device and app</em></span><span>Camera integrity<em>detect injected video</em></span><span>Guided capture<em>ID and selfie</em></span></div></div>
+<div class="dgm-tier"><small>Verify</small><div class="dgm-nodes"><span>Liveness<em>active and passive</em></span><span>Face match<em>selfie to document</em></span><span>Document checks<em>security features</em></span><span>Provenance<em>content credentials where present</em></span></div></div>
+<div class="dgm-tier"><small>Decide</small><div class="dgm-nodes"><span class="hl">Risk scoring<em>signals combined</em></span><span>Step-up<em>extra checks by risk</em></span><span>Reviewer queue<em>hard cases</em></span></div></div>
+<div class="dgm-tier"><small>Data</small><div class="dgm-nodes"><span class="hl">In-Kingdom processing<em>vendor and bank</em></span><span>Short retention<em>biometrics deleted promptly</em></span><span>Audit trail<em>decisions and reasons</em></span></div></div>
+<div class="dgm-tier"><small>Learn</small><div class="dgm-nodes"><span>Fraud feedback<em>confirmed cases</em></span><span>Telemetry<em>signal performance</em></span></div></div>
+</div>
+<figcaption>The capture layer protects everything above it: if the camera feed is fake, no model downstream can be trusted.</figcaption>
+</figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Attest</b><span>The app proves it runs unmodified on a genuine device</span></li>
+<li><b>Capture</b><span>ID and selfie video captured with camera integrity checks</span></li>
+<li><b>Verify</b><span>Liveness, face match and document checks run in parallel</span></li>
+<li class="hl"><b>Score</b><span>Signals combined with device, network and behavioural context</span></li>
+<li class="hl"><b>Route</b><span>Low risk opens; medium steps up; high goes to a reviewer</span></li>
+<li><b>Learn</b><span>Confirmed fraud updates rules and thresholds</span></li>
+</ol>
+<figcaption>Friction follows risk: most genuine customers never see the extra steps.</figcaption>
+</figure>
+
+<h2>The hard part: attacks that never touch the camera</h2>
+<p>The most dangerous attacks skip the camera altogether, feeding generated or replayed video into a tampered app or emulator. Better face models do not help if the input is fake. The answer was to raise the attacker's cost at the capture step: device and app attestation, plus camera integrity checks, so injected video fails before any face comparison runs. The same reasoning appears in security design elsewhere: in the Model Context Protocol's analysis of client impersonation, adding attestation moves an attack from cheap to costly<sup class="cite"><a href="#ref-6">6</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/saudi-bank-deepfake-resistant-onboarding/attack-cost.webp" alt="Chart plotting attacker cost against mitigation cost: an attacker-controlled web callback is cheap to attack and cheap to mitigate, a local callback costs more, and a local callback with attestation sits highest for attacker cost" width="1000" height="609" loading="lazy"></div><figcaption>Attestation raises attacker cost more than any downstream check: the same principle applies to onboarding video. <span class="credit">Source: <a href="https://blog.modelcontextprotocol.io/posts/client_registration/" target="_blank" rel="noopener">Model Context Protocol blog, Paul Carleton</a> · CC BY 4.0</span></figcaption></figure>
+<div class="callout"><p>Do not try to out-detect every deepfake. Make faking the capture expensive, and combine enough independent signals that no single fake is enough.</p></div>
+<p>Where documents or media carried content credentials, the platform recorded them as one more signal; provenance standards such as C2PA are designed to show how content was created and edited<sup class="cite"><a href="#ref-5">5</a></sup>. Their absence was never treated as proof of fraud. Related reading: <a href="/insights/defender-first-ai-models-vulnerability-management/">defender-first AI and patch cycles</a> and <a href="/case-studies/fintech-fraud-ring-knowledge-graph/">detecting fraud rings with a knowledge graph</a>.</p>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Fraud and risk</small><ol><li>Attack scenarios</li><li class="hl">Risk thresholds</li><li>Reviewer guidance</li></ol></div>
+<div class="dgm-lane"><small>Engineering</small><ol><li>Attestation and capture</li><li class="hl">Risk scoring service</li><li>Telemetry and feedback</li></ol></div>
+<div class="dgm-lane"><small>Compliance and vendors</small><ol><li>PDPL and retention</li><li>In-Kingdom processing</li><li>Vendor testing evidence</li></ol></div>
+</div>
+<figcaption>Fraud set thresholds from real attempts; engineering made every signal measurable.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Threats</b><ul><li>Red-team the flow</li><li>Injected and replayed video</li><li>Document fraud</li></ul></div>
+<div><small>Phase 2</small><b>Capture</b><ul><li>Device attestation</li><li>Camera integrity</li><li>Guided capture</li></ul></div>
+<div><small>Phase 3</small><b>Decide</b><ul><li>Risk scoring</li><li>Step-up flows</li><li>Reviewer tools</li></ul></div>
+<div><small>Phase 4</small><b>Improve</b><ul><li>Fraud feedback loop</li><li>Retention tuning</li><li>Quarterly red-teaming</li></ul></div>
+</div>
+<figcaption>Red-team first: the tests showed where the real weakness was, at capture.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Secure the capture step first</td><td>Buy a better deepfake detector</td><td>Injected video bypasses any detector downstream</td></tr>
+<tr><td>Combine independent signals</td><td>One strong biometric check</td><td>An attacker must defeat several things at once</td></tr>
+<tr><td>Risk-based step-up</td><td>Extra checks for everyone</td><td>Genuine customers keep a fast journey</td></tr>
+<tr><td>Human review for high risk</td><td>Automatic rejection</td><td>Fewer false rejections, better fraud learning</td></tr>
+<tr><td>In-Kingdom processing, short retention</td><td>Vendor processing abroad</td><td>Simpler under PDPL transfer rules and less to lose</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: red-team the onboarding flow before buying anything; it showed the weak point was capture, not matching. Differently: build reviewer tooling earlier. The quality of human decisions on hard cases depended more on the tools than on the guidance. See also <a href="/insights/saudi-pdpl-cross-border-ai/">Saudi PDPL and cross-border AI</a>.</p>
+<p>If you run digital onboarding in Saudi Arabia or the Gulf, my <a href="/fractional-cto-saudi-arabia/">work with Saudi companies</a> explains how I approach it, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
