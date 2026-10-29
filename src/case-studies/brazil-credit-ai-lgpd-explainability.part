@@ -1,0 +1,79 @@
+<!--{"title": "Case study: explainable AI credit decisions for a Brazilian fintech", "description": "How a Brazilian digital lender can make AI credit decisions reviewable under the LGPD and ready for Brazil's AI bill: reason codes, human review and traceable decisions.", "short": "Explainable AI credit decisions in Brazil", "h1": "Decisions people can question: explainable AI credit scoring for a Brazilian digital lender", "kicker": "Case study · Responsible AI in lending", "lede": "A Brazilian digital lender approved and priced loans in seconds with machine learning models. Customers could not easily find out why they were declined, and reviewing a decision meant digging through logs. The goal was to make every automated credit decision explainable, reviewable by a person and ready for the AI rules Brazil is debating.", "date": "2026-10-30", "datetime": "2026-10-30T01:20:00+04:00", "readtime": "9 min read", "sector": "Consumer lending · Brazil", "role": "Fractional CTO and AI architect", "engagement": "Assessment, architecture and delivery leadership", "scope": "Decision service, reason codes, human review, model governance, data protection", "stack": ["Credit decision service", "Gradient-boosted models", "Reason code generation", "Review workbench", "Event streaming", "OpenTelemetry tracing", "Model registry", "Data catalogue"], "outcomes": ["Every automated decision stored with model version, inputs used and reason codes", "Customers given clear reasons and a route to request human review", "Reviews handled in a workbench with the full decision context", "Models released through a governed gate with performance and stability checks", "Data used for credit decisions documented and minimised"], "tags": ["ai", "governance", "data"], "keywords": ["LGPD automated decisions", "Brazil AI bill PL 2338", "explainable credit scoring", "reason codes", "human review AI", "ANPD", "responsible AI lending", "fintech Brazil AI", "fractional CTO Latin America", "AI governance Brazil"], "faq": [["Does the LGPD cover automated credit decisions?", "Yes. The LGPD gives data subjects the right to request review of decisions taken solely on the basis of automated processing that affect their interests, including profiling such as credit, and to receive clear information about the criteria and procedures used, subject to trade secrets."], ["Is Brazil's AI bill law yet?", "Not at the time of writing. Bill 2338/2023 was approved by the Senate in December 2024 and was pending in the Chamber of Deputies, with a vote reported as expected after the October 2026 elections."], ["What are reason codes?", "Short, standardised explanations of the main factors behind a decision, such as income stability or existing debt, generated from the model and the inputs it used, so customers and reviewers can understand and challenge the outcome."]], "related": ["/ai-architect/", "/regions/", "/fractional-cto/"], "citations": [{"title": "Lei nº 13.709, de 14 de agosto de 2018 (Lei Geral de Proteção de Dados Pessoais)", "url": "http://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/lei/l13709.htm", "publisher": "Presidência da República (Brazil)"}, {"title": "Autoridade Nacional de Proteção de Dados", "url": "https://www.gov.br/anpd/", "publisher": "ANPD"}, {"title": "Brazil's AI bill PL 2338: approved, not law", "url": "https://casrai.org/guides/brazil-ai-bill-pl-2338-status", "publisher": "CASRAI", "date": "2026"}, {"title": "Brazil's AI bill misses fourth deadline in a row", "url": "https://www.entercastconsulting.com.br/en/blog/brazil-ai-bill-pl-2338-delay-2026", "publisher": "Entercast Consulting", "date": "2026"}, {"title": "Bill 2338/2023: where Brazil's AI framework stands in 2026", "url": "https://bairogonzalez.com/en/in-the-world/ia/pl-2338-brazil-ai-legal-framework-2026/", "publisher": "Bairo Gonzalez", "date": "2026"}, {"title": "Instrumenting Apache Kafka clients with OpenTelemetry", "url": "https://opentelemetry.io/blog/2022/instrument-kafka-clients/", "publisher": "OpenTelemetry blog (Paolo Patierno)", "date": "6 Sep 2022"}]}-->
+<h2>The situation</h2>
+<p>A digital lender in Brazil offered personal loans and credit lines through its app. Machine learning models approved, declined and priced applications in seconds, using bureau data, open finance data shared with consent and in-app behaviour. Growth was strong. Complaints were the warning sign: declined customers could not get a useful answer about why, and when the team reviewed a decision it meant piecing together logs from several services.</p>
+<p><strong>Why now.</strong> Brazil's data protection law, the LGPD, already gives people the right to request review of decisions taken solely through automated processing that affect their interests, including credit profiling, and to receive clear information about the criteria used<sup class="cite"><a href="#ref-1">1</a></sup>. The national data protection authority, ANPD, oversees it<sup class="cite"><a href="#ref-2">2</a></sup>. On top of that, Brazil's AI bill, PL 2338/2023, passed the Senate in December 2024 and was pending in the Chamber of Deputies, with a vote reported as expected after the October 2026 elections<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-4">4</a></sup><sup class="cite"><a href="#ref-5">5</a></sup>. It is not law yet, but a lender relying on automated credit decisions could not afford to wait.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>Every decision reconstructable</strong>: model version, data used and outcome, stored together.</li>
+<li><strong>Clear reasons</strong> a customer can understand, without exposing trade secrets.</li>
+<li><strong>Human review on request</strong>, handled quickly with full context.</li>
+<li><strong>Governed models</strong>: tested before release and monitored after.</li>
+<li><strong>Data minimised and documented</strong>, especially open finance data used with consent.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Channels</small><div class="dgm-nodes"><span>App<em>application and result</em></span><span>Customer service<em>review requests</em></span></div></div>
+<div class="dgm-tier"><small>Decision</small><div class="dgm-nodes"><span class="hl">Credit decision service<em>one entry point</em></span><span>Policy rules<em>hard limits first</em></span><span>Scoring models<em>versioned</em></span></div></div>
+<div class="dgm-tier"><small>Explain</small><div class="dgm-nodes"><span class="hl">Reason codes<em>top factors, plain language</em></span><span>Decision record<em>inputs, versions, outcome</em></span></div></div>
+<div class="dgm-tier"><small>Review</small><div class="dgm-nodes"><span class="hl">Review workbench<em>full context for analysts</em></span><span>Outcome feedback<em>overturns tracked</em></span></div></div>
+<div class="dgm-tier"><small>Govern</small><div class="dgm-nodes"><span>Model registry<em>tests and approvals</em></span><span>Monitoring<em>drift and stability</em></span><span>Data catalogue<em>purpose and consent</em></span></div></div>
+</div>
+<figcaption>One decision service produces the outcome, the reasons and the record in the same step.</figcaption>
+</figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Apply</b><span>Application submitted with consented data sources</span></li>
+<li><b>Rules</b><span>Policy rules applied first, with their own reasons</span></li>
+<li><b>Score</b><span>Versioned model scores; top factors extracted</span></li>
+<li class="hl"><b>Record</b><span>Decision, inputs, versions and reason codes stored together</span></li>
+<li class="hl"><b>Explain</b><span>Customer sees outcome, main reasons and how to ask for review</span></li>
+<li><b>Review</b><span>An analyst reviews with full context and can overturn</span></li>
+</ol>
+<figcaption>The record is written at decision time, not reconstructed later.</figcaption>
+</figure>
+
+<h2>The hard part: reconstructing a decision months later</h2>
+<p>A review request can arrive weeks or months after the decision. By then models have been retrained and data has changed. The team made the decision record immutable and complete at the moment of decision, and linked each application event to the processing that handled it with distributed tracing. OpenTelemetry instrumentation for Kafka links the receive and process steps of a message in one trace, so analysts can follow an application from arrival to outcome<sup class="cite"><a href="#ref-6">6</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/brazil-credit-ai-lgpd-explainability/decision-trace.webp" alt="Jaeger trace view showing a Kafka receive span and a linked process span for the same message, with messaging attributes and references between spans" width="1200" height="345" loading="lazy"></div><figcaption>Receive and process steps linked in one trace: the same pattern ties each application to the decision made about it. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2022/instrument-kafka-clients/" target="_blank" rel="noopener">OpenTelemetry blog, Paolo Patierno</a> · CC BY 4.0</span></figcaption></figure>
+<div class="callout"><p>An explanation you generate later is a story. An explanation recorded at decision time is evidence. Build for the second.</p></div>
+<p>Reason codes were generated from the model's own attributions and mapped to plain-language statements reviewed by legal and customer teams, so explanations were truthful without revealing model internals. More on evidence and evaluation in <a href="/insights/llm-evaluation-sets-that-predict-production/">evaluation sets that predict production</a> and <a href="/case-studies/korea-ai-basic-act-hiring-platform/">high-impact AI in hiring</a>.</p>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Credit risk</small><ol><li>Policy rules</li><li class="hl">Reason code library</li><li>Model approval</li></ol></div>
+<div class="dgm-lane"><small>Engineering and data</small><ol><li>Decision service</li><li class="hl">Decision record and tracing</li><li>Monitoring</li></ol></div>
+<div class="dgm-lane"><small>Legal and customer service</small><ol><li>LGPD requirements</li><li>Customer wording</li><li class="hl">Review process</li></ol></div>
+</div>
+<figcaption>Risk owned the reasons, engineering the evidence, customer service the review.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Consolidate</b><ul><li>One decision service</li><li>Policy rules separated</li><li>Model registry</li></ul></div>
+<div><small>Phase 2</small><b>Record</b><ul><li>Immutable decision records</li><li>Tracing</li><li>Data catalogue</li></ul></div>
+<div><small>Phase 3</small><b>Explain</b><ul><li>Reason codes</li><li>Customer messages</li><li>Review workbench</li></ul></div>
+<div><small>Phase 4</small><b>Govern</b><ul><li>Release gate</li><li>Drift monitoring</li><li>Overturn analysis</li></ul></div>
+</div>
+<figcaption>Consolidating decision logic first made everything else possible.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>One decision service</td><td>Scoring spread across services</td><td>One place to record, explain and govern</td></tr>
+<tr><td>Record at decision time</td><td>Reconstruct from logs on request</td><td>Models and data change; records must not</td></tr>
+<tr><td>Reason codes from model attributions</td><td>Generic decline messages</td><td>Truthful, useful and consistent explanations</td></tr>
+<tr><td>Policy rules before models</td><td>Model-only decisions</td><td>Hard limits are easy to explain and audit</td></tr>
+<tr><td>Prepare for the AI bill now</td><td>Wait for the final text</td><td>The LGPD already requires most of this</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: consolidate decisions into one service before adding explanations; scattered logic cannot be explained. Differently: track overturned decisions from day one. They were the clearest signal of where models or rules needed work. Related: <a href="/insights/structured-outputs-reliable-llm-integration/">structured outputs</a> and <a href="/regions/">where I work</a>.</p>
+<p>If you make automated decisions about customers in Brazil or elsewhere in Latin America, my <a href="/ai-architect/">AI architecture work</a> explains how I approach it, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>

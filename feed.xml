@@ -1,6 +1,83 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link><description>Fractional CTO and AI architect: insights, case studies and daily tech news.</description><language>en-gb</language><lastBuildDate>Fri, 30 Oct 2026 00:30:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link></image><item><title>India&#x27;s proposed frontier AI law: what it could mean for companies building on AI in India</title><link>https://asksumanta.com/insights/india-frontier-ai-law-what-it-means/</link><guid isPermaLink="true">https://asksumanta.com/insights/india-frontier-ai-law-what-it-means/</guid><pubDate>Fri, 30 Oct 2026 00:30:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>ai</category><category>governance</category><description>India is weighing pre-release safety checks for the most powerful AI models. A CTO&#x27;s take on who it may affect, what to prepare now and how it fits with the DPDP Rules.</description><content:encoded><![CDATA[<p><em>Reports this week say India is considering a law with a separate safety framework for the most powerful AI models, possibly including testing before release. Nothing is final. Most companies will be deployers rather than frontier developers, but the direction of travel is worth preparing for now.</em></p><section class="block">
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link><description>Fractional CTO and AI architect: insights, case studies and daily tech news.</description><language>en-gb</language><lastBuildDate>Fri, 30 Oct 2026 01:20:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link></image><item><title>Decisions people can question: explainable AI credit scoring for a Brazilian digital lender</title><link>https://asksumanta.com/case-studies/brazil-credit-ai-lgpd-explainability/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/brazil-credit-ai-lgpd-explainability/</guid><pubDate>Fri, 30 Oct 2026 01:20:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>ai</category><category>governance</category><category>data</category><description>How a Brazilian digital lender can make AI credit decisions reviewable under the LGPD and ready for Brazil&#x27;s AI bill: reason codes, human review and traceable decisions.</description><content:encoded><![CDATA[<p><em>A Brazilian digital lender approved and priced loans in seconds with machine learning models. Customers could not easily find out why they were declined, and reviewing a decision meant digging through logs. The goal was to make every automated credit decision explainable, reviewable by a person and ready for the AI rules Brazil is debating.</em></p><h2>The situation</h2>
+<p>A digital lender in Brazil offered personal loans and credit lines through its app. Machine learning models approved, declined and priced applications in seconds, using bureau data, open finance data shared with consent and in-app behaviour. Growth was strong. Complaints were the warning sign: declined customers could not get a useful answer about why, and when the team reviewed a decision it meant piecing together logs from several services.</p>
+<p><strong>Why now.</strong> Brazil's data protection law, the LGPD, already gives people the right to request review of decisions taken solely through automated processing that affect their interests, including credit profiling, and to receive clear information about the criteria used<sup class="cite"><a href="#ref-1">1</a></sup>. The national data protection authority, ANPD, oversees it<sup class="cite"><a href="#ref-2">2</a></sup>. On top of that, Brazil's AI bill, PL 2338/2023, passed the Senate in December 2024 and was pending in the Chamber of Deputies, with a vote reported as expected after the October 2026 elections<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-4">4</a></sup><sup class="cite"><a href="#ref-5">5</a></sup>. It is not law yet, but a lender relying on automated credit decisions could not afford to wait.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>Every decision reconstructable</strong>: model version, data used and outcome, stored together.</li>
+<li><strong>Clear reasons</strong> a customer can understand, without exposing trade secrets.</li>
+<li><strong>Human review on request</strong>, handled quickly with full context.</li>
+<li><strong>Governed models</strong>: tested before release and monitored after.</li>
+<li><strong>Data minimised and documented</strong>, especially open finance data used with consent.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Channels</small><div class="dgm-nodes"><span>App<em>application and result</em></span><span>Customer service<em>review requests</em></span></div></div>
+<div class="dgm-tier"><small>Decision</small><div class="dgm-nodes"><span class="hl">Credit decision service<em>one entry point</em></span><span>Policy rules<em>hard limits first</em></span><span>Scoring models<em>versioned</em></span></div></div>
+<div class="dgm-tier"><small>Explain</small><div class="dgm-nodes"><span class="hl">Reason codes<em>top factors, plain language</em></span><span>Decision record<em>inputs, versions, outcome</em></span></div></div>
+<div class="dgm-tier"><small>Review</small><div class="dgm-nodes"><span class="hl">Review workbench<em>full context for analysts</em></span><span>Outcome feedback<em>overturns tracked</em></span></div></div>
+<div class="dgm-tier"><small>Govern</small><div class="dgm-nodes"><span>Model registry<em>tests and approvals</em></span><span>Monitoring<em>drift and stability</em></span><span>Data catalogue<em>purpose and consent</em></span></div></div>
+</div>
+<figcaption>One decision service produces the outcome, the reasons and the record in the same step.</figcaption>
+</figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Apply</b><span>Application submitted with consented data sources</span></li>
+<li><b>Rules</b><span>Policy rules applied first, with their own reasons</span></li>
+<li><b>Score</b><span>Versioned model scores; top factors extracted</span></li>
+<li class="hl"><b>Record</b><span>Decision, inputs, versions and reason codes stored together</span></li>
+<li class="hl"><b>Explain</b><span>Customer sees outcome, main reasons and how to ask for review</span></li>
+<li><b>Review</b><span>An analyst reviews with full context and can overturn</span></li>
+</ol>
+<figcaption>The record is written at decision time, not reconstructed later.</figcaption>
+</figure>
+
+<h2>The hard part: reconstructing a decision months later</h2>
+<p>A review request can arrive weeks or months after the decision. By then models have been retrained and data has changed. The team made the decision record immutable and complete at the moment of decision, and linked each application event to the processing that handled it with distributed tracing. OpenTelemetry instrumentation for Kafka links the receive and process steps of a message in one trace, so analysts can follow an application from arrival to outcome<sup class="cite"><a href="#ref-6">6</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/brazil-credit-ai-lgpd-explainability/decision-trace.webp" alt="Jaeger trace view showing a Kafka receive span and a linked process span for the same message, with messaging attributes and references between spans" width="1200" height="345" loading="lazy"></div><figcaption>Receive and process steps linked in one trace: the same pattern ties each application to the decision made about it. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2022/instrument-kafka-clients/" target="_blank" rel="noopener">OpenTelemetry blog, Paolo Patierno</a> · CC BY 4.0</span></figcaption></figure>
+<div class="callout"><p>An explanation you generate later is a story. An explanation recorded at decision time is evidence. Build for the second.</p></div>
+<p>Reason codes were generated from the model's own attributions and mapped to plain-language statements reviewed by legal and customer teams, so explanations were truthful without revealing model internals. More on evidence and evaluation in <a href="https://asksumanta.com/insights/llm-evaluation-sets-that-predict-production/">evaluation sets that predict production</a> and <a href="https://asksumanta.com/case-studies/korea-ai-basic-act-hiring-platform/">high-impact AI in hiring</a>.</p>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Credit risk</small><ol><li>Policy rules</li><li class="hl">Reason code library</li><li>Model approval</li></ol></div>
+<div class="dgm-lane"><small>Engineering and data</small><ol><li>Decision service</li><li class="hl">Decision record and tracing</li><li>Monitoring</li></ol></div>
+<div class="dgm-lane"><small>Legal and customer service</small><ol><li>LGPD requirements</li><li>Customer wording</li><li class="hl">Review process</li></ol></div>
+</div>
+<figcaption>Risk owned the reasons, engineering the evidence, customer service the review.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Consolidate</b><ul><li>One decision service</li><li>Policy rules separated</li><li>Model registry</li></ul></div>
+<div><small>Phase 2</small><b>Record</b><ul><li>Immutable decision records</li><li>Tracing</li><li>Data catalogue</li></ul></div>
+<div><small>Phase 3</small><b>Explain</b><ul><li>Reason codes</li><li>Customer messages</li><li>Review workbench</li></ul></div>
+<div><small>Phase 4</small><b>Govern</b><ul><li>Release gate</li><li>Drift monitoring</li><li>Overturn analysis</li></ul></div>
+</div>
+<figcaption>Consolidating decision logic first made everything else possible.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>One decision service</td><td>Scoring spread across services</td><td>One place to record, explain and govern</td></tr>
+<tr><td>Record at decision time</td><td>Reconstruct from logs on request</td><td>Models and data change; records must not</td></tr>
+<tr><td>Reason codes from model attributions</td><td>Generic decline messages</td><td>Truthful, useful and consistent explanations</td></tr>
+<tr><td>Policy rules before models</td><td>Model-only decisions</td><td>Hard limits are easy to explain and audit</td></tr>
+<tr><td>Prepare for the AI bill now</td><td>Wait for the final text</td><td>The LGPD already requires most of this</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: consolidate decisions into one service before adding explanations; scattered logic cannot be explained. Differently: track overturned decisions from day one. They were the clearest signal of where models or rules needed work. Related: <a href="https://asksumanta.com/insights/structured-outputs-reliable-llm-integration/">structured outputs</a> and <a href="https://asksumanta.com/regions/">where I work</a>.</p>
+<p>If you make automated decisions about customers in Brazil or elsewhere in Latin America, my <a href="https://asksumanta.com/ai-architect/">AI architecture work</a> explains how I approach it, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/brazil-credit-ai-lgpd-explainability/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>India&#x27;s proposed frontier AI law: what it could mean for companies building on AI in India</title><link>https://asksumanta.com/insights/india-frontier-ai-law-what-it-means/</link><guid isPermaLink="true">https://asksumanta.com/insights/india-frontier-ai-law-what-it-means/</guid><pubDate>Fri, 30 Oct 2026 00:30:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>ai</category><category>governance</category><description>India is weighing pre-release safety checks for the most powerful AI models. A CTO&#x27;s take on who it may affect, what to prepare now and how it fits with the DPDP Rules.</description><content:encoded><![CDATA[<p><em>Reports this week say India is considering a law with a separate safety framework for the most powerful AI models, possibly including testing before release. Nothing is final. Most companies will be deployers rather than frontier developers, but the direction of travel is worth preparing for now.</em></p><section class="block">
 <h2>What is reported</h2>
 <p>Reports on 28 October 2026 say India is considering a new AI law that could create a separate safety framework for the most powerful AI models, requiring developers to show adequate safeguards before public release<sup class="cite"><a href="#ref-2">2</a></sup>. Options reportedly under discussion include pre-release evaluation, testing in controlled environments and sandbox requirements, with a consultation paper expected soon<sup class="cite"><a href="#ref-1">1</a></sup>. Earlier in October, the IT Minister was reported as saying a regulation blueprint would follow within a month<sup class="cite"><a href="#ref-4">4</a></sup>, and coverage has also described proposals for safeguards on high-risk AI systems<sup class="cite"><a href="#ref-3">3</a></sup>. None of this is final.</p>
 </section>
@@ -3669,89 +3746,4 @@ tracer_provider:
 
 <h2>What I'd do again, and differently</h2>
 <p>Again: name the ambiguous states in the data model and design for them explicitly. Differently: build reconciliation earlier. It is the system that tells you whether everything else is working, and it is the first place a new failure mode shows up.</p>
-<p>If your platform is outgrowing its original design, the <a href="https://asksumanta.com/fractional-cto/">fractional CTO</a> page describes how I work with teams on this, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/payments-platform-1m-transactions-a-day/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Finding coordinated fraud rings with entity resolution and a knowledge graph</title><link>https://asksumanta.com/case-studies/fintech-fraud-ring-knowledge-graph/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/fintech-fraud-ring-knowledge-graph/</guid><pubDate>Wed, 28 Oct 2026 01:16:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>knowledge-graph</category><category>ontology</category><category>streaming</category><category>data</category><category>security</category><description>How a fintech moved beyond row-by-row fraud rules: streaming entity resolution into a graph of customers, devices and payees, with graph features for risk scoring.</description><content:encoded><![CDATA[<p><em>Fraud rules scored one transaction or one account at a time, while organised fraud spread across many accounts sharing devices, addresses and payees. The goal was to resolve those shared entities, connect them in a graph, and give risk models and investigators the network view the rules were missing.</em></p><h2>The situation</h2>
-<p>A fintech offering accounts, cards and small loans had a mature rules engine and a transaction-level risk model. Both looked at one event or one account at a time. The losses that hurt most came from coordinated activity: clusters of new accounts opened from the same few devices, with addresses written slightly differently, paying out to a shared set of payees. Each account looked unremarkable alone. The pattern only appeared when someone noticed the connections by hand, usually after the money had moved.</p>
-<p>The question was how to make those connections visible automatically, fast enough to matter, without replacing the decisioning stack that already worked.</p>
-
-<h2>What had to be true</h2>
-<ul>
-<li><strong>Resolve before you connect</strong>: one entity per real person, device, address and payee.</li>
-<li><strong>Explainable links</strong>: every edge in a ring traceable to the evidence behind it.</li>
-<li><strong>Features, not a new decision engine</strong>: graph signals feed existing models and rules.</li>
-<li><strong>Fresh enough for onboarding and payouts</strong>, the two moments where stopping fraud pays.</li>
-<li><strong>Investigators in the loop</strong>, able to confirm, split or merge entities.</li>
-</ul>
-
-<h2>Architecture</h2>
-<figure class="dgm">
-<div class="dgm-stack">
-<div class="dgm-tier"><small>Events</small><div class="dgm-nodes"><span>Onboarding<em>identity, device</em></span><span>Logins<em>device, network</em></span><span>Payments<em>payer, payee</em></span><span>Case outcomes<em>confirmed fraud</em></span></div></div>
-<div class="dgm-tier"><small>Stream</small><div class="dgm-nodes"><span>Kafka topics<em>keyed by entity</em></span><span>Normalisation<em>addresses, names, devices</em></span></div></div>
-<div class="dgm-tier"><small>Resolve</small><div class="dgm-nodes"><span>Blocking<em>candidate pairs</em></span><span class="hl">Probabilistic matching<em>scored, explainable</em></span><span>Analyst overrides<em>merge, split</em></span></div></div>
-<div class="dgm-tier"><small>Graph</small><div class="dgm-nodes"><span class="hl">Entity graph<em>people, devices, addresses, payees</em></span><span>Connected components<em>ring candidates</em></span><span>Graph features<em>size, proximity to fraud</em></span></div></div>
-<div class="dgm-tier"><small>Use</small><div class="dgm-nodes"><span>Feature store<em>online lookups</em></span><span>Risk scoring<em>existing models</em></span><span>Investigator UI<em>ring view with evidence</em></span></div></div>
-</div>
-<figcaption>Layered architecture: events are resolved into entities, connected in a graph, and returned to existing scoring as features.</figcaption>
-</figure>
-<p>Confirmed fraud outcomes from closed cases were fed back as events too, so proximity to known fraud stayed current and the risk models had better labels over time.</p>
-<p>The graph model was kept deliberately small, a handful of entity and relationship types with clear definitions, following the approach in <a href="https://asksumanta.com/insights/ontology-vs-knowledge-graph-vs-semantic-layer/">ontology vs knowledge graph vs semantic layer</a>.</p>
-
-<h2>The data flow, end to end</h2>
-<figure class="dgm">
-<ol class="dgm-flow g3">
-<li><b>Stream</b><span>Onboarding, login and payment events published to Kafka, keyed by source identifiers</span></li>
-<li><b>Normalise</b><span>Standardise addresses, names, phone numbers and device fingerprints</span></li>
-<li class="hl"><b>Resolve</b><span>Block into candidate pairs, score matches, assign stable entity IDs with match evidence</span></li>
-<li><b>Connect</b><span>Upsert entities and relationships into the graph incrementally</span></li>
-<li class="hl"><b>Featurise</b><span>Compute component size, shared-attribute counts and distance to confirmed fraud</span></li>
-<li><b>Act</b><span>Features served to risk scoring; high-risk rings opened as investigator cases</span></li>
-</ol>
-<figcaption>Entity resolution sits before the graph, so the graph only ever connects resolved entities.</figcaption>
-</figure>
-<p>Current entity state was held in compacted topics, where Kafka retains the latest value for each key, so downstream services could rebuild their view without replaying full history<sup class="cite"><a href="#ref-4">4</a></sup>. Streaming patterns are in <a href="https://asksumanta.com/insights/change-data-capture-event-streams/">change data capture and event streams</a>.</p>
-
-<h2>The hard part: entity resolution you can defend</h2>
-<p>Matching everything to everything is quadratic, so resolution started with blocking: cheap keys that limit comparisons to plausible candidates, a well-studied family of techniques<sup class="cite"><a href="#ref-1">1</a></sup>. Matching then used a probabilistic, Fellegi-Sunter style model of the kind implemented in Splink, which scores each comparison field and can be trained without labelled pairs<sup class="cite"><a href="#ref-2">2</a></sup>. What made it defensible:</p>
-<ul>
-<li>Every merge stored the field-level evidence and score, so an investigator could see why two records became one entity.</li>
-<li>Thresholds were set separately for automatic merges and for "possible match" links that investigators saw but models treated with caution.</li>
-<li>Shared infrastructure entities (a popular office address, a carrier-grade NAT IP) were flagged so they did not collapse unrelated customers into giant false rings.</li>
-<li>Analyst merges and splits were written back as overrides that survived reprocessing.</li>
-</ul>
-<p>Ring candidates came from connected components over the resolved graph, which groups nodes reachable from one another regardless of edge direction<sup class="cite"><a href="#ref-3">3</a></sup>. More detail in <a href="https://asksumanta.com/insights/entity-resolution-knowledge-graphs/">entity resolution for knowledge graphs</a>.</p>
-<div class="callout"><p>In fraud work a false merge is not a modelling error, it is an accusation. Explainable matches and reversible overrides are what make a graph usable by investigators.</p></div>
-
-<h2>How it ran</h2>
-<figure class="dgm">
-<div class="dgm-lanes">
-<div class="dgm-lane"><small>Platform</small><ol><li>Resolves entities</li><li>Updates graph</li><li class="hl">Serves ring features</li></ol></div>
-<div class="dgm-lane"><small>Risk scoring</small><ol><li>Reads features</li><li>Scores event</li><li>Opens case on high risk</li></ol></div>
-<div class="dgm-lane"><small>Investigator</small><ol><li>Reviews ring and evidence</li><li class="hl">Confirms, splits or merges</li><li>Records outcome</li></ol></div>
-</div>
-<figcaption>Investigator outcomes flow back as labels and overrides.</figcaption>
-</figure>
-<figure class="dgm">
-<div class="dgm-phases">
-<div><small>Phase 1</small><b>Model</b><ul><li>Entity and relationship types</li><li>Known fraud cases mapped</li><li>Data sources inventoried</li></ul></div>
-<div><small>Phase 2</small><b>Batch proof</b><ul><li>Historical resolution</li><li>Rings found in past cases</li><li>Investigator feedback</li></ul></div>
-<div><small>Phase 3</small><b>Streaming</b><ul><li>Incremental resolution</li><li>Online features</li><li>Model integration</li></ul></div>
-<div><small>Phase 4</small><b>Operate</b><ul><li>Investigator UI</li><li>Override workflow</li><li>Runbooks and hand-off</li></ul></div>
-</div>
-<figcaption>A batch proof on historical cases before any real-time work.</figcaption>
-</figure>
-
-<h2>Key decisions and trade-offs</h2>
-<table class="tbl">
-<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
-<tbody>
-<tr><td>Probabilistic, explainable matching</td><td>Exact keys only</td><td>Catches variant spellings while keeping evidence for every merge</td></tr>
-<tr><td>Graph features into existing models</td><td>Separate graph-based decision engine</td><td>Adds signal without replacing a working decision stack</td></tr>
-<tr><td>Small, defined graph model</td><td>Load every attribute as a node</td><td>Fewer false connections and simpler queries</td></tr>
-<tr><td>Batch proof before streaming</td><td>Build real-time first</td><td>Validates value on known cases before paying for latency</td></tr>
-<tr><td>Durable analyst overrides</td><td>Recompute from scratch each run</td><td>Human corrections are not lost on reprocessing</td></tr>
-</tbody>
-</table>
-
-<h2>What I'd do again, and differently</h2>
-<p>Again: start with historical confirmed cases and show investigators the rings the graph would have surfaced. Differently: build the shared-infrastructure entity list on day one. It is the main source of false rings, and it is easier to design for than to clean up.</p>
-<p>If you are considering a knowledge graph for risk or investigations, the <a href="https://asksumanta.com/ontology-knowledge-graph/">ontology and knowledge graph</a> page describes how I run these engagements, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/fintech-fraud-ring-knowledge-graph/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
+<p>If your platform is outgrowing its original design, the <a href="https://asksumanta.com/fractional-cto/">fractional CTO</a> page describes how I work with teams on this, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/payments-platform-1m-transactions-a-day/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
