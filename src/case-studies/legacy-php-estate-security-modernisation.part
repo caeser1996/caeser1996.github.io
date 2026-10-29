@@ -1,0 +1,81 @@
+<!--{"title": "Case study: securing and modernising a legacy PHP estate", "description": "How a US insurer can find every PHP runtime, patch exploited flaws fast, add tracing and retire legacy apps safely, using a strangler pattern instead of a rewrite.", "short": "Legacy PHP estate security and modernisation", "h1": "From emergency patch to modern platform: securing a legacy PHP estate without a big-bang rewrite", "kicker": "Case study · Application security", "lede": "A US specialty insurer ran its agent portal, quoting tools and dozens of marketing sites on PHP, some of it years out of support. When an actively exploited PHP flaw landed, nobody could say quickly where PHP was running. The goal was to close that exposure in days, then turn a one-off scramble into a platform that stays patched.", "date": "2026-10-29", "datetime": "2026-10-29T05:20:00+04:00", "readtime": "9 min read", "sector": "Insurance · United States", "role": "Fractional CTO and principal engineer", "engagement": "Incident response, architecture and delivery leadership", "scope": "Runtime inventory, emergency patching, observability, golden images, phased modernisation", "stack": ["PHP 8.x (supported releases)", "Apache HTTP Server", "Container golden images", "Web application firewall", "OpenTelemetry", "Kubernetes", "Terraform", "Software bill of materials"], "outcomes": ["A complete, automatically refreshed inventory of PHP runtimes and owners", "Exploited versions patched or isolated within the federal remediation window", "Request tracing on legacy apps before any code was changed", "A golden image and pipeline that keep every PHP app on a supported release", "Legacy quoting functions moved behind a facade and retired one route at a time"], "tags": ["security", "platform", "architecture"], "keywords": ["PHP2Shell", "CVE-2026-109618", "legacy PHP modernisation", "CISA KEV remediation", "strangler fig pattern", "OpenTelemetry Apache", "insurance technology security", "fractional CTO United States", "application security programme", "golden container images"], "faq": [["How do you find every PHP runtime in a large estate?", "Combine sources: cloud and hypervisor inventories, container image scans, web server banners from external and internal scans, package manager data on hosts, and DNS records for forgotten sites. Reconcile them into one list with an owner per runtime, and refresh it automatically."], ["Is a web application firewall enough for an exploited PHP flaw?", "No. A WAF rule can buy time while you patch, but it is a compensating control. The fix is upgrading to a patched release, or isolating anything that cannot be upgraded, as CISA advises for PHP 8.1 and older."], ["Why not rewrite the legacy PHP applications?", "Big-bang rewrites of business-critical systems are slow and risky. The strangler fig approach puts a facade in front of the old system and replaces it route by route, so each step is small, testable and reversible."]], "related": ["/fractional-cto-united-states/", "/fractional-cto/", "/technical-due-diligence/"], "citations": [{"title": "CISA warns of PHP bug exploitation attempts, gives federal agencies days to patch", "url": "https://therecord.media/php-vulnerabilities-cisa-kev", "publisher": "The Record", "date": "Oct 2026"}, {"title": "CISA confirms PHP2Shell under attack as researchers clock successful exploits", "url": "https://www.theregister.com/cyber-crime/2026/10/27/cisa-confirms-php2shell-under-attack-as-researchers-clock-successful-exploits/5305681", "publisher": "The Register", "date": "27 Oct 2026"}, {"title": "Known Exploited Vulnerabilities Catalog", "url": "https://www.cisa.gov/known-exploited-vulnerabilities-catalog", "publisher": "CISA"}, {"title": "Supported Versions", "url": "https://www.php.net/supported-versions.php", "publisher": "PHP"}, {"title": "Learn how to instrument Apache Http Server with OpenTelemetry", "url": "https://opentelemetry.io/blog/2022/instrument-apache-httpd-server/", "publisher": "OpenTelemetry blog (Debajit Das)", "date": "27 May 2022"}, {"title": "StranglerFigApplication", "url": "https://martinfowler.com/bliki/StranglerFigApplication.html", "publisher": "Martin Fowler"}]}-->
+<h2>The situation</h2>
+<p>A specialty insurer in the United States had grown its digital estate over fifteen years. The agent portal and quoting tools ran on PHP, alongside dozens of marketing and campaign sites built by agencies, a document-generation service, and vendor appliances that embedded PHP without anyone realising. Some runtimes were current; others were several releases out of support.</p>
+<p><strong>Why now.</strong> On 26 October 2026, CISA added two PHP remote code execution flaws, known as PHP2Shell, to its Known Exploited Vulnerabilities catalog and gave US federal agencies days to remediate<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>. Researchers reported successful exploitation in the wild<sup class="cite"><a href="#ref-2">2</a></sup>. For a regulated insurer, the first question from the board was simple: are we exposed? The honest answer was "we don't know yet", and that was the real problem to solve.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>Exposure closed within days</strong>: every affected runtime patched to a fixed release or isolated.</li>
+<li><strong>One trustworthy inventory</strong> of PHP runtimes, versions and owners, refreshed automatically.</li>
+<li><strong>No outage for agents</strong> during quoting hours.</li>
+<li><strong>Visibility before change</strong>: know what each legacy app actually does in production before touching it.</li>
+<li><strong>A durable fix</strong>, so the next advisory is routine work, not a crisis.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Edge</small><div class="dgm-nodes"><span>CDN and WAF<em>virtual patches while upgrading</em></span><span class="hl">Routing facade<em>old and new behind one front door</em></span></div></div>
+<div class="dgm-tier"><small>Apps</small><div class="dgm-nodes"><span>Agent portal<em>PHP, patched</em></span><span>Quoting<em>migrating route by route</em></span><span>Marketing sites<em>moved to static</em></span></div></div>
+<div class="dgm-tier"><small>Platform</small><div class="dgm-nodes"><span class="hl">Golden PHP images<em>supported releases only</em></span><span>Kubernetes<em>rolling, reversible deploys</em></span><span>Terraform<em>reproducible environments</em></span></div></div>
+<div class="dgm-tier"><small>Visibility</small><div class="dgm-nodes"><span class="hl">Runtime inventory<em>versions, owners, exposure</em></span><span>OpenTelemetry<em>traces from Apache and PHP</em></span><span>SBOM<em>per image</em></span></div></div>
+<div class="dgm-tier"><small>Governance</small><div class="dgm-nodes"><span>Patch SLAs<em>by severity and exploitation</em></span><span>Exceptions register<em>owner and expiry</em></span></div></div>
+</div>
+<figcaption>Inventory and images make patching routine; the facade makes modernisation gradual.</figcaption>
+</figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Discover</b><span>Scans, cloud APIs, image registries and DNS merged into one runtime list</span></li>
+<li><b>Triage</b><span>Each runtime scored by version, internet exposure and business criticality</span></li>
+<li class="hl"><b>Contain</b><span>WAF rules and isolation for anything that cannot be patched today</span></li>
+<li class="hl"><b>Patch</b><span>Rebuild on a fixed release from the golden image and roll out</span></li>
+<li><b>Verify</b><span>Rescan, check logs for exploitation since fixes shipped, close the item</span></li>
+<li><b>Modernise</b><span>Trace the legacy app, then move routes behind the facade one by one</span></li>
+</ol>
+<figcaption>The same loop handles the next advisory; only the first run was an emergency.</figcaption>
+</figure>
+<p>The patched releases (8.5.12, 8.4.27, 8.3.36 and 8.2.35) were available from 21 October<sup class="cite"><a href="#ref-2">2</a></sup>. Anything on PHP 8.1 or older could not simply be patched, because those branches no longer receive security fixes<sup class="cite"><a href="#ref-4">4</a></sup>; CISA's advice for such systems was to take them offline until they could be upgraded<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+
+<h2>The hard part: changing systems nobody fully understood</h2>
+<p>The quoting tool had no tests and few people who knew it well. Before upgrading or migrating anything, the team added request tracing at the web server. The OpenTelemetry module for Apache HTTP Server records each incoming request as a trace, with spans for the modules involved, so you can see what the server is doing without changing application code<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/legacy-php-estate-security-modernisation/trace-hierarchy.webp" alt="Zipkin trace view showing a request to an Apache HTTP Server with child spans for mod_proxy, mod_proxy_balancer and mod_dav handlers and their durations" width="1200" height="656" loading="lazy"></div><figcaption>Tracing at the web server shows which modules and routes each request touches, before any code changes. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2022/instrument-apache-httpd-server/" target="_blank" rel="noopener">OpenTelemetry blog, Debajit Das</a> · CC BY 4.0</span></figcaption></figure>
+<p>A few weeks of traces showed which routes agents actually used, which were dead, and which called downstream systems. That turned an unknown monolith into a ranked list of routes to move.</p>
+<div class="callout"><p>The first deliverable of any legacy modernisation is a map of what the system really does in production. Traces give you that map for free.</p></div>
+<p>With that map, quoting functions moved behind a routing facade one route at a time, the strangler fig approach<sup class="cite"><a href="#ref-6">6</a></sup>: new services took over a route, traffic shifted gradually, and the old code path was removed once unused. More on the observability side in <a href="/insights/opentelemetry-collector-deployment-patterns/">OpenTelemetry Collector deployment patterns</a>.</p>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Security</small><ol><li>Advisory triage</li><li class="hl">WAF virtual patches</li><li>Exploitation log review</li></ol></div>
+<div class="dgm-lane"><small>Platform</small><ol><li>Runtime inventory</li><li class="hl">Golden images and rollout</li><li>Patch SLAs in the pipeline</li></ol></div>
+<div class="dgm-lane"><small>Product teams</small><ol><li>Confirm owners</li><li>Tracing on legacy apps</li><li class="hl">Route-by-route migration</li></ol></div>
+</div>
+<figcaption>Security bought time, platform made patching repeatable, product teams retired the legacy code.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Days 1 to 3</small><b>Contain</b><ul><li>Inventory sprint</li><li>WAF rules</li><li>Isolate unsupported runtimes</li></ul></div>
+<div><small>Week 1</small><b>Patch</b><ul><li>Golden images</li><li>Rolling upgrades</li><li>Exploitation review</li></ul></div>
+<div><small>Weeks 2 to 6</small><b>See</b><ul><li>Tracing on legacy apps</li><li>Automated inventory</li><li>Patch SLAs</li></ul></div>
+<div><small>Months 2 to 9</small><b>Modernise</b><ul><li>Routing facade</li><li>Route-by-route migration</li><li>Static marketing sites</li></ul></div>
+</div>
+<figcaption>The emergency took days; the platform that prevents the next one took months.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Isolate unsupported runtimes immediately</td><td>Leave them up behind the WAF</td><td>No security fixes are coming for those branches; a WAF is a stopgap</td></tr>
+<tr><td>Golden images for all PHP apps</td><td>Patch each server by hand</td><td>One rebuild fixes every app; drift disappears</td></tr>
+<tr><td>Trace before changing code</td><td>Read the code and guess</td><td>Production behaviour beats documentation that no longer exists</td></tr>
+<tr><td>Strangler facade</td><td>Big-bang rewrite</td><td>Small, reversible steps with no quoting outage</td></tr>
+<tr><td>Static hosting for marketing sites</td><td>Keep a PHP runtime per site</td><td>Removes dozens of attack surfaces entirely</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: inventory first, then golden images, then tracing before touching code. Differently: put patch SLAs and the exceptions register in place before an emergency, not after. The scramble was mostly the cost of not knowing what was running. For the incident-review side, see <a href="/insights/ai-incident-postmortems/">running useful postmortems</a>, and for the week's context, <a href="/insights/tech-news-2026-10-29/">tech news for 29 October</a>.</p>
+<p>If your estate has systems nobody can fully map, my <a href="/fractional-cto-united-states/">work with US companies</a> and <a href="/technical-due-diligence/">technical due diligence</a> pages explain how I approach it, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
