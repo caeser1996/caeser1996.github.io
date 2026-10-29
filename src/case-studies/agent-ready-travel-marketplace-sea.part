@@ -1,0 +1,80 @@
+<!--{"title": "Case study: making a travel marketplace ready for AI agents", "description": "How a Southeast Asian travel marketplace can serve AI agents as well as people: machine-readable inventory, safe booking APIs, approvals and separate routing.", "short": "Agent-ready travel marketplace", "h1": "When the customer is an agent: making a Southeast Asian travel marketplace ready for AI assistants", "kicker": "Case study · Agentic commerce", "lede": "A regional travel marketplace saw consumer AI agents arrive in its home market, able to compare, basket and book on a person's behalf. Its site was built for humans and scrapers. The goal was to give agents a fast, safe and honest way in, without breaking the experience for everyone else.", "date": "2026-10-29", "datetime": "2026-10-29T10:25:00+04:00", "readtime": "9 min read", "sector": "Travel · Singapore & Southeast Asia", "role": "Fractional CTO and AI architect", "engagement": "Strategy, architecture and delivery leadership", "scope": "Agent-facing APIs, structured inventory, booking safety, traffic routing, data protection", "stack": ["Structured product data", "Agent booking API", "MCP server", "Kubernetes Gateway API", "Idempotent booking service", "Consent and approval flow", "Rate limiting", "OpenTelemetry"], "outcomes": ["Inventory, prices and policies readable by agents without scraping", "Bookings that require an explicit human approval step and cannot be duplicated", "Agent traffic routed, limited and measured separately from human traffic", "A clear basis for personal data use under the PDPA", "Partners able to integrate through a documented interface"], "tags": ["ai", "agents", "architecture"], "keywords": ["agentic commerce", "AI agents booking", "agent-ready APIs", "Meta Muse Singapore", "MCP server travel", "Kubernetes Gateway API", "idempotent booking", "PDPA AI", "fractional CTO Singapore", "Southeast Asia travel technology"], "faq": [["What does agent-ready mean for an online marketplace?", "Agents can find, compare and book through documented, machine-readable interfaces instead of scraping pages, with clear prices and policies, safe booking steps that need human approval, and their own rate limits and monitoring."], ["Should we block AI agents or serve them?", "Blocking rarely works and loses customers who choose to shop through an assistant. Serving agents through a proper interface gives you control: authentication, limits, accurate data and a human approval step for purchases."], ["How do you stop an agent from booking twice?", "Make every booking request idempotent with a client-supplied key, hold inventory for a short approval window, and confirm only after an explicit approval from the person the agent is acting for."]], "related": ["/fractional-cto-singapore/", "/ai-architect/", "/fractional-cto/"], "citations": [{"title": "Muse is now available in Singapore", "url": "https://about.fb.com/news/2026/10/muse-is-now-available-in-singapore-the-worlds-first-personal-ai-agent-built-for-everyone/", "publisher": "Meta", "date": "Oct 2026"}, {"title": "Meta's Muse AI agent arrives in Singapore with Grab, Shopee and more", "url": "https://fintechnews.sg/139860/ai/meta-muse-ai-agent-singapore/", "publisher": "Fintech Singapore", "date": "Oct 2026"}, {"title": "Advisory Guidelines on use of Personal Data in AI Recommendation and Decision Systems", "url": "https://pdpc.gov.sg/guidelines-and-consultation/2024/02/advisory-guidelines-on-use-of-personal-data-in-ai-recommendation-and-decision-systems", "publisher": "Personal Data Protection Commission", "date": "Mar 2024"}, {"title": "Evolving Kubernetes networking with the Gateway API", "url": "https://kubernetes.io/blog/2021/04/22/evolving-kubernetes-networking-with-the-gateway-api/", "publisher": "Kubernetes blog", "date": "22 Apr 2021"}, {"title": "Model Context Protocol specification", "url": "https://modelcontextprotocol.io/specification/", "publisher": "Model Context Protocol"}]}-->
+<h2>The situation</h2>
+<p>A travel marketplace serving Singapore and its neighbours sold hotels, flights and activities through a website and app. Its traffic already included price scrapers and comparison bots, handled with blocking and rate limits. Its booking flow assumed a person clicking through screens.</p>
+<p><strong>Why now.</strong> In late October 2026, Meta made its personal AI agent, Muse, available in Singapore, with partners including Shopee, Grab, Singapore Airlines, Agoda and Trip.com<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. Coverage describes the agent building a basket and waiting for the person's approval before ordering, and asking for approval before sensitive steps such as purchases<sup class="cite"><a href="#ref-2">2</a></sup>. For a travel business, that means some customers will arrive through an assistant rather than the app, and the marketplace either offers agents a good way in or watches them book elsewhere. See the <a href="/insights/tech-news-2026-10-29-2/">tech news update for 29 October</a>.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>Agents read the truth</strong>: inventory, total prices, fees and cancellation rules available as structured data, not scraped from pages.</li>
+<li><strong>No booking without a person's approval</strong>, and no duplicate bookings from retries.</li>
+<li><strong>Agent traffic isolated</strong>, so a busy agent platform cannot slow down human customers.</li>
+<li><strong>Clear data protection basis</strong> for using personal data in recommendations under Singapore's PDPA.</li>
+<li><strong>One interface for many agents</strong>, not a custom integration per assistant.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Callers</small><div class="dgm-nodes"><span>People<em>web and app</em></span><span>Consumer agents<em>partner assistants</em></span><span>Business partners<em>resellers and OTAs</em></span></div></div>
+<div class="dgm-tier"><small>Edge</small><div class="dgm-nodes"><span class="hl">Gateway routing<em>agents to their own backend</em></span><span>Authentication<em>per agent platform</em></span><span>Rate limits<em>per caller</em></span></div></div>
+<div class="dgm-tier"><small>Agent interface</small><div class="dgm-nodes"><span class="hl">Search and quote API<em>structured, complete prices</em></span><span>MCP server<em>search, hold, book tools</em></span><span>Policy pages as data<em>fees, cancellation</em></span></div></div>
+<div class="dgm-tier"><small>Booking</small><div class="dgm-nodes"><span class="hl">Hold and approve<em>short inventory hold</em></span><span>Idempotent booking<em>keys per request</em></span><span>Payments<em>person-confirmed</em></span></div></div>
+<div class="dgm-tier"><small>Assurance</small><div class="dgm-nodes"><span>Telemetry by caller type<em>conversion, errors, cost</em></span><span>Audit trail<em>who approved what</em></span><span>Consent records<em>PDPA basis per use</em></span></div></div>
+</div>
+<figcaption>Agents get their own front door, their own limits and a booking path that cannot complete without a person.</figcaption>
+</figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Ask</b><span>A person asks their assistant for a hotel and flight within a budget</span></li>
+<li><b>Search</b><span>The agent queries the structured search API or MCP tools</span></li>
+<li><b>Quote</b><span>Full price, fees and cancellation terms returned as data</span></li>
+<li class="hl"><b>Hold</b><span>Inventory held briefly under an idempotency key</span></li>
+<li class="hl"><b>Approve</b><span>The person approves in their assistant; the approval is recorded</span></li>
+<li><b>Book</b><span>Booking and payment confirmed once; retries return the same result</span></li>
+</ol>
+<figcaption>The hold-and-approve step turns an agent's plan into a booking only with a person's consent.</figcaption>
+</figure>
+<p>The agent-facing tools followed the Model Context Protocol so different assistants could use the same interface<sup class="cite"><a href="#ref-5">5</a></sup>. Security for those tools followed the practices in <a href="/insights/securing-mcp-servers-checklist/">securing MCP servers</a>, and the idempotent booking design reused patterns from <a href="/insights/idempotent-payments-order-pipelines/">idempotent payment pipelines</a>.</p>
+
+<h2>The hard part: serving agents without hurting people</h2>
+<p>Agent platforms can generate bursts of searches as they compare options for thousands of users at once. The answer was to route agent traffic to its own backends with its own limits and capacity, so a spike from one assistant never slowed the app. The Kubernetes Gateway API made this declarative: routes can match on headers, such as an authenticated agent identifier, and split or direct traffic to different services<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/agent-ready-travel-marketplace-sea/httproute.webp" alt="Diagram of a load balancer sending requests through an HTTPRoute: normal traffic split 90 percent to service v1 and 10 percent to v2, and requests with a canary header sent entirely to v2" width="1200" height="319" loading="lazy"></div><figcaption>Header-based routing with the Gateway API: the same mechanism sends identified agent traffic to its own backend and lets new agent APIs roll out gradually. <span class="credit">Source: <a href="https://kubernetes.io/blog/2021/04/22/evolving-kubernetes-networking-with-the-gateway-api/" target="_blank" rel="noopener">Kubernetes blog, Gateway API authors</a> · CC BY 4.0</span></figcaption></figure>
+<div class="callout"><p>Treat agents as a customer channel, not as bots to block. Give them a front door, rules and limits, and they become measurable revenue instead of unmanaged load.</p></div>
+<p>On personal data, the PDPC's advisory guidelines explain how consent and notification obligations, and their exceptions, apply when personal data is used in AI recommendation systems<sup class="cite"><a href="#ref-3">3</a></sup>. Recommendations to agents used only the data needed for the request, and anything personalised was tied to a recorded basis. More on the rules in <a href="/fractional-cto-singapore/">fractional CTO in Singapore</a>.</p>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Product and commercial</small><ol><li>Which partners and agents</li><li class="hl">Pricing and fee transparency</li><li>Partner terms</li></ol></div>
+<div class="dgm-lane"><small>Engineering</small><ol><li>Structured search API</li><li class="hl">Hold, approve and idempotent booking</li><li>Gateway routing and limits</li></ol></div>
+<div class="dgm-lane"><small>Risk and data</small><ol><li>PDPA basis per use</li><li>Fraud signals for agent traffic</li><li>Audit trail of approvals</li></ol></div>
+</div>
+<figcaption>Commercial transparency mattered as much as engineering: agents compare total prices ruthlessly.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Readable</b><ul><li>Structured inventory</li><li>Prices and policies as data</li><li>Agent traffic measured</li></ul></div>
+<div><small>Phase 2</small><b>Bookable</b><ul><li>Hold and approve</li><li>Idempotent booking</li><li>Pilot with one partner</li></ul></div>
+<div><small>Phase 3</small><b>Isolated</b><ul><li>Gateway routing</li><li>Per-agent limits</li><li>Separate capacity</li></ul></div>
+<div><small>Phase 4</small><b>Open</b><ul><li>MCP tools</li><li>Partner onboarding</li><li>Conversion by channel</li></ul></div>
+</div>
+<figcaption>Read first, book second, scale third.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Serve agents through an API</td><td>Block or tolerate scraping</td><td>Accurate data, control and a measurable channel</td></tr>
+<tr><td>Hold and approve before booking</td><td>Let agents book directly</td><td>A person's consent for every purchase, fewer disputes</td></tr>
+<tr><td>Idempotency keys on every booking call</td><td>Rely on agents not retrying</td><td>Agents retry; duplicates are expensive</td></tr>
+<tr><td>Separate routing and capacity for agents</td><td>One shared backend</td><td>Agent bursts cannot degrade the app</td></tr>
+<tr><td>Standard protocol for tools</td><td>Custom integration per assistant</td><td>One interface, many agents</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: make prices and policies machine-readable first; it improved the human site too. Differently: involve finance and customer service earlier. Approval, refund and dispute flows for agent bookings raised more questions than the APIs did. Related reading: <a href="/insights/structured-data-for-ai-search/">structured data for AI search</a> and <a href="/insights/mcp-registry-enterprise-subregistry/">MCP registries for enterprises</a>.</p>
+<p>If your customers are starting to arrive through AI assistants, my <a href="/ai-architect/">AI architecture work</a> and <a href="/fractional-cto-singapore/">work in Singapore and Southeast Asia</a> explain how I approach it, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
