@@ -1,6 +1,84 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link><description>Anonymised engagements with architecture and flow diagrams</description><language>en-gb</language><lastBuildDate>Thu, 29 Oct 2026 10:25:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/case-studies/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link></image><item><title>When the customer is an agent: making a Southeast Asian travel marketplace ready for AI assistants</title><link>https://asksumanta.com/case-studies/agent-ready-travel-marketplace-sea/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/agent-ready-travel-marketplace-sea/</guid><pubDate>Thu, 29 Oct 2026 10:25:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>ai</category><category>agents</category><category>architecture</category><description>How a Southeast Asian travel marketplace can serve AI agents as well as people: machine-readable inventory, safe booking APIs, approvals and separate routing.</description><content:encoded><![CDATA[<p><em>A regional travel marketplace saw consumer AI agents arrive in its home market, able to compare, basket and book on a person&#x27;s behalf. Its site was built for humans and scrapers. The goal was to give agents a fast, safe and honest way in, without breaking the experience for everyone else.</em></p><h2>The situation</h2>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link><description>Anonymised engagements with architecture and flow diagrams</description><language>en-gb</language><lastBuildDate>Thu, 29 Oct 2026 13:05:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/case-studies/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link></image><item><title>When the model is a material service provider: AI resilience for an Australian insurer under CPS 230</title><link>https://asksumanta.com/case-studies/ai-provider-resilience-cps-230-insurer/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/ai-provider-resilience-cps-230-insurer/</guid><pubDate>Thu, 29 Oct 2026 13:05:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>ai</category><category>architecture</category><category>governance</category><description>How an Australian insurer can treat AI model providers as material service providers under CPS 230: critical operations, tolerances, fallbacks and tested exit plans.</description><content:encoded><![CDATA[<p><em>An Australian general insurer had put AI into claims intake, customer service and fraud review, mostly through one hosted model provider. Nobody had asked what happens when that provider is slow, out of capacity or gone. Under APRA&#x27;s CPS 230 that is a board-level question, and the goal was a credible answer.</em></p><h2>The situation</h2>
+<p>A general insurer in Australia had moved quickly with AI. Claims intake used a hosted model to read documents and photos, the contact centre used it to draft responses, and the fraud team used it to summarise case files. Almost all of it ran through one external model provider, wired directly into each application.</p>
+<p>CPS 230, APRA's prudential standard on operational risk management, has applied to banks, insurers and superannuation entities since 1 July 2025, with existing service provider contracts brought in at renewal or by 1 July 2026<sup class="cite"><a href="#ref-1">1</a></sup>. It expects entities to identify critical operations, set tolerance levels for disruption, and manage material service providers<sup class="cite"><a href="#ref-2">2</a></sup>. The board asked a fair question: if the model provider has an outage, runs out of capacity or changes terms, what happens to claims?</p>
+<p><strong>Why now.</strong> Capacity is not a theoretical risk. Reporting on Microsoft's latest results notes that demand for its cloud still exceeds supply<sup class="cite"><a href="#ref-4">4</a></sup>, and AI capacity is the tightest part of that market. See the <a href="https://asksumanta.com/insights/tech-news-2026-10-29-2/">tech news update for 29 October</a>.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>AI dependencies visible</strong> in the same register as other material service providers.</li>
+<li><strong>Tolerance levels</strong> for each AI-assisted critical operation: how long, how degraded, before customers are harmed.</li>
+<li><strong>A tested alternative</strong> for every critical use, not a slide.</li>
+<li><strong>Privacy obligations met</strong> on every path, including fallbacks.</li>
+<li><strong>No rebuild of the applications</strong>: changes behind a common interface.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Operations</small><div class="dgm-nodes"><span class="hl">Claims intake<em>critical</em></span><span>Contact centre drafts<em>important</em></span><span>Fraud summaries<em>supporting</em></span></div></div>
+<div class="dgm-tier"><small>Gateway</small><div class="dgm-nodes"><span class="hl">Model gateway<em>one interface for all apps</em></span><span>Criticality tags<em>per request</em></span><span>Budget and limits<em>per operation</em></span></div></div>
+<div class="dgm-tier"><small>Providers</small><div class="dgm-nodes"><span>Primary provider<em>hosted</em></span><span>Second provider<em>hosted, different vendor</em></span><span class="hl">Private model<em>in-house, smaller</em></span></div></div>
+<div class="dgm-tier"><small>Degraded modes</small><div class="dgm-nodes"><span>Rules and templates<em>no model needed</em></span><span>Human queue<em>with capacity limits</em></span></div></div>
+<div class="dgm-tier"><small>Assurance</small><div class="dgm-nodes"><span class="hl">Telemetry<em>latency, errors, quality per path</em></span><span>Provider register<em>terms, exit, concentration</em></span><span>Scenario tests<em>scheduled</em></span></div></div>
+</div>
+<figcaption>One gateway turns provider choice into configuration, so resilience can be tested without touching the applications.</figcaption>
+</figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Request</b><span>An application calls the gateway with an operation and criticality tag</span></li>
+<li><b>Route</b><span>The gateway picks the primary provider within budget</span></li>
+<li class="hl"><b>Detect</b><span>Errors, latency or capacity limits breach thresholds</span></li>
+<li class="hl"><b>Fail over</b><span>Critical traffic moves to the second provider or private model</span></li>
+<li><b>Degrade</b><span>Lower-priority work queues or falls back to rules and people</span></li>
+<li><b>Record</b><span>Every switch is logged against the operation's tolerance level</span></li>
+</ol>
+<figcaption>Critical operations keep their capacity; everything else waits or degrades on purpose.</figcaption>
+</figure>
+
+<h2>The hard part: deciding what to drop when capacity is short</h2>
+<p>Not every AI use is equally important, and pretending otherwise means everything fails together. The team tagged each request with the criticality of the operation it served, so the gateway could protect claims intake and shed or delay lower-priority work. The same idea appears in the Kubernetes Gateway API inference extension, where scheduling considers whether a request is critical and whether there is capacity before choosing a model server, and can drop non-critical requests when there is not<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/ai-provider-resilience-cps-230-insurer/criticality-scheduling.webp" alt="Flowchart of an inference scheduling request: critical requests choose from pods with the right adapters or standard pods, non-critical requests go to pods with capacity or are dropped, then candidates are filtered by lowest queue and cache use" width="580" height="685" loading="lazy"></div><figcaption>Criticality-aware scheduling: critical requests always find a server; non-critical ones are dropped when capacity runs out. <span class="credit">Source: <a href="https://kubernetes.io/blog/2025/06/05/introducing-gateway-api-inference-extension/" target="_blank" rel="noopener">Kubernetes blog, Gateway API Inference Extension authors</a> · CC BY 4.0</span></figcaption></figure>
+<div class="callout"><p>Resilience for AI is mostly a prioritisation decision. Decide in advance which work gets the last available capacity.</p></div>
+<p>Every fallback path also had to meet privacy obligations. The OAIC's guidance on commercially available AI products expects due diligence on each product and ongoing review, not a one-off check<sup class="cite"><a href="#ref-3">3</a></sup>, so the second provider and the private model went through the same assessment as the primary. Routing patterns are covered in <a href="https://asksumanta.com/insights/llm-model-routing/">LLM model routing</a> and <a href="https://asksumanta.com/insights/kubernetes-inference-gateway/">Kubernetes inference gateways</a>.</p>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Risk and compliance</small><ol><li>Critical operations register</li><li class="hl">Tolerance levels</li><li>Board reporting</li></ol></div>
+<div class="dgm-lane"><small>Engineering</small><ol><li>Model gateway</li><li class="hl">Second provider and private model</li><li>Telemetry and switches</li></ol></div>
+<div class="dgm-lane"><small>Operations</small><ol><li>Degraded-mode playbooks</li><li>Human queue capacity</li><li class="hl">Scenario exercises</li></ol></div>
+</div>
+<figcaption>Risk set the tolerances, engineering built the paths, operations proved they worked.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Map</b><ul><li>AI uses and providers</li><li>Link to critical operations</li><li>Tolerance levels</li></ul></div>
+<div><small>Phase 2</small><b>Abstract</b><ul><li>Model gateway</li><li>Move apps behind it</li><li>Telemetry per path</li></ul></div>
+<div><small>Phase 3</small><b>Diversify</b><ul><li>Second provider</li><li>Private model</li><li>Degraded modes</li></ul></div>
+<div><small>Phase 4</small><b>Prove</b><ul><li>Failover drills</li><li>Exit rehearsal</li><li>Board reporting</li></ul></div>
+</div>
+<figcaption>Map, abstract, diversify, then prove it with real traffic.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>A single model gateway</td><td>Provider SDKs in each application</td><td>Failover and exit become configuration, not rewrites</td></tr>
+<tr><td>Second provider from a different vendor</td><td>Second region with the same vendor</td><td>Reduces concentration on one company's terms and capacity</td></tr>
+<tr><td>Small private model as a floor</td><td>Hosted providers only</td><td>A guaranteed baseline for the most critical step</td></tr>
+<tr><td>Criticality tags on every request</td><td>Treat all AI traffic the same</td><td>Protects claims when capacity is short</td></tr>
+<tr><td>Rehearse exit with live traffic</td><td>A written exit plan</td><td>Only tested plans count</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: put a gateway in front of every model call before adding a second provider; it made everything else cheap. Differently: build the evaluation set for each critical operation first. The slowest part of adding a provider was proving its answers were good enough, not wiring it in. See <a href="https://asksumanta.com/insights/llm-evaluation-sets-that-predict-production/">evaluation sets that predict production</a> and <a href="https://asksumanta.com/insights/ai-incident-postmortems/">AI incident postmortems</a>.</p>
+<p>If you run AI in a regulated Australian business, my <a href="https://asksumanta.com/fractional-cto-australia/">work with Australian companies</a> explains how I approach it, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/ai-provider-resilience-cps-230-insurer/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>When the customer is an agent: making a Southeast Asian travel marketplace ready for AI assistants</title><link>https://asksumanta.com/case-studies/agent-ready-travel-marketplace-sea/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/agent-ready-travel-marketplace-sea/</guid><pubDate>Thu, 29 Oct 2026 10:25:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>ai</category><category>agents</category><category>architecture</category><description>How a Southeast Asian travel marketplace can serve AI agents as well as people: machine-readable inventory, safe booking APIs, approvals and separate routing.</description><content:encoded><![CDATA[<p><em>A regional travel marketplace saw consumer AI agents arrive in its home market, able to compare, basket and book on a person&#x27;s behalf. Its site was built for humans and scrapers. The goal was to give agents a fast, safe and honest way in, without breaking the experience for everyone else.</em></p><h2>The situation</h2>
 <p>A travel marketplace serving Singapore and its neighbours sold hotels, flights and activities through a website and app. Its traffic already included price scrapers and comparison bots, handled with blocking and rate limits. Its booking flow assumed a person clicking through screens.</p>
 <p><strong>Why now.</strong> In late October 2026, Meta made its personal AI agent, Muse, available in Singapore, with partners including Shopee, Grab, Singapore Airlines, Agoda and Trip.com<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. Coverage describes the agent building a basket and waiting for the person's approval before ordering, and asking for approval before sensitive steps such as purchases<sup class="cite"><a href="#ref-2">2</a></sup>. For a travel business, that means some customers will arrive through an assistant rather than the app, and the marketplace either offers agents a good way in or watches them book elsewhere. See the <a href="https://asksumanta.com/insights/tech-news-2026-10-29-2/">tech news update for 29 October</a>.</p>
 
