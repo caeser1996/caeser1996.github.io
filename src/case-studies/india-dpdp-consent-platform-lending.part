@@ -1,0 +1,79 @@
+<!--{"title": "Case study: a DPDP-ready consent platform for an Indian lender", "description": "How an Indian digital lender can prepare for the DPDP Rules: purpose-level consent, withdrawal that reaches every partner, real erasure and evidence for audits.", "short": "DPDP-ready consent platform for lending", "h1": "Consent that actually propagates: preparing an Indian digital lender for the DPDP Rules", "kicker": "Case study · Data protection engineering", "lede": "An Indian digital lender collected consent in its app but could not say, for any one customer, which partners held their data, for what purpose, or whether a withdrawal had reached them. With the DPDP Rules phasing in, the goal was a consent and data-rights platform that turns legal obligations into events every system honours.", "date": "2026-10-29", "datetime": "2026-10-29T07:50:00+04:00", "readtime": "9 min read", "sector": "Consumer lending · India", "role": "Fractional CTO and data architect", "engagement": "Architecture, build and delivery leadership", "scope": "Consent ledger, purpose model, propagation to processors, retention and erasure, breach detection, audit evidence", "stack": ["Consent ledger", "Purpose and data catalogue", "Event streaming (Kafka)", "Policy enforcement at APIs", "Retention and erasure jobs", "OpenTelemetry", "Consent manager integration", "Audit store"], "outcomes": ["Consent recorded per purpose, with notice version and timestamp", "Withdrawals propagated to internal systems and partners as tracked events", "Retention rules that delete data on schedule, with proof", "A single view of who holds a customer's data and why", "Evidence ready for audits and data principal requests"], "tags": ["data", "security", "architecture"], "keywords": ["DPDP Act", "DPDP Rules 2025", "consent manager India", "digital lending data protection", "consent ledger", "data principal rights", "right to erasure India", "fractional CTO India", "data protection engineering", "Kafka consent events"], "faq": [["When do the DPDP Rules apply?", "The Rules were notified on 13 November 2025 and phase in over 18 months. Consent manager registration applies after one year, and most core obligations for data fiduciaries apply from around May 2027."], ["What does a consent ledger do?", "It records each consent as an immutable event: who consented, to which purpose, under which notice version, when, and through which channel, and records withdrawals the same way. Every system that uses personal data checks it before processing."], ["How do you prove a withdrawal reached every partner?", "Publish withdrawal as an event, require each consumer and partner integration to acknowledge it, and trace the event end to end so the audit trail shows delivery and the action taken."]], "related": ["/fractional-cto-india/", "/fractional-cto/", "/technical-due-diligence/"], "citations": [{"title": "India's Digital Personal Data Protection Act, 2023 brought into force", "url": "https://ca.hoganlovells.com/en/publications/indias-digital-personal-data-protection-act-2023-brought-into-force-", "publisher": "Hogan Lovells", "date": "Nov 2025"}, {"title": "Update: India's digital personal data protection framework comes into effect", "url": "https://www.azbpartners.com/bank/update-indias-digital-personal-data-protection-framework-comes-into-effect/", "publisher": "AZB & Partners", "date": "Nov 2025"}, {"title": "Govt notifies Digital Personal Data Protection Rules 2025; rollout stretched over 18 months", "url": "https://yourstory.com/2025/11/digital-personal-data-protection-dpdp-rules-2025-rollout-over-18-months", "publisher": "YourStory", "date": "Nov 2025"}, {"title": "Instrumenting Apache Kafka clients with OpenTelemetry", "url": "https://opentelemetry.io/blog/2022/instrument-kafka-clients/", "publisher": "OpenTelemetry blog (Paolo Patierno)", "date": "6 Sep 2022"}]}-->
+<h2>The situation</h2>
+<p>A digital lender in India served customers through a mobile app, with credit decisions supported by bureaus, co-lending partners, verification vendors, a collections agency and marketing platforms. Consent was a set of checkboxes at sign-up. Personal data flowed to partners through file drops and APIs built over years by different teams, and nobody could answer a simple question for a single customer: who holds this person's data, for which purpose, and what happens if they withdraw?</p>
+<p><strong>Why now.</strong> The Digital Personal Data Protection Rules were notified on 13 November 2025, bringing the DPDP Act, 2023 into force in stages over 18 months<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. Registration of consent managers applies after the first year, which falls in November 2026, and most core obligations for data fiduciaries apply from around May 2027<sup class="cite"><a href="#ref-3">3</a></sup>. For a lender whose business runs on personal and financial data, that is not much time to rebuild how consent works.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>Consent per purpose</strong>, not one blanket checkbox, with the notice version recorded.</li>
+<li><strong>Withdrawal as easy as giving consent</strong>, and actually honoured by every system and partner.</li>
+<li><strong>Retention that deletes</strong>: data removed when its purpose ends, with evidence.</li>
+<li><strong>Breach detection and reporting</strong> fast enough to meet notification duties.</li>
+<li><strong>Room for consent managers</strong>, so customers can manage consent through a registered intermediary.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Customers</small><div class="dgm-nodes"><span>Mobile app<em>notices and choices</em></span><span>Consent manager<em>registered intermediary</em></span><span>Rights requests<em>access, correction, erasure</em></span></div></div>
+<div class="dgm-tier"><small>Consent</small><div class="dgm-nodes"><span class="hl">Consent ledger<em>append-only, per purpose</em></span><span>Purpose catalogue<em>data, systems, retention</em></span></div></div>
+<div class="dgm-tier"><small>Enforcement</small><div class="dgm-nodes"><span class="hl">Policy checks at APIs<em>no consent, no processing</em></span><span>Event stream<em>consent and withdrawal events</em></span><span>Partner gateway<em>acknowledged delivery</em></span></div></div>
+<div class="dgm-tier"><small>Data</small><div class="dgm-nodes"><span>Lending core<em>loans, repayments</em></span><span>Analytics<em>purpose-tagged data</em></span><span class="hl">Retention jobs<em>delete and prove it</em></span></div></div>
+<div class="dgm-tier"><small>Assurance</small><div class="dgm-nodes"><span>Traces per event<em>publish to every consumer</em></span><span>Audit store<em>evidence on request</em></span><span>Breach detection<em>alerts and runbooks</em></span></div></div>
+</div>
+<figcaption>Consent becomes data: a ledger that every system checks and an event stream that every system obeys.</figcaption>
+</figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Notice</b><span>Customer sees a clear notice per purpose in the app or via a consent manager</span></li>
+<li class="hl"><b>Record</b><span>Consent written to the ledger with purpose, notice version and time</span></li>
+<li><b>Enforce</b><span>APIs and pipelines check the ledger before using the data</span></li>
+<li class="hl"><b>Withdraw</b><span>A withdrawal is published as an event to every internal consumer and partner</span></li>
+<li><b>Acknowledge</b><span>Each consumer confirms and records the action taken</span></li>
+<li><b>Retain or erase</b><span>Jobs delete data when purposes end and write proof to the audit store</span></li>
+</ol>
+<figcaption>Every step leaves evidence, so "did we honour this withdrawal?" has a factual answer.</figcaption>
+</figure>
+
+<h2>The hard part: proving a withdrawal reached everyone</h2>
+<p>Recording consent is easy. Proving that a withdrawal stopped processing everywhere is not, because data has already been copied to analytics, partners and vendors. The design treated each withdrawal as an event on the stream, with every consumer and partner integration required to acknowledge it. Tracing producers and consumers with OpenTelemetry links a published event to each receiving service in one trace<sup class="cite"><a href="#ref-4">4</a></sup>, which turns propagation into something you can query and show to an auditor.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/india-dpdp-consent-platform-lending/consent-event-trace.webp" alt="Trace view showing a Kafka producer span sending a message to a topic and a linked consumer span receiving it, with messaging attributes for each" width="1200" height="498" loading="lazy"></div><figcaption>A traced message from producer to consumer: the same technique shows each withdrawal reaching every system that holds the data. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2022/instrument-kafka-clients/" target="_blank" rel="noopener">OpenTelemetry blog, Paolo Patierno</a> · CC BY 4.0</span></figcaption></figure>
+<div class="callout"><p>A consent you cannot withdraw everywhere is not really consent. Design withdrawal first; recording consent is the easy half.</p></div>
+<p>Partners without event integrations received withdrawals through an authenticated API with mandatory acknowledgement and a retry queue. Unacknowledged withdrawals raised alerts to the partner owner, not just to engineering. Related reading: <a href="/insights/change-data-capture-event-streams/">change data capture and event streams</a> and <a href="/insights/data-contracts-playbook/">data contracts</a>.</p>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Legal and compliance</small><ol><li>Purpose and notice wording</li><li class="hl">Retention schedule</li><li>Partner contract updates</li></ol></div>
+<div class="dgm-lane"><small>Engineering</small><ol><li>Consent ledger and APIs</li><li class="hl">Withdrawal events and acknowledgements</li><li>Retention and erasure jobs</li></ol></div>
+<div class="dgm-lane"><small>Partners and vendors</small><ol><li>Data flow inventory</li><li>Event or API integration</li><li class="hl">Acknowledgement SLAs</li></ol></div>
+</div>
+<figcaption>Legal defined purposes and retention, engineering made them executable, partners committed to acknowledgement.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Map</b><ul><li>Data and partner inventory</li><li>Purpose catalogue</li><li>Gap assessment</li></ul></div>
+<div><small>Phase 2</small><b>Ledger</b><ul><li>Consent ledger</li><li>New notices in the app</li><li>Policy checks at APIs</li></ul></div>
+<div><small>Phase 3</small><b>Propagate</b><ul><li>Withdrawal events</li><li>Partner gateway</li><li>Tracing and alerts</li></ul></div>
+<div><small>Phase 4</small><b>Prove</b><ul><li>Retention and erasure</li><li>Consent manager integration</li><li>Audit evidence</li></ul></div>
+</div>
+<figcaption>Inventory before ledger, propagation before polish, evidence throughout.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Append-only consent ledger</td><td>Consent flags on the customer record</td><td>History, notice versions and audit evidence come built in</td></tr>
+<tr><td>Withdrawal as an event with acknowledgement</td><td>Nightly batch updates</td><td>Fast propagation and proof of delivery per system</td></tr>
+<tr><td>Purpose tags on data in analytics</td><td>One shared data lake with no purpose context</td><td>Lets retention and access rules work on analytical copies too</td></tr>
+<tr><td>Deletion with proof</td><td>Soft-delete flags</td><td>Erasure has to be real and demonstrable</td></tr>
+<tr><td>Design for consent managers now</td><td>Wait for the registry to mature</td><td>Interfaces are cheaper to add before integrations multiply</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: start with the data and partner inventory, and make withdrawal the first feature built. Differently: bring partners in earlier. The longest delays came from contract changes and vendors without any way to receive a withdrawal, not from the engineering. For broader context on rules across markets, see <a href="/regions/">where I work</a> and <a href="/insights/uae-pdpl-ai-architecture-2026/">how another data protection law shapes AI architecture</a>.</p>
+<p>If you are preparing an Indian platform for the DPDP Rules, my <a href="/fractional-cto-india/">work with Indian companies</a> explains how I approach it, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>

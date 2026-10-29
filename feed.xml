@@ -1,6 +1,83 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link><description>Fractional CTO and AI architect: insights, case studies and daily tech news.</description><language>en-gb</language><lastBuildDate>Thu, 29 Oct 2026 05:20:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link></image><item><title>From emergency patch to modern platform: securing a legacy PHP estate without a big-bang rewrite</title><link>https://asksumanta.com/case-studies/legacy-php-estate-security-modernisation/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/legacy-php-estate-security-modernisation/</guid><pubDate>Thu, 29 Oct 2026 05:20:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>security</category><category>platform</category><category>architecture</category><description>How a US insurer can find every PHP runtime, patch exploited flaws fast, add tracing and retire legacy apps safely, using a strangler pattern instead of a rewrite.</description><content:encoded><![CDATA[<p><em>A US specialty insurer ran its agent portal, quoting tools and dozens of marketing sites on PHP, some of it years out of support. When an actively exploited PHP flaw landed, nobody could say quickly where PHP was running. The goal was to close that exposure in days, then turn a one-off scramble into a platform that stays patched.</em></p><h2>The situation</h2>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link><description>Fractional CTO and AI architect: insights, case studies and daily tech news.</description><language>en-gb</language><lastBuildDate>Thu, 29 Oct 2026 07:50:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link></image><item><title>Consent that actually propagates: preparing an Indian digital lender for the DPDP Rules</title><link>https://asksumanta.com/case-studies/india-dpdp-consent-platform-lending/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/india-dpdp-consent-platform-lending/</guid><pubDate>Thu, 29 Oct 2026 07:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>data</category><category>security</category><category>architecture</category><description>How an Indian digital lender can prepare for the DPDP Rules: purpose-level consent, withdrawal that reaches every partner, real erasure and evidence for audits.</description><content:encoded><![CDATA[<p><em>An Indian digital lender collected consent in its app but could not say, for any one customer, which partners held their data, for what purpose, or whether a withdrawal had reached them. With the DPDP Rules phasing in, the goal was a consent and data-rights platform that turns legal obligations into events every system honours.</em></p><h2>The situation</h2>
+<p>A digital lender in India served customers through a mobile app, with credit decisions supported by bureaus, co-lending partners, verification vendors, a collections agency and marketing platforms. Consent was a set of checkboxes at sign-up. Personal data flowed to partners through file drops and APIs built over years by different teams, and nobody could answer a simple question for a single customer: who holds this person's data, for which purpose, and what happens if they withdraw?</p>
+<p><strong>Why now.</strong> The Digital Personal Data Protection Rules were notified on 13 November 2025, bringing the DPDP Act, 2023 into force in stages over 18 months<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. Registration of consent managers applies after the first year, which falls in November 2026, and most core obligations for data fiduciaries apply from around May 2027<sup class="cite"><a href="#ref-3">3</a></sup>. For a lender whose business runs on personal and financial data, that is not much time to rebuild how consent works.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>Consent per purpose</strong>, not one blanket checkbox, with the notice version recorded.</li>
+<li><strong>Withdrawal as easy as giving consent</strong>, and actually honoured by every system and partner.</li>
+<li><strong>Retention that deletes</strong>: data removed when its purpose ends, with evidence.</li>
+<li><strong>Breach detection and reporting</strong> fast enough to meet notification duties.</li>
+<li><strong>Room for consent managers</strong>, so customers can manage consent through a registered intermediary.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Customers</small><div class="dgm-nodes"><span>Mobile app<em>notices and choices</em></span><span>Consent manager<em>registered intermediary</em></span><span>Rights requests<em>access, correction, erasure</em></span></div></div>
+<div class="dgm-tier"><small>Consent</small><div class="dgm-nodes"><span class="hl">Consent ledger<em>append-only, per purpose</em></span><span>Purpose catalogue<em>data, systems, retention</em></span></div></div>
+<div class="dgm-tier"><small>Enforcement</small><div class="dgm-nodes"><span class="hl">Policy checks at APIs<em>no consent, no processing</em></span><span>Event stream<em>consent and withdrawal events</em></span><span>Partner gateway<em>acknowledged delivery</em></span></div></div>
+<div class="dgm-tier"><small>Data</small><div class="dgm-nodes"><span>Lending core<em>loans, repayments</em></span><span>Analytics<em>purpose-tagged data</em></span><span class="hl">Retention jobs<em>delete and prove it</em></span></div></div>
+<div class="dgm-tier"><small>Assurance</small><div class="dgm-nodes"><span>Traces per event<em>publish to every consumer</em></span><span>Audit store<em>evidence on request</em></span><span>Breach detection<em>alerts and runbooks</em></span></div></div>
+</div>
+<figcaption>Consent becomes data: a ledger that every system checks and an event stream that every system obeys.</figcaption>
+</figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Notice</b><span>Customer sees a clear notice per purpose in the app or via a consent manager</span></li>
+<li class="hl"><b>Record</b><span>Consent written to the ledger with purpose, notice version and time</span></li>
+<li><b>Enforce</b><span>APIs and pipelines check the ledger before using the data</span></li>
+<li class="hl"><b>Withdraw</b><span>A withdrawal is published as an event to every internal consumer and partner</span></li>
+<li><b>Acknowledge</b><span>Each consumer confirms and records the action taken</span></li>
+<li><b>Retain or erase</b><span>Jobs delete data when purposes end and write proof to the audit store</span></li>
+</ol>
+<figcaption>Every step leaves evidence, so "did we honour this withdrawal?" has a factual answer.</figcaption>
+</figure>
+
+<h2>The hard part: proving a withdrawal reached everyone</h2>
+<p>Recording consent is easy. Proving that a withdrawal stopped processing everywhere is not, because data has already been copied to analytics, partners and vendors. The design treated each withdrawal as an event on the stream, with every consumer and partner integration required to acknowledge it. Tracing producers and consumers with OpenTelemetry links a published event to each receiving service in one trace<sup class="cite"><a href="#ref-4">4</a></sup>, which turns propagation into something you can query and show to an auditor.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/india-dpdp-consent-platform-lending/consent-event-trace.webp" alt="Trace view showing a Kafka producer span sending a message to a topic and a linked consumer span receiving it, with messaging attributes for each" width="1200" height="498" loading="lazy"></div><figcaption>A traced message from producer to consumer: the same technique shows each withdrawal reaching every system that holds the data. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2022/instrument-kafka-clients/" target="_blank" rel="noopener">OpenTelemetry blog, Paolo Patierno</a> · CC BY 4.0</span></figcaption></figure>
+<div class="callout"><p>A consent you cannot withdraw everywhere is not really consent. Design withdrawal first; recording consent is the easy half.</p></div>
+<p>Partners without event integrations received withdrawals through an authenticated API with mandatory acknowledgement and a retry queue. Unacknowledged withdrawals raised alerts to the partner owner, not just to engineering. Related reading: <a href="https://asksumanta.com/insights/change-data-capture-event-streams/">change data capture and event streams</a> and <a href="https://asksumanta.com/insights/data-contracts-playbook/">data contracts</a>.</p>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Legal and compliance</small><ol><li>Purpose and notice wording</li><li class="hl">Retention schedule</li><li>Partner contract updates</li></ol></div>
+<div class="dgm-lane"><small>Engineering</small><ol><li>Consent ledger and APIs</li><li class="hl">Withdrawal events and acknowledgements</li><li>Retention and erasure jobs</li></ol></div>
+<div class="dgm-lane"><small>Partners and vendors</small><ol><li>Data flow inventory</li><li>Event or API integration</li><li class="hl">Acknowledgement SLAs</li></ol></div>
+</div>
+<figcaption>Legal defined purposes and retention, engineering made them executable, partners committed to acknowledgement.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Map</b><ul><li>Data and partner inventory</li><li>Purpose catalogue</li><li>Gap assessment</li></ul></div>
+<div><small>Phase 2</small><b>Ledger</b><ul><li>Consent ledger</li><li>New notices in the app</li><li>Policy checks at APIs</li></ul></div>
+<div><small>Phase 3</small><b>Propagate</b><ul><li>Withdrawal events</li><li>Partner gateway</li><li>Tracing and alerts</li></ul></div>
+<div><small>Phase 4</small><b>Prove</b><ul><li>Retention and erasure</li><li>Consent manager integration</li><li>Audit evidence</li></ul></div>
+</div>
+<figcaption>Inventory before ledger, propagation before polish, evidence throughout.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Append-only consent ledger</td><td>Consent flags on the customer record</td><td>History, notice versions and audit evidence come built in</td></tr>
+<tr><td>Withdrawal as an event with acknowledgement</td><td>Nightly batch updates</td><td>Fast propagation and proof of delivery per system</td></tr>
+<tr><td>Purpose tags on data in analytics</td><td>One shared data lake with no purpose context</td><td>Lets retention and access rules work on analytical copies too</td></tr>
+<tr><td>Deletion with proof</td><td>Soft-delete flags</td><td>Erasure has to be real and demonstrable</td></tr>
+<tr><td>Design for consent managers now</td><td>Wait for the registry to mature</td><td>Interfaces are cheaper to add before integrations multiply</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: start with the data and partner inventory, and make withdrawal the first feature built. Differently: bring partners in earlier. The longest delays came from contract changes and vendors without any way to receive a withdrawal, not from the engineering. For broader context on rules across markets, see <a href="https://asksumanta.com/regions/">where I work</a> and <a href="https://asksumanta.com/insights/uae-pdpl-ai-architecture-2026/">how another data protection law shapes AI architecture</a>.</p>
+<p>If you are preparing an Indian platform for the DPDP Rules, my <a href="https://asksumanta.com/fractional-cto-india/">work with Indian companies</a> explains how I approach it, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/india-dpdp-consent-platform-lending/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>From emergency patch to modern platform: securing a legacy PHP estate without a big-bang rewrite</title><link>https://asksumanta.com/case-studies/legacy-php-estate-security-modernisation/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/legacy-php-estate-security-modernisation/</guid><pubDate>Thu, 29 Oct 2026 05:20:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>security</category><category>platform</category><category>architecture</category><description>How a US insurer can find every PHP runtime, patch exploited flaws fast, add tracing and retire legacy apps safely, using a strangler pattern instead of a rewrite.</description><content:encoded><![CDATA[<p><em>A US specialty insurer ran its agent portal, quoting tools and dozens of marketing sites on PHP, some of it years out of support. When an actively exploited PHP flaw landed, nobody could say quickly where PHP was running. The goal was to close that exposure in days, then turn a one-off scramble into a platform that stays patched.</em></p><h2>The situation</h2>
 <p>A specialty insurer in the United States had grown its digital estate over fifteen years. The agent portal and quoting tools ran on PHP, alongside dozens of marketing and campaign sites built by agencies, a document-generation service, and vendor appliances that embedded PHP without anyone realising. Some runtimes were current; others were several releases out of support.</p>
 <p><strong>Why now.</strong> On 26 October 2026, CISA added two PHP remote code execution flaws, known as PHP2Shell, to its Known Exploited Vulnerabilities catalog and gave US federal agencies days to remediate<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>. Researchers reported successful exploitation in the wild<sup class="cite"><a href="#ref-2">2</a></sup>. For a regulated insurer, the first question from the board was simple: are we exposed? The honest answer was "we don't know yet", and that was the real problem to solve.</p>
 
@@ -3661,62 +3738,4 @@ tracer_provider:
 <section class="block">
 <h2>How I can help</h2>
 <p>I help companies in the UAE and the US build AI platforms with governance that maps cleanly across regimes. As a <a href="https://asksumanta.com/fractional-cto/">fractional CTO</a> I can own that work. Or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
-</section><p><a href="https://asksumanta.com/insights/uae-federal-authority-ai-data/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>SKOS or OWL? Choosing the right model for enterprise taxonomies and ontologies</title><link>https://asksumanta.com/insights/skos-vs-owl-enterprise-taxonomies/</link><guid isPermaLink="true">https://asksumanta.com/insights/skos-vs-owl-enterprise-taxonomies/</guid><pubDate>Mon, 26 Oct 2026 16:30:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>ontology</category><category>knowledge-graph</category><category>data</category><category>architecture</category><description>SKOS and OWL are both W3C standards for knowledge models, and they solve different problems. When to use each, how to combine them, and the most common enterprise mistake.</description><content:encoded><![CDATA[<p><em>Enterprise ontology programmes often stall on a modelling question disguised as a tooling one: should the product taxonomy, the risk register or the clinical code list be an OWL ontology or a SKOS vocabulary? The answer is usually both, for different jobs.</em></p><p>Every organisation already has knowledge models. They're in spreadsheets of product categories, SharePoint term stores, code lists in the data warehouse and the folder structure of the document system. When an ontology or knowledge graph programme starts, one of the first decisions is how to represent these formally. Two W3C standards dominate the conversation, and choosing the wrong one for a given job is a common reason programmes lose a year.</p>
-
-<section class="block">
-<h2>Two standards, two purposes</h2>
-<p><strong>SKOS</strong>, the Simple Knowledge Organization System, became a W3C Recommendation in 2009. It is a common data model for sharing and linking knowledge organisation systems, such as thesauri, taxonomies and classification schemes, on the web<sup class="cite"><a href="#ref-1">1</a></sup>. Its world is concepts, labels and loose relations between them.</p>
-<p><strong>OWL 2</strong>, the Web Ontology Language, defines classes, properties and logical axioms that reasoners can use to infer new facts and detect contradictions. Its profiles, finalised in their second edition in 2012, trade expressiveness for tractable reasoning<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
-<p>The SKOS designers were explicit that SKOS was not meant to compete with OWL but to complement it, offering a path to bring existing knowledge that doesn't map easily into an OWL ontology onto the semantic web<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
-</section>
-
-<section class="block">
-<h2>Side by side</h2>
-<table class="tbl">
-<thead><tr><th></th><th>SKOS</th><th>OWL 2</th></tr></thead>
-<tbody>
-<tr><td>Core unit</td><td>Concept with labels</td><td>Class, property, individual</td></tr>
-<tr><td>Hierarchy</td><td><code>skos:broader</code>: "is filed under", for navigation and retrieval</td><td><code>rdfs:subClassOf</code>: "every X is a Y", logical subsumption</td></tr>
-<tr><td>Labels</td><td>First-class: preferred, alternative and hidden labels, with at most one preferred label per language<sup class="cite"><a href="#ref-1">1</a></sup></td><td>Annotations, not part of the logic</td></tr>
-<tr><td>Reasoning</td><td>Light; little to infer</td><td>Rich, with profiles tuned for scale<sup class="cite"><a href="#ref-3">3</a></sup></td></tr>
-<tr><td>Cross-scheme links</td><td>Mapping properties such as exact, close and broader matches<sup class="cite"><a href="#ref-1">1</a></sup></td><td>Equivalence and subclass axioms with logical consequences</td></tr>
-<tr><td>Who maintains it</td><td>Taxonomists, subject experts, business owners</td><td>Ontologists and data architects</td></tr>
-<tr><td>Best for</td><td>Product categories, subject tags, code lists, synonyms for search</td><td>Domain models, constraints, integration semantics</td></tr>
-</tbody>
-</table>
-</section>
-
-<section class="block">
-<h2>The mistake that matters most</h2>
-<p>The most expensive error is treating a taxonomy hierarchy as a class hierarchy. In a product catalogue, "Garden furniture" sits under "Outdoor" and also under "Furniture". That is a filing decision, not a claim that every garden chair is, logically, an instance of "Outdoor".</p>
-<p>SKOS is careful here. <code>skos:broader</code> is used only for direct hierarchical links and is not declared transitive; <code>skos:broaderTransitive</code> is a separate superproperty for inferring indirect links<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. Converting the same hierarchy into <code>rdfs:subClassOf</code> makes every relation logically binding, and a reasoner will happily draw conclusions nobody intended.</p>
-<div class="callout"><p>If the business owner would say "it's filed under", use SKOS. If they would say "it is always a kind of", consider OWL. Most enterprise hierarchies are the first.</p></div>
-</section>
-
-<section class="block">
-<h2>Choosing OWL profiles when you do need logic</h2>
-<p>Where OWL is the right tool, its profiles help match reasoning to scale<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>:</p>
-<ul>
-<li><strong>OWL 2 EL</strong> suits ontologies with very large numbers of classes and properties, with polynomial-time reasoning for core tasks. Large biomedical terminologies are the classic fit.</li>
-<li><strong>OWL 2 QL</strong> targets large volumes of instance data queried through relational databases, which suits virtual knowledge graphs over existing warehouses.</li>
-<li><strong>OWL 2 RL</strong> supports rule-based reasoning that works directly on RDF triples, practical inside many triple stores.</li>
-</ul>
-<p>Choosing a profile early prevents a common failure: a model that is logically elegant and unusable at production volume.</p>
-</section>
-
-<section class="block">
-<h2>The combined pattern I use</h2>
-<ol>
-<li><strong>A small OWL core</strong> for the domain: customer, product, contract, patient, asset, and the relations between them. Keep it in a tractable profile.</li>
-<li><strong>SKOS vocabularies for classification</strong>: product categories, risk types, diagnosis groupings, document subjects. Instances in the core point to concepts through ordinary properties, such as "has category".</li>
-<li><strong>Mappings between vocabularies</strong> using SKOS mapping properties, so a local code list can align with an industry standard without pretending they are identical.</li>
-<li><strong>SHACL for data quality</strong>, as described in <a href="https://asksumanta.com/insights/shacl-validation-knowledge-graphs/">SHACL validation</a>, because closed-world checks belong outside the open-world logic of OWL.</li>
-<li><strong>Labels feed search and AI.</strong> SKOS alternative and hidden labels give retrieval and <a href="https://asksumanta.com/insights/graphrag-when-it-beats-vector-rag/">GraphRAG</a> the synonyms and misspellings users actually type.</li>
-</ol>
-<p>This also clarifies ownership. Business teams can maintain vocabularies in a taxonomy tool without touching the ontology, while architects govern the core. How these pieces relate to a semantic layer is covered in <a href="https://asksumanta.com/insights/ontology-vs-knowledge-graph-vs-semantic-layer/">ontology vs knowledge graph vs semantic layer</a>, and how clinical vocabularies are handled in practice in <a href="https://asksumanta.com/insights/clinical-terminologies-omop-vocabularies/">clinical terminologies in OMOP</a>.</p>
-</section>
-
-<section class="block">
-<h2>How I can help</h2>
-<p>I design ontology and knowledge graph programmes that start with the models an organisation already has, and choose the lightest formalism that does the job. See <a href="https://asksumanta.com/ontology-knowledge-graph/">ontology and knowledge graphs</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
-</section><p><a href="https://asksumanta.com/insights/skos-vs-owl-enterprise-taxonomies/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
+</section><p><a href="https://asksumanta.com/insights/uae-federal-authority-ai-data/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
