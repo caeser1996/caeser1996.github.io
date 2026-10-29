@@ -1,6 +1,83 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link><description>Anonymised engagements with architecture and flow diagrams</description><language>en-gb</language><lastBuildDate>Thu, 29 Oct 2026 13:05:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/case-studies/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link></image><item><title>When the model is a material service provider: AI resilience for an Australian insurer under CPS 230</title><link>https://asksumanta.com/case-studies/ai-provider-resilience-cps-230-insurer/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/ai-provider-resilience-cps-230-insurer/</guid><pubDate>Thu, 29 Oct 2026 13:05:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>ai</category><category>architecture</category><category>governance</category><description>How an Australian insurer can treat AI model providers as material service providers under CPS 230: critical operations, tolerances, fallbacks and tested exit plans.</description><content:encoded><![CDATA[<p><em>An Australian general insurer had put AI into claims intake, customer service and fraud review, mostly through one hosted model provider. Nobody had asked what happens when that provider is slow, out of capacity or gone. Under APRA&#x27;s CPS 230 that is a board-level question, and the goal was a credible answer.</em></p><h2>The situation</h2>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link><description>Anonymised engagements with architecture and flow diagrams</description><language>en-gb</language><lastBuildDate>Thu, 29 Oct 2026 14:40:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/case-studies/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link></image><item><title>Access by design: building an EU Data Act-ready data platform for a maker of connected equipment</title><link>https://asksumanta.com/case-studies/eu-data-act-connected-products-platform/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/eu-data-act-connected-products-platform/</guid><pubDate>Thu, 29 Oct 2026 14:40:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>data</category><category>architecture</category><category>governance</category><description>How a European equipment maker can meet the EU Data Act&#x27;s access-by-design rules: product data users can reach and share, consent, trade secrets and cloud portability.</description><content:encoded><![CDATA[<p><em>A European manufacturer of connected heating and ventilation equipment collected rich product data, but only its own service teams could use it. The EU Data Act turned that into an obligation: users must be able to access the data their products generate and share it with others. The goal was to build that into the product platform rather than bolt on a support process.</em></p><h2>The situation</h2>
+<p>A manufacturer of connected heat pumps and ventilation units sold across the European Union. Its devices streamed temperatures, energy use, fault codes and runtime data to the cloud, where service teams used it for diagnostics and the product team used it to improve designs. Homeowners, installers and energy advisers saw only a slice of it in an app, and there was no way for a customer to take their data to someone else.</p>
+<p><strong>Why now.</strong> The EU Data Act gives users rights over the data their connected products and related services generate, including access and sharing with third parties they choose<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. Its access-by-design obligation applies to connected products placed on the market after 12 September 2026, and commentators stress that it is an engineering obligation that has to be built into the product<sup class="cite"><a href="#ref-3">3</a></sup>. Separately, the Act's cloud switching rules prohibit switching charges from 12 January 2027<sup class="cite"><a href="#ref-3">3</a></sup>. For a product line launching new models, both dates landed in the middle of the roadmap.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>Users can get their data</strong> easily, in a usable format, without raising a support ticket.</li>
+<li><strong>Users can share it</strong> with an installer, energy adviser or app of their choice, and revoke that.</li>
+<li><strong>Personal data handled under the GDPR</strong>, because household energy patterns can identify people<sup class="cite"><a href="#ref-4">4</a></sup>.</li>
+<li><strong>Trade secrets protected</strong> through agreed measures, not used as a blanket excuse.</li>
+<li><strong>No cloud lock-in</strong> in the platform itself, in line with the switching rules.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Products</small><div class="dgm-nodes"><span>Heat pumps<em>telemetry and events</em></span><span>Ventilation units<em>telemetry and events</em></span><span>Companion app<em>related service data</em></span></div></div>
+<div class="dgm-tier"><small>Ingest</small><div class="dgm-nodes"><span class="hl">Collector gateways<em>load-balanced, per region</em></span><span>Event stream<em>raw product data</em></span></div></div>
+<div class="dgm-tier"><small>Data</small><div class="dgm-nodes"><span class="hl">Product data catalogue<em>what each field means</em></span><span>Raw data store<em>user-accessible</em></span><span>Derived models<em>proprietary, separated</em></span></div></div>
+<div class="dgm-tier"><small>Access</small><div class="dgm-nodes"><span class="hl">User data API<em>and download</em></span><span>Sharing service<em>third parties, consent, revocation</em></span><span>Partner onboarding<em>terms and protections</em></span></div></div>
+<div class="dgm-tier"><small>Platform</small><div class="dgm-nodes"><span>Open formats<em>portable by default</em></span><span>Terraform<em>reproducible on another cloud</em></span><span>Audit<em>who accessed what</em></span></div></div>
+</div>
+<figcaption>Raw product data and proprietary derived models live apart, so sharing the first never exposes the second.</figcaption>
+</figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Emit</b><span>Devices send telemetry and events through regional gateways</span></li>
+<li><b>Catalogue</b><span>Each data point is described: meaning, units, frequency, personal or not</span></li>
+<li><b>Store</b><span>Raw data kept per device and owner, separate from derived models</span></li>
+<li class="hl"><b>Access</b><span>The user downloads or queries their data through the app or API</span></li>
+<li class="hl"><b>Share</b><span>The user authorises an installer or app; the sharing service issues scoped access</span></li>
+<li><b>Revoke</b><span>Access ends when the user says so; every access is logged</span></li>
+</ol>
+<figcaption>The user, not the support team, controls access and sharing.</figcaption>
+</figure>
+
+<h2>The hard part: ingestion that scales with the fleet</h2>
+<p>Access by design starts at ingestion: if data is dropped, summarised too early or locked into a proprietary pipeline, users cannot get it later. The team standardised device telemetry on OTLP and placed a tier of OpenTelemetry Collectors in gateway mode behind a load balancer in each region, so data keeps flowing as the fleet grows and individual collectors can be replaced without loss<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/eu-data-act-connected-products-platform/collector-gateway.webp" alt="Diagram of a telemetry source sending data to a load balancer, which spreads it across three OpenTelemetry Collector instances in gateway mode before it reaches the destination" width="1200" height="299" loading="lazy"></div><figcaption>Collectors in gateway mode behind a load balancer: one scalable front door for all product data. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2024/otel-collector-anti-patterns/" target="_blank" rel="noopener">OpenTelemetry blog, Adriana Villela</a> · CC BY 4.0</span></figcaption></figure>
+<div class="callout"><p>You cannot share data you never kept. Access by design is decided at ingestion, years before a user asks.</p></div>
+<p>The second hard part was the line between raw data and know-how. Raw readings went into the user-accessible store; the predictive maintenance models and efficiency algorithms built from them stayed separate, with sharing partners bound by terms to protect anything sensitive. More on related patterns in <a href="https://asksumanta.com/insights/opentelemetry-collector-deployment-patterns/">OpenTelemetry Collector deployment patterns</a> and <a href="https://asksumanta.com/insights/data-contracts-playbook/">data contracts</a>.</p>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Product and legal</small><ol><li>Which data is in scope</li><li class="hl">Trade secret measures</li><li>Partner terms</li></ol></div>
+<div class="dgm-lane"><small>Platform engineering</small><ol><li>Collector gateways</li><li class="hl">Catalogue and raw store</li><li>User API and sharing service</li></ol></div>
+<div class="dgm-lane"><small>Device teams</small><ol><li>OTLP firmware support</li><li>New models designed for access</li><li>Field update plan</li></ol></div>
+</div>
+<figcaption>Legal decided what is shared and how it is protected; engineering made sharing self-service.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Inventory</b><ul><li>Data per product line</li><li>Personal data mapping</li><li>Trade secret review</li></ul></div>
+<div><small>Phase 2</small><b>Ingest</b><ul><li>Collector gateways</li><li>Raw store</li><li>Catalogue</li></ul></div>
+<div><small>Phase 3</small><b>Access</b><ul><li>User API and download</li><li>App integration</li><li>Audit</li></ul></div>
+<div><small>Phase 4</small><b>Share</b><ul><li>Sharing service</li><li>Partner onboarding</li><li>Portability checks</li></ul></div>
+</div>
+<figcaption>New product models were designed for access from the start; older fleets followed through updates.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Self-service access and sharing</td><td>Data requests through support</td><td>The obligation is about design; support processes do not scale</td></tr>
+<tr><td>Separate raw data from derived models</td><td>One store for everything</td><td>Share raw data freely while protecting know-how</td></tr>
+<tr><td>Open telemetry protocol and formats</td><td>Proprietary device protocol</td><td>Easier access, portability and partner integration</td></tr>
+<tr><td>A data catalogue users can read</td><td>Raw field dumps</td><td>Data is only useful if people know what it means</td></tr>
+<tr><td>Infrastructure as code, open formats</td><td>Deep use of one cloud's proprietary services</td><td>Keeps switching realistic as the rules intend</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: treat the catalogue as a product, because it made the data useful to customers and partners, not just compliant. Differently: settle the trade secret approach with legal before building the stores, since it shaped the data model more than any technical choice. Related reading: <a href="https://asksumanta.com/insights/lakehouse-catalog-strategy-iceberg/">lakehouse catalogue strategy</a> and <a href="https://asksumanta.com/insights/eu-ai-act-digital-omnibus-roadmap/">the EU AI Act roadmap</a>.</p>
+<p>If you build connected products for the European market, my <a href="https://asksumanta.com/fractional-cto-europe/">work with European companies</a> explains how I approach it, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/eu-data-act-connected-products-platform/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>When the model is a material service provider: AI resilience for an Australian insurer under CPS 230</title><link>https://asksumanta.com/case-studies/ai-provider-resilience-cps-230-insurer/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/ai-provider-resilience-cps-230-insurer/</guid><pubDate>Thu, 29 Oct 2026 13:05:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>ai</category><category>architecture</category><category>governance</category><description>How an Australian insurer can treat AI model providers as material service providers under CPS 230: critical operations, tolerances, fallbacks and tested exit plans.</description><content:encoded><![CDATA[<p><em>An Australian general insurer had put AI into claims intake, customer service and fraud review, mostly through one hosted model provider. Nobody had asked what happens when that provider is slow, out of capacity or gone. Under APRA&#x27;s CPS 230 that is a board-level question, and the goal was a credible answer.</em></p><h2>The situation</h2>
 <p>A general insurer in Australia had moved quickly with AI. Claims intake used a hosted model to read documents and photos, the contact centre used it to draft responses, and the fraud team used it to summarise case files. Almost all of it ran through one external model provider, wired directly into each application.</p>
 <p>CPS 230, APRA's prudential standard on operational risk management, has applied to banks, insurers and superannuation entities since 1 July 2025, with existing service provider contracts brought in at renewal or by 1 July 2026<sup class="cite"><a href="#ref-1">1</a></sup>. It expects entities to identify critical operations, set tolerance levels for disruption, and manage material service providers<sup class="cite"><a href="#ref-2">2</a></sup>. The board asked a fair question: if the model provider has an outage, runs out of capacity or changes terms, what happens to claims?</p>
 <p><strong>Why now.</strong> Capacity is not a theoretical risk. Reporting on Microsoft's latest results notes that demand for its cloud still exceeds supply<sup class="cite"><a href="#ref-4">4</a></sup>, and AI capacity is the tightest part of that market. See the <a href="https://asksumanta.com/insights/tech-news-2026-10-29-2/">tech news update for 29 October</a>.</p>
