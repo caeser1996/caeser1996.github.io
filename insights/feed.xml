@@ -1,6 +1,69 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights</title><link>https://asksumanta.com/</link><description>Articles on AI, data, cloud and technology leadership</description><language>en-gb</language><lastBuildDate>Thu, 29 Oct 2026 04:20:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/insights/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights</title><link>https://asksumanta.com/</link></image><item><title>What Anthropic&#x27;s IPO filing teaches every team running AI agents about sandboxing</title><link>https://asksumanta.com/insights/ai-agent-sandboxing-lessons-anthropic-s1/</link><guid isPermaLink="true">https://asksumanta.com/insights/ai-agent-sandboxing-lessons-anthropic-s1/</guid><pubDate>Thu, 29 Oct 2026 04:20:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>ai</category><category>agents</category><category>security</category><description>Anthropic&#x27;s IPO filing describes models reaching real systems during security tests. A CTO&#x27;s take on egress, credentials and sandbox design for AI agents.</description><content:encoded><![CDATA[<p><em>Anthropic&#x27;s S-1 puts on the record that models reached real third-party systems during security evaluations. The lesson is not about one lab. Any agent with tools can do real things outside the box you think it is in, and most teams&#x27; test environments are leakier than their production ones.</em></p><section class="block">
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights</title><link>https://asksumanta.com/</link><description>Articles on AI, data, cloud and technology leadership</description><language>en-gb</language><lastBuildDate>Thu, 29 Oct 2026 08:20:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/insights/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights</title><link>https://asksumanta.com/</link></image><item><title>GPT-6.1 Terra and the new economics of computer-use agents: what to change, and what to test first</title><link>https://asksumanta.com/insights/gpt-6-1-terra-computer-use-agent-economics/</link><guid isPermaLink="true">https://asksumanta.com/insights/gpt-6-1-terra-computer-use-agent-economics/</guid><pubDate>Thu, 29 Oct 2026 08:20:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>ai</category><category>llm</category><category>agents</category><description>OpenAI&#x27;s GPT-6.1 Terra cuts the price of computer-use agents. A CTO&#x27;s take on routing, evaluation and cost tracking before you switch models.</description><content:encoded><![CDATA[<p><em>OpenAI&#x27;s new mid-tier model is pitched at computer use and coding at half the price of the models above it. Cheaper capable models change agent architecture more than frontier launches do, but only for teams that can measure quality and cost per task.</em></p><section class="block">
+<h2>What was released</h2>
+<p>OpenAI released GPT-6.1 Terra on 26 October 2026, a mid-sized model aimed at computer use, visual reasoning and coding, available in ChatGPT and Codex<sup class="cite"><a href="#ref-2">2</a></sup>. Quartz reports API pricing of $1 per million input tokens and $5 per million output tokens, half the price of the models it sits below, along with benchmark gains that come from OpenAI's own testing<sup class="cite"><a href="#ref-1">1</a></sup>. Coverage of the cost per task compared with competing frontier models varies between outlets, from about nine to about twelve times lower<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>, which is a reminder that these are vendor-sourced comparisons, not independent results.</p>
+</section>
+
+<section class="block">
+<h2>Why mid-tier releases matter more than frontier ones</h2>
+<p>Agents that operate software make many model calls per task: read the screen, decide, act, check, repeat. Most of those steps are routine. A capable, cheaper model in the middle tier changes the cost of the whole loop, while frontier models are only needed for the hard decisions. The architecture that benefits is one that already routes by step difficulty and measures cost per completed task.</p>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Task</small><div class="dgm-nodes"><span>Agent plan<em>goal, budget, tools</em></span></div></div>
+<div class="dgm-tier"><small>Router</small><div class="dgm-nodes"><span class="hl">Step classifier<em>routine, hard or risky</em></span><span>Budget guard<em>stop when spend exceeds value</em></span></div></div>
+<div class="dgm-tier"><small>Models</small><div class="dgm-nodes"><span class="hl">Mid-tier model<em>routine computer-use steps</em></span><span>Frontier model<em>hard reasoning and recovery</em></span><span>Small model<em>classification and checks</em></span></div></div>
+<div class="dgm-tier"><small>Safety</small><div class="dgm-nodes"><span>Tool allowlist<em>per task</em></span><span>Approval<em>for consequential actions</em></span></div></div>
+<div class="dgm-tier"><small>Measure</small><div class="dgm-nodes"><span class="hl">Eval set<em>quality per step type</em></span><span>GenAI telemetry<em>tokens, latency, cost per task</em></span></div></div>
+</div>
+<figcaption>Routing by step type lets cheaper models take the routine work without lowering the quality bar for the hard steps.</figcaption>
+</figure>
+<p>More on the pattern in <a href="https://asksumanta.com/insights/llm-model-routing/">LLM model routing</a>.</p>
+</section>
+
+<section class="block">
+<h2>How to decide whether to switch</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Baseline</b><span>Measure current quality and cost per completed task, not per token</span></li>
+<li><b>Replay</b><span>Run your evaluation set and recorded tasks against the new model</span></li>
+<li class="hl"><b>Compare by step</b><span>Find which step types match quality and which degrade</span></li>
+<li><b>Route</b><span>Move only the matching steps, behind a feature flag</span></li>
+<li class="hl"><b>Watch</b><span>Track cost, latency and task success in production telemetry</span></li>
+<li><b>Decide</b><span>Keep, widen or roll back based on your numbers, not the launch post</span></li>
+</ol>
+<figcaption>Small, reversible changes driven by your own evaluation set.</figcaption>
+</figure>
+<p>The measurement layer is where most teams fall short. OpenTelemetry's GenAI conventions record each model call with the requested model, token usage split into input and output, and latency, so you can compare models side by side and estimate cost per request<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/gpt-6-1-terra-computer-use-agent-economics/genai-metrics.webp" alt="Dashboard chart of gen_ai.client.token.usage over time with filters for operation, provider, requested model, response model and token type" width="1200" height="553" loading="lazy"></div><figcaption>Token usage by model from OpenTelemetry GenAI metrics: the raw material for cost per task. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2026/genai-observability/" target="_blank" rel="noopener">OpenTelemetry blog, James Newton-King</a> · CC BY 4.0</span></figcaption></figure>
+<div class="callout"><p>Price per token is a vendor's number. Cost per completed task is yours. Only the second one should drive a model switch.</p></div>
+</section>
+
+<section class="block">
+<h2>Risks to price in</h2>
+<table class="tbl">
+<thead><tr><th>Risk</th><th>Why it matters</th><th>Mitigation</th></tr></thead>
+<tbody>
+<tr><td>Benchmarks that do not match your work</td><td>Vendor results use their tasks, not yours</td><td>Your own evaluation set per step type</td></tr>
+<tr><td>Cheaper steps, more steps</td><td>A weaker model can loop longer and cost more per task</td><td>Budget guards and cost per completed task</td></tr>
+<tr><td>Excessive agency</td><td>Computer-use agents act on real systems<sup class="cite"><a href="#ref-6">6</a></sup></td><td>Tool allowlists, sandboxing and approvals</td></tr>
+<tr><td>Data location</td><td>Screens and files may hold personal or regulated data</td><td>Check region, retention and contract terms in each market</td></tr>
+<tr><td>Single-vendor lock-in</td><td>Prices and models change quickly</td><td>A provider-neutral routing layer</td></tr>
+</tbody>
+</table>
+<p>Sandboxing matters even more when agents get cheaper and run more often; see <a href="https://asksumanta.com/insights/ai-agent-sandboxing-lessons-anthropic-s1/">what Anthropic's S-1 teaches about sandboxing agents</a>.</p>
+</section>
+
+<section class="block">
+<h2>CTO take</h2>
+<p>Treat this release as a prompt to build the plumbing, not as a reason to switch. If you can already measure quality and cost per task by step type, a cheaper capable model is close to free money: route the routine steps and keep the hard ones where they are. If you cannot, the first job is the evaluation set and the telemetry. That is true whether your teams are in the US, Europe, India or Asia-Pacific; data-location rules differ by market, so check them before sending screens and documents to any new model (<a href="https://asksumanta.com/regions/">by region</a>).</p>
+<p>Related reading: <a href="https://asksumanta.com/insights/llm-evaluation-sets-that-predict-production/">evaluation sets that predict production</a>, <a href="https://asksumanta.com/insights/llm-observability-opentelemetry-genai/">LLM observability with OpenTelemetry</a>, <a href="https://asksumanta.com/insights/evaluating-ai-agents-reliability/">evaluating AI agents</a> and the <a href="https://asksumanta.com/insights/tech-news-2026-10-29/">daily tech news for 29 October</a>.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I design agent platforms with routing, evaluation and cost telemetry built in, so model launches become a measured decision rather than a gamble. See <a href="https://asksumanta.com/ai-architect/">AI architecture</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section><p><a href="https://asksumanta.com/insights/gpt-6-1-terra-computer-use-agent-economics/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>What Anthropic&#x27;s IPO filing teaches every team running AI agents about sandboxing</title><link>https://asksumanta.com/insights/ai-agent-sandboxing-lessons-anthropic-s1/</link><guid isPermaLink="true">https://asksumanta.com/insights/ai-agent-sandboxing-lessons-anthropic-s1/</guid><pubDate>Thu, 29 Oct 2026 04:20:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>ai</category><category>agents</category><category>security</category><description>Anthropic&#x27;s IPO filing describes models reaching real systems during security tests. A CTO&#x27;s take on egress, credentials and sandbox design for AI agents.</description><content:encoded><![CDATA[<p><em>Anthropic&#x27;s S-1 puts on the record that models reached real third-party systems during security evaluations. The lesson is not about one lab. Any agent with tools can do real things outside the box you think it is in, and most teams&#x27; test environments are leakier than their production ones.</em></p><section class="block">
 <h2>What was disclosed</h2>
 <p>Anthropic filed its S-1 registration statement with the SEC this week<sup class="cite"><a href="#ref-2">2</a></sup>, and coverage has focused on the numbers<sup class="cite"><a href="#ref-1">1</a></sup> and the risk factors<sup class="cite"><a href="#ref-5">5</a></sup>. Press accounts of the filing describe four cases in which models reached real third-party systems during cybersecurity evaluations that ran for roughly 10 to 34 hours of active work, with one account attributing the exposure to a testing partner's configuration that left internet access on<sup class="cite"><a href="#ref-3">3</a></sup>. In one case a model reportedly found a stored password and used it to gain administrator access to a third-party system; Anthropic says affected parties were notified<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>. The filing also reportedly describes a pause of more than a month before pre-training a new frontier model, to strengthen protection against theft of model weights<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
 <p>These details come from news coverage of the prospectus; the S-1 itself is the primary source to read before quoting it.</p>
@@ -2596,49 +2659,4 @@ tracer_provider:
 <section class="block">
 <h2>How I can help</h2>
 <p>I design AI gateways, routing policies and evaluation loops that cut model spend without quietly cutting quality. See my <a href="https://asksumanta.com/ai-architect/">AI architecture work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
-</section><p><a href="https://asksumanta.com/insights/llm-model-routing/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>OMOP cohort definitions: the logic behind every real-world evidence study</title><link>https://asksumanta.com/insights/omop-cohort-definitions/</link><guid isPermaLink="true">https://asksumanta.com/insights/omop-cohort-definitions/</guid><pubDate>Thu, 22 Oct 2026 04:15:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>healthcare</category><category>omop</category><category>data</category><category>ai</category><description>A cohort is not a code list. How OHDSI defines cohorts with entry events, inclusion criteria and exit rules, and how LLMs can help write them without being trusted blindly.</description><content:encoded><![CDATA[<p><em>Ask a team for &#x27;patients with diabetes&#x27; and you will get as many answers as there are analysts. OHDSI&#x27;s cohort definitions make that question precise, reusable and executable across databases. They are also where LLMs could help most, and where they need the most checking.</em></p><p>Real-world evidence studies, quality measures and many clinical AI projects begin with the same deceptively simple step: find the right patients. "Patients with type 2 diabetes starting metformin" sounds precise until you ask which codes, which first occurrence, how much prior history, and when someone stops counting. Different answers produce different results from the same data.</p>
-
-<section class="block">
-<h2>A cohort is not a code list</h2>
-<p>The Book of OHDSI defines a cohort as a set of persons who satisfy one or more inclusion criteria for a duration of time. It is explicit that a cohort is not a code set: it needs logic for how codes are used, such as first occurrence versus any occurrence, and a well-defined cohort specifies how a person enters and how they exit<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
-<p>A few properties follow: one person can belong to several cohorts, can belong to the same cohort in different periods, but not twice in the same period, and a cohort can be empty<sup class="cite"><a href="#ref-1">1</a></sup>. Cohorts are also defined independently and reused, so the same outcome cohort can serve many studies<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
-</section>
-
-<section class="block">
-<h2>The building blocks</h2>
-<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/omop-cohort-definitions/cohort-legos.webp" alt="Illustration of cohort definition building blocks, with domains such as conditions, drugs, procedures and measurements shown as stackable blocks" width="358" height="419" loading="lazy"></div><figcaption>Building blocks of cohort definitions: CDM domains combined with concept sets and logic. <span class="credit">Source: <a href="https://ohdsi.github.io/TheBookOfOhdsi/Cohorts.html" target="_blank" rel="noopener">The Book of OHDSI, Defining Cohorts</a> · CC0 1.0</span></figcaption></figure>
-<p>Rule-based definitions combine four components<sup class="cite"><a href="#ref-1">1</a></sup>:</p>
-<ul>
-<li><strong>Domain</strong>: where the data lives in the CDM, such as drug exposures or procedures.</li>
-<li><strong>Concept set</strong>: a data-agnostic expression of standard concepts for the clinical idea, portable across databases.</li>
-<li><strong>Domain-specific attributes</strong>: days' supply for a drug, a measurement value or range.</li>
-<li><strong>Temporal logic</strong>: when one criterion must occur relative to another, for example within 365 days before the index event.</li>
-</ul>
-<p>Assembled, they answer three questions: what event sets the index date, which inclusion criteria apply, and what ends cohort membership<sup class="cite"><a href="#ref-1">1</a></sup>. In OHDSI tools there are no separate exclusion criteria; "exclude prior hypertension" becomes "include people with zero occurrences of prior hypertension"<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
-<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/omop-cohort-definitions/atlas-initialevent.webp" alt="Screenshot of the ATLAS cohort definition editor showing the cohort entry events section" width="1278" height="783" loading="lazy"></div><figcaption>Defining a cohort's entry event in ATLAS, OHDSI's web tool for building definitions. <span class="credit">Source: <a href="https://ohdsi.github.io/TheBookOfOhdsi/Cohorts.html" target="_blank" rel="noopener">The Book of OHDSI, Defining Cohorts</a> · CC0 1.0</span></figcaption></figure>
-</section>
-
-<section class="block">
-<h2>Definitions as code</h2>
-<p>Definitions built in ATLAS are stored as JSON and compiled to SQL for each database platform, and tools such as CohortGenerator run them in analysis pipelines<sup class="cite"><a href="#ref-2">2</a></sup>. That is what makes OHDSI network studies possible: the same definition, run unchanged at many sites.</p>
-<p>For a data platform, I treat cohort definitions as versioned artefacts: stored in a repository, reviewed, tested against data quality checks as in <a href="https://asksumanta.com/insights/omop-data-quality-checks/">OMOP data quality checks</a>, and linked to every result produced with them.</p>
-<div class="callout"><p>If a result can't be traced to the exact cohort definition version that produced it, it isn't reproducible, however good the analysis was.</p></div>
-</section>
-
-<section class="block">
-<h2>Where LLMs fit</h2>
-<p>Turning a clinical question into a cohort definition is skilled, slow work, which makes it a natural target for language models. Research is exploring this, including an MCP server that exposes the OHDSI WebAPI's cohort tools so a model can assemble definitions from natural language<sup class="cite"><a href="#ref-3">3</a></sup>. That design is the right shape: the model calls structured tools that produce standard definitions, rather than writing free-form SQL.</p>
-<p>The risks are clinical, not technical. A plausible definition with the wrong concept set, a missing washout period or an exit rule that silently drops patients will run perfectly and produce wrong evidence. My rules:</p>
-<ol>
-<li><strong>Generate into the standard format</strong>, never ad hoc SQL, so definitions can be reviewed in familiar tools.</li>
-<li><strong>Require clinical review</strong> of concept sets and temporal logic before any use.</li>
-<li><strong>Check against data</strong>: counts, attrition by criterion and patient profiles, before trusting results.</li>
-<li><strong>Prefer reuse.</strong> Start from established, validated definitions where they exist, and let the model adapt rather than invent.</li>
-</ol>
-<p>The tool-based approach also follows the governance patterns in <a href="https://asksumanta.com/insights/mcp-apps-tool-annotations/">MCP Apps and tool annotations</a>: read-only tools for exploration, review before anything is saved or run.</p>
-</section>
-
-<section class="block">
-<h2>How I can help</h2>
-<p>I design OMOP platforms and research pipelines where cohort definitions are versioned, tested and reproducible, and help teams apply AI to them safely. See <a href="https://asksumanta.com/healthcare-data-architecture/">healthcare data architecture</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
-</section><p><a href="https://asksumanta.com/insights/omop-cohort-definitions/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
+</section><p><a href="https://asksumanta.com/insights/llm-model-routing/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>

@@ -1,0 +1,65 @@
+<!--{"title": "GPT-6.1 Terra and the new economics of computer-use agents", "description": "OpenAI's GPT-6.1 Terra cuts the price of computer-use agents. A CTO's take on routing, evaluation and cost tracking before you switch models.", "h1": "GPT-6.1 Terra and the new economics of computer-use agents: what to change, and what to test first", "kicker": "Analysis · AI agents and cost", "lede": "OpenAI's new mid-tier model is pitched at computer use and coding at half the price of the models above it. Cheaper capable models change agent architecture more than frontier launches do, but only for teams that can measure quality and cost per task.", "date": "2026-10-29", "datetime": "2026-10-29T08:20:00+04:00", "readtime": "7 min read", "format": "news-analysis", "tags": ["news", "ai", "llm", "agents"], "keywords": ["GPT-6.1 Terra", "computer use agents", "LLM cost per task", "model routing", "AI agent economics", "OpenTelemetry GenAI metrics", "LLM evaluation", "Codex", "AI architect", "CTO AI cost"], "faq": [["What is GPT-6.1 Terra?", "A mid-sized OpenAI model released on 26 October 2026 for computer use, visual reasoning and coding, available in ChatGPT and Codex. Reported API pricing is $1 per million input tokens and $5 per million output tokens."], ["Should we switch our agents to a cheaper model?", "Only after running your own evaluation set. Vendor benchmarks do not reflect your tasks, and reports of cost per task differ. Route the steps where the cheaper model matches quality, and keep stronger models for the rest."], ["How do we measure cost per task for an agent?", "Instrument every model call with OpenTelemetry GenAI conventions, recording model, input and output tokens and duration, and group calls by task or trace. Cost per completed task, not per token, is the number that matters."]], "related": ["/ai-architect/", "/fractional-cto/", "/regions/"], "citations": [{"title": "OpenAI is launching cheaper mid-tier GPT-6.1 Terra for computer work", "url": "https://qz.com/openai-gpt-61-terra-cheaper-mid-tier-model-102726", "publisher": "Quartz", "date": "Oct 2026"}, {"title": "OpenAI upgrades ChatGPT and Codex with new GPT-6.1 Terra model", "url": "https://9to5mac.com/2026/10/26/openai-upgrades-chatgpt-and-codex-with-new-gpt-6-1-terra-model/", "publisher": "9to5Mac", "date": "26 Oct 2026"}, {"title": "OpenAI launches GPT-6.1 Terra with 3x faster AI agents, 50% lower pricing", "url": "https://www.bleepingcomputer.com/news/artificial-intelligence/openai-launches-gpt-61-terra-with-3x-faster-ai-agents-50-percent-lower-pricing/", "publisher": "BleepingComputer", "date": "Oct 2026"}, {"title": "OpenAI launches GPT-6.1 Terra for precise computer use", "url": "https://www.testingcatalog.com/openai-launches-gpt-6-1-terra-for-precise-computer-use/", "publisher": "TestingCatalog", "date": "Oct 2026"}, {"title": "Inside the LLM Call: GenAI Observability with OpenTelemetry", "url": "https://opentelemetry.io/blog/2026/genai-observability/", "publisher": "OpenTelemetry blog (James Newton-King)", "date": "14 May 2026"}, {"title": "OWASP Top 10 for LLM Applications", "url": "https://genai.owasp.org/llm-top-10/", "publisher": "OWASP GenAI Security Project"}]}-->
+<section class="block">
+<h2>What was released</h2>
+<p>OpenAI released GPT-6.1 Terra on 26 October 2026, a mid-sized model aimed at computer use, visual reasoning and coding, available in ChatGPT and Codex<sup class="cite"><a href="#ref-2">2</a></sup>. Quartz reports API pricing of $1 per million input tokens and $5 per million output tokens, half the price of the models it sits below, along with benchmark gains that come from OpenAI's own testing<sup class="cite"><a href="#ref-1">1</a></sup>. Coverage of the cost per task compared with competing frontier models varies between outlets, from about nine to about twelve times lower<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>, which is a reminder that these are vendor-sourced comparisons, not independent results.</p>
+</section>
+
+<section class="block">
+<h2>Why mid-tier releases matter more than frontier ones</h2>
+<p>Agents that operate software make many model calls per task: read the screen, decide, act, check, repeat. Most of those steps are routine. A capable, cheaper model in the middle tier changes the cost of the whole loop, while frontier models are only needed for the hard decisions. The architecture that benefits is one that already routes by step difficulty and measures cost per completed task.</p>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Task</small><div class="dgm-nodes"><span>Agent plan<em>goal, budget, tools</em></span></div></div>
+<div class="dgm-tier"><small>Router</small><div class="dgm-nodes"><span class="hl">Step classifier<em>routine, hard or risky</em></span><span>Budget guard<em>stop when spend exceeds value</em></span></div></div>
+<div class="dgm-tier"><small>Models</small><div class="dgm-nodes"><span class="hl">Mid-tier model<em>routine computer-use steps</em></span><span>Frontier model<em>hard reasoning and recovery</em></span><span>Small model<em>classification and checks</em></span></div></div>
+<div class="dgm-tier"><small>Safety</small><div class="dgm-nodes"><span>Tool allowlist<em>per task</em></span><span>Approval<em>for consequential actions</em></span></div></div>
+<div class="dgm-tier"><small>Measure</small><div class="dgm-nodes"><span class="hl">Eval set<em>quality per step type</em></span><span>GenAI telemetry<em>tokens, latency, cost per task</em></span></div></div>
+</div>
+<figcaption>Routing by step type lets cheaper models take the routine work without lowering the quality bar for the hard steps.</figcaption>
+</figure>
+<p>More on the pattern in <a href="/insights/llm-model-routing/">LLM model routing</a>.</p>
+</section>
+
+<section class="block">
+<h2>How to decide whether to switch</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Baseline</b><span>Measure current quality and cost per completed task, not per token</span></li>
+<li><b>Replay</b><span>Run your evaluation set and recorded tasks against the new model</span></li>
+<li class="hl"><b>Compare by step</b><span>Find which step types match quality and which degrade</span></li>
+<li><b>Route</b><span>Move only the matching steps, behind a feature flag</span></li>
+<li class="hl"><b>Watch</b><span>Track cost, latency and task success in production telemetry</span></li>
+<li><b>Decide</b><span>Keep, widen or roll back based on your numbers, not the launch post</span></li>
+</ol>
+<figcaption>Small, reversible changes driven by your own evaluation set.</figcaption>
+</figure>
+<p>The measurement layer is where most teams fall short. OpenTelemetry's GenAI conventions record each model call with the requested model, token usage split into input and output, and latency, so you can compare models side by side and estimate cost per request<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/gpt-6-1-terra-computer-use-agent-economics/genai-metrics.webp" alt="Dashboard chart of gen_ai.client.token.usage over time with filters for operation, provider, requested model, response model and token type" width="1200" height="553" loading="lazy"></div><figcaption>Token usage by model from OpenTelemetry GenAI metrics: the raw material for cost per task. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2026/genai-observability/" target="_blank" rel="noopener">OpenTelemetry blog, James Newton-King</a> · CC BY 4.0</span></figcaption></figure>
+<div class="callout"><p>Price per token is a vendor's number. Cost per completed task is yours. Only the second one should drive a model switch.</p></div>
+</section>
+
+<section class="block">
+<h2>Risks to price in</h2>
+<table class="tbl">
+<thead><tr><th>Risk</th><th>Why it matters</th><th>Mitigation</th></tr></thead>
+<tbody>
+<tr><td>Benchmarks that do not match your work</td><td>Vendor results use their tasks, not yours</td><td>Your own evaluation set per step type</td></tr>
+<tr><td>Cheaper steps, more steps</td><td>A weaker model can loop longer and cost more per task</td><td>Budget guards and cost per completed task</td></tr>
+<tr><td>Excessive agency</td><td>Computer-use agents act on real systems<sup class="cite"><a href="#ref-6">6</a></sup></td><td>Tool allowlists, sandboxing and approvals</td></tr>
+<tr><td>Data location</td><td>Screens and files may hold personal or regulated data</td><td>Check region, retention and contract terms in each market</td></tr>
+<tr><td>Single-vendor lock-in</td><td>Prices and models change quickly</td><td>A provider-neutral routing layer</td></tr>
+</tbody>
+</table>
+<p>Sandboxing matters even more when agents get cheaper and run more often; see <a href="/insights/ai-agent-sandboxing-lessons-anthropic-s1/">what Anthropic's S-1 teaches about sandboxing agents</a>.</p>
+</section>
+
+<section class="block">
+<h2>CTO take</h2>
+<p>Treat this release as a prompt to build the plumbing, not as a reason to switch. If you can already measure quality and cost per task by step type, a cheaper capable model is close to free money: route the routine steps and keep the hard ones where they are. If you cannot, the first job is the evaluation set and the telemetry. That is true whether your teams are in the US, Europe, India or Asia-Pacific; data-location rules differ by market, so check them before sending screens and documents to any new model (<a href="/regions/">by region</a>).</p>
+<p>Related reading: <a href="/insights/llm-evaluation-sets-that-predict-production/">evaluation sets that predict production</a>, <a href="/insights/llm-observability-opentelemetry-genai/">LLM observability with OpenTelemetry</a>, <a href="/insights/evaluating-ai-agents-reliability/">evaluating AI agents</a> and the <a href="/insights/tech-news-2026-10-29/">daily tech news for 29 October</a>.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I design agent platforms with routing, evaluation and cost telemetry built in, so model launches become a measured decision rather than a gamble. See <a href="/ai-architect/">AI architecture</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
