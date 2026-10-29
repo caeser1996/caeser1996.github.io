@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) with Consent Mode v2 -->
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('consent', 'default', {ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied', analytics_storage: 'granted'});
+  gtag('consent', 'default', {analytics_storage: 'denied', region: ['AT','BE','BG','HR','CY','CZ','DK','EE','FI','FR','DE','GR','HU','IS','IE','IT','LV','LI','LT','LU','MT','NL','NO','PL','PT','RO','SK','SI','ES','SE','GB','CH'], wait_for_update: 500});
+  try { var c = localStorage.getItem('consent'); if (c === 'granted' || c === 'denied') gtag('consent', 'update', {analytics_storage: c}); } catch (e) {}
+</script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-8TKBV1S98Q"></script>
+<script>
+  gtag('js', new Date());
+
+  gtag('config', 'G-8TKBV1S98Q', {content_group: (function(p){return p==='/'?'Home':p.indexOf('/insights/')===0?'Insights':p.indexOf('/case-studies/')===0?'Case studies':'Services';})(location.pathname)});
+</script>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Azure&#x27;s quarter and the AI capacity crunch: how to plan</title>
+<meta name="description" content="Microsoft says cloud demand still exceeds supply. A CTO&#x27;s take on planning AI capacity: reservations, priorities, portability and degraded modes when GPUs run short." />
+<meta name="keywords" content="AI capacity planning, GPU shortage, Azure growth, cloud capacity constraints, AI FinOps, PriorityClass, Kubernetes preemption, multi-cloud AI, capacity reservations, CTO cloud strategy" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://asksumanta.com/insights/ai-capacity-crunch-cloud-planning/" />
+<meta name="theme-color" content="#fafafa" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<link rel="alternate" type="application/rss+xml" title="Sumanta Mukhopadhyay: insights and case studies" href="/feed.xml" />
+<link rel="alternate" type="application/rss+xml" title="Sumanta Mukhopadhyay: daily tech news" href="/insights/news.xml" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="Azure&#x27;s quarter and the AI capacity crunch: how to plan" />
+<meta property="og:description" content="Microsoft says cloud demand still exceeds supply. A CTO&#x27;s take on planning AI capacity: reservations, priorities, portability and degraded modes when GPUs run short." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://asksumanta.com/insights/ai-capacity-crunch-cloud-planning/" />
+<meta property="og:image" content="https://asksumanta.com/assets/og/ai-capacity-crunch-cloud-planning.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Azure&#x27;s quarter and the AI capacity crunch: how to plan" />
+<meta name="twitter:description" content="Microsoft says cloud demand still exceeds supply. A CTO&#x27;s take on planning AI capacity: reservations, priorities, portability and degraded modes when GPUs run short." />
+<meta name="twitter:image" content="https://asksumanta.com/assets/og/ai-capacity-crunch-cloud-planning.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "BlogPosting", "headline": "The AI capacity crunch: what Microsoft's quarter means for how you plan compute", "description": "Microsoft says cloud demand still exceeds supply. A CTO's take on planning AI capacity: reservations, priorities, portability and degraded modes when GPUs run short.", "datePublished": "2026-10-29T16:40:00+04:00", "dateModified": "2026-10-29T16:40:00+04:00", "articleSection": "Analysis · Cloud and FinOps", "genre": "Analysis", "citation": [{"@type": "CreativeWork", "name": "Microsoft's cloud growth, cash flow offer respite from AI spending fears", "url": "https://www.usnews.com/news/top-news/articles/2026-10-28/microsoft-beats-quarterly-cloud-revenue-estimates"}, {"@type": "CreativeWork", "name": "Microsoft's cloud growth accelerates, and so too does the spending", "url": "https://fortune.com/2026/10/28/microsofts-cloud-growth-accelerates-and-so-too-does-the-spending/"}, {"@type": "CreativeWork", "name": "Microsoft earnings: Azure accelerates while capital expenditure guidance is steady", "url": "https://www.morningstar.com/stocks/microsoft-earnings-azure-accelerates-while-capital-expenditure-guidance-is-steady"}, {"@type": "CreativeWork", "name": "Pod Priority and Preemption", "url": "https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/"}, {"@type": "CreativeWork", "name": "Protect Your Mission-Critical Pods From Eviction With PriorityClass", "url": "https://kubernetes.io/blog/2023/01/12/protect-mission-critical-pods-priorityclass/"}], "author": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "publisher": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "mainEntityOfPage": "https://asksumanta.com/insights/ai-capacity-crunch-cloud-planning/", "image": "https://asksumanta.com/assets/og/ai-capacity-crunch-cloud-planning.png", "keywords": "AI capacity planning, GPU shortage, Azure growth, cloud capacity constraints, AI FinOps, PriorityClass, Kubernetes preemption, multi-cloud AI, capacity reservations, CTO cloud strategy", "wordCount": 620}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://asksumanta.com/"}, {"@type": "ListItem", "position": 2, "name": "Insights", "item": "https://asksumanta.com/insights/"}, {"@type": "ListItem", "position": 3, "name": "The AI capacity crunch: what Microsoft's quarter means for how you plan compute", "item": "https://asksumanta.com/insights/ai-capacity-crunch-cloud-planning/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Is AI compute capacity really constrained?", "acceptedAnswer": {"@type": "Answer", "text": "Microsoft reported 48% Azure growth for the September quarter and its finance chief said demand still exceeds supply. Capacity for AI workloads in particular regions can be limited, so plan for it rather than assuming on-demand availability."}}, {"@type": "Question", "name": "How should we plan AI capacity?", "acceptedAnswer": {"@type": "Answer", "text": "Separate critical from flexible workloads, reserve capacity for the critical ones in the regions you need, keep at least one alternative provider or model ready, and define what degrades first when capacity is short."}}, {"@type": "Question", "name": "How does Kubernetes help in a capacity crunch?", "acceptedAnswer": {"@type": "Answer", "text": "Pod priority and preemption let the scheduler place important workloads first and evict lower-priority ones when resources are scarce, so a shortage hits batch jobs before customer-facing services."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css?v=19708aaece" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='light';try{t=localStorage.getItem('theme')||'light';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+  try{if(!sessionStorage.getItem('booted')&&!/bot|crawl|spider|slurp|lighthouse|headless/i.test(navigator.userAgent)&&!matchMedia('(prefers-reduced-motion: reduce)').matches){document.documentElement.classList.add('boot');sessionStorage.setItem('booted','1');}}catch(e){}
+</script>
+</head>
+<body class="sub is-post">
+<div class="progress" id="progress"></div>
+<nav class="topnav">
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links" id="navLinks">
+      <div class="nd"><button type="button" class="nd-b" aria-expanded="false" aria-controls="nd-services">Services<svg class="chev" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 3.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button><div class="nd-p" id="nd-services"><div class="nd-grid"><a class="nd-i" href="/fractional-cto/"><b>Fractional CTO</b><span>Part-time technology leadership for startups and scale-ups</span></a><a class="nd-i" href="/ai-architect/"><b>AI &amp; LLM architecture</b><span>RAG, agents and private LLMs that make it to production</span></a><a class="nd-i" href="/ontology-knowledge-graph/"><b>Ontology &amp; knowledge graphs</b><span>Shared meaning for your data, analytics and AI</span></a><a class="nd-i" href="/healthcare-data-architecture/"><b>Healthcare data architecture</b><span>FHIR, OMOP and HIPAA-aligned data platforms</span></a><a class="nd-i" href="/technical-due-diligence/"><b>Technical due diligence</b><span>Independent technology assessment for investors</span></a><a class="nd-i" href="/regions/"><b>Fractional CTO worldwide</b><span>US, UK, Europe, Middle East, India, Singapore and Australia</span></a></div><div class="nd-side"><small>Not sure where to start?</small><p>Answer four questions and get a first diagnosis of your challenge.</p><a class="lnk" href="/#assess">Analyse your challenge →</a></div></div></div>
+      <div class="nd"><button type="button" class="nd-b" aria-expanded="false" aria-controls="nd-work">Work<svg class="chev" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 3.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button><div class="nd-p" id="nd-work"><div class="nd-grid"><a class="nd-i" href="/case-studies/"><b>All case studies</b><span>37 anonymised engagements with architecture and flow diagrams</span></a><a class="nd-i" href="/case-studies/#use-cases"><b>Use cases</b><span>Problems I&#x27;m brought in to solve, by sector</span></a><a class="nd-i" href="/case-studies/#snapshots"><b>Engagement snapshots</b><span>Six common problems, the approach and the stack</span></a><a class="nd-i" href="/case-studies/eu-data-act-connected-products-platform/"><b>EU Data Act connected products platform</b><span>Manufacturing · European Union</span></a><a class="nd-i" href="/case-studies/ai-provider-resilience-cps-230-insurer/"><b>AI provider resilience under CPS 230</b><span>Insurance · Australia</span></a><a class="nd-i" href="/case-studies/agent-ready-travel-marketplace-sea/"><b>Agent-ready travel marketplace</b><span>Travel · Singapore &amp; Southeast Asia</span></a></div><div class="nd-side"><small>Confidential by default</small><p>Every case study is an anonymised composite, cited to public sources.</p><a class="lnk" href="/case-studies/">Browse all →</a></div></div></div>
+      <div class="nd"><button type="button" class="nd-b" aria-expanded="false" aria-controls="nd-insights">Insights<svg class="chev" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 3.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button><div class="nd-p" id="nd-insights"><div class="nd-grid"><a class="nd-i" href="/insights/"><b>All insights</b><span>109 articles on AI, data, cloud and leadership</span></a><a class="nd-i" href="/insights/#topic-news"><b>Daily tech news</b><span>A CTO&#x27;s take on the day&#x27;s releases, deals and rules</span></a><a class="nd-i" href="/subscribe/"><b>Subscribe via RSS</b><span>Get every new post in Feedly, Inoreader or any reader</span></a><a class="nd-i" href="/insights/ai-capacity-crunch-cloud-planning/"><b>The AI capacity crunch: what Microsoft&#x27;s quarter means for how you plan compute</b></a><a class="nd-i" href="/insights/defender-first-ai-models-vulnerability-management/"><b>Defender-first AI models: what Gemini 4 Carbon means for how fast you must patch</b></a><a class="nd-i" href="/insights/tech-news-2026-10-29-2/"><b>Tech news, 29 October 2026 (update): Gemini 4 Carbon, Azure&#x27;s quarter, Jio&#x27;s debut and Meta&#x27;s Muse in Singapore</b></a><a class="nd-i" href="/insights/gpt-6-1-terra-computer-use-agent-economics/"><b>GPT-6.1 Terra and the new economics of computer-use agents: what to change, and what to test first</b></a><a class="nd-i" href="/insights/ai-agent-sandboxing-lessons-anthropic-s1/"><b>What Anthropic&#x27;s IPO filing teaches every team running AI agents about sandboxing</b></a></div><div class="nd-side"><small>New every week</small><p>Explainers, playbooks and analysis of new standards and regulation.</p><a class="lnk" href="/insights/">Read the latest →</a></div></div></div>
+      <div class="nd"><button type="button" class="nd-b" aria-expanded="false" aria-controls="nd-about">About<svg class="chev" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 3.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button><div class="nd-p" id="nd-about"><div class="nd-grid"><a class="nd-i" href="/about/"><b>About</b><span>Background, credentials and open-source work</span></a><a class="nd-i" href="/expertise/"><b>Expertise</b><span>Practice areas, reference architecture and industries</span></a><a class="nd-i" href="/how-i-work/"><b>How I work</b><span>Playbook, principles and engagement models</span></a><a class="nd-i" href="/how-i-work/#faq"><b>FAQ</b><span>Common questions about working together</span></a><a class="nd-i" href="/#contact"><b>Contact</b><span>Book a call or send a message</span></a></div><div class="nd-side"><small>Take a break</small><p>Defend production from incoming incidents in Orbital Ops, a free sci-fi browser game.</p><a class="lnk" href="/play/">Play now →</a></div></div></div>
+      <a class="nd-l" href="/play/">Play <em>new</em></a>
+    </div>
+    <div class="nav-r">
+      <button type="button" class="kbtn" data-search aria-label="Search the site" title="Search (Ctrl K)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><kbd>⌘K</kbd></button>
+      <button type="button" class="snd" aria-pressed="false" aria-label="Turn ambient sound on" title="Ambient sound"><span class="eq"><i></i><i></i><i></i><i></i></span></button>
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/insights/">Insights</a> <span>/</span> <em>The AI capacity crunch: what Microsoft&#x27;s quarter means for how you plan compute</em></div>
+    <div class="kicker">Analysis · Cloud and FinOps</div>
+    <h1>The AI capacity crunch: what Microsoft&#x27;s quarter means for how you plan compute</h1>
+    <p class="sub-lede">Azure grew 48% last quarter and Microsoft still says demand outruns supply. For engineering leaders, that is not a stock story. It means AI capacity is a constrained resource you plan, prioritise and hedge, like any other scarce input.</p>
+    <div class="ameta"><span class="fmt">Analysis</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-10-29T16:40:00+04:00">29 Oct 2026 · 16:40 GST</time><span>7 min read</span><span>5 sources</span></div><div class="atags"><span class="tagp">#news</span><span class="tagp">#platform</span><span class="tagp">#ai</span><span class="tagp">#architecture</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Analysis cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><polyline points="540,208 596,246 652,231 708,201 764,185 820,214 876,233 932,231 988,173 1044,253 1100,248 1156,230" class="cv-line"/><polyline points="540,209 596,161 652,287 708,243 764,296 820,145 876,296 932,242 988,244 1044,266 1100,246 1156,135" class="cv-line"/><polyline points="540,234 596,204 652,252 708,268 764,187 820,312 876,243 932,321 988,126 1044,268 1100,194 1156,321" class="cv-line hl"/><text x="60" y="90" class="cv-k">ANALYSIS · ANALYSIS · CLOUD AND FINOPS</text><text x="60" y="350" class="cv-n">29 Oct 2026 · 16:40 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <section class="block">
+<h2 id="what-was-reported">What was reported</h2>
+<p>Microsoft's results for the quarter to 30 September showed Azure revenue growing 48%, ahead of analyst estimates, with guidance for faster growth in the current quarter<sup class="cite"><a href="#ref-1">1</a></sup>. Capital spending of $45.2 billion came in below the company's own projection, which it attributed to delivery timing rather than a change of plan<sup class="cite"><a href="#ref-1">1</a></sup>, and its finance chief said demand still exceeds supply<sup class="cite"><a href="#ref-2">2</a></sup>. Analysts also noted capital expenditure guidance was held steady<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+</section>
+
+<section class="block">
+<h2 id="why-this-matters-to-engineering-leaders">Why this matters to engineering leaders</h2>
+<p>When the largest providers are still building as fast as they can and demand outruns them, capacity for AI workloads, especially accelerators in specific regions, is not guaranteed on demand. That affects launch dates, data-residency plans and cost. The response is the same discipline used for any scarce resource: know what you need, decide what matters most, reserve for that, and have a fallback.</p>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Critical</small><div class="dgm-nodes"><span class="hl">Customer-facing inference<em>reserved capacity, home region</em></span></div></div>
+<div class="dgm-tier"><small>Important</small><div class="dgm-nodes"><span>Internal assistants<em>on demand, can queue</em></span><span>Evaluation runs<em>scheduled off-peak</em></span></div></div>
+<div class="dgm-tier"><small>Flexible</small><div class="dgm-nodes"><span>Batch enrichment<em>spot or preemptible</em></span><span>Training and fine-tuning<em>any region allowed by data rules</em></span></div></div>
+<div class="dgm-tier"><small>Fallback</small><div class="dgm-nodes"><span class="hl">Second provider or model<em>tested, not theoretical</em></span><span>Smaller private model<em>floor for critical paths</em></span></div></div>
+</div>
+<figcaption>Tier workloads by how much a shortage would hurt, and match each tier to a capacity strategy.</figcaption>
+</figure>
+</section>
+
+<section class="block">
+<h2 id="let-the-scheduler-enforce-your-priorities">Let the scheduler enforce your priorities</h2>
+<p>On Kubernetes, the scheduler decides where each workload runs, and pod priority and preemption decide what happens when resources run out: higher-priority pods are scheduled first, and lower-priority ones can be evicted to make room<sup class="cite"><a href="#ref-4">4</a></sup><sup class="cite"><a href="#ref-5">5</a></sup>. Giving customer-facing inference a higher priority class than batch jobs means a capacity squeeze lands on work that can wait.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/ai-capacity-crunch-cloud-planning/scheduling.webp" alt="Diagram of Kubernetes scheduling: a client creates new pods, the API server stores them in etcd, the kube-scheduler assigns pods without a node to a node, and kubelets on each node launch them" width="1200" height="935" loading="lazy"></div><figcaption>How the scheduler places new workloads; priority classes decide who goes first, and who is evicted, when capacity is short. <span class="credit">Source: <a href="https://kubernetes.io/blog/2023/01/12/protect-mission-critical-pods-priorityclass/" target="_blank" rel="noopener">Kubernetes blog, Sunny Bhambhani</a> · CC BY 4.0</span></figcaption></figure>
+<div class="callout"><p>In a shortage, something will wait. Decide in advance what it is, and encode that decision in the platform rather than in a meeting during the incident.</p></div>
+</section>
+
+<section class="block">
+<h2 id="a-capacity-plan-in-four-steps">A capacity plan in four steps</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Measure</b><span>Accelerator hours, tokens and latency per workload and region</span></li>
+<li><b>Tier</b><span>Critical, important and flexible, agreed with the business</span></li>
+<li class="hl"><b>Reserve</b><span>Committed capacity for critical work where data rules require it</span></li>
+<li><b>Prioritise</b><span>Priority classes and quotas so shortages hit flexible work first</span></li>
+<li class="hl"><b>Hedge</b><span>A second provider, region or model tested with real traffic</span></li>
+<li><b>Review</b><span>Monthly: usage against reservations, cost, and upcoming launches</span></li>
+</ol>
+<figcaption>Capacity planning for AI is FinOps plus resilience.</figcaption>
+</figure>
+<table class="tbl">
+<thead><tr><th>Lever</th><th>Helps with</th><th>Watch out for</th></tr></thead>
+<tbody>
+<tr><td>Reservations and commitments</td><td>Guaranteed capacity for critical work</td><td>Paying for idle capacity if forecasts are wrong</td></tr>
+<tr><td>Priority classes and quotas</td><td>Shortages fall on flexible work</td><td>Needs agreed tiers, not engineering guesses</td></tr>
+<tr><td>Second provider or region</td><td>Availability and negotiating position</td><td>Data residency and quality differences</td></tr>
+<tr><td>Smaller or routed models</td><td>Less capacity needed per task</td><td>Quality must be proven on your evaluation set</td></tr>
+</tbody>
+</table>
+</section>
+
+<section class="block">
+<h2 id="cto-take">CTO take</h2>
+<p>Treat AI capacity as a supply chain. Know your demand by workload, reserve for what is critical in the regions your data rules require, and make sure a shortage degrades flexible work first. Regional constraints differ: residency rules in the EU, India, Saudi Arabia and elsewhere can limit where you are allowed to fail over, so check them before you count a region as a fallback (<a href="/regions/">by region</a>). Related reading: <a href="/insights/focus-finops-ai-cost-allocation/">AI cost allocation with FOCUS</a>, <a href="/insights/kubernetes-dra-gpu-scheduling/">GPU scheduling with DRA</a>, <a href="/insights/llm-model-routing/">LLM model routing</a>, <a href="/case-studies/ai-provider-resilience-cps-230-insurer/">AI provider resilience under CPS 230</a> and the <a href="/insights/tech-news-2026-10-29-2/">tech news update for 29 October</a>.</p>
+</section>
+
+<section class="block">
+<h2 id="how-i-can-help">How I can help</h2>
+<p>I help teams plan AI capacity and cost alongside architecture, so launches are not hostage to a shortage. See <a href="/fractional-cto/">fractional CTO</a> and <a href="/ai-architect/">AI architecture</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://www.usnews.com/news/top-news/articles/2026-10-28/microsoft-beats-quarterly-cloud-revenue-estimates" target="_blank" rel="noopener">Microsoft&#x27;s cloud growth, cash flow offer respite from AI spending fears</a><small>US News (Reuters) · 28 Oct 2026</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://fortune.com/2026/10/28/microsofts-cloud-growth-accelerates-and-so-too-does-the-spending/" target="_blank" rel="noopener">Microsoft&#x27;s cloud growth accelerates, and so too does the spending</a><small>Fortune · 28 Oct 2026</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://www.morningstar.com/stocks/microsoft-earnings-azure-accelerates-while-capital-expenditure-guidance-is-steady" target="_blank" rel="noopener">Microsoft earnings: Azure accelerates while capital expenditure guidance is steady</a><small>Morningstar · Oct 2026</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/" target="_blank" rel="noopener">Pod Priority and Preemption</a><small>Kubernetes documentation</small></div></li><li id="ref-5"><span class="rn">5</span><div><a href="https://kubernetes.io/blog/2023/01/12/protect-mission-critical-pods-priorityclass/" target="_blank" rel="noopener">Protect Your Mission-Critical Pods From Eviction With PriorityClass</a><small>Kubernetes blog (Sunny Bhambhani) · 12 Jan 2023</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fai-capacity-crunch-cloud-planning%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fai-capacity-crunch-cloud-planning%2F&amp;text=The%20AI%20capacity%20crunch%3A%20what%20Microsoft%27s%20quarter%20means%20for%20how%20you%20plan%20compute" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=The%20AI%20capacity%20crunch%3A%20what%20Microsoft%27s%20quarter%20means%20for%20how%20you%20plan%20compute%20https%3A%2F%2Fasksumanta.com%2Finsights%2Fai-capacity-crunch-cloud-planning%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://asksumanta.com/insights/ai-capacity-crunch-cloud-planning/">Copy link</button></div>
+      <aside class="author-box" aria-label="About the author">
+        <div class="ab-av" aria-hidden="true">SM</div>
+        <div><small>About the author</small><b>Sumanta Mukhopadhyay</b>
+        <p>Fractional CTO, principal engineer and AI architect based in India, the United States and the UAE. Works across ontology and knowledge graphs, production AI, healthcare data platforms and cloud infrastructure.</p>
+        <div class="ab-l"><a href="/about/">More about me</a><a href="/how-i-work/">How I work</a><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a call</a></div></div>
+      </aside>
+      <div class="pnav"><a class="pn prev" href="/insights/defender-first-ai-models-vulnerability-management/"><small>← Previous</small><b>Defender-first AI models: what Gemini 4 Carbon means for how fast you must patch</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#what-was-reported">What was reported</a></li><li><a href="#why-this-matters-to-engineering-leaders">Why this matters to engineering leaders</a></li><li><a href="#let-the-scheduler-enforce-your-priorities">Let the scheduler enforce your priorities</a></li><li><a href="#a-capacity-plan-in-four-steps">A capacity plan in four steps</a></li><li><a href="#cto-take">CTO take</a></li><li><a href="#how-i-can-help">How I can help</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>Is AI compute capacity really constrained?</summary><p>Microsoft reported 48% Azure growth for the September quarter and its finance chief said demand still exceeds supply. Capacity for AI workloads in particular regions can be limited, so plan for it rather than assuming on-demand availability.</p></details><details class="rise"><summary>How should we plan AI capacity?</summary><p>Separate critical from flexible workloads, reserve capacity for the critical ones in the regions you need, keep at least one alternative provider or model ready, and define what degrades first when capacity is short.</p></details><details class="rise"><summary>How does Kubernetes help in a capacity crunch?</summary><p>Pod priority and preemption let the scheduler place important workloads first and evict lower-priority ones when resources are scarce, so a shortage hits batch jobs before customer-facing services.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/fractional-cto/"><small>Service</small><b>Fractional CTO</b><span>I work as a part-time CTO for founders, CEOs and boards who need experienced technical judgement now, and a team that can carry it on after I step back.</span><i>→</i></a><a class="rcard rise" href="/ai-architect/"><small>Service</small><b>AI &amp; LLM architecture</b><span>I design and build AI systems that leadership can trust: grounded in your data, measured by evaluations, governed by your rules and priced so they make sense at scale.</span><i>→</i></a><a class="rcard rise" href="/insights/defender-first-ai-models-vulnerability-management/"><small>Insight</small><b>Defender-first AI models: what Gemini 4 Carbon means for how fast you must patch</b><span>Google&#x27;s newest frontier model is going to cyber defenders before anyone else, because it is good at finding and exploiting vulnerabilities. That head start will not last. The practical question for engineering leaders is how short your window from disclosure to patch needs to be when finding bugs gets cheap.</span><i>→</i></a><a class="rcard rise" href="/insights/tech-news-2026-10-29-2/"><small>Insight</small><b>Tech news, 29 October 2026 (update): Gemini 4 Carbon, Azure&#x27;s quarter, Jio&#x27;s debut and Meta&#x27;s Muse in Singapore</b><span>Four stories since this morning&#x27;s brief: a frontier model released to cyber defenders first, cloud demand still outrunning supply, India&#x27;s largest IPO, and a consumer AI agent that shops and books on your behalf in Singapore.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: The AI capacity crunch: what Microsoft&#x27;s quarter means for how you plan compute">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. Time zones from the Americas and Europe to the Middle East and Asia-Pacific.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
+        <p class="floc">Global, remote-first · based in India, the US &amp; UAE · <a href="/regions/">where I work</a></p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/regions/">Fractional CTO worldwide →</a></li></ul></div>
+      <div class="fc"><h4>Case studies</h4><ul><li><a href="/case-studies/eu-data-act-connected-products-platform/">EU Data Act connected products platform</a></li><li><a href="/case-studies/ai-provider-resilience-cps-230-insurer/">AI provider resilience under CPS 230</a></li><li><a href="/case-studies/agent-ready-travel-marketplace-sea/">Agent-ready travel marketplace</a></li><li><a href="/case-studies/india-dpdp-consent-platform-lending/">DPDP-ready consent platform for lending</a></li><li><a href="/case-studies/#snapshots">Engagement snapshots</a></li><li><a href="/case-studies/">All case studies →</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/ai-capacity-crunch-cloud-planning/">The AI capacity crunch: what Microsoft&#x27;s quarter means for how you plan compute</a></li><li><a href="/insights/defender-first-ai-models-vulnerability-management/">Defender-first AI models: what Gemini 4 Carbon means for how fast you must patch</a></li><li><a href="/insights/tech-news-2026-10-29-2/">Tech news, 29 October 2026 (update): Gemini 4 Carbon, Azure&#x27;s quarter, Jio&#x27;s debut and Meta&#x27;s Muse in Singapore</a></li><li><a href="/insights/gpt-6-1-terra-computer-use-agent-economics/">GPT-6.1 Terra and the new economics of computer-use agents: what to change, and what to test first</a></li><li><a href="/insights/ai-agent-sandboxing-lessons-anthropic-s1/">What Anthropic&#x27;s IPO filing teaches every team running AI agents about sandboxing</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="/how-i-work/">How I work</a></li>
+        <li><a href="/expertise/">Expertise</a></li>
+        <li><a href="/about/">About</a></li>
+        <li><a href="/play/">Play Orbital Ops</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/privacy/">Privacy &amp; cookies</a><button type="button" class="cookie-link" data-cookie-settings>Cookie settings</button><a href="/subscribe/">RSS</a><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js?v=fddb4ea7bf"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>

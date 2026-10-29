@@ -1,6 +1,64 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Daily tech news</title><link>https://asksumanta.com/</link><description>A CTO&#x27;s take on the day&#x27;s releases, deals and rules</description><language>en-gb</language><lastBuildDate>Thu, 29 Oct 2026 12:25:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/insights/news.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Daily tech news</title><link>https://asksumanta.com/</link></image><item><title>Defender-first AI models: what Gemini 4 Carbon means for how fast you must patch</title><link>https://asksumanta.com/insights/defender-first-ai-models-vulnerability-management/</link><guid isPermaLink="true">https://asksumanta.com/insights/defender-first-ai-models-vulnerability-management/</guid><pubDate>Thu, 29 Oct 2026 12:25:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>security</category><category>ai</category><category>platform</category><description>Google is releasing Gemini 4 Carbon to cyber defenders first. A CTO&#x27;s take on why AI-speed vulnerability discovery means faster patching and behaviour monitoring.</description><content:encoded><![CDATA[<p><em>Google&#x27;s newest frontier model is going to cyber defenders before anyone else, because it is good at finding and exploiting vulnerabilities. That head start will not last. The practical question for engineering leaders is how short your window from disclosure to patch needs to be when finding bugs gets cheap.</em></p><section class="block">
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Daily tech news</title><link>https://asksumanta.com/</link><description>A CTO&#x27;s take on the day&#x27;s releases, deals and rules</description><language>en-gb</language><lastBuildDate>Thu, 29 Oct 2026 16:40:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/insights/news.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Daily tech news</title><link>https://asksumanta.com/</link></image><item><title>The AI capacity crunch: what Microsoft&#x27;s quarter means for how you plan compute</title><link>https://asksumanta.com/insights/ai-capacity-crunch-cloud-planning/</link><guid isPermaLink="true">https://asksumanta.com/insights/ai-capacity-crunch-cloud-planning/</guid><pubDate>Thu, 29 Oct 2026 16:40:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>platform</category><category>ai</category><category>architecture</category><description>Microsoft says cloud demand still exceeds supply. A CTO&#x27;s take on planning AI capacity: reservations, priorities, portability and degraded modes when GPUs run short.</description><content:encoded><![CDATA[<p><em>Azure grew 48% last quarter and Microsoft still says demand outruns supply. For engineering leaders, that is not a stock story. It means AI capacity is a constrained resource you plan, prioritise and hedge, like any other scarce input.</em></p><section class="block">
+<h2>What was reported</h2>
+<p>Microsoft's results for the quarter to 30 September showed Azure revenue growing 48%, ahead of analyst estimates, with guidance for faster growth in the current quarter<sup class="cite"><a href="#ref-1">1</a></sup>. Capital spending of $45.2 billion came in below the company's own projection, which it attributed to delivery timing rather than a change of plan<sup class="cite"><a href="#ref-1">1</a></sup>, and its finance chief said demand still exceeds supply<sup class="cite"><a href="#ref-2">2</a></sup>. Analysts also noted capital expenditure guidance was held steady<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+</section>
+
+<section class="block">
+<h2>Why this matters to engineering leaders</h2>
+<p>When the largest providers are still building as fast as they can and demand outruns them, capacity for AI workloads, especially accelerators in specific regions, is not guaranteed on demand. That affects launch dates, data-residency plans and cost. The response is the same discipline used for any scarce resource: know what you need, decide what matters most, reserve for that, and have a fallback.</p>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Critical</small><div class="dgm-nodes"><span class="hl">Customer-facing inference<em>reserved capacity, home region</em></span></div></div>
+<div class="dgm-tier"><small>Important</small><div class="dgm-nodes"><span>Internal assistants<em>on demand, can queue</em></span><span>Evaluation runs<em>scheduled off-peak</em></span></div></div>
+<div class="dgm-tier"><small>Flexible</small><div class="dgm-nodes"><span>Batch enrichment<em>spot or preemptible</em></span><span>Training and fine-tuning<em>any region allowed by data rules</em></span></div></div>
+<div class="dgm-tier"><small>Fallback</small><div class="dgm-nodes"><span class="hl">Second provider or model<em>tested, not theoretical</em></span><span>Smaller private model<em>floor for critical paths</em></span></div></div>
+</div>
+<figcaption>Tier workloads by how much a shortage would hurt, and match each tier to a capacity strategy.</figcaption>
+</figure>
+</section>
+
+<section class="block">
+<h2>Let the scheduler enforce your priorities</h2>
+<p>On Kubernetes, the scheduler decides where each workload runs, and pod priority and preemption decide what happens when resources run out: higher-priority pods are scheduled first, and lower-priority ones can be evicted to make room<sup class="cite"><a href="#ref-4">4</a></sup><sup class="cite"><a href="#ref-5">5</a></sup>. Giving customer-facing inference a higher priority class than batch jobs means a capacity squeeze lands on work that can wait.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/ai-capacity-crunch-cloud-planning/scheduling.webp" alt="Diagram of Kubernetes scheduling: a client creates new pods, the API server stores them in etcd, the kube-scheduler assigns pods without a node to a node, and kubelets on each node launch them" width="1200" height="935" loading="lazy"></div><figcaption>How the scheduler places new workloads; priority classes decide who goes first, and who is evicted, when capacity is short. <span class="credit">Source: <a href="https://kubernetes.io/blog/2023/01/12/protect-mission-critical-pods-priorityclass/" target="_blank" rel="noopener">Kubernetes blog, Sunny Bhambhani</a> · CC BY 4.0</span></figcaption></figure>
+<div class="callout"><p>In a shortage, something will wait. Decide in advance what it is, and encode that decision in the platform rather than in a meeting during the incident.</p></div>
+</section>
+
+<section class="block">
+<h2>A capacity plan in four steps</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Measure</b><span>Accelerator hours, tokens and latency per workload and region</span></li>
+<li><b>Tier</b><span>Critical, important and flexible, agreed with the business</span></li>
+<li class="hl"><b>Reserve</b><span>Committed capacity for critical work where data rules require it</span></li>
+<li><b>Prioritise</b><span>Priority classes and quotas so shortages hit flexible work first</span></li>
+<li class="hl"><b>Hedge</b><span>A second provider, region or model tested with real traffic</span></li>
+<li><b>Review</b><span>Monthly: usage against reservations, cost, and upcoming launches</span></li>
+</ol>
+<figcaption>Capacity planning for AI is FinOps plus resilience.</figcaption>
+</figure>
+<table class="tbl">
+<thead><tr><th>Lever</th><th>Helps with</th><th>Watch out for</th></tr></thead>
+<tbody>
+<tr><td>Reservations and commitments</td><td>Guaranteed capacity for critical work</td><td>Paying for idle capacity if forecasts are wrong</td></tr>
+<tr><td>Priority classes and quotas</td><td>Shortages fall on flexible work</td><td>Needs agreed tiers, not engineering guesses</td></tr>
+<tr><td>Second provider or region</td><td>Availability and negotiating position</td><td>Data residency and quality differences</td></tr>
+<tr><td>Smaller or routed models</td><td>Less capacity needed per task</td><td>Quality must be proven on your evaluation set</td></tr>
+</tbody>
+</table>
+</section>
+
+<section class="block">
+<h2>CTO take</h2>
+<p>Treat AI capacity as a supply chain. Know your demand by workload, reserve for what is critical in the regions your data rules require, and make sure a shortage degrades flexible work first. Regional constraints differ: residency rules in the EU, India, Saudi Arabia and elsewhere can limit where you are allowed to fail over, so check them before you count a region as a fallback (<a href="https://asksumanta.com/regions/">by region</a>). Related reading: <a href="https://asksumanta.com/insights/focus-finops-ai-cost-allocation/">AI cost allocation with FOCUS</a>, <a href="https://asksumanta.com/insights/kubernetes-dra-gpu-scheduling/">GPU scheduling with DRA</a>, <a href="https://asksumanta.com/insights/llm-model-routing/">LLM model routing</a>, <a href="https://asksumanta.com/case-studies/ai-provider-resilience-cps-230-insurer/">AI provider resilience under CPS 230</a> and the <a href="https://asksumanta.com/insights/tech-news-2026-10-29-2/">tech news update for 29 October</a>.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I help teams plan AI capacity and cost alongside architecture, so launches are not hostage to a shortage. See <a href="https://asksumanta.com/fractional-cto/">fractional CTO</a> and <a href="https://asksumanta.com/ai-architect/">AI architecture</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section><p><a href="https://asksumanta.com/insights/ai-capacity-crunch-cloud-planning/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Defender-first AI models: what Gemini 4 Carbon means for how fast you must patch</title><link>https://asksumanta.com/insights/defender-first-ai-models-vulnerability-management/</link><guid isPermaLink="true">https://asksumanta.com/insights/defender-first-ai-models-vulnerability-management/</guid><pubDate>Thu, 29 Oct 2026 12:25:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>security</category><category>ai</category><category>platform</category><description>Google is releasing Gemini 4 Carbon to cyber defenders first. A CTO&#x27;s take on why AI-speed vulnerability discovery means faster patching and behaviour monitoring.</description><content:encoded><![CDATA[<p><em>Google&#x27;s newest frontier model is going to cyber defenders before anyone else, because it is good at finding and exploiting vulnerabilities. That head start will not last. The practical question for engineering leaders is how short your window from disclosure to patch needs to be when finding bugs gets cheap.</em></p><section class="block">
 <h2>What was announced</h2>
 <p>Google announced Gemini 4 Carbon on 28 October 2026 as its next frontier model, highlighting cybersecurity and long-running engineering work<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. Rather than a general launch, Carbon is going first to a small group of cyber defenders, with trusted partners added gradually and no date yet for developers or businesses; the security benchmark results quoted at launch are Google's own<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
 </section>
