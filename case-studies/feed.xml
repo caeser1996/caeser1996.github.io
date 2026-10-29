@@ -1,6 +1,84 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link><description>Anonymised engagements with architecture and flow diagrams</description><language>en-gb</language><lastBuildDate>Thu, 29 Oct 2026 14:40:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/case-studies/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link></image><item><title>Access by design: building an EU Data Act-ready data platform for a maker of connected equipment</title><link>https://asksumanta.com/case-studies/eu-data-act-connected-products-platform/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/eu-data-act-connected-products-platform/</guid><pubDate>Thu, 29 Oct 2026 14:40:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>data</category><category>architecture</category><category>governance</category><description>How a European equipment maker can meet the EU Data Act&#x27;s access-by-design rules: product data users can reach and share, consent, trade secrets and cloud portability.</description><content:encoded><![CDATA[<p><em>A European manufacturer of connected heating and ventilation equipment collected rich product data, but only its own service teams could use it. The EU Data Act turned that into an obligation: users must be able to access the data their products generate and share it with others. The goal was to build that into the product platform rather than bolt on a support process.</em></p><h2>The situation</h2>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link><description>Anonymised engagements with architecture and flow diagrams</description><language>en-gb</language><lastBuildDate>Thu, 29 Oct 2026 17:20:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/case-studies/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link></image><item><title>Ready before it is law: preparing a UK managed service provider for the Cyber Security and Resilience Bill</title><link>https://asksumanta.com/case-studies/uk-msp-cyber-resilience-bill-readiness/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/uk-msp-cyber-resilience-bill-readiness/</guid><pubDate>Thu, 29 Oct 2026 17:20:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>security</category><category>governance</category><category>platform</category><description>How a UK managed service provider can prepare for regulation under the Cyber Security and Resilience Bill: privileged access, incident reporting and customer notice.</description><content:encoded><![CDATA[<p><em>A mid-sized UK managed service provider held administrator access to hundreds of customer environments. The Cyber Security and Resilience Bill would bring providers like it under the NIS regulations for the first time. The goal was to get ahead of it: control privileged access centrally, detect and report incidents quickly, and tell affected customers promptly.</em></p><h2>The situation</h2>
+<p>A UK managed service provider looked after IT for several hundred organisations: small businesses, schools, professional services firms and a few public-sector suppliers. Its technicians held administrator access to customer networks, cloud tenants and line-of-business systems. Over the years, access had accumulated in shared accounts, remote management tools and scripts with stored credentials.</p>
+<p><strong>Why now.</strong> The Cyber Security and Resilience Bill would bring medium and large managed service providers within the scope of the NIS regulations, because of the privileged access they hold to customer systems<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. It also proposes duties to report significant incidents and to identify and notify customers likely to be affected<sup class="cite"><a href="#ref-3">3</a></sup>. In October 2026 the Bill was still before Parliament<sup class="cite"><a href="#ref-4">4</a></sup>, but the direction was clear, and customers were already asking about it in renewals.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>No standing administrator access</strong> to customer environments.</li>
+<li><strong>Every privileged session attributable</strong> to a named technician, approved and recorded.</li>
+<li><strong>Incidents detected and escalated fast</strong>, with a process that can support early notification and a fuller report.</li>
+<li><strong>Affected customers identifiable within minutes</strong>, not days of spreadsheet work.</li>
+<li><strong>Automation under the same rules</strong> as people, including AI-assisted tools.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>People and tools</small><div class="dgm-nodes"><span>Technicians<em>named identities</em></span><span>Automation and agents<em>scoped service identities</em></span></div></div>
+<div class="dgm-tier"><small>Identity</small><div class="dgm-nodes"><span class="hl">Central identity provider<em>MFA, groups, roles</em></span><span>Just-in-time elevation<em>approved, time-limited</em></span></div></div>
+<div class="dgm-tier"><small>Access</small><div class="dgm-nodes"><span class="hl">Privileged access broker<em>no shared passwords</em></span><span>Session recording<em>per customer</em></span><span>Remote tools<em>behind the broker</em></span></div></div>
+<div class="dgm-tier"><small>Detect</small><div class="dgm-nodes"><span>Security event pipeline<em>from tools and tenants</em></span><span class="hl">Incident case management<em>clock starts on detection</em></span></div></div>
+<div class="dgm-tier"><small>Notify</small><div class="dgm-nodes"><span class="hl">Customer impact map<em>which tools touch which customers</em></span><span>Notification service<em>templates and audit</em></span></div></div>
+</div>
+<figcaption>Identity is the control point; the impact map turns an incident into a list of customers to notify.</figcaption>
+</figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Request</b><span>A technician asks for access to a customer system for a ticket</span></li>
+<li><b>Approve</b><span>Time-limited elevation approved against the ticket</span></li>
+<li><b>Connect</b><span>Access through the broker; the session is recorded</span></li>
+<li class="hl"><b>Detect</b><span>Anomalies in tools or tenants open an incident automatically</span></li>
+<li class="hl"><b>Assess</b><span>The impact map lists affected customers and services</span></li>
+<li><b>Notify</b><span>Early notifications sent, followed by a fuller report</span></li>
+</ol>
+<figcaption>The same identity and access records that make work auditable also answer "who is affected?".</figcaption>
+</figure>
+
+<h2>The hard part: one front door for hundreds of environments</h2>
+<p>Access was spread across per-customer accounts in dozens of tools, each with its own login and its own way of revoking access. The design moved to a single identity provider for all technician and automation access, with customers' systems trusting it for scoped, time-limited sessions. The same principle is spreading in AI tooling: the Model Context Protocol's Enterprise-Managed Authorization lets an organisation provision access to many servers through its identity provider, scoped to users' groups and roles, instead of authenticating to each one separately<sup class="cite"><a href="#ref-6">6</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/uk-msp-cyber-resilience-bill-readiness/central-authorisation.webp" alt="Side-by-side diagram: on the left a user authenticates separately to five servers, on the right the user signs in once through an identity provider which connects to all authorised servers" width="1200" height="659" loading="lazy"></div><figcaption>Per-system logins versus one identity provider: central control is what makes access revocable and auditable. <span class="credit">Source: <a href="https://blog.modelcontextprotocol.io/posts/enterprise-managed-auth/" target="_blank" rel="noopener">Model Context Protocol blog, Paul Carleton</a> · CC BY 4.0</span></figcaption></figure>
+<div class="callout"><p>An MSP's biggest risk is its own access. Make every privileged session temporary, attributable and recorded, and most of the regulatory work follows.</p></div>
+<p>Automation got no exemption. Scripts and AI-assisted tools used scoped service identities through the same broker, with no stored administrator passwords. More on that in <a href="https://asksumanta.com/insights/securing-mcp-servers-checklist/">securing MCP servers</a> and <a href="https://asksumanta.com/insights/ai-agent-sandboxing-lessons-anthropic-s1/">sandboxing AI agents</a>.</p>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Security</small><ol><li>Privileged access inventory</li><li class="hl">Broker and recording</li><li>CAF mapping</li></ol></div>
+<div class="dgm-lane"><small>Service delivery</small><ol><li>Ticket-linked access</li><li>Technician training</li><li class="hl">Incident drills</li></ol></div>
+<div class="dgm-lane"><small>Commercial</small><ol><li>Customer impact map</li><li>Notification templates</li><li>Contract updates</li></ol></div>
+</div>
+<figcaption>Security built the controls; service delivery made them part of everyday work; commercial owned the customer side.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Inventory</b><ul><li>Every privileged account</li><li>Every remote tool</li><li>Customer to tool map</li></ul></div>
+<div><small>Phase 2</small><b>Centralise</b><ul><li>Identity provider</li><li>Privileged access broker</li><li>Remove shared credentials</li></ul></div>
+<div><small>Phase 3</small><b>Detect</b><ul><li>Event pipeline</li><li>Incident case management</li><li>Reporting timelines</li></ul></div>
+<div><small>Phase 4</small><b>Prove</b><ul><li>Notification drills</li><li>CAF assessment</li><li>Customer assurance pack</li></ul></div>
+</div>
+<figcaption>Inventory first: you cannot remove access you have not found.</figcaption>
+</figure>
+<p>Controls were mapped to the NCSC Cyber Assessment Framework, which organises security into outcomes for managing risk, protecting against attack, detecting events and minimising impact<sup class="cite"><a href="#ref-5">5</a></sup>. That gave customers and, later, a regulator a recognised way to read the programme.</p>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Prepare before the Bill passes</td><td>Wait for the final text</td><td>The core controls are good practice either way, and customers were asking now</td></tr>
+<tr><td>Just-in-time access only</td><td>Standing admin accounts with strong passwords</td><td>No standing access means less to steal</td></tr>
+<tr><td>One identity provider for people and automation</td><td>Per-tool accounts</td><td>Central revocation and a single audit trail</td></tr>
+<tr><td>Customer impact map as a system</td><td>Spreadsheets</td><td>Prompt notification needs answers in minutes</td></tr>
+<tr><td>Map to the NCSC CAF</td><td>A home-grown checklist</td><td>A recognised framework customers and regulators understand</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: start with the privileged access inventory, because it surfaced most of the risk. Differently: run the first notification drill earlier. It showed that knowing which customers were affected was harder than detecting the incident. Related reading: <a href="https://asksumanta.com/insights/defender-first-ai-models-vulnerability-management/">defender-first AI and patch cycles</a> and <a href="https://asksumanta.com/case-studies/security-operations-ai-copilot/">an AI copilot for the security operations centre</a>.</p>
+<p>If you run or rely on managed services in the UK, my <a href="https://asksumanta.com/fractional-cto-united-kingdom/">work with UK companies</a> explains how I approach it, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/uk-msp-cyber-resilience-bill-readiness/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Access by design: building an EU Data Act-ready data platform for a maker of connected equipment</title><link>https://asksumanta.com/case-studies/eu-data-act-connected-products-platform/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/eu-data-act-connected-products-platform/</guid><pubDate>Thu, 29 Oct 2026 14:40:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>data</category><category>architecture</category><category>governance</category><description>How a European equipment maker can meet the EU Data Act&#x27;s access-by-design rules: product data users can reach and share, consent, trade secrets and cloud portability.</description><content:encoded><![CDATA[<p><em>A European manufacturer of connected heating and ventilation equipment collected rich product data, but only its own service teams could use it. The EU Data Act turned that into an obligation: users must be able to access the data their products generate and share it with others. The goal was to build that into the product platform rather than bolt on a support process.</em></p><h2>The situation</h2>
 <p>A manufacturer of connected heat pumps and ventilation units sold across the European Union. Its devices streamed temperatures, energy use, fault codes and runtime data to the cloud, where service teams used it for diagnostics and the product team used it to improve designs. Homeowners, installers and energy advisers saw only a slice of it in an app, and there was no way for a customer to take their data to someone else.</p>
 <p><strong>Why now.</strong> The EU Data Act gives users rights over the data their connected products and related services generate, including access and sharing with third parties they choose<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. Its access-by-design obligation applies to connected products placed on the market after 12 September 2026, and commentators stress that it is an engineering obligation that has to be built into the product<sup class="cite"><a href="#ref-3">3</a></sup>. Separately, the Act's cloud switching rules prohibit switching charges from 12 January 2027<sup class="cite"><a href="#ref-3">3</a></sup>. For a product line launching new models, both dates landed in the middle of the roadmap.</p>
 
