@@ -1264,11 +1264,15 @@ def main():
     urls += [(f"/{k}/", "0.8", "monthly") for k in HUB_PAGES] + [("/regions/", "0.8", "monthly"), ("/subscribe/", "0.4", "monthly")]
     urls += [(f"/{m['slug']}/", "0.8", "monthly") for m in regions]
     urls += [(f"/{m['slug']}/", "0.9", "monthly") for m in pages]
-    urls += [(f"/insights/{m['slug']}/", "0.7", "yearly") for m in posts]
+    # Articles report their own publish date; listing and service pages report the latest content date.
+    newest = max([m.get("date", TODAY) for m in posts + cases] or [TODAY])
+    urls = [(u, pr, c, newest) for u, pr, c in urls]
+    urls += [(f"/insights/{m['slug']}/", "0.7", "yearly", m.get("date", newest)) for m in posts]
     if cases:
-        urls += [("/case-studies/", "0.8", "weekly")] + [(f"/case-studies/{m['slug']}/", "0.8", "yearly") for m in cases]
-    sm = "".join(f"  <url><loc>{SITE}{u}</loc><lastmod>{TODAY}</lastmod><changefreq>{c}</changefreq>"
-                 f"<priority>{pr}</priority></url>\n" for u, pr, c in urls)
+        urls += [("/case-studies/", "0.8", "weekly", newest)]
+        urls += [(f"/case-studies/{m['slug']}/", "0.8", "yearly", m.get("date", newest)) for m in cases]
+    sm = "".join(f"  <url><loc>{SITE}{u}</loc><lastmod>{lm}</lastmod><changefreq>{c}</changefreq>"
+                 f"<priority>{pr}</priority></url>\n" for u, pr, c, lm in urls)
     (ROOT / "sitemap.xml").write_text(
         '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
         + sm + "</urlset>\n")
