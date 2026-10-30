@@ -1,0 +1,82 @@
+<!--{"title": "Case study: a mandatory open finance platform for a Colombian bank", "description": "How a mid-sized Colombian bank can prepare for mandatory open finance under Decree 368 of 2026: consent, secure APIs, data receiving and measurable reliability.", "short": "Mandatory open finance for a Colombian bank", "h1": "From voluntary to mandatory: an open finance platform for a mid-sized Colombian bank", "kicker": "Case study · Open finance APIs", "lede": "Colombia has made open finance mandatory for supervised financial institutions. A mid-sized bank had to become both a reliable data provider and a capable data receiver, on standards still being written, without building twice. The answer was a platform designed around consent, security profiles and measurable service levels.", "date": "2026-10-30", "datetime": "2026-10-30T11:50:00+04:00", "readtime": "9 min read", "sector": "Banking · Colombia", "role": "Fractional CTO and principal architect", "engagement": "Assessment, architecture and delivery leadership", "scope": "Consent service, API gateway, data provider and receiver, security profile, service-level reporting", "stack": ["API gateway (Envoy)", "OAuth 2.0 and FAPI 2.0 security profile", "Consent service", "Change data capture", "Event streaming", "Canonical data model", "OpenTelemetry tracing", "Service-level reporting"], "outcomes": ["A single consent service covering both sharing and receiving data", "Provider APIs built on a canonical model that can map to the SFC standards as they are published", "Security aligned with a recognised financial-grade API profile", "Availability and latency measured per endpoint, ready for regulator indicators", "Received data usable by credit and product teams with purpose recorded"], "tags": ["data", "security", "architecture"], "keywords": ["Colombia open finance", "Decreto 368 de 2026", "finanzas abiertas obligatorias", "Superintendencia Financiera de Colombia", "open finance API platform", "FAPI 2.0", "consent management", "Latin America open banking", "fractional CTO Latin America", "API gateway tracing"], "faq": [["Is open finance mandatory in Colombia?", "Yes. Decree 368 of 2026 makes participation mandatory for entities supervised by the Financial Superintendence of Colombia (SFC), both as data providers and data receivers, replacing the earlier voluntary scheme. Data can only be shared with the customer's prior, express and informed consent."], ["Have the technical standards been published?", "The decree leaves the common, mandatory standards to the SFC. Commentary on the decree sets out a deadline in October 2026 for the SFC to publish its schedule for issuing them. Banks should design so that the final standards can be mapped in without rebuilding."], ["Why use a financial-grade API security profile before the standards are final?", "Profiles such as FAPI 2.0 are widely used by open finance schemes and cover the hard parts, such as sender-constrained tokens and strong client authentication. Building to one early makes it likely that most of the work carries over, whatever the final local profile says."]], "related": ["/fractional-cto/", "/regions/", "/technical-due-diligence/"], "citations": [{"title": "Decreto 368 de 2026", "url": "https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=275576", "publisher": "Función Pública (Colombia)", "date": "2026"}, {"title": "Finanzas abiertas obligatorias impulsarán el desarrollo del sistema y la inclusión financiera en el país", "url": "https://www.superfinanciera.gov.co/publicaciones/10116081/finanzas-abiertas-obligatorias-impulsaran-el-desarrollo-del-sistema-y-la-inclusion-financiera-en-el-pais/", "publisher": "Superintendencia Financiera de Colombia", "date": "Apr 2026"}, {"title": "Open Finance Colombia 2026: The Mandatory Path Toward Financial Inclusion", "url": "https://facephi.com/observatory/en/open-finance-colombia-2026-the-mandatory-path-toward-financial-inclusion/", "publisher": "Facephi Observatory", "date": "2026"}, {"title": "FAPI 2.0 Security Profile", "url": "https://openid.net/specs/fapi-security-profile-2_0-final.html", "publisher": "OpenID Foundation", "date": "2025"}, {"title": "Observability at the Edge: New OTel features in Envoy and Istio", "url": "https://opentelemetry.io/blog/2024/new-otel-features-envoy-istio/", "publisher": "OpenTelemetry blog", "date": "7 Jun 2024"}]}-->
+<h2>The situation</h2>
+<p>A mid-sized Colombian bank offered current accounts, cards and small business loans. It had taken part in the earlier, voluntary open finance scheme in a limited way: a few partner integrations, each built separately, with its own consent screens and its own security setup. Customer data lived in a core banking system, a card platform and a lending system, each with a different idea of what a "customer" was.</p>
+<p><strong>Why now.</strong> Decree 368 of 2026 made open finance mandatory for institutions supervised by the Financial Superintendence of Colombia (SFC), replacing the voluntary framework<sup class="cite"><a href="#ref-1">1</a></sup>. Supervised entities must act as both data providers and data receivers, and data can only flow with the customer's prior, express and informed consent<sup class="cite"><a href="#ref-2">2</a></sup>. The common technical standards are left to the SFC, and commentary on the decree sets out a deadline in October 2026 for the SFC to publish its schedule for them, with a period for institutions to comply after each standard is issued<sup class="cite"><a href="#ref-3">3</a></sup>. The bank had to start building before the details were final.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>One consent model</strong> for every data flow, out and in, that customers can see and revoke.</li>
+<li><strong>Standards-ready APIs</strong>: a canonical internal model that can be mapped to the SFC standards as they arrive.</li>
+<li><strong>Financial-grade security</strong> for every third party, with no bespoke partner setups.</li>
+<li><strong>Measurable reliability</strong>: availability and latency per endpoint, because the regulator will publish indicators.</li>
+<li><strong>Useful received data</strong>: data from other institutions available to credit and product teams, with purpose recorded.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Participants</small><div class="dgm-nodes"><span>Other banks and fintechs<em>receivers and providers</em></span><span>Customers<em>grant and revoke consent</em></span></div></div>
+<div class="dgm-tier"><small>Edge</small><div class="dgm-nodes"><span class="hl">API gateway<em>Envoy, mTLS, rate limits</em></span><span class="hl">Authorisation server<em>FAPI 2.0 profile</em></span></div></div>
+<div class="dgm-tier"><small>Consent</small><div class="dgm-nodes"><span class="hl">Consent service<em>scope, purpose, expiry, revocation</em></span><span>Customer dashboard<em>see and revoke</em></span></div></div>
+<div class="dgm-tier"><small>Provider</small><div class="dgm-nodes"><span>Data APIs<em>accounts, cards, loans</em></span><span>Canonical model<em>one customer view</em></span><span>Change data capture<em>fresh, not batch</em></span></div></div>
+<div class="dgm-tier"><small>Receiver</small><div class="dgm-nodes"><span>Data client<em>calls other institutions</em></span><span>Received data store<em>purpose-tagged</em></span></div></div>
+<div class="dgm-tier"><small>Operate</small><div class="dgm-nodes"><span>Tracing<em>OpenTelemetry</em></span><span class="hl">Service-level reporting<em>per endpoint</em></span><span>Audit log<em>every access</em></span></div></div>
+</div>
+<figcaption>Provider and receiver share one edge, one consent service and one operations layer.</figcaption>
+</figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Request</b><span>A receiver asks for access to specific data for a stated purpose</span></li>
+<li><b>Consent</b><span>The customer authenticates with the bank and approves scope and duration</span></li>
+<li class="hl"><b>Token</b><span>A sender-constrained token is issued for that consent only</span></li>
+<li><b>Serve</b><span>The gateway checks token and consent; data APIs answer from the canonical model</span></li>
+<li class="hl"><b>Measure</b><span>Each call is traced and counted against availability and latency targets</span></li>
+<li><b>Revoke</b><span>The customer can withdraw consent; tokens stop working at once</span></li>
+</ol>
+<figcaption>The same path runs in reverse when the bank is the receiver.</figcaption>
+</figure>
+
+<h2>The hard part: building to standards that do not exist yet</h2>
+<p>The decree sets the framework, but the technical standards come later<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>. Waiting meant missing the window; building to a guess meant rework. The team separated what was certain from what was not.</p>
+<p>Security was the most certain. Open finance schemes around the world converge on financial-grade API profiles, so the authorisation server was built to the OpenID Foundation's FAPI 2.0 Security Profile, with sender-constrained tokens and strong client authentication<sup class="cite"><a href="#ref-4">4</a></sup>. Whatever the local profile adds, most of that work carries over.</p>
+<p>Data formats were the least certain. Instead of exposing internal systems directly, the team built a canonical model of customers, accounts, cards and loans, fed by change data capture from each source system. The public API shapes became a thin mapping layer on top. When the SFC publishes a standard, the change lands in the mapping, not in three core systems. More on that pattern in <a href="/insights/change-data-capture-event-streams/">change data capture and event streams</a> and <a href="/insights/data-contracts-playbook/">data contracts</a>.</p>
+<p>Reliability had to be measurable from day one, because the SFC must publish indicators on the system<sup class="cite"><a href="#ref-2">2</a></sup>. The gateway emits a trace for every call, so availability and latency can be reported per endpoint and per participant, and a slow downstream system shows up in the trace rather than in a complaint<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/colombia-open-finance-api-platform/gateway-tracing.webp" alt="Diagram of two services, each with an Envoy proxy that starts or continues a trace and creates new spans for outgoing calls, with an Istio control plane configuring the OpenTelemetry tracer" width="1200" height="780" loading="lazy"></div><figcaption>Tracing at the edge: every open finance call gets a span at the gateway, so service levels come from real traffic. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2024/new-otel-features-envoy-istio/" target="_blank" rel="noopener">OpenTelemetry blog, Joao Grassi</a> · CC BY 4.0</span></figcaption></figure>
+<div class="callout"><p>When the rules are still being written, build the parts every scheme shares, consent, security and measurement, and keep the parts that will change behind a thin mapping layer.</p></div>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Compliance and legal</small><ol><li>Decree and SFC tracking</li><li class="hl">Consent wording and purposes</li><li>Participant agreements</li></ol></div>
+<div class="dgm-lane"><small>Engineering</small><ol><li>Canonical model and CDC</li><li class="hl">Gateway and authorisation server</li><li>Service-level reporting</li></ol></div>
+<div class="dgm-lane"><small>Product and credit</small><ol><li>Receiver use cases</li><li>Customer dashboard</li><li class="hl">Use of received data</li></ol></div>
+</div>
+<figcaption>Compliance owned purpose, engineering owned the platform, product owned the value of received data.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Foundations</b><ul><li>Consent service</li><li>Authorisation server</li><li>Gateway with tracing</li></ul></div>
+<div><small>Phase 2</small><b>Provide</b><ul><li>Canonical model</li><li>Change data capture</li><li>Account and card APIs</li></ul></div>
+<div><small>Phase 3</small><b>Receive</b><ul><li>Data client</li><li>Purpose-tagged store</li><li>First credit use case</li></ul></div>
+<div><small>Phase 4</small><b>Conform</b><ul><li>Map SFC standards as issued</li><li>Indicator reporting</li><li>Participant onboarding</li></ul></div>
+</div>
+<figcaption>Foundations first; standards mapped in as they are published.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Build to FAPI 2.0 now</td><td>Wait for the local profile</td><td>Security work carries over; waiting costs months</td></tr>
+<tr><td>Canonical model behind thin mappings</td><td>Expose source systems directly</td><td>Standards changes land in one place</td></tr>
+<tr><td>Change data capture</td><td>Nightly batch extracts</td><td>Shared data must be current, and batch hides failures</td></tr>
+<tr><td>One consent service for in and out</td><td>Separate provider and receiver consent</td><td>One place for customers to see and revoke</td></tr>
+<tr><td>Trace every call at the gateway</td><td>Sample or rely on logs</td><td>Regulator indicators need complete, per-endpoint data</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: treat the receiver side as a product, not a compliance task. Data from other institutions is what makes open finance worth the cost, as the <a href="/case-studies/brazil-credit-ai-lgpd-explainability/">Brazilian lender</a> found when it used consented data in credit decisions. Differently: start participant onboarding earlier. Technical integration was faster than agreeing testing and support arrangements with other institutions. Related: <a href="/insights/idempotent-payments-order-pipelines/">idempotent financial pipelines</a> and <a href="/regions/">where I work</a>.</p>
+<p>If you are preparing for open finance in Colombia or elsewhere in Latin America, see my <a href="/fractional-cto/">fractional CTO work</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>

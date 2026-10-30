@@ -1,6 +1,165 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link><description>Fractional CTO and AI architect: insights, case studies and daily tech news.</description><language>en-gb</language><lastBuildDate>Fri, 30 Oct 2026 11:05:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link></image><item><title>The AI memory squeeze: what Samsung&#x27;s and SK hynix&#x27;s record quarters mean for your inference architecture</title><link>https://asksumanta.com/insights/ai-memory-squeeze-inference-architecture/</link><guid isPermaLink="true">https://asksumanta.com/insights/ai-memory-squeeze-inference-architecture/</guid><pubDate>Fri, 30 Oct 2026 11:05:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>ai</category><category>llm</category><category>platform</category><description>Samsung and SK hynix posted record profits as AI memory stays tight. A CTO&#x27;s take on designing inference for memory, not just GPUs, and buying hardware now.</description><content:encoded><![CDATA[<p><em>Korea&#x27;s two memory makers have just reported the biggest quarters in their history, and the reason is the memory that sits next to every AI accelerator. When memory is the scarce, rising-cost part of the stack, inference architecture should be designed around it. Here is what that means in practice.</em></p><section class="block">
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link><description>Fractional CTO and AI architect: insights, case studies and daily tech news.</description><language>en-gb</language><lastBuildDate>Fri, 30 Oct 2026 12:30:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link></image><item><title>Onshore by January: moving Nigerian payment data home without breaking a pan-African platform</title><link>https://asksumanta.com/case-studies/nigeria-payment-data-localisation-platform/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/nigeria-payment-data-localisation-platform/</guid><pubDate>Fri, 30 Oct 2026 12:30:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>platform</category><category>data</category><category>kubernetes</category><description>How a Lagos-based payments company can meet the CBN&#x27;s 2027 payment data localisation deadline without splitting its platform: cells, data classes and tested cutover.</description><content:encoded><![CDATA[<p><em>A Lagos-based payments company ran one platform for Nigeria, Kenya and Ghana from an overseas cloud region. The Central Bank of Nigeria then set a deadline for payment transaction data generated in Nigeria to be stored in Nigeria. The task was to move that data onshore, keep one platform for every market and cut over without losing a payment.</em></p><h2>The situation</h2>
+<p>A payments company headquartered in Lagos offered merchant collections, payouts and card processing in Nigeria, Kenya and Ghana. Nigeria was its largest market. Everything ran in one overseas public cloud region: one set of databases, one event stream, one analytics warehouse. It was simple to run, and every market shared the same release process.</p>
+<p><strong>Why now.</strong> The Central Bank of Nigeria directed banks, fintechs and other payment service providers to store payment transaction data generated in Nigeria on servers in Nigeria from 1 January 2027, with vendors that handle that data expected to align<sup class="cite"><a href="#ref-1">1</a></sup>. Legal commentary noted open questions, such as how "generated in Nigeria" applies to transactions that cross borders<sup class="cite"><a href="#ref-2">2</a></sup>. Separately, the federal government adopted a National Digital Cloud Policy in 2026, which commentators describe as classifying data and applying residency rules to defined sensitive and sovereign categories rather than all data<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>. With only months to the deadline, the company needed a plan it could execute, not a debate about interpretation.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>Nigerian payment transaction data at rest and in processing in Nigeria</strong> by the deadline, including backups and logs.</li>
+<li><strong>One platform</strong>: the same code, pipelines and on-call for every market.</li>
+<li><strong>Every field classified</strong>, so engineers know what may leave a country and in what form.</li>
+<li><strong>No lost or duplicated payments</strong> during migration.</li>
+<li><strong>Vendors aligned</strong>: fraud, card and support tools that touch Nigerian payment data had to follow it.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Global control</small><div class="dgm-nodes"><span class="hl">Management cluster<em>Cluster API and GitOps</em></span><span>Shared services<em>no payment data</em></span></div></div>
+<div class="dgm-tier"><small>Nigeria cell</small><div class="dgm-nodes"><span class="hl">Onshore data centre<em>payments, ledger, logs</em></span><span>Tokenisation<em>tokens only leave</em></span></div></div>
+<div class="dgm-tier"><small>Kenya and Ghana cells</small><div class="dgm-nodes"><span>Cloud region<em>same code, own data</em></span></div></div>
+<div class="dgm-tier"><small>Cross-border layer</small><div class="dgm-nodes"><span class="hl">Allowed exports<em>tokens, aggregates, metrics</em></span><span>Policy checks<em>in the pipeline</em></span></div></div>
+<div class="dgm-tier"><small>Group functions</small><div class="dgm-nodes"><span>Analytics<em>aggregates only</em></span><span>Fraud models<em>trained per cell</em></span><span>Observability<em>no payload data</em></span></div></div>
+</div>
+<figcaption>One control plane, data pinned to cells. Only classified, permitted data crosses borders.</figcaption>
+</figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Route</b><span>The edge routes each request to the cell for its market</span></li>
+<li><b>Process</b><span>Authorisation, ledger and settlement run inside the Nigeria cell</span></li>
+<li class="hl"><b>Store</b><span>Transactions, logs and backups stay on Nigerian infrastructure</span></li>
+<li><b>Tokenise</b><span>Identifiers that must be shared are replaced with tokens</span></li>
+<li class="hl"><b>Export</b><span>Only classified, permitted aggregates and metrics leave the cell</span></li>
+<li><b>Report</b><span>Group analytics and dashboards work from those exports</span></li>
+</ol>
+<figcaption>Processing and storage stay local; reporting works from what is allowed to travel.</figcaption>
+</figure>
+
+<h2>The hard part: one platform, several homes</h2>
+<p>The tempting answer was to fork: copy the platform into a Nigerian data centre and run it separately. That doubles releases, on-call and drift. Instead, the team adopted a cell design. Each market runs as a cell with identical services, deployed from the same Git repository. The cells differ only in where they run and in the data rules applied to them.</p>
+<p>Cluster API made that practical across very different infrastructure. A management cluster declares the workload clusters, whether they run in a Nigerian colocation facility or a public cloud region, and the same tooling creates, upgrades and replaces them<sup class="cite"><a href="#ref-5">5</a></sup>. The management cluster holds no payment data, so it can sit outside Nigeria.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/nigeria-payment-data-localisation-platform/cluster-api.webp" alt="Diagram of a management Kubernetes cluster running Cluster API, which creates and manages three tenant Kubernetes clusters" width="1100" height="524" loading="lazy"></div><figcaption>One management cluster, many workload clusters: the pattern that kept every market on the same platform. <span class="credit">Source: <a href="https://kubernetes.io/blog/2024/04/05/diy-create-your-own-cloud-with-kubernetes-part-3/" target="_blank" rel="noopener">Kubernetes blog, Andrei Kvapil</a> · CC BY 4.0</span></figcaption></figure>
+<p>The second hard part was the data no one thinks about: logs, traces, backups, support tickets and fraud vendor feeds. The team classified fields into a short list of classes, from public to payment transaction data, and enforced the classes in code: telemetry carried identifiers as tokens, backups were written to onshore storage only, and export pipelines refused unclassified fields. See <a href="https://asksumanta.com/insights/data-contracts-playbook/">data contracts</a> for how to make that stick.</p>
+<div class="callout"><p>Localisation fails in the side channels. Classify logs, traces, backups and vendor feeds as carefully as the main database.</p></div>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Compliance and legal</small><ol><li>Directive interpretation</li><li class="hl">Data classes</li><li>Vendor terms</li></ol></div>
+<div class="dgm-lane"><small>Platform engineering</small><ol><li>Onshore facility</li><li class="hl">Cluster API and GitOps</li><li>Backups and DR</li></ol></div>
+<div class="dgm-lane"><small>Payments engineering</small><ol><li>Replication</li><li class="hl">Product-by-product cutover</li><li>Reconciliation</li></ol></div>
+</div>
+<figcaption>Legal defined the classes, platform built the home, payments moved the money flows.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Classify</b><ul><li>Field inventory</li><li>Data classes</li><li>Vendor review</li></ul></div>
+<div><small>Phase 2</small><b>Build</b><ul><li>Onshore cell</li><li>Management cluster</li><li>Tokenisation service</li></ul></div>
+<div><small>Phase 3</small><b>Replicate</b><ul><li>Logical replication</li><li>Dual-run checks</li><li>Reconciliation reports</li></ul></div>
+<div><small>Phase 4</small><b>Cut over</b><ul><li>Per product</li><li>Rollback rehearsed</li><li>Old copies removed</li></ul></div>
+</div>
+<figcaption>Classify first: it decides what has to move.</figcaption>
+</figure>
+<p>Migration ran product by product, starting with payouts, which had the simplest flows. Databases were replicated into the Nigeria cell and both copies ran side by side, with reconciliation reports comparing every transaction, before traffic moved. Payment idempotency mattered here; see <a href="https://asksumanta.com/insights/idempotent-payments-order-pipelines/">idempotent payment pipelines</a>. After each cutover, overseas copies and backups were deleted on a recorded schedule.</p>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Cells on one codebase</td><td>Fork a Nigerian platform</td><td>One release process and one on-call</td></tr>
+<tr><td>Cluster API across colocation and cloud</td><td>Different tooling per location</td><td>Same lifecycle everywhere</td></tr>
+<tr><td>Tokens and aggregates cross borders</td><td>Copy full records to the group warehouse</td><td>Group reporting without moving payment data</td></tr>
+<tr><td>Product-by-product cutover</td><td>One big switch</td><td>Smaller blast radius and real rollback</td></tr>
+<tr><td>Classify telemetry and backups</td><td>Focus on primary databases</td><td>Side channels are where localisation breaks</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: classify before building. The classes answered most of the hard questions, including which vendors were affected. Differently: involve card and fraud vendors earlier. Their onshore options and timelines set the critical path more than our own engineering did. For related patterns, see <a href="https://asksumanta.com/case-studies/multi-cloud-terraform-estate/">a multi-cloud Terraform estate</a>, <a href="https://asksumanta.com/insights/kubernetes-multi-tenancy/">Kubernetes multi-tenancy</a> and <a href="https://asksumanta.com/regions/">where I work</a>.</p>
+<p>If you run payments or financial data across African markets, see my <a href="https://asksumanta.com/fractional-cto/">fractional CTO work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/nigeria-payment-data-localisation-platform/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>From voluntary to mandatory: an open finance platform for a mid-sized Colombian bank</title><link>https://asksumanta.com/case-studies/colombia-open-finance-api-platform/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/colombia-open-finance-api-platform/</guid><pubDate>Fri, 30 Oct 2026 11:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>data</category><category>security</category><category>architecture</category><description>How a mid-sized Colombian bank can prepare for mandatory open finance under Decree 368 of 2026: consent, secure APIs, data receiving and measurable reliability.</description><content:encoded><![CDATA[<p><em>Colombia has made open finance mandatory for supervised financial institutions. A mid-sized bank had to become both a reliable data provider and a capable data receiver, on standards still being written, without building twice. The answer was a platform designed around consent, security profiles and measurable service levels.</em></p><h2>The situation</h2>
+<p>A mid-sized Colombian bank offered current accounts, cards and small business loans. It had taken part in the earlier, voluntary open finance scheme in a limited way: a few partner integrations, each built separately, with its own consent screens and its own security setup. Customer data lived in a core banking system, a card platform and a lending system, each with a different idea of what a "customer" was.</p>
+<p><strong>Why now.</strong> Decree 368 of 2026 made open finance mandatory for institutions supervised by the Financial Superintendence of Colombia (SFC), replacing the voluntary framework<sup class="cite"><a href="#ref-1">1</a></sup>. Supervised entities must act as both data providers and data receivers, and data can only flow with the customer's prior, express and informed consent<sup class="cite"><a href="#ref-2">2</a></sup>. The common technical standards are left to the SFC, and commentary on the decree sets out a deadline in October 2026 for the SFC to publish its schedule for them, with a period for institutions to comply after each standard is issued<sup class="cite"><a href="#ref-3">3</a></sup>. The bank had to start building before the details were final.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>One consent model</strong> for every data flow, out and in, that customers can see and revoke.</li>
+<li><strong>Standards-ready APIs</strong>: a canonical internal model that can be mapped to the SFC standards as they arrive.</li>
+<li><strong>Financial-grade security</strong> for every third party, with no bespoke partner setups.</li>
+<li><strong>Measurable reliability</strong>: availability and latency per endpoint, because the regulator will publish indicators.</li>
+<li><strong>Useful received data</strong>: data from other institutions available to credit and product teams, with purpose recorded.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Participants</small><div class="dgm-nodes"><span>Other banks and fintechs<em>receivers and providers</em></span><span>Customers<em>grant and revoke consent</em></span></div></div>
+<div class="dgm-tier"><small>Edge</small><div class="dgm-nodes"><span class="hl">API gateway<em>Envoy, mTLS, rate limits</em></span><span class="hl">Authorisation server<em>FAPI 2.0 profile</em></span></div></div>
+<div class="dgm-tier"><small>Consent</small><div class="dgm-nodes"><span class="hl">Consent service<em>scope, purpose, expiry, revocation</em></span><span>Customer dashboard<em>see and revoke</em></span></div></div>
+<div class="dgm-tier"><small>Provider</small><div class="dgm-nodes"><span>Data APIs<em>accounts, cards, loans</em></span><span>Canonical model<em>one customer view</em></span><span>Change data capture<em>fresh, not batch</em></span></div></div>
+<div class="dgm-tier"><small>Receiver</small><div class="dgm-nodes"><span>Data client<em>calls other institutions</em></span><span>Received data store<em>purpose-tagged</em></span></div></div>
+<div class="dgm-tier"><small>Operate</small><div class="dgm-nodes"><span>Tracing<em>OpenTelemetry</em></span><span class="hl">Service-level reporting<em>per endpoint</em></span><span>Audit log<em>every access</em></span></div></div>
+</div>
+<figcaption>Provider and receiver share one edge, one consent service and one operations layer.</figcaption>
+</figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Request</b><span>A receiver asks for access to specific data for a stated purpose</span></li>
+<li><b>Consent</b><span>The customer authenticates with the bank and approves scope and duration</span></li>
+<li class="hl"><b>Token</b><span>A sender-constrained token is issued for that consent only</span></li>
+<li><b>Serve</b><span>The gateway checks token and consent; data APIs answer from the canonical model</span></li>
+<li class="hl"><b>Measure</b><span>Each call is traced and counted against availability and latency targets</span></li>
+<li><b>Revoke</b><span>The customer can withdraw consent; tokens stop working at once</span></li>
+</ol>
+<figcaption>The same path runs in reverse when the bank is the receiver.</figcaption>
+</figure>
+
+<h2>The hard part: building to standards that do not exist yet</h2>
+<p>The decree sets the framework, but the technical standards come later<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>. Waiting meant missing the window; building to a guess meant rework. The team separated what was certain from what was not.</p>
+<p>Security was the most certain. Open finance schemes around the world converge on financial-grade API profiles, so the authorisation server was built to the OpenID Foundation's FAPI 2.0 Security Profile, with sender-constrained tokens and strong client authentication<sup class="cite"><a href="#ref-4">4</a></sup>. Whatever the local profile adds, most of that work carries over.</p>
+<p>Data formats were the least certain. Instead of exposing internal systems directly, the team built a canonical model of customers, accounts, cards and loans, fed by change data capture from each source system. The public API shapes became a thin mapping layer on top. When the SFC publishes a standard, the change lands in the mapping, not in three core systems. More on that pattern in <a href="https://asksumanta.com/insights/change-data-capture-event-streams/">change data capture and event streams</a> and <a href="https://asksumanta.com/insights/data-contracts-playbook/">data contracts</a>.</p>
+<p>Reliability had to be measurable from day one, because the SFC must publish indicators on the system<sup class="cite"><a href="#ref-2">2</a></sup>. The gateway emits a trace for every call, so availability and latency can be reported per endpoint and per participant, and a slow downstream system shows up in the trace rather than in a complaint<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/colombia-open-finance-api-platform/gateway-tracing.webp" alt="Diagram of two services, each with an Envoy proxy that starts or continues a trace and creates new spans for outgoing calls, with an Istio control plane configuring the OpenTelemetry tracer" width="1200" height="780" loading="lazy"></div><figcaption>Tracing at the edge: every open finance call gets a span at the gateway, so service levels come from real traffic. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2024/new-otel-features-envoy-istio/" target="_blank" rel="noopener">OpenTelemetry blog, Joao Grassi</a> · CC BY 4.0</span></figcaption></figure>
+<div class="callout"><p>When the rules are still being written, build the parts every scheme shares, consent, security and measurement, and keep the parts that will change behind a thin mapping layer.</p></div>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Compliance and legal</small><ol><li>Decree and SFC tracking</li><li class="hl">Consent wording and purposes</li><li>Participant agreements</li></ol></div>
+<div class="dgm-lane"><small>Engineering</small><ol><li>Canonical model and CDC</li><li class="hl">Gateway and authorisation server</li><li>Service-level reporting</li></ol></div>
+<div class="dgm-lane"><small>Product and credit</small><ol><li>Receiver use cases</li><li>Customer dashboard</li><li class="hl">Use of received data</li></ol></div>
+</div>
+<figcaption>Compliance owned purpose, engineering owned the platform, product owned the value of received data.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Foundations</b><ul><li>Consent service</li><li>Authorisation server</li><li>Gateway with tracing</li></ul></div>
+<div><small>Phase 2</small><b>Provide</b><ul><li>Canonical model</li><li>Change data capture</li><li>Account and card APIs</li></ul></div>
+<div><small>Phase 3</small><b>Receive</b><ul><li>Data client</li><li>Purpose-tagged store</li><li>First credit use case</li></ul></div>
+<div><small>Phase 4</small><b>Conform</b><ul><li>Map SFC standards as issued</li><li>Indicator reporting</li><li>Participant onboarding</li></ul></div>
+</div>
+<figcaption>Foundations first; standards mapped in as they are published.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Build to FAPI 2.0 now</td><td>Wait for the local profile</td><td>Security work carries over; waiting costs months</td></tr>
+<tr><td>Canonical model behind thin mappings</td><td>Expose source systems directly</td><td>Standards changes land in one place</td></tr>
+<tr><td>Change data capture</td><td>Nightly batch extracts</td><td>Shared data must be current, and batch hides failures</td></tr>
+<tr><td>One consent service for in and out</td><td>Separate provider and receiver consent</td><td>One place for customers to see and revoke</td></tr>
+<tr><td>Trace every call at the gateway</td><td>Sample or rely on logs</td><td>Regulator indicators need complete, per-endpoint data</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: treat the receiver side as a product, not a compliance task. Data from other institutions is what makes open finance worth the cost, as the <a href="https://asksumanta.com/case-studies/brazil-credit-ai-lgpd-explainability/">Brazilian lender</a> found when it used consented data in credit decisions. Differently: start participant onboarding earlier. Technical integration was faster than agreeing testing and support arrangements with other institutions. Related: <a href="https://asksumanta.com/insights/idempotent-payments-order-pipelines/">idempotent financial pipelines</a> and <a href="https://asksumanta.com/regions/">where I work</a>.</p>
+<p>If you are preparing for open finance in Colombia or elsewhere in Latin America, see my <a href="https://asksumanta.com/fractional-cto/">fractional CTO work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/colombia-open-finance-api-platform/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>The AI memory squeeze: what Samsung&#x27;s and SK hynix&#x27;s record quarters mean for your inference architecture</title><link>https://asksumanta.com/insights/ai-memory-squeeze-inference-architecture/</link><guid isPermaLink="true">https://asksumanta.com/insights/ai-memory-squeeze-inference-architecture/</guid><pubDate>Fri, 30 Oct 2026 11:05:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>ai</category><category>llm</category><category>platform</category><description>Samsung and SK hynix posted record profits as AI memory stays tight. A CTO&#x27;s take on designing inference for memory, not just GPUs, and buying hardware now.</description><content:encoded><![CDATA[<p><em>Korea&#x27;s two memory makers have just reported the biggest quarters in their history, and the reason is the memory that sits next to every AI accelerator. When memory is the scarce, rising-cost part of the stack, inference architecture should be designed around it. Here is what that means in practice.</em></p><section class="block">
 <h2>What happened</h2>
 <p>On 29 October, Samsung Electronics confirmed record quarterly operating profit of about 107.4 trillion won, almost all of it from its chip business, driven by high-bandwidth memory (HBM) for AI servers<sup class="cite"><a href="#ref-1">1</a></sup>. A day earlier, SK hynix reported its own record quarter, said HBM4 had entered full-scale mass production, and described memory prices rising across HBM, server DRAM and enterprise SSDs<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
 <p>TrendForce's latest forecast, from 30 September, expected conventional DRAM contract prices to keep rising in the fourth quarter, with server DRAM still undersupplied<sup class="cite"><a href="#ref-3">3</a></sup>. In the same week, Korea's FuriosaAI raised $620 million to scale its RNGD inference chip, pitched on efficiency per watt<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
@@ -3529,173 +3688,4 @@ tracer_provider:
 
 <h2>What I'd do again, and differently</h2>
 <p>Again: get tenant context right before anything else, and make isolation a test suite rather than a document. Differently: agree the tier definitions with product and sales earlier. The engineering was straightforward once everyone agreed what "dedicated" promised and who could buy it.</p>
-<p>If your platform is facing the same pressures, the <a href="https://asksumanta.com/fractional-cto/">fractional CTO</a> page describes how I work with teams on it, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/saas-multi-tenant-re-architecture/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Triaging shipment exceptions with agents that ask before they act</title><link>https://asksumanta.com/case-studies/logistics-exception-handling-agents/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/logistics-exception-handling-agents/</guid><pubDate>Wed, 28 Oct 2026 01:26:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>agents</category><category>ai</category><category>llm</category><category>mcp</category><category>security</category><description>How a logistics operator used AI agents to triage shipment exception emails: classification, governed MCP tool calls to the TMS and human-approved actions.</description><content:encoded><![CDATA[<p><em>Every delayed shipment produced emails: carriers, customers, warehouses, customs brokers. Staff read, classified and chased each one by hand. The goal was agents that classify exceptions, look up shipment state through governed tools and draft the next action, with a person approving anything that changes the world.</em></p><h2>The situation</h2>
-<p>A logistics operator's customer service and operations teams handled shipment exceptions largely by email. A late container, a failed delivery, a missing customs document or an address query each arrived as free text, often with attachments, sometimes in a long thread. Staff read each message, worked out which shipment it concerned, looked it up in the transport management system (TMS), decided what to do and then did it, across several screens.</p>
-<p>The work was repetitive but not trivial. The hard part of each email was usually the same: identify the shipment, understand the exception, gather the facts. The decision itself was often quick once the facts were on one screen.</p>
-
-<h2>What had to be true</h2>
-<ul>
-<li><strong>Structured, not chatty</strong>: every email becomes a typed exception record, or is routed to a person as unclassifiable.</li>
-<li><strong>Governed tools</strong>: the agent reaches systems only through a defined, permissioned tool layer.</li>
-<li><strong>Read freely, write with approval</strong>: lookups are automatic; anything with side effects needs a person.</li>
-<li><strong>Inbound email is untrusted</strong> and never treated as instructions.</li>
-<li><strong>Measured and traceable</strong>: behaviour evaluated before release, every run inspectable afterwards.</li>
-</ul>
-
-<h2>Architecture</h2>
-<p>The design favoured a defined workflow with agentic steps over an open-ended autonomous agent. Anthropic's guidance on building agents makes the same distinction, recommending the simplest pattern that works and adding autonomy only where it earns its keep<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
-<figure class="dgm">
-<div class="dgm-stack">
-<div class="dgm-tier"><small>Intake</small><div class="dgm-nodes"><span>Shared mailboxes<em>carriers, customers</em></span><span>Queue<em>one message per job</em></span><span>Attachment parsing<em>PDF, images</em></span></div></div>
-<div class="dgm-tier"><small>Understand</small><div class="dgm-nodes"><span class="hl">Classifier<em>structured output</em></span><span>Extractor<em>references, dates, parties</em></span><span>Shipment matcher<em>confidence scored</em></span></div></div>
-<div class="dgm-tier"><small>Orchestrate</small><div class="dgm-nodes"><span>LangGraph workflow<em>per exception type</em></span><span>State checkpoint<em>durable</em></span><span>Interrupts<em>human approval</em></span></div></div>
-<div class="dgm-tier"><small>Tools</small><div class="dgm-nodes"><span class="hl">MCP servers<em>scoped tools</em></span><span>TMS read tools<em>status, events</em></span><span>TMS write tools<em>approval only</em></span><span>Messaging tools<em>drafts only</em></span></div></div>
-<div class="dgm-tier"><small>Assure</small><div class="dgm-nodes"><span>Labelled eval set<em>real exceptions</em></span><span>Traces<em>OpenTelemetry</em></span><span>Audit log<em>who approved what</em></span></div></div>
-</div>
-<figcaption>Layered architecture: a fixed workflow, typed outputs at each step, and every system reached through scoped tools.</figcaption>
-</figure>
-
-<h2>The data flow, end to end</h2>
-<figure class="dgm">
-<ol class="dgm-flow g3">
-<li><b>Receive</b><span>Email lands on a queue with its thread and attachments</span></li>
-<li class="hl"><b>Classify</b><span>Exception type, shipment references and key facts as a typed record</span></li>
-<li><b>Match</b><span>References resolved to a shipment; low confidence routed to a person</span></li>
-<li><b>Look up</b><span>Read-only MCP tools fetch status, milestones and contacts from the TMS</span></li>
-<li class="hl"><b>Propose</b><span>Draft action and reply prepared; workflow pauses for approval</span></li>
-<li><b>Act</b><span>On approval, write tool executes; outcome logged and thread updated</span></li>
-</ol>
-<figcaption>The workflow pauses before any side effect, and resumes from a durable checkpoint after a person decides.</figcaption>
-</figure>
-<p>Classification and extraction used structured outputs, where the model's response is constrained to a supplied JSON schema<sup class="cite"><a href="#ref-5">5</a></sup>, so downstream steps receive valid records rather than prose. Approval pauses used LangGraph interrupts, which persist graph state while waiting for human input and resume with that input<sup class="cite"><a href="#ref-3">3</a></sup>. More in <a href="https://asksumanta.com/insights/structured-outputs-reliable-llm-integration/">structured outputs for reliable LLM integration</a>.</p>
-
-<h2>The hard part: tools you can trust an agent with</h2>
-<p>The model was rarely the weak point. The tool layer was where safety lived. The MCP specification describes tools as model-invoked and recommends that a human can always deny a tool invocation<sup class="cite"><a href="#ref-2">2</a></sup>. The design took that literally:</p>
-<ul>
-<li><strong>Separate read and write servers</strong>, with write tools reachable only from the post-approval step of the workflow.</li>
-<li><strong>Narrow tools</strong>: "get shipment milestones" and "request redelivery", not a general API passthrough.</li>
-<li><strong>Service identity per tool</strong>, scoped to the minimum permissions in the TMS.</li>
-<li><strong>Email as data</strong>: inbound text is passed as content to classify, never as instructions, because prompt injection and excessive agency both appear in the OWASP Top 10 for LLM applications<sup class="cite"><a href="#ref-4">4</a></sup>.</li>
-</ul>
-<p>The checklist used is in <a href="https://asksumanta.com/insights/securing-mcp-servers-checklist/">securing MCP servers</a> and <a href="https://asksumanta.com/insights/prompt-injection-defence-for-agents/">prompt injection defence for agents</a>.</p>
-<div class="callout"><p>Give an agent the narrowest tools that do the job, and put approval in the workflow, not in the prompt.</p></div>
-
-<h2>How it ran</h2>
-<figure class="dgm">
-<div class="dgm-lanes">
-<div class="dgm-lane"><small>Agent</small><ol><li>Classifies and extracts</li><li>Looks up shipment state</li><li class="hl">Drafts action and reply</li></ol></div>
-<div class="dgm-lane"><small>Operator</small><ol><li>Reviews the case card</li><li class="hl">Approves, edits or rejects</li><li>Handles unclassified mail</li></ol></div>
-<div class="dgm-lane"><small>Systems</small><ol><li>TMS via MCP tools</li><li>Messaging via drafts</li><li>Traces and audit log</li></ol></div>
-</div>
-<figcaption>The operator sees one case card with facts gathered; the decision stays with them.</figcaption>
-</figure>
-<figure class="dgm">
-<div class="dgm-phases">
-<div><small>Phase 1</small><b>Understand</b><ul><li>Exception taxonomy</li><li>Labelled sample of emails</li><li>Current handling steps</li></ul></div>
-<div><small>Phase 2</small><b>Read-only</b><ul><li>Classification and matching</li><li>Lookup tools</li><li>Case cards in shadow</li></ul></div>
-<div><small>Phase 3</small><b>Assisted actions</b><ul><li>Write tools behind approval</li><li>Draft replies</li><li>Evaluation gate</li></ul></div>
-<div><small>Phase 4</small><b>Extend and hand off</b><ul><li>More exception types</li><li>Runbooks and owners</li><li>Autonomy reviews</li></ul></div>
-</div>
-<figcaption>Read-only first; write tools added only once classification and matching were measured.</figcaption>
-</figure>
-<p>Evaluation followed <a href="https://asksumanta.com/insights/evaluating-ai-agents-reliability/">evaluating AI agents for reliability</a>, scoring classification, shipment matching and proposed actions separately, so a regression could be located rather than just noticed.</p>
-
-<h2>Key decisions and trade-offs</h2>
-<table class="tbl">
-<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
-<tbody>
-<tr><td>Fixed workflow with agentic steps</td><td>Open-ended autonomous agent</td><td>Predictable, testable paths per exception type</td></tr>
-<tr><td>MCP tool layer</td><td>Direct API calls from prompts</td><td>Standard, reusable tools with permissions in one place</td></tr>
-<tr><td>Approval before side effects</td><td>Full autonomy</td><td>Trust earned with evidence, not assumed</td></tr>
-<tr><td>Structured outputs everywhere</td><td>Free-text parsing</td><td>Typed records that downstream code can rely on</td></tr>
-<tr><td>Separate scores per step</td><td>One end-to-end score</td><td>Regressions can be traced to a step</td></tr>
-</tbody>
-</table>
-
-<h2>What I'd do again, and differently</h2>
-<p>Again: start read-only, build the labelled set from real emails, and keep write tools behind approval. Differently: invest earlier in shipment matching. Ambiguous references caused more escalations than misclassification did, and better matching would have improved every downstream step.</p>
-<p>If you are designing agents that touch operational systems, the <a href="https://asksumanta.com/ai-architect/">AI architect</a> page describes how I approach it, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/logistics-exception-handling-agents/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Replacing nightly stock syncs with a live inventory stream</title><link>https://asksumanta.com/case-studies/retail-real-time-inventory-cdc/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/retail-real-time-inventory-cdc/</guid><pubDate>Wed, 28 Oct 2026 01:24:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>streaming</category><category>data</category><category>architecture</category><category>platform</category><description>How a retailer replaced nightly stock syncs with change data capture and event streams, so stores, web and marketplaces read current inventory instead of last night&#x27;s.</description><content:encoded><![CDATA[<p><em>Stock moved all day in stores, warehouses and online, but channels learned about it once a night. Overselling was the predictable result. The goal was to stream every committed stock and order change from the operational databases into projections that every channel could read in near real time.</em></p><h2>The situation</h2>
-<p>A retailer sold through physical stores, its own website and several marketplaces. Stock levels lived in a warehouse system and store systems, orders in an order management database, and each channel received a stock file once a night. During the day, the same last unit could be sold in a store, online and on a marketplace before anyone knew.</p>
-<p>The workarounds made things worse: large safety buffers that hid sellable stock, manual cancellations, and ad hoc point-to-point integrations that each team had built to get fresher data for its own channel.</p>
-
-<h2>What had to be true</h2>
-<ul>
-<li><strong>Every committed change is captured</strong>, without polling or adding load to operational databases.</li>
-<li><strong>No dual writes</strong>: an order and its event either both happen or neither does.</li>
-<li><strong>Channels read a projection</strong>, not the source systems.</li>
-<li><strong>History is replayable</strong>, so a bug in a projection can be fixed and rebuilt.</li>
-<li><strong>Contracts are explicit</strong>, so source teams can change their schemas without breaking consumers.</li>
-</ul>
-
-<h2>Architecture</h2>
-<p>Log-based change data capture reads committed row-level changes from the database's transaction log, so applications consume changes rather than querying the source<sup class="cite"><a href="#ref-1">1</a></sup>. That became the backbone, with a stream processing layer building inventory views for each consumer.</p>
-<figure class="dgm">
-<div class="dgm-stack">
-<div class="dgm-tier"><small>Sources</small><div class="dgm-nodes"><span>Order management<em>relational DB</em></span><span>Warehouse system<em>stock movements</em></span><span>Store systems<em>sales, returns</em></span></div></div>
-<div class="dgm-tier"><small>Capture</small><div class="dgm-nodes"><span class="hl">Outbox tables<em>same transaction</em></span><span>Debezium<em>Kafka Connect</em></span><span>Schema registry<em>versioned contracts</em></span></div></div>
-<div class="dgm-tier"><small>Stream</small><div class="dgm-nodes"><span>Kafka topics<em>keyed by SKU and location</em></span><span>Compacted state topics<em>latest per key</em></span><span>Dead-letter topics<em>with reasons</em></span></div></div>
-<div class="dgm-tier"><small>Project</small><div class="dgm-nodes"><span class="hl">Available-to-sell<em>stream processor</em></span><span>Reservations<em>pending orders</em></span><span>Location rollups<em>store, region, online</em></span></div></div>
-<div class="dgm-tier"><small>Serve</small><div class="dgm-nodes"><span>Redis read model<em>low-latency lookups</em></span><span>Web and app<em>live stock</em></span><span>Marketplace feeds<em>incremental</em></span><span>Analytics<em>same events</em></span></div></div>
-</div>
-<figcaption>Layered architecture: capture once from the log, project many times for each consumer.</figcaption>
-</figure>
-
-<h2>The data flow, end to end</h2>
-<figure class="dgm">
-<ol class="dgm-flow g3">
-<li><b>Commit</b><span>Order or stock change and its outbox event written in one database transaction</span></li>
-<li class="hl"><b>Capture</b><span>Debezium reads the log and routes outbox events to domain topics</span></li>
-<li><b>Validate</b><span>Schema checked against the registry; malformed events to dead-letter</span></li>
-<li class="hl"><b>Project</b><span>Stream processor updates available-to-sell per SKU and location</span></li>
-<li><b>Serve</b><span>Read model updated; channels query it or receive incremental updates</span></li>
-<li><b>Reconcile</b><span>Periodic comparison with source counts; drift raised, not hidden</span></li>
-</ol>
-<figcaption>Every step is idempotent and keyed, so replays and retries do not double-count stock.</figcaption>
-</figure>
-<p>More on the capture side in <a href="https://asksumanta.com/insights/change-data-capture-event-streams/">change data capture and event streams</a>, and on duplicate-safe consumers in <a href="https://asksumanta.com/insights/idempotent-payments-order-pipelines/">idempotent order pipelines</a>.</p>
-
-<h2>The hard part: events that mean something</h2>
-<p>Streaming raw table changes was quick to demonstrate and the wrong long-term contract. Consumers ended up decoding internal columns and status codes, and any schema change in the source broke them. The transactional outbox pattern addresses this: the service writes a domain event to an outbox table in the same transaction as the business change, and a relay publishes it<sup class="cite"><a href="#ref-3">3</a></sup>. Debezium's outbox event router does that relay from the log, routing events to topics by aggregate type and keying them by aggregate identifier<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
-<ul>
-<li>Events were designed with the consuming teams: "stock adjusted", "order allocated", "reservation released", not "row updated".</li>
-<li>Keys were chosen for ordering: everything about one SKU at one location lands in one partition, in order.</li>
-<li>Contracts went into the schema registry with compatibility rules, following a <a href="https://asksumanta.com/insights/data-contracts-playbook/">data contracts</a> approach.</li>
-</ul>
-<p>For current state, compacted topics keep the latest record per key and support rebuilding state after a failure<sup class="cite"><a href="#ref-4">4</a></sup>, which let new projections bootstrap without a bulk extract from the source.</p>
-<div class="callout"><p>CDC moves data quickly; it does not decide what the data means. Design the events with the teams who will read them.</p></div>
-
-<h2>How it ran</h2>
-<figure class="dgm">
-<div class="dgm-lanes">
-<div class="dgm-lane"><small>Source teams</small><ol><li>Add outbox writes</li><li class="hl">Own event schemas</li><li>Keep compatibility</li></ol></div>
-<div class="dgm-lane"><small>Platform</small><ol><li>Run Connect and Kafka</li><li>Operate the registry</li><li>Monitor lag and drift</li></ol></div>
-<div class="dgm-lane"><small>Channel teams</small><ol><li>Read projections</li><li class="hl">Report mismatches</li><li>Retire old file feeds</li></ol></div>
-</div>
-<figcaption>Producers own their events, the platform owns the pipes, consumers own their projections.</figcaption>
-</figure>
-<figure class="dgm">
-<div class="dgm-phases">
-<div><small>Phase 1</small><b>Map</b><ul><li>Stock and order flows</li><li>Where overselling occurs</li><li>Event catalogue draft</li></ul></div>
-<div><small>Phase 2</small><b>Thin slice</b><ul><li>One source with outbox</li><li>One projection</li><li>One channel in shadow</li></ul></div>
-<div><small>Phase 3</small><b>Extend</b><ul><li>Remaining sources</li><li>Reservations logic</li><li>Reconciliation jobs</li></ul></div>
-<div><small>Phase 4</small><b>Switch and hand off</b><ul><li>Channels cut over</li><li>Nightly files retired</li><li>Runbooks and on-call</li></ul></div>
-</div>
-<figcaption>Each channel ran in shadow against the nightly file before cutting over.</figcaption>
-</figure>
-<p>Operationally, the signals that mattered were connector health, consumer lag per projection and the reconciliation drift report. Those went on one dashboard owned by the platform team, with alerts tied to what a channel would notice (stale stock) rather than to every broker metric. Traces carried the event identifier from commit to read model, so a disputed stock figure could be followed back to the change that produced it.</p>
-
-<h2>Key decisions and trade-offs</h2>
-<table class="tbl">
-<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
-<tbody>
-<tr><td>Log-based CDC</td><td>Polling or nightly extracts</td><td>Captures every committed change with little source load</td></tr>
-<tr><td>Transactional outbox</td><td>Raw table change events</td><td>Stable domain contracts; no dual writes</td></tr>
-<tr><td>Key by SKU and location</td><td>Key by order</td><td>Ordered updates for the thing being counted</td></tr>
-<tr><td>Separate read model</td><td>Channels query sources</td><td>Protects operational systems; fast reads</td></tr>
-<tr><td>Reconciliation jobs</td><td>Trust the stream</td><td>Drift is surfaced and explained, not discovered by customers</td></tr>
-</tbody>
-</table>
-
-<h2>What I'd do again, and differently</h2>
-<p>Again: a thin slice end to end before scaling, shadow running against the old feed, and reconciliation from the start. Differently: agree the reservation and allocation rules with operations earlier. Live data exposed business rules that had never been written down, and those took longer to settle than the streaming platform.</p>
-<p>If you are planning a similar move off batch, the <a href="https://asksumanta.com/fractional-cto/">fractional CTO</a> page describes how I work with teams on it, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/retail-real-time-inventory-cdc/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
+<p>If your platform is facing the same pressures, the <a href="https://asksumanta.com/fractional-cto/">fractional CTO</a> page describes how I work with teams on it, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/saas-multi-tenant-re-architecture/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>

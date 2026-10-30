@@ -1,6 +1,165 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link><description>Anonymised engagements with architecture and flow diagrams</description><language>en-gb</language><lastBuildDate>Fri, 30 Oct 2026 01:20:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/case-studies/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link></image><item><title>Decisions people can question: explainable AI credit scoring for a Brazilian digital lender</title><link>https://asksumanta.com/case-studies/brazil-credit-ai-lgpd-explainability/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/brazil-credit-ai-lgpd-explainability/</guid><pubDate>Fri, 30 Oct 2026 01:20:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>ai</category><category>governance</category><category>data</category><description>How a Brazilian digital lender can make AI credit decisions reviewable under the LGPD and ready for Brazil&#x27;s AI bill: reason codes, human review and traceable decisions.</description><content:encoded><![CDATA[<p><em>A Brazilian digital lender approved and priced loans in seconds with machine learning models. Customers could not easily find out why they were declined, and reviewing a decision meant digging through logs. The goal was to make every automated credit decision explainable, reviewable by a person and ready for the AI rules Brazil is debating.</em></p><h2>The situation</h2>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link><description>Anonymised engagements with architecture and flow diagrams</description><language>en-gb</language><lastBuildDate>Fri, 30 Oct 2026 12:30:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/case-studies/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link></image><item><title>Onshore by January: moving Nigerian payment data home without breaking a pan-African platform</title><link>https://asksumanta.com/case-studies/nigeria-payment-data-localisation-platform/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/nigeria-payment-data-localisation-platform/</guid><pubDate>Fri, 30 Oct 2026 12:30:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>platform</category><category>data</category><category>kubernetes</category><description>How a Lagos-based payments company can meet the CBN&#x27;s 2027 payment data localisation deadline without splitting its platform: cells, data classes and tested cutover.</description><content:encoded><![CDATA[<p><em>A Lagos-based payments company ran one platform for Nigeria, Kenya and Ghana from an overseas cloud region. The Central Bank of Nigeria then set a deadline for payment transaction data generated in Nigeria to be stored in Nigeria. The task was to move that data onshore, keep one platform for every market and cut over without losing a payment.</em></p><h2>The situation</h2>
+<p>A payments company headquartered in Lagos offered merchant collections, payouts and card processing in Nigeria, Kenya and Ghana. Nigeria was its largest market. Everything ran in one overseas public cloud region: one set of databases, one event stream, one analytics warehouse. It was simple to run, and every market shared the same release process.</p>
+<p><strong>Why now.</strong> The Central Bank of Nigeria directed banks, fintechs and other payment service providers to store payment transaction data generated in Nigeria on servers in Nigeria from 1 January 2027, with vendors that handle that data expected to align<sup class="cite"><a href="#ref-1">1</a></sup>. Legal commentary noted open questions, such as how "generated in Nigeria" applies to transactions that cross borders<sup class="cite"><a href="#ref-2">2</a></sup>. Separately, the federal government adopted a National Digital Cloud Policy in 2026, which commentators describe as classifying data and applying residency rules to defined sensitive and sovereign categories rather than all data<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>. With only months to the deadline, the company needed a plan it could execute, not a debate about interpretation.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>Nigerian payment transaction data at rest and in processing in Nigeria</strong> by the deadline, including backups and logs.</li>
+<li><strong>One platform</strong>: the same code, pipelines and on-call for every market.</li>
+<li><strong>Every field classified</strong>, so engineers know what may leave a country and in what form.</li>
+<li><strong>No lost or duplicated payments</strong> during migration.</li>
+<li><strong>Vendors aligned</strong>: fraud, card and support tools that touch Nigerian payment data had to follow it.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Global control</small><div class="dgm-nodes"><span class="hl">Management cluster<em>Cluster API and GitOps</em></span><span>Shared services<em>no payment data</em></span></div></div>
+<div class="dgm-tier"><small>Nigeria cell</small><div class="dgm-nodes"><span class="hl">Onshore data centre<em>payments, ledger, logs</em></span><span>Tokenisation<em>tokens only leave</em></span></div></div>
+<div class="dgm-tier"><small>Kenya and Ghana cells</small><div class="dgm-nodes"><span>Cloud region<em>same code, own data</em></span></div></div>
+<div class="dgm-tier"><small>Cross-border layer</small><div class="dgm-nodes"><span class="hl">Allowed exports<em>tokens, aggregates, metrics</em></span><span>Policy checks<em>in the pipeline</em></span></div></div>
+<div class="dgm-tier"><small>Group functions</small><div class="dgm-nodes"><span>Analytics<em>aggregates only</em></span><span>Fraud models<em>trained per cell</em></span><span>Observability<em>no payload data</em></span></div></div>
+</div>
+<figcaption>One control plane, data pinned to cells. Only classified, permitted data crosses borders.</figcaption>
+</figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Route</b><span>The edge routes each request to the cell for its market</span></li>
+<li><b>Process</b><span>Authorisation, ledger and settlement run inside the Nigeria cell</span></li>
+<li class="hl"><b>Store</b><span>Transactions, logs and backups stay on Nigerian infrastructure</span></li>
+<li><b>Tokenise</b><span>Identifiers that must be shared are replaced with tokens</span></li>
+<li class="hl"><b>Export</b><span>Only classified, permitted aggregates and metrics leave the cell</span></li>
+<li><b>Report</b><span>Group analytics and dashboards work from those exports</span></li>
+</ol>
+<figcaption>Processing and storage stay local; reporting works from what is allowed to travel.</figcaption>
+</figure>
+
+<h2>The hard part: one platform, several homes</h2>
+<p>The tempting answer was to fork: copy the platform into a Nigerian data centre and run it separately. That doubles releases, on-call and drift. Instead, the team adopted a cell design. Each market runs as a cell with identical services, deployed from the same Git repository. The cells differ only in where they run and in the data rules applied to them.</p>
+<p>Cluster API made that practical across very different infrastructure. A management cluster declares the workload clusters, whether they run in a Nigerian colocation facility or a public cloud region, and the same tooling creates, upgrades and replaces them<sup class="cite"><a href="#ref-5">5</a></sup>. The management cluster holds no payment data, so it can sit outside Nigeria.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/nigeria-payment-data-localisation-platform/cluster-api.webp" alt="Diagram of a management Kubernetes cluster running Cluster API, which creates and manages three tenant Kubernetes clusters" width="1100" height="524" loading="lazy"></div><figcaption>One management cluster, many workload clusters: the pattern that kept every market on the same platform. <span class="credit">Source: <a href="https://kubernetes.io/blog/2024/04/05/diy-create-your-own-cloud-with-kubernetes-part-3/" target="_blank" rel="noopener">Kubernetes blog, Andrei Kvapil</a> · CC BY 4.0</span></figcaption></figure>
+<p>The second hard part was the data no one thinks about: logs, traces, backups, support tickets and fraud vendor feeds. The team classified fields into a short list of classes, from public to payment transaction data, and enforced the classes in code: telemetry carried identifiers as tokens, backups were written to onshore storage only, and export pipelines refused unclassified fields. See <a href="https://asksumanta.com/insights/data-contracts-playbook/">data contracts</a> for how to make that stick.</p>
+<div class="callout"><p>Localisation fails in the side channels. Classify logs, traces, backups and vendor feeds as carefully as the main database.</p></div>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Compliance and legal</small><ol><li>Directive interpretation</li><li class="hl">Data classes</li><li>Vendor terms</li></ol></div>
+<div class="dgm-lane"><small>Platform engineering</small><ol><li>Onshore facility</li><li class="hl">Cluster API and GitOps</li><li>Backups and DR</li></ol></div>
+<div class="dgm-lane"><small>Payments engineering</small><ol><li>Replication</li><li class="hl">Product-by-product cutover</li><li>Reconciliation</li></ol></div>
+</div>
+<figcaption>Legal defined the classes, platform built the home, payments moved the money flows.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Classify</b><ul><li>Field inventory</li><li>Data classes</li><li>Vendor review</li></ul></div>
+<div><small>Phase 2</small><b>Build</b><ul><li>Onshore cell</li><li>Management cluster</li><li>Tokenisation service</li></ul></div>
+<div><small>Phase 3</small><b>Replicate</b><ul><li>Logical replication</li><li>Dual-run checks</li><li>Reconciliation reports</li></ul></div>
+<div><small>Phase 4</small><b>Cut over</b><ul><li>Per product</li><li>Rollback rehearsed</li><li>Old copies removed</li></ul></div>
+</div>
+<figcaption>Classify first: it decides what has to move.</figcaption>
+</figure>
+<p>Migration ran product by product, starting with payouts, which had the simplest flows. Databases were replicated into the Nigeria cell and both copies ran side by side, with reconciliation reports comparing every transaction, before traffic moved. Payment idempotency mattered here; see <a href="https://asksumanta.com/insights/idempotent-payments-order-pipelines/">idempotent payment pipelines</a>. After each cutover, overseas copies and backups were deleted on a recorded schedule.</p>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Cells on one codebase</td><td>Fork a Nigerian platform</td><td>One release process and one on-call</td></tr>
+<tr><td>Cluster API across colocation and cloud</td><td>Different tooling per location</td><td>Same lifecycle everywhere</td></tr>
+<tr><td>Tokens and aggregates cross borders</td><td>Copy full records to the group warehouse</td><td>Group reporting without moving payment data</td></tr>
+<tr><td>Product-by-product cutover</td><td>One big switch</td><td>Smaller blast radius and real rollback</td></tr>
+<tr><td>Classify telemetry and backups</td><td>Focus on primary databases</td><td>Side channels are where localisation breaks</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: classify before building. The classes answered most of the hard questions, including which vendors were affected. Differently: involve card and fraud vendors earlier. Their onshore options and timelines set the critical path more than our own engineering did. For related patterns, see <a href="https://asksumanta.com/case-studies/multi-cloud-terraform-estate/">a multi-cloud Terraform estate</a>, <a href="https://asksumanta.com/insights/kubernetes-multi-tenancy/">Kubernetes multi-tenancy</a> and <a href="https://asksumanta.com/regions/">where I work</a>.</p>
+<p>If you run payments or financial data across African markets, see my <a href="https://asksumanta.com/fractional-cto/">fractional CTO work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/nigeria-payment-data-localisation-platform/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>From voluntary to mandatory: an open finance platform for a mid-sized Colombian bank</title><link>https://asksumanta.com/case-studies/colombia-open-finance-api-platform/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/colombia-open-finance-api-platform/</guid><pubDate>Fri, 30 Oct 2026 11:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>data</category><category>security</category><category>architecture</category><description>How a mid-sized Colombian bank can prepare for mandatory open finance under Decree 368 of 2026: consent, secure APIs, data receiving and measurable reliability.</description><content:encoded><![CDATA[<p><em>Colombia has made open finance mandatory for supervised financial institutions. A mid-sized bank had to become both a reliable data provider and a capable data receiver, on standards still being written, without building twice. The answer was a platform designed around consent, security profiles and measurable service levels.</em></p><h2>The situation</h2>
+<p>A mid-sized Colombian bank offered current accounts, cards and small business loans. It had taken part in the earlier, voluntary open finance scheme in a limited way: a few partner integrations, each built separately, with its own consent screens and its own security setup. Customer data lived in a core banking system, a card platform and a lending system, each with a different idea of what a "customer" was.</p>
+<p><strong>Why now.</strong> Decree 368 of 2026 made open finance mandatory for institutions supervised by the Financial Superintendence of Colombia (SFC), replacing the voluntary framework<sup class="cite"><a href="#ref-1">1</a></sup>. Supervised entities must act as both data providers and data receivers, and data can only flow with the customer's prior, express and informed consent<sup class="cite"><a href="#ref-2">2</a></sup>. The common technical standards are left to the SFC, and commentary on the decree sets out a deadline in October 2026 for the SFC to publish its schedule for them, with a period for institutions to comply after each standard is issued<sup class="cite"><a href="#ref-3">3</a></sup>. The bank had to start building before the details were final.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>One consent model</strong> for every data flow, out and in, that customers can see and revoke.</li>
+<li><strong>Standards-ready APIs</strong>: a canonical internal model that can be mapped to the SFC standards as they arrive.</li>
+<li><strong>Financial-grade security</strong> for every third party, with no bespoke partner setups.</li>
+<li><strong>Measurable reliability</strong>: availability and latency per endpoint, because the regulator will publish indicators.</li>
+<li><strong>Useful received data</strong>: data from other institutions available to credit and product teams, with purpose recorded.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Participants</small><div class="dgm-nodes"><span>Other banks and fintechs<em>receivers and providers</em></span><span>Customers<em>grant and revoke consent</em></span></div></div>
+<div class="dgm-tier"><small>Edge</small><div class="dgm-nodes"><span class="hl">API gateway<em>Envoy, mTLS, rate limits</em></span><span class="hl">Authorisation server<em>FAPI 2.0 profile</em></span></div></div>
+<div class="dgm-tier"><small>Consent</small><div class="dgm-nodes"><span class="hl">Consent service<em>scope, purpose, expiry, revocation</em></span><span>Customer dashboard<em>see and revoke</em></span></div></div>
+<div class="dgm-tier"><small>Provider</small><div class="dgm-nodes"><span>Data APIs<em>accounts, cards, loans</em></span><span>Canonical model<em>one customer view</em></span><span>Change data capture<em>fresh, not batch</em></span></div></div>
+<div class="dgm-tier"><small>Receiver</small><div class="dgm-nodes"><span>Data client<em>calls other institutions</em></span><span>Received data store<em>purpose-tagged</em></span></div></div>
+<div class="dgm-tier"><small>Operate</small><div class="dgm-nodes"><span>Tracing<em>OpenTelemetry</em></span><span class="hl">Service-level reporting<em>per endpoint</em></span><span>Audit log<em>every access</em></span></div></div>
+</div>
+<figcaption>Provider and receiver share one edge, one consent service and one operations layer.</figcaption>
+</figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Request</b><span>A receiver asks for access to specific data for a stated purpose</span></li>
+<li><b>Consent</b><span>The customer authenticates with the bank and approves scope and duration</span></li>
+<li class="hl"><b>Token</b><span>A sender-constrained token is issued for that consent only</span></li>
+<li><b>Serve</b><span>The gateway checks token and consent; data APIs answer from the canonical model</span></li>
+<li class="hl"><b>Measure</b><span>Each call is traced and counted against availability and latency targets</span></li>
+<li><b>Revoke</b><span>The customer can withdraw consent; tokens stop working at once</span></li>
+</ol>
+<figcaption>The same path runs in reverse when the bank is the receiver.</figcaption>
+</figure>
+
+<h2>The hard part: building to standards that do not exist yet</h2>
+<p>The decree sets the framework, but the technical standards come later<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>. Waiting meant missing the window; building to a guess meant rework. The team separated what was certain from what was not.</p>
+<p>Security was the most certain. Open finance schemes around the world converge on financial-grade API profiles, so the authorisation server was built to the OpenID Foundation's FAPI 2.0 Security Profile, with sender-constrained tokens and strong client authentication<sup class="cite"><a href="#ref-4">4</a></sup>. Whatever the local profile adds, most of that work carries over.</p>
+<p>Data formats were the least certain. Instead of exposing internal systems directly, the team built a canonical model of customers, accounts, cards and loans, fed by change data capture from each source system. The public API shapes became a thin mapping layer on top. When the SFC publishes a standard, the change lands in the mapping, not in three core systems. More on that pattern in <a href="https://asksumanta.com/insights/change-data-capture-event-streams/">change data capture and event streams</a> and <a href="https://asksumanta.com/insights/data-contracts-playbook/">data contracts</a>.</p>
+<p>Reliability had to be measurable from day one, because the SFC must publish indicators on the system<sup class="cite"><a href="#ref-2">2</a></sup>. The gateway emits a trace for every call, so availability and latency can be reported per endpoint and per participant, and a slow downstream system shows up in the trace rather than in a complaint<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/colombia-open-finance-api-platform/gateway-tracing.webp" alt="Diagram of two services, each with an Envoy proxy that starts or continues a trace and creates new spans for outgoing calls, with an Istio control plane configuring the OpenTelemetry tracer" width="1200" height="780" loading="lazy"></div><figcaption>Tracing at the edge: every open finance call gets a span at the gateway, so service levels come from real traffic. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2024/new-otel-features-envoy-istio/" target="_blank" rel="noopener">OpenTelemetry blog, Joao Grassi</a> · CC BY 4.0</span></figcaption></figure>
+<div class="callout"><p>When the rules are still being written, build the parts every scheme shares, consent, security and measurement, and keep the parts that will change behind a thin mapping layer.</p></div>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Compliance and legal</small><ol><li>Decree and SFC tracking</li><li class="hl">Consent wording and purposes</li><li>Participant agreements</li></ol></div>
+<div class="dgm-lane"><small>Engineering</small><ol><li>Canonical model and CDC</li><li class="hl">Gateway and authorisation server</li><li>Service-level reporting</li></ol></div>
+<div class="dgm-lane"><small>Product and credit</small><ol><li>Receiver use cases</li><li>Customer dashboard</li><li class="hl">Use of received data</li></ol></div>
+</div>
+<figcaption>Compliance owned purpose, engineering owned the platform, product owned the value of received data.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Foundations</b><ul><li>Consent service</li><li>Authorisation server</li><li>Gateway with tracing</li></ul></div>
+<div><small>Phase 2</small><b>Provide</b><ul><li>Canonical model</li><li>Change data capture</li><li>Account and card APIs</li></ul></div>
+<div><small>Phase 3</small><b>Receive</b><ul><li>Data client</li><li>Purpose-tagged store</li><li>First credit use case</li></ul></div>
+<div><small>Phase 4</small><b>Conform</b><ul><li>Map SFC standards as issued</li><li>Indicator reporting</li><li>Participant onboarding</li></ul></div>
+</div>
+<figcaption>Foundations first; standards mapped in as they are published.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Build to FAPI 2.0 now</td><td>Wait for the local profile</td><td>Security work carries over; waiting costs months</td></tr>
+<tr><td>Canonical model behind thin mappings</td><td>Expose source systems directly</td><td>Standards changes land in one place</td></tr>
+<tr><td>Change data capture</td><td>Nightly batch extracts</td><td>Shared data must be current, and batch hides failures</td></tr>
+<tr><td>One consent service for in and out</td><td>Separate provider and receiver consent</td><td>One place for customers to see and revoke</td></tr>
+<tr><td>Trace every call at the gateway</td><td>Sample or rely on logs</td><td>Regulator indicators need complete, per-endpoint data</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: treat the receiver side as a product, not a compliance task. Data from other institutions is what makes open finance worth the cost, as the <a href="https://asksumanta.com/case-studies/brazil-credit-ai-lgpd-explainability/">Brazilian lender</a> found when it used consented data in credit decisions. Differently: start participant onboarding earlier. Technical integration was faster than agreeing testing and support arrangements with other institutions. Related: <a href="https://asksumanta.com/insights/idempotent-payments-order-pipelines/">idempotent financial pipelines</a> and <a href="https://asksumanta.com/regions/">where I work</a>.</p>
+<p>If you are preparing for open finance in Colombia or elsewhere in Latin America, see my <a href="https://asksumanta.com/fractional-cto/">fractional CTO work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/colombia-open-finance-api-platform/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Decisions people can question: explainable AI credit scoring for a Brazilian digital lender</title><link>https://asksumanta.com/case-studies/brazil-credit-ai-lgpd-explainability/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/brazil-credit-ai-lgpd-explainability/</guid><pubDate>Fri, 30 Oct 2026 01:20:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>ai</category><category>governance</category><category>data</category><description>How a Brazilian digital lender can make AI credit decisions reviewable under the LGPD and ready for Brazil&#x27;s AI bill: reason codes, human review and traceable decisions.</description><content:encoded><![CDATA[<p><em>A Brazilian digital lender approved and priced loans in seconds with machine learning models. Customers could not easily find out why they were declined, and reviewing a decision meant digging through logs. The goal was to make every automated credit decision explainable, reviewable by a person and ready for the AI rules Brazil is debating.</em></p><h2>The situation</h2>
 <p>A digital lender in Brazil offered personal loans and credit lines through its app. Machine learning models approved, declined and priced applications in seconds, using bureau data, open finance data shared with consent and in-app behaviour. Growth was strong. Complaints were the warning sign: declined customers could not get a useful answer about why, and when the team reviewed a decision it meant piecing together logs from several services.</p>
 <p><strong>Why now.</strong> Brazil's data protection law, the LGPD, already gives people the right to request review of decisions taken solely through automated processing that affect their interests, including credit profiling, and to receive clear information about the criteria used<sup class="cite"><a href="#ref-1">1</a></sup>. The national data protection authority, ANPD, oversees it<sup class="cite"><a href="#ref-2">2</a></sup>. On top of that, Brazil's AI bill, PL 2338/2023, passed the Senate in December 2024 and was pending in the Chamber of Deputies, with a vote reported as expected after the October 2026 elections<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-4">4</a></sup><sup class="cite"><a href="#ref-5">5</a></sup>. It is not law yet, but a lender relying on automated credit decisions could not afford to wait.</p>
 
