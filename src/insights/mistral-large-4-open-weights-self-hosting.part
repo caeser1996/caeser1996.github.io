@@ -1,0 +1,65 @@
+<!--{"title": "Mistral Large 4 open weights: should you run a 1T model yourself?", "description": "Mistral has released weights for its trillion-parameter Large 4. A CTO's take on when self-hosting a frontier-scale open model makes sense, and what it really costs.", "h1": "Mistral Large 4's open weights: when running a trillion-parameter model yourself makes sense, and when it does not", "kicker": "Analysis · Open models and sovereign AI", "lede": "On 29 October, Mistral published the weights of Large 4, a one-trillion-parameter mixture-of-experts model pitched at security teams who want to run it on their own infrastructure. The same day, Canada announced a large equity stake in Cohere to build sovereign AI capacity. Frontier-scale open models are now a real option. Whether they are the right option is an architecture and cost question, not a headline one.", "date": "2026-10-30", "datetime": "2026-10-30T16:55:00+04:00", "readtime": "8 min read", "format": "news-analysis", "tags": ["news", "ai", "llm", "platform"], "keywords": ["Mistral Large 4", "open weights", "trillion parameter model", "mixture of experts", "self-hosted LLM", "sovereign AI", "vLLM", "Cohere Canada investment", "private LLM cost", "AI architect"], "faq": [["What did Mistral release?", "On 29 October 2026, Mistral released the weights of Mistral Large 4, a one-trillion-parameter mixture-of-experts model, on Hugging Face, with a focus on cybersecurity use. It is also available through Mistral's API. Benchmark figures quoted at launch are Mistral's own."], ["Is it really open?", "The weights are downloadable, but commentary has debated whether the licence terms fit common definitions of open weight. Read the licence before planning commercial use."], ["Should we self-host it?", "Only if you have a strong reason, such as data that cannot leave your environment, a sovereignty requirement or very high steady volume, and the team to run multi-GPU inference. Otherwise, use it through a provider and keep the option to move."]], "related": ["/ai-architect/", "/fractional-cto-europe/", "/regions/"], "citations": [{"title": "Mistral releases weights for its trillion-parameter AI model, targeting cybersecurity", "url": "https://techcrunch.com/2026/10/29/mistral-releases-weights-for-its-trillion-parameter-ai-model-targeting-cybersecurity/", "publisher": "TechCrunch", "date": "29 Oct 2026"}, {"title": "Mistral releases open weights for its 1 trillion-parameter Large 4 model", "url": "https://thenextweb.com/news/mistral-large-4-open-weights-release", "publisher": "The Next Web", "date": "Oct 2026"}, {"title": "Mistral releases open weights for 1 trillion-parameter Large 4, with day-0 vLLM support", "url": "https://daily.dev/posts/mistral-releases-open-weights-for-1-trillion-parameter-large-4-with-day-0-vllm-support-hrgscxwdb", "publisher": "daily.dev", "date": "Oct 2026"}, {"title": "Mistral AI Releases Open Weights for Its 1 Trillion-Parameter Large 4 Model", "url": "https://oodaloop.com/briefs/technology/mistral-ai-releases-open-weights-for-its-1-trillion-parameter-large-4-model/", "publisher": "OODA Loop", "date": "Oct 2026"}, {"title": "Canada announces landmark investment in Cohere to scale secure, sovereign AI", "url": "https://www.pm.gc.ca/en/news/news-releases/2026/10/29/canada-announces-landmark-investment-cohere-scale-secure-sovereign-ai", "publisher": "Prime Minister of Canada", "date": "29 Oct 2026"}, {"title": "Introducing JobSet", "url": "https://kubernetes.io/blog/2025/03/23/introducing-jobset/", "publisher": "Kubernetes blog", "date": "23 Mar 2025"}]}-->
+<section class="block">
+<h2>What happened</h2>
+<p>Mistral released the weights of Mistral Large 4 on 29 October. It is a mixture-of-experts model with about one trillion parameters in total, of which roughly 50 billion are active for any given token, and Mistral is positioning it for cybersecurity defenders who want to run it themselves<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. The vLLM project had support ready on day one<sup class="cite"><a href="#ref-3">3</a></sup>. The benchmark results quoted at launch are Mistral's own, and some commentators have questioned whether the licence terms meet common definitions of open weight<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+<p>The same day, Canada announced an equity investment of up to C$1.6 billion in Cohere, tied to commitments to build compute capacity in Canada<sup class="cite"><a href="#ref-5">5</a></sup>. Two different routes, one theme: governments and security teams want frontier-class models they control.</p>
+</section>
+
+<section class="block">
+<h2>Why this matters</h2>
+<p>Until recently, "run it yourself" meant accepting a clear capability gap against the best hosted models. Large, capable open-weight models narrow that gap for some tasks, particularly in security, where sending logs, code and vulnerability data to a third party is often unacceptable. That brings self-hosting into serious consideration for regulated and sovereign buyers in <a href="/fractional-cto-europe/">Europe</a>, the <a href="/fractional-cto-saudi-arabia/">GCC</a>, <a href="/fractional-cto-india/">India</a> and beyond.</p>
+<p>It does not make self-hosting cheap. A mixture-of-experts model only activates part of its weights per token, which helps compute, but all trillion parameters still have to sit in accelerator memory. In a year when memory is the scarce part of AI hardware, as covered in <a href="/insights/ai-memory-squeeze-inference-architecture/">the AI memory squeeze</a>, that is the cost that decides most business cases.</p>
+</section>
+
+<section class="block">
+<h2>Three ways to use it</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Option A</small><div class="dgm-nodes"><span>Provider API<em>Mistral or a cloud marketplace</em></span><span>Lowest effort<em>data leaves your boundary</em></span></div></div>
+<div class="dgm-tier"><small>Option B</small><div class="dgm-nodes"><span class="hl">Dedicated hosting in your cloud tenancy<em>your region, your keys</em></span><span>Moderate effort<em>reserved multi-GPU capacity</em></span></div></div>
+<div class="dgm-tier"><small>Option C</small><div class="dgm-nodes"><span class="hl">On-premises or sovereign facility<em>full control</em></span><span>Highest effort<em>hardware, power, operations</em></span></div></div>
+<div class="dgm-tier"><small>Common layer</small><div class="dgm-nodes"><span>Gateway and routing<em>swap options without app changes</em></span><span>Evaluations<em>your tasks, your data</em></span><span>Telemetry<em>cost and quality per task</em></span></div></div>
+</div>
+<figcaption>Whichever option you pick, build the common layer so you can move between them.</figcaption>
+</figure>
+<p>Most organisations should start with option A to test quality on their own tasks, behind a gateway, and move to B or C only when a requirement forces it. The <a href="/insights/llm-model-routing/">model routing</a> and <a href="/insights/kubernetes-inference-gateway/">inference gateway</a> notes cover how to keep that switch cheap.</p>
+</section>
+
+<section class="block">
+<h2>If you do self-host: what it takes</h2>
+<ul>
+<li><strong>Multi-GPU, often multi-node serving.</strong> A model this size needs several high-memory accelerators even with quantisation, and possibly more than one server. Serving engines such as <a href="/insights/llm-inference-serving-vllm/">vLLM</a> handle the parallelism; your platform has to schedule and heal it.</li>
+<li><strong>Gang scheduling.</strong> Multi-node work has to start together or not at all. Kubernetes projects such as JobSet represent groups of pods as one unit for distributed jobs like evaluation runs and fine-tuning<sup class="cite"><a href="#ref-6">6</a></sup>; see <a href="/insights/kubernetes-gang-scheduling-ai/">gang scheduling for AI</a>.</li>
+<li><strong>Your own safety layer.</strong> A hosted API brings abuse monitoring and guardrails. Self-hosted, those are yours, which matters for a model marketed for offensive-security-adjacent work.</li>
+<li><strong>Licence review.</strong> Read the terms for commercial use, redistribution and any field-of-use limits before building on it.</li>
+<li><strong>A team.</strong> Someone has to patch, monitor, upgrade and be on call for it.</li>
+</ul>
+<figure class="fig"><div class="im"><img src="/assets/img/mistral-large-4-open-weights-self-hosting/jobset.webp" alt="Diagram of a JobSet custom resource that manages two replicated jobs, one with a single pod and one with two jobs of two pods each, all connected through a headless service" width="900" height="872" loading="lazy"></div><figcaption>JobSet groups the pods of a distributed job so they are scheduled, networked and restarted together. <span class="credit">Source: <a href="https://kubernetes.io/blog/2025/03/23/introducing-jobset/" target="_blank" rel="noopener">Kubernetes blog, Daniel Vega-Myhre, Abdullah Gharaibeh and Kevin Hannon</a> · CC BY 4.0</span></figcaption></figure>
+<div class="callout"><p>Downloading the weights is the easy part. The cost of self-hosting is the memory to hold the model and the people to keep it running.</p></div>
+</section>
+
+<section class="block">
+<h2>How to decide</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Requirement</b><span>Is there a legal, sovereignty or contractual reason data cannot go to a provider?</span></li>
+<li><b>Quality</b><span>Does the model beat your current option on your own evaluation set?</span></li>
+<li class="hl"><b>Volume</b><span>Is usage high and steady enough to keep dedicated hardware busy?</span></li>
+<li><b>Cost</b><span>Compare cost per completed task, including people and idle time</span></li>
+<li class="hl"><b>Capability</b><span>Can your team run multi-GPU inference with on-call cover?</span></li>
+<li><b>Exit</b><span>Can you switch back to an API within days if it goes wrong?</span></li>
+</ol>
+<figcaption>If the first answer is no and the volume is modest, use an API and revisit in six months.</figcaption>
+</figure>
+<p>For on-premises economics in detail, see <a href="/insights/private-llm-on-prem/">private LLMs on-premises</a>; for the security use case Mistral is targeting, <a href="/insights/defender-first-ai-models-vulnerability-management/">defender-first AI models</a>.</p>
+</section>
+
+<section class="block">
+<h2>CTO take</h2>
+<p>Large 4 is good news for buyers because it adds a credible, self-hostable option at the top end and puts pressure on hosted pricing. It is not a reason to start buying GPUs. Test it through an API on your real tasks, behind a gateway you control. If it wins on quality and you have a hard requirement to keep data in your environment, plan dedicated hosting with the memory, scheduling and team it needs. Either way, the winning move is the same: keep your stack portable so you can take advantage of the next release too. Today's <a href="/insights/tech-news-2026-10-30/">tech news brief</a> has the wider context.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I help teams decide between hosted and self-hosted models, and design portable inference platforms that keep that choice open. I am based in India, the United States and the UAE, working globally. See <a href="/ai-architect/">AI architecture</a> or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>

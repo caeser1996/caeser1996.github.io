@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) with Consent Mode v2 -->
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('consent', 'default', {ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied', analytics_storage: 'granted'});
+  gtag('consent', 'default', {analytics_storage: 'denied', region: ['AT','BE','BG','HR','CY','CZ','DK','EE','FI','FR','DE','GR','HU','IS','IE','IT','LV','LI','LT','LU','MT','NL','NO','PL','PT','RO','SK','SI','ES','SE','GB','CH'], wait_for_update: 500});
+  try { var c = localStorage.getItem('consent'); if (c === 'granted' || c === 'denied') gtag('consent', 'update', {analytics_storage: c}); } catch (e) {}
+</script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-8TKBV1S98Q"></script>
+<script>
+  gtag('js', new Date());
+
+  gtag('config', 'G-8TKBV1S98Q', {content_group: (function(p){return p==='/'?'Home':p.indexOf('/insights/')===0?'Insights':p.indexOf('/case-studies/')===0?'Case studies':'Services';})(location.pathname)});
+</script>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Mistral Large 4 open weights: should you run a 1T model yourself?</title>
+<meta name="description" content="Mistral has released weights for its trillion-parameter Large 4. A CTO&#x27;s take on when self-hosting a frontier-scale open model makes sense, and what it really costs." />
+<meta name="keywords" content="Mistral Large 4, open weights, trillion parameter model, mixture of experts, self-hosted LLM, sovereign AI, vLLM, Cohere Canada investment, private LLM cost, AI architect" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://asksumanta.com/insights/mistral-large-4-open-weights-self-hosting/" />
+<meta name="theme-color" content="#fafafa" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<link rel="alternate" type="application/rss+xml" title="Sumanta Mukhopadhyay: insights and case studies" href="/feed.xml" />
+<link rel="alternate" type="application/rss+xml" title="Sumanta Mukhopadhyay: daily tech news" href="/insights/news.xml" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="Mistral Large 4 open weights: should you run a 1T model yourself?" />
+<meta property="og:description" content="Mistral has released weights for its trillion-parameter Large 4. A CTO&#x27;s take on when self-hosting a frontier-scale open model makes sense, and what it really costs." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://asksumanta.com/insights/mistral-large-4-open-weights-self-hosting/" />
+<meta property="og:image" content="https://asksumanta.com/assets/og/mistral-large-4-open-weights-self-hosting.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Mistral Large 4 open weights: should you run a 1T model yourself?" />
+<meta name="twitter:description" content="Mistral has released weights for its trillion-parameter Large 4. A CTO&#x27;s take on when self-hosting a frontier-scale open model makes sense, and what it really costs." />
+<meta name="twitter:image" content="https://asksumanta.com/assets/og/mistral-large-4-open-weights-self-hosting.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "BlogPosting", "headline": "Mistral Large 4's open weights: when running a trillion-parameter model yourself makes sense, and when it does not", "description": "Mistral has released weights for its trillion-parameter Large 4. A CTO's take on when self-hosting a frontier-scale open model makes sense, and what it really costs.", "datePublished": "2026-10-30T16:55:00+04:00", "dateModified": "2026-10-30T16:55:00+04:00", "articleSection": "Analysis · Open models and sovereign AI", "genre": "Analysis", "citation": [{"@type": "CreativeWork", "name": "Mistral releases weights for its trillion-parameter AI model, targeting cybersecurity", "url": "https://techcrunch.com/2026/10/29/mistral-releases-weights-for-its-trillion-parameter-ai-model-targeting-cybersecurity/"}, {"@type": "CreativeWork", "name": "Mistral releases open weights for its 1 trillion-parameter Large 4 model", "url": "https://thenextweb.com/news/mistral-large-4-open-weights-release"}, {"@type": "CreativeWork", "name": "Mistral releases open weights for 1 trillion-parameter Large 4, with day-0 vLLM support", "url": "https://daily.dev/posts/mistral-releases-open-weights-for-1-trillion-parameter-large-4-with-day-0-vllm-support-hrgscxwdb"}, {"@type": "CreativeWork", "name": "Mistral AI Releases Open Weights for Its 1 Trillion-Parameter Large 4 Model", "url": "https://oodaloop.com/briefs/technology/mistral-ai-releases-open-weights-for-its-1-trillion-parameter-large-4-model/"}, {"@type": "CreativeWork", "name": "Canada announces landmark investment in Cohere to scale secure, sovereign AI", "url": "https://www.pm.gc.ca/en/news/news-releases/2026/10/29/canada-announces-landmark-investment-cohere-scale-secure-sovereign-ai"}, {"@type": "CreativeWork", "name": "Introducing JobSet", "url": "https://kubernetes.io/blog/2025/03/23/introducing-jobset/"}], "author": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "publisher": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "mainEntityOfPage": "https://asksumanta.com/insights/mistral-large-4-open-weights-self-hosting/", "image": "https://asksumanta.com/assets/og/mistral-large-4-open-weights-self-hosting.png", "keywords": "Mistral Large 4, open weights, trillion parameter model, mixture of experts, self-hosted LLM, sovereign AI, vLLM, Cohere Canada investment, private LLM cost, AI architect", "wordCount": 856}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://asksumanta.com/"}, {"@type": "ListItem", "position": 2, "name": "Insights", "item": "https://asksumanta.com/insights/"}, {"@type": "ListItem", "position": 3, "name": "Mistral Large 4's open weights: when running a trillion-parameter model yourself makes sense, and when it does not", "item": "https://asksumanta.com/insights/mistral-large-4-open-weights-self-hosting/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What did Mistral release?", "acceptedAnswer": {"@type": "Answer", "text": "On 29 October 2026, Mistral released the weights of Mistral Large 4, a one-trillion-parameter mixture-of-experts model, on Hugging Face, with a focus on cybersecurity use. It is also available through Mistral's API. Benchmark figures quoted at launch are Mistral's own."}}, {"@type": "Question", "name": "Is it really open?", "acceptedAnswer": {"@type": "Answer", "text": "The weights are downloadable, but commentary has debated whether the licence terms fit common definitions of open weight. Read the licence before planning commercial use."}}, {"@type": "Question", "name": "Should we self-host it?", "acceptedAnswer": {"@type": "Answer", "text": "Only if you have a strong reason, such as data that cannot leave your environment, a sovereignty requirement or very high steady volume, and the team to run multi-GPU inference. Otherwise, use it through a provider and keep the option to move."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css?v=9155e6ca2c" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='light';try{t=localStorage.getItem('theme')||'light';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+  try{if(!sessionStorage.getItem('booted')&&!/bot|crawl|spider|slurp|lighthouse|headless/i.test(navigator.userAgent)&&!matchMedia('(prefers-reduced-motion: reduce)').matches){document.documentElement.classList.add('boot');sessionStorage.setItem('booted','1');}}catch(e){}
+</script>
+</head>
+<body class="sub is-post">
+<div class="progress" id="progress"></div>
+<nav class="topnav">
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links" id="navLinks">
+      <div class="nd"><button type="button" class="nd-b" aria-expanded="false" aria-controls="nd-services">Services<svg class="chev" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 3.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button><div class="nd-p" id="nd-services"><div class="nd-grid"><a class="nd-i" href="/fractional-cto/"><b>Fractional CTO</b><span>Part-time technology leadership for startups and scale-ups</span></a><a class="nd-i" href="/ai-architect/"><b>AI &amp; LLM architecture</b><span>RAG, agents and private LLMs that make it to production</span></a><a class="nd-i" href="/ontology-knowledge-graph/"><b>Ontology &amp; knowledge graphs</b><span>Shared meaning for your data, analytics and AI</span></a><a class="nd-i" href="/healthcare-data-architecture/"><b>Healthcare data architecture</b><span>FHIR, OMOP and HIPAA-aligned data platforms</span></a><a class="nd-i" href="/technical-due-diligence/"><b>Technical due diligence</b><span>Independent technology assessment for investors</span></a><a class="nd-i" href="/regions/"><b>Fractional CTO worldwide</b><span>US, UK, Europe, Middle East, India, Singapore and Australia</span></a></div><div class="nd-side"><small>Not sure where to start?</small><p>Answer four questions and get a first diagnosis of your challenge.</p><a class="lnk" href="/#assess">Analyse your challenge →</a></div></div></div>
+      <div class="nd"><button type="button" class="nd-b" aria-expanded="false" aria-controls="nd-work">Work<svg class="chev" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 3.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button><div class="nd-p" id="nd-work"><div class="nd-grid"><a class="nd-i" href="/case-studies/"><b>All case studies</b><span>47 anonymised engagements with architecture and flow diagrams</span></a><a class="nd-i" href="/case-studies/#use-cases"><b>Use cases</b><span>Problems I&#x27;m brought in to solve, by sector</span></a><a class="nd-i" href="/case-studies/#snapshots"><b>Engagement snapshots</b><span>Six common problems, the approach and the stack</span></a><a class="nd-i" href="/case-studies/uk-housing-repairs-ai-agents-adm/"><b>AI repairs triage for UK social housing</b><span>Social housing · United Kingdom</span></a><a class="nd-i" href="/case-studies/japan-retail-ai-appi-amendment/"><b>AI data governance for Japan&#x27;s amended APPI</b><span>Retail · Japan</span></a><a class="nd-i" href="/case-studies/kenya-telehealth-ai-triage-data-protection/"><b>AI triage for telehealth in Kenya</b><span>Healthcare · Kenya</span></a></div><div class="nd-side"><small>Confidential by default</small><p>Every case study is an anonymised composite, cited to public sources.</p><a class="lnk" href="/case-studies/">Browse all →</a></div></div></div>
+      <div class="nd"><button type="button" class="nd-b" aria-expanded="false" aria-controls="nd-insights">Insights<svg class="chev" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 3.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button><div class="nd-p" id="nd-insights"><div class="nd-grid"><a class="nd-i" href="/insights/"><b>All insights</b><span>116 articles on AI, data, cloud and leadership</span></a><a class="nd-i" href="/insights/#topic-news"><b>Daily tech news</b><span>A CTO&#x27;s take on the day&#x27;s releases, deals and rules</span></a><a class="nd-i" href="/subscribe/"><b>Subscribe via RSS</b><span>Get every new post in Feedly, Inoreader or any reader</span></a><a class="nd-i" href="/insights/mistral-large-4-open-weights-self-hosting/"><b>Mistral Large 4&#x27;s open weights: when running a trillion-parameter model yourself makes sense, and when it does not</b></a><a class="nd-i" href="/insights/new-york-youth-chatbot-law-ai-assistants/"><b>New York&#x27;s youth chatbot law: what teams shipping AI assistants need to build, and by when</b></a><a class="nd-i" href="/insights/ai-memory-squeeze-inference-architecture/"><b>The AI memory squeeze: what Samsung&#x27;s and SK hynix&#x27;s record quarters mean for your inference architecture</b></a><a class="nd-i" href="/insights/agents-replace-seats-enterprise-saas/"><b>When agents become the user: what ServiceNow&#x27;s week means for enterprise SaaS architecture, pricing and control</b></a><a class="nd-i" href="/insights/tech-news-2026-10-30/"><b>Tech news, 30 October 2026: the AI capex bill arrives, Samsung&#x27;s HBM record, FuriosaAI, ServiceNow and an ESX zero-day</b></a></div><div class="nd-side"><small>New every week</small><p>Explainers, playbooks and analysis of new standards and regulation.</p><a class="lnk" href="/insights/">Read the latest →</a></div></div></div>
+      <div class="nd"><button type="button" class="nd-b" aria-expanded="false" aria-controls="nd-about">About<svg class="chev" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 3.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button><div class="nd-p" id="nd-about"><div class="nd-grid"><a class="nd-i" href="/about/"><b>About</b><span>Background, credentials and open-source work</span></a><a class="nd-i" href="/expertise/"><b>Expertise</b><span>Practice areas, reference architecture and industries</span></a><a class="nd-i" href="/how-i-work/"><b>How I work</b><span>Playbook, principles and engagement models</span></a><a class="nd-i" href="/how-i-work/#faq"><b>FAQ</b><span>Common questions about working together</span></a><a class="nd-i" href="/#contact"><b>Contact</b><span>Book a call or send a message</span></a></div><div class="nd-side"><small>Take a break</small><p>Defend production from incoming incidents in Orbital Ops, a free sci-fi browser game.</p><a class="lnk" href="/play/">Play now →</a></div></div></div>
+      <a class="nd-l" href="/play/">Play <em>new</em></a>
+    </div>
+    <div class="nav-r">
+      <button type="button" class="kbtn" data-search aria-label="Search the site" title="Search (Ctrl K)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><kbd>⌘K</kbd></button>
+      <button type="button" class="snd" aria-pressed="false" aria-label="Turn ambient sound on" title="Ambient sound"><span class="eq"><i></i><i></i><i></i><i></i></span></button>
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/insights/">Insights</a> <span>/</span> <em>Mistral Large 4&#x27;s open weights: when running a trillion-parameter model yourself makes sense, and when it does not</em></div>
+    <div class="kicker">Analysis · Open models and sovereign AI</div>
+    <h1>Mistral Large 4&#x27;s open weights: when running a trillion-parameter model yourself makes sense, and when it does not</h1>
+    <p class="sub-lede">On 29 October, Mistral published the weights of Large 4, a one-trillion-parameter mixture-of-experts model pitched at security teams who want to run it on their own infrastructure. The same day, Canada announced a large equity stake in Cohere to build sovereign AI capacity. Frontier-scale open models are now a real option. Whether they are the right option is an architecture and cost question, not a headline one.</p>
+    <div class="ameta"><span class="fmt">Analysis</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-10-30T16:55:00+04:00">30 Oct 2026 · 16:55 GST</time><span>8 min read</span><span>6 sources</span></div><div class="atags"><span class="tagp">#news</span><span class="tagp">#ai</span><span class="tagp">#llm</span><span class="tagp">#platform</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Analysis cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><polyline points="540,224 596,178 652,198 708,220 764,193 820,189 876,218 932,194 988,205 1044,169 1100,216 1156,198" class="cv-line"/><polyline points="540,176 596,208 652,194 708,273 764,208 820,125 876,143 932,295 988,224 1044,205 1100,193 1156,217" class="cv-line"/><polyline points="540,172 596,118 652,159 708,127 764,246 820,154 876,175 932,156 988,315 1044,164 1100,218 1156,230" class="cv-line hl"/><text x="60" y="90" class="cv-k">ANALYSIS · ANALYSIS · OPEN MODELS AND SOVEREIGN AI</text><text x="60" y="350" class="cv-n">30 Oct 2026 · 16:55 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <section class="block">
+<h2 id="what-happened">What happened</h2>
+<p>Mistral released the weights of Mistral Large 4 on 29 October. It is a mixture-of-experts model with about one trillion parameters in total, of which roughly 50 billion are active for any given token, and Mistral is positioning it for cybersecurity defenders who want to run it themselves<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. The vLLM project had support ready on day one<sup class="cite"><a href="#ref-3">3</a></sup>. The benchmark results quoted at launch are Mistral's own, and some commentators have questioned whether the licence terms meet common definitions of open weight<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+<p>The same day, Canada announced an equity investment of up to C$1.6 billion in Cohere, tied to commitments to build compute capacity in Canada<sup class="cite"><a href="#ref-5">5</a></sup>. Two different routes, one theme: governments and security teams want frontier-class models they control.</p>
+</section>
+
+<section class="block">
+<h2 id="why-this-matters">Why this matters</h2>
+<p>Until recently, "run it yourself" meant accepting a clear capability gap against the best hosted models. Large, capable open-weight models narrow that gap for some tasks, particularly in security, where sending logs, code and vulnerability data to a third party is often unacceptable. That brings self-hosting into serious consideration for regulated and sovereign buyers in <a href="/fractional-cto-europe/">Europe</a>, the <a href="/fractional-cto-saudi-arabia/">GCC</a>, <a href="/fractional-cto-india/">India</a> and beyond.</p>
+<p>It does not make self-hosting cheap. A mixture-of-experts model only activates part of its weights per token, which helps compute, but all trillion parameters still have to sit in accelerator memory. In a year when memory is the scarce part of AI hardware, as covered in <a href="/insights/ai-memory-squeeze-inference-architecture/">the AI memory squeeze</a>, that is the cost that decides most business cases.</p>
+</section>
+
+<section class="block">
+<h2 id="three-ways-to-use-it">Three ways to use it</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Option A</small><div class="dgm-nodes"><span>Provider API<em>Mistral or a cloud marketplace</em></span><span>Lowest effort<em>data leaves your boundary</em></span></div></div>
+<div class="dgm-tier"><small>Option B</small><div class="dgm-nodes"><span class="hl">Dedicated hosting in your cloud tenancy<em>your region, your keys</em></span><span>Moderate effort<em>reserved multi-GPU capacity</em></span></div></div>
+<div class="dgm-tier"><small>Option C</small><div class="dgm-nodes"><span class="hl">On-premises or sovereign facility<em>full control</em></span><span>Highest effort<em>hardware, power, operations</em></span></div></div>
+<div class="dgm-tier"><small>Common layer</small><div class="dgm-nodes"><span>Gateway and routing<em>swap options without app changes</em></span><span>Evaluations<em>your tasks, your data</em></span><span>Telemetry<em>cost and quality per task</em></span></div></div>
+</div>
+<figcaption>Whichever option you pick, build the common layer so you can move between them.</figcaption>
+</figure>
+<p>Most organisations should start with option A to test quality on their own tasks, behind a gateway, and move to B or C only when a requirement forces it. The <a href="/insights/llm-model-routing/">model routing</a> and <a href="/insights/kubernetes-inference-gateway/">inference gateway</a> notes cover how to keep that switch cheap.</p>
+</section>
+
+<section class="block">
+<h2 id="if-you-do-self-host-what-it-takes">If you do self-host: what it takes</h2>
+<ul>
+<li><strong>Multi-GPU, often multi-node serving.</strong> A model this size needs several high-memory accelerators even with quantisation, and possibly more than one server. Serving engines such as <a href="/insights/llm-inference-serving-vllm/">vLLM</a> handle the parallelism; your platform has to schedule and heal it.</li>
+<li><strong>Gang scheduling.</strong> Multi-node work has to start together or not at all. Kubernetes projects such as JobSet represent groups of pods as one unit for distributed jobs like evaluation runs and fine-tuning<sup class="cite"><a href="#ref-6">6</a></sup>; see <a href="/insights/kubernetes-gang-scheduling-ai/">gang scheduling for AI</a>.</li>
+<li><strong>Your own safety layer.</strong> A hosted API brings abuse monitoring and guardrails. Self-hosted, those are yours, which matters for a model marketed for offensive-security-adjacent work.</li>
+<li><strong>Licence review.</strong> Read the terms for commercial use, redistribution and any field-of-use limits before building on it.</li>
+<li><strong>A team.</strong> Someone has to patch, monitor, upgrade and be on call for it.</li>
+</ul>
+<figure class="fig"><div class="im"><img src="/assets/img/mistral-large-4-open-weights-self-hosting/jobset.webp" alt="Diagram of a JobSet custom resource that manages two replicated jobs, one with a single pod and one with two jobs of two pods each, all connected through a headless service" width="900" height="872" loading="lazy"></div><figcaption>JobSet groups the pods of a distributed job so they are scheduled, networked and restarted together. <span class="credit">Source: <a href="https://kubernetes.io/blog/2025/03/23/introducing-jobset/" target="_blank" rel="noopener">Kubernetes blog, Daniel Vega-Myhre, Abdullah Gharaibeh and Kevin Hannon</a> · CC BY 4.0</span></figcaption></figure>
+<div class="callout"><p>Downloading the weights is the easy part. The cost of self-hosting is the memory to hold the model and the people to keep it running.</p></div>
+</section>
+
+<section class="block">
+<h2 id="how-to-decide">How to decide</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Requirement</b><span>Is there a legal, sovereignty or contractual reason data cannot go to a provider?</span></li>
+<li><b>Quality</b><span>Does the model beat your current option on your own evaluation set?</span></li>
+<li class="hl"><b>Volume</b><span>Is usage high and steady enough to keep dedicated hardware busy?</span></li>
+<li><b>Cost</b><span>Compare cost per completed task, including people and idle time</span></li>
+<li class="hl"><b>Capability</b><span>Can your team run multi-GPU inference with on-call cover?</span></li>
+<li><b>Exit</b><span>Can you switch back to an API within days if it goes wrong?</span></li>
+</ol>
+<figcaption>If the first answer is no and the volume is modest, use an API and revisit in six months.</figcaption>
+</figure>
+<p>For on-premises economics in detail, see <a href="/insights/private-llm-on-prem/">private LLMs on-premises</a>; for the security use case Mistral is targeting, <a href="/insights/defender-first-ai-models-vulnerability-management/">defender-first AI models</a>.</p>
+</section>
+
+<section class="block">
+<h2 id="cto-take">CTO take</h2>
+<p>Large 4 is good news for buyers because it adds a credible, self-hostable option at the top end and puts pressure on hosted pricing. It is not a reason to start buying GPUs. Test it through an API on your real tasks, behind a gateway you control. If it wins on quality and you have a hard requirement to keep data in your environment, plan dedicated hosting with the memory, scheduling and team it needs. Either way, the winning move is the same: keep your stack portable so you can take advantage of the next release too. Today's <a href="/insights/tech-news-2026-10-30/">tech news brief</a> has the wider context.</p>
+</section>
+
+<section class="block">
+<h2 id="how-i-can-help">How I can help</h2>
+<p>I help teams decide between hosted and self-hosted models, and design portable inference platforms that keep that choice open. I am based in India, the United States and the UAE, working globally. See <a href="/ai-architect/">AI architecture</a> or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://techcrunch.com/2026/10/29/mistral-releases-weights-for-its-trillion-parameter-ai-model-targeting-cybersecurity/" target="_blank" rel="noopener">Mistral releases weights for its trillion-parameter AI model, targeting cybersecurity</a><small>TechCrunch · 29 Oct 2026</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://thenextweb.com/news/mistral-large-4-open-weights-release" target="_blank" rel="noopener">Mistral releases open weights for its 1 trillion-parameter Large 4 model</a><small>The Next Web · Oct 2026</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://daily.dev/posts/mistral-releases-open-weights-for-1-trillion-parameter-large-4-with-day-0-vllm-support-hrgscxwdb" target="_blank" rel="noopener">Mistral releases open weights for 1 trillion-parameter Large 4, with day-0 vLLM support</a><small>daily.dev · Oct 2026</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://oodaloop.com/briefs/technology/mistral-ai-releases-open-weights-for-its-1-trillion-parameter-large-4-model/" target="_blank" rel="noopener">Mistral AI Releases Open Weights for Its 1 Trillion-Parameter Large 4 Model</a><small>OODA Loop · Oct 2026</small></div></li><li id="ref-5"><span class="rn">5</span><div><a href="https://www.pm.gc.ca/en/news/news-releases/2026/10/29/canada-announces-landmark-investment-cohere-scale-secure-sovereign-ai" target="_blank" rel="noopener">Canada announces landmark investment in Cohere to scale secure, sovereign AI</a><small>Prime Minister of Canada · 29 Oct 2026</small></div></li><li id="ref-6"><span class="rn">6</span><div><a href="https://kubernetes.io/blog/2025/03/23/introducing-jobset/" target="_blank" rel="noopener">Introducing JobSet</a><small>Kubernetes blog · 23 Mar 2025</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fmistral-large-4-open-weights-self-hosting%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fmistral-large-4-open-weights-self-hosting%2F&amp;text=Mistral%20Large%204%27s%20open%20weights%3A%20when%20running%20a%20trillion-parameter%20model%20yourself%20makes%20sense%2C%20and%20when%20it%20does%20not" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=Mistral%20Large%204%27s%20open%20weights%3A%20when%20running%20a%20trillion-parameter%20model%20yourself%20makes%20sense%2C%20and%20when%20it%20does%20not%20https%3A%2F%2Fasksumanta.com%2Finsights%2Fmistral-large-4-open-weights-self-hosting%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://asksumanta.com/insights/mistral-large-4-open-weights-self-hosting/">Copy link</button></div>
+      <aside class="author-box" aria-label="About the author">
+        <div class="ab-av" aria-hidden="true">SM</div>
+        <div><small>About the author</small><b>Sumanta Mukhopadhyay</b>
+        <p>Fractional CTO, principal engineer and AI architect based in India, the United States and the UAE. Works across ontology and knowledge graphs, production AI, healthcare data platforms and cloud infrastructure.</p>
+        <div class="ab-l"><a href="/about/">More about me</a><a href="/how-i-work/">How I work</a><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a call</a></div></div>
+      </aside>
+      <div class="pnav"><a class="pn prev" href="/insights/new-york-youth-chatbot-law-ai-assistants/"><small>← Previous</small><b>New York&#x27;s youth chatbot law: what teams shipping AI assistants need to build, and by when</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#what-happened">What happened</a></li><li><a href="#why-this-matters">Why this matters</a></li><li><a href="#three-ways-to-use-it">Three ways to use it</a></li><li><a href="#if-you-do-self-host-what-it-takes">If you do self-host: what it takes</a></li><li><a href="#how-to-decide">How to decide</a></li><li><a href="#cto-take">CTO take</a></li><li><a href="#how-i-can-help">How I can help</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>What did Mistral release?</summary><p>On 29 October 2026, Mistral released the weights of Mistral Large 4, a one-trillion-parameter mixture-of-experts model, on Hugging Face, with a focus on cybersecurity use. It is also available through Mistral&#x27;s API. Benchmark figures quoted at launch are Mistral&#x27;s own.</p></details><details class="rise"><summary>Is it really open?</summary><p>The weights are downloadable, but commentary has debated whether the licence terms fit common definitions of open weight. Read the licence before planning commercial use.</p></details><details class="rise"><summary>Should we self-host it?</summary><p>Only if you have a strong reason, such as data that cannot leave your environment, a sovereignty requirement or very high steady volume, and the team to run multi-GPU inference. Otherwise, use it through a provider and keep the option to move.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/ai-architect/"><small>Service</small><b>AI &amp; LLM architecture</b><span>I design and build AI systems that leadership can trust: grounded in your data, measured by evaluations, governed by your rules and priced so they make sense at scale.</span><i>→</i></a><a class="rcard rise" href="/fractional-cto-europe/"><small>Service</small><b>Fractional CTO and AI architect for European companies</b><span>Technology leadership for EU startups, scale-ups and enterprises, with AI and data platforms built for the EU AI Act, GDPR and the resilience rules that now apply to financial services and critical sectors.</span><i>→</i></a><a class="rcard rise" href="/insights/ai-memory-squeeze-inference-architecture/"><small>Insight</small><b>The AI memory squeeze: what Samsung&#x27;s and SK hynix&#x27;s record quarters mean for your inference architecture</b><span>Korea&#x27;s two memory makers have just reported the biggest quarters in their history, and the reason is the memory that sits next to every AI accelerator. When memory is the scarce, rising-cost part of the stack, inference architecture should be designed around it. Here is what that means in practice.</span><i>→</i></a><a class="rcard rise" href="/insights/tech-news-2026-10-30/"><small>Insight</small><b>Tech news, 30 October 2026: the AI capex bill arrives, Samsung&#x27;s HBM record, FuriosaAI, ServiceNow and an ESX zero-day</b><span>Big Tech&#x27;s AI spending showed up in the cash flow statements this week: Google Cloud doubled and AWS beat estimates, but both companies spent more than they brought in. Memory makers are the clear winners, Korea is backing a GPU alternative, investors are questioning SaaS, and attackers are chaining old and new flaws to get root.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: Mistral Large 4&#x27;s open weights: when running a trillion-parameter model yourself makes sense, and when it does not">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. Time zones from the Americas and Europe to the Middle East and Asia-Pacific.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
+        <p class="floc">Global, remote-first · based in India, the US &amp; UAE · <a href="/regions/">where I work</a></p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/regions/">Fractional CTO worldwide →</a></li></ul></div>
+      <div class="fc"><h4>Case studies</h4><ul><li><a href="/case-studies/uk-housing-repairs-ai-agents-adm/">AI repairs triage for UK social housing</a></li><li><a href="/case-studies/japan-retail-ai-appi-amendment/">AI data governance for Japan&#x27;s amended APPI</a></li><li><a href="/case-studies/kenya-telehealth-ai-triage-data-protection/">AI triage for telehealth in Kenya</a></li><li><a href="/case-studies/nigeria-payment-data-localisation-platform/">Payment data localisation in Nigeria</a></li><li><a href="/case-studies/#snapshots">Engagement snapshots</a></li><li><a href="/case-studies/">All case studies →</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/mistral-large-4-open-weights-self-hosting/">Mistral Large 4&#x27;s open weights: when running a trillion-parameter model yourself makes sense, and when it does not</a></li><li><a href="/insights/new-york-youth-chatbot-law-ai-assistants/">New York&#x27;s youth chatbot law: what teams shipping AI assistants need to build, and by when</a></li><li><a href="/insights/ai-memory-squeeze-inference-architecture/">The AI memory squeeze: what Samsung&#x27;s and SK hynix&#x27;s record quarters mean for your inference architecture</a></li><li><a href="/insights/agents-replace-seats-enterprise-saas/">When agents become the user: what ServiceNow&#x27;s week means for enterprise SaaS architecture, pricing and control</a></li><li><a href="/insights/tech-news-2026-10-30/">Tech news, 30 October 2026: the AI capex bill arrives, Samsung&#x27;s HBM record, FuriosaAI, ServiceNow and an ESX zero-day</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="/how-i-work/">How I work</a></li>
+        <li><a href="/expertise/">Expertise</a></li>
+        <li><a href="/about/">About</a></li>
+        <li><a href="/play/">Play Orbital Ops</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/privacy/">Privacy &amp; cookies</a><button type="button" class="cookie-link" data-cookie-settings>Cookie settings</button><a href="/subscribe/">RSS</a><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js?v=fddb4ea7bf"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>
