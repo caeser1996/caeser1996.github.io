@@ -80,7 +80,85 @@
 
 <h2>What I'd do again, and differently</h2>
 <p>Again: redesign the camera use case instead of documenting it. It removed most of the risk in one move. Differently: put purpose tags on data at ingestion from the start, rather than adding them during the inventory; tagging old data took longer than building the platform. Related: <a href="https://asksumanta.com/insights/iso-42001-vs-nist-ai-rmf/">ISO 42001 and the NIST AI RMF</a>, <a href="https://asksumanta.com/case-studies/korea-ai-basic-act-hiring-platform/">high-impact AI under Korea's AI Basic Act</a> and <a href="https://asksumanta.com/regions/">where I work</a>.</p>
-<p>If you use personal data for AI in Japan or across Asia, see my <a href="https://asksumanta.com/ai-architect/">AI architecture work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/japan-retail-ai-appi-amendment/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Onshore by January: moving Nigerian payment data home without breaking a pan-African platform</title><link>https://asksumanta.com/case-studies/nigeria-payment-data-localisation-platform/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/nigeria-payment-data-localisation-platform/</guid><pubDate>Fri, 30 Oct 2026 12:30:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>platform</category><category>data</category><category>kubernetes</category><description>How a Lagos-based payments company can meet the CBN&#x27;s 2027 payment data localisation deadline without splitting its platform: cells, data classes and tested cutover.</description><content:encoded><![CDATA[<p><em>A Lagos-based payments company ran one platform for Nigeria, Kenya and Ghana from an overseas cloud region. The Central Bank of Nigeria then set a deadline for payment transaction data generated in Nigeria to be stored in Nigeria. The task was to move that data onshore, keep one platform for every market and cut over without losing a payment.</em></p><h2>The situation</h2>
+<p>If you use personal data for AI in Japan or across Asia, see my <a href="https://asksumanta.com/ai-architect/">AI architecture work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/japan-retail-ai-appi-amendment/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Helpful, not reckless: privacy-first AI triage for a Kenyan telehealth service</title><link>https://asksumanta.com/case-studies/kenya-telehealth-ai-triage-data-protection/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/kenya-telehealth-ai-triage-data-protection/</guid><pubDate>Fri, 30 Oct 2026 12:55:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>healthcare</category><category>ai</category><category>governance</category><description>How a Kenyan telehealth provider can use LLM triage in English and Swahili while meeting the Data Protection Act and the ODPC&#x27;s draft AI guidance on health data.</description><content:encoded><![CDATA[<p><em>A Kenyan telehealth service wanted an AI assistant to take symptoms over chat, in English and Swahili, and route patients to the right clinician faster. Health data is the most sensitive data it holds, the best models run offshore, and Kenya&#x27;s regulator is moving from warnings to enforcement. The design had to keep patients safe, keep identifiable data at home and prove both.</em></p><h2>The situation</h2>
+<p>A telehealth provider in Kenya offered consultations by app, WhatsApp and SMS, backed by a network of clinicians and partner pharmacies. Demand peaked in the evenings, when patients waited longest for a first response. The team wanted an AI assistant to take a structured symptom history in English or Swahili, summarise it and suggest who should see the patient, so clinicians could start from a clear picture.</p>
+<p><strong>Why now.</strong> Kenya's Data Protection Act treats health data as sensitive personal data and allows transfers abroad only with appropriate safeguards<sup class="cite"><a href="#ref-1">1</a></sup>. The Office of the Data Protection Commissioner (ODPC) consulted in 2026 on draft guidance on AI<sup class="cite"><a href="#ref-2">2</a></sup>, and commentary on the draft says uses such as health diagnostics and clinical decision support would need a data protection impact assessment<sup class="cite"><a href="#ref-3">3</a></sup>. There were also public calls for stronger protection of data sent to offshore AI providers<sup class="cite"><a href="#ref-4">4</a></sup>, and an October 2026 report described African regulators, Kenya's among them, using data protection law to police AI while dedicated AI bills stall<sup class="cite"><a href="#ref-5">5</a></sup>. A dedicated AI law may or may not arrive soon. The data protection duties already apply.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>Safety first</strong>: urgent symptoms escalated by rules, never left to a model's judgement.</li>
+<li><strong>Clinician in the loop</strong>: the AI drafts, a clinician decides.</li>
+<li><strong>Identifiable data stays home</strong>: names, numbers and IDs never reach an offshore model.</li>
+<li><strong>Both languages work</strong>, including mixed English and Swahili, tested on every change.</li>
+<li><strong>A living DPIA</strong>, updated with each release and backed by evidence.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Channels</small><div class="dgm-nodes"><span>App<em>rich chat</em></span><span>WhatsApp<em>most patients</em></span><span>SMS<em>basic phones</em></span></div></div>
+<div class="dgm-tier"><small>Safety</small><div class="dgm-nodes"><span class="hl">Red-flag rules<em>run before the model</em></span><span>Emergency routing<em>call-back and referral</em></span></div></div>
+<div class="dgm-tier"><small>In-country boundary</small><div class="dgm-nodes"><span class="hl">De-identification gateway<em>strip and tokenise identifiers</em></span><span>MCP servers<em>clinic, pharmacy, scheduling</em></span></div></div>
+<div class="dgm-tier"><small>Model</small><div class="dgm-nodes"><span>Hosted LLM<em>zero retention, de-identified text</em></span><span>Prompt and policy pack<em>versioned</em></span></div></div>
+<div class="dgm-tier"><small>Care</small><div class="dgm-nodes"><span class="hl">Clinician review queue<em>summary, suggestion, full history</em></span><span>Records<em>in-country EHR</em></span></div></div>
+<div class="dgm-tier"><small>Evidence</small><div class="dgm-nodes"><span>Traces<em>no raw content</em></span><span>Evaluations<em>English, Swahili, mixed</em></span><span>DPIA<em>per release</em></span></div></div>
+</div>
+<figcaption>Rules guard safety, the gateway guards identity, and clinicians guard decisions.</figcaption>
+</figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Message</b><span>A patient describes symptoms by app, WhatsApp or SMS</span></li>
+<li class="hl"><b>Screen</b><span>Rules check for red flags; urgent cases go straight to a clinician</span></li>
+<li class="hl"><b>De-identify</b><span>Names, numbers and IDs are replaced with tokens in-country</span></li>
+<li><b>Draft</b><span>The model asks follow-up questions and drafts a summary and routing</span></li>
+<li><b>Review</b><span>A clinician sees the summary, the suggestion and the full history</span></li>
+<li><b>Record</b><span>The decision is stored in the in-country record with the model version</span></li>
+</ol>
+<figcaption>Nothing the model says affects care until a clinician has confirmed it.</figcaption>
+</figure>
+
+<h2>The hard part: giving the model context without giving it identities</h2>
+<p>Good triage needs context: age band, past visits, current medicines, allergies. Shipping the whole record to the model would have been easy and wrong. The team instead exposed clinic systems through small MCP servers running in-country, each offering narrow, read-only tools such as "medicines for this patient token" or "visits in the last 90 days"<sup class="cite"><a href="#ref-6">6</a></sup>. The servers return only the fields the tool needs, keyed by token, so the model can reason about the patient without ever seeing who they are.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/kenya-telehealth-ai-triage-data-protection/mcp-overview.webp" alt="Diagram of the Model Context Protocol connecting AI applications such as chat interfaces, IDEs and other AI apps with data sources and tools such as databases, development tools and productivity tools through bidirectional data flow" width="1400" height="547" loading="lazy"></div><figcaption>MCP sits between the assistant and clinic systems, so each tool can decide exactly what leaves the boundary. <span class="credit">Source: <a href="https://modelcontextprotocol.io/docs/getting-started/intro" target="_blank" rel="noopener">Model Context Protocol docs, MCP contributors</a> · CC BY 4.0</span></figcaption></figure>
+<p>De-identification in free text is harder than in records. Patients type names, phone numbers, locations and the names of relatives, often mixing English and Swahili. The gateway combined pattern rules with a small local model for entity detection, tested on real, consented examples in both languages, and failed closed: if it was unsure, the message went to a human rather than to the model. More on securing tool servers in the <a href="https://asksumanta.com/insights/securing-mcp-servers-checklist/">MCP security checklist</a>.</p>
+<div class="callout"><p>The question is not "can we send this to the model?" but "what is the least the model needs to be useful?" Build tools that answer exactly that.</p></div>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Clinical lead</small><ol><li>Red-flag rules</li><li class="hl">Review workflow</li><li>Safety reviews</li></ol></div>
+<div class="dgm-lane"><small>Engineering</small><ol><li>Gateway and MCP servers</li><li class="hl">Evaluation harness</li><li>Tracing</li></ol></div>
+<div class="dgm-lane"><small>Data protection</small><ol><li>DPIA</li><li>Transfer safeguards</li><li class="hl">Patient notices</li></ol></div>
+</div>
+<figcaption>The clinical lead owned safety; engineering owned the boundary; data protection owned the paper trail.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Safety and DPIA</b><ul><li>Red-flag rules</li><li>Draft DPIA</li><li>Clinician workflow</li></ul></div>
+<div><small>Phase 2</small><b>Boundary</b><ul><li>De-identification gateway</li><li>MCP servers</li><li>Zero-retention model</li></ul></div>
+<div><small>Phase 3</small><b>Shadow mode</b><ul><li>AI drafts unseen</li><li>Compare with clinicians</li><li>Fix gaps</li></ul></div>
+<div><small>Phase 4</small><b>Assist</b><ul><li>Drafts shown to clinicians</li><li>Evening pilot</li><li>DPIA updated</li></ul></div>
+</div>
+<figcaption>Shadow mode first: the AI's drafts were compared with clinicians' own triage before anyone saw them.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Rules before the model for red flags</td><td>Let the model spot emergencies</td><td>Predictable, testable and explainable</td></tr>
+<tr><td>De-identify in-country</td><td>Send records under a contract</td><td>Identifiable health data never leaves</td></tr>
+<tr><td>Narrow MCP tools</td><td>Give the model the whole record</td><td>Least data for each question</td></tr>
+<tr><td>Fail closed on uncertain redaction</td><td>Send and hope</td><td>A human is cheaper than a breach</td></tr>
+<tr><td>Shadow mode before assist</td><td>Pilot directly with patients</td><td>Find errors without risk to care</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: shadow mode. It showed where the model asked poor follow-up questions in Swahili before any patient saw them. Differently: build the bilingual evaluation set first, not alongside the gateway. It was the slowest part to get right and it drove most design choices. Related: <a href="https://asksumanta.com/case-studies/ambient-clinical-documentation-private-ai/">private AI for clinical documentation</a>, <a href="https://asksumanta.com/insights/private-llm-on-prem/">private LLMs</a>, <a href="https://asksumanta.com/insights/llm-evaluation-sets-that-predict-production/">evaluation sets</a>, <a href="https://asksumanta.com/healthcare-data-architecture/">healthcare data architecture</a> and <a href="https://asksumanta.com/regions/">where I work</a>.</p>
+<p>If you are bringing AI into healthcare in Kenya or elsewhere in Africa, see my <a href="https://asksumanta.com/ai-architect/">AI architecture work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/kenya-telehealth-ai-triage-data-protection/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Onshore by January: moving Nigerian payment data home without breaking a pan-African platform</title><link>https://asksumanta.com/case-studies/nigeria-payment-data-localisation-platform/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/nigeria-payment-data-localisation-platform/</guid><pubDate>Fri, 30 Oct 2026 12:30:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>platform</category><category>data</category><category>kubernetes</category><description>How a Lagos-based payments company can meet the CBN&#x27;s 2027 payment data localisation deadline without splitting its platform: cells, data classes and tested cutover.</description><content:encoded><![CDATA[<p><em>A Lagos-based payments company ran one platform for Nigeria, Kenya and Ghana from an overseas cloud region. The Central Bank of Nigeria then set a deadline for payment transaction data generated in Nigeria to be stored in Nigeria. The task was to move that data onshore, keep one platform for every market and cut over without losing a payment.</em></p><h2>The situation</h2>
 <p>A payments company headquartered in Lagos offered merchant collections, payouts and card processing in Nigeria, Kenya and Ghana. Nigeria was its largest market. Everything ran in one overseas public cloud region: one set of databases, one event stream, one analytics warehouse. It was simple to run, and every market shared the same release process.</p>
 <p><strong>Why now.</strong> The Central Bank of Nigeria directed banks, fintechs and other payment service providers to store payment transaction data generated in Nigeria on servers in Nigeria from 1 January 2027, with vendors that handle that data expected to align<sup class="cite"><a href="#ref-1">1</a></sup>. Legal commentary noted open questions, such as how "generated in Nigeria" applies to transactions that cross borders<sup class="cite"><a href="#ref-2">2</a></sup>. Separately, the federal government adopted a National Digital Cloud Policy in 2026, which commentators describe as classifying data and applying residency rules to defined sensitive and sovereign categories rather than all data<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>. With only months to the deadline, the company needed a plan it could execute, not a debate about interpretation.</p>
 
