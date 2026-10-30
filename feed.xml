@@ -1,6 +1,74 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link><description>Fractional CTO and AI architect: insights, case studies and daily tech news.</description><language>en-gb</language><lastBuildDate>Fri, 30 Oct 2026 23:05:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link></image><item><title>Our models, our metal: a sovereign LLM platform for a European telecom operator</title><link>https://asksumanta.com/case-studies/eu-telecom-sovereign-llm-platform/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/eu-telecom-sovereign-llm-platform/</guid><pubDate>Fri, 30 Oct 2026 23:05:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>ai</category><category>llm</category><category>kubernetes</category><description>How a European telecom operator can run open-weight LLMs on its own GPUs for network, care and security teams, with NIS2-grade controls and a hosted fallback.</description><content:encoded><![CDATA[<p><em>A telecom operator in central Europe wanted generative AI for network operations, customer care and security, but would not send network configurations, customer records or incident data to an outside model. Capable open-weight models made running its own platform realistic. The task was to build one that is shared, secure, reliable and honest about cost.</em></p><h2>The situation</h2>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link><description>Fractional CTO and AI architect: insights, case studies and daily tech news.</description><language>en-gb</language><lastBuildDate>Sat, 31 Oct 2026 00:25:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link></image><item><title>The Binance hack: what a laptop-to-withdrawal attack teaches every platform that moves money</title><link>https://asksumanta.com/insights/binance-hack-custody-architecture-lessons/</link><guid isPermaLink="true">https://asksumanta.com/insights/binance-hack-custody-architecture-lessons/</guid><pubDate>Sat, 31 Oct 2026 00:25:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>security</category><category>architecture</category><category>platform</category><description>Binance says a compromised laptop led to a $6.3B theft via a service container. A CTO&#x27;s take on withdrawal paths, signing services and limits for any money platform.</description><content:encoded><![CDATA[<p><em>On 29 October, Binance reported what is being described as the largest crypto theft on record, about $6.3 billion. Its early account is familiar to anyone who runs payments: a compromised laptop, access to a service container, and withdrawal requests that the system accepted. The lessons apply to banks, fintechs and marketplaces as much as to crypto exchanges.</em></p><section class="block">
+<h2>What happened</h2>
+<p>Binance reported on 29 October that attackers had stolen crypto assets it estimated at about $6.3 billion, which press reports describe as the largest crypto theft on record. It suspended deposits and withdrawals and said it would cover losses<sup class="cite"><a href="#ref-2">2</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>. In its early account, a compromised laptop gave the attacker access to a service container, from which unauthorised withdrawal transactions were submitted<sup class="cite"><a href="#ref-4">4</a></sup>. Stablecoin issuers froze part of the funds, and markets fell on the news<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<p>Details are early and figures have varied between sources. What follows does not depend on the specifics; it is about the pattern Binance described, which exists in most systems that move money.</p>
+</section>
+
+<section class="block">
+<h2>The pattern: one step too few between a service and the money</h2>
+<p>Every payments, lending, marketplace or exchange platform has a path from internal services to an action that releases value: a withdrawal, a payout, a refund, a transfer. The question is how many independent checks sit on that path. If a compromised internal service can submit a request and the system executes it, then one stolen laptop, one leaked token or one vulnerable container is enough.</p>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>People</small><div class="dgm-nodes"><span>Engineer laptops<em>the usual entry point</em></span><span>Admin access<em>just-in-time, hardware keys</em></span></div></div>
+<div class="dgm-tier"><small>Services</small><div class="dgm-nodes"><span>Application services<em>request, never execute</em></span><span>Workload identity<em>short-lived, per service</em></span></div></div>
+<div class="dgm-tier"><small>Independent control</small><div class="dgm-nodes"><span class="hl">Policy service<em>limits, velocity, destinations</em></span><span class="hl">Anomaly checks<em>pattern breaks pause flows</em></span><span>Human approval<em>above thresholds</em></span></div></div>
+<div class="dgm-tier"><small>Execution</small><div class="dgm-nodes"><span class="hl">Signing or payment execution<em>isolated, minimal access</em></span><span>Reserves split<em>most value not instantly movable</em></span></div></div>
+<div class="dgm-tier"><small>Evidence</small><div class="dgm-nodes"><span>Tamper-proof logs<em>off-host</em></span><span>Kill switch<em>tested</em></span></div></div>
+</div>
+<figcaption>Services ask; an independent layer decides; a separate, minimal component executes.</figcaption>
+</figure>
+</section>
+
+<section class="block">
+<h2>Six controls worth checking this week</h2>
+<ol>
+<li><strong>Separate request from execution.</strong> Application services should only create requests. Execution, whether signing a transaction or sending a payment instruction, sits in a small, isolated component that only accepts requests the policy layer has approved.</li>
+<li><strong>Give the policy layer its own identity and its own admins.</strong> If the people or credentials that run application services can also change policy rules, the layer is not independent.</li>
+<li><strong>Limit what can move quickly.</strong> Most value should not be movable in minutes. Tiered reserves, per-destination limits and velocity caps turn a catastrophic theft into a contained one.</li>
+<li><strong>Stop on anomalies, then ask.</strong> Unusual volume, new destinations or off-hours bursts should pause flows automatically. A false alarm costs minutes; a missed one can cost the company.</li>
+<li><strong>Use short-lived workload identity.</strong> Services should prove who they are with short-lived certificates, not long-lived shared secrets, so a stolen credential expires quickly. Kubernetes now supports issuing certificates to pods directly<sup class="cite"><a href="#ref-5">5</a></sup>; see <a href="https://asksumanta.com/insights/kubernetes-pod-certificates-workload-identity/">pod certificates and workload identity</a>.</li>
+<li><strong>Harden the laptop path.</strong> Engineers should not reach production containers from everyday laptops. Use dedicated admin workstations, hardware keys and time-limited access, as in <a href="https://asksumanta.com/case-studies/us-utility-management-plane-hardening/">hardening a utility's management plane</a>.</li>
+</ol>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/binance-hack-custody-architecture-lessons/workload-identity.webp" alt="Architecture diagram: a signer controller issues PodCertificateRequests and publishes ClusterTrustBundles; the kubelet creates requests and writes credential and trust bundle files into the Pod, which the application reads" width="900" height="1009" loading="lazy"></div><figcaption>Short-lived, per-pod certificates: a stolen credential stops working quickly and identifies exactly which workload it belonged to. <span class="credit">Source: <a href="https://kubernetes.io/blog/2026/08/28/kubernetes-v1-37-pod-certificates-and-cluster-trust-bundles/" target="_blank" rel="noopener">Kubernetes blog</a> · CC BY 4.0</span></figcaption></figure>
+<div class="callout"><p>Ask one question of your platform: if an attacker fully controls one internal service, what is the most money they can move, and how fast? If you do not know the answer, that is the finding.</p></div>
+</section>
+
+<section class="block">
+<h2>How to test it</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Map</b><span>List every path from an internal service to an action that moves value</span></li>
+<li><b>Assume breach</b><span>Pick one service and assume an attacker controls it fully</span></li>
+<li class="hl"><b>Trace</b><span>Follow what it can request and which checks stand in the way</span></li>
+<li><b>Measure</b><span>Calculate the maximum value movable in an hour and in a day</span></li>
+<li class="hl"><b>Close</b><span>Add independent checks, limits or isolation where the number is too high</span></li>
+<li><b>Drill</b><span>Run the kill switch and recovery with the real on-call team</span></li>
+</ol>
+<figcaption>An assume-breach review of the money path, done once a quarter.</figcaption>
+</figure>
+</section>
+
+<section class="block">
+<h2>Who should act</h2>
+<ul>
+<li><strong>Exchanges and custodians</strong>: obviously, and now with regulators and customers asking.</li>
+<li><strong>Payment companies and neobanks</strong>: the same pattern applies to payouts and transfers; see <a href="https://asksumanta.com/insights/idempotent-payments-order-pipelines/">idempotent payment pipelines</a> and <a href="https://asksumanta.com/case-studies/nigeria-payment-data-localisation-platform/">onshoring a payments platform</a>.</li>
+<li><strong>Marketplaces and lenders</strong>: refunds, disbursements and seller payouts are money paths too.</li>
+<li><strong>Investors</strong>: ask this question in <a href="https://asksumanta.com/technical-due-diligence/">technical due diligence</a> before the next round.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>CTO take</h2>
+<p>Large thefts are rarely about exotic cryptography. They are about a short path from a compromised machine to an action that moves value, with too few independent checks in between. Binance's early account fits that pattern. Whatever your platform moves, make the money path long for attackers and short for operators: services request, an independent layer decides, a minimal component executes, and limits cap the damage when something gets through. See today's <a href="https://asksumanta.com/insights/tech-news-2026-10-30/">tech news brief</a> for the other security stories this week.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I run assume-breach reviews of payment and custody architectures and help teams design independent controls on the money path. I am based in India, the United States and the UAE, working globally. See <a href="https://asksumanta.com/fractional-cto/">fractional CTO work</a> or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section><p><a href="https://asksumanta.com/insights/binance-hack-custody-architecture-lessons/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Our models, our metal: a sovereign LLM platform for a European telecom operator</title><link>https://asksumanta.com/case-studies/eu-telecom-sovereign-llm-platform/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/eu-telecom-sovereign-llm-platform/</guid><pubDate>Fri, 30 Oct 2026 23:05:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>ai</category><category>llm</category><category>kubernetes</category><description>How a European telecom operator can run open-weight LLMs on its own GPUs for network, care and security teams, with NIS2-grade controls and a hosted fallback.</description><content:encoded><![CDATA[<p><em>A telecom operator in central Europe wanted generative AI for network operations, customer care and security, but would not send network configurations, customer records or incident data to an outside model. Capable open-weight models made running its own platform realistic. The task was to build one that is shared, secure, reliable and honest about cost.</em></p><h2>The situation</h2>
 <p>A telecom operator in central Europe ran fixed and mobile networks for several million customers. Three teams wanted generative AI: network operations, to read alarms and configuration changes; customer care, to summarise interactions and draft replies; and security, to triage alerts and investigate incidents. Each had started its own pilot with a different hosted model, and the security and legal teams had stopped all three because network topology, customer data and incident details were leaving the company.</p>
 <p><strong>Why now.</strong> Telecom operators are essential entities under the EU's NIS2 Directive, with duties covering risk management, supply-chain security and incident reporting<sup class="cite"><a href="#ref-4">4</a></sup>. Transposition has been uneven, and the Commission took several member states to the Court of Justice in July 2026 for not implementing it<sup class="cite"><a href="#ref-3">3</a></sup>, but national laws are now arriving; Austria's, for example, applies from 1 October 2026<sup class="cite"><a href="#ref-2">2</a></sup>. At the same time, capable open-weight models became realistic to run in-house; on 29 October 2026 Mistral released the weights of its trillion-parameter Large 4, pitched at security teams who want to run it on their own infrastructure<sup class="cite"><a href="#ref-1">1</a></sup>. The operator decided to build one shared, sovereign platform rather than three pilots.</p>
 
@@ -3492,89 +3560,4 @@ tracer_provider:
 
 <h2>What I'd do again, and differently</h2>
 <p>Again: write the AI programme and the evaluation set before writing the first prompt, and run in shadow mode. Differently: involve the special investigations team in designing fraud signals from the first week. Their sense of what makes a signal actionable shaped the design more than any model choice.</p>
-<p>If you're bringing AI into claims, underwriting or service, my <a href="https://asksumanta.com/ai-architect/">AI architecture work</a> covers how I approach it, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/insurance-claims-triage-ai/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Giving a fast-moving seed team the technical leadership investors expect at Series A</title><link>https://asksumanta.com/case-studies/startup-fractional-cto-seed-to-series-a/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/startup-fractional-cto-seed-to-series-a/</guid><pubDate>Wed, 28 Oct 2026 01:48:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>leadership</category><category>architecture</category><category>security</category><category>platform</category><description>How a part-time CTO helped a seed-stage team set a technical roadmap, decision records, delivery metrics, SLOs, security foundations and its first senior hires.</description><content:encoded><![CDATA[<p><em>Founders shipping quickly, customers arriving, and a Series A process ahead. Architecture decisions lived in chat threads, security questionnaires were piling up and nobody owned hiring for senior engineers. The goal was technical leadership that fitted the stage: enough structure to scale and pass scrutiny, without slowing the team down.</em></p><h2>The situation</h2>
-<p>A seed-stage B2B software company had found traction. The founders were strong builders and the small engineering team shipped quickly, but the things that matter at the next stage were falling behind. Architecture choices were made in chat and forgotten, the release process depended on one person, there was no shared view of reliability, and enterprise prospects were sending security questionnaires nobody had time to answer well. A Series A process was on the horizon, and technical diligence would follow.</p>
-<p>The company did not yet need, or want to pay for, a full-time CTO. It needed senior technical leadership for part of each week, with a clear plan for handing over.</p>
-
-<h2>What had to be true</h2>
-<ul>
-<li><strong>A roadmap the team believed</strong>, connecting product goals to platform work and technical debt.</li>
-<li><strong>Decisions written down</strong>, so they can be reviewed, challenged and learned by new hires.</li>
-<li><strong>Delivery and reliability measured</strong>, as signals for improvement rather than targets to game.</li>
-<li><strong>Security that stands up to scrutiny</strong>, with controls and evidence rather than promises.</li>
-<li><strong>A team that outlasts the engagement</strong>: senior hires and habits that keep working after hand-off.</li>
-</ul>
-
-<h2>Architecture</h2>
-<p>Here the architecture was as much the operating model as the system. The technical work rested on a light set of leadership practices, each producing an artefact the team and investors could see.</p>
-<figure class="dgm">
-<div class="dgm-stack">
-<div class="dgm-tier"><small>Direction</small><div class="dgm-nodes"><span class="hl">Technical roadmap<em>tied to company plan</em></span><span>Investor narrative<em>technology story</em></span><span>Build vs buy<em>explicit choices</em></span></div></div>
-<div class="dgm-tier"><small>Decisions</small><div class="dgm-nodes"><span class="hl">ADRs<em>in the repository</em></span><span>Architecture review<em>regular, short</em></span><span>Tech debt register<em>ranked by risk</em></span></div></div>
-<div class="dgm-tier"><small>Delivery</small><div class="dgm-nodes"><span>CI/CD<em>automated releases</em></span><span>Infrastructure as code<em>reviewable environments</em></span><span>DORA metrics<em>throughput and stability</em></span></div></div>
-<div class="dgm-tier"><small>Reliability and security</small><div class="dgm-nodes"><span>SLOs<em>key customer journeys</em></span><span class="hl">Security controls<em>SOC 2 readiness</em></span><span>Incident reviews<em>blameless</em></span></div></div>
-<div class="dgm-tier"><small>People</small><div class="dgm-nodes"><span>Hiring plan<em>senior roles first</em></span><span>Career framework<em>simple levels</em></span><span>Successor<em>full-time leader</em></span></div></div>
-</div>
-<figcaption>Operating model: each layer produces something written and reviewable, from roadmap to hiring plan.</figcaption>
-</figure>
-<p>Architecture decision records followed the lightweight format Michael Nygard described: context, decision and consequences, kept with the code<sup class="cite"><a href="#ref-1">1</a></sup>. How I use them in a fractional role is in <a href="https://asksumanta.com/insights/architecture-decision-records-fractional-cto/">architecture decision records for fractional CTOs</a>.</p>
-
-<h2>The data flow, end to end</h2>
-<p>The cadence mattered more than any single document. Each cycle followed the same loop:</p>
-<figure class="dgm">
-<ol class="dgm-flow g3">
-<li><b>Assess</b><span>Review the stack, delivery pipeline, incidents and open risks</span></li>
-<li class="hl"><b>Decide</b><span>Write ADRs for significant choices; review with the engineers affected</span></li>
-<li><b>Plan</b><span>Update the roadmap and debt register against company priorities</span></li>
-<li><b>Deliver</b><span>Team ships; pipeline produces delivery and reliability data automatically</span></li>
-<li class="hl"><b>Measure</b><span>Discuss DORA metrics and SLO error budgets as improvement signals</span></li>
-<li><b>Report</b><span>Short update for founders and board on progress, risks and hiring</span></li>
-</ol>
-<figcaption>A repeating leadership loop: decisions and measurements feed the next plan.</figcaption>
-</figure>
-<p>Delivery was tracked with DORA's software delivery metrics, which cover throughput and instability. DORA itself warns against turning them into blanket targets, so they were used per service and only to find bottlenecks<sup class="cite"><a href="#ref-2">2</a></sup>. See <a href="https://asksumanta.com/insights/dora-metrics-ai-assisted-engineering/">DORA metrics for AI-assisted engineering</a>. Reliability used a small number of SLOs on the journeys customers cared about, with an agreed policy for what happens when an error budget is spent<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
-
-<h2>The hard part: adding structure without slowing the team</h2>
-<p>A fast seed team is right to be suspicious of process. Every practice had to earn its place by saving more time than it cost. That meant:</p>
-<ul>
-<li>ADRs only for decisions that are expensive to reverse, written in under an hour, not for every library choice.</li>
-<li>Automating the evidence: delivery metrics from the pipeline, access reviews from the identity provider, change history from pull requests.</li>
-<li>Sequencing security work against real demand. The SOC 2 trust services criteria (security, availability, processing integrity, confidentiality and privacy) gave the structure<sup class="cite"><a href="#ref-4">4</a></sup>, with security controls first because every enterprise questionnaire asked about them. More in <a href="https://asksumanta.com/insights/soc2-for-ai-startups/">SOC 2 for AI startups</a>.</li>
-<li>Hiring senior engineers who could own areas, not just add capacity, so leadership could be handed over rather than borrowed.</li>
-</ul>
-<div class="callout"><p>A fractional CTO succeeds when the role becomes unnecessary. The test is whether decisions, metrics and hiring keep happening well in the weeks you are not there.</p></div>
-
-<h2>How the engagement ran</h2>
-<figure class="dgm">
-<div class="dgm-lanes">
-<div class="dgm-lane"><small>Founders</small><ol><li>Set company priorities</li><li>Approve hiring plan</li><li class="hl">Own investor narrative</li></ol></div>
-<div class="dgm-lane"><small>Fractional CTO</small><ol><li>Run architecture reviews</li><li class="hl">Write and coach ADRs</li><li>Lead senior hiring</li></ol></div>
-<div class="dgm-lane"><small>Engineering team</small><ol><li>Propose and record decisions</li><li>Own delivery and on-call</li><li>Join interview loops</li></ol></div>
-</div>
-<figcaption>Clear ownership: founders set direction, the CTO sets technical standards, the team owns delivery.</figcaption>
-</figure>
-<figure class="dgm">
-<div class="dgm-phases">
-<div><small>Phase 1</small><b>Assess</b><ul><li>Stack and pipeline review</li><li>Risk and debt register</li><li>Quick wins</li></ul></div>
-<div><small>Phase 2</small><b>Foundations</b><ul><li>Roadmap and ADRs</li><li>CI/CD and infrastructure as code</li><li>Core security controls</li></ul></div>
-<div><small>Phase 3</small><b>Scale</b><ul><li>DORA metrics and SLOs</li><li>SOC 2 readiness</li><li>Senior hires</li></ul></div>
-<div><small>Phase 4</small><b>Hand off</b><ul><li>Diligence pack</li><li>Full-time leader onboarding</li><li>Advisory follow-up</li></ul></div>
-</div>
-<figcaption>Phased leadership: assess, lay foundations, scale, then hand over to a permanent leader.</figcaption>
-</figure>
-
-<h2>Key decisions and trade-offs</h2>
-<table class="tbl">
-<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
-<tbody>
-<tr><td>Fractional CTO first</td><td>Hire full-time CTO immediately</td><td>Senior judgement now, while the company learns what role it needs</td></tr>
-<tr><td>ADRs in the repository</td><td>Wiki pages or chat threads</td><td>Versioned with code, reviewed like code, found by new hires</td></tr>
-<tr><td>Metrics as signals</td><td>Metrics as targets</td><td>Avoids gaming; focuses on bottlenecks</td></tr>
-<tr><td>Security controls before certification</td><td>Rush to an audit</td><td>Real controls and evidence first; audit when customers require it</td></tr>
-<tr><td>Senior owners before headcount</td><td>Hire for capacity</td><td>Creates leaders who can take over from the fractional role</td></tr>
-</tbody>
-</table>
-
-<h2>What I'd do again, and differently</h2>
-<p>Again: write decisions down from the first week and keep the cadence predictable, even when the week is busy. Differently: start the search for the permanent engineering leader earlier. Good senior hires take longer than any technical workstream, and the hand-off is only as strong as the person receiving it.</p>
-<p>If your team is at a similar stage, the <a href="https://asksumanta.com/fractional-cto/">fractional CTO</a> page describes how I work, <a href="https://asksumanta.com/insights/when-do-you-need-a-fractional-cto/">when you need one</a> covers the signals, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/startup-fractional-cto-seed-to-series-a/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
+<p>If you're bringing AI into claims, underwriting or service, my <a href="https://asksumanta.com/ai-architect/">AI architecture work</a> covers how I approach it, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/insurance-claims-triage-ai/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>

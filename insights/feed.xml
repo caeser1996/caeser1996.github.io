@@ -1,6 +1,74 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights</title><link>https://asksumanta.com/</link><description>Articles on AI, data, cloud and technology leadership</description><language>en-gb</language><lastBuildDate>Fri, 30 Oct 2026 21:05:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/insights/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights</title><link>https://asksumanta.com/</link></image><item><title>Reddit goes logged-in: how to protect and monetise valuable content when AI answers the search</title><link>https://asksumanta.com/insights/reddit-logged-in-ai-scraping-content-access/</link><guid isPermaLink="true">https://asksumanta.com/insights/reddit-logged-in-ai-scraping-content-access/</guid><pubDate>Fri, 30 Oct 2026 21:05:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>ai</category><category>architecture</category><category>platform</category><description>Reddit is moving to a logged-in experience as AI search cuts referrals and scraping grows. A CTO&#x27;s take on access tiers, bot controls and licensed data APIs.</description><content:encoded><![CDATA[<p><em>On 29 October, Reddit said it will move towards a primarily logged-in experience, citing falling search referrals and scraping of its content for AI. It is the clearest sign yet that the open, crawlable web is being rebuilt into tiers. Any business whose content, data or listings have value now faces the same design question: who gets what, how, and on what terms?</em></p><section class="block">
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights</title><link>https://asksumanta.com/</link><description>Articles on AI, data, cloud and technology leadership</description><language>en-gb</language><lastBuildDate>Sat, 31 Oct 2026 00:25:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/insights/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights</title><link>https://asksumanta.com/</link></image><item><title>The Binance hack: what a laptop-to-withdrawal attack teaches every platform that moves money</title><link>https://asksumanta.com/insights/binance-hack-custody-architecture-lessons/</link><guid isPermaLink="true">https://asksumanta.com/insights/binance-hack-custody-architecture-lessons/</guid><pubDate>Sat, 31 Oct 2026 00:25:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>security</category><category>architecture</category><category>platform</category><description>Binance says a compromised laptop led to a $6.3B theft via a service container. A CTO&#x27;s take on withdrawal paths, signing services and limits for any money platform.</description><content:encoded><![CDATA[<p><em>On 29 October, Binance reported what is being described as the largest crypto theft on record, about $6.3 billion. Its early account is familiar to anyone who runs payments: a compromised laptop, access to a service container, and withdrawal requests that the system accepted. The lessons apply to banks, fintechs and marketplaces as much as to crypto exchanges.</em></p><section class="block">
+<h2>What happened</h2>
+<p>Binance reported on 29 October that attackers had stolen crypto assets it estimated at about $6.3 billion, which press reports describe as the largest crypto theft on record. It suspended deposits and withdrawals and said it would cover losses<sup class="cite"><a href="#ref-2">2</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>. In its early account, a compromised laptop gave the attacker access to a service container, from which unauthorised withdrawal transactions were submitted<sup class="cite"><a href="#ref-4">4</a></sup>. Stablecoin issuers froze part of the funds, and markets fell on the news<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<p>Details are early and figures have varied between sources. What follows does not depend on the specifics; it is about the pattern Binance described, which exists in most systems that move money.</p>
+</section>
+
+<section class="block">
+<h2>The pattern: one step too few between a service and the money</h2>
+<p>Every payments, lending, marketplace or exchange platform has a path from internal services to an action that releases value: a withdrawal, a payout, a refund, a transfer. The question is how many independent checks sit on that path. If a compromised internal service can submit a request and the system executes it, then one stolen laptop, one leaked token or one vulnerable container is enough.</p>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>People</small><div class="dgm-nodes"><span>Engineer laptops<em>the usual entry point</em></span><span>Admin access<em>just-in-time, hardware keys</em></span></div></div>
+<div class="dgm-tier"><small>Services</small><div class="dgm-nodes"><span>Application services<em>request, never execute</em></span><span>Workload identity<em>short-lived, per service</em></span></div></div>
+<div class="dgm-tier"><small>Independent control</small><div class="dgm-nodes"><span class="hl">Policy service<em>limits, velocity, destinations</em></span><span class="hl">Anomaly checks<em>pattern breaks pause flows</em></span><span>Human approval<em>above thresholds</em></span></div></div>
+<div class="dgm-tier"><small>Execution</small><div class="dgm-nodes"><span class="hl">Signing or payment execution<em>isolated, minimal access</em></span><span>Reserves split<em>most value not instantly movable</em></span></div></div>
+<div class="dgm-tier"><small>Evidence</small><div class="dgm-nodes"><span>Tamper-proof logs<em>off-host</em></span><span>Kill switch<em>tested</em></span></div></div>
+</div>
+<figcaption>Services ask; an independent layer decides; a separate, minimal component executes.</figcaption>
+</figure>
+</section>
+
+<section class="block">
+<h2>Six controls worth checking this week</h2>
+<ol>
+<li><strong>Separate request from execution.</strong> Application services should only create requests. Execution, whether signing a transaction or sending a payment instruction, sits in a small, isolated component that only accepts requests the policy layer has approved.</li>
+<li><strong>Give the policy layer its own identity and its own admins.</strong> If the people or credentials that run application services can also change policy rules, the layer is not independent.</li>
+<li><strong>Limit what can move quickly.</strong> Most value should not be movable in minutes. Tiered reserves, per-destination limits and velocity caps turn a catastrophic theft into a contained one.</li>
+<li><strong>Stop on anomalies, then ask.</strong> Unusual volume, new destinations or off-hours bursts should pause flows automatically. A false alarm costs minutes; a missed one can cost the company.</li>
+<li><strong>Use short-lived workload identity.</strong> Services should prove who they are with short-lived certificates, not long-lived shared secrets, so a stolen credential expires quickly. Kubernetes now supports issuing certificates to pods directly<sup class="cite"><a href="#ref-5">5</a></sup>; see <a href="https://asksumanta.com/insights/kubernetes-pod-certificates-workload-identity/">pod certificates and workload identity</a>.</li>
+<li><strong>Harden the laptop path.</strong> Engineers should not reach production containers from everyday laptops. Use dedicated admin workstations, hardware keys and time-limited access, as in <a href="https://asksumanta.com/case-studies/us-utility-management-plane-hardening/">hardening a utility's management plane</a>.</li>
+</ol>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/binance-hack-custody-architecture-lessons/workload-identity.webp" alt="Architecture diagram: a signer controller issues PodCertificateRequests and publishes ClusterTrustBundles; the kubelet creates requests and writes credential and trust bundle files into the Pod, which the application reads" width="900" height="1009" loading="lazy"></div><figcaption>Short-lived, per-pod certificates: a stolen credential stops working quickly and identifies exactly which workload it belonged to. <span class="credit">Source: <a href="https://kubernetes.io/blog/2026/08/28/kubernetes-v1-37-pod-certificates-and-cluster-trust-bundles/" target="_blank" rel="noopener">Kubernetes blog</a> · CC BY 4.0</span></figcaption></figure>
+<div class="callout"><p>Ask one question of your platform: if an attacker fully controls one internal service, what is the most money they can move, and how fast? If you do not know the answer, that is the finding.</p></div>
+</section>
+
+<section class="block">
+<h2>How to test it</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Map</b><span>List every path from an internal service to an action that moves value</span></li>
+<li><b>Assume breach</b><span>Pick one service and assume an attacker controls it fully</span></li>
+<li class="hl"><b>Trace</b><span>Follow what it can request and which checks stand in the way</span></li>
+<li><b>Measure</b><span>Calculate the maximum value movable in an hour and in a day</span></li>
+<li class="hl"><b>Close</b><span>Add independent checks, limits or isolation where the number is too high</span></li>
+<li><b>Drill</b><span>Run the kill switch and recovery with the real on-call team</span></li>
+</ol>
+<figcaption>An assume-breach review of the money path, done once a quarter.</figcaption>
+</figure>
+</section>
+
+<section class="block">
+<h2>Who should act</h2>
+<ul>
+<li><strong>Exchanges and custodians</strong>: obviously, and now with regulators and customers asking.</li>
+<li><strong>Payment companies and neobanks</strong>: the same pattern applies to payouts and transfers; see <a href="https://asksumanta.com/insights/idempotent-payments-order-pipelines/">idempotent payment pipelines</a> and <a href="https://asksumanta.com/case-studies/nigeria-payment-data-localisation-platform/">onshoring a payments platform</a>.</li>
+<li><strong>Marketplaces and lenders</strong>: refunds, disbursements and seller payouts are money paths too.</li>
+<li><strong>Investors</strong>: ask this question in <a href="https://asksumanta.com/technical-due-diligence/">technical due diligence</a> before the next round.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>CTO take</h2>
+<p>Large thefts are rarely about exotic cryptography. They are about a short path from a compromised machine to an action that moves value, with too few independent checks in between. Binance's early account fits that pattern. Whatever your platform moves, make the money path long for attackers and short for operators: services request, an independent layer decides, a minimal component executes, and limits cap the damage when something gets through. See today's <a href="https://asksumanta.com/insights/tech-news-2026-10-30/">tech news brief</a> for the other security stories this week.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I run assume-breach reviews of payment and custody architectures and help teams design independent controls on the money path. I am based in India, the United States and the UAE, working globally. See <a href="https://asksumanta.com/fractional-cto/">fractional CTO work</a> or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section><p><a href="https://asksumanta.com/insights/binance-hack-custody-architecture-lessons/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Reddit goes logged-in: how to protect and monetise valuable content when AI answers the search</title><link>https://asksumanta.com/insights/reddit-logged-in-ai-scraping-content-access/</link><guid isPermaLink="true">https://asksumanta.com/insights/reddit-logged-in-ai-scraping-content-access/</guid><pubDate>Fri, 30 Oct 2026 21:05:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>ai</category><category>architecture</category><category>platform</category><description>Reddit is moving to a logged-in experience as AI search cuts referrals and scraping grows. A CTO&#x27;s take on access tiers, bot controls and licensed data APIs.</description><content:encoded><![CDATA[<p><em>On 29 October, Reddit said it will move towards a primarily logged-in experience, citing falling search referrals and scraping of its content for AI. It is the clearest sign yet that the open, crawlable web is being rebuilt into tiers. Any business whose content, data or listings have value now faces the same design question: who gets what, how, and on what terms?</em></p><section class="block">
 <h2>What happened</h2>
 <p>Reddit used its third-quarter results on 29 October to announce a shift towards a primarily logged-in experience. It said search referrals had fallen sharply, by more than a million a week in October, and that most scraping of its content happens through logged-out access<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. Testing begins outside the US this quarter, with no date yet for a global rollout, and Reddit says it will keep licensing its data to AI companies<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>.</p>
 <p>The reasons Reddit gives are commercial: logged-in users carry more signals for advertising, and a protected corpus is worth more in licensing talks<sup class="cite"><a href="#ref-2">2</a></sup>. The pattern matters well beyond Reddit.</p>
@@ -2778,67 +2846,4 @@ tracer_provider:
 <section class="block">
 <h2>How I can help</h2>
 <p>I design federated health data platforms and OMOP networks, from the standard site node to governance and results pipelines, for research groups, health systems and life sciences companies in the US, Europe and the Gulf. See <a href="https://asksumanta.com/healthcare-data-architecture/">healthcare data architecture</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
-</section><p><a href="https://asksumanta.com/insights/federated-health-analytics-ohdsi/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Long context or RAG? What the research says about very large context windows</title><link>https://asksumanta.com/insights/long-context-vs-rag/</link><guid isPermaLink="true">https://asksumanta.com/insights/long-context-vs-rag/</guid><pubDate>Fri, 23 Oct 2026 04:15:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>ai</category><category>rag</category><category>llm</category><category>platform</category><description>Million-token context windows tempt teams to skip retrieval. Research on lost-in-the-middle, RULER and context rot shows why that&#x27;s risky, and how I combine long context with RAG.</description><content:encoded><![CDATA[<p><em>Context windows have grown from a few thousand tokens to hundreds of thousands and more. It&#x27;s tempting to stop building retrieval and just put everything in the prompt. The research suggests that bigger windows change the trade-offs, but don&#x27;t remove them.</em></p><p>Every few months a model ships with a bigger context window, and the same question comes up: do we still need retrieval? If the model can read the whole policy manual, the full contract set or a year of support tickets in one go, why maintain chunking, embeddings, indexes and ranking at all?</p>
-<p>It's a fair question, and for some workloads the answer really is "less than before". But the research on how models use long inputs is consistent enough that I don't treat a large window as a substitute for deciding what the model should read.</p>
-
-<section class="block">
-<h2>Three findings worth knowing</h2>
-<p><strong>Position matters.</strong> In "Lost in the Middle", Liu and colleagues studied how models use long inputs in tasks such as multi-document question answering. Performance was often highest when the relevant information appeared at the beginning or end of the context and dropped when it was in the middle<sup class="cite"><a href="#ref-1">1</a></sup>. A later survey of long-context modelling describes this as a U-shaped curve<sup class="cite"><a href="#ref-5">5</a></sup>. The practical implication: where a fact sits in a long prompt can change whether it's used.</p>
-<p><strong>Advertised windows overstate useful windows.</strong> NVIDIA's RULER benchmark extended simple needle-in-a-haystack tests with harder tasks such as multi-hop tracing and aggregation. Models that scored almost perfectly on the simple test showed large drops as context length grew, and the authors report that many models fell below their quality threshold well before reaching their claimed context lengths<sup class="cite"><a href="#ref-2">2</a></sup>. Finding one sentence in a haystack is a much easier job than reasoning across a long document.</p>
-<p><strong>Longer inputs degrade reliability.</strong> Chroma's 2025 "Context Rot" report tested 18 models, including several frontier models, on deliberately simple tasks, keeping difficulty constant while increasing input length. Performance grew increasingly unreliable as input grew, and models didn't use their context uniformly<sup class="cite"><a href="#ref-3">3</a></sup>. The authors note that real tasks are more complex, so the effect may be larger in practice, and they published their code for replication<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>.</p>
-<div class="callout"><p>A model that can accept a million tokens has not promised to use all of them equally well. Capacity and attention are different things.</p></div>
-</section>
-
-<section class="block">
-<h2>The other costs of stuffing the context</h2>
-<p>Quality isn't the only issue. Every token in the prompt costs money and adds latency on every request, unless the same prefix is cached and reused, which I cover in <a href="https://asksumanta.com/insights/llm-inference-serving-vllm/">LLM inference serving</a>. Long prompts are also harder to debug: when an answer is wrong, it is much harder to tell which of 200 pages misled the model than which of five retrieved passages did.</p>
-<p>There's a governance cost too. Retrieval enforces access control naturally: you only fetch documents the user is allowed to see. "Put everything in the prompt" either ignores permissions or rebuilds them in a less tested way. For regulated data, that alone usually settles the question, as discussed in <a href="https://asksumanta.com/insights/hipaa-security-rule-proposal-ai-platforms/">the HIPAA Security Rule proposal</a> and <a href="https://asksumanta.com/insights/uae-health-data-law-localisation/">UAE health data localisation</a>.</p>
-</section>
-
-<section class="block">
-<h2>When long context genuinely helps</h2>
-<p>None of this means long context is a gimmick. It changes what good retrieval looks like:</p>
-<ul>
-<li><strong>Bigger, more coherent chunks.</strong> Instead of 300-token fragments, retrieve whole sections or whole documents, so the model sees definitions and exceptions alongside the rule.</li>
-<li><strong>Single-document deep work.</strong> Reviewing one contract, one codebase module or one patient record against a checklist is a good fit, especially with the most important material placed at the start or end.</li>
-<li><strong>Fewer retrieval misses.</strong> A wider net for recall, followed by a model that reads more candidates, can beat aggressive filtering that drops the right passage.</li>
-<li><strong>Stable reference material.</strong> Long, unchanging context such as a policy manual or schema can be cached as a prefix and reused across requests.</li>
-</ul>
-</section>
-
-<section class="block">
-<h2>How I design it: retrieve, then read generously</h2>
-<table class="tbl">
-<thead><tr><th>Workload</th><th>Approach</th></tr></thead>
-<tbody>
-<tr><td>Questions over a large, changing corpus</td><td>RAG with larger chunks and reranking; long context only for the top results</td></tr>
-<tr><td>Analysis of one long document</td><td>Long context, with key instructions and questions at the start and end</td></tr>
-<tr><td>Whole-corpus themes and patterns</td><td>Neither alone; consider <a href="https://asksumanta.com/insights/graphrag-when-it-beats-vector-rag/">GraphRAG</a> or map-reduce summarisation</td></tr>
-<tr><td>Facts about known entities</td><td>Query a governed <a href="https://asksumanta.com/insights/ontology-vs-knowledge-graph-vs-semantic-layer/">knowledge graph</a>, then explain with the model</td></tr>
-<tr><td>Agents working over many steps</td><td>Keep working context small; summarise and store state rather than accumulating everything</td></tr>
-</tbody>
-</table>
-<p>The common thread is what is now called context engineering: deciding deliberately what goes into the window, in what order, and what stays out. Retrieval, ranking, summarisation and memory are all tools for that decision. A large window gives you more room to be generous; it doesn't remove the need to choose.</p>
-</section>
-
-<section class="block">
-<h2>Test it on your own data</h2>
-<p>Published benchmarks tell you the direction of the effect, not its size for your documents. Before choosing an approach, I run a simple comparison on the client's own evaluation set, as described in <a href="https://asksumanta.com/insights/llm-evaluation-sets-that-predict-production/">evaluation sets that predict production</a>:</p>
-<ol>
-<li><strong>Baseline RAG</strong> with the current chunking and top-k.</li>
-<li><strong>RAG with larger chunks and more results</strong>, using the long window to read more.</li>
-<li><strong>Full-document long context</strong> for the subset of questions where it is feasible.</li>
-<li><strong>Position tests:</strong> the same answer-bearing passage placed at the start, middle and end of the context.</li>
-</ol>
-<p>Measure accuracy, citation correctness, latency and cost per answer for each. The result is usually a hybrid, and the numbers make the case to stakeholders far better than any article, including this one.</p>
-</section>
-
-<section class="block">
-<h2>The bottom line</h2>
-<p>Bigger context windows are a genuine improvement. They make retrieval more forgiving, enable new single-document workflows and reduce some engineering effort. But the evidence on position effects, effective context length and degradation with input size means the most reliable systems still choose what the model reads. Treat the window as a budget to spend well, not a bucket to fill.</p>
-</section>
-
-<section class="block">
-<h2>How I can help</h2>
-<p>I design retrieval and context strategies for AI products, from chunking and ranking to long-context workflows, and test them against real data before they ship. See my <a href="https://asksumanta.com/ai-architect/">AI architecture work</a> and <a href="https://asksumanta.com/insights/rag-to-production-checklist/">the RAG to production checklist</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
-</section><p><a href="https://asksumanta.com/insights/long-context-vs-rag/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
+</section><p><a href="https://asksumanta.com/insights/federated-health-analytics-ohdsi/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>

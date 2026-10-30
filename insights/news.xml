@@ -1,6 +1,74 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Daily tech news</title><link>https://asksumanta.com/</link><description>A CTO&#x27;s take on the day&#x27;s releases, deals and rules</description><language>en-gb</language><lastBuildDate>Fri, 30 Oct 2026 21:05:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/insights/news.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Daily tech news</title><link>https://asksumanta.com/</link></image><item><title>Reddit goes logged-in: how to protect and monetise valuable content when AI answers the search</title><link>https://asksumanta.com/insights/reddit-logged-in-ai-scraping-content-access/</link><guid isPermaLink="true">https://asksumanta.com/insights/reddit-logged-in-ai-scraping-content-access/</guid><pubDate>Fri, 30 Oct 2026 21:05:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>ai</category><category>architecture</category><category>platform</category><description>Reddit is moving to a logged-in experience as AI search cuts referrals and scraping grows. A CTO&#x27;s take on access tiers, bot controls and licensed data APIs.</description><content:encoded><![CDATA[<p><em>On 29 October, Reddit said it will move towards a primarily logged-in experience, citing falling search referrals and scraping of its content for AI. It is the clearest sign yet that the open, crawlable web is being rebuilt into tiers. Any business whose content, data or listings have value now faces the same design question: who gets what, how, and on what terms?</em></p><section class="block">
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Daily tech news</title><link>https://asksumanta.com/</link><description>A CTO&#x27;s take on the day&#x27;s releases, deals and rules</description><language>en-gb</language><lastBuildDate>Sat, 31 Oct 2026 00:25:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/insights/news.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Daily tech news</title><link>https://asksumanta.com/</link></image><item><title>The Binance hack: what a laptop-to-withdrawal attack teaches every platform that moves money</title><link>https://asksumanta.com/insights/binance-hack-custody-architecture-lessons/</link><guid isPermaLink="true">https://asksumanta.com/insights/binance-hack-custody-architecture-lessons/</guid><pubDate>Sat, 31 Oct 2026 00:25:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>security</category><category>architecture</category><category>platform</category><description>Binance says a compromised laptop led to a $6.3B theft via a service container. A CTO&#x27;s take on withdrawal paths, signing services and limits for any money platform.</description><content:encoded><![CDATA[<p><em>On 29 October, Binance reported what is being described as the largest crypto theft on record, about $6.3 billion. Its early account is familiar to anyone who runs payments: a compromised laptop, access to a service container, and withdrawal requests that the system accepted. The lessons apply to banks, fintechs and marketplaces as much as to crypto exchanges.</em></p><section class="block">
+<h2>What happened</h2>
+<p>Binance reported on 29 October that attackers had stolen crypto assets it estimated at about $6.3 billion, which press reports describe as the largest crypto theft on record. It suspended deposits and withdrawals and said it would cover losses<sup class="cite"><a href="#ref-2">2</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>. In its early account, a compromised laptop gave the attacker access to a service container, from which unauthorised withdrawal transactions were submitted<sup class="cite"><a href="#ref-4">4</a></sup>. Stablecoin issuers froze part of the funds, and markets fell on the news<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<p>Details are early and figures have varied between sources. What follows does not depend on the specifics; it is about the pattern Binance described, which exists in most systems that move money.</p>
+</section>
+
+<section class="block">
+<h2>The pattern: one step too few between a service and the money</h2>
+<p>Every payments, lending, marketplace or exchange platform has a path from internal services to an action that releases value: a withdrawal, a payout, a refund, a transfer. The question is how many independent checks sit on that path. If a compromised internal service can submit a request and the system executes it, then one stolen laptop, one leaked token or one vulnerable container is enough.</p>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>People</small><div class="dgm-nodes"><span>Engineer laptops<em>the usual entry point</em></span><span>Admin access<em>just-in-time, hardware keys</em></span></div></div>
+<div class="dgm-tier"><small>Services</small><div class="dgm-nodes"><span>Application services<em>request, never execute</em></span><span>Workload identity<em>short-lived, per service</em></span></div></div>
+<div class="dgm-tier"><small>Independent control</small><div class="dgm-nodes"><span class="hl">Policy service<em>limits, velocity, destinations</em></span><span class="hl">Anomaly checks<em>pattern breaks pause flows</em></span><span>Human approval<em>above thresholds</em></span></div></div>
+<div class="dgm-tier"><small>Execution</small><div class="dgm-nodes"><span class="hl">Signing or payment execution<em>isolated, minimal access</em></span><span>Reserves split<em>most value not instantly movable</em></span></div></div>
+<div class="dgm-tier"><small>Evidence</small><div class="dgm-nodes"><span>Tamper-proof logs<em>off-host</em></span><span>Kill switch<em>tested</em></span></div></div>
+</div>
+<figcaption>Services ask; an independent layer decides; a separate, minimal component executes.</figcaption>
+</figure>
+</section>
+
+<section class="block">
+<h2>Six controls worth checking this week</h2>
+<ol>
+<li><strong>Separate request from execution.</strong> Application services should only create requests. Execution, whether signing a transaction or sending a payment instruction, sits in a small, isolated component that only accepts requests the policy layer has approved.</li>
+<li><strong>Give the policy layer its own identity and its own admins.</strong> If the people or credentials that run application services can also change policy rules, the layer is not independent.</li>
+<li><strong>Limit what can move quickly.</strong> Most value should not be movable in minutes. Tiered reserves, per-destination limits and velocity caps turn a catastrophic theft into a contained one.</li>
+<li><strong>Stop on anomalies, then ask.</strong> Unusual volume, new destinations or off-hours bursts should pause flows automatically. A false alarm costs minutes; a missed one can cost the company.</li>
+<li><strong>Use short-lived workload identity.</strong> Services should prove who they are with short-lived certificates, not long-lived shared secrets, so a stolen credential expires quickly. Kubernetes now supports issuing certificates to pods directly<sup class="cite"><a href="#ref-5">5</a></sup>; see <a href="https://asksumanta.com/insights/kubernetes-pod-certificates-workload-identity/">pod certificates and workload identity</a>.</li>
+<li><strong>Harden the laptop path.</strong> Engineers should not reach production containers from everyday laptops. Use dedicated admin workstations, hardware keys and time-limited access, as in <a href="https://asksumanta.com/case-studies/us-utility-management-plane-hardening/">hardening a utility's management plane</a>.</li>
+</ol>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/binance-hack-custody-architecture-lessons/workload-identity.webp" alt="Architecture diagram: a signer controller issues PodCertificateRequests and publishes ClusterTrustBundles; the kubelet creates requests and writes credential and trust bundle files into the Pod, which the application reads" width="900" height="1009" loading="lazy"></div><figcaption>Short-lived, per-pod certificates: a stolen credential stops working quickly and identifies exactly which workload it belonged to. <span class="credit">Source: <a href="https://kubernetes.io/blog/2026/08/28/kubernetes-v1-37-pod-certificates-and-cluster-trust-bundles/" target="_blank" rel="noopener">Kubernetes blog</a> · CC BY 4.0</span></figcaption></figure>
+<div class="callout"><p>Ask one question of your platform: if an attacker fully controls one internal service, what is the most money they can move, and how fast? If you do not know the answer, that is the finding.</p></div>
+</section>
+
+<section class="block">
+<h2>How to test it</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Map</b><span>List every path from an internal service to an action that moves value</span></li>
+<li><b>Assume breach</b><span>Pick one service and assume an attacker controls it fully</span></li>
+<li class="hl"><b>Trace</b><span>Follow what it can request and which checks stand in the way</span></li>
+<li><b>Measure</b><span>Calculate the maximum value movable in an hour and in a day</span></li>
+<li class="hl"><b>Close</b><span>Add independent checks, limits or isolation where the number is too high</span></li>
+<li><b>Drill</b><span>Run the kill switch and recovery with the real on-call team</span></li>
+</ol>
+<figcaption>An assume-breach review of the money path, done once a quarter.</figcaption>
+</figure>
+</section>
+
+<section class="block">
+<h2>Who should act</h2>
+<ul>
+<li><strong>Exchanges and custodians</strong>: obviously, and now with regulators and customers asking.</li>
+<li><strong>Payment companies and neobanks</strong>: the same pattern applies to payouts and transfers; see <a href="https://asksumanta.com/insights/idempotent-payments-order-pipelines/">idempotent payment pipelines</a> and <a href="https://asksumanta.com/case-studies/nigeria-payment-data-localisation-platform/">onshoring a payments platform</a>.</li>
+<li><strong>Marketplaces and lenders</strong>: refunds, disbursements and seller payouts are money paths too.</li>
+<li><strong>Investors</strong>: ask this question in <a href="https://asksumanta.com/technical-due-diligence/">technical due diligence</a> before the next round.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>CTO take</h2>
+<p>Large thefts are rarely about exotic cryptography. They are about a short path from a compromised machine to an action that moves value, with too few independent checks in between. Binance's early account fits that pattern. Whatever your platform moves, make the money path long for attackers and short for operators: services request, an independent layer decides, a minimal component executes, and limits cap the damage when something gets through. See today's <a href="https://asksumanta.com/insights/tech-news-2026-10-30/">tech news brief</a> for the other security stories this week.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I run assume-breach reviews of payment and custody architectures and help teams design independent controls on the money path. I am based in India, the United States and the UAE, working globally. See <a href="https://asksumanta.com/fractional-cto/">fractional CTO work</a> or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section><p><a href="https://asksumanta.com/insights/binance-hack-custody-architecture-lessons/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Reddit goes logged-in: how to protect and monetise valuable content when AI answers the search</title><link>https://asksumanta.com/insights/reddit-logged-in-ai-scraping-content-access/</link><guid isPermaLink="true">https://asksumanta.com/insights/reddit-logged-in-ai-scraping-content-access/</guid><pubDate>Fri, 30 Oct 2026 21:05:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>ai</category><category>architecture</category><category>platform</category><description>Reddit is moving to a logged-in experience as AI search cuts referrals and scraping grows. A CTO&#x27;s take on access tiers, bot controls and licensed data APIs.</description><content:encoded><![CDATA[<p><em>On 29 October, Reddit said it will move towards a primarily logged-in experience, citing falling search referrals and scraping of its content for AI. It is the clearest sign yet that the open, crawlable web is being rebuilt into tiers. Any business whose content, data or listings have value now faces the same design question: who gets what, how, and on what terms?</em></p><section class="block">
 <h2>What happened</h2>
 <p>Reddit used its third-quarter results on 29 October to announce a shift towards a primarily logged-in experience. It said search referrals had fallen sharply, by more than a million a week in October, and that most scraping of its content happens through logged-out access<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. Testing begins outside the US this quarter, with no date yet for a global rollout, and Reddit says it will keep licensing its data to AI companies<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>.</p>
 <p>The reasons Reddit gives are commercial: logged-in users carry more signals for advertising, and a protected corpus is worth more in licensing talks<sup class="cite"><a href="#ref-2">2</a></sup>. The pattern matters well beyond Reddit.</p>
