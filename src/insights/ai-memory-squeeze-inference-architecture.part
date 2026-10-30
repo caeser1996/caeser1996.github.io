@@ -1,0 +1,73 @@
+<!--{"title": "The AI memory squeeze: what record HBM profits mean for inference", "description": "Samsung and SK hynix posted record profits as AI memory stays tight. A CTO's take on designing inference for memory, not just GPUs, and buying hardware now.", "h1": "The AI memory squeeze: what Samsung's and SK hynix's record quarters mean for your inference architecture", "kicker": "Analysis · AI infrastructure and cost", "lede": "Korea's two memory makers have just reported the biggest quarters in their history, and the reason is the memory that sits next to every AI accelerator. When memory is the scarce, rising-cost part of the stack, inference architecture should be designed around it. Here is what that means in practice.", "date": "2026-10-30", "datetime": "2026-10-30T11:05:00+04:00", "readtime": "8 min read", "format": "news-analysis", "tags": ["news", "ai", "llm", "platform"], "keywords": ["HBM shortage", "AI memory prices", "Samsung record profit", "SK hynix HBM4", "DRAM contract prices 2026", "KV cache", "LLM inference memory", "vLLM PagedAttention", "inference gateway", "on-premises AI hardware"], "faq": [["Why does memory matter so much for LLM inference?", "Model weights and the KV cache for each active conversation must sit in accelerator memory. At high load, memory fills before compute does, so memory capacity often sets how many users a GPU can serve and how fast it responds."], ["Are memory prices still rising?", "TrendForce's late-September forecast expected conventional DRAM contract prices to rise again in the fourth quarter of 2026, with server DRAM still undersupplied, though at a slower pace than earlier in the year."], ["What can teams do without buying more hardware?", "Use a serving engine that manages KV cache efficiently, quantise where quality allows, cache shared prompt prefixes, route requests with awareness of memory load, and right-size models to the task."]], "related": ["/ai-architect/", "/fractional-cto/", "/regions/"], "citations": [{"title": "Samsung Posts Record 107 Trillion Won Profit on Chip Boom", "url": "https://en.sedaily.com/finance/2026/10/29/samsung-posts-record-107-trillion-won-profit-on-chip-boom", "publisher": "Seoul Economic Daily", "date": "29 Oct 2026"}, {"title": "SK hynix Announces 3Q26 Financial Results", "url": "https://news.skhynix.com/en/q3-2026-business-results/", "publisher": "SK hynix", "date": "Oct 2026"}, {"title": "AI Server Demand Sustains Memory Contract Price Increases in 4Q26, While Consumer-Side Pressure Persists", "url": "https://www.trendforce.com/presscenter/news/20260930-13258.html", "publisher": "TrendForce", "date": "30 Sep 2026"}, {"title": "FuriosaAI closes $620 million Series D to scale efficient, production-ready AI inference", "url": "https://furiosa.ai/blog/furiosaai-620-million-series-d", "publisher": "FuriosaAI", "date": "Oct 2026"}, {"title": "Efficient Memory Management for Large Language Model Serving with PagedAttention", "url": "https://arxiv.org/abs/2309.06180", "publisher": "arXiv (Kwon et al.)", "date": "2023"}, {"title": "Introducing Gateway API Inference Extension", "url": "https://kubernetes.io/blog/2025/06/05/introducing-gateway-api-inference-extension/", "publisher": "Kubernetes blog", "date": "5 Jun 2025"}]}-->
+<section class="block">
+<h2>What happened</h2>
+<p>On 29 October, Samsung Electronics confirmed record quarterly operating profit of about 107.4 trillion won, almost all of it from its chip business, driven by high-bandwidth memory (HBM) for AI servers<sup class="cite"><a href="#ref-1">1</a></sup>. A day earlier, SK hynix reported its own record quarter, said HBM4 had entered full-scale mass production, and described memory prices rising across HBM, server DRAM and enterprise SSDs<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<p>TrendForce's latest forecast, from 30 September, expected conventional DRAM contract prices to keep rising in the fourth quarter, with server DRAM still undersupplied<sup class="cite"><a href="#ref-3">3</a></sup>. In the same week, Korea's FuriosaAI raised $620 million to scale its RNGD inference chip, pitched on efficiency per watt<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+<p>The common thread: memory is one of the scarcest, fastest-rising costs in AI infrastructure. That matters whether you rent GPUs in the cloud or buy your own.</p>
+</section>
+
+<section class="block">
+<h2>Why inference is a memory problem</h2>
+<p>Serving a large language model needs memory for two things: the model's weights, which are fixed, and the key-value (KV) cache, which grows with every active conversation and every token of context. The KV cache is what fills up under load. The vLLM team's PagedAttention paper showed that much of this memory was wasted by naive allocation, and that managing it like virtual memory pages let one GPU serve far more requests at once<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Requests</small><div class="dgm-nodes"><span>Users and agents<em>long contexts, many turns</em></span></div></div>
+<div class="dgm-tier"><small>Routing</small><div class="dgm-nodes"><span class="hl">Memory-aware gateway<em>sends work where KV cache has room</em></span></div></div>
+<div class="dgm-tier"><small>Serving engine</small><div class="dgm-nodes"><span class="hl">Paged KV cache<em>vLLM or similar</em></span><span>Prefix caching<em>shared system prompts</em></span></div></div>
+<div class="dgm-tier"><small>Model</small><div class="dgm-nodes"><span>Right-sized weights<em>quantised where quality holds</em></span></div></div>
+<div class="dgm-tier"><small>Hardware</small><div class="dgm-nodes"><span class="hl">Accelerator memory<em>HBM: the scarce part</em></span><span>Host DRAM and SSD<em>offload tiers</em></span></div></div>
+</div>
+<figcaption>Each layer above the hardware either saves memory or spends it. Design them together.</figcaption>
+</figure>
+<p>Agents make this worse. A long-running agent carries a large, growing context, and many agents in parallel hold many caches at once. If your plans assume agent workloads will grow, assume memory pressure will grow faster than request counts.</p>
+</section>
+
+<section class="block">
+<h2>What to change in the architecture</h2>
+<p><strong>Route with memory in mind.</strong> A standard load balancer spreads requests evenly and ignores how full each replica's cache is. The Kubernetes Gateway API Inference Extension routes using model-server metrics; in its published benchmark, throughput was similar to a standard Service but tail latency was much lower at high load, which the authors attribute to fewer collisions as GPU memory nears saturation<sup class="cite"><a href="#ref-6">6</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/ai-memory-squeeze-inference-architecture/inference-extension-benchmark.webp" alt="Three bar charts comparing the inference extension with a standard Kubernetes Service from 100 to 1000 queries per second: throughput is similar, while p90 per-token latency and p90 latency are much lower with the extension at higher load" width="1600" height="363" loading="lazy"></div><figcaption>Same throughput, lower tail latency at high load when routing is aware of model-server state. <span class="credit">Source: <a href="https://kubernetes.io/blog/2025/06/05/introducing-gateway-api-inference-extension/" target="_blank" rel="noopener">Kubernetes blog, Daneyon Hansen, Kaushik Mitra, Jiaxin Shan and Kellen Swain</a> · CC BY 4.0</span></figcaption></figure>
+<p><strong>Cache shared prefixes.</strong> If every request starts with the same long system prompt or document set, reuse its cache instead of recomputing and storing it per request. See <a href="/insights/prompt-caching-llm-cost-latency/">prompt caching for cost and latency</a>.</p>
+<p><strong>Right-size and quantise.</strong> Not every step needs the largest model. <a href="/insights/llm-model-routing/">Model routing</a> sends simple steps to smaller models, and quantisation cuts weight memory, as long as your evaluation set shows quality holds.</p>
+<p><strong>Cap context deliberately.</strong> Long context is convenient but expensive in memory. Retrieval and summarisation often beat sending everything; our <a href="/insights/long-context-vs-rag/">long context versus RAG</a> note covers the trade-off.</p>
+<p><strong>Treat accelerators as a pool you can change.</strong> Kubernetes exposes accelerators to workloads through device plugins and, more recently, Dynamic Resource Allocation. Keeping serving on that standard layer, behind <a href="/insights/llm-inference-serving-vllm/">a portable engine such as vLLM</a>, is what lets you test a new accelerator, such as the ones FuriosaAI and others now sell, without rewriting your platform. See <a href="/insights/kubernetes-dra-gpu-scheduling/">DRA for GPU scheduling</a>.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/ai-memory-squeeze-inference-architecture/device-plugin.webp" alt="Diagram of a Kubernetes device plugin advertising eight devices to the kubelet over gRPC, the node status showing capacity and allocatable of eight, and a user pod requesting two" width="1000" height="560" loading="lazy"></div><figcaption>How Kubernetes exposes accelerators to pods: the abstraction that keeps hardware swappable. <span class="credit">Source: <a href="https://kubernetes.io/blog/2025/07/03/navigating-failures-in-pods-with-devices/" target="_blank" rel="noopener">Kubernetes blog, Sergey Kanzhelev and Mrunal Patel</a> · CC BY 4.0</span></figcaption></figure>
+</section>
+
+<section class="block">
+<h2>What to change in buying</h2>
+<ul>
+<li><strong>Quote early, and quote again.</strong> If you plan on-premises inference, as in <a href="/insights/private-llm-on-prem/">private LLMs on-premises</a>, memory-heavy servers are rising in price. Lock quotes where you can, and size purchases to the models you will actually run.</li>
+<li><strong>Compare cost per served request, not per GPU.</strong> A card with more memory may serve more concurrent users and cost less per request, even at a higher list price.</li>
+<li><strong>Benchmark alternatives on your own traffic.</strong> Vendor figures, including FuriosaAI's, are the vendor's own<sup class="cite"><a href="#ref-4">4</a></sup>. Replay real prompts and measure.</li>
+<li><strong>Ask cloud providers about memory, not just GPU type.</strong> The same GPU name can come with different memory sizes and very different serving capacity.</li>
+</ul>
+<div class="callout"><p>In 2026, the question is less "how many GPUs?" and more "how many concurrent conversations can we hold in memory, and what does each one cost?"</p></div>
+</section>
+
+<section class="block">
+<h2>Who should act, by region</h2>
+<p>Teams building sovereign or in-country AI capacity feel this most, because they cannot always fall back on a hyperscaler's pooled supply. That includes public-sector and regulated buyers in the <a href="/fractional-cto-saudi-arabia/">GCC</a>, <a href="/fractional-cto-india/">India</a>, <a href="/fractional-cto-europe/">the EU</a> and <a href="/fractional-cto-singapore/">Southeast Asia</a>. For cloud-first teams in the <a href="/fractional-cto-united-states/">United States</a> and elsewhere, the impact arrives through instance pricing and capacity, which is covered in <a href="/insights/ai-capacity-crunch-cloud-planning/">planning around the AI capacity crunch</a>.</p>
+</section>
+
+<section class="block">
+<h2>A 60-day plan</h2>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><b>Weeks 1 to 2</b><span>Measure KV cache use, concurrency and latency per model in production. Find the replicas that saturate first.</span></div>
+<div><b>Weeks 3 to 5</b><span>Turn on paged KV cache and prefix caching, test quantised variants against your evaluation set, and add memory-aware routing.</span></div>
+<div><b>Weeks 6 to 8</b><span>Recalculate cost per served request. Use it to set hardware orders and cloud reservations for next year.</span></div>
+</div>
+<figcaption>Measure, then optimise, then buy.</figcaption>
+</figure>
+</section>
+
+<section class="block">
+<h2>CTO take</h2>
+<p>Record memory profits are a signal about your costs. As long as AI demand outruns memory supply, the cheapest capacity is the capacity you stop wasting. Most inference estates I review have room to serve noticeably more traffic on the same hardware through better caching, routing and model sizing. Do that work before signing the next hardware order, and keep the platform portable enough to take advantage when alternatives get cheaper.</p>
+<p>For the wider picture, see today's <a href="/insights/tech-news-2026-10-30/">tech news brief</a>.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I review inference platforms for cost per request, latency and portability, and help teams plan hardware and cloud commitments. I am based in India, the United States and the UAE, working globally. See <a href="/ai-architect/">AI architecture</a> or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
