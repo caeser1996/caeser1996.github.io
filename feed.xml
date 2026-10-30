@@ -1,6 +1,84 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link><description>Fractional CTO and AI architect: insights, case studies and daily tech news.</description><language>en-gb</language><lastBuildDate>Fri, 30 Oct 2026 16:55:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link></image><item><title>Mistral Large 4&#x27;s open weights: when running a trillion-parameter model yourself makes sense, and when it does not</title><link>https://asksumanta.com/insights/mistral-large-4-open-weights-self-hosting/</link><guid isPermaLink="true">https://asksumanta.com/insights/mistral-large-4-open-weights-self-hosting/</guid><pubDate>Fri, 30 Oct 2026 16:55:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>ai</category><category>llm</category><category>platform</category><description>Mistral has released weights for its trillion-parameter Large 4. A CTO&#x27;s take on when self-hosting a frontier-scale open model makes sense, and what it really costs.</description><content:encoded><![CDATA[<p><em>On 29 October, Mistral published the weights of Large 4, a one-trillion-parameter mixture-of-experts model pitched at security teams who want to run it on their own infrastructure. The same day, Canada announced a large equity stake in Cohere to build sovereign AI capacity. Frontier-scale open models are now a real option. Whether they are the right option is an architecture and cost question, not a headline one.</em></p><section class="block">
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link><description>Fractional CTO and AI architect: insights, case studies and daily tech news.</description><language>en-gb</language><lastBuildDate>Fri, 30 Oct 2026 17:10:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link></image><item><title>Ready for 10 December: automated decision transparency for an Australian energy retailer</title><link>https://asksumanta.com/case-studies/australia-energy-retailer-adm-transparency/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/australia-energy-retailer-adm-transparency/</guid><pubDate>Fri, 30 Oct 2026 17:10:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>governance</category><category>data</category><category>observability</category><description>How an Australian energy retailer can meet the Privacy Act&#x27;s automated decision disclosure duty from 10 December 2026: find every decision, record it and explain it.</description><content:encoded><![CDATA[<p><em>An energy retailer used software to run credit checks, set payment plans, flag hardship and trigger collections, across systems built over twenty years. From 10 December 2026, Australian organisations must explain in their privacy policy when computer programs make or substantially inform decisions that significantly affect people. The retailer first had to find out where that happened.</em></p><h2>The situation</h2>
+<p>An Australian energy retailer served households and small businesses across several states. Software touched many decisions that matter to customers: credit checks at sign-up, security deposits, payment plan offers, hardship flags, collections steps and, at the end of the line, disconnection warnings. The logic lived in a billing platform from the 2000s, a CRM, a collections tool, a credit bureau integration and a newer machine learning model that predicted who might struggle to pay.</p>
+<p><strong>Why now.</strong> From 10 December 2026, APP entities must include information in their privacy policy when they have arranged for a computer program to make, or do something substantially and directly related to making, decisions that significantly affect individuals' rights or interests<sup class="cite"><a href="#ref-1">1</a></sup>. The OAIC published its final guidance on 30 September 2026<sup class="cite"><a href="#ref-4">4</a></sup>. Commentary on that guidance reads it broadly: it reaches rules engines and decision-support tools, not only AI, and human review does not automatically take a decision out of scope<sup class="cite"><a href="#ref-2">2</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>. The retailer's privacy policy said nothing about any of this, and nobody could list where it applied.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>A complete list</strong> of significant decisions that software makes or substantially informs.</li>
+<li><strong>Disclosures that match reality</strong>, generated from that list and kept current.</li>
+<li><strong>Evidence for each decision</strong>: which system, which logic version, which data.</li>
+<li><strong>Explanations on request</strong> that customer service can give in plain language.</li>
+<li><strong>No new hidden decisions</strong>: changes to decision logic registered before release.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Decision sources</small><div class="dgm-nodes"><span>Billing platform<em>deposits, plans</em></span><span>Collections tool<em>reminders, warnings</em></span><span>Credit integration<em>sign-up checks</em></span><span>ML model<em>payment difficulty</em></span></div></div>
+<div class="dgm-tier"><small>Capture</small><div class="dgm-nodes"><span class="hl">OpenTelemetry Collector<em>logs and SQL, no rewrites</em></span><span>Decision events<em>standard schema</em></span></div></div>
+<div class="dgm-tier"><small>Register</small><div class="dgm-nodes"><span class="hl">Decision register<em>purpose, data, logic, owner</em></span><span>Data catalogue<em>personal data used</em></span></div></div>
+<div class="dgm-tier"><small>Outputs</small><div class="dgm-nodes"><span class="hl">Privacy policy section<em>generated from the register</em></span><span>Customer service workbench<em>explain and review</em></span></div></div>
+<div class="dgm-tier"><small>Control</small><div class="dgm-nodes"><span>Release gate<em>no unregistered decision logic</em></span><span>Quarterly review<em>register against reality</em></span></div></div>
+</div>
+<figcaption>The register is the single source of truth; disclosures, explanations and release checks all read from it.</figcaption>
+</figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Decide</b><span>A system makes or informs a decision about a customer</span></li>
+<li class="hl"><b>Emit</b><span>A decision event is captured with decision type, logic version and inputs used</span></li>
+<li><b>Link</b><span>The event is matched to its register entry and the customer record</span></li>
+<li><b>Disclose</b><span>The privacy policy describes each registered decision type in plain language</span></li>
+<li class="hl"><b>Explain</b><span>Customer service retrieves the event and gives the reasons</span></li>
+<li><b>Review</b><span>A customer can ask for a person to look again; the outcome is recorded</span></li>
+</ol>
+<figcaption>Disclosure covers the decision type; the event covers the individual decision.</figcaption>
+</figure>
+
+<h2>The hard part: finding decisions in twenty-year-old systems</h2>
+<p>Nobody had a list. Decision logic sat in billing configuration tables, stored procedures, collections scripts and a model in a notebook pipeline. Interviews found the obvious decisions; data found the rest. The team traced customer journeys that ended in a significant outcome, such as a deposit request or a disconnection warning, back through the systems that produced them, and recorded every step where software chose or ranked something.</p>
+<p>Capturing evidence without rewriting the billing platform was the second problem. The OpenTelemetry Collector can read existing log files and query databases through receivers, then forward everything in one format, which is how the OpenTelemetry community recommends bringing older systems into modern observability<sup class="cite"><a href="#ref-5">5</a></sup>. The team used it to turn existing logs and table changes into structured decision events, with no change to the legacy code.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/australia-energy-retailer-adm-transparency/legacy-telemetry.webp" alt="Diagram of an OpenTelemetry Collector receiving data from a legacy application's log server through a filelog receiver, from SQL Server databases through SQL receivers, from Windows machines over OTLP and from production line devices through an MQTT bridge, and forwarding to a backend" width="1400" height="761" loading="lazy"></div><figcaption>One collector gathering logs and database data from older systems: the pattern used to capture decision events without rewrites. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2026/demystifying-opentelemetry/" target="_blank" rel="noopener">OpenTelemetry blog, Lukasz Ciukaj</a> · CC BY 4.0</span></figcaption></figure>
+<p>The scope calls were made with counsel. Following the guidance's broad reading, the team treated borderline cases as in scope, including the payment difficulty model, even though a person made the final hardship decision<sup class="cite"><a href="#ref-2">2</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>. The hardship model was also a reason for care: it informed help for vulnerable customers, so its explanations were written with the hardship team. See <a href="https://asksumanta.com/case-studies/brazil-credit-ai-lgpd-explainability/">explainable credit decisions in Brazil</a> for the reason-code pattern.</p>
+<div class="callout"><p>You cannot disclose what you have not found. The privacy policy paragraph is the last step; the inventory is the work.</p></div>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Privacy and legal</small><ol><li>Scope rules</li><li class="hl">Policy wording</li><li>Review process</li></ol></div>
+<div class="dgm-lane"><small>Engineering and data</small><ol><li>Journey tracing</li><li class="hl">Decision events and register</li><li>Release gate</li></ol></div>
+<div class="dgm-lane"><small>Customer operations</small><ol><li>Hardship input</li><li>Explanation scripts</li><li class="hl">Workbench and reviews</li></ol></div>
+</div>
+<figcaption>Legal set the scope, engineering produced the evidence, customer operations made it usable.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Find</b><ul><li>Journey tracing</li><li>Interviews</li><li>Draft register</li></ul></div>
+<div><small>Phase 2</small><b>Decide scope</b><ul><li>Significance tests</li><li>Borderline calls</li><li>Owners named</li></ul></div>
+<div><small>Phase 3</small><b>Evidence</b><ul><li>Collector on legacy systems</li><li>Decision events</li><li>Workbench view</li></ul></div>
+<div><small>Phase 4</small><b>Disclose</b><ul><li>Policy generated from register</li><li>Release gate</li><li>Quarterly review</li></ul></div>
+</div>
+<figcaption>Find, scope, evidence, disclose: in that order, with the 10 December date as the hard stop.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Treat borderline cases as in scope</td><td>Narrow reading to limit disclosure</td><td>Matches the guidance and avoids later corrections</td></tr>
+<tr><td>Generate disclosures from the register</td><td>Write the policy section by hand</td><td>Policy stays true as systems change</td></tr>
+<tr><td>Capture events from logs and databases</td><td>Modify legacy code</td><td>Faster, lower risk before the deadline</td></tr>
+<tr><td>Release gate on decision logic</td><td>Periodic audits only</td><td>New decisions cannot appear unnoticed</td></tr>
+<tr><td>Write explanations with hardship staff</td><td>Engineering-written reasons</td><td>Clear and appropriate for vulnerable customers</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: trace from outcomes backwards. It found decisions no interview would have surfaced, such as a deposit rule hidden in a billing configuration table. Differently: start the release gate first. Two new rules went live during the inventory and had to be found again. Related: <a href="https://asksumanta.com/insights/new-york-youth-chatbot-law-ai-assistants/">policy layers for AI assistants</a>, <a href="https://asksumanta.com/insights/iso-42001-vs-nist-ai-rmf/">ISO 42001 and the NIST AI RMF</a>, <a href="https://asksumanta.com/case-studies/ai-provider-resilience-cps-230-insurer/">AI provider resilience under CPS 230</a> and the <a href="https://asksumanta.com/fractional-cto-australia/">Australia page</a>.</p>
+<p>If you need to be ready for 10 December in Australia, see my <a href="https://asksumanta.com/fractional-cto/">fractional CTO work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/australia-energy-retailer-adm-transparency/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Mistral Large 4&#x27;s open weights: when running a trillion-parameter model yourself makes sense, and when it does not</title><link>https://asksumanta.com/insights/mistral-large-4-open-weights-self-hosting/</link><guid isPermaLink="true">https://asksumanta.com/insights/mistral-large-4-open-weights-self-hosting/</guid><pubDate>Fri, 30 Oct 2026 16:55:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>ai</category><category>llm</category><category>platform</category><description>Mistral has released weights for its trillion-parameter Large 4. A CTO&#x27;s take on when self-hosting a frontier-scale open model makes sense, and what it really costs.</description><content:encoded><![CDATA[<p><em>On 29 October, Mistral published the weights of Large 4, a one-trillion-parameter mixture-of-experts model pitched at security teams who want to run it on their own infrastructure. The same day, Canada announced a large equity stake in Cohere to build sovereign AI capacity. Frontier-scale open models are now a real option. Whether they are the right option is an architecture and cost question, not a headline one.</em></p><section class="block">
 <h2>What happened</h2>
 <p>Mistral released the weights of Mistral Large 4 on 29 October. It is a mixture-of-experts model with about one trillion parameters in total, of which roughly 50 billion are active for any given token, and Mistral is positioning it for cybersecurity defenders who want to run it themselves<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. The vLLM project had support ready on day one<sup class="cite"><a href="#ref-3">3</a></sup>. The benchmark results quoted at launch are Mistral's own, and some commentators have questioned whether the licence terms meet common definitions of open weight<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>.</p>
 <p>The same day, Canada announced an equity investment of up to C$1.6 billion in Cohere, tied to commitments to build compute capacity in Canada<sup class="cite"><a href="#ref-5">5</a></sup>. Two different routes, one theme: governments and security teams want frontier-class models they control.</p>
@@ -3532,89 +3610,4 @@ tracer_provider:
 
 <h2>What I'd do again, and differently</h2>
 <p>Again: keep the model away from credentials and let validation, not the model, decide what is posted. Differently: build the labelled sample before the pipeline. Every threshold discussion went faster once there was a shared set of real documents to measure against.</p>
-<p>If you're planning something similar, the <a href="https://asksumanta.com/ai-architect/">AI architect</a> page describes how I run these engagements, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/real-estate-document-intake-automation/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Making a decades-old media archive findable with model enrichment and a controlled vocabulary</title><link>https://asksumanta.com/case-studies/media-archive-metadata-enrichment/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/media-archive-metadata-enrichment/</guid><pubDate>Wed, 28 Oct 2026 01:40:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>ai</category><category>llm</category><category>ontology</category><category>knowledge-graph</category><category>data</category><description>How a media archive made decades of content findable: batch model enrichment mapped to a SKOS vocabulary, human review queues and semantic search with provenance.</description><content:encoded><![CDATA[<p><em>A large archive of video, audio and photographs, catalogued under decades of changing conventions, with most items described by little more than a title and a date. The goal was consistent, searchable metadata at archive scale, without letting a model invent the catalogue.</em></p><h2>The situation</h2>
-<p>A media organisation held decades of video, audio and photography. The material was valuable for new programmes, licensing and research, but most of it was hard to find. Cataloguing conventions had changed several times, many items carried only a title and a broadcast date, and the same subject was described in a dozen ways. Search worked if you already knew the exact words a cataloguer had used years earlier, and otherwise depended on a few long-serving people who remembered where things were.</p>
-<p>The organisation wanted to use AI to describe the backlog. The concern, rightly, was that a model left to itself would produce confident, inconsistent tags at a scale nobody could review.</p>
-
-<h2>What had to be true</h2>
-<ul>
-<li><strong>One controlled vocabulary</strong>, so a subject, place or person is described the same way across the archive.</li>
-<li><strong>Machine suggestions, human authority</strong>: models propose, people decide where confidence is low or the subject is sensitive.</li>
-<li><strong>Provenance on every field</strong>, so anyone can see whether a label came from a cataloguer, a model or a reviewer.</li>
-<li><strong>Search by meaning and by exact term</strong>, for editors who know what they want and for those who are exploring.</li>
-<li><strong>A taxonomy the archive team owns</strong>, not one hidden inside prompts or code.</li>
-</ul>
-
-<h2>Architecture</h2>
-<p>The vocabulary was modelled as a SKOS concept scheme, which gives each concept a preferred label, alternative labels and broader or narrower relationships<sup class="cite"><a href="#ref-1">1</a></sup>. Descriptive fields such as creator, date, subject and rights were aligned with DCMI Metadata Terms so that records stayed portable between systems<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
-<figure class="dgm">
-<div class="dgm-stack">
-<div class="dgm-tier"><small>Sources</small><div class="dgm-nodes"><span>Media asset store<em>video, audio, images</em></span><span>Legacy catalogue<em>sparse records</em></span><span>Rights records<em>licensing terms</em></span></div></div>
-<div class="dgm-tier"><small>Derive</small><div class="dgm-nodes"><span>Speech-to-text<em>transcripts</em></span><span>Keyframes and OCR<em>on-screen text</em></span><span>Existing metadata<em>normalised</em></span></div></div>
-<div class="dgm-tier"><small>Enrich</small><div class="dgm-nodes"><span class="hl">Batch model enrichment<em>structured suggestions</em></span><span class="hl">Vocabulary mapping<em>labels → SKOS concepts</em></span><span>Confidence scoring<em>per field</em></span></div></div>
-<div class="dgm-tier"><small>Assure</small><div class="dgm-nodes"><span class="hl">Review queue<em>low confidence, sensitive</em></span><span>Provenance log<em>model, prompt, reviewer</em></span><span>Taxonomy owner<em>new concept requests</em></span></div></div>
-<div class="dgm-tier"><small>Use</small><div class="dgm-nodes"><span>Catalogue search<em>filters, exact terms</em></span><span>Semantic search<em>embeddings</em></span><span>Reuse and licensing<em>rights-aware</em></span></div></div>
-</div>
-<figcaption>Layered architecture: models suggest, the vocabulary constrains, and people review before anything is published to search.</figcaption>
-</figure>
-
-<h2>The data flow, end to end</h2>
-<figure class="dgm">
-<ol class="dgm-flow g3">
-<li><b>Select</b><span>Pick a collection batch, prioritised by editorial and licensing demand</span></li>
-<li><b>Derive</b><span>Generate transcripts, keyframes and on-screen text; keep them as versioned artefacts</span></li>
-<li><b>Enrich</b><span>Run batch inference that returns structured candidate subjects, places, people and a summary</span></li>
-<li class="hl"><b>Map</b><span>Resolve candidates to concepts in the scheme; unmatched terms become proposals, not tags</span></li>
-<li class="hl"><b>Review</b><span>Route low-confidence and sensitive items to cataloguers; record every decision</span></li>
-<li><b>Publish</b><span>Write approved metadata to the catalogue and refresh keyword and vector indexes</span></li>
-</ol>
-<figcaption>Each batch is versioned, so any published label can be traced back to the inputs, model and reviewer that produced it.</figcaption>
-</figure>
-<p>For semantic search, transcripts and summaries were embedded with a sentence-embedding model, which produces vectors that can be compared with cosine similarity<sup class="cite"><a href="#ref-3">3</a></sup>. Nearest-neighbour lookup used an HNSW index, a graph-based approximate search method that scales well to large collections<sup class="cite"><a href="#ref-4">4</a></sup>. Model choice and storage trade-offs are covered in <a href="https://asksumanta.com/insights/choosing-embedding-models-rag/">choosing embedding models</a> and <a href="https://asksumanta.com/insights/pgvector-or-vector-database/">pgvector or a vector database</a>.</p>
-
-<h2>The hard part: a vocabulary people agree on</h2>
-<p>Running models over the archive was the easy part. Agreeing what the labels should be took far longer. The approach that worked:</p>
-<ul>
-<li>Seed the concept scheme from the terms cataloguers already used most, then merge duplicates as alternative labels rather than deleting them, so old records still match.</li>
-<li>Use SKOS mapping properties to link local concepts to external vocabularies where they existed, instead of copying those vocabularies wholesale<sup class="cite"><a href="#ref-1">1</a></sup>.</li>
-<li>Never let the pipeline create a concept. A model suggestion with no match becomes a proposal for the taxonomy owner, with example items attached.</li>
-<li>Treat people and sensitive topics as always-reviewed fields, whatever the model's confidence.</li>
-</ul>
-<p>The taxonomy design choices are discussed further in <a href="https://asksumanta.com/insights/skos-vs-owl-enterprise-taxonomies/">SKOS vs OWL for enterprise taxonomies</a>.</p>
-<div class="callout"><p>A controlled vocabulary turns a model from an author into an assistant. The model can only choose from concepts people have agreed, and everything else becomes a question for a person.</p></div>
-
-<h2>How the engagement ran</h2>
-<figure class="dgm">
-<div class="dgm-lanes">
-<div class="dgm-lane"><small>Pipeline</small><ol><li>Derive and enrich a batch</li><li class="hl">Map to concepts and score</li><li>Publish approved records</li></ol></div>
-<div class="dgm-lane"><small>Cataloguer</small><ol><li>Work the review queue</li><li class="hl">Accept, correct or reject</li><li>Flag missing concepts</li></ol></div>
-<div class="dgm-lane"><small>Taxonomy owner</small><ol><li>Review concept proposals</li><li>Version the scheme</li><li>Trigger re-mapping</li></ol></div>
-</div>
-<figcaption>Three roles, one loop: reviewer corrections and new concepts flow back into the next batch.</figcaption>
-</figure>
-<figure class="dgm">
-<div class="dgm-phases">
-<div><small>Phase 1</small><b>Discover</b><ul><li>Collection and rights inventory</li><li>Search pain points</li><li>Seed vocabulary</li></ul></div>
-<div><small>Phase 2</small><b>Pilot collection</b><ul><li>End-to-end pipeline</li><li>Review queue design</li><li>Evaluation set</li></ul></div>
-<div><small>Phase 3</small><b>Harden</b><ul><li>Confidence thresholds</li><li>Provenance and versioning</li><li>Hybrid search</li></ul></div>
-<div><small>Phase 4</small><b>Scale and hand off</b><ul><li>Further collections</li><li>Taxonomy governance</li><li>Runbooks and training</li></ul></div>
-</div>
-<figcaption>Phased delivery: one collection end to end before widening the backlog.</figcaption>
-</figure>
-<p>Thresholds were set against a hand-labelled evaluation set drawn from the pilot collection, not against the model's own sense of certainty. The method is in <a href="https://asksumanta.com/insights/llm-evaluation-sets-that-predict-production/">LLM evaluation sets that predict production</a>.</p>
-
-<h2>Key decisions and trade-offs</h2>
-<table class="tbl">
-<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
-<tbody>
-<tr><td>SKOS concept scheme</td><td>Free-text model tags</td><td>Consistent labels, synonyms and hierarchy; reusable outside the pipeline</td></tr>
-<tr><td>Batch enrichment</td><td>Real-time tagging on view</td><td>Predictable cost, reproducible runs and reviewable outputs</td></tr>
-<tr><td>Structured model outputs</td><td>Prose descriptions parsed later</td><td>Fields validate on arrival; failures are visible, not silent</td></tr>
-<tr><td>Review by confidence and sensitivity</td><td>Review everything, or nothing</td><td>People spend time where the model is weakest or the risk is highest</td></tr>
-<tr><td>Hybrid keyword and vector search</td><td>Vector search only</td><td>Editors still need exact names, dates and identifiers</td></tr>
-</tbody>
-</table>
-
-<h2>What I'd do again, and differently</h2>
-<p>Again: put the vocabulary at the centre and make provenance a field, not a log file. Differently: involve the cataloguers in designing the review screen from the first week. The speed and quality of review decided the throughput of the whole system, far more than the model did.</p>
-<p>If you're planning something similar, the <a href="https://asksumanta.com/ontology-knowledge-graph/">ontology and knowledge graph</a> page describes how I run these engagements, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/media-archive-metadata-enrichment/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
+<p>If you're planning something similar, the <a href="https://asksumanta.com/ai-architect/">AI architect</a> page describes how I run these engagements, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/real-estate-document-intake-automation/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>

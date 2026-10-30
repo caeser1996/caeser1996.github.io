@@ -1,0 +1,80 @@
+<!--{"title": "Case study: automated decision transparency for an Australian energy retailer", "description": "How an Australian energy retailer can meet the Privacy Act's automated decision disclosure duty from 10 December 2026: find every decision, record it and explain it.", "short": "ADM transparency for an Australian retailer", "h1": "Ready for 10 December: automated decision transparency for an Australian energy retailer", "kicker": "Case study · Privacy engineering and automated decisions", "lede": "An energy retailer used software to run credit checks, set payment plans, flag hardship and trigger collections, across systems built over twenty years. From 10 December 2026, Australian organisations must explain in their privacy policy when computer programs make or substantially inform decisions that significantly affect people. The retailer first had to find out where that happened.", "date": "2026-10-30", "datetime": "2026-10-30T17:10:00+04:00", "readtime": "9 min read", "sector": "Energy retail · Australia", "role": "Fractional CTO and principal architect", "engagement": "Assessment, architecture and delivery leadership", "scope": "Decision inventory, decision register, decision event capture, privacy policy content, explanations and review", "stack": ["Decision register", "OpenTelemetry Collector", "Filelog and SQL receivers", "Event streaming", "Data catalogue", "Rules engine", "Customer service workbench", "Policy as code"], "outcomes": ["Every significant automated or computer-assisted decision listed in one register with an owner", "Privacy policy disclosures generated from the register, not written from memory", "Decision events captured from legacy systems without rewriting them", "Customer service able to explain a decision and route a review", "New decision logic blocked from release until registered"], "tags": ["governance", "data", "observability"], "keywords": ["Australia automated decision making Privacy Act", "APP 1.7 1.8 1.9", "10 December 2026 privacy policy", "OAIC ADM guidance", "Privacy and Other Legislation Amendment Act 2024", "energy retailer hardship", "decision register", "OpenTelemetry legacy systems", "fractional CTO Australia", "AI governance Australia"], "faq": [["What changes on 10 December 2026?", "APP entities must include information in their privacy policy where they have arranged for a computer program to make, or do something substantially and directly related to making, decisions that significantly affect individuals, using personal information. The duty comes from the Privacy and Other Legislation Amendment Act 2024."], ["Does human review take a decision out of scope?", "Not automatically. According to commentary on the OAIC's guidance, a decision can be in scope even when a program's output only informs a person who makes the final call, and the OAIC encourages treating borderline cases as in scope."], ["Is this only about AI?", "No. The OAIC's guidance reaches rules engines, scoring tools and other software that substantially informs significant decisions, not only machine learning."]], "related": ["/fractional-cto-australia/", "/ai-architect/", "/fractional-cto/"], "citations": [{"title": "New resources on transparency for use of AI and automated decision-making", "url": "https://www.oaic.gov.au/news/media-centre/new-resources-on-transparency-for-use-of-ai-and-automated-decision-making", "publisher": "OAIC", "date": "Sep 2026"}, {"title": "Mandatory automated decision-making disclosure requirements are coming: key takeaways from the OAIC guidance", "url": "https://www.allens.com.au/insights-news/insights/2026/10/mandatory-automated-decision-making-disclosure-requirements-are-coming-key-takeaways-from-the-oaic-guidance/", "publisher": "Allens", "date": "Oct 2026"}, {"title": "Transparency in automated decision-making: What the OAIC guidance means for your business", "url": "https://www.corrs.com.au/insights/transparency-in-automated-decision-making-what-the-oaic-guidance-means-for-your-business", "publisher": "Corrs Chambers Westgarth", "date": "2026"}, {"title": "New Privacy Policy Disclosures for Automated Decision Making: Are You Ready for 10 December 2026?", "url": "https://www.russellkennedy.com.au/insights-events/insights/new-privacy-policy-disclosures-for-automated-decision-making-are-you-ready-for-10-december-2026", "publisher": "Russell Kennedy", "date": "2026"}, {"title": "Demystifying OpenTelemetry: Why You Shouldn't Fear Observability in Traditional Environments", "url": "https://opentelemetry.io/blog/2026/demystifying-opentelemetry/", "publisher": "OpenTelemetry blog", "date": "13 Jan 2026"}]}-->
+<h2>The situation</h2>
+<p>An Australian energy retailer served households and small businesses across several states. Software touched many decisions that matter to customers: credit checks at sign-up, security deposits, payment plan offers, hardship flags, collections steps and, at the end of the line, disconnection warnings. The logic lived in a billing platform from the 2000s, a CRM, a collections tool, a credit bureau integration and a newer machine learning model that predicted who might struggle to pay.</p>
+<p><strong>Why now.</strong> From 10 December 2026, APP entities must include information in their privacy policy when they have arranged for a computer program to make, or do something substantially and directly related to making, decisions that significantly affect individuals' rights or interests<sup class="cite"><a href="#ref-1">1</a></sup>. The OAIC published its final guidance on 30 September 2026<sup class="cite"><a href="#ref-4">4</a></sup>. Commentary on that guidance reads it broadly: it reaches rules engines and decision-support tools, not only AI, and human review does not automatically take a decision out of scope<sup class="cite"><a href="#ref-2">2</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>. The retailer's privacy policy said nothing about any of this, and nobody could list where it applied.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>A complete list</strong> of significant decisions that software makes or substantially informs.</li>
+<li><strong>Disclosures that match reality</strong>, generated from that list and kept current.</li>
+<li><strong>Evidence for each decision</strong>: which system, which logic version, which data.</li>
+<li><strong>Explanations on request</strong> that customer service can give in plain language.</li>
+<li><strong>No new hidden decisions</strong>: changes to decision logic registered before release.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Decision sources</small><div class="dgm-nodes"><span>Billing platform<em>deposits, plans</em></span><span>Collections tool<em>reminders, warnings</em></span><span>Credit integration<em>sign-up checks</em></span><span>ML model<em>payment difficulty</em></span></div></div>
+<div class="dgm-tier"><small>Capture</small><div class="dgm-nodes"><span class="hl">OpenTelemetry Collector<em>logs and SQL, no rewrites</em></span><span>Decision events<em>standard schema</em></span></div></div>
+<div class="dgm-tier"><small>Register</small><div class="dgm-nodes"><span class="hl">Decision register<em>purpose, data, logic, owner</em></span><span>Data catalogue<em>personal data used</em></span></div></div>
+<div class="dgm-tier"><small>Outputs</small><div class="dgm-nodes"><span class="hl">Privacy policy section<em>generated from the register</em></span><span>Customer service workbench<em>explain and review</em></span></div></div>
+<div class="dgm-tier"><small>Control</small><div class="dgm-nodes"><span>Release gate<em>no unregistered decision logic</em></span><span>Quarterly review<em>register against reality</em></span></div></div>
+</div>
+<figcaption>The register is the single source of truth; disclosures, explanations and release checks all read from it.</figcaption>
+</figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Decide</b><span>A system makes or informs a decision about a customer</span></li>
+<li class="hl"><b>Emit</b><span>A decision event is captured with decision type, logic version and inputs used</span></li>
+<li><b>Link</b><span>The event is matched to its register entry and the customer record</span></li>
+<li><b>Disclose</b><span>The privacy policy describes each registered decision type in plain language</span></li>
+<li class="hl"><b>Explain</b><span>Customer service retrieves the event and gives the reasons</span></li>
+<li><b>Review</b><span>A customer can ask for a person to look again; the outcome is recorded</span></li>
+</ol>
+<figcaption>Disclosure covers the decision type; the event covers the individual decision.</figcaption>
+</figure>
+
+<h2>The hard part: finding decisions in twenty-year-old systems</h2>
+<p>Nobody had a list. Decision logic sat in billing configuration tables, stored procedures, collections scripts and a model in a notebook pipeline. Interviews found the obvious decisions; data found the rest. The team traced customer journeys that ended in a significant outcome, such as a deposit request or a disconnection warning, back through the systems that produced them, and recorded every step where software chose or ranked something.</p>
+<p>Capturing evidence without rewriting the billing platform was the second problem. The OpenTelemetry Collector can read existing log files and query databases through receivers, then forward everything in one format, which is how the OpenTelemetry community recommends bringing older systems into modern observability<sup class="cite"><a href="#ref-5">5</a></sup>. The team used it to turn existing logs and table changes into structured decision events, with no change to the legacy code.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/australia-energy-retailer-adm-transparency/legacy-telemetry.webp" alt="Diagram of an OpenTelemetry Collector receiving data from a legacy application's log server through a filelog receiver, from SQL Server databases through SQL receivers, from Windows machines over OTLP and from production line devices through an MQTT bridge, and forwarding to a backend" width="1400" height="761" loading="lazy"></div><figcaption>One collector gathering logs and database data from older systems: the pattern used to capture decision events without rewrites. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2026/demystifying-opentelemetry/" target="_blank" rel="noopener">OpenTelemetry blog, Lukasz Ciukaj</a> · CC BY 4.0</span></figcaption></figure>
+<p>The scope calls were made with counsel. Following the guidance's broad reading, the team treated borderline cases as in scope, including the payment difficulty model, even though a person made the final hardship decision<sup class="cite"><a href="#ref-2">2</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>. The hardship model was also a reason for care: it informed help for vulnerable customers, so its explanations were written with the hardship team. See <a href="/case-studies/brazil-credit-ai-lgpd-explainability/">explainable credit decisions in Brazil</a> for the reason-code pattern.</p>
+<div class="callout"><p>You cannot disclose what you have not found. The privacy policy paragraph is the last step; the inventory is the work.</p></div>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Privacy and legal</small><ol><li>Scope rules</li><li class="hl">Policy wording</li><li>Review process</li></ol></div>
+<div class="dgm-lane"><small>Engineering and data</small><ol><li>Journey tracing</li><li class="hl">Decision events and register</li><li>Release gate</li></ol></div>
+<div class="dgm-lane"><small>Customer operations</small><ol><li>Hardship input</li><li>Explanation scripts</li><li class="hl">Workbench and reviews</li></ol></div>
+</div>
+<figcaption>Legal set the scope, engineering produced the evidence, customer operations made it usable.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Find</b><ul><li>Journey tracing</li><li>Interviews</li><li>Draft register</li></ul></div>
+<div><small>Phase 2</small><b>Decide scope</b><ul><li>Significance tests</li><li>Borderline calls</li><li>Owners named</li></ul></div>
+<div><small>Phase 3</small><b>Evidence</b><ul><li>Collector on legacy systems</li><li>Decision events</li><li>Workbench view</li></ul></div>
+<div><small>Phase 4</small><b>Disclose</b><ul><li>Policy generated from register</li><li>Release gate</li><li>Quarterly review</li></ul></div>
+</div>
+<figcaption>Find, scope, evidence, disclose: in that order, with the 10 December date as the hard stop.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Treat borderline cases as in scope</td><td>Narrow reading to limit disclosure</td><td>Matches the guidance and avoids later corrections</td></tr>
+<tr><td>Generate disclosures from the register</td><td>Write the policy section by hand</td><td>Policy stays true as systems change</td></tr>
+<tr><td>Capture events from logs and databases</td><td>Modify legacy code</td><td>Faster, lower risk before the deadline</td></tr>
+<tr><td>Release gate on decision logic</td><td>Periodic audits only</td><td>New decisions cannot appear unnoticed</td></tr>
+<tr><td>Write explanations with hardship staff</td><td>Engineering-written reasons</td><td>Clear and appropriate for vulnerable customers</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: trace from outcomes backwards. It found decisions no interview would have surfaced, such as a deposit rule hidden in a billing configuration table. Differently: start the release gate first. Two new rules went live during the inventory and had to be found again. Related: <a href="/insights/new-york-youth-chatbot-law-ai-assistants/">policy layers for AI assistants</a>, <a href="/insights/iso-42001-vs-nist-ai-rmf/">ISO 42001 and the NIST AI RMF</a>, <a href="/case-studies/ai-provider-resilience-cps-230-insurer/">AI provider resilience under CPS 230</a> and the <a href="/fractional-cto-australia/">Australia page</a>.</p>
+<p>If you need to be ready for 10 December in Australia, see my <a href="/fractional-cto/">fractional CTO work</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
