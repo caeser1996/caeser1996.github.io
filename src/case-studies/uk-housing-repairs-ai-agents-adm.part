@@ -1,0 +1,81 @@
+<!--{"title": "Case study: AI agents for repairs at a UK housing association", "description": "How a UK housing association can use AI agents to triage repairs and spot vulnerable tenants under the DUAA's automated decision rules and Awaab's Law timescales.", "short": "AI repairs triage for UK social housing", "h1": "Faster repairs, fair decisions: AI agents for a UK housing association under the new automated decision rules", "kicker": "Case study · AI agents in the public interest", "lede": "A housing association received thousands of repair requests a month by phone, web and email, and missed hazards hidden in the backlog. Damp and mould now carry legal deadlines, and the UK's rules on automated decisions have changed. The aim was to use AI agents to read, classify and route every request quickly, while keeping people in charge of decisions that affect tenants.", "date": "2026-10-30", "datetime": "2026-10-30T14:30:00+04:00", "readtime": "9 min read", "sector": "Social housing · United Kingdom", "role": "Fractional CTO and AI architect", "engagement": "Assessment, architecture and delivery leadership", "scope": "Repairs intake, AI classification, hazard escalation, vulnerability flags, durable workflows, ADM safeguards", "stack": ["Omnichannel intake", "LLM classification with structured outputs", "Durable workflow engine (Dapr)", "Rules for statutory timescales", "Housing management system integration", "Human review queues", "OpenTelemetry tracing", "Evaluation harness"], "outcomes": ["Every repair request read and classified on arrival, not when someone reaches it", "Potential damp, mould and safety hazards escalated by rules with statutory clocks", "Significant decisions about tenants kept with people, with AI as support", "Each step of each case traceable for complaints and regulators", "A clear route for tenants to challenge outcomes and get a human review"], "tags": ["ai", "agents", "governance"], "keywords": ["Data (Use and Access) Act automated decisions", "Article 22A UK GDPR", "Awaab's Law", "social housing repairs AI", "ICO agentic AI", "AI triage housing association", "meaningful human involvement", "durable workflows Dapr", "fractional CTO United Kingdom", "AI agents public services"], "faq": [["What changed in UK law on automated decisions?", "The Data (Use and Access) Act 2025 replaced Article 22 of the UK GDPR with new Articles 22A to 22D, in force from 5 February 2026. Solely automated significant decisions are generally permitted with safeguards, such as information about the decision, a way to contest it and human intervention, with tighter limits where special category data is involved."], ["What is Awaab's Law?", "A legal requirement for social landlords in England to investigate and fix damp, mould and other serious hazards within set timescales. Its first phase, covering damp and mould and emergency hazards, came into force in October 2025."], ["Should AI agents decide repair priorities on their own?", "In this design, rules set statutory priorities, the agent classifies and drafts, and people make decisions that significantly affect tenants. That keeps the system fast and within the safeguards the law expects."]], "related": ["/fractional-cto-united-kingdom/", "/ai-architect/", "/fractional-cto/"], "citations": [{"title": "One year on: marking the 12-month commencement of the Data (Use and Access) Act", "url": "https://ico.org.uk/about-the-ico/media-centre/news-and-blogs/2026/06/one-year-on-marking-the-12-month-commencement-of-the-data-use-and-access-act/", "publisher": "ICO", "date": "Jun 2026"}, {"title": "UK: Commencement of the data protection provisions in the Data (Use and Access) Act", "url": "https://privacymatters.dlapiper.com/2026/02/uk-commencement-of-the-data-protection-provisions-in-the-data-use-and-access-act/", "publisher": "DLA Piper", "date": "Feb 2026"}, {"title": "AI and Automated Decision-Making in the UK (Part I): The new rules and regulatory guidance", "url": "https://www.hlc.com/en/publications/ai-and-automated-decisionmaking-in-the-uk-part-i-the-new-rules-and-regulatory-guidance", "publisher": "Hill Dickinson", "date": "2026"}, {"title": "AI agents and UK data protection law: ICO sets out its expectations and calls for views", "url": "https://www.freshfields.com/en/our-thinking/blogs/technology-quotient/ai-agents-and-uk-data-protection-law-ico-sets-out-its-expectations-and-calls-for-102o5zk", "publisher": "Freshfields", "date": "Oct 2026"}, {"title": "Awaab's Law: guidance for social landlords", "url": "https://www.gov.uk/government/publications/awaabs-law-guidance-for-social-landlords", "publisher": "GOV.UK", "date": "2025"}, {"title": "Improving Async Workflow Observability in Dapr", "url": "https://opentelemetry.io/blog/2026/dapr-workflow-observability/", "publisher": "OpenTelemetry blog", "date": "21 Jan 2026"}]}-->
+<h2>The situation</h2>
+<p>A housing association in England managed tens of thousands of homes. Repair requests arrived by phone, web form, email and through housing officers, and were keyed into the housing management system by a contact centre. At busy times, requests waited days to be read. A message mentioning "black marks on the bedroom wall" or "the baby keeps coughing" could sit in the same queue as a dripping tap.</p>
+<p><strong>Why now.</strong> Two sets of rules changed the stakes. Awaab's Law requires social landlords to investigate and fix damp, mould and serious hazards within set timescales, with the first phase in force since October 2025<sup class="cite"><a href="#ref-5">5</a></sup>. And the Data (Use and Access) Act replaced the UK GDPR's rules on automated decisions with new Articles 22A to 22D from 5 February 2026, permitting more automated decision-making but with safeguards such as information, the right to contest and human intervention<sup class="cite"><a href="#ref-2">2</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>. The ICO has said it is working on updated guidance and a code of practice on AI and automated decisions<sup class="cite"><a href="#ref-1">1</a></sup>, and in October 2026 it set out its expectations for AI agents and called for views<sup class="cite"><a href="#ref-4">4</a></sup>. The association needed speed and safeguards together.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>Every request read on arrival</strong>, whatever the channel.</li>
+<li><strong>Hazards escalated by rules</strong>, with statutory clocks that start when the landlord becomes aware.</li>
+<li><strong>People decide what significantly affects tenants</strong>; AI classifies, summarises and suggests.</li>
+<li><strong>Every step traceable</strong>, so complaints and the Housing Ombudsman can see what happened and why.</li>
+<li><strong>Tenants can challenge</strong> an outcome and reach a person.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Intake</small><div class="dgm-nodes"><span>Phone transcripts<em>with consent</em></span><span>Web and email<em>photos attached</em></span><span>Housing officers<em>visit notes</em></span></div></div>
+<div class="dgm-tier"><small>Understand</small><div class="dgm-nodes"><span class="hl">Classification agent<em>structured outputs</em></span><span>Photo analysis<em>possible damp and mould</em></span></div></div>
+<div class="dgm-tier"><small>Rules</small><div class="dgm-nodes"><span class="hl">Statutory timescales<em>Awaab's Law clocks</em></span><span>Vulnerability flags<em>for human follow-up</em></span></div></div>
+<div class="dgm-tier"><small>Orchestrate</small><div class="dgm-nodes"><span class="hl">Durable workflows<em>survive restarts, wait for people</em></span><span>Human review queues<em>by skill and urgency</em></span></div></div>
+<div class="dgm-tier"><small>Systems</small><div class="dgm-nodes"><span>Housing management system<em>jobs and appointments</em></span><span>Contractor portal<em>work orders</em></span></div></div>
+<div class="dgm-tier"><small>Evidence</small><div class="dgm-nodes"><span>Traces<em>every step</em></span><span>Evaluations<em>per release</em></span><span>Tenant notices<em>and challenge route</em></span></div></div>
+</div>
+<figcaption>The agent reads and suggests; rules and people decide; workflows make sure nothing is dropped.</figcaption>
+</figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Receive</b><span>A request arrives by any channel and gets a case ID at once</span></li>
+<li class="hl"><b>Classify</b><span>The agent extracts trade, location, urgency signals and possible hazards</span></li>
+<li class="hl"><b>Apply rules</b><span>Hazard indicators start statutory clocks and jump the queue</span></li>
+<li><b>Review</b><span>A person confirms priority for hazards and anything affecting vulnerable tenants</span></li>
+<li><b>Act</b><span>A work order is raised; the workflow tracks it to completion</span></li>
+<li><b>Tell</b><span>The tenant is told what happens next and how to challenge it</span></li>
+</ol>
+<figcaption>Hazards never wait for a human to notice them; decisions about tenants always reach one.</figcaption>
+</figure>
+
+<h2>The hard part: long-running cases that must not get lost</h2>
+<p>A repair case is not a single model call. It can run for weeks: classify, wait for a surveyor, wait for a tenant to confirm access, raise a job, wait for a contractor, check it is fixed. Agents built as simple request-and-response loops lose state when a service restarts, and nobody notices until a statutory deadline has passed.</p>
+<p>The team ran each case as a durable workflow. The workflow engine records every step, so a case resumes exactly where it was after a failure, and it can wait days for a person or a contractor without holding resources. Tracing had to follow the whole case, not just individual calls; the OpenTelemetry and Dapr communities have worked on carrying trace context across the workflow engine's internal boundaries so steps form one coherent trace<sup class="cite"><a href="#ref-6">6</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/uk-housing-repairs-ai-agents-adm/durable-workflow.webp" alt="Diagram of an application pod with a Dapr sidecar containing workflow and activity actors and a workflow engine, connected by a gRPC stream to the workflow app's Dapr Workflow SDK" width="1400" height="597" loading="lazy"></div><figcaption>A durable workflow engine runs each case step by step and survives restarts; tracing across its boundaries keeps the case history in one place. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2026/dapr-workflow-observability/" target="_blank" rel="noopener">OpenTelemetry blog, Mauricio Salatino and Kasper Borg Nissen</a> · CC BY 4.0</span></figcaption></figure>
+<p>The second hard part was deciding where automation stops. Classification and routing of ordinary repairs were automated end to end. Anything that could significantly affect a tenant, such as refusing a repair, deciding it was the tenant's responsibility or flagging possible vulnerability, went to a person with the agent's summary and evidence. That kept the association comfortably within the safeguards the new rules expect, and made challenges easy to handle<sup class="cite"><a href="#ref-3">3</a></sup>. See <a href="/insights/structured-outputs-reliable-llm-integration/">structured outputs</a> for how the classifications were kept reliable.</p>
+<div class="callout"><p>Automate the reading, the routing and the reminders. Keep people on the decisions a tenant might want to argue with.</p></div>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Housing services</small><ol><li>Hazard definitions</li><li class="hl">Review queues and roles</li><li>Tenant communications</li></ol></div>
+<div class="dgm-lane"><small>Technology</small><ol><li>Intake and classification</li><li class="hl">Durable workflows</li><li>Tracing and evaluations</li></ol></div>
+<div class="dgm-lane"><small>Governance</small><ol><li>DPIA</li><li>ADM safeguards</li><li class="hl">Challenge route</li></ol></div>
+</div>
+<figcaption>Housing staff defined what counts as a hazard; technology made sure it was caught; governance made it contestable.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Read everything</b><ul><li>Unified intake</li><li>Classification in shadow</li><li>Evaluation set</li></ul></div>
+<div><small>Phase 2</small><b>Catch hazards</b><ul><li>Hazard rules</li><li>Statutory clocks</li><li>Review queues</li></ul></div>
+<div><small>Phase 3</small><b>Run cases</b><ul><li>Durable workflows</li><li>Contractor integration</li><li>End-to-end tracing</li></ul></div>
+<div><small>Phase 4</small><b>Open up</b><ul><li>Tenant updates</li><li>Challenge route</li><li>Quarterly review</li></ul></div>
+</div>
+<figcaption>Shadow mode first: the agent classified alongside the contact centre before it routed anything.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Rules own statutory priorities</td><td>Let the model rank urgency</td><td>Deadlines must be predictable and auditable</td></tr>
+<tr><td>People decide significant outcomes</td><td>Fully automated decisions with safeguards</td><td>Lower risk and easier challenges</td></tr>
+<tr><td>Durable workflows</td><td>Agent loops with a database</td><td>Cases survive failures and long waits</td></tr>
+<tr><td>Structured outputs</td><td>Free-text summaries</td><td>Reliable routing and measurable accuracy</td></tr>
+<tr><td>Shadow mode before routing</td><td>Switch on and monitor</td><td>Find misses without risk to tenants</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: let housing staff define hazards and vulnerability in their own words, then turn those into rules and test cases. Differently: bring the complaints team in from the start. Their cases were the best test set we had. Related: <a href="/insights/evaluating-ai-agents-reliability/">evaluating AI agents</a>, <a href="/insights/agents-replace-seats-enterprise-saas/">agents as users of enterprise systems</a>, <a href="/case-studies/uk-msp-cyber-resilience-bill-readiness/">UK cyber resilience readiness</a> and the <a href="/fractional-cto-united-kingdom/">UK page</a>.</p>
+<p>If you are bringing AI agents into public-facing services in the UK, see my <a href="/ai-architect/">AI architecture work</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
