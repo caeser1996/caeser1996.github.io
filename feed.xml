@@ -1,6 +1,84 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link><description>Fractional CTO and AI architect: insights, case studies and daily tech news.</description><language>en-gb</language><lastBuildDate>Fri, 30 Oct 2026 21:05:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link></image><item><title>Reddit goes logged-in: how to protect and monetise valuable content when AI answers the search</title><link>https://asksumanta.com/insights/reddit-logged-in-ai-scraping-content-access/</link><guid isPermaLink="true">https://asksumanta.com/insights/reddit-logged-in-ai-scraping-content-access/</guid><pubDate>Fri, 30 Oct 2026 21:05:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>ai</category><category>architecture</category><category>platform</category><description>Reddit is moving to a logged-in experience as AI search cuts referrals and scraping grows. A CTO&#x27;s take on access tiers, bot controls and licensed data APIs.</description><content:encoded><![CDATA[<p><em>On 29 October, Reddit said it will move towards a primarily logged-in experience, citing falling search referrals and scraping of its content for AI. It is the clearest sign yet that the open, crawlable web is being rebuilt into tiers. Any business whose content, data or listings have value now faces the same design question: who gets what, how, and on what terms?</em></p><section class="block">
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link><description>Fractional CTO and AI architect: insights, case studies and daily tech news.</description><language>en-gb</language><lastBuildDate>Fri, 30 Oct 2026 23:05:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link></image><item><title>Our models, our metal: a sovereign LLM platform for a European telecom operator</title><link>https://asksumanta.com/case-studies/eu-telecom-sovereign-llm-platform/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/eu-telecom-sovereign-llm-platform/</guid><pubDate>Fri, 30 Oct 2026 23:05:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>ai</category><category>llm</category><category>kubernetes</category><description>How a European telecom operator can run open-weight LLMs on its own GPUs for network, care and security teams, with NIS2-grade controls and a hosted fallback.</description><content:encoded><![CDATA[<p><em>A telecom operator in central Europe wanted generative AI for network operations, customer care and security, but would not send network configurations, customer records or incident data to an outside model. Capable open-weight models made running its own platform realistic. The task was to build one that is shared, secure, reliable and honest about cost.</em></p><h2>The situation</h2>
+<p>A telecom operator in central Europe ran fixed and mobile networks for several million customers. Three teams wanted generative AI: network operations, to read alarms and configuration changes; customer care, to summarise interactions and draft replies; and security, to triage alerts and investigate incidents. Each had started its own pilot with a different hosted model, and the security and legal teams had stopped all three because network topology, customer data and incident details were leaving the company.</p>
+<p><strong>Why now.</strong> Telecom operators are essential entities under the EU's NIS2 Directive, with duties covering risk management, supply-chain security and incident reporting<sup class="cite"><a href="#ref-4">4</a></sup>. Transposition has been uneven, and the Commission took several member states to the Court of Justice in July 2026 for not implementing it<sup class="cite"><a href="#ref-3">3</a></sup>, but national laws are now arriving; Austria's, for example, applies from 1 October 2026<sup class="cite"><a href="#ref-2">2</a></sup>. At the same time, capable open-weight models became realistic to run in-house; on 29 October 2026 Mistral released the weights of its trillion-parameter Large 4, pitched at security teams who want to run it on their own infrastructure<sup class="cite"><a href="#ref-1">1</a></sup>. The operator decided to build one shared, sovereign platform rather than three pilots.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>Sensitive data stays in-house</strong>: network, customer and incident data only touch the operator's own infrastructure.</li>
+<li><strong>One platform, three tenants</strong>, with quotas, policies and costs kept separate.</li>
+<li><strong>Models chosen by evidence</strong>: evaluations on each team's real tasks.</li>
+<li><strong>Reliable on imperfect hardware</strong>: GPU, driver and node failures must not take services down.</li>
+<li><strong>A sensible escape hatch</strong>: hosted models for non-sensitive work, through the same controls.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Tenants</small><div class="dgm-nodes"><span>Network operations<em>alarms, configs</em></span><span>Customer care<em>summaries, drafts</em></span><span>Security<em>triage, investigation</em></span></div></div>
+<div class="dgm-tier"><small>Gateway</small><div class="dgm-nodes"><span class="hl">Inference gateway<em>auth, quotas, routing, data rules</em></span><span>Classification check<em>sensitive data stays in-house</em></span></div></div>
+<div class="dgm-tier"><small>Serving</small><div class="dgm-nodes"><span class="hl">vLLM pools<em>large, medium and small models</em></span><span>Hosted fallback<em>non-sensitive only</em></span></div></div>
+<div class="dgm-tier"><small>Compute</small><div class="dgm-nodes"><span class="hl">Kubernetes GPU nodes<em>DRA, health checks</em></span><span>Model registry<em>versions, licences</em></span></div></div>
+<div class="dgm-tier"><small>Assure</small><div class="dgm-nodes"><span>Evaluations<em>per tenant, per release</em></span><span>Tracing and cost<em>OpenTelemetry</em></span><span>Security controls<em>NIS2 evidence</em></span></div></div>
+</div>
+<figcaption>Tenants never call models directly; the gateway decides which model, and where, each request may use.</figcaption>
+</figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Request</b><span>A tenant application sends a task with its data classification</span></li>
+<li class="hl"><b>Check</b><span>The gateway verifies identity, quota and whether data may leave the platform</span></li>
+<li><b>Route</b><span>The task goes to the smallest in-house model that meets quality for that task</span></li>
+<li><b>Serve</b><span>vLLM serves from GPU pools; failures move work to healthy replicas</span></li>
+<li class="hl"><b>Trace</b><span>Tokens, latency, model version and cost are recorded per tenant</span></li>
+<li><b>Fallback</b><span>Only non-sensitive tasks may use a hosted model when capacity is short</span></li>
+</ol>
+<figcaption>Data classification decides where a request may go before any model sees it.</figcaption>
+</figure>
+
+<h2>The hard part: running GPUs like a utility</h2>
+<p>Buying GPUs was the easy part. Keeping them useful was not. Multi-GPU model servers are sensitive to hardware faults, driver updates and slow terminations, and Kubernetes' traditional view of devices as either present or absent does not cope well with partial failures. The Kubernetes community has documented these failure modes, from device plugin restarts to pods holding devices while they shut down<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/eu-telecom-sovereign-llm-platform/device-failures.webp" alt="Diagram of kubelet, device plugin, node status and a user pod, annotated with failure points: kubelet restarts losing device information, device plugin updates or restarts preventing allocation, and slow pod termination leaving devices unavailable" width="1200" height="514" loading="lazy"></div><figcaption>Where device-backed workloads break on Kubernetes: the failure modes the platform was designed around. <span class="credit">Source: <a href="https://kubernetes.io/blog/2025/07/03/navigating-failures-in-pods-with-devices/" target="_blank" rel="noopener">Kubernetes blog, Sergey Kanzhelev and Mrunal Patel</a> · CC BY 4.0</span></figcaption></figure>
+<p>The team designed for those failures: health checks on GPUs and model servers, spare capacity so a failed node does not halve a model pool, staged driver and plugin updates, and a gateway that retries on a healthy replica. Scheduling moved to Dynamic Resource Allocation so model servers could ask for the exact accelerators they needed; see <a href="https://asksumanta.com/insights/kubernetes-dra-gpu-scheduling/">DRA for GPU scheduling</a>. Sharing used quotas per tenant, with security given priority during incidents.</p>
+<p>Model choice was the other discipline. The largest open models are impressive and expensive to hold in memory. Each tenant built an evaluation set from real tasks, and the gateway routed each task to the smallest model that met its quality bar, keeping the largest model for hard security investigations. More in <a href="https://asksumanta.com/insights/mistral-large-4-open-weights-self-hosting/">running a trillion-parameter model yourself</a> and <a href="https://asksumanta.com/insights/ai-memory-squeeze-inference-architecture/">the AI memory squeeze</a>.</p>
+<div class="callout"><p>Self-hosting is an operations commitment, not a download. Budget for spare capacity, failure handling and evaluation before you budget for the biggest model.</p></div>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Platform team</small><ol><li>GPU cluster and DRA</li><li class="hl">Gateway and quotas</li><li>Failure drills</li></ol></div>
+<div class="dgm-lane"><small>Tenant teams</small><ol><li>Use cases</li><li class="hl">Evaluation sets</li><li>Adoption</li></ol></div>
+<div class="dgm-lane"><small>Security and legal</small><ol><li>Data classification</li><li>Model licences</li><li class="hl">NIS2 evidence</li></ol></div>
+</div>
+<figcaption>The platform team ran it like any other shared utility; tenants owned their quality bar.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Gate</b><ul><li>Gateway with data rules</li><li>Hosted models for safe tasks</li><li>Pilots consolidated</li></ul></div>
+<div><small>Phase 2</small><b>Build</b><ul><li>GPU nodes</li><li>vLLM pools</li><li>Evaluation sets</li></ul></div>
+<div><small>Phase 3</small><b>Harden</b><ul><li>Failure handling</li><li>Quotas and priorities</li><li>Cost per task</li></ul></div>
+<div><small>Phase 4</small><b>Scale</b><ul><li>More tenants</li><li>Larger models where earned</li><li>Quarterly model review</li></ul></div>
+</div>
+<figcaption>The gateway came first, so every later change was invisible to tenant applications.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>One shared platform</td><td>A cluster per team</td><td>Scarce GPUs used well; one set of controls</td></tr>
+<tr><td>Gateway enforces data classification</td><td>Trust each application</td><td>One place to prove where data went</td></tr>
+<tr><td>Smallest model that passes evaluation</td><td>Largest model everywhere</td><td>Lower memory, cost and latency</td></tr>
+<tr><td>Spare capacity for failures</td><td>Run GPUs at full allocation</td><td>Service survives node and driver failures</td></tr>
+<tr><td>Hosted fallback for non-sensitive tasks</td><td>In-house only</td><td>Handles peaks without overbuying hardware</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: put the gateway in first. It stopped the data leaks on day one and let the platform change underneath without tenant rework. Differently: run failure drills before the first production tenant, not after the first outage. Related: <a href="https://asksumanta.com/insights/kubernetes-inference-gateway/">Kubernetes inference gateway</a>, <a href="https://asksumanta.com/insights/llm-inference-serving-vllm/">serving with vLLM</a>, <a href="https://asksumanta.com/case-studies/telecom-observability-slos/">telecom observability and SLOs</a> and the <a href="https://asksumanta.com/fractional-cto-europe/">Europe page</a>.</p>
+<p>If you are planning private AI infrastructure in Europe or elsewhere, see my <a href="https://asksumanta.com/ai-architect/">AI architecture work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/eu-telecom-sovereign-llm-platform/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Reddit goes logged-in: how to protect and monetise valuable content when AI answers the search</title><link>https://asksumanta.com/insights/reddit-logged-in-ai-scraping-content-access/</link><guid isPermaLink="true">https://asksumanta.com/insights/reddit-logged-in-ai-scraping-content-access/</guid><pubDate>Fri, 30 Oct 2026 21:05:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>ai</category><category>architecture</category><category>platform</category><description>Reddit is moving to a logged-in experience as AI search cuts referrals and scraping grows. A CTO&#x27;s take on access tiers, bot controls and licensed data APIs.</description><content:encoded><![CDATA[<p><em>On 29 October, Reddit said it will move towards a primarily logged-in experience, citing falling search referrals and scraping of its content for AI. It is the clearest sign yet that the open, crawlable web is being rebuilt into tiers. Any business whose content, data or listings have value now faces the same design question: who gets what, how, and on what terms?</em></p><section class="block">
 <h2>What happened</h2>
 <p>Reddit used its third-quarter results on 29 October to announce a shift towards a primarily logged-in experience. It said search referrals had fallen sharply, by more than a million a week in October, and that most scraping of its content happens through logged-out access<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. Testing begins outside the US this quarter, with no date yet for a global rollout, and Reddit says it will keep licensing its data to AI companies<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>.</p>
 <p>The reasons Reddit gives are commercial: logged-in users carry more signals for advertising, and a protected corpus is worth more in licensing talks<sup class="cite"><a href="#ref-2">2</a></sup>. The pattern matters well beyond Reddit.</p>
@@ -3499,88 +3577,4 @@ tracer_provider:
 
 <h2>What I'd do again, and differently</h2>
 <p>Again: write decisions down from the first week and keep the cadence predictable, even when the week is busy. Differently: start the search for the permanent engineering leader earlier. Good senior hires take longer than any technical workstream, and the hand-off is only as strong as the person receiving it.</p>
-<p>If your team is at a similar stage, the <a href="https://asksumanta.com/fractional-cto/">fractional CTO</a> page describes how I work, <a href="https://asksumanta.com/insights/when-do-you-need-a-fractional-cto/">when you need one</a> covers the signals, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/startup-fractional-cto-seed-to-series-a/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Testing whether an AI company&#x27;s technology is what the deck says it is</title><link>https://asksumanta.com/case-studies/private-equity-ai-technical-due-diligence/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/private-equity-ai-technical-due-diligence/</guid><pubDate>Wed, 28 Oct 2026 01:46:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>ai</category><category>governance</category><category>security</category><category>regulation</category><category>architecture</category><category>leadership</category><description>How a structured technical due diligence tested an AI company&#x27;s architecture, model and data provenance, security, costs and team, ending in a risk-rated report.</description><content:encoded><![CDATA[<p><em>An investor was close to committing to a company whose value rested on its AI. The questions were simple to state and hard to answer: is the AI really theirs, do they have the rights to the data behind it, will it scale at a sensible cost, and can this team keep building it?</em></p><h2>The situation</h2>
-<p>A private equity investor was preparing to invest in a software company whose growth story rested on AI: models that automated part of its customers' work and data assets that, the deck said, competitors could not replicate. The commercial and financial diligence was well under way. What the deal team lacked was an independent view of whether the technology, the data rights and the team matched the story, and what it would cost to fix anything that did not.</p>
-<p>The timeline was set by the deal, so the review had to be structured, evidence-led and focused on findings that could change price, terms or the post-close plan.</p>
-
-<h2>What had to be true</h2>
-<ul>
-<li><strong>Evidence over assertion</strong>: every finding tied to something inspected, not only something said in an interview.</li>
-<li><strong>Proprietary versus borrowed</strong> made explicit: which capabilities the company built, and which depend on third-party models or APIs.</li>
-<li><strong>Data rights traced</strong> from source to model to product, including customer data used for training.</li>
-<li><strong>Costs that scale</strong>: inference and cloud spend modelled against the growth plan.</li>
-<li><strong>A report the deal team can use</strong>: risk-rated, with recommended responses, readable by non-engineers.</li>
-</ul>
-
-<h2>Architecture</h2>
-<p>The review was organised into workstreams, each with its own evidence requests and interview plan. AI governance was assessed against the functions of the NIST AI Risk Management Framework (govern, map, measure, manage)<sup class="cite"><a href="#ref-1">1</a></sup>, with ISO/IEC 42001 used as the reference for what a management system for AI looks like<sup class="cite"><a href="#ref-2">2</a></sup>. The comparison is in <a href="https://asksumanta.com/insights/iso-42001-vs-nist-ai-rmf/">ISO 42001 vs NIST AI RMF</a>.</p>
-<figure class="dgm">
-<div class="dgm-stack">
-<div class="dgm-tier"><small>Evidence</small><div class="dgm-nodes"><span>Data room<em>documents, contracts</em></span><span>Repositories<em>read access</em></span><span>Cloud billing<em>cost exports</em></span><span>Interviews<em>leadership and engineers</em></span></div></div>
-<div class="dgm-tier"><small>Platform</small><div class="dgm-nodes"><span>Architecture review<em>scalability, resilience</em></span><span>Code and delivery<em>quality, practices</em></span><span>Security<em>SDLC and controls</em></span></div></div>
-<div class="dgm-tier"><small>AI</small><div class="dgm-nodes"><span class="hl">Model provenance<em>built, tuned or bought</em></span><span class="hl">Data rights<em>source to product</em></span><span>Evaluation evidence<em>quality claims</em></span></div></div>
-<div class="dgm-tier"><small>Economics and people</small><div class="dgm-nodes"><span>Cost model<em>inference and cloud</em></span><span>Team and key people<em>concentration risk</em></span><span>Roadmap realism<em>plan vs capacity</em></span></div></div>
-<div class="dgm-tier"><small>Output</small><div class="dgm-nodes"><span class="hl">Risk register<em>severity and evidence</em></span><span>Deal implications<em>price, terms, conditions</em></span><span>100-day plan<em>post-close actions</em></span></div></div>
-</div>
-<figcaption>Review architecture: evidence feeds workstreams, workstreams feed one risk register, the register feeds the deal.</figcaption>
-</figure>
-
-<h2>The data flow, end to end</h2>
-<figure class="dgm">
-<ol class="dgm-flow g3">
-<li><b>Request</b><span>Issue a targeted evidence list per workstream, prioritised by deal risk</span></li>
-<li><b>Inspect</b><span>Review architecture, repositories, pipelines, billing and contracts</span></li>
-<li><b>Interview</b><span>Test what was inspected with the people who built and run it</span></li>
-<li class="hl"><b>Trace</b><span>Follow data and models from source through training to the product</span></li>
-<li class="hl"><b>Rate</b><span>Score each finding for severity and likelihood; record the evidence behind it</span></li>
-<li><b>Report</b><span>Summarise for the investment committee with recommended responses</span></li>
-</ol>
-<figcaption>Every finding carries its evidence, so the deal team can see what was verified and what rests on representations.</figcaption>
-</figure>
-<p>Secure development practices were reviewed against the NIST Secure Software Development Framework, which groups practices into preparing the organisation, protecting the software, producing well-secured software and responding to vulnerabilities<sup class="cite"><a href="#ref-3">3</a></sup>. The full checklist I use is in <a href="https://asksumanta.com/insights/ai-startup-technical-due-diligence-checklist/">the AI startup technical due diligence checklist</a>, and supply chain questions in <a href="https://asksumanta.com/insights/ai-model-supply-chain-security/">AI model supply chain security</a>.</p>
-
-<h2>The hard part: proving data rights, not just data</h2>
-<p>Showing that a company has data is easy. Showing that it may use that data for the purpose the plan depends on is not. The provenance workstream asked, for each dataset behind a model:</p>
-<ul>
-<li>Where it came from, under which contract or licence, and whether that permits training and commercial use.</li>
-<li>Whether customer data was used to train shared models, and whether customer contracts allow it.</li>
-<li>Whether the dataset is documented in a form like a datasheet, covering motivation, composition and collection<sup class="cite"><a href="#ref-4">4</a></sup>.</li>
-<li>Whether models carry documentation of intended use and evaluation, in the spirit of model cards<sup class="cite"><a href="#ref-5">5</a></sup>.</li>
-</ul>
-<p>Regulation was mapped to where the company sells. For customers in the European Union, the review considered how the EU AI Act might classify the product and which provider or deployer obligations could apply<sup class="cite"><a href="#ref-6">6</a></sup>.</p>
-<div class="callout"><p>In AI diligence, the most valuable finding is often not a technical flaw but a missing right. A gap in data permissions can matter more to value than any code quality issue.</p></div>
-
-<h2>How the engagement ran</h2>
-<figure class="dgm">
-<div class="dgm-lanes">
-<div class="dgm-lane"><small>Deal team</small><ol><li>Set key questions</li><li>Arrange access</li><li class="hl">Decide price and terms</li></ol></div>
-<div class="dgm-lane"><small>Diligence lead</small><ol><li>Run workstreams</li><li class="hl">Rate findings</li><li>Present report</li></ol></div>
-<div class="dgm-lane"><small>Target company</small><ol><li>Provide evidence</li><li>Join interviews</li><li>Respond to findings</li></ol></div>
-</div>
-<figcaption>Findings were shared with the target for factual accuracy before the final report.</figcaption>
-</figure>
-<figure class="dgm">
-<div class="dgm-phases">
-<div><small>Phase 1</small><b>Scope</b><ul><li>Deal thesis and key risks</li><li>Evidence request list</li><li>Access arrangements</li></ul></div>
-<div><small>Phase 2</small><b>Inspect</b><ul><li>Architecture and code</li><li>Billing and cost model</li><li>Contracts and data sources</li></ul></div>
-<div><small>Phase 3</small><b>Test</b><ul><li>Interviews</li><li>Provenance tracing</li><li>Draft findings</li></ul></div>
-<div><small>Phase 4</small><b>Report</b><ul><li>Risk-rated register</li><li>Committee briefing</li><li>Post-close plan</li></ul></div>
-</div>
-<figcaption>Phased diligence: scope to the deal thesis first, then inspect, test and report.</figcaption>
-</figure>
-
-<h2>Key decisions and trade-offs</h2>
-<table class="tbl">
-<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
-<tbody>
-<tr><td>Scope to the deal thesis</td><td>Exhaustive technical audit</td><td>Effort goes to what can change price or terms</td></tr>
-<tr><td>Repository access</td><td>Documents and interviews only</td><td>Inspection gives stronger evidence than representation</td></tr>
-<tr><td>Dedicated provenance workstream</td><td>Fold into legal review</td><td>Data rights need technical tracing, not only contract reading</td></tr>
-<tr><td>Recognised frameworks as reference</td><td>Ad hoc checklist</td><td>Findings are comparable and defensible</td></tr>
-<tr><td>Recommended response per finding</td><td>List of issues</td><td>Deal team can act: price, condition, warranty or plan</td></tr>
-</tbody>
-</table>
-
-<h2>What I'd do again, and differently</h2>
-<p>Again: insist on repository and billing access early, and separate verified findings from representations in the report. Differently: start the data rights tracing on the first day, in parallel with legal counsel. It is the slowest workstream and the one most likely to change the deal.</p>
-<p>If you're planning an investment, the <a href="https://asksumanta.com/technical-due-diligence/">technical due diligence</a> page describes how I run these reviews, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/private-equity-ai-technical-due-diligence/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
+<p>If your team is at a similar stage, the <a href="https://asksumanta.com/fractional-cto/">fractional CTO</a> page describes how I work, <a href="https://asksumanta.com/insights/when-do-you-need-a-fractional-cto/">when you need one</a> covers the signals, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/startup-fractional-cto-seed-to-series-a/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
