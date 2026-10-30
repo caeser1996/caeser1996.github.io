@@ -1,0 +1,79 @@
+<!--{"title": "Case study: hardening a US utility's management plane", "description": "How a US regional water and power utility can protect the management tools attackers now target: isolated admin paths, strong identity, tamper-proof logs and drills.", "short": "Management plane hardening for a US utility", "h1": "Guarding the keys: hardening the management plane of a US regional water and power utility", "kicker": "Case study · Critical infrastructure security", "lede": "A regional utility had invested in protecting its control systems, but the tools that manage everything else, from firewalls and VPNs to endpoint and IT service platforms, sat on the ordinary corporate network. That is exactly where state-backed attackers have been looking. The goal was to make those management tools hard to reach, hard to abuse and impossible to use silently.", "date": "2026-10-30", "datetime": "2026-10-30T10:40:00+04:00", "readtime": "9 min read", "sector": "Utilities · United States", "role": "Fractional CTO and principal architect", "engagement": "Assessment, architecture and delivery leadership", "scope": "Management plane inventory, admin network isolation, privileged access, telemetry, patching, exercises", "stack": ["Privileged access workstations", "Isolated management network", "Phishing-resistant MFA", "Just-in-time admin access", "OpenTelemetry Collector with mTLS", "Immutable log storage", "Infrastructure as code", "Asset inventory"], "outcomes": ["Every management interface inventoried, with an owner and a patch route", "Administration possible only from dedicated, hardened workstations on an isolated network", "Standing admin rights replaced by time-limited, approved access", "Management-plane logs shipped off-device to storage attackers cannot edit", "Incident drills run against realistic management-plane scenarios"], "tags": ["security", "platform", "observability"], "keywords": ["Volt Typhoon", "Silent Train", "management plane security", "critical infrastructure cybersecurity", "utility cybersecurity", "privileged access workstation", "edge device zero-day", "CISA advisory Volt Typhoon", "fractional CTO United States", "OT IT security architecture"], "faq": [["What is the management plane?", "The systems used to configure and control everything else: firewall and VPN consoles, SD-WAN controllers, endpoint and patch management, IT service platforms and hypervisor managers. Whoever controls them controls the network."], ["Why are attackers targeting management tools?", "Reporting on Volt Typhoon's Silent Train campaigns describes a focus on centralised management platforms, because compromising one gives broad, quiet access. The US government has warned since 2024 that this group seeks persistent access to critical infrastructure."], ["Where should a utility start?", "Inventory every management interface and take any that face the internet off it. Then require dedicated admin workstations, phishing-resistant MFA and time-limited access, and ship management logs off-device."]], "related": ["/fractional-cto-united-states/", "/fractional-cto/", "/technical-due-diligence/"], "citations": [{"title": "Silent Train: uncovering Volt Typhoon's operational framework for zero-day exploitation and strategic access", "url": "https://www.lumen.com/blog/en-us/silent-train-volt-typhoon-operational-framework", "publisher": "Lumen Black Lotus Labs", "date": "Oct 2026"}, {"title": "Volt Typhoon used Silent Train to hide zero-day attacks", "url": "https://securityaffairs.com/202023/intelligence/volt-typhoon-used-silent-train-to-hide-zero-day-attacks.html", "publisher": "Security Affairs", "date": "Oct 2026"}, {"title": "PRC State-Sponsored Actors Compromise and Maintain Persistent Access to U.S. Critical Infrastructure", "url": "https://www.cisa.gov/news-events/cybersecurity-advisories/aa24-038a", "publisher": "CISA", "date": "7 Feb 2024"}, {"title": "Chinese hackers used VMware ESX zero-day; PHP2Shell and Fragnesia chained to root firewalls", "url": "https://helpnetsecurity.com/2026/10/29/php2shell-fragnesia-vmware-esx-zero-day", "publisher": "Help Net Security", "date": "29 Oct 2026"}, {"title": "Exposing OTel Collector in Kubernetes with Gateway API & mTLS", "url": "https://opentelemetry.io/blog/2025/expose-otel-collector-gateway-api/", "publisher": "OpenTelemetry blog", "date": "5 Jun 2025"}]}-->
+<h2>The situation</h2>
+<p>A regional utility in the United States supplied water and electricity to several counties. Its operational technology (OT) team had done solid work separating control systems from the corporate network. The IT side was different. Firewall and VPN consoles, an SD-WAN controller, the hypervisor manager, endpoint management, the IT service platform and the GIS server were all administered from ordinary laptops on the corporate network, several with web consoles reachable from the internet "for vendor support". Many admins had standing domain-wide rights.</p>
+<p><strong>Why now.</strong> In late October 2026, Lumen's Black Lotus Labs described Volt Typhoon's Silent Train framework: short-lived relay networks used in several zero-day campaigns against centralised management platforms, with victims including energy, water and transport organisations<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. The same week, Help Net Security reported a China-nexus group using a VMware ESX logging flaw as a zero-day to hide its activity<sup class="cite"><a href="#ref-4">4</a></sup>. CISA and partners had already warned in 2024 that Volt Typhoon seeks persistent access to US critical infrastructure, living off the land and abusing valid accounts<sup class="cite"><a href="#ref-3">3</a></sup>. The utility's board asked a simple question: if someone took over our management tools, would we know?</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>No management interface on the internet</strong>, and every one inventoried with an owner.</li>
+<li><strong>Administration only from dedicated, hardened workstations</strong> on an isolated network.</li>
+<li><strong>No standing admin rights</strong>: access granted for a task, approved and time-limited.</li>
+<li><strong>Logs that survive a compromise</strong>: shipped off the device, to storage the attacker cannot edit.</li>
+<li><strong>A practised response</strong> for "a management tool is compromised", including OT impact.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Admins</small><div class="dgm-nodes"><span class="hl">Privileged access workstations<em>no email, no browsing</em></span><span>Vendor support<em>brokered sessions only</em></span></div></div>
+<div class="dgm-tier"><small>Access</small><div class="dgm-nodes"><span class="hl">Phishing-resistant MFA<em>hardware keys</em></span><span>Just-in-time access<em>approved, time-limited</em></span><span>Session recording<em>for high-risk tools</em></span></div></div>
+<div class="dgm-tier"><small>Management network</small><div class="dgm-nodes"><span class="hl">Isolated admin segment<em>only path to consoles</em></span></div></div>
+<div class="dgm-tier"><small>Managed systems</small><div class="dgm-nodes"><span>Firewalls, VPN, SD-WAN<em>edge</em></span><span>Hypervisors<em>ESX hosts</em></span><span>Endpoint and ITSM<em>fleet-wide reach</em></span><span>GIS<em>asset maps</em></span></div></div>
+<div class="dgm-tier"><small>Evidence</small><div class="dgm-nodes"><span class="hl">Off-device telemetry<em>OTel Collector over mTLS</em></span><span>Immutable storage<em>write once</em></span><span>Detection rules<em>admin behaviour</em></span></div></div>
+</div>
+<figcaption>Admins reach consoles only through one hardened path, and every action leaves evidence somewhere the attacker cannot reach.</figcaption>
+</figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Request</b><span>An admin requests access to a specific console for a ticketed task</span></li>
+<li><b>Approve</b><span>A second person approves; access is granted for hours, not months</span></li>
+<li class="hl"><b>Connect</b><span>From a privileged workstation, through the isolated admin network, with a hardware key</span></li>
+<li><b>Act</b><span>Changes are made, recorded and, where possible, applied through code</span></li>
+<li class="hl"><b>Ship</b><span>Device and console logs stream off-device over mTLS to immutable storage</span></li>
+<li><b>Expire</b><span>Access ends automatically; detections compare actions with the ticket</span></li>
+</ol>
+<figcaption>Every admin action is tied to a person, a ticket and a time window.</figcaption>
+</figure>
+
+<h2>The hard part: telemetry an attacker cannot erase</h2>
+<p>Attackers who reach a management tool tend to clean up after themselves, and the ESX case shows they will use logging weaknesses to hide<sup class="cite"><a href="#ref-4">4</a></sup>. Logs that stay on the device prove little. The team made off-device telemetry the rule: firewalls, VPN concentrators, hypervisors and consoles send logs to OpenTelemetry Collectors at each site, which forward them over mutually authenticated TLS to a central collector behind a gateway that terminates mTLS<sup class="cite"><a href="#ref-5">5</a></sup>. From there, data lands in write-once storage with its own separate admin path.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/us-utility-management-plane-hardening/mtls-telemetry-flow.webp" alt="Diagram of an external OpenTelemetry Collector client using mTLS over an external network to reach a Kubernetes gateway that terminates mTLS and passes data to an internal service and collector" width="306" height="602" loading="lazy"></div><figcaption>Site collectors send logs over mTLS to a central collector, so evidence leaves each device as it is created. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2025/expose-otel-collector-gateway-api/" target="_blank" rel="noopener">OpenTelemetry blog, Vipin Vijaykumar</a> · CC BY 4.0</span></figcaption></figure>
+<p>Two details mattered. First, the logging pipeline had its own credentials and admins, so taking over the firewall console did not also give control of the logs about it. Second, detections focused on behaviour CISA describes for this actor, such as valid accounts used at odd times, new admin accounts and configuration exports, rather than malware signatures<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+<div class="callout"><p>If the people who administer a system also administer its logs, you do not have evidence. You have a diary the attacker can edit.</p></div>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Security</small><ol><li>Management plane inventory</li><li class="hl">Detections and drills</li><li>Vendor access rules</li></ol></div>
+<div class="dgm-lane"><small>IT infrastructure</small><ol><li>Admin network</li><li class="hl">Privileged workstations</li><li>Patch routes per device</li></ol></div>
+<div class="dgm-lane"><small>OT engineering</small><ol><li>Dependencies on IT tools</li><li>Isolation checks</li><li class="hl">Joint incident playbook</li></ol></div>
+</div>
+<figcaption>OT joined from the start, because several IT management tools could reach the operational network.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Close the doors</b><ul><li>Inventory consoles</li><li>Remove internet exposure</li><li>Patch edge devices</li></ul></div>
+<div><small>Phase 2</small><b>One way in</b><ul><li>Admin network</li><li>Privileged workstations</li><li>Hardware keys</li></ul></div>
+<div><small>Phase 3</small><b>Prove it</b><ul><li>Off-device logs</li><li>Immutable storage</li><li>Behaviour detections</li></ul></div>
+<div><small>Phase 4</small><b>Practise</b><ul><li>Just-in-time access</li><li>Tabletop drills</li><li>Vendor session brokering</li></ul></div>
+</div>
+<figcaption>Remove exposure first; it is the fastest risk reduction.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Dedicated admin workstations</td><td>Admin from everyday laptops</td><td>Phishing and browsing never touch admin sessions</td></tr>
+<tr><td>Isolated admin network</td><td>Firewall rules on the corporate network</td><td>One path to watch and defend</td></tr>
+<tr><td>Just-in-time access</td><td>Standing domain admin rights</td><td>Stolen accounts are useless most of the time</td></tr>
+<tr><td>Separate admins for logging</td><td>Same team runs systems and logs</td><td>Evidence survives a console takeover</td></tr>
+<tr><td>Brokered vendor sessions</td><td>Internet-facing consoles for vendors</td><td>Support without permanent exposure</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: start with the inventory. Several consoles nobody owned turned up, including two still facing the internet. Differently: involve the main vendors in week one. Their support processes, not our technology, were the slowest part to change. For the patching side, see <a href="/insights/defender-first-ai-models-vulnerability-management/">defender-first AI models and vulnerability management</a>, this week's <a href="/insights/tech-news-2026-10-30/">tech news brief</a>, <a href="/case-studies/legacy-php-estate-security-modernisation/">securing a legacy PHP estate</a> and <a href="/insights/llm-observability-opentelemetry-genai/">OpenTelemetry in practice</a>.</p>
+<p>If you run critical infrastructure in the United States or elsewhere, see the <a href="/fractional-cto-united-states/">US page</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
