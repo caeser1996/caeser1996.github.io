@@ -1,6 +1,155 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Daily tech news</title><link>https://asksumanta.com/</link><description>A CTO&#x27;s take on the day&#x27;s releases, deals and rules</description><language>en-gb</language><lastBuildDate>Fri, 30 Oct 2026 09:45:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/insights/news.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Daily tech news</title><link>https://asksumanta.com/</link></image><item><title>Tech news, 30 October 2026: the AI capex bill arrives, Samsung&#x27;s HBM record, FuriosaAI, ServiceNow and an ESX zero-day</title><link>https://asksumanta.com/insights/tech-news-2026-10-30/</link><guid isPermaLink="true">https://asksumanta.com/insights/tech-news-2026-10-30/</guid><pubDate>Fri, 30 Oct 2026 09:45:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>ai</category><category>platform</category><category>security</category><description>A CTO&#x27;s take: Alphabet and Amazon burn cash on AI capex, Samsung&#x27;s HBM record, FuriosaAI&#x27;s $620M round, ServiceNow&#x27;s slide and an ESX zero-day chain.</description><content:encoded><![CDATA[<p><em>Big Tech&#x27;s AI spending showed up in the cash flow statements this week: Google Cloud doubled and AWS beat estimates, but both companies spent more than they brought in. Memory makers are the clear winners, Korea is backing a GPU alternative, investors are questioning SaaS, and attackers are chaining old and new flaws to get root.</em></p><p>Today's brief covers stories published on 28 and 29 October that yesterday's <a href="https://asksumanta.com/insights/tech-news-2026-10-29/">morning brief</a> and <a href="https://asksumanta.com/insights/tech-news-2026-10-29-2/">update</a> did not include.</p>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Daily tech news</title><link>https://asksumanta.com/</link><description>A CTO&#x27;s take on the day&#x27;s releases, deals and rules</description><language>en-gb</language><lastBuildDate>Fri, 30 Oct 2026 11:05:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/insights/news.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Daily tech news</title><link>https://asksumanta.com/</link></image><item><title>The AI memory squeeze: what Samsung&#x27;s and SK hynix&#x27;s record quarters mean for your inference architecture</title><link>https://asksumanta.com/insights/ai-memory-squeeze-inference-architecture/</link><guid isPermaLink="true">https://asksumanta.com/insights/ai-memory-squeeze-inference-architecture/</guid><pubDate>Fri, 30 Oct 2026 11:05:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>ai</category><category>llm</category><category>platform</category><description>Samsung and SK hynix posted record profits as AI memory stays tight. A CTO&#x27;s take on designing inference for memory, not just GPUs, and buying hardware now.</description><content:encoded><![CDATA[<p><em>Korea&#x27;s two memory makers have just reported the biggest quarters in their history, and the reason is the memory that sits next to every AI accelerator. When memory is the scarce, rising-cost part of the stack, inference architecture should be designed around it. Here is what that means in practice.</em></p><section class="block">
+<h2>What happened</h2>
+<p>On 29 October, Samsung Electronics confirmed record quarterly operating profit of about 107.4 trillion won, almost all of it from its chip business, driven by high-bandwidth memory (HBM) for AI servers<sup class="cite"><a href="#ref-1">1</a></sup>. A day earlier, SK hynix reported its own record quarter, said HBM4 had entered full-scale mass production, and described memory prices rising across HBM, server DRAM and enterprise SSDs<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<p>TrendForce's latest forecast, from 30 September, expected conventional DRAM contract prices to keep rising in the fourth quarter, with server DRAM still undersupplied<sup class="cite"><a href="#ref-3">3</a></sup>. In the same week, Korea's FuriosaAI raised $620 million to scale its RNGD inference chip, pitched on efficiency per watt<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+<p>The common thread: memory is one of the scarcest, fastest-rising costs in AI infrastructure. That matters whether you rent GPUs in the cloud or buy your own.</p>
+</section>
+
+<section class="block">
+<h2>Why inference is a memory problem</h2>
+<p>Serving a large language model needs memory for two things: the model's weights, which are fixed, and the key-value (KV) cache, which grows with every active conversation and every token of context. The KV cache is what fills up under load. The vLLM team's PagedAttention paper showed that much of this memory was wasted by naive allocation, and that managing it like virtual memory pages let one GPU serve far more requests at once<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Requests</small><div class="dgm-nodes"><span>Users and agents<em>long contexts, many turns</em></span></div></div>
+<div class="dgm-tier"><small>Routing</small><div class="dgm-nodes"><span class="hl">Memory-aware gateway<em>sends work where KV cache has room</em></span></div></div>
+<div class="dgm-tier"><small>Serving engine</small><div class="dgm-nodes"><span class="hl">Paged KV cache<em>vLLM or similar</em></span><span>Prefix caching<em>shared system prompts</em></span></div></div>
+<div class="dgm-tier"><small>Model</small><div class="dgm-nodes"><span>Right-sized weights<em>quantised where quality holds</em></span></div></div>
+<div class="dgm-tier"><small>Hardware</small><div class="dgm-nodes"><span class="hl">Accelerator memory<em>HBM: the scarce part</em></span><span>Host DRAM and SSD<em>offload tiers</em></span></div></div>
+</div>
+<figcaption>Each layer above the hardware either saves memory or spends it. Design them together.</figcaption>
+</figure>
+<p>Agents make this worse. A long-running agent carries a large, growing context, and many agents in parallel hold many caches at once. If your plans assume agent workloads will grow, assume memory pressure will grow faster than request counts.</p>
+</section>
+
+<section class="block">
+<h2>What to change in the architecture</h2>
+<p><strong>Route with memory in mind.</strong> A standard load balancer spreads requests evenly and ignores how full each replica's cache is. The Kubernetes Gateway API Inference Extension routes using model-server metrics; in its published benchmark, throughput was similar to a standard Service but tail latency was much lower at high load, which the authors attribute to fewer collisions as GPU memory nears saturation<sup class="cite"><a href="#ref-6">6</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/ai-memory-squeeze-inference-architecture/inference-extension-benchmark.webp" alt="Three bar charts comparing the inference extension with a standard Kubernetes Service from 100 to 1000 queries per second: throughput is similar, while p90 per-token latency and p90 latency are much lower with the extension at higher load" width="1600" height="363" loading="lazy"></div><figcaption>Same throughput, lower tail latency at high load when routing is aware of model-server state. <span class="credit">Source: <a href="https://kubernetes.io/blog/2025/06/05/introducing-gateway-api-inference-extension/" target="_blank" rel="noopener">Kubernetes blog, Daneyon Hansen, Kaushik Mitra, Jiaxin Shan and Kellen Swain</a> · CC BY 4.0</span></figcaption></figure>
+<p><strong>Cache shared prefixes.</strong> If every request starts with the same long system prompt or document set, reuse its cache instead of recomputing and storing it per request. See <a href="https://asksumanta.com/insights/prompt-caching-llm-cost-latency/">prompt caching for cost and latency</a>.</p>
+<p><strong>Right-size and quantise.</strong> Not every step needs the largest model. <a href="https://asksumanta.com/insights/llm-model-routing/">Model routing</a> sends simple steps to smaller models, and quantisation cuts weight memory, as long as your evaluation set shows quality holds.</p>
+<p><strong>Cap context deliberately.</strong> Long context is convenient but expensive in memory. Retrieval and summarisation often beat sending everything; our <a href="https://asksumanta.com/insights/long-context-vs-rag/">long context versus RAG</a> note covers the trade-off.</p>
+<p><strong>Treat accelerators as a pool you can change.</strong> Kubernetes exposes accelerators to workloads through device plugins and, more recently, Dynamic Resource Allocation. Keeping serving on that standard layer, behind <a href="https://asksumanta.com/insights/llm-inference-serving-vllm/">a portable engine such as vLLM</a>, is what lets you test a new accelerator, such as the ones FuriosaAI and others now sell, without rewriting your platform. See <a href="https://asksumanta.com/insights/kubernetes-dra-gpu-scheduling/">DRA for GPU scheduling</a>.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/ai-memory-squeeze-inference-architecture/device-plugin.webp" alt="Diagram of a Kubernetes device plugin advertising eight devices to the kubelet over gRPC, the node status showing capacity and allocatable of eight, and a user pod requesting two" width="1000" height="560" loading="lazy"></div><figcaption>How Kubernetes exposes accelerators to pods: the abstraction that keeps hardware swappable. <span class="credit">Source: <a href="https://kubernetes.io/blog/2025/07/03/navigating-failures-in-pods-with-devices/" target="_blank" rel="noopener">Kubernetes blog, Sergey Kanzhelev and Mrunal Patel</a> · CC BY 4.0</span></figcaption></figure>
+</section>
+
+<section class="block">
+<h2>What to change in buying</h2>
+<ul>
+<li><strong>Quote early, and quote again.</strong> If you plan on-premises inference, as in <a href="https://asksumanta.com/insights/private-llm-on-prem/">private LLMs on-premises</a>, memory-heavy servers are rising in price. Lock quotes where you can, and size purchases to the models you will actually run.</li>
+<li><strong>Compare cost per served request, not per GPU.</strong> A card with more memory may serve more concurrent users and cost less per request, even at a higher list price.</li>
+<li><strong>Benchmark alternatives on your own traffic.</strong> Vendor figures, including FuriosaAI's, are the vendor's own<sup class="cite"><a href="#ref-4">4</a></sup>. Replay real prompts and measure.</li>
+<li><strong>Ask cloud providers about memory, not just GPU type.</strong> The same GPU name can come with different memory sizes and very different serving capacity.</li>
+</ul>
+<div class="callout"><p>In 2026, the question is less "how many GPUs?" and more "how many concurrent conversations can we hold in memory, and what does each one cost?"</p></div>
+</section>
+
+<section class="block">
+<h2>Who should act, by region</h2>
+<p>Teams building sovereign or in-country AI capacity feel this most, because they cannot always fall back on a hyperscaler's pooled supply. That includes public-sector and regulated buyers in the <a href="https://asksumanta.com/fractional-cto-saudi-arabia/">GCC</a>, <a href="https://asksumanta.com/fractional-cto-india/">India</a>, <a href="https://asksumanta.com/fractional-cto-europe/">the EU</a> and <a href="https://asksumanta.com/fractional-cto-singapore/">Southeast Asia</a>. For cloud-first teams in the <a href="https://asksumanta.com/fractional-cto-united-states/">United States</a> and elsewhere, the impact arrives through instance pricing and capacity, which is covered in <a href="https://asksumanta.com/insights/ai-capacity-crunch-cloud-planning/">planning around the AI capacity crunch</a>.</p>
+</section>
+
+<section class="block">
+<h2>A 60-day plan</h2>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Weeks 1 to 2</small><b>Measure</b><ul><li>Measure KV cache use, concurrency and latency per model in production</li><li>Find the replicas that saturate first</li></ul></div>
+<div><small>Weeks 3 to 5</small><b>Optimise</b><ul><li>Turn on paged KV cache and prefix caching</li><li>Test quantised variants against your evaluation set</li><li>Add memory-aware routing</li></ul></div>
+<div><small>Weeks 6 to 8</small><b>Buy</b><ul><li>Recalculate cost per served request</li><li>Use it to set hardware orders and cloud reservations for next year</li></ul></div>
+</div>
+<figcaption>Measure, then optimise, then buy.</figcaption>
+</figure>
+</section>
+
+<section class="block">
+<h2>CTO take</h2>
+<p>Record memory profits are a signal about your costs. As long as AI demand outruns memory supply, the cheapest capacity is the capacity you stop wasting. Most inference estates I review have room to serve noticeably more traffic on the same hardware through better caching, routing and model sizing. Do that work before signing the next hardware order, and keep the platform portable enough to take advantage when alternatives get cheaper.</p>
+<p>For the wider picture, see today's <a href="https://asksumanta.com/insights/tech-news-2026-10-30/">tech news brief</a>.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I review inference platforms for cost per request, latency and portability, and help teams plan hardware and cloud commitments. I am based in India, the United States and the UAE, working globally. See <a href="https://asksumanta.com/ai-architect/">AI architecture</a> or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section><p><a href="https://asksumanta.com/insights/ai-memory-squeeze-inference-architecture/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>When agents become the user: what ServiceNow&#x27;s week means for enterprise SaaS architecture, pricing and control</title><link>https://asksumanta.com/insights/agents-replace-seats-enterprise-saas/</link><guid isPermaLink="true">https://asksumanta.com/insights/agents-replace-seats-enterprise-saas/</guid><pubDate>Fri, 30 Oct 2026 10:20:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>ai</category><category>agents</category><category>architecture</category><description>ServiceNow&#x27;s record share fall and its wider OpenAI deal show agents reshaping enterprise SaaS. A CTO&#x27;s take on architecture, pricing and governance.</description><content:encoded><![CDATA[<p><em>In the same week, ServiceNow widened its partnership with OpenAI so ChatGPT agents can act on its workflows, raised its AI targets, and still had its worst day on the stock market. Investors are asking what happens to software sold per person when agents do the work. Engineering leaders have a more practical question: what has to change in our platforms and contracts when an agent becomes the user?</em></p><section class="block">
+<h2>What happened</h2>
+<p>On 28 October, OpenAI and ServiceNow expanded the partnership they signed in January<sup class="cite"><a href="#ref-4">4</a></sup>. OpenAI's models and agents are coming into ServiceNow products, and ServiceNow workflows become reachable from ChatGPT and Codex, with ServiceNow enforcing permissions on what an agent may do<sup class="cite"><a href="#ref-1">1</a></sup>. No financial terms were disclosed.</p>
+<p>The next day, ServiceNow reported subscription revenue up 21% and raised its 2026 target for AI annual contract value to $1.7 billion<sup class="cite"><a href="#ref-2">2</a></sup>. Its shares still fell about 19%, which Yahoo Finance links to investor fear that AI agents will eat into software sold per seat<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+<p>The share price is not my concern here. The pattern is: the systems of record your business runs on are being opened up so that agents, not just people, can read and change them. That changes architecture, contracts and controls at the same time.</p>
+</section>
+
+<section class="block">
+<h2>Three ways agents reach your systems</h2>
+<p>Every enterprise SaaS tool you own will soon be used in one or more of these ways. Each needs different controls.</p>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>1. Vendor's own agents</small><div class="dgm-nodes"><span>Inside the SaaS product<em>vendor models, vendor pricing</em></span></div></div>
+<div class="dgm-tier"><small>2. External assistant</small><div class="dgm-nodes"><span class="hl">ChatGPT, Claude, Copilot<em>calls the SaaS through connectors</em></span></div></div>
+<div class="dgm-tier"><small>3. Your own agents</small><div class="dgm-nodes"><span class="hl">Your orchestration<em>MCP servers and APIs</em></span></div></div>
+<div class="dgm-tier"><small>Control plane you own</small><div class="dgm-nodes"><span class="hl">Agent identity<em>one per agent, narrow scopes</em></span><span>Policy and approvals<em>human sign-off on risky actions</em></span><span>Telemetry<em>every action traced</em></span></div></div>
+<div class="dgm-tier"><small>Systems of record</small><div class="dgm-nodes"><span>ITSM, CRM, HR, ERP<em>where the actions land</em></span></div></div>
+</div>
+<figcaption>The three routes in. The bottom two layers must be yours whichever route wins.</figcaption>
+</figure>
+<p>The vendor wants route 1, assistant providers want route 2, and your platform team probably wants route 3. You will get all three. The mistake is letting each route bring its own identity model, logs and approval rules.</p>
+</section>
+
+<section class="block">
+<h2>What changes in the architecture</h2>
+<p><strong>Agents need identities, not borrowed sessions.</strong> An agent acting through a person's login makes audit trails meaningless and permissions too broad. Give each agent its own identity, scoped to the actions it needs, with the person it acts for recorded alongside. ServiceNow's point that it enforces permissions on agent actions is the right direction<sup class="cite"><a href="#ref-1">1</a></sup>; make sure the same is true for every other system.</p>
+<p><strong>Expose actions, not screens.</strong> Agents that click through user interfaces are fragile and hard to govern. Well-defined actions, such as "create incident" or "update record", with typed inputs, are easier to permission, test and price. This is what MCP servers and vendor action layers provide.</p>
+<p><strong>Load tools on demand.</strong> With dozens of systems exposed, tool definitions alone can fill a model's context. The MCP client guidance recommends discovering tools on demand rather than loading all of them up front<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/agents-replace-seats-enterprise-saas/progressive-discovery.webp" alt="Comparison of loading all tool definitions up front, about 150,000 tokens, with discovering tools on demand through catalogue, inspect and call steps, about 2,000 tokens" width="1200" height="695" loading="lazy"></div><figcaption>Progressive discovery keeps an agent's context for the task, not the tool catalogue. <span class="credit">Source: <a href="https://modelcontextprotocol.io/docs/develop/clients/client-best-practices" target="_blank" rel="noopener">Model Context Protocol docs, MCP contributors</a> · CC BY 4.0</span></figcaption></figure>
+<p><strong>Keep bulk work out of the model.</strong> When an agent processes thousands of records, routing every result through the model is slow and expensive. Having the model write a short script that runs in a sandbox and returns a summary is cheaper and easier to audit<sup class="cite"><a href="#ref-5">5</a></sup>. It also means the sandbox, not the model, holds credentials, which is where you want them.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/agents-replace-seats-enterprise-saas/programmatic-tool-calling.webp" alt="Sequence diagram comparing direct tool calling, where 2,000 log entries pass through the model, with programmatic tool calling, where a sandbox runs the calls and returns a short summary" width="1200" height="1200" loading="lazy"></div><figcaption>Programmatic tool calling: the model writes code, a sandbox runs the calls. <span class="credit">Source: <a href="https://modelcontextprotocol.io/docs/develop/clients/client-best-practices" target="_blank" rel="noopener">Model Context Protocol docs, MCP contributors</a> · CC BY 4.0</span></figcaption></figure>
+<p><strong>Trace every agent action.</strong> Use the OpenTelemetry generative AI conventions so model calls, tool calls and their costs land in the same traces as the rest of your system<sup class="cite"><a href="#ref-6">6</a></sup>. Without this, you cannot answer "what did the agent do?" for an auditor, or "what did it cost?" for finance. Our <a href="https://asksumanta.com/insights/llm-observability-opentelemetry-genai/">agent observability</a> and <a href="https://asksumanta.com/insights/ai-agent-sandboxing-lessons-anthropic-s1/">agent sandboxing</a> notes go deeper.</p>
+</section>
+
+<section class="block">
+<h2>What changes in the contract</h2>
+<p>If agents do work that used to need a licensed person, seat counts stop describing what you buy. I expect most renewals over the next two years to mix three things: a platform fee, seats for the people who still use the product, and a metered allowance for agent activity. That shift is predicted by many analysts, but I have not seen reliable public data on how far it has gone, so treat any single forecast with care.</p>
+<p>What you can control is your evidence. Before a renewal, know:</p>
+<ul>
+<li>how many actions agents took in the product, by type, and which person or team they acted for;</li>
+<li>which of those actions would otherwise have needed a licensed user;</li>
+<li>what the same actions would cost if run through your own agents and the vendor's API instead.</li>
+</ul>
+<p>That last point is your negotiating position. If you can switch routes, you can negotiate. If every agent runs inside the vendor's product with the vendor's pricing, you cannot.</p>
+<div class="callout"><p>The question for every renewal is no longer "how many seats?" but "who, or what, is doing the work, and can we prove it?"</p></div>
+</section>
+
+<section class="block">
+<h2>A 90-day plan</h2>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Days 1 to 30</small><b>Inventory</b><ul><li>List every SaaS tool with agent or connector features switched on</li><li>Record who enabled them and which identity they use</li></ul></div>
+<div><small>Days 31 to 60</small><b>Control</b><ul><li>Move agents to their own identities with narrow scopes</li><li>Add approval steps for actions that change money, access or customer data</li><li>Turn on tracing</li></ul></div>
+<div><small>Days 61 to 90</small><b>Negotiate</b><ul><li>Report agent actions per tool and per team</li><li>Bring that report to the next two renewals and price the alternatives</li></ul></div>
+</div>
+<figcaption>Get control before you negotiate.</figcaption>
+</figure>
+</section>
+
+<section class="block">
+<h2>Risks to watch</h2>
+<ul>
+<li><strong>Permission creep.</strong> Agents granted broad access "for the pilot" keep it. Review agent scopes the way you review admin accounts.</li>
+<li><strong>Prompt injection through records.</strong> An agent that reads tickets or emails can be steered by text inside them. See <a href="https://asksumanta.com/insights/prompt-injection-defence-for-agents/">prompt-injection defence for agents</a>.</li>
+<li><strong>Regulated actions.</strong> In the EU, UK and elsewhere, automated decisions about people carry legal duties. Keep a human approval step where the law expects one; the <a href="https://asksumanta.com/fractional-cto-europe/">Europe</a> and <a href="https://asksumanta.com/fractional-cto-united-kingdom/">UK</a> pages cover the local rules.</li>
+<li><strong>Vendor lock-in through agents.</strong> Agents built in one vendor's studio are hard to move. Keep business logic in your own orchestration where it matters.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>CTO take</h2>
+<p>ServiceNow's week is a preview for every large SaaS vendor. Agents are becoming users of your systems of record, from the vendor's side, from assistants such as ChatGPT, and from your own platform. The organisations that do well will treat agents as a new kind of workforce: identified, permissioned, observed and costed. Do that first, and the pricing debate becomes a negotiation you can win rather than a bill you receive.</p>
+<p>For the model-cost side of the same shift, see <a href="https://asksumanta.com/insights/gpt-6-1-terra-computer-use-agent-economics/">the economics of computer-use agents</a> and today's <a href="https://asksumanta.com/insights/tech-news-2026-10-30/">tech news brief</a>.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I help teams design agent platforms with proper identity, tracing and cost controls, and review SaaS and AI contracts before renewal. I am based in India, the United States and the UAE, working globally. See <a href="https://asksumanta.com/ai-architect/">AI architecture</a> or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section><p><a href="https://asksumanta.com/insights/agents-replace-seats-enterprise-saas/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Tech news, 30 October 2026: the AI capex bill arrives, Samsung&#x27;s HBM record, FuriosaAI, ServiceNow and an ESX zero-day</title><link>https://asksumanta.com/insights/tech-news-2026-10-30/</link><guid isPermaLink="true">https://asksumanta.com/insights/tech-news-2026-10-30/</guid><pubDate>Fri, 30 Oct 2026 09:45:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>ai</category><category>platform</category><category>security</category><description>A CTO&#x27;s take: Alphabet and Amazon burn cash on AI capex, Samsung&#x27;s HBM record, FuriosaAI&#x27;s $620M round, ServiceNow&#x27;s slide and an ESX zero-day chain.</description><content:encoded><![CDATA[<p><em>Big Tech&#x27;s AI spending showed up in the cash flow statements this week: Google Cloud doubled and AWS beat estimates, but both companies spent more than they brought in. Memory makers are the clear winners, Korea is backing a GPU alternative, investors are questioning SaaS, and attackers are chaining old and new flaws to get root.</em></p><p>Today's brief covers stories published on 28 and 29 October that yesterday's <a href="https://asksumanta.com/insights/tech-news-2026-10-29/">morning brief</a> and <a href="https://asksumanta.com/insights/tech-news-2026-10-29-2/">update</a> did not include.</p>
 
 <figure class="dgm">
 <div class="dgm-stack">

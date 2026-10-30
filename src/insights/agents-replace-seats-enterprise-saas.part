@@ -1,0 +1,80 @@
+<!--{"title": "When agents become the user: ServiceNow, OpenAI and the end of the seat", "description": "ServiceNow's record share fall and its wider OpenAI deal show agents reshaping enterprise SaaS. A CTO's take on architecture, pricing and governance.", "h1": "When agents become the user: what ServiceNow's week means for enterprise SaaS architecture, pricing and control", "kicker": "Analysis · AI agents and enterprise software", "lede": "In the same week, ServiceNow widened its partnership with OpenAI so ChatGPT agents can act on its workflows, raised its AI targets, and still had its worst day on the stock market. Investors are asking what happens to software sold per person when agents do the work. Engineering leaders have a more practical question: what has to change in our platforms and contracts when an agent becomes the user?", "date": "2026-10-30", "datetime": "2026-10-30T10:20:00+04:00", "readtime": "8 min read", "format": "news-analysis", "tags": ["news", "ai", "agents", "architecture"], "keywords": ["ServiceNow OpenAI partnership", "AI agents enterprise SaaS", "per-seat pricing AI agents", "agent identity and permissions", "MCP enterprise", "programmatic tool calling", "SaaS renewal AI agents", "agent governance", "AI architect", "CTO enterprise software"], "faq": [["What did ServiceNow and OpenAI announce?", "On 28 October 2026 the two companies expanded their partnership: OpenAI models and agents come into ServiceNow products, and ServiceNow workflows become reachable from ChatGPT and Codex, with ServiceNow enforcing permissions. Financial terms were not disclosed."], ["Will AI agents end per-seat software pricing?", "Not overnight. Expect contracts that mix a platform fee, human seats and a pool of agent activity. The practical step is to measure what agents actually do in each tool before your next renewal."], ["What architectural change matters most when agents use enterprise systems?", "Giving agents their own identities with narrow permissions, logging every action they take, and exposing well-defined actions rather than screens. That makes agent work auditable and lets you price, limit and switch it."]], "related": ["/ai-architect/", "/fractional-cto/", "/technical-due-diligence/"], "citations": [{"title": "OpenAI and ServiceNow expand partnership across enterprise workflows", "url": "https://openai.com/index/openai-servicenow-partnership-expansion/", "publisher": "OpenAI", "date": "28 Oct 2026"}, {"title": "ServiceNow Reports Third Quarter 2026 Financial Results", "url": "https://newsroom.servicenow.com/press-releases/details/2026/ServiceNow-Reports-Third-Quarter-2026-Financial-Results/default.aspx", "publisher": "ServiceNow", "date": "Oct 2026"}, {"title": "ServiceNow's 19% crash says Wall Street thinks AI will eat software. Its OpenAI deal says the opposite.", "url": "https://finance.yahoo.com/markets/stocks/articles/servicenow-19-crash-says-wall-110258575.html", "publisher": "Yahoo Finance", "date": "29 Oct 2026"}, {"title": "ServiceNow inks deal with OpenAI to boost its AI software stack", "url": "https://www.cnbc.com/2026/01/20/servicenow-openai-ai-software-saas.html", "publisher": "CNBC", "date": "20 Jan 2026"}, {"title": "Client best practices", "url": "https://modelcontextprotocol.io/docs/develop/clients/client-best-practices", "publisher": "Model Context Protocol", "date": "2026"}, {"title": "Semantic conventions for generative AI systems", "url": "https://opentelemetry.io/docs/specs/semconv/gen-ai/", "publisher": "OpenTelemetry", "date": "2026"}]}-->
+<section class="block">
+<h2>What happened</h2>
+<p>On 28 October, OpenAI and ServiceNow expanded the partnership they signed in January<sup class="cite"><a href="#ref-4">4</a></sup>. OpenAI's models and agents are coming into ServiceNow products, and ServiceNow workflows become reachable from ChatGPT and Codex, with ServiceNow enforcing permissions on what an agent may do<sup class="cite"><a href="#ref-1">1</a></sup>. No financial terms were disclosed.</p>
+<p>The next day, ServiceNow reported subscription revenue up 21% and raised its 2026 target for AI annual contract value to $1.7 billion<sup class="cite"><a href="#ref-2">2</a></sup>. Its shares still fell about 19%, which Yahoo Finance links to investor fear that AI agents will eat into software sold per seat<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+<p>The share price is not my concern here. The pattern is: the systems of record your business runs on are being opened up so that agents, not just people, can read and change them. That changes architecture, contracts and controls at the same time.</p>
+</section>
+
+<section class="block">
+<h2>Three ways agents reach your systems</h2>
+<p>Every enterprise SaaS tool you own will soon be used in one or more of these ways. Each needs different controls.</p>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>1. Vendor's own agents</small><div class="dgm-nodes"><span>Inside the SaaS product<em>vendor models, vendor pricing</em></span></div></div>
+<div class="dgm-tier"><small>2. External assistant</small><div class="dgm-nodes"><span class="hl">ChatGPT, Claude, Copilot<em>calls the SaaS through connectors</em></span></div></div>
+<div class="dgm-tier"><small>3. Your own agents</small><div class="dgm-nodes"><span class="hl">Your orchestration<em>MCP servers and APIs</em></span></div></div>
+<div class="dgm-tier"><small>Control plane you own</small><div class="dgm-nodes"><span class="hl">Agent identity<em>one per agent, narrow scopes</em></span><span>Policy and approvals<em>human sign-off on risky actions</em></span><span>Telemetry<em>every action traced</em></span></div></div>
+<div class="dgm-tier"><small>Systems of record</small><div class="dgm-nodes"><span>ITSM, CRM, HR, ERP<em>where the actions land</em></span></div></div>
+</div>
+<figcaption>The three routes in. The bottom two layers must be yours whichever route wins.</figcaption>
+</figure>
+<p>The vendor wants route 1, assistant providers want route 2, and your platform team probably wants route 3. You will get all three. The mistake is letting each route bring its own identity model, logs and approval rules.</p>
+</section>
+
+<section class="block">
+<h2>What changes in the architecture</h2>
+<p><strong>Agents need identities, not borrowed sessions.</strong> An agent acting through a person's login makes audit trails meaningless and permissions too broad. Give each agent its own identity, scoped to the actions it needs, with the person it acts for recorded alongside. ServiceNow's point that it enforces permissions on agent actions is the right direction<sup class="cite"><a href="#ref-1">1</a></sup>; make sure the same is true for every other system.</p>
+<p><strong>Expose actions, not screens.</strong> Agents that click through user interfaces are fragile and hard to govern. Well-defined actions, such as "create incident" or "update record", with typed inputs, are easier to permission, test and price. This is what MCP servers and vendor action layers provide.</p>
+<p><strong>Load tools on demand.</strong> With dozens of systems exposed, tool definitions alone can fill a model's context. The MCP client guidance recommends discovering tools on demand rather than loading all of them up front<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/agents-replace-seats-enterprise-saas/progressive-discovery.webp" alt="Comparison of loading all tool definitions up front, about 150,000 tokens, with discovering tools on demand through catalogue, inspect and call steps, about 2,000 tokens" width="1200" height="695" loading="lazy"></div><figcaption>Progressive discovery keeps an agent's context for the task, not the tool catalogue. <span class="credit">Source: <a href="https://modelcontextprotocol.io/docs/develop/clients/client-best-practices" target="_blank" rel="noopener">Model Context Protocol docs, MCP contributors</a> · CC BY 4.0</span></figcaption></figure>
+<p><strong>Keep bulk work out of the model.</strong> When an agent processes thousands of records, routing every result through the model is slow and expensive. Having the model write a short script that runs in a sandbox and returns a summary is cheaper and easier to audit<sup class="cite"><a href="#ref-5">5</a></sup>. It also means the sandbox, not the model, holds credentials, which is where you want them.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/agents-replace-seats-enterprise-saas/programmatic-tool-calling.webp" alt="Sequence diagram comparing direct tool calling, where 2,000 log entries pass through the model, with programmatic tool calling, where a sandbox runs the calls and returns a short summary" width="1200" height="1200" loading="lazy"></div><figcaption>Programmatic tool calling: the model writes code, a sandbox runs the calls. <span class="credit">Source: <a href="https://modelcontextprotocol.io/docs/develop/clients/client-best-practices" target="_blank" rel="noopener">Model Context Protocol docs, MCP contributors</a> · CC BY 4.0</span></figcaption></figure>
+<p><strong>Trace every agent action.</strong> Use the OpenTelemetry generative AI conventions so model calls, tool calls and their costs land in the same traces as the rest of your system<sup class="cite"><a href="#ref-6">6</a></sup>. Without this, you cannot answer "what did the agent do?" for an auditor, or "what did it cost?" for finance. Our <a href="/insights/llm-observability-opentelemetry-genai/">agent observability</a> and <a href="/insights/ai-agent-sandboxing-lessons-anthropic-s1/">agent sandboxing</a> notes go deeper.</p>
+</section>
+
+<section class="block">
+<h2>What changes in the contract</h2>
+<p>If agents do work that used to need a licensed person, seat counts stop describing what you buy. I expect most renewals over the next two years to mix three things: a platform fee, seats for the people who still use the product, and a metered allowance for agent activity. That shift is predicted by many analysts, but I have not seen reliable public data on how far it has gone, so treat any single forecast with care.</p>
+<p>What you can control is your evidence. Before a renewal, know:</p>
+<ul>
+<li>how many actions agents took in the product, by type, and which person or team they acted for;</li>
+<li>which of those actions would otherwise have needed a licensed user;</li>
+<li>what the same actions would cost if run through your own agents and the vendor's API instead.</li>
+</ul>
+<p>That last point is your negotiating position. If you can switch routes, you can negotiate. If every agent runs inside the vendor's product with the vendor's pricing, you cannot.</p>
+<div class="callout"><p>The question for every renewal is no longer "how many seats?" but "who, or what, is doing the work, and can we prove it?"</p></div>
+</section>
+
+<section class="block">
+<h2>A 90-day plan</h2>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Days 1 to 30</small><b>Inventory</b><ul><li>List every SaaS tool with agent or connector features switched on</li><li>Record who enabled them and which identity they use</li></ul></div>
+<div><small>Days 31 to 60</small><b>Control</b><ul><li>Move agents to their own identities with narrow scopes</li><li>Add approval steps for actions that change money, access or customer data</li><li>Turn on tracing</li></ul></div>
+<div><small>Days 61 to 90</small><b>Negotiate</b><ul><li>Report agent actions per tool and per team</li><li>Bring that report to the next two renewals and price the alternatives</li></ul></div>
+</div>
+<figcaption>Get control before you negotiate.</figcaption>
+</figure>
+</section>
+
+<section class="block">
+<h2>Risks to watch</h2>
+<ul>
+<li><strong>Permission creep.</strong> Agents granted broad access "for the pilot" keep it. Review agent scopes the way you review admin accounts.</li>
+<li><strong>Prompt injection through records.</strong> An agent that reads tickets or emails can be steered by text inside them. See <a href="/insights/prompt-injection-defence-for-agents/">prompt-injection defence for agents</a>.</li>
+<li><strong>Regulated actions.</strong> In the EU, UK and elsewhere, automated decisions about people carry legal duties. Keep a human approval step where the law expects one; the <a href="/fractional-cto-europe/">Europe</a> and <a href="/fractional-cto-united-kingdom/">UK</a> pages cover the local rules.</li>
+<li><strong>Vendor lock-in through agents.</strong> Agents built in one vendor's studio are hard to move. Keep business logic in your own orchestration where it matters.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>CTO take</h2>
+<p>ServiceNow's week is a preview for every large SaaS vendor. Agents are becoming users of your systems of record, from the vendor's side, from assistants such as ChatGPT, and from your own platform. The organisations that do well will treat agents as a new kind of workforce: identified, permissioned, observed and costed. Do that first, and the pricing debate becomes a negotiation you can win rather than a bill you receive.</p>
+<p>For the model-cost side of the same shift, see <a href="/insights/gpt-6-1-terra-computer-use-agent-economics/">the economics of computer-use agents</a> and today's <a href="/insights/tech-news-2026-10-30/">tech news brief</a>.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I help teams design agent platforms with proper identity, tracing and cost controls, and review SaaS and AI contracts before renewal. I am based in India, the United States and the UAE, working globally. See <a href="/ai-architect/">AI architecture</a> or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>

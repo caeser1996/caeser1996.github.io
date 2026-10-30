@@ -1,6 +1,155 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link><description>Fractional CTO and AI architect: insights, case studies and daily tech news.</description><language>en-gb</language><lastBuildDate>Fri, 30 Oct 2026 09:45:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link></image><item><title>Tech news, 30 October 2026: the AI capex bill arrives, Samsung&#x27;s HBM record, FuriosaAI, ServiceNow and an ESX zero-day</title><link>https://asksumanta.com/insights/tech-news-2026-10-30/</link><guid isPermaLink="true">https://asksumanta.com/insights/tech-news-2026-10-30/</guid><pubDate>Fri, 30 Oct 2026 09:45:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>ai</category><category>platform</category><category>security</category><description>A CTO&#x27;s take: Alphabet and Amazon burn cash on AI capex, Samsung&#x27;s HBM record, FuriosaAI&#x27;s $620M round, ServiceNow&#x27;s slide and an ESX zero-day chain.</description><content:encoded><![CDATA[<p><em>Big Tech&#x27;s AI spending showed up in the cash flow statements this week: Google Cloud doubled and AWS beat estimates, but both companies spent more than they brought in. Memory makers are the clear winners, Korea is backing a GPU alternative, investors are questioning SaaS, and attackers are chaining old and new flaws to get root.</em></p><p>Today's brief covers stories published on 28 and 29 October that yesterday's <a href="https://asksumanta.com/insights/tech-news-2026-10-29/">morning brief</a> and <a href="https://asksumanta.com/insights/tech-news-2026-10-29-2/">update</a> did not include.</p>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link><description>Fractional CTO and AI architect: insights, case studies and daily tech news.</description><language>en-gb</language><lastBuildDate>Fri, 30 Oct 2026 11:05:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link></image><item><title>The AI memory squeeze: what Samsung&#x27;s and SK hynix&#x27;s record quarters mean for your inference architecture</title><link>https://asksumanta.com/insights/ai-memory-squeeze-inference-architecture/</link><guid isPermaLink="true">https://asksumanta.com/insights/ai-memory-squeeze-inference-architecture/</guid><pubDate>Fri, 30 Oct 2026 11:05:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>ai</category><category>llm</category><category>platform</category><description>Samsung and SK hynix posted record profits as AI memory stays tight. A CTO&#x27;s take on designing inference for memory, not just GPUs, and buying hardware now.</description><content:encoded><![CDATA[<p><em>Korea&#x27;s two memory makers have just reported the biggest quarters in their history, and the reason is the memory that sits next to every AI accelerator. When memory is the scarce, rising-cost part of the stack, inference architecture should be designed around it. Here is what that means in practice.</em></p><section class="block">
+<h2>What happened</h2>
+<p>On 29 October, Samsung Electronics confirmed record quarterly operating profit of about 107.4 trillion won, almost all of it from its chip business, driven by high-bandwidth memory (HBM) for AI servers<sup class="cite"><a href="#ref-1">1</a></sup>. A day earlier, SK hynix reported its own record quarter, said HBM4 had entered full-scale mass production, and described memory prices rising across HBM, server DRAM and enterprise SSDs<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<p>TrendForce's latest forecast, from 30 September, expected conventional DRAM contract prices to keep rising in the fourth quarter, with server DRAM still undersupplied<sup class="cite"><a href="#ref-3">3</a></sup>. In the same week, Korea's FuriosaAI raised $620 million to scale its RNGD inference chip, pitched on efficiency per watt<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+<p>The common thread: memory is one of the scarcest, fastest-rising costs in AI infrastructure. That matters whether you rent GPUs in the cloud or buy your own.</p>
+</section>
+
+<section class="block">
+<h2>Why inference is a memory problem</h2>
+<p>Serving a large language model needs memory for two things: the model's weights, which are fixed, and the key-value (KV) cache, which grows with every active conversation and every token of context. The KV cache is what fills up under load. The vLLM team's PagedAttention paper showed that much of this memory was wasted by naive allocation, and that managing it like virtual memory pages let one GPU serve far more requests at once<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Requests</small><div class="dgm-nodes"><span>Users and agents<em>long contexts, many turns</em></span></div></div>
+<div class="dgm-tier"><small>Routing</small><div class="dgm-nodes"><span class="hl">Memory-aware gateway<em>sends work where KV cache has room</em></span></div></div>
+<div class="dgm-tier"><small>Serving engine</small><div class="dgm-nodes"><span class="hl">Paged KV cache<em>vLLM or similar</em></span><span>Prefix caching<em>shared system prompts</em></span></div></div>
+<div class="dgm-tier"><small>Model</small><div class="dgm-nodes"><span>Right-sized weights<em>quantised where quality holds</em></span></div></div>
+<div class="dgm-tier"><small>Hardware</small><div class="dgm-nodes"><span class="hl">Accelerator memory<em>HBM: the scarce part</em></span><span>Host DRAM and SSD<em>offload tiers</em></span></div></div>
+</div>
+<figcaption>Each layer above the hardware either saves memory or spends it. Design them together.</figcaption>
+</figure>
+<p>Agents make this worse. A long-running agent carries a large, growing context, and many agents in parallel hold many caches at once. If your plans assume agent workloads will grow, assume memory pressure will grow faster than request counts.</p>
+</section>
+
+<section class="block">
+<h2>What to change in the architecture</h2>
+<p><strong>Route with memory in mind.</strong> A standard load balancer spreads requests evenly and ignores how full each replica's cache is. The Kubernetes Gateway API Inference Extension routes using model-server metrics; in its published benchmark, throughput was similar to a standard Service but tail latency was much lower at high load, which the authors attribute to fewer collisions as GPU memory nears saturation<sup class="cite"><a href="#ref-6">6</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/ai-memory-squeeze-inference-architecture/inference-extension-benchmark.webp" alt="Three bar charts comparing the inference extension with a standard Kubernetes Service from 100 to 1000 queries per second: throughput is similar, while p90 per-token latency and p90 latency are much lower with the extension at higher load" width="1600" height="363" loading="lazy"></div><figcaption>Same throughput, lower tail latency at high load when routing is aware of model-server state. <span class="credit">Source: <a href="https://kubernetes.io/blog/2025/06/05/introducing-gateway-api-inference-extension/" target="_blank" rel="noopener">Kubernetes blog, Daneyon Hansen, Kaushik Mitra, Jiaxin Shan and Kellen Swain</a> · CC BY 4.0</span></figcaption></figure>
+<p><strong>Cache shared prefixes.</strong> If every request starts with the same long system prompt or document set, reuse its cache instead of recomputing and storing it per request. See <a href="https://asksumanta.com/insights/prompt-caching-llm-cost-latency/">prompt caching for cost and latency</a>.</p>
+<p><strong>Right-size and quantise.</strong> Not every step needs the largest model. <a href="https://asksumanta.com/insights/llm-model-routing/">Model routing</a> sends simple steps to smaller models, and quantisation cuts weight memory, as long as your evaluation set shows quality holds.</p>
+<p><strong>Cap context deliberately.</strong> Long context is convenient but expensive in memory. Retrieval and summarisation often beat sending everything; our <a href="https://asksumanta.com/insights/long-context-vs-rag/">long context versus RAG</a> note covers the trade-off.</p>
+<p><strong>Treat accelerators as a pool you can change.</strong> Kubernetes exposes accelerators to workloads through device plugins and, more recently, Dynamic Resource Allocation. Keeping serving on that standard layer, behind <a href="https://asksumanta.com/insights/llm-inference-serving-vllm/">a portable engine such as vLLM</a>, is what lets you test a new accelerator, such as the ones FuriosaAI and others now sell, without rewriting your platform. See <a href="https://asksumanta.com/insights/kubernetes-dra-gpu-scheduling/">DRA for GPU scheduling</a>.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/ai-memory-squeeze-inference-architecture/device-plugin.webp" alt="Diagram of a Kubernetes device plugin advertising eight devices to the kubelet over gRPC, the node status showing capacity and allocatable of eight, and a user pod requesting two" width="1000" height="560" loading="lazy"></div><figcaption>How Kubernetes exposes accelerators to pods: the abstraction that keeps hardware swappable. <span class="credit">Source: <a href="https://kubernetes.io/blog/2025/07/03/navigating-failures-in-pods-with-devices/" target="_blank" rel="noopener">Kubernetes blog, Sergey Kanzhelev and Mrunal Patel</a> · CC BY 4.0</span></figcaption></figure>
+</section>
+
+<section class="block">
+<h2>What to change in buying</h2>
+<ul>
+<li><strong>Quote early, and quote again.</strong> If you plan on-premises inference, as in <a href="https://asksumanta.com/insights/private-llm-on-prem/">private LLMs on-premises</a>, memory-heavy servers are rising in price. Lock quotes where you can, and size purchases to the models you will actually run.</li>
+<li><strong>Compare cost per served request, not per GPU.</strong> A card with more memory may serve more concurrent users and cost less per request, even at a higher list price.</li>
+<li><strong>Benchmark alternatives on your own traffic.</strong> Vendor figures, including FuriosaAI's, are the vendor's own<sup class="cite"><a href="#ref-4">4</a></sup>. Replay real prompts and measure.</li>
+<li><strong>Ask cloud providers about memory, not just GPU type.</strong> The same GPU name can come with different memory sizes and very different serving capacity.</li>
+</ul>
+<div class="callout"><p>In 2026, the question is less "how many GPUs?" and more "how many concurrent conversations can we hold in memory, and what does each one cost?"</p></div>
+</section>
+
+<section class="block">
+<h2>Who should act, by region</h2>
+<p>Teams building sovereign or in-country AI capacity feel this most, because they cannot always fall back on a hyperscaler's pooled supply. That includes public-sector and regulated buyers in the <a href="https://asksumanta.com/fractional-cto-saudi-arabia/">GCC</a>, <a href="https://asksumanta.com/fractional-cto-india/">India</a>, <a href="https://asksumanta.com/fractional-cto-europe/">the EU</a> and <a href="https://asksumanta.com/fractional-cto-singapore/">Southeast Asia</a>. For cloud-first teams in the <a href="https://asksumanta.com/fractional-cto-united-states/">United States</a> and elsewhere, the impact arrives through instance pricing and capacity, which is covered in <a href="https://asksumanta.com/insights/ai-capacity-crunch-cloud-planning/">planning around the AI capacity crunch</a>.</p>
+</section>
+
+<section class="block">
+<h2>A 60-day plan</h2>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Weeks 1 to 2</small><b>Measure</b><ul><li>Measure KV cache use, concurrency and latency per model in production</li><li>Find the replicas that saturate first</li></ul></div>
+<div><small>Weeks 3 to 5</small><b>Optimise</b><ul><li>Turn on paged KV cache and prefix caching</li><li>Test quantised variants against your evaluation set</li><li>Add memory-aware routing</li></ul></div>
+<div><small>Weeks 6 to 8</small><b>Buy</b><ul><li>Recalculate cost per served request</li><li>Use it to set hardware orders and cloud reservations for next year</li></ul></div>
+</div>
+<figcaption>Measure, then optimise, then buy.</figcaption>
+</figure>
+</section>
+
+<section class="block">
+<h2>CTO take</h2>
+<p>Record memory profits are a signal about your costs. As long as AI demand outruns memory supply, the cheapest capacity is the capacity you stop wasting. Most inference estates I review have room to serve noticeably more traffic on the same hardware through better caching, routing and model sizing. Do that work before signing the next hardware order, and keep the platform portable enough to take advantage when alternatives get cheaper.</p>
+<p>For the wider picture, see today's <a href="https://asksumanta.com/insights/tech-news-2026-10-30/">tech news brief</a>.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I review inference platforms for cost per request, latency and portability, and help teams plan hardware and cloud commitments. I am based in India, the United States and the UAE, working globally. See <a href="https://asksumanta.com/ai-architect/">AI architecture</a> or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section><p><a href="https://asksumanta.com/insights/ai-memory-squeeze-inference-architecture/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>When agents become the user: what ServiceNow&#x27;s week means for enterprise SaaS architecture, pricing and control</title><link>https://asksumanta.com/insights/agents-replace-seats-enterprise-saas/</link><guid isPermaLink="true">https://asksumanta.com/insights/agents-replace-seats-enterprise-saas/</guid><pubDate>Fri, 30 Oct 2026 10:20:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>ai</category><category>agents</category><category>architecture</category><description>ServiceNow&#x27;s record share fall and its wider OpenAI deal show agents reshaping enterprise SaaS. A CTO&#x27;s take on architecture, pricing and governance.</description><content:encoded><![CDATA[<p><em>In the same week, ServiceNow widened its partnership with OpenAI so ChatGPT agents can act on its workflows, raised its AI targets, and still had its worst day on the stock market. Investors are asking what happens to software sold per person when agents do the work. Engineering leaders have a more practical question: what has to change in our platforms and contracts when an agent becomes the user?</em></p><section class="block">
+<h2>What happened</h2>
+<p>On 28 October, OpenAI and ServiceNow expanded the partnership they signed in January<sup class="cite"><a href="#ref-4">4</a></sup>. OpenAI's models and agents are coming into ServiceNow products, and ServiceNow workflows become reachable from ChatGPT and Codex, with ServiceNow enforcing permissions on what an agent may do<sup class="cite"><a href="#ref-1">1</a></sup>. No financial terms were disclosed.</p>
+<p>The next day, ServiceNow reported subscription revenue up 21% and raised its 2026 target for AI annual contract value to $1.7 billion<sup class="cite"><a href="#ref-2">2</a></sup>. Its shares still fell about 19%, which Yahoo Finance links to investor fear that AI agents will eat into software sold per seat<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+<p>The share price is not my concern here. The pattern is: the systems of record your business runs on are being opened up so that agents, not just people, can read and change them. That changes architecture, contracts and controls at the same time.</p>
+</section>
+
+<section class="block">
+<h2>Three ways agents reach your systems</h2>
+<p>Every enterprise SaaS tool you own will soon be used in one or more of these ways. Each needs different controls.</p>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>1. Vendor's own agents</small><div class="dgm-nodes"><span>Inside the SaaS product<em>vendor models, vendor pricing</em></span></div></div>
+<div class="dgm-tier"><small>2. External assistant</small><div class="dgm-nodes"><span class="hl">ChatGPT, Claude, Copilot<em>calls the SaaS through connectors</em></span></div></div>
+<div class="dgm-tier"><small>3. Your own agents</small><div class="dgm-nodes"><span class="hl">Your orchestration<em>MCP servers and APIs</em></span></div></div>
+<div class="dgm-tier"><small>Control plane you own</small><div class="dgm-nodes"><span class="hl">Agent identity<em>one per agent, narrow scopes</em></span><span>Policy and approvals<em>human sign-off on risky actions</em></span><span>Telemetry<em>every action traced</em></span></div></div>
+<div class="dgm-tier"><small>Systems of record</small><div class="dgm-nodes"><span>ITSM, CRM, HR, ERP<em>where the actions land</em></span></div></div>
+</div>
+<figcaption>The three routes in. The bottom two layers must be yours whichever route wins.</figcaption>
+</figure>
+<p>The vendor wants route 1, assistant providers want route 2, and your platform team probably wants route 3. You will get all three. The mistake is letting each route bring its own identity model, logs and approval rules.</p>
+</section>
+
+<section class="block">
+<h2>What changes in the architecture</h2>
+<p><strong>Agents need identities, not borrowed sessions.</strong> An agent acting through a person's login makes audit trails meaningless and permissions too broad. Give each agent its own identity, scoped to the actions it needs, with the person it acts for recorded alongside. ServiceNow's point that it enforces permissions on agent actions is the right direction<sup class="cite"><a href="#ref-1">1</a></sup>; make sure the same is true for every other system.</p>
+<p><strong>Expose actions, not screens.</strong> Agents that click through user interfaces are fragile and hard to govern. Well-defined actions, such as "create incident" or "update record", with typed inputs, are easier to permission, test and price. This is what MCP servers and vendor action layers provide.</p>
+<p><strong>Load tools on demand.</strong> With dozens of systems exposed, tool definitions alone can fill a model's context. The MCP client guidance recommends discovering tools on demand rather than loading all of them up front<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/agents-replace-seats-enterprise-saas/progressive-discovery.webp" alt="Comparison of loading all tool definitions up front, about 150,000 tokens, with discovering tools on demand through catalogue, inspect and call steps, about 2,000 tokens" width="1200" height="695" loading="lazy"></div><figcaption>Progressive discovery keeps an agent's context for the task, not the tool catalogue. <span class="credit">Source: <a href="https://modelcontextprotocol.io/docs/develop/clients/client-best-practices" target="_blank" rel="noopener">Model Context Protocol docs, MCP contributors</a> · CC BY 4.0</span></figcaption></figure>
+<p><strong>Keep bulk work out of the model.</strong> When an agent processes thousands of records, routing every result through the model is slow and expensive. Having the model write a short script that runs in a sandbox and returns a summary is cheaper and easier to audit<sup class="cite"><a href="#ref-5">5</a></sup>. It also means the sandbox, not the model, holds credentials, which is where you want them.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/agents-replace-seats-enterprise-saas/programmatic-tool-calling.webp" alt="Sequence diagram comparing direct tool calling, where 2,000 log entries pass through the model, with programmatic tool calling, where a sandbox runs the calls and returns a short summary" width="1200" height="1200" loading="lazy"></div><figcaption>Programmatic tool calling: the model writes code, a sandbox runs the calls. <span class="credit">Source: <a href="https://modelcontextprotocol.io/docs/develop/clients/client-best-practices" target="_blank" rel="noopener">Model Context Protocol docs, MCP contributors</a> · CC BY 4.0</span></figcaption></figure>
+<p><strong>Trace every agent action.</strong> Use the OpenTelemetry generative AI conventions so model calls, tool calls and their costs land in the same traces as the rest of your system<sup class="cite"><a href="#ref-6">6</a></sup>. Without this, you cannot answer "what did the agent do?" for an auditor, or "what did it cost?" for finance. Our <a href="https://asksumanta.com/insights/llm-observability-opentelemetry-genai/">agent observability</a> and <a href="https://asksumanta.com/insights/ai-agent-sandboxing-lessons-anthropic-s1/">agent sandboxing</a> notes go deeper.</p>
+</section>
+
+<section class="block">
+<h2>What changes in the contract</h2>
+<p>If agents do work that used to need a licensed person, seat counts stop describing what you buy. I expect most renewals over the next two years to mix three things: a platform fee, seats for the people who still use the product, and a metered allowance for agent activity. That shift is predicted by many analysts, but I have not seen reliable public data on how far it has gone, so treat any single forecast with care.</p>
+<p>What you can control is your evidence. Before a renewal, know:</p>
+<ul>
+<li>how many actions agents took in the product, by type, and which person or team they acted for;</li>
+<li>which of those actions would otherwise have needed a licensed user;</li>
+<li>what the same actions would cost if run through your own agents and the vendor's API instead.</li>
+</ul>
+<p>That last point is your negotiating position. If you can switch routes, you can negotiate. If every agent runs inside the vendor's product with the vendor's pricing, you cannot.</p>
+<div class="callout"><p>The question for every renewal is no longer "how many seats?" but "who, or what, is doing the work, and can we prove it?"</p></div>
+</section>
+
+<section class="block">
+<h2>A 90-day plan</h2>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Days 1 to 30</small><b>Inventory</b><ul><li>List every SaaS tool with agent or connector features switched on</li><li>Record who enabled them and which identity they use</li></ul></div>
+<div><small>Days 31 to 60</small><b>Control</b><ul><li>Move agents to their own identities with narrow scopes</li><li>Add approval steps for actions that change money, access or customer data</li><li>Turn on tracing</li></ul></div>
+<div><small>Days 61 to 90</small><b>Negotiate</b><ul><li>Report agent actions per tool and per team</li><li>Bring that report to the next two renewals and price the alternatives</li></ul></div>
+</div>
+<figcaption>Get control before you negotiate.</figcaption>
+</figure>
+</section>
+
+<section class="block">
+<h2>Risks to watch</h2>
+<ul>
+<li><strong>Permission creep.</strong> Agents granted broad access "for the pilot" keep it. Review agent scopes the way you review admin accounts.</li>
+<li><strong>Prompt injection through records.</strong> An agent that reads tickets or emails can be steered by text inside them. See <a href="https://asksumanta.com/insights/prompt-injection-defence-for-agents/">prompt-injection defence for agents</a>.</li>
+<li><strong>Regulated actions.</strong> In the EU, UK and elsewhere, automated decisions about people carry legal duties. Keep a human approval step where the law expects one; the <a href="https://asksumanta.com/fractional-cto-europe/">Europe</a> and <a href="https://asksumanta.com/fractional-cto-united-kingdom/">UK</a> pages cover the local rules.</li>
+<li><strong>Vendor lock-in through agents.</strong> Agents built in one vendor's studio are hard to move. Keep business logic in your own orchestration where it matters.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>CTO take</h2>
+<p>ServiceNow's week is a preview for every large SaaS vendor. Agents are becoming users of your systems of record, from the vendor's side, from assistants such as ChatGPT, and from your own platform. The organisations that do well will treat agents as a new kind of workforce: identified, permissioned, observed and costed. Do that first, and the pricing debate becomes a negotiation you can win rather than a bill you receive.</p>
+<p>For the model-cost side of the same shift, see <a href="https://asksumanta.com/insights/gpt-6-1-terra-computer-use-agent-economics/">the economics of computer-use agents</a> and today's <a href="https://asksumanta.com/insights/tech-news-2026-10-30/">tech news brief</a>.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I help teams design agent platforms with proper identity, tracing and cost controls, and review SaaS and AI contracts before renewal. I am based in India, the United States and the UAE, working globally. See <a href="https://asksumanta.com/ai-architect/">AI architecture</a> or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section><p><a href="https://asksumanta.com/insights/agents-replace-seats-enterprise-saas/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Tech news, 30 October 2026: the AI capex bill arrives, Samsung&#x27;s HBM record, FuriosaAI, ServiceNow and an ESX zero-day</title><link>https://asksumanta.com/insights/tech-news-2026-10-30/</link><guid isPermaLink="true">https://asksumanta.com/insights/tech-news-2026-10-30/</guid><pubDate>Fri, 30 Oct 2026 09:45:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>ai</category><category>platform</category><category>security</category><description>A CTO&#x27;s take: Alphabet and Amazon burn cash on AI capex, Samsung&#x27;s HBM record, FuriosaAI&#x27;s $620M round, ServiceNow&#x27;s slide and an ESX zero-day chain.</description><content:encoded><![CDATA[<p><em>Big Tech&#x27;s AI spending showed up in the cash flow statements this week: Google Cloud doubled and AWS beat estimates, but both companies spent more than they brought in. Memory makers are the clear winners, Korea is backing a GPU alternative, investors are questioning SaaS, and attackers are chaining old and new flaws to get root.</em></p><p>Today's brief covers stories published on 28 and 29 October that yesterday's <a href="https://asksumanta.com/insights/tech-news-2026-10-29/">morning brief</a> and <a href="https://asksumanta.com/insights/tech-news-2026-10-29-2/">update</a> did not include.</p>
 
 <figure class="dgm">
 <div class="dgm-stack">
@@ -3549,173 +3698,4 @@ tracer_provider:
 
 <h2>What I'd do again, and differently</h2>
 <p>Again: a thin slice end to end before scaling, shadow running against the old feed, and reconciliation from the start. Differently: agree the reservation and allocation rules with operations earlier. Live data exposed business rules that had never been written down, and those took longer to settle than the streaming platform.</p>
-<p>If you are planning a similar move off batch, the <a href="https://asksumanta.com/fractional-cto/">fractional CTO</a> page describes how I work with teams on it, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/retail-real-time-inventory-cdc/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Fixing product search and AI shopping by fixing what the catalogue means</title><link>https://asksumanta.com/case-studies/ecommerce-product-ontology-search/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/ecommerce-product-ontology-search/</guid><pubDate>Wed, 28 Oct 2026 01:22:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>ontology</category><category>knowledge-graph</category><category>data</category><category>ai</category><category>governance</category><description>How an online retailer replaced inconsistent categories with a SKOS taxonomy, a small OWL core and SHACL validation, making search, filters and AI shopping reliable.</description><content:encoded><![CDATA[<p><em>Supplier feeds arrived with their own categories, attribute names and units. Search filters broke, facets contradicted each other and an AI shopping assistant gave confident answers from messy data. The fix was a governed product ontology that every catalogue load is mapped to and validated against.</em></p><h2>The situation</h2>
-<p>An online retailer sold products from many suppliers. Each supplier feed brought its own category tree, attribute names and conventions: one sent "colour", another "color_name", a third put colour in the title. Sizes, materials and units varied by feed. The internal category tree had grown by accretion, with near-duplicate branches and categories that meant different things to different teams.</p>
-<p>The symptoms were familiar. Filters returned partial results because half the products lacked the attribute being filtered. Search relied on hand-maintained synonym lists. A new AI shopping assistant made the problem more visible: asked to compare products, it reasoned confidently over data that was inconsistent underneath.</p>
-
-<h2>What had to be true</h2>
-<ul>
-<li><strong>One model of meaning</strong> for categories and attributes, shared by search, filters, feeds and the assistant.</li>
-<li><strong>Mapping, not rewriting</strong>: supplier data is mapped to the model, with the original preserved.</li>
-<li><strong>Validation on every load</strong>, so bad data is caught before customers see it.</li>
-<li><strong>Business ownership</strong>: merchandisers change the taxonomy through review, without engineering in the loop for every edit.</li>
-<li><strong>Standards, not a bespoke format</strong>, so the model outlives any one tool.</li>
-</ul>
-
-<h2>Architecture</h2>
-<p>The taxonomy was modelled in SKOS, which is designed for concept schemes with broader and narrower relations and preferred and alternative labels<sup class="cite"><a href="#ref-1">1</a></sup>. A deliberately small OWL core covered the classes and properties that needed formal definitions<sup class="cite"><a href="#ref-2">2</a></sup>. The reasoning behind that split is in <a href="https://asksumanta.com/insights/skos-vs-owl-enterprise-taxonomies/">SKOS vs OWL for enterprise taxonomies</a>.</p>
-<figure class="dgm">
-<div class="dgm-stack">
-<div class="dgm-tier"><small>Sources</small><div class="dgm-nodes"><span>Supplier feeds<em>CSV, XML, API</em></span><span>Product master<em>internal</em></span><span>Search logs<em>queries, zero results</em></span></div></div>
-<div class="dgm-tier"><small>Model</small><div class="dgm-nodes"><span class="hl">Category scheme<em>SKOS</em></span><span>Attribute core<em>small OWL model</em></span><span>Units and value lists<em>controlled</em></span></div></div>
-<div class="dgm-tier"><small>Map</small><div class="dgm-nodes"><span>Supplier mappings<em>versioned, reviewed</em></span><span>Attribute extraction<em>rules, then ML</em></span><span>Unit normalisation<em>canonical units</em></span></div></div>
-<div class="dgm-tier"><small>Validate</small><div class="dgm-nodes"><span class="hl">SHACL shapes<em>per category</em></span><span>Quarantine<em>with reasons</em></span><span>Quality report<em>per supplier</em></span></div></div>
-<div class="dgm-tier"><small>Use</small><div class="dgm-nodes"><span>Search index<em>labels as synonyms</em></span><span>Facets and filters<em>from the model</em></span><span>AI assistant<em>structured attributes</em></span><span>Structured data<em>schema.org</em></span></div></div>
-</div>
-<figcaption>Layered architecture: one model of meaning, mapped into from every feed and published to every consumer.</figcaption>
-</figure>
-
-<h2>The data flow, end to end</h2>
-<figure class="dgm">
-<ol class="dgm-flow g3">
-<li><b>Receive</b><span>Supplier feed lands raw, unchanged, with supplier and load identifiers</span></li>
-<li class="hl"><b>Map</b><span>Supplier categories and attributes mapped to concepts and properties</span></li>
-<li><b>Normalise</b><span>Units converted, values matched to controlled lists, originals kept</span></li>
-<li class="hl"><b>Validate</b><span>SHACL shapes check required attributes and values per category</span></li>
-<li><b>Publish</b><span>Valid products to search, facets and the assistant; failures quarantined</span></li>
-<li><b>Improve</b><span>Zero-result queries and quarantine reasons feed the taxonomy backlog</span></li>
-</ol>
-<figcaption>Validation is a gate: a product that fails its category's shape is held back with a readable reason.</figcaption>
-</figure>
-<p>SHACL describes the conditions data must meet and produces a validation report, which made it a natural release gate for each load<sup class="cite"><a href="#ref-3">3</a></sup>. Patterns for writing shapes are in <a href="https://asksumanta.com/insights/shacl-validation-knowledge-graphs/">SHACL validation for knowledge graphs</a>.</p>
-
-<h2>The hard part: attributes, not categories</h2>
-<p>Agreeing a category tree was comparatively quick. Agreeing attributes was not, because attributes are where search filters and assistant answers actually come from. The work that made a difference:</p>
-<ul>
-<li><strong>Attributes defined per category</strong>, with required, recommended and optional tiers, so a shape knows what "complete" means for a sofa versus a shoe.</li>
-<li><strong>Controlled value lists</strong> with preferred and alternative labels, so "navy", "dark blue" and supplier codes resolve to one value while search still matches all of them.</li>
-<li><strong>Canonical units</strong> with conversion at load, never in the search layer.</li>
-<li><strong>Duplicate and variant handling</strong>, the same product from two suppliers, which is an entity resolution problem in its own right; see <a href="https://asksumanta.com/insights/entity-resolution-knowledge-graphs/">entity resolution for knowledge graphs</a>.</li>
-</ul>
-<div class="callout"><p>An AI assistant is only as consistent as the attributes it reads. Many apparent "hallucinations" about products turn out to be faithful readings of contradictory data.</p></div>
-
-<h2>How the engagement ran</h2>
-<figure class="dgm">
-<div class="dgm-lanes">
-<div class="dgm-lane"><small>Merchandising</small><ol><li>Proposes category changes</li><li class="hl">Approves attribute rules</li><li>Owns value lists</li></ol></div>
-<div class="dgm-lane"><small>Data team</small><ol><li>Maintains supplier mappings</li><li>Runs validation</li><li>Works the quarantine</li></ol></div>
-<div class="dgm-lane"><small>Search and AI</small><ol><li>Consume published model</li><li class="hl">Report zero-result gaps</li><li>Test assistant answers</li></ol></div>
-</div>
-<figcaption>Ownership split: the business owns meaning, the data team owns mapping, consumers report gaps.</figcaption>
-</figure>
-<figure class="dgm">
-<div class="dgm-phases">
-<div><small>Phase 1</small><b>Discover</b><ul><li>Feed and attribute inventory</li><li>Search log analysis</li><li>Highest-value categories</li></ul></div>
-<div><small>Phase 2</small><b>Model</b><ul><li>SKOS category scheme</li><li>Attribute core</li><li>First SHACL shapes</li></ul></div>
-<div><small>Phase 3</small><b>Pipeline</b><ul><li>Supplier mappings</li><li>Validation gate</li><li>Quarantine and reports</li></ul></div>
-<div><small>Phase 4</small><b>Consume and hand off</b><ul><li>Search and facets</li><li>Assistant integration</li><li>Governance workflow</li></ul></div>
-</div>
-<figcaption>Phased delivery, starting with the categories that drove the most search traffic.</figcaption>
-</figure>
-<p>Product pages also emitted schema.org Product markup generated from the same model<sup class="cite"><a href="#ref-4">4</a></sup>, so structured data for external search stayed consistent with internal search. More in <a href="https://asksumanta.com/insights/structured-data-for-ai-search/">structured data for AI search</a>.</p>
-
-<h2>Key decisions and trade-offs</h2>
-<table class="tbl">
-<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
-<tbody>
-<tr><td>SKOS for the taxonomy</td><td>Full OWL ontology</td><td>Labels and hierarchy are what categories need; easier for the business to own</td></tr>
-<tr><td>Small OWL core</td><td>No formal model at all</td><td>Precise definitions where products are compared and filtered</td></tr>
-<tr><td>SHACL as a load gate</td><td>Ad hoc scripts in the pipeline</td><td>Declarative, standard rules with readable reports</td></tr>
-<tr><td>Keep supplier originals</td><td>Overwrite on mapping</td><td>Mappings can be corrected and replayed</td></tr>
-<tr><td>Assistant reads structured attributes</td><td>Assistant reads raw descriptions</td><td>Comparisons and filters grounded in validated facts</td></tr>
-</tbody>
-</table>
-
-<h2>What I'd do again, and differently</h2>
-<p>Again: start from search logs and the categories that matter commercially, and make validation a gate rather than a report. Differently: put merchandising ownership and the review workflow in place before the model grows, not after. A taxonomy without a clear owner drifts back to where it started.</p>
-<p>If your catalogue or knowledge model has the same symptoms, the <a href="https://asksumanta.com/ontology-knowledge-graph/">ontology and knowledge graph</a> page describes how I approach it, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/ecommerce-product-ontology-search/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Giving KYC analysts cited answers from policy, without giving up control</title><link>https://asksumanta.com/case-studies/bank-kyc-policy-assistant-rag/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/bank-kyc-policy-assistant-rag/</guid><pubDate>Wed, 28 Oct 2026 01:20:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>ai</category><category>llm</category><category>governance</category><category>security</category><category>regulation</category><description>How a bank gave KYC analysts a cited, permission-aware policy assistant: hybrid retrieval, evaluation sets signed off by compliance and auditable answers.</description><content:encoded><![CDATA[<p><em>Onboarding analysts were searching hundreds of policy pages and past case notes for every decision. The goal was an assistant that answers from approved sources only, shows its citations, respects who is allowed to see what, and is measured against questions compliance has signed off.</em></p><h2>The situation</h2>
-<p>A bank's onboarding analysts spent much of each case looking things up. Policy lived across hundreds of pages of procedures, risk appetite statements and local addenda, and the most useful guidance was often in past case notes: how a similar ownership structure or jurisdiction had been handled before. Senior analysts carried that knowledge in their heads; newer analysts asked them, or searched a document portal that matched keywords and returned whole documents.</p>
-<p>Customer due diligence obligations come from the FATF Recommendations and their national implementations, which require institutions to identify and verify customers and beneficial owners<sup class="cite"><a href="#ref-1">1</a></sup>. None of that changes because an assistant exists. The aim was narrower and more useful: help analysts find the right rule and the right precedent faster, with the evidence in front of them.</p>
-
-<h2>What had to be true</h2>
-<ul>
-<li><strong>Answers come from approved sources only</strong>, and every answer cites them.</li>
-<li><strong>Entitlements are enforced at retrieval</strong>: a user only ever sees passages they could already open in the source system.</li>
-<li><strong>The analyst decides</strong>. The assistant informs a decision; it never records one.</li>
-<li><strong>Quality is measured before release</strong>, against questions compliance agrees are representative.</li>
-<li><strong>Everything is auditable</strong>: question, retrieved sources, model version and answer.</li>
-</ul>
-
-<h2>Architecture</h2>
-<p>The pattern is retrieval-augmented generation: a retriever selects relevant passages and a generator answers conditioned on them, which keeps knowledge in an index that can be updated without retraining<sup class="cite"><a href="#ref-2">2</a></sup>. The work was in making each layer governable.</p>
-<figure class="dgm">
-<div class="dgm-stack">
-<div class="dgm-tier"><small>Sources</small><div class="dgm-nodes"><span>Policy library<em>approved versions</em></span><span>Procedures<em>by business line</em></span><span>Case notes<em>closed cases</em></span><span>Regulatory guidance<em>curated</em></span></div></div>
-<div class="dgm-tier"><small>Index</small><div class="dgm-nodes"><span>Chunking<em>clause-aware</em></span><span>Hybrid index<em>keyword + vector</em></span><span class="hl">ACL metadata<em>per chunk</em></span></div></div>
-<div class="dgm-tier"><small>Retrieve</small><div class="dgm-nodes"><span>SSO identity<em>groups, region</em></span><span class="hl">Entitlement filter<em>before ranking</em></span><span>Re-ranker<em>top passages</em></span></div></div>
-<div class="dgm-tier"><small>Answer</small><div class="dgm-nodes"><span>Grounded prompt<em>cite or decline</em></span><span>LLM<em>pinned version</em></span><span>Citation check<em>claims to sources</em></span></div></div>
-<div class="dgm-tier"><small>Assure</small><div class="dgm-nodes"><span class="hl">Evaluation set<em>compliance-owned</em></span><span>Audit log<em>immutable</em></span><span>Traces<em>OpenTelemetry</em></span></div></div>
-</div>
-<figcaption>Layered architecture: entitlements travel with every chunk, and nothing ships without passing the evaluation set.</figcaption>
-</figure>
-
-<h2>The data flow, end to end</h2>
-<figure class="dgm">
-<ol class="dgm-flow g3">
-<li><b>Ingest</b><span>Only published policy versions and closed case notes, with owner and effective date</span></li>
-<li><b>Index</b><span>Split on clause boundaries; attach source permissions to every chunk</span></li>
-<li class="hl"><b>Retrieve</b><span>Filter by the analyst's entitlements, then hybrid search and re-rank</span></li>
-<li><b>Answer</b><span>Generate only from retrieved passages, or say the sources do not cover it</span></li>
-<li class="hl"><b>Cite</b><span>Link each statement to a clause or case; flag unsupported sentences</span></li>
-<li><b>Learn</b><span>Analyst feedback becomes candidate evaluation cases for compliance review</span></li>
-</ol>
-<figcaption>The assistant declines rather than guesses when the retrieved sources do not answer the question.</figcaption>
-</figure>
-<p>Hybrid retrieval mattered because KYC questions mix exact terms (a form name, a jurisdiction, a document type) with paraphrase. Keyword search finds the former and vectors the latter. The detail is in <a href="https://asksumanta.com/insights/mongodb-hybrid-search-rag/">hybrid search for RAG</a> and <a href="https://asksumanta.com/insights/choosing-embedding-models-rag/">choosing embedding models</a>.</p>
-
-<h2>The hard part: permissions that survive retrieval</h2>
-<p>The tempting shortcut is one index for everyone and an instruction to the model not to reveal restricted material. That is not access control. OWASP's Top 10 for LLM applications lists sensitive information disclosure and vector and embedding weaknesses as distinct risks for exactly this kind of system<sup class="cite"><a href="#ref-3">3</a></sup>. The approach was:</p>
-<ul>
-<li>Carry the source system's permissions onto every chunk at index time, and re-sync them when they change.</li>
-<li>Apply the entitlement filter inside the retrieval query, so restricted passages are never ranked, let alone sent to the model.</li>
-<li>Treat case notes as more sensitive than policy by default, with access scoped by business line and region.</li>
-<li>Test it: evaluation cases that ask, as a restricted user, for content they should not see, and fail the release if anything leaks.</li>
-</ul>
-<p>The same thinking applies to retrieved text as untrusted input; see <a href="https://asksumanta.com/insights/prompt-injection-defence-for-agents/">prompt injection defence</a>.</p>
-<div class="callout"><p>If a user could not open the document, the model should never read it on their behalf. Enforce that in the query, not the prompt.</p></div>
-
-<h2>How it ran</h2>
-<figure class="dgm">
-<div class="dgm-lanes">
-<div class="dgm-lane"><small>Analyst</small><ol><li>Asks in plain language</li><li class="hl">Checks cited clauses</li><li>Records own decision</li></ol></div>
-<div class="dgm-lane"><small>Assistant</small><ol><li>Filters by entitlement</li><li>Retrieves and answers</li><li>Logs sources and version</li></ol></div>
-<div class="dgm-lane"><small>Compliance</small><ol><li>Owns the evaluation set</li><li class="hl">Approves releases</li><li>Samples the audit log</li></ol></div>
-</div>
-<figcaption>The analyst stays the decision-maker; compliance owns the definition of "good enough".</figcaption>
-</figure>
-<figure class="dgm">
-<div class="dgm-phases">
-<div><small>Phase 1</small><b>Frame</b><ul><li>Top analyst questions</li><li>Source inventory and owners</li><li>Risk and control mapping</li></ul></div>
-<div><small>Phase 2</small><b>Evaluate first</b><ul><li>Evaluation set drafted</li><li>Compliance sign-off</li><li>Baseline retrieval quality</li></ul></div>
-<div><small>Phase 3</small><b>Build</b><ul><li>Entitlement-aware index</li><li>Citation checking</li><li>Audit and tracing</li></ul></div>
-<div><small>Phase 4</small><b>Pilot and hand off</b><ul><li>One team, then more</li><li>Feedback loop into evals</li><li>Runbooks and ownership</li></ul></div>
-</div>
-<figcaption>The evaluation set came before the build, so every later change had a fixed bar to clear.</figcaption>
-</figure>
-<p>Framing the work against the NIST AI RMF's govern, map, measure and manage functions gave risk and compliance teams a familiar structure for their review<sup class="cite"><a href="#ref-4">4</a></sup>. The release checklist followed <a href="https://asksumanta.com/insights/rag-to-production-checklist/">RAG to production</a>, and the evaluation design followed <a href="https://asksumanta.com/insights/llm-evaluation-sets-that-predict-production/">evaluation sets that predict production</a>.</p>
-
-<h2>Key decisions and trade-offs</h2>
-<table class="tbl">
-<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
-<tbody>
-<tr><td>Entitlement filter in the retrieval query</td><td>Prompt-level instructions</td><td>Restricted content never reaches the model; testable</td></tr>
-<tr><td>Hybrid keyword and vector search</td><td>Vector-only retrieval</td><td>KYC questions mix exact terms with paraphrase</td></tr>
-<tr><td>Cite or decline</td><td>Best-effort answers</td><td>An uncited answer is not usable as evidence</td></tr>
-<tr><td>Compliance-owned evaluation set</td><td>Engineering-owned benchmarks</td><td>The people accountable for the outcome define the bar</td></tr>
-<tr><td>Pinned model versions</td><td>Always-latest model</td><td>Changes are deliberate, evaluated and logged</td></tr>
-</tbody>
-</table>
-
-<h2>What I'd do again, and differently</h2>
-<p>Again: write the evaluation set before the first prompt, and put entitlements in the data path from day one. Differently: start the source clean-up sooner. Superseded policy versions and inconsistent case notes caused more wrong answers than the model did, and fixing content is slower than fixing code.</p>
-<p>If you are weighing something similar, the <a href="https://asksumanta.com/ai-architect/">AI architect</a> page describes how I run these engagements, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/bank-kyc-policy-assistant-rag/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
+<p>If you are planning a similar move off batch, the <a href="https://asksumanta.com/fractional-cto/">fractional CTO</a> page describes how I work with teams on it, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/retail-real-time-inventory-cdc/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
