@@ -1,0 +1,82 @@
+<!--{"title": "Case study: AI data governance for a Japanese retailer", "description": "How a Japanese retail chain can prepare its AI and camera analytics for the amended APPI: purpose-tagged data, facial data controls, contractor limits and evidence.", "short": "AI data governance for Japan's amended APPI", "h1": "Ready before it bites: AI data governance for a Japanese retail chain under the amended APPI", "kicker": "Case study · Privacy engineering and AI", "lede": "A Japanese retail chain used loyalty data to forecast demand and store cameras to understand footfall, with several contractors doing the analytics. Japan's amended privacy law is now on the books, adding surcharges, rules for facial data and a route for using personal data in statistics and AI development. The duties are not in force yet. The aim was to make the data estate ready before they are.", "date": "2026-10-30", "datetime": "2026-10-30T13:10:00+04:00", "readtime": "9 min read", "sector": "Retail · Japan", "role": "Fractional CTO and AI architect", "engagement": "Assessment, architecture and delivery leadership", "scope": "Data inventory, purpose tagging, facial data controls, contractor boundaries, telemetry masking, evidence", "stack": ["Data catalogue", "Purpose and consent tags", "Lakehouse with row and column policies", "Pseudonymisation service", "Edge video processing", "Contractor workspaces", "OpenTelemetry with masking", "Policy as code"], "outcomes": ["Every dataset used for AI tagged with source, purpose and legal basis", "Camera analytics redesigned to keep counts, not faces, wherever possible", "Contractors limited to scoped workspaces for the task they were given", "Personal data masked in logs and traces by default", "An evidence pack ready for the PPC rules as they are issued"], "tags": ["governance", "data", "ai"], "keywords": ["Japan APPI amendment 2026", "Act No. 56 of 2026", "APPI AI training exception", "facial recognition data Japan", "APPI administrative surcharge", "Personal Information Protection Commission", "retail AI governance", "privacy engineering", "fractional CTO Japan", "data catalogue purpose tags"], "faq": [["Is the amended APPI in force?", "It was promulgated in July 2026 as Act No. 56 of 2026, but most duties start on dates set by Cabinet Order. Commentary expects strengthened criminal penalties from early 2027 and the main reforms, including surcharges, by mid-2028 at the latest. Check the PPC's announcements for confirmed dates."], ["Does the amendment let companies train AI on personal data without consent?", "It creates a consent exception for statistical processing and AI development in defined circumstances. The detailed rules from the Personal Information Protection Commission will decide how far it reaches, so design for it without assuming it covers everything."], ["What should retailers using cameras do now?", "Know which systems process facial data and why, prefer edge processing that keeps counts rather than images, prepare clear disclosures, and make sure contractors use the data only for the task they were given."]], "related": ["/ai-architect/", "/regions/", "/fractional-cto/"], "citations": [{"title": "Japan approves APPI amendment bill on personal data, AI training, and fines", "url": "https://dig.watch/updates/japan-appi-personal-data-ai-fines", "publisher": "Digital Watch Observatory", "date": "2026"}, {"title": "Japan's APPI amendment is on the books as Act No. 56. Its duties do not bite yet.", "url": "https://www.theleveragedyears.com/ai-regulation-news/japan-appi-amendment-act-56-promulgated-2026", "publisher": "The Leveraged Years", "date": "2026"}, {"title": "Proposed Amendments to Japan's Act on the Protection of Personal Information (APPI) (2026): What You Need to Know", "url": "https://www.morihamada.com/en/insights/newsletters/138006", "publisher": "Mori Hamada", "date": "2026"}, {"title": "Personal Information Protection Commission", "url": "https://www.ppc.go.jp/en/", "publisher": "PPC (Japan)"}, {"title": "OBI Gives Incident Response the Request Context It Needs", "url": "https://opentelemetry.io/blog/2026/obi-http-header-enrichment/", "publisher": "OpenTelemetry blog", "date": "10 Apr 2026"}]}-->
+<h2>The situation</h2>
+<p>A Japanese retail chain with several hundred stores ran a loyalty programme, an app and in-store cameras. Its data team trained demand forecasting and promotion models on loyalty purchases, and two outside contractors analysed camera footage to measure footfall and queue times. The data had grown up over a decade: copies in the warehouse, the contractors' environments and a few notebooks, with no single record of where personal data went or why.</p>
+<p><strong>Why now.</strong> Japan's amended Act on the Protection of Personal Information was promulgated in July 2026 as Act No. 56 of 2026, with most duties starting on dates set later by Cabinet Order<sup class="cite"><a href="#ref-2">2</a></sup>. As reported, it introduces an administrative surcharge, adds rules for facial recognition data, makes contractors' duty not to use data beyond their task explicit, and creates a consent exception for statistical processing and AI development<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>. Commentary expects strengthened penalties from early 2027 and the main reforms by mid-2028<sup class="cite"><a href="#ref-2">2</a></sup>. The Personal Information Protection Commission (PPC) will set the detailed rules<sup class="cite"><a href="#ref-4">4</a></sup>. The chain wanted to use the time to get ready rather than react later.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>Every dataset used for AI known</strong>: its source, purpose, legal basis and where copies live.</li>
+<li><strong>Facial data minimised</strong>: kept only where needed, disclosed clearly and never reused quietly.</li>
+<li><strong>Contractors bounded</strong> to the task they were hired for, technically and not just by contract.</li>
+<li><strong>Personal data out of telemetry</strong> by default.</li>
+<li><strong>Evidence on demand</strong>, ready to map to the PPC's rules when they arrive.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Sources</small><div class="dgm-nodes"><span>Loyalty and app<em>purchases, profiles</em></span><span>Store cameras<em>video at the edge</em></span><span>Stores and supply<em>no personal data</em></span></div></div>
+<div class="dgm-tier"><small>Edge</small><div class="dgm-nodes"><span class="hl">On-premises video processing<em>counts and queues, not faces</em></span></div></div>
+<div class="dgm-tier"><small>Govern</small><div class="dgm-nodes"><span class="hl">Data catalogue<em>source, purpose, basis</em></span><span>Policy as code<em>who may use what, for what</em></span></div></div>
+<div class="dgm-tier"><small>Platform</small><div class="dgm-nodes"><span>Lakehouse<em>row and column policies</em></span><span class="hl">Pseudonymisation<em>keys held centrally</em></span></div></div>
+<div class="dgm-tier"><small>Use</small><div class="dgm-nodes"><span>Forecasting and promotions<em>pseudonymised features</em></span><span class="hl">Contractor workspaces<em>scoped, logged, time-limited</em></span></div></div>
+<div class="dgm-tier"><small>Evidence</small><div class="dgm-nodes"><span>Access and lineage logs<em>per dataset</em></span><span>Masked telemetry<em>OpenTelemetry</em></span></div></div>
+</div>
+<figcaption>Purpose is recorded once in the catalogue and enforced everywhere the data is used.</figcaption>
+</figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Collect</b><span>Loyalty data arrives with its notice and consent version attached</span></li>
+<li><b>Tag</b><span>The catalogue records source, purpose and legal basis for each dataset</span></li>
+<li class="hl"><b>Pseudonymise</b><span>Direct identifiers are replaced before data reaches analytics</span></li>
+<li><b>Grant</b><span>Policy allows each team or contractor only the datasets for its purpose</span></li>
+<li class="hl"><b>Train</b><span>Models train on permitted features; the run records which datasets it used</span></li>
+<li><b>Prove</b><span>Lineage and access logs answer who used what, for which purpose</span></li>
+</ol>
+<figcaption>Every model can be traced back to the purpose and basis of its data.</figcaption>
+</figure>
+
+<h2>The hard part: cameras and contractors</h2>
+<p>The footfall project was the riskiest part of the estate. Contractors received video clips and ran their own models on them, which meant faces left the stores and their later use was hard to control. With facial data getting specific rules in the amendment<sup class="cite"><a href="#ref-1">1</a></sup>, the team changed the design rather than adding paperwork.</p>
+<p>Video processing moved to on-premises devices in each store. They produce counts, dwell times and queue lengths, and discard frames after processing. Contractors now receive those aggregates, not footage. Where a use case truly needed identification, such as a loss-prevention pilot, it was split out as its own system with its own disclosure, retention and approval. That separation is what makes the purpose clear to customers and to a regulator.</p>
+<p>Contractors moved into scoped workspaces on the chain's own platform, with access to named datasets for a set period, every query logged and no export by default. This turns the duty not to use data beyond the task into a technical control instead of a clause<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+<p>The last gap was telemetry. Application logs and traces carried customer IDs, emails and auth headers, copied into tools that many people could see. The team set masking as the default in the OpenTelemetry pipeline, keeping useful context such as store or segment and hiding identifiers and credentials<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/japan-retail-ai-appi-amendment/masked-span.webp" alt="Jaeger span tags for a GET /inventory request where the authorization header value is masked as three asterisks while tenant ID and user segment headers remain visible" width="563" height="317" loading="lazy"></div><figcaption>Masked by default: the credential is hidden while the context needed for troubleshooting stays visible. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2026/obi-http-header-enrichment/" target="_blank" rel="noopener">OpenTelemetry blog, Tyler Yahn and Nimrod Avni</a> · CC BY 4.0</span></figcaption></figure>
+<div class="callout"><p>The cheapest compliance is data you never collect. Change the design so the sensitive data does not leave the store, then govern what remains.</p></div>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Legal and privacy</small><ol><li>APPI amendment tracking</li><li class="hl">Purposes and notices</li><li>Contractor terms</li></ol></div>
+<div class="dgm-lane"><small>Data and platform</small><ol><li>Inventory and catalogue</li><li class="hl">Pseudonymisation and policies</li><li>Masked telemetry</li></ol></div>
+<div class="dgm-lane"><small>Stores and analytics</small><ol><li>Edge video devices</li><li class="hl">Contractor workspaces</li><li>Model retraining</li></ol></div>
+</div>
+<figcaption>Privacy owned purposes, platform owned enforcement, the business owned the redesigned use cases.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Inventory</b><ul><li>Find every copy</li><li>Record purposes</li><li>Rank risks</li></ul></div>
+<div><small>Phase 2</small><b>Redesign</b><ul><li>Edge video</li><li>Contractor workspaces</li><li>Pseudonymisation</li></ul></div>
+<div><small>Phase 3</small><b>Enforce</b><ul><li>Policy as code</li><li>Masked telemetry</li><li>Retire old copies</li></ul></div>
+<div><small>Phase 4</small><b>Evidence</b><ul><li>Lineage reports</li><li>Model data records</li><li>Map to PPC rules</li></ul></div>
+</div>
+<figcaption>Inventory first: you cannot govern copies you do not know about.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Process video at the edge</td><td>Send footage to contractors</td><td>Faces stay in the store; purpose is clear</td></tr>
+<tr><td>Prepare now</td><td>Wait for the PPC rules</td><td>Inventory and redesign take longer than the rules will</td></tr>
+<tr><td>Do not rely on the AI exception yet</td><td>Assume all training is covered</td><td>Its reach depends on rules not yet issued</td></tr>
+<tr><td>Contractor workspaces on our platform</td><td>Data shipped to contractor systems</td><td>Task limits enforced technically and logged</td></tr>
+<tr><td>Mask telemetry by default</td><td>Clean up logs case by case</td><td>Observability tools are a common leak</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: redesign the camera use case instead of documenting it. It removed most of the risk in one move. Differently: put purpose tags on data at ingestion from the start, rather than adding them during the inventory; tagging old data took longer than building the platform. Related: <a href="/insights/iso-42001-vs-nist-ai-rmf/">ISO 42001 and the NIST AI RMF</a>, <a href="/case-studies/korea-ai-basic-act-hiring-platform/">high-impact AI under Korea's AI Basic Act</a> and <a href="/regions/">where I work</a>.</p>
+<p>If you use personal data for AI in Japan or across Asia, see my <a href="/ai-architect/">AI architecture work</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>

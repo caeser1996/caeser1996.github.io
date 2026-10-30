@@ -1,6 +1,86 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link><description>Fractional CTO and AI architect: insights, case studies and daily tech news.</description><language>en-gb</language><lastBuildDate>Fri, 30 Oct 2026 12:30:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link></image><item><title>Onshore by January: moving Nigerian payment data home without breaking a pan-African platform</title><link>https://asksumanta.com/case-studies/nigeria-payment-data-localisation-platform/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/nigeria-payment-data-localisation-platform/</guid><pubDate>Fri, 30 Oct 2026 12:30:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>platform</category><category>data</category><category>kubernetes</category><description>How a Lagos-based payments company can meet the CBN&#x27;s 2027 payment data localisation deadline without splitting its platform: cells, data classes and tested cutover.</description><content:encoded><![CDATA[<p><em>A Lagos-based payments company ran one platform for Nigeria, Kenya and Ghana from an overseas cloud region. The Central Bank of Nigeria then set a deadline for payment transaction data generated in Nigeria to be stored in Nigeria. The task was to move that data onshore, keep one platform for every market and cut over without losing a payment.</em></p><h2>The situation</h2>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link><description>Fractional CTO and AI architect: insights, case studies and daily tech news.</description><language>en-gb</language><lastBuildDate>Fri, 30 Oct 2026 13:10:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link></image><item><title>Ready before it bites: AI data governance for a Japanese retail chain under the amended APPI</title><link>https://asksumanta.com/case-studies/japan-retail-ai-appi-amendment/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/japan-retail-ai-appi-amendment/</guid><pubDate>Fri, 30 Oct 2026 13:10:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>governance</category><category>data</category><category>ai</category><description>How a Japanese retail chain can prepare its AI and camera analytics for the amended APPI: purpose-tagged data, facial data controls, contractor limits and evidence.</description><content:encoded><![CDATA[<p><em>A Japanese retail chain used loyalty data to forecast demand and store cameras to understand footfall, with several contractors doing the analytics. Japan&#x27;s amended privacy law is now on the books, adding surcharges, rules for facial data and a route for using personal data in statistics and AI development. The duties are not in force yet. The aim was to make the data estate ready before they are.</em></p><h2>The situation</h2>
+<p>A Japanese retail chain with several hundred stores ran a loyalty programme, an app and in-store cameras. Its data team trained demand forecasting and promotion models on loyalty purchases, and two outside contractors analysed camera footage to measure footfall and queue times. The data had grown up over a decade: copies in the warehouse, the contractors' environments and a few notebooks, with no single record of where personal data went or why.</p>
+<p><strong>Why now.</strong> Japan's amended Act on the Protection of Personal Information was promulgated in July 2026 as Act No. 56 of 2026, with most duties starting on dates set later by Cabinet Order<sup class="cite"><a href="#ref-2">2</a></sup>. As reported, it introduces an administrative surcharge, adds rules for facial recognition data, makes contractors' duty not to use data beyond their task explicit, and creates a consent exception for statistical processing and AI development<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>. Commentary expects strengthened penalties from early 2027 and the main reforms by mid-2028<sup class="cite"><a href="#ref-2">2</a></sup>. The Personal Information Protection Commission (PPC) will set the detailed rules<sup class="cite"><a href="#ref-4">4</a></sup>. The chain wanted to use the time to get ready rather than react later.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>Every dataset used for AI known</strong>: its source, purpose, legal basis and where copies live.</li>
+<li><strong>Facial data minimised</strong>: kept only where needed, disclosed clearly and never reused quietly.</li>
+<li><strong>Contractors bounded</strong> to the task they were hired for, technically and not just by contract.</li>
+<li><strong>Personal data out of telemetry</strong> by default.</li>
+<li><strong>Evidence on demand</strong>, ready to map to the PPC's rules when they arrive.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Sources</small><div class="dgm-nodes"><span>Loyalty and app<em>purchases, profiles</em></span><span>Store cameras<em>video at the edge</em></span><span>Stores and supply<em>no personal data</em></span></div></div>
+<div class="dgm-tier"><small>Edge</small><div class="dgm-nodes"><span class="hl">On-premises video processing<em>counts and queues, not faces</em></span></div></div>
+<div class="dgm-tier"><small>Govern</small><div class="dgm-nodes"><span class="hl">Data catalogue<em>source, purpose, basis</em></span><span>Policy as code<em>who may use what, for what</em></span></div></div>
+<div class="dgm-tier"><small>Platform</small><div class="dgm-nodes"><span>Lakehouse<em>row and column policies</em></span><span class="hl">Pseudonymisation<em>keys held centrally</em></span></div></div>
+<div class="dgm-tier"><small>Use</small><div class="dgm-nodes"><span>Forecasting and promotions<em>pseudonymised features</em></span><span class="hl">Contractor workspaces<em>scoped, logged, time-limited</em></span></div></div>
+<div class="dgm-tier"><small>Evidence</small><div class="dgm-nodes"><span>Access and lineage logs<em>per dataset</em></span><span>Masked telemetry<em>OpenTelemetry</em></span></div></div>
+</div>
+<figcaption>Purpose is recorded once in the catalogue and enforced everywhere the data is used.</figcaption>
+</figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Collect</b><span>Loyalty data arrives with its notice and consent version attached</span></li>
+<li><b>Tag</b><span>The catalogue records source, purpose and legal basis for each dataset</span></li>
+<li class="hl"><b>Pseudonymise</b><span>Direct identifiers are replaced before data reaches analytics</span></li>
+<li><b>Grant</b><span>Policy allows each team or contractor only the datasets for its purpose</span></li>
+<li class="hl"><b>Train</b><span>Models train on permitted features; the run records which datasets it used</span></li>
+<li><b>Prove</b><span>Lineage and access logs answer who used what, for which purpose</span></li>
+</ol>
+<figcaption>Every model can be traced back to the purpose and basis of its data.</figcaption>
+</figure>
+
+<h2>The hard part: cameras and contractors</h2>
+<p>The footfall project was the riskiest part of the estate. Contractors received video clips and ran their own models on them, which meant faces left the stores and their later use was hard to control. With facial data getting specific rules in the amendment<sup class="cite"><a href="#ref-1">1</a></sup>, the team changed the design rather than adding paperwork.</p>
+<p>Video processing moved to on-premises devices in each store. They produce counts, dwell times and queue lengths, and discard frames after processing. Contractors now receive those aggregates, not footage. Where a use case truly needed identification, such as a loss-prevention pilot, it was split out as its own system with its own disclosure, retention and approval. That separation is what makes the purpose clear to customers and to a regulator.</p>
+<p>Contractors moved into scoped workspaces on the chain's own platform, with access to named datasets for a set period, every query logged and no export by default. This turns the duty not to use data beyond the task into a technical control instead of a clause<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+<p>The last gap was telemetry. Application logs and traces carried customer IDs, emails and auth headers, copied into tools that many people could see. The team set masking as the default in the OpenTelemetry pipeline, keeping useful context such as store or segment and hiding identifiers and credentials<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/japan-retail-ai-appi-amendment/masked-span.webp" alt="Jaeger span tags for a GET /inventory request where the authorization header value is masked as three asterisks while tenant ID and user segment headers remain visible" width="563" height="317" loading="lazy"></div><figcaption>Masked by default: the credential is hidden while the context needed for troubleshooting stays visible. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2026/obi-http-header-enrichment/" target="_blank" rel="noopener">OpenTelemetry blog, Tyler Yahn and Nimrod Avni</a> · CC BY 4.0</span></figcaption></figure>
+<div class="callout"><p>The cheapest compliance is data you never collect. Change the design so the sensitive data does not leave the store, then govern what remains.</p></div>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Legal and privacy</small><ol><li>APPI amendment tracking</li><li class="hl">Purposes and notices</li><li>Contractor terms</li></ol></div>
+<div class="dgm-lane"><small>Data and platform</small><ol><li>Inventory and catalogue</li><li class="hl">Pseudonymisation and policies</li><li>Masked telemetry</li></ol></div>
+<div class="dgm-lane"><small>Stores and analytics</small><ol><li>Edge video devices</li><li class="hl">Contractor workspaces</li><li>Model retraining</li></ol></div>
+</div>
+<figcaption>Privacy owned purposes, platform owned enforcement, the business owned the redesigned use cases.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Inventory</b><ul><li>Find every copy</li><li>Record purposes</li><li>Rank risks</li></ul></div>
+<div><small>Phase 2</small><b>Redesign</b><ul><li>Edge video</li><li>Contractor workspaces</li><li>Pseudonymisation</li></ul></div>
+<div><small>Phase 3</small><b>Enforce</b><ul><li>Policy as code</li><li>Masked telemetry</li><li>Retire old copies</li></ul></div>
+<div><small>Phase 4</small><b>Evidence</b><ul><li>Lineage reports</li><li>Model data records</li><li>Map to PPC rules</li></ul></div>
+</div>
+<figcaption>Inventory first: you cannot govern copies you do not know about.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Process video at the edge</td><td>Send footage to contractors</td><td>Faces stay in the store; purpose is clear</td></tr>
+<tr><td>Prepare now</td><td>Wait for the PPC rules</td><td>Inventory and redesign take longer than the rules will</td></tr>
+<tr><td>Do not rely on the AI exception yet</td><td>Assume all training is covered</td><td>Its reach depends on rules not yet issued</td></tr>
+<tr><td>Contractor workspaces on our platform</td><td>Data shipped to contractor systems</td><td>Task limits enforced technically and logged</td></tr>
+<tr><td>Mask telemetry by default</td><td>Clean up logs case by case</td><td>Observability tools are a common leak</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: redesign the camera use case instead of documenting it. It removed most of the risk in one move. Differently: put purpose tags on data at ingestion from the start, rather than adding them during the inventory; tagging old data took longer than building the platform. Related: <a href="https://asksumanta.com/insights/iso-42001-vs-nist-ai-rmf/">ISO 42001 and the NIST AI RMF</a>, <a href="https://asksumanta.com/case-studies/korea-ai-basic-act-hiring-platform/">high-impact AI under Korea's AI Basic Act</a> and <a href="https://asksumanta.com/regions/">where I work</a>.</p>
+<p>If you use personal data for AI in Japan or across Asia, see my <a href="https://asksumanta.com/ai-architect/">AI architecture work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/japan-retail-ai-appi-amendment/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Onshore by January: moving Nigerian payment data home without breaking a pan-African platform</title><link>https://asksumanta.com/case-studies/nigeria-payment-data-localisation-platform/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/nigeria-payment-data-localisation-platform/</guid><pubDate>Fri, 30 Oct 2026 12:30:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>platform</category><category>data</category><category>kubernetes</category><description>How a Lagos-based payments company can meet the CBN&#x27;s 2027 payment data localisation deadline without splitting its platform: cells, data classes and tested cutover.</description><content:encoded><![CDATA[<p><em>A Lagos-based payments company ran one platform for Nigeria, Kenya and Ghana from an overseas cloud region. The Central Bank of Nigeria then set a deadline for payment transaction data generated in Nigeria to be stored in Nigeria. The task was to move that data onshore, keep one platform for every market and cut over without losing a payment.</em></p><h2>The situation</h2>
 <p>A payments company headquartered in Lagos offered merchant collections, payouts and card processing in Nigeria, Kenya and Ghana. Nigeria was its largest market. Everything ran in one overseas public cloud region: one set of databases, one event stream, one analytics warehouse. It was simple to run, and every market shared the same release process.</p>
 <p><strong>Why now.</strong> The Central Bank of Nigeria directed banks, fintechs and other payment service providers to store payment transaction data generated in Nigeria on servers in Nigeria from 1 January 2027, with vendors that handle that data expected to align<sup class="cite"><a href="#ref-1">1</a></sup>. Legal commentary noted open questions, such as how "generated in Nigeria" applies to transactions that cross borders<sup class="cite"><a href="#ref-2">2</a></sup>. Separately, the federal government adopted a National Digital Cloud Policy in 2026, which commentators describe as classifying data and applying residency rules to defined sensitive and sovereign categories rather than all data<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>. With only months to the deadline, the company needed a plan it could execute, not a debate about interpretation.</p>
 
@@ -3604,88 +3684,4 @@ tracer_provider:
 
 <h2>What I'd do again, and differently</h2>
 <p>Again: put the gateway and the audit log in before the first use case, and make departments bring their own evaluation examples. Differently: start capacity planning earlier. In-country GPU capacity is finite and slow to expand, so demand forecasting deserves the same attention as the architecture.</p>
-<p>If you're planning sovereign AI in the region, the <a href="https://asksumanta.com/uae/">UAE</a> page describes how I work there, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/uae-government-sovereign-llm-service/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Re-architecting a SaaS platform so one tenant can&#x27;t slow down the rest</title><link>https://asksumanta.com/case-studies/saas-multi-tenant-re-architecture/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/saas-multi-tenant-re-architecture/</guid><pubDate>Wed, 28 Oct 2026 01:28:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>platform</category><category>architecture</category><category>kubernetes</category><category>security</category><category>observability</category><description>How a B2B SaaS platform tamed noisy neighbours and met enterprise isolation demands with pooled and dedicated tiers, per-tenant limits and tested isolation.</description><content:encoded><![CDATA[<p><em>A few heavy tenants could degrade the service for everyone, and enterprise buyers were asking for isolation guarantees the platform could not evidence. The goal was tiered tenancy: pooled by default, dedicated where it is worth paying for, with per-tenant limits and isolation proven by tests rather than asserted in a questionnaire.</em></p><h2>The situation</h2>
-<p>A B2B SaaS platform had grown on a single shared architecture: one application deployment, one database cluster, every tenant in the same collections. That served it well while tenants were similar in size. As larger customers arrived, two problems appeared together. A heavy import or reporting job from one tenant could slow the service for everyone. And enterprise prospects began asking, in security reviews, how their data was isolated and whether they could have dedicated infrastructure.</p>
-<p>The team's instinct was to give big customers their own copy of everything. That answers the sales question and creates an operations problem: many stacks to upgrade, monitor and pay for.</p>
-
-<h2>What had to be true</h2>
-<ul>
-<li><strong>Isolation as a choice per tenant</strong>, not one model forced on all.</li>
-<li><strong>One codebase and one release process</strong> across every tier.</li>
-<li><strong>Per-tenant limits</strong> at every shared resource.</li>
-<li><strong>Tenant context everywhere</strong>: in routing, data access, logs, traces and cost.</li>
-<li><strong>Isolation proven by tests</strong>, so the answer to a security review is evidence.</li>
-</ul>
-
-<h2>Architecture</h2>
-<p>AWS's tenant isolation guidance frames the options as silo (dedicated resources), pool (shared resources) and bridge (a mix chosen per layer)<sup class="cite"><a href="#ref-1">1</a></sup>. The design adopted that vocabulary directly: a pooled tier for most tenants and a dedicated tier for those whose requirements justify it, running the same services.</p>
-<figure class="dgm">
-<div class="dgm-stack">
-<div class="dgm-tier"><small>Edge</small><div class="dgm-nodes"><span>Identity<em>tenant in token</em></span><span class="hl">Gateway API<em>tenant-aware routing</em></span><span>Rate limits<em>per tenant</em></span></div></div>
-<div class="dgm-tier"><small>Control plane</small><div class="dgm-nodes"><span>Tenant registry<em>tier, region, limits</em></span><span>Provisioning<em>infrastructure as code</em></span><span>Plan and quota config<em>versioned</em></span></div></div>
-<div class="dgm-tier"><small>Compute</small><div class="dgm-nodes"><span>Pooled namespace<em>shared services</em></span><span>Dedicated namespaces<em>per tenant</em></span><span>ResourceQuotas<em>per namespace</em></span></div></div>
-<div class="dgm-tier"><small>Data</small><div class="dgm-nodes"><span>Pooled cluster<em>tenantId on every document</em></span><span>Dedicated database or cluster<em>enterprise tier</em></span><span class="hl">Data access layer<em>tenant filter enforced</em></span></div></div>
-<div class="dgm-tier"><small>Assure</small><div class="dgm-nodes"><span class="hl">Isolation tests<em>every build</em></span><span>OpenTelemetry<em>tenant attributes</em></span><span>Per-tenant usage<em>cost and capacity</em></span></div></div>
-</div>
-<figcaption>Layered architecture: one control plane decides where each tenant runs; the same code serves both tiers.</figcaption>
-</figure>
-
-<h2>The data flow, end to end</h2>
-<figure class="dgm">
-<ol class="dgm-flow g3">
-<li><b>Authenticate</b><span>Token carries the tenant identifier; nothing downstream trusts a header alone</span></li>
-<li class="hl"><b>Route</b><span>Gateway looks up the tenant's tier and sends the request to pooled or dedicated services</span></li>
-<li><b>Limit</b><span>Per-tenant rate and concurrency limits applied before work starts</span></li>
-<li class="hl"><b>Access data</b><span>Data layer injects the tenant filter or selects the tenant's database</span></li>
-<li><b>Observe</b><span>Tenant context propagated on traces, metrics and logs</span></li>
-<li><b>Account</b><span>Usage aggregated per tenant for capacity, cost and plan enforcement</span></li>
-</ol>
-<figcaption>Tenant context is set once at the edge and carried through every hop.</figcaption>
-</figure>
-<p>On the data side, MongoDB's guidance compares database-per-tenant with shared collections keyed by a tenant field, and notes that the shared model needs every query to filter by tenant<sup class="cite"><a href="#ref-3">3</a></sup>. That requirement was moved out of individual queries and into one data access layer. Detail in <a href="https://asksumanta.com/insights/mongodb-multi-tenant-saas-patterns/">MongoDB multi-tenant SaaS patterns</a>.</p>
-
-<h2>The hard part: noisy neighbours at every layer</h2>
-<p>Noisy neighbours are rarely one bottleneck. Limits had to exist at each shared resource, or load simply moved to the next one. The Kubernetes documentation treats noisy neighbours as a core multi-tenancy concern and points to resource quotas and node isolation as controls<sup class="cite"><a href="#ref-2">2</a></sup>; quotas cap aggregate consumption per namespace<sup class="cite"><a href="#ref-5">5</a></sup>. The layers addressed were:</p>
-<ul>
-<li><strong>Requests</strong>: per-tenant rate and concurrency limits at the gateway.</li>
-<li><strong>Background work</strong>: per-tenant queues or fair scheduling, so one tenant's bulk import cannot starve others.</li>
-<li><strong>Compute</strong>: dedicated namespaces with quotas for the dedicated tier; resource requests and limits in the pool.</li>
-<li><strong>Database</strong>: indexes that start with the tenant key, query timeouts, and heavy reporting moved off the primary path.</li>
-</ul>
-<p>None of that is manageable without seeing it per tenant. OpenTelemetry baggage carries key-value context such as a tenant identifier across service boundaries<sup class="cite"><a href="#ref-4">4</a></sup>, which let traces and metrics be broken down by tenant. More in <a href="https://asksumanta.com/insights/kubernetes-multi-tenancy/">Kubernetes multi-tenancy</a>.</p>
-<div class="callout"><p>Isolation you cannot test is a claim. Isolation with a failing test when it breaks is a control.</p></div>
-
-<h2>How the engagement ran</h2>
-<figure class="dgm">
-<div class="dgm-lanes">
-<div class="dgm-lane"><small>Product and sales</small><ol><li>Define tier offers</li><li class="hl">Agree who qualifies</li><li>Use isolation evidence</li></ol></div>
-<div class="dgm-lane"><small>Engineering</small><ol><li>Tenant context and data layer</li><li>Limits at each layer</li><li class="hl">Isolation test suite</li></ol></div>
-<div class="dgm-lane"><small>Platform</small><ol><li>Provision dedicated tier</li><li>Per-tenant dashboards</li><li>Migrate tenants between tiers</li></ol></div>
-</div>
-<figcaption>Tiering is a product decision as much as an engineering one.</figcaption>
-</figure>
-<figure class="dgm">
-<div class="dgm-phases">
-<div><small>Phase 1</small><b>Assess</b><ul><li>Shared resource inventory</li><li>Noisy neighbour incidents</li><li>Enterprise requirements</li></ul></div>
-<div><small>Phase 2</small><b>Foundations</b><ul><li>Tenant context end to end</li><li>Data access layer</li><li>Per-tenant observability</li></ul></div>
-<div><small>Phase 3</small><b>Limits and tiers</b><ul><li>Gateway limits</li><li>Fair background work</li><li>Dedicated tier provisioning</li></ul></div>
-<div><small>Phase 4</small><b>Prove and hand off</b><ul><li>Isolation tests in CI</li><li>Tier migration runbook</li><li>Security review pack</li></ul></div>
-</div>
-<figcaption>Foundations first: without tenant context, neither limits nor evidence are possible.</figcaption>
-</figure>
-
-<h2>Key decisions and trade-offs</h2>
-<table class="tbl">
-<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
-<tbody>
-<tr><td>Pooled default, dedicated by exception</td><td>A stack per enterprise tenant</td><td>Isolation where it pays, without multiplying operations</td></tr>
-<tr><td>One codebase across tiers</td><td>Forked enterprise edition</td><td>One release process; no drift between tiers</td></tr>
-<tr><td>Tenant filter in a data access layer</td><td>Filter in each query</td><td>One place to enforce and test</td></tr>
-<tr><td>Gateway API for routing</td><td>Routing logic in each service</td><td>Tier routing declared at the edge</td></tr>
-<tr><td>Isolation tests in CI</td><td>Annual manual review</td><td>Continuous evidence; regressions caught before release</td></tr>
-</tbody>
-</table>
-
-<h2>What I'd do again, and differently</h2>
-<p>Again: get tenant context right before anything else, and make isolation a test suite rather than a document. Differently: agree the tier definitions with product and sales earlier. The engineering was straightforward once everyone agreed what "dedicated" promised and who could buy it.</p>
-<p>If your platform is facing the same pressures, the <a href="https://asksumanta.com/fractional-cto/">fractional CTO</a> page describes how I work with teams on it, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/saas-multi-tenant-re-architecture/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
+<p>If you're planning sovereign AI in the region, the <a href="https://asksumanta.com/uae/">UAE</a> page describes how I work there, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/uae-government-sovereign-llm-service/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
