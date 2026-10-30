@@ -1,0 +1,80 @@
+<!--{"title": "Case study: MAS AI risk guidelines at a Singapore wealth manager", "description": "How a Singapore wealth manager can put MAS's final AI risk management guidelines into practice: an AI inventory, risk tiers, vendor assessments and lifecycle evidence.", "short": "MAS AI risk guidelines in wealth management", "h1": "From guidelines to plumbing: putting MAS's AI risk management guidelines to work at a Singapore wealth manager", "kicker": "Case study · AI governance in financial services", "lede": "A Singapore wealth manager had AI everywhere and an inventory nowhere: vendor copilots, a suitability model, generative AI drafting client letters, and agents piloted by operations. MAS's final guidelines on AI risk management made the board accountable for all of it. The task was to turn the guidelines into systems that keep the inventory, the controls and the evidence current without a spreadsheet army.", "date": "2026-10-31", "datetime": "2026-10-31T01:05:00+04:00", "readtime": "9 min read", "sector": "Wealth management · Singapore", "role": "Fractional CTO and AI architect", "engagement": "Assessment, architecture and delivery leadership", "scope": "AI inventory, risk tiering, third-party AI assessment, lifecycle gates, monitoring and board reporting", "stack": ["AI inventory service", "Risk tiering rules", "Model and prompt registry", "LLM gateway", "OpenTelemetry GenAI conventions", "Telemetry conformance checks", "Evaluation harness", "Board reporting dashboards"], "outcomes": ["Every AI use, built or bought, recorded with owner, purpose and risk tier", "Controls proportionate to tier, so low-risk uses are not slowed down", "Vendor AI assessed on evidence rather than self-attestation where risk warrants", "Release gates that require evaluations and monitoring before material AI goes live", "Board reporting generated from live data, not assembled by hand"], "tags": ["governance", "ai", "observability"], "keywords": ["MAS AI risk management guidelines", "MAS guidelines October 2026", "Singapore AI governance financial institutions", "AI inventory", "third-party AI risk", "AI risk tiering", "generative AI governance", "OpenTelemetry GenAI", "fractional CTO Singapore", "AI agents financial services"], "faq": [["What did MAS publish?", "MAS issued its final Guidelines on Artificial Intelligence Risk Management for financial institutions on 7 October 2026. According to published summaries, they apply to all forms of AI, including generative AI and AI agents, on a risk-proportionate basis, with board and senior management oversight."], ["Do the guidelines cover AI bought from vendors?", "Yes. Commentary on the final guidelines says financial institutions keep primary accountability for third-party AI, and that independent assessments are preferred over vendor self-attestations where risk warrants."], ["When do firms need to comply?", "Commentary describes transition periods running into 2027 and 2028 for different sections. Check the MAS text for the exact dates that apply to your institution."]], "related": ["/fractional-cto-singapore/", "/ai-architect/", "/fractional-cto/"], "citations": [{"title": "October 2026 Global Regulatory Brief: AI risk management, tokenized securities and cryptoasset regulation", "url": "https://www.bloomberg.com/professional/insights/regulation/october-2026-global-regulatory-brief-digital-finance/", "publisher": "Bloomberg Professional", "date": "Oct 2026"}, {"title": "MAS AI Risk Management Guidelines: Turning AI governance into operational reality for financial institutions", "url": "https://www.pwc.com/sg/en/services/risk/straightaways/mas-ai-risk-management-guidelines.html", "publisher": "PwC Singapore", "date": "2026"}, {"title": "MAS Finalises AI Risk Guidelines for Financial Firms", "url": "https://www.leaprate.com/regulation/mas-finalises-ai-risk-guidelines-for-financial-firms/", "publisher": "LeapRate", "date": "Oct 2026"}, {"title": "Monetary Authority of Singapore", "url": "https://www.mas.gov.sg/", "publisher": "MAS"}, {"title": "Observability by Design: Unlocking Consistency with OpenTelemetry Weaver", "url": "https://opentelemetry.io/blog/2025/otel-weaver/", "publisher": "OpenTelemetry blog", "date": "2 Jul 2025"}]}-->
+<h2>The situation</h2>
+<p>A Singapore-based wealth manager served private and affluent clients across Asia. AI had arrived from every direction: a suitability scoring model built in-house, a vendor's generative AI assistant for relationship managers, a document tool that drafted client letters, transaction monitoring with machine learning inside, and an operations pilot using AI agents to reconcile statements. Risk kept a short spreadsheet of "AI models". Nobody believed it was complete.</p>
+<p><strong>Why now.</strong> The Monetary Authority of Singapore (MAS) issued its final Guidelines on Artificial Intelligence Risk Management on 7 October 2026<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>. Published summaries describe guidelines that cover all forms of AI, including generative AI and agents, on a risk-proportionate basis; that put boards and senior management in charge of AI risk appetite and oversight; and that keep the institution accountable for AI bought from vendors<sup class="cite"><a href="#ref-2">2</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>. Commentary reports transition periods into 2027 and 2028<sup class="cite"><a href="#ref-3">3</a></sup>. The authoritative text sits with MAS<sup class="cite"><a href="#ref-4">4</a></sup>. The board wanted to know what the firm actually used, how risky each use was, and how it would know when something went wrong.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>A complete, living inventory</strong> of AI, built and bought, including features inside vendor products.</li>
+<li><strong>Risk tiers that change the controls</strong>: light for low-risk uses, rigorous for client-impacting ones.</li>
+<li><strong>Vendor AI held to the same bar</strong>, with evidence proportionate to risk.</li>
+<li><strong>Gates in the lifecycle</strong>: material AI cannot go live without evaluations and monitoring.</li>
+<li><strong>Board reporting from live data</strong>, not quarterly heroics.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>AI uses</small><div class="dgm-nodes"><span>In-house models<em>suitability, monitoring</em></span><span>Vendor AI<em>assistants, embedded features</em></span><span>Agents<em>operations pilots</em></span></div></div>
+<div class="dgm-tier"><small>Front door</small><div class="dgm-nodes"><span class="hl">LLM gateway<em>all generative AI calls</em></span><span>Procurement hook<em>new vendors declare AI</em></span></div></div>
+<div class="dgm-tier"><small>Register</small><div class="dgm-nodes"><span class="hl">AI inventory<em>owner, purpose, data, tier</em></span><span>Model and prompt registry<em>versions</em></span></div></div>
+<div class="dgm-tier"><small>Controls</small><div class="dgm-nodes"><span class="hl">Tier rules<em>what each tier requires</em></span><span>Evaluations<em>before release and on change</em></span><span>Vendor assessments<em>evidence by tier</em></span></div></div>
+<div class="dgm-tier"><small>Monitor and report</small><div class="dgm-nodes"><span>GenAI telemetry<em>standard conventions</em></span><span>Conformance checks<em>in CI</em></span><span>Board dashboard<em>live</em></span></div></div>
+</div>
+<figcaption>Discovery feeds the inventory; the inventory drives the controls; telemetry proves they work.</figcaption>
+</figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Discover</b><span>Gateway traffic, procurement and code scans reveal AI uses</span></li>
+<li><b>Register</b><span>Each use is recorded with owner, purpose, data and affected clients</span></li>
+<li class="hl"><b>Tier</b><span>Rules assign a risk tier from impact, autonomy and data sensitivity</span></li>
+<li><b>Control</b><span>The tier sets required evaluations, approvals, monitoring and vendor evidence</span></li>
+<li class="hl"><b>Monitor</b><span>Telemetry tracks quality, drift, incidents and cost against thresholds</span></li>
+<li><b>Report</b><span>Dashboards roll up by tier and business line for management and the board</span></li>
+</ol>
+<figcaption>The inventory is updated by systems, not surveys.</figcaption>
+</figure>
+
+<h2>The hard part: finding the AI you did not build</h2>
+<p>Most of the firm's AI was inside products it had bought. Vendors had switched on generative features in CRM, document and communications tools, often by default. Interviews missed them. The team used three nets: every generative AI call from internal systems went through an LLM gateway, which logged the application and model; procurement and renewals now asked vendors to declare AI features and their data use; and a periodic scan looked for AI SDKs and API keys in code and configuration. Each find created a draft inventory entry for an owner to complete.</p>
+<p>Monitoring had a consistency problem. Each tool reported AI activity differently, so dashboards were stitched together by hand. The team adopted the OpenTelemetry generative AI conventions as the firm's telemetry contract and checked conformance in CI, so a service that emitted the wrong attributes failed its build rather than quietly breaking reports. OpenTelemetry Weaver provides exactly that kind of live check against a registry of conventions<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/singapore-wealth-ai-risk-mas-guidelines/telemetry-check.webp" alt="CI job output from a build-and-test run showing a Weaver live-check report listing span and resource attributes, with stability notes, a type mismatch and an undefined enum variant flagged" width="1132" height="826" loading="lazy"></div><figcaption>A telemetry conformance report in CI: attributes that break the agreed conventions are flagged before release. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2025/otel-weaver/" target="_blank" rel="noopener">OpenTelemetry blog, Laurent Quérel, Jeremy Blythe and contributors</a> · CC BY 4.0</span></figcaption></figure>
+<p>Agents needed their own treatment. The reconciliation pilot was low risk in impact but high in autonomy, so its tier was raised: every action logged, narrow permissions and a human approval step for anything that changed client records. See <a href="/insights/agents-replace-seats-enterprise-saas/">when agents become the user</a> and <a href="/insights/evaluating-ai-agents-reliability/">evaluating AI agents</a>.</p>
+<div class="callout"><p>An AI inventory kept by survey is out of date the day it is finished. Wire discovery into the gateway, procurement and the codebase, and let people complete what the systems find.</p></div>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Risk and compliance</small><ol><li>Risk appetite</li><li class="hl">Tier rules</li><li>Board reporting</li></ol></div>
+<div class="dgm-lane"><small>Technology</small><ol><li>LLM gateway</li><li class="hl">Inventory and registry</li><li>Telemetry and CI checks</li></ol></div>
+<div class="dgm-lane"><small>Business and procurement</small><ol><li>Use owners</li><li>Vendor declarations</li><li class="hl">Vendor evidence</li></ol></div>
+</div>
+<figcaption>Risk set the bar, technology built the plumbing, the business owned each use.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Discover</b><ul><li>LLM gateway</li><li>Vendor declarations</li><li>Code scans</li></ul></div>
+<div><small>Phase 2</small><b>Tier</b><ul><li>Risk appetite</li><li>Tier rules</li><li>Owners named</li></ul></div>
+<div><small>Phase 3</small><b>Control</b><ul><li>Release gates</li><li>Evaluations</li><li>Vendor assessments</li></ul></div>
+<div><small>Phase 4</small><b>Prove</b><ul><li>Telemetry contract</li><li>CI conformance</li><li>Live board view</li></ul></div>
+</div>
+<figcaption>Discovery first: you cannot tier what you have not found.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Discover through systems</td><td>Annual surveys</td><td>Inventory stays current as tools change</td></tr>
+<tr><td>Tier by impact, autonomy and data</td><td>One control set for all AI</td><td>Proportionate effort, as the guidelines intend</td></tr>
+<tr><td>All generative AI through one gateway</td><td>Direct calls from each app</td><td>Visibility, policy and cost in one place</td></tr>
+<tr><td>Telemetry contract checked in CI</td><td>Dashboards fixed by hand</td><td>Reliable evidence without manual effort</td></tr>
+<tr><td>Evidence from vendors by tier</td><td>Accept self-attestation everywhere</td><td>Accountability stays with the firm</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: put the gateway in early. It quickly found AI uses the survey had missed. Differently: involve procurement from the start. Vendor features switched on at renewal were the largest source of new entries. Related: <a href="/insights/iso-42001-vs-nist-ai-rmf/">ISO 42001 and the NIST AI RMF</a>, <a href="/insights/llm-observability-opentelemetry-genai/">LLM observability with OpenTelemetry</a>, <a href="/case-studies/agent-ready-travel-marketplace-sea/">an agent-ready marketplace in Southeast Asia</a> and the <a href="/fractional-cto-singapore/">Singapore page</a>.</p>
+<p>If you are putting MAS's AI guidelines into practice, see my <a href="/ai-architect/">AI architecture work</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
