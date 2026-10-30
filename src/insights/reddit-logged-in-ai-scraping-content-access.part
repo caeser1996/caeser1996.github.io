@@ -1,0 +1,66 @@
+<!--{"title": "Reddit goes logged-in: what it means for anyone with valuable content", "description": "Reddit is moving to a logged-in experience as AI search cuts referrals and scraping grows. A CTO's take on access tiers, bot controls and licensed data APIs.", "h1": "Reddit goes logged-in: how to protect and monetise valuable content when AI answers the search", "kicker": "Analysis · AI, search and content platforms", "lede": "On 29 October, Reddit said it will move towards a primarily logged-in experience, citing falling search referrals and scraping of its content for AI. It is the clearest sign yet that the open, crawlable web is being rebuilt into tiers. Any business whose content, data or listings have value now faces the same design question: who gets what, how, and on what terms?", "date": "2026-10-30", "datetime": "2026-10-30T21:05:00+04:00", "readtime": "8 min read", "format": "news-analysis", "tags": ["news", "ai", "architecture", "platform"], "keywords": ["Reddit logged-in experience", "AI scraping", "AI search referral traffic", "content licensing AI", "AI crawler controls", "IETF AI preferences", "Content-Usage robots.txt", "data licensing API", "Gateway API", "CTO content strategy"], "faq": [["What did Reddit announce?", "In its third-quarter results on 29 October 2026, Reddit said it will move towards a primarily logged-in experience, starting with tests outside the US, citing a sharp fall in search referrals and the scraping of logged-out content. It said it still intends to license its data to AI companies."], ["Can robots.txt stop AI crawlers?", "Only those that choose to respect it. The IETF's AI Preferences work aims to standardise how sites express preferences such as allowing search but not AI training, but it is still in draft, and compliance remains voluntary."], ["Should other businesses put content behind a login?", "Not by default. Decide per content type: what drives discovery should stay open and structured, what is your competitive asset should be gated or licensed, and access should be controlled at the edge rather than in each application."]], "related": ["/ai-architect/", "/fractional-cto/", "/regions/"], "citations": [{"title": "As search traffic dries up, Reddit announces it's shifting to a logged-in experience", "url": "https://techcrunch.com/2026/10/29/as-search-traffic-dries-up-reddit-announces-its-shifting-to-a-logged-in-experience/", "publisher": "TechCrunch", "date": "29 Oct 2026"}, {"title": "Reddit moves to logged-in experience as AI eats search", "url": "https://www.axios.com/2026/10/29/reddit-logged-in-ai-search-incognito", "publisher": "Axios", "date": "29 Oct 2026"}, {"title": "Reddit will make users log in as Google's AI search cuts its traffic", "url": "https://thenextweb.com/news/reddit-login-required-google-ai-search-traffic", "publisher": "The Next Web", "date": "Oct 2026"}, {"title": "AI Preferences (aipref)", "url": "https://datatracker.ietf.org/wg/aipref/about/", "publisher": "IETF", "date": "2026"}, {"title": "Associating AI Usage Preferences with Content in HTTP", "url": "https://datatracker.ietf.org/doc/html/draft-ietf-aipref-attach-04", "publisher": "IETF (Internet-Draft)", "date": "2026"}, {"title": "Evolving Kubernetes networking with the Gateway API", "url": "https://kubernetes.io/blog/2021/04/22/evolving-kubernetes-networking-with-the-gateway-api/", "publisher": "Kubernetes blog", "date": "22 Apr 2021"}]}-->
+<section class="block">
+<h2>What happened</h2>
+<p>Reddit used its third-quarter results on 29 October to announce a shift towards a primarily logged-in experience. It said search referrals had fallen sharply, by more than a million a week in October, and that most scraping of its content happens through logged-out access<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. Testing begins outside the US this quarter, with no date yet for a global rollout, and Reddit says it will keep licensing its data to AI companies<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+<p>The reasons Reddit gives are commercial: logged-in users carry more signals for advertising, and a protected corpus is worth more in licensing talks<sup class="cite"><a href="#ref-2">2</a></sup>. The pattern matters well beyond Reddit.</p>
+</section>
+
+<section class="block">
+<h2>Why it matters to you</h2>
+<p>For two decades, the bargain was simple: let search engines crawl you, get traffic back. AI answers break that bargain. The engine reads your content and answers the question itself, so less traffic comes back, while AI companies also crawl the same pages to train models. If your business publishes reviews, listings, prices, research, community content or documentation, you are being asked the same question as Reddit.</p>
+<p>Standards are lagging. The IETF's AI Preferences working group is building a shared vocabulary for signals such as "allow search, not AI training", carried in robots.txt and HTTP headers, but the work is still in draft, and honouring the signals is voluntary<sup class="cite"><a href="#ref-4">4</a></sup><sup class="cite"><a href="#ref-5">5</a></sup>. In practice, control comes from your own architecture.</p>
+</section>
+
+<section class="block">
+<h2>Design content access in tiers</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Open</small><div class="dgm-nodes"><span>Discovery content<em>summaries, landing pages</em></span><span>Structured data<em>so AI answers cite you</em></span></div></div>
+<div class="dgm-tier"><small>Signed in</small><div class="dgm-nodes"><span class="hl">Full content and history<em>for people with accounts</em></span><span>Personalisation<em>the reason to sign in</em></span></div></div>
+<div class="dgm-tier"><small>Licensed</small><div class="dgm-nodes"><span class="hl">Data API<em>contracts, quotas, audit</em></span><span>Bulk exports<em>for approved partners</em></span></div></div>
+<div class="dgm-tier"><small>Edge controls</small><div class="dgm-nodes"><span class="hl">Gateway<em>routes by tier and client</em></span><span>Bot management<em>verify, rate-limit, block</em></span><span>AI preference signals<em>robots.txt and headers</em></span></div></div>
+</div>
+<figcaption>Decide which content belongs in which tier; enforce it at the edge, not in each application.</figcaption>
+</figure>
+<p><strong>Keep discovery open and structured.</strong> Gating everything trades AI scraping for invisibility. Content that brings people to you should stay crawlable, with structured data that makes it easy for AI answers to cite and link you. See <a href="/insights/structured-data-for-ai-search/">structured data for AI search</a>.</p>
+<p><strong>Gate the asset.</strong> The content that makes you different, such as full threads, complete datasets or detailed reviews, sits behind sign-in, with reasons for people to sign in beyond the gate itself.</p>
+<p><strong>Sell structured access.</strong> If AI companies want your data, an API with contracts, quotas and audit logs is better for both sides than a scraping arms race. It is also the only tier you can price.</p>
+<p><strong>Enforce at the edge.</strong> Put tier rules in a gateway, so public, signed-in and partner traffic follow different routes with different limits, and applications do not each reinvent bot rules. In Kubernetes, the Gateway API lets an infrastructure team own shared gateways while application teams attach their own routes, or gives a dedicated gateway to a partner API<sup class="cite"><a href="#ref-6">6</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/reddit-logged-in-ai-scraping-content-access/route-binding.webp" alt="Diagram of a shared gateway in an infrastructure namespace bound to HTTP routes in two application namespaces, and a dedicated gateway bound to one route in a third namespace" width="1400" height="452" loading="lazy"></div><figcaption>Shared and dedicated gateways: public and signed-in traffic through one, licensed partner traffic through its own. <span class="credit">Source: <a href="https://kubernetes.io/blog/2021/04/22/evolving-kubernetes-networking-with-the-gateway-api/" target="_blank" rel="noopener">Kubernetes blog, Mark Church, Harry Bagdi, Daneyon Hanson, Nick Young and Manuel Zapf</a> · CC BY 4.0</span></figcaption></figure>
+<div class="callout"><p>Treat your content like a product with three prices: free for discovery, an account for depth, and a contract for bulk. Then build the edge that enforces them.</p></div>
+</section>
+
+<section class="block">
+<h2>What to measure first</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Classify traffic</b><span>Separate people, search crawlers, AI crawlers and unknown bots</span></li>
+<li><b>Trace referrals</b><span>Track search and AI-assistant referrals by page type over time</span></li>
+<li class="hl"><b>Value content</b><span>Find which content drives sign-ups, revenue or partner interest</span></li>
+<li><b>Set tiers</b><span>Assign each content type to open, signed in or licensed</span></li>
+<li class="hl"><b>Enforce</b><span>Gateway routes, rate limits and preference signals by tier</span></li>
+<li><b>Review</b><span>Check traffic, sign-ups and licensing quarterly and adjust</span></li>
+</ol>
+<figcaption>Measure before gating; the data usually shows which content is worth protecting.</figcaption>
+</figure>
+</section>
+
+<section class="block">
+<h2>Risks</h2>
+<ul>
+<li><strong>Losing discovery.</strong> Gating too much can cut the very traffic you are trying to protect. Test in one market or section first, as Reddit is doing<sup class="cite"><a href="#ref-1">1</a></sup>.</li>
+<li><strong>Privacy obligations.</strong> More logged-in users means more personal data. In the EU, UK, India and elsewhere that brings consent, minimisation and rights duties; see the <a href="/fractional-cto-europe/">Europe</a> and <a href="/fractional-cto-india/">India</a> pages.</li>
+<li><strong>Arms race costs.</strong> Bot detection never finishes. Budget for it as an ongoing service, not a project.</li>
+<li><strong>Licensing without metering.</strong> A data deal you cannot measure is hard to enforce. Build quotas and audit into the API from day one.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>CTO take</h2>
+<p>Reddit is large enough to make the move loudly, but the economics apply to any business whose content has value. The answer is rarely "lock everything" or "leave everything open". It is a deliberate split between content that earns discovery, content that earns accounts and content that earns licence fees, enforced consistently at the edge. Make that design decision now, while traffic data is still telling you what each type is worth. For more on how agents and AI change who uses your systems, see <a href="/insights/agents-replace-seats-enterprise-saas/">when agents become the user</a> and today's <a href="/insights/tech-news-2026-10-30/">tech news brief</a>.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I help content and marketplace businesses design access tiers, partner APIs and edge controls for an AI-shaped web. I am based in India, the United States and the UAE, working globally. See <a href="/fractional-cto/">fractional CTO work</a> or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
