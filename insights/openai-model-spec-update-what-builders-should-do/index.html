@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) with Consent Mode v2 -->
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('consent', 'default', {ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied', analytics_storage: 'granted'});
+  gtag('consent', 'default', {analytics_storage: 'denied', region: ['AT','BE','BG','HR','CY','CZ','DK','EE','FI','FR','DE','GR','HU','IS','IE','IT','LV','LI','LT','LU','MT','NL','NO','PL','PT','RO','SK','SI','ES','SE','GB','CH'], wait_for_update: 500});
+  try { var c = localStorage.getItem('consent'); if (c === 'granted' || c === 'denied') gtag('consent', 'update', {analytics_storage: c}); } catch (e) {}
+</script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-8TKBV1S98Q"></script>
+<script>
+  gtag('js', new Date());
+
+  gtag('config', 'G-8TKBV1S98Q', {content_group: (function(p){return p==='/'?'Home':p.indexOf('/insights/')===0?'Insights':p.indexOf('/case-studies/')===0?'Case studies':'Services';})(location.pathname)});
+</script>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>OpenAI&#x27;s new Model Spec: what teams building on LLMs should do</title>
+<meta name="description" content="OpenAI rewrote its Model Spec around five values and an updated chain of command. A CTO&#x27;s take on prompts, guardrails, evaluations and vendor behaviour change." />
+<meta name="keywords" content="OpenAI Model Spec, Model Spec October 2026, chain of command LLM, instruction hierarchy, system prompt design, LLM guardrails, LLM evaluation regression, model behaviour change, AI governance, AI architect" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://asksumanta.com/insights/openai-model-spec-update-what-builders-should-do/" />
+<meta name="theme-color" content="#fafafa" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<link rel="alternate" type="application/rss+xml" title="Sumanta Mukhopadhyay: insights and case studies" href="/feed.xml" />
+<link rel="alternate" type="application/rss+xml" title="Sumanta Mukhopadhyay: daily tech news" href="/insights/news.xml" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="OpenAI&#x27;s new Model Spec: what teams building on LLMs should do" />
+<meta property="og:description" content="OpenAI rewrote its Model Spec around five values and an updated chain of command. A CTO&#x27;s take on prompts, guardrails, evaluations and vendor behaviour change." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://asksumanta.com/insights/openai-model-spec-update-what-builders-should-do/" />
+<meta property="og:image" content="https://asksumanta.com/assets/og/openai-model-spec-update-what-builders-should-do.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="OpenAI&#x27;s new Model Spec: what teams building on LLMs should do" />
+<meta name="twitter:description" content="OpenAI rewrote its Model Spec around five values and an updated chain of command. A CTO&#x27;s take on prompts, guardrails, evaluations and vendor behaviour change." />
+<meta name="twitter:image" content="https://asksumanta.com/assets/og/openai-model-spec-update-what-builders-should-do.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "BlogPosting", "headline": "OpenAI's new Model Spec: what it changes for teams building on LLMs, and what it does not", "description": "OpenAI rewrote its Model Spec around five values and an updated chain of command. A CTO's take on prompts, guardrails, evaluations and vendor behaviour change.", "datePublished": "2026-10-31T21:30:00+04:00", "dateModified": "2026-10-31T21:30:00+04:00", "articleSection": "Analysis · LLM behaviour and governance", "genre": "Analysis", "citation": [{"@type": "CreativeWork", "name": "An updated Model Spec for more capable and beneficial AI", "url": "https://openai.com/index/updated-model-spec/"}, {"@type": "CreativeWork", "name": "Model Spec (2026/10/29)", "url": "https://model-spec.openai.com/2026-10-29.html"}, {"@type": "CreativeWork", "name": "OpenAI Reorganizes Model Spec Around Five Core Behavior Values", "url": "https://www.unite.ai/openai-reorganizes-model-spec-around-five-core-behavior-values/"}, {"@type": "CreativeWork", "name": "OpenAI rebuilds its Model Spec around five core values", "url": "https://betanews.com/article/openai-model-spec-five-values-style-rules/"}, {"@type": "CreativeWork", "name": "OpenAI's New Model Spec: Five Values, Style Rules Cut", "url": "https://cellcog.ai/blog/openai-model-spec-five-values/"}, {"@type": "CreativeWork", "name": "OpenTelemetry for Generative AI", "url": "https://opentelemetry.io/blog/2024/otel-generative-ai/"}], "author": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "publisher": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "mainEntityOfPage": "https://asksumanta.com/insights/openai-model-spec-update-what-builders-should-do/", "image": "https://asksumanta.com/assets/og/openai-model-spec-update-what-builders-should-do.png", "keywords": "OpenAI Model Spec, Model Spec October 2026, chain of command LLM, instruction hierarchy, system prompt design, LLM guardrails, LLM evaluation regression, model behaviour change, AI governance, AI architect", "wordCount": 846}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://asksumanta.com/"}, {"@type": "ListItem", "position": 2, "name": "Insights", "item": "https://asksumanta.com/insights/"}, {"@type": "ListItem", "position": 3, "name": "OpenAI's new Model Spec: what it changes for teams building on LLMs, and what it does not", "item": "https://asksumanta.com/insights/openai-model-spec-update-what-builders-should-do/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What is the OpenAI Model Spec?", "acceptedAnswer": {"@type": "Answer", "text": "A public document describing how OpenAI intends its models to behave, including how they weigh different instructions. The version published on 29 October 2026 is organised around five values: faithfulness to human intent, harm minimisation, honesty and transparency, human agency, and care."}}, {"@type": "Question", "name": "Do OpenAI's models already follow the new Spec?", "acceptedAnswer": {"@type": "Answer", "text": "Not fully. OpenAI describes the Spec as a target, and has said its models do not yet fully reflect it. Expect behaviour to shift as models are trained towards it."}}, {"@type": "Question", "name": "What should teams building on OpenAI models do?", "acceptedAnswer": {"@type": "Answer", "text": "Treat the Spec as context, not as a control. Keep your own policy and guardrail layer, write system prompts that state scope and priorities explicitly, and re-run your evaluation set whenever the model or its Spec changes."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css?v=9155e6ca2c" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='light';try{t=localStorage.getItem('theme')||'light';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+  try{if(!sessionStorage.getItem('booted')&&!/bot|crawl|spider|slurp|lighthouse|headless/i.test(navigator.userAgent)&&!matchMedia('(prefers-reduced-motion: reduce)').matches){document.documentElement.classList.add('boot');sessionStorage.setItem('booted','1');}}catch(e){}
+</script>
+</head>
+<body class="sub is-post">
+<div class="progress" id="progress"></div>
+<nav class="topnav">
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links" id="navLinks">
+      <div class="nd"><button type="button" class="nd-b" aria-expanded="false" aria-controls="nd-services">Services<svg class="chev" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 3.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button><div class="nd-p" id="nd-services"><div class="nd-grid"><a class="nd-i" href="/fractional-cto/"><b>Fractional CTO</b><span>Part-time technology leadership for startups and scale-ups</span></a><a class="nd-i" href="/ai-architect/"><b>AI &amp; LLM architecture</b><span>RAG, agents and private LLMs that make it to production</span></a><a class="nd-i" href="/ontology-knowledge-graph/"><b>Ontology &amp; knowledge graphs</b><span>Shared meaning for your data, analytics and AI</span></a><a class="nd-i" href="/healthcare-data-architecture/"><b>Healthcare data architecture</b><span>FHIR, OMOP and HIPAA-aligned data platforms</span></a><a class="nd-i" href="/technical-due-diligence/"><b>Technical due diligence</b><span>Independent technology assessment for investors</span></a><a class="nd-i" href="/regions/"><b>Fractional CTO worldwide</b><span>US, UK, Europe, Middle East, India, Singapore and Australia</span></a></div><div class="nd-side"><small>Not sure where to start?</small><p>Answer four questions and get a first diagnosis of your challenge.</p><a class="lnk" href="/#assess">Analyse your challenge →</a></div></div></div>
+      <div class="nd"><button type="button" class="nd-b" aria-expanded="false" aria-controls="nd-work">Work<svg class="chev" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 3.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button><div class="nd-p" id="nd-work"><div class="nd-grid"><a class="nd-i" href="/case-studies/"><b>All case studies</b><span>52 anonymised engagements with architecture and flow diagrams</span></a><a class="nd-i" href="/case-studies/#use-cases"><b>Use cases</b><span>Problems I&#x27;m brought in to solve, by sector</span></a><a class="nd-i" href="/case-studies/#snapshots"><b>Engagement snapshots</b><span>Six common problems, the approach and the stack</span></a><a class="nd-i" href="/case-studies/mexico-ecommerce-voice-ai-agents/"><b>Voice AI agents for Mexican e-commerce</b><span>E-commerce · Mexico</span></a><a class="nd-i" href="/case-studies/singapore-wealth-ai-risk-mas-guidelines/"><b>MAS AI risk guidelines in wealth management</b><span>Wealth management · Singapore</span></a><a class="nd-i" href="/case-studies/eu-telecom-sovereign-llm-platform/"><b>Sovereign LLM platform for an EU telecom</b><span>Telecom · European Union</span></a></div><div class="nd-side"><small>Confidential by default</small><p>Every case study is an anonymised composite, cited to public sources.</p><a class="lnk" href="/case-studies/">Browse all →</a></div></div></div>
+      <div class="nd"><button type="button" class="nd-b" aria-expanded="false" aria-controls="nd-insights">Insights<svg class="chev" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 3.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button><div class="nd-p" id="nd-insights"><div class="nd-grid"><a class="nd-i" href="/insights/"><b>All insights</b><span>120 articles on AI, data, cloud and leadership</span></a><a class="nd-i" href="/insights/#topic-news"><b>Daily tech news</b><span>A CTO&#x27;s take on the day&#x27;s releases, deals and rules</span></a><a class="nd-i" href="/subscribe/"><b>Subscribe via RSS</b><span>Get every new post in Feedly, Inoreader or any reader</span></a><a class="nd-i" href="/insights/openai-model-spec-update-what-builders-should-do/"><b>OpenAI&#x27;s new Model Spec: what it changes for teams building on LLMs, and what it does not</b></a><a class="nd-i" href="/insights/tech-news-2026-10-31/"><b>Tech news, 31 October 2026: Binance&#x27;s record hack, Intel&#x27;s guidance shock, open weights at the top end, OpenAI&#x27;s new Model Spec, voice AI consolidation and New York&#x27;s chatbot law</b></a><a class="nd-i" href="/insights/binance-hack-custody-architecture-lessons/"><b>The Binance hack: what a laptop-to-withdrawal attack teaches every platform that moves money</b></a><a class="nd-i" href="/insights/reddit-logged-in-ai-scraping-content-access/"><b>Reddit goes logged-in: how to protect and monetise valuable content when AI answers the search</b></a><a class="nd-i" href="/insights/mistral-large-4-open-weights-self-hosting/"><b>Mistral Large 4&#x27;s open weights: when running a trillion-parameter model yourself makes sense, and when it does not</b></a></div><div class="nd-side"><small>New every week</small><p>Explainers, playbooks and analysis of new standards and regulation.</p><a class="lnk" href="/insights/">Read the latest →</a></div></div></div>
+      <div class="nd"><button type="button" class="nd-b" aria-expanded="false" aria-controls="nd-about">About<svg class="chev" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 3.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button><div class="nd-p" id="nd-about"><div class="nd-grid"><a class="nd-i" href="/about/"><b>About</b><span>Background, credentials and open-source work</span></a><a class="nd-i" href="/expertise/"><b>Expertise</b><span>Practice areas, reference architecture and industries</span></a><a class="nd-i" href="/how-i-work/"><b>How I work</b><span>Playbook, principles and engagement models</span></a><a class="nd-i" href="/how-i-work/#faq"><b>FAQ</b><span>Common questions about working together</span></a><a class="nd-i" href="/#contact"><b>Contact</b><span>Book a call or send a message</span></a></div><div class="nd-side"><small>Take a break</small><p>Defend production from incoming incidents in Orbital Ops, a free sci-fi browser game.</p><a class="lnk" href="/play/">Play now →</a></div></div></div>
+      <a class="nd-l" href="/play/">Play <em>new</em></a>
+    </div>
+    <div class="nav-r">
+      <button type="button" class="kbtn" data-search aria-label="Search the site" title="Search (Ctrl K)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><kbd>⌘K</kbd></button>
+      <button type="button" class="snd" aria-pressed="false" aria-label="Turn ambient sound on" title="Ambient sound"><span class="eq"><i></i><i></i><i></i><i></i></span></button>
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/insights/">Insights</a> <span>/</span> <em>OpenAI&#x27;s new Model Spec: what it changes for teams building on LLMs, and what it does not</em></div>
+    <div class="kicker">Analysis · LLM behaviour and governance</div>
+    <h1>OpenAI&#x27;s new Model Spec: what it changes for teams building on LLMs, and what it does not</h1>
+    <p class="sub-lede">On 29 October, OpenAI published a rewritten Model Spec, the document describing how its models are meant to behave. It is organised around five values and an updated chain of command, and OpenAI says its models do not yet fully meet it. For anyone shipping products on top of these models, the useful question is not what the document says in the abstract, but what to change in prompts, guardrails and testing when a vendor redefines model behaviour.</p>
+    <div class="ameta"><span class="fmt">Analysis</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-10-31T21:30:00+04:00">31 Oct 2026 · 21:30 GST</time><span>8 min read</span><span>6 sources</span></div><div class="atags"><span class="tagp">#news</span><span class="tagp">#ai</span><span class="tagp">#llm</span><span class="tagp">#governance</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Analysis cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><polyline points="540,177 596,223 652,231 708,220 764,185 820,176 876,170 932,182 988,252 1044,234 1100,248 1156,237" class="cv-line"/><polyline points="540,170 596,283 652,296 708,284 764,217 820,289 876,152 932,160 988,142 1044,193 1100,184 1156,274" class="cv-line"/><polyline points="540,93 596,179 652,251 708,218 764,265 820,311 876,147 932,278 988,333 1044,249 1100,327 1156,168" class="cv-line hl"/><text x="60" y="90" class="cv-k">ANALYSIS · ANALYSIS · LLM BEHAVIOUR AND GOVERNANCE</text><text x="60" y="350" class="cv-n">31 Oct 2026 · 21:30 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <section class="block">
+<h2 id="what-changed">What changed</h2>
+<p>OpenAI published an updated Model Spec on 29 October 2026<sup class="cite"><a href="#ref-1">1</a></sup>. It is reorganised around five values: faithfulness to human intent, harm minimisation, honesty and transparency, human agency, and care<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>. Most detailed guidance on writing style was retired, with style expected to follow user preferences and context<sup class="cite"><a href="#ref-4">4</a></sup>. The Spec includes an updated chain of command describing which instructions apply and how conflicts are resolved, with sections marked at different levels of authority<sup class="cite"><a href="#ref-2">2</a></sup>, and a new section on how memories and earlier conversations should inform the model's reading of what people want<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<p>Two caveats matter. OpenAI describes the Spec as a target, and says its models do not yet fully reflect it<sup class="cite"><a href="#ref-5">5</a></sup>. And secondary coverage differs on some details of how developer and user instructions are ranked<sup class="cite"><a href="#ref-3">3</a></sup>, so read the primary text for anything you depend on.</p>
+</section>
+
+<section class="block">
+<h2 id="why-it-matters-if-you-build-on-these-models">Why it matters if you build on these models</h2>
+<p>A model's published behaviour rules are a moving part of your system. When they change, three things can change with them: how the model resolves conflicts between your system prompt and user requests, how it treats context such as memory and retrieved documents, and how it styles its output. None of that shows up as an API change, so it will not break your build. It can still break your product.</p>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Vendor layer</small><div class="dgm-nodes"><span>Model Spec<em>intended behaviour</em></span><span>Model training<em>moves towards the Spec over time</em></span></div></div>
+<div class="dgm-tier"><small>Your instructions</small><div class="dgm-nodes"><span class="hl">System prompt<em>scope, priorities, refusals</em></span><span>Tool definitions<em>what the model may do</em></span></div></div>
+<div class="dgm-tier"><small>Your controls</small><div class="dgm-nodes"><span class="hl">Policy layer<em>checks before and after the model</em></span><span>Approval steps<em>for consequential actions</em></span></div></div>
+<div class="dgm-tier"><small>Your evidence</small><div class="dgm-nodes"><span class="hl">Evaluation set<em>re-run on every model change</em></span><span>Telemetry<em>model version on every call</em></span></div></div>
+</div>
+<figcaption>The vendor's Spec shapes the model; your prompts, controls and evaluations decide what your product actually does.</figcaption>
+</figure>
+</section>
+
+<section class="block">
+<h2 id="five-things-to-do">Five things to do</h2>
+<ol>
+<li><strong>Treat the Spec as context, not a control.</strong> A vendor's behaviour document describes intent. It does not replace your own guardrails for data access, consequential actions or regulated decisions. See <a href="/insights/new-york-youth-chatbot-law-ai-assistants/">policy layers for AI assistants</a>.</li>
+<li><strong>Write system prompts that state scope and priorities explicitly.</strong> Do not rely on the model to infer that your instructions outrank user requests. Say what the assistant is for, what it must refuse, and what to do when a user asks for something outside scope.</li>
+<li><strong>Keep untrusted content in its place.</strong> Retrieved documents, tool results and emails should be clearly marked as data, and actions that matter should go through checks outside the model. See <a href="/insights/prompt-injection-defence-for-agents/">prompt-injection defence for agents</a>.</li>
+<li><strong>Specify style instead of relying on defaults.</strong> With detailed style rules retired from the Spec<sup class="cite"><a href="#ref-4">4</a></sup>, house style should live in your prompts and be checked by your evaluations, especially for customer-facing text.</li>
+<li><strong>Re-run your evaluation set when the model or Spec changes.</strong> Behaviour will drift as models are trained towards the new Spec<sup class="cite"><a href="#ref-5">5</a></sup>. Pin model versions where you can, and compare results before upgrading. See <a href="/insights/llm-evaluation-sets-that-predict-production/">evaluation sets that predict production</a>.</li>
+</ol>
+</section>
+
+<section class="block">
+<h2 id="know-which-model-answered">Know which model answered</h2>
+<p>When behaviour changes, the first question is always which model, at which version, produced the output. The OpenTelemetry generative AI conventions record the requested model and the model version that actually responded on every call, alongside token usage<sup class="cite"><a href="#ref-6">6</a></sup>. With that in your traces, a shift in behaviour can be tied to a model update rather than guessed at.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/openai-model-spec-update-what-builders-should-do/model-version-trace.webp" alt="Trace detail for a chat call showing span attributes including gen_ai.operation.name, gen_ai.request.model, gen_ai.response.model with a dated model version, finish reasons and input and output token counts" width="1400" height="712" loading="lazy"></div><figcaption>Every call records the requested model and the exact version that answered, the evidence you need when behaviour changes. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2024/otel-generative-ai/" target="_blank" rel="noopener">OpenTelemetry blog, Drew Robbins and Liudmila Molkova</a> · CC BY 4.0</span></figcaption></figure>
+<div class="callout"><p>Vendor behaviour is a dependency like any other. Version it, test it and trace it, or you will learn about changes from your users.</p></div>
+</section>
+
+<section class="block">
+<h2 id="a-routine-for-every-model-change">A routine for every model change</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Watch</b><span>Track model, Spec and policy updates from each vendor you use</span></li>
+<li><b>Pin</b><span>Keep production on a known model version until the new one passes</span></li>
+<li class="hl"><b>Evaluate</b><span>Run your evaluation set, including refusals, scope and style cases</span></li>
+<li><b>Compare</b><span>Review differences by task, not by headline score</span></li>
+<li class="hl"><b>Adjust</b><span>Update prompts and guardrails where behaviour moved</span></li>
+<li><b>Roll out</b><span>Shift traffic gradually and watch telemetry by model version</span></li>
+</ol>
+<figcaption>The same routine works for any vendor, not just OpenAI.</figcaption>
+</figure>
+</section>
+
+<section class="block">
+<h2 id="cto-take">CTO take</h2>
+<p>Publishing a detailed Model Spec is useful transparency, and the explicit chain of command will help teams reason about conflicts between their instructions and users'. But the Spec is a statement of intent about a moving target. Teams that ship reliable AI products own their behaviour: explicit prompts, independent controls, evaluations that run on every change and telemetry that names the model behind every answer. Do that, and a vendor's Spec update becomes a routine regression run rather than a production surprise. For the wider week, see the <a href="/insights/tech-news-2026-10-31/">31 October tech news brief</a>.</p>
+</section>
+
+<section class="block">
+<h2 id="how-i-can-help">How I can help</h2>
+<p>I help teams set up model governance: prompt and policy design, evaluation suites and upgrade routines across vendors. I am based in India, the United States and the UAE, working globally. See <a href="/ai-architect/">AI architecture</a> or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://openai.com/index/updated-model-spec/" target="_blank" rel="noopener">An updated Model Spec for more capable and beneficial AI</a><small>OpenAI · 29 Oct 2026</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://model-spec.openai.com/2026-10-29.html" target="_blank" rel="noopener">Model Spec (2026/10/29)</a><small>OpenAI · 29 Oct 2026</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://www.unite.ai/openai-reorganizes-model-spec-around-five-core-behavior-values/" target="_blank" rel="noopener">OpenAI Reorganizes Model Spec Around Five Core Behavior Values</a><small>Unite.AI · Oct 2026</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://betanews.com/article/openai-model-spec-five-values-style-rules/" target="_blank" rel="noopener">OpenAI rebuilds its Model Spec around five core values</a><small>BetaNews · Oct 2026</small></div></li><li id="ref-5"><span class="rn">5</span><div><a href="https://cellcog.ai/blog/openai-model-spec-five-values/" target="_blank" rel="noopener">OpenAI&#x27;s New Model Spec: Five Values, Style Rules Cut</a><small>CellCog · Oct 2026</small></div></li><li id="ref-6"><span class="rn">6</span><div><a href="https://opentelemetry.io/blog/2024/otel-generative-ai/" target="_blank" rel="noopener">OpenTelemetry for Generative AI</a><small>OpenTelemetry blog · 5 Dec 2024</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fopenai-model-spec-update-what-builders-should-do%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fopenai-model-spec-update-what-builders-should-do%2F&amp;text=OpenAI%27s%20new%20Model%20Spec%3A%20what%20it%20changes%20for%20teams%20building%20on%20LLMs%2C%20and%20what%20it%20does%20not" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=OpenAI%27s%20new%20Model%20Spec%3A%20what%20it%20changes%20for%20teams%20building%20on%20LLMs%2C%20and%20what%20it%20does%20not%20https%3A%2F%2Fasksumanta.com%2Finsights%2Fopenai-model-spec-update-what-builders-should-do%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://asksumanta.com/insights/openai-model-spec-update-what-builders-should-do/">Copy link</button></div>
+      <aside class="author-box" aria-label="About the author">
+        <div class="ab-av" aria-hidden="true">SM</div>
+        <div><small>About the author</small><b>Sumanta Mukhopadhyay</b>
+        <p>Fractional CTO, principal engineer and AI architect based in India, the United States and the UAE. Works across ontology and knowledge graphs, production AI, healthcare data platforms and cloud infrastructure.</p>
+        <div class="ab-l"><a href="/about/">More about me</a><a href="/how-i-work/">How I work</a><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a call</a></div></div>
+      </aside>
+      <div class="pnav"><a class="pn prev" href="/insights/tech-news-2026-10-31/"><small>← Previous</small><b>Tech news, 31 October 2026: Binance&#x27;s record hack, Intel&#x27;s guidance shock, open weights at the top end, OpenAI&#x27;s new Model Spec, voice AI consolidation and New York&#x27;s chatbot law</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#what-changed">What changed</a></li><li><a href="#why-it-matters-if-you-build-on-these-models">Why it matters if you build on these models</a></li><li><a href="#five-things-to-do">Five things to do</a></li><li><a href="#know-which-model-answered">Know which model answered</a></li><li><a href="#a-routine-for-every-model-change">A routine for every model change</a></li><li><a href="#cto-take">CTO take</a></li><li><a href="#how-i-can-help">How I can help</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>What is the OpenAI Model Spec?</summary><p>A public document describing how OpenAI intends its models to behave, including how they weigh different instructions. The version published on 29 October 2026 is organised around five values: faithfulness to human intent, harm minimisation, honesty and transparency, human agency, and care.</p></details><details class="rise"><summary>Do OpenAI&#x27;s models already follow the new Spec?</summary><p>Not fully. OpenAI describes the Spec as a target, and has said its models do not yet fully reflect it. Expect behaviour to shift as models are trained towards it.</p></details><details class="rise"><summary>What should teams building on OpenAI models do?</summary><p>Treat the Spec as context, not as a control. Keep your own policy and guardrail layer, write system prompts that state scope and priorities explicitly, and re-run your evaluation set whenever the model or its Spec changes.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/ai-architect/"><small>Service</small><b>AI &amp; LLM architecture</b><span>I design and build AI systems that leadership can trust: grounded in your data, measured by evaluations, governed by your rules and priced so they make sense at scale.</span><i>→</i></a><a class="rcard rise" href="/fractional-cto/"><small>Service</small><b>Fractional CTO</b><span>I work as a part-time CTO for founders, CEOs and boards who need experienced technical judgement now, and a team that can carry it on after I step back.</span><i>→</i></a><a class="rcard rise" href="/insights/tech-news-2026-10-31/"><small>Insight</small><b>Tech news, 31 October 2026: Binance&#x27;s record hack, Intel&#x27;s guidance shock, open weights at the top end, OpenAI&#x27;s new Model Spec, voice AI consolidation and New York&#x27;s chatbot law</b><span>The biggest story is a security one: Binance says a compromised laptop led to the largest crypto theft on record. Around it, Intel&#x27;s outlook rattled chip stocks, frontier-scale open weights arrived from Mistral, OpenAI rewrote the rules its models are meant to follow, a voice AI deal promised to keep a key open-source framework open, and New York moved to regulate chatbots for minors.</span><i>→</i></a><a class="rcard rise" href="/insights/mistral-large-4-open-weights-self-hosting/"><small>Insight</small><b>Mistral Large 4&#x27;s open weights: when running a trillion-parameter model yourself makes sense, and when it does not</b><span>On 29 October, Mistral published the weights of Large 4, a one-trillion-parameter mixture-of-experts model pitched at security teams who want to run it on their own infrastructure. The same day, Canada announced a large equity stake in Cohere to build sovereign AI capacity. Frontier-scale open models are now a real option. Whether they are the right option is an architecture and cost question, not a headline one.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: OpenAI&#x27;s new Model Spec: what it changes for teams building on LLMs, and what it does not">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. Time zones from the Americas and Europe to the Middle East and Asia-Pacific.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
+        <p class="floc">Global, remote-first · based in India, the US &amp; UAE · <a href="/regions/">where I work</a></p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/regions/">Fractional CTO worldwide →</a></li></ul></div>
+      <div class="fc"><h4>Case studies</h4><ul><li><a href="/case-studies/mexico-ecommerce-voice-ai-agents/">Voice AI agents for Mexican e-commerce</a></li><li><a href="/case-studies/singapore-wealth-ai-risk-mas-guidelines/">MAS AI risk guidelines in wealth management</a></li><li><a href="/case-studies/eu-telecom-sovereign-llm-platform/">Sovereign LLM platform for an EU telecom</a></li><li><a href="/case-studies/india-diagnostics-consent-data-platform/">Consent-aware data for Indian diagnostics</a></li><li><a href="/case-studies/#snapshots">Engagement snapshots</a></li><li><a href="/case-studies/">All case studies →</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/openai-model-spec-update-what-builders-should-do/">OpenAI&#x27;s new Model Spec: what it changes for teams building on LLMs, and what it does not</a></li><li><a href="/insights/tech-news-2026-10-31/">Tech news, 31 October 2026: Binance&#x27;s record hack, Intel&#x27;s guidance shock, open weights at the top end, OpenAI&#x27;s new Model Spec, voice AI consolidation and New York&#x27;s chatbot law</a></li><li><a href="/insights/binance-hack-custody-architecture-lessons/">The Binance hack: what a laptop-to-withdrawal attack teaches every platform that moves money</a></li><li><a href="/insights/reddit-logged-in-ai-scraping-content-access/">Reddit goes logged-in: how to protect and monetise valuable content when AI answers the search</a></li><li><a href="/insights/mistral-large-4-open-weights-self-hosting/">Mistral Large 4&#x27;s open weights: when running a trillion-parameter model yourself makes sense, and when it does not</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="/how-i-work/">How I work</a></li>
+        <li><a href="/expertise/">Expertise</a></li>
+        <li><a href="/about/">About</a></li>
+        <li><a href="/play/">Play Orbital Ops</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/privacy/">Privacy &amp; cookies</a><button type="button" class="cookie-link" data-cookie-settings>Cookie settings</button><a href="/subscribe/">RSS</a><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js?v=fddb4ea7bf"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>
