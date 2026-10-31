@@ -1,6 +1,85 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link><description>Anonymised engagements with architecture and flow diagrams</description><language>en-gb</language><lastBuildDate>Sat, 31 Oct 2026 01:05:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/case-studies/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link></image><item><title>From guidelines to plumbing: putting MAS&#x27;s AI risk management guidelines to work at a Singapore wealth manager</title><link>https://asksumanta.com/case-studies/singapore-wealth-ai-risk-mas-guidelines/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/singapore-wealth-ai-risk-mas-guidelines/</guid><pubDate>Sat, 31 Oct 2026 01:05:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>governance</category><category>ai</category><category>observability</category><description>How a Singapore wealth manager can put MAS&#x27;s final AI risk management guidelines into practice: an AI inventory, risk tiers, vendor assessments and lifecycle evidence.</description><content:encoded><![CDATA[<p><em>A Singapore wealth manager had AI everywhere and an inventory nowhere: vendor copilots, a suitability model, generative AI drafting client letters, and agents piloted by operations. MAS&#x27;s final guidelines on AI risk management made the board accountable for all of it. The task was to turn the guidelines into systems that keep the inventory, the controls and the evidence current without a spreadsheet army.</em></p><h2>The situation</h2>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link><description>Anonymised engagements with architecture and flow diagrams</description><language>en-gb</language><lastBuildDate>Sat, 31 Oct 2026 15:50:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/case-studies/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link></image><item><title>Answering in under a breath: voice AI agents for a Mexican e-commerce marketplace</title><link>https://asksumanta.com/case-studies/mexico-ecommerce-voice-ai-agents/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/mexico-ecommerce-voice-ai-agents/</guid><pubDate>Sat, 31 Oct 2026 15:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>ai</category><category>agents</category><category>architecture</category><description>How a Mexican marketplace can run Spanish voice AI agents for order calls on an open framework, with latency budgets, human handover and data rights built in</description><content:encoded><![CDATA[<p><em>A Mexican marketplace took most of its customer calls about one thing: where is my order. Wait times grew every sales season. Voice AI agents could answer those calls, but only if they sounded natural in Mexican Spanish, responded fast enough to feel like a conversation, handed over to people gracefully and respected callers&#x27; data rights. The architecture had to make all four true at once.</em></p><h2>The situation</h2>
+<p>A marketplace in Mexico sold electronics, home goods and fashion from thousands of sellers, with deliveries handled by several carriers. Its contact centre took calls in Spanish, and most of them were about the same few things: where an order was, when it would arrive, how to change the address, how to start a return. During sales seasons, queues grew long enough that callers hung up and tried again, which made the queues longer.</p>
+<p><strong>Why now.</strong> On 29 October 2026, Deepgram announced it is acquiring Daily, the company behind Pipecat, a widely used open-source framework for real-time voice agents<sup class="cite"><a href="#ref-1">1</a></sup>. Both companies said Pipecat will stay under its BSD licence and move to an independent foundation whose steering committee includes Deepgram's competitors<sup class="cite"><a href="#ref-2">2</a></sup>. For a team choosing a voice agent stack, that settled the main worry about building on an open framework. On the legal side, Mexico's new personal data protection law took effect in March 2025<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>, and legal commentary notes a right to object to automated processing that significantly affects people without human involvement<sup class="cite"><a href="#ref-3">3</a></sup>. Callers would always need a route to a person.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>Natural Mexican Spanish</strong>, including regional accents, background noise and code-switching with English product names.</li>
+<li><strong>Conversational speed</strong>: replies quick enough that silence never feels like a dropped call.</li>
+<li><strong>Grounded answers only</strong>: order status from the systems, never from the model's imagination.</li>
+<li><strong>A person on request</strong>, with the conversation so far passed across.</li>
+<li><strong>Clear data rules</strong> for recordings and transcripts, and no lock-in to one speech vendor.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Caller</small><div class="dgm-nodes"><span>Phone<em>SIP trunk</em></span><span>App call button<em>WebRTC</em></span></div></div>
+<div class="dgm-tier"><small>Voice pipeline</small><div class="dgm-nodes"><span class="hl">Pipecat<em>streaming orchestration</em></span><span>Speech-to-text<em>streaming, Spanish models</em></span><span>Text-to-speech<em>streaming, Mexican voice</em></span></div></div>
+<div class="dgm-tier"><small>Reasoning</small><div class="dgm-nodes"><span class="hl">LLM with tool calls<em>structured, narrow tools</em></span><span>Turn-taking<em>interruptions, silence</em></span></div></div>
+<div class="dgm-tier"><small>Tools</small><div class="dgm-nodes"><span>Order lookup<em>verified caller only</em></span><span>Carrier tracking<em>live status</em></span><span>Address change and returns<em>rules first</em></span></div></div>
+<div class="dgm-tier"><small>People</small><div class="dgm-nodes"><span class="hl">Handover to agents<em>summary and transcript</em></span></div></div>
+<div class="dgm-tier"><small>Assure</small><div class="dgm-nodes"><span>Per-stage tracing<em>OpenTelemetry</em></span><span>Evaluations<em>real call samples</em></span><span>Retention rules<em>recordings and transcripts</em></span></div></div>
+</div>
+<figcaption>The framework streams every stage; tools ground every answer; people are one sentence away.</figcaption>
+</figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Answer</b><span>The call connects; the agent says it is an automated assistant and offers a person</span></li>
+<li><b>Verify</b><span>The caller is matched to an order with phone number and a light check</span></li>
+<li class="hl"><b>Understand</b><span>Streaming speech recognition feeds the model as the caller speaks</span></li>
+<li><b>Look up</b><span>The model calls order and carrier tools; it never guesses a status</span></li>
+<li class="hl"><b>Reply</b><span>Speech starts streaming as soon as the first words are ready</span></li>
+<li><b>Hand over</b><span>On request or low confidence, a person takes over with the summary</span></li>
+</ol>
+<figcaption>Streaming at every stage is what makes the pause short enough to feel human.</figcaption>
+</figure>
+
+<h2>The hard part: latency you can feel</h2>
+<p>In text chat, a two-second delay is fine. On a phone call it feels like the line has dropped. The delay a caller hears is the sum of several stages: detecting that they stopped speaking, finishing speech recognition, the model's first tokens, any tool calls, and the first audio from speech synthesis. Each stage looked acceptable alone; together they were too slow.</p>
+<p>The team set a latency budget per stage and traced every call end to end, so each turn showed exactly where the time went, in the same way distributed tracing shows which service in a request is slow<sup class="cite"><a href="#ref-5">5</a></sup>. That made the fixes obvious: stream everything instead of waiting for whole sentences; prefetch the caller's recent orders as soon as they are verified, so the first tool call is usually instant; use a smaller, faster model for routine turns; and play a short natural acknowledgement while a slow carrier API responds.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/mexico-ecommerce-voice-ai-agents/trace-latency.webp" alt="Trace view showing a request's entity map across frontend, cart, product catalogue, currency and feature flag services, with a span timeline below listing each call and its duration" width="1400" height="760" loading="lazy"></div><figcaption>A trace shows where every millisecond of a request goes; the same view, applied to each conversational turn, made latency fixable. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2024/demo-skyscanner/" target="_blank" rel="noopener">OpenTelemetry blog, Jordi Bisbal Ansaldo</a> · CC BY 4.0</span></figcaption></figure>
+<p>Turn-taking was the other half. Callers interrupt, pause mid-sentence and talk over the agent. The framework's interruption handling let the agent stop speaking when the caller started, and tuning silence detection for Spanish speech patterns cut the most awkward moments. See <a href="https://asksumanta.com/insights/llm-model-routing/">model routing</a> and <a href="https://asksumanta.com/insights/prompt-caching-llm-cost-latency/">prompt caching for latency</a>.</p>
+<div class="callout"><p>Voice agents are judged in hundreds of milliseconds. Budget latency per stage, trace every turn, and stream everything that can be streamed.</p></div>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Customer operations</small><ol><li>Top call reasons</li><li class="hl">Handover rules</li><li>Agent coaching</li></ol></div>
+<div class="dgm-lane"><small>Engineering</small><ol><li>Voice pipeline</li><li class="hl">Latency budget and tracing</li><li>Order and carrier tools</li></ol></div>
+<div class="dgm-lane"><small>Legal and privacy</small><ol><li>Disclosure script</li><li>Recording retention</li><li class="hl">Objection and access requests</li></ol></div>
+</div>
+<figcaption>Operations defined what the agent should handle; engineering made it fast; legal made it fair.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Listen</b><ul><li>Call reason analysis</li><li>Evaluation set from real calls</li><li>Provider tests in Spanish</li></ul></div>
+<div><small>Phase 2</small><b>Build</b><ul><li>Pipecat pipeline</li><li>Order and carrier tools</li><li>Handover</li></ul></div>
+<div><small>Phase 3</small><b>Tune</b><ul><li>Latency budget</li><li>Turn-taking</li><li>Shadow calls</li></ul></div>
+<div><small>Phase 4</small><b>Expand</b><ul><li>Off-peak first</li><li>Sales-season readiness</li><li>Returns flow</li></ul></div>
+</div>
+<figcaption>Off-peak hours first, then sales seasons once the latency budget held.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Open-source framework</td><td>A closed voice agent platform</td><td>Swap speech and model providers; no lock-in</td></tr>
+<tr><td>Stream every stage</td><td>Sentence-by-sentence processing</td><td>The only way to stay inside the latency budget</td></tr>
+<tr><td>Narrow tools for order data</td><td>Give the model raw order records</td><td>Grounded answers and less personal data exposed</td></tr>
+<tr><td>Disclose AI and offer a person upfront</td><td>Only hand over on failure</td><td>Trust, and respects the right to object</td></tr>
+<tr><td>Off-peak rollout first</td><td>Launch for a sales season</td><td>Learn under low risk before peak load</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: build the evaluation set from real call recordings before choosing providers. Speech models that tested well on clean audio struggled with real calls. Differently: trace latency per stage from the first prototype, not after the first complaints. Related: <a href="https://asksumanta.com/insights/evaluating-ai-agents-reliability/">evaluating AI agents</a>, <a href="https://asksumanta.com/case-studies/agent-ready-travel-marketplace-sea/">an agent-ready travel marketplace</a>, today's <a href="https://asksumanta.com/insights/tech-news-2026-10-31/">tech news</a> and <a href="https://asksumanta.com/regions/">where I work</a>.</p>
+<p>If you are building voice AI for customers in Mexico or elsewhere in Latin America, see my <a href="https://asksumanta.com/ai-architect/">AI architecture work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/mexico-ecommerce-voice-ai-agents/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>From guidelines to plumbing: putting MAS&#x27;s AI risk management guidelines to work at a Singapore wealth manager</title><link>https://asksumanta.com/case-studies/singapore-wealth-ai-risk-mas-guidelines/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/singapore-wealth-ai-risk-mas-guidelines/</guid><pubDate>Sat, 31 Oct 2026 01:05:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>governance</category><category>ai</category><category>observability</category><description>How a Singapore wealth manager can put MAS&#x27;s final AI risk management guidelines into practice: an AI inventory, risk tiers, vendor assessments and lifecycle evidence.</description><content:encoded><![CDATA[<p><em>A Singapore wealth manager had AI everywhere and an inventory nowhere: vendor copilots, a suitability model, generative AI drafting client letters, and agents piloted by operations. MAS&#x27;s final guidelines on AI risk management made the board accountable for all of it. The task was to turn the guidelines into systems that keep the inventory, the controls and the evidence current without a spreadsheet army.</em></p><h2>The situation</h2>
 <p>A Singapore-based wealth manager served private and affluent clients across Asia. AI had arrived from every direction: a suitability scoring model built in-house, a vendor's generative AI assistant for relationship managers, a document tool that drafted client letters, transaction monitoring with machine learning inside, and an operations pilot using AI agents to reconcile statements. Risk kept a short spreadsheet of "AI models". Nobody believed it was complete.</p>
 <p><strong>Why now.</strong> The Monetary Authority of Singapore (MAS) issued its final Guidelines on Artificial Intelligence Risk Management on 7 October 2026<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>. Published summaries describe guidelines that cover all forms of AI, including generative AI and agents, on a risk-proportionate basis; that put boards and senior management in charge of AI risk appetite and oversight; and that keep the institution accountable for AI bought from vendors<sup class="cite"><a href="#ref-2">2</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>. Commentary reports transition periods into 2027 and 2028<sup class="cite"><a href="#ref-3">3</a></sup>. The authoritative text sits with MAS<sup class="cite"><a href="#ref-4">4</a></sup>. The board wanted to know what the firm actually used, how risky each use was, and how it would know when something went wrong.</p>
 
@@ -4013,88 +4092,4 @@
 
 <h2>What I'd do again, and differently</h2>
 <p>Again: start with the decision record and event stream, because everything else (reporting, audit, provider status checks) hangs off it. Differently: bring provider-side EHR partners into testing earlier. Real Claim bundles from real ordering workflows surface mapping gaps that synthetic tests never do.</p>
-<p>If you are planning for CMS-0057-F, the <a href="https://asksumanta.com/healthcare-data-architecture/">healthcare data architecture</a> page describes how I run these engagements, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/payer-prior-authorisation-fhir-apis/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Getting an ambient AI scribe through security review and into the EHR</title><link>https://asksumanta.com/case-studies/ambient-clinical-documentation-private-ai/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/ambient-clinical-documentation-private-ai/</guid><pubDate>Wed, 28 Oct 2026 01:10:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>healthcare</category><category>ai</category><category>llm</category><category>fhir</category><category>security</category><description>How a provider group moved an AI scribe past security review: private speech and LLM inference, SMART on FHIR scopes, clinician sign-off and a full audit trail.</description><content:encoded><![CDATA[<p><em>Clinicians were finishing notes in the evening, and every AI scribe pilot had stalled in security review. The goal was a private ambient documentation pipeline that drafted notes for clinician sign-off, ran on infrastructure the organisation controlled, and could prove what happened to every recording.</em></p><h2>The situation</h2>
-<p>A multi-specialty provider group had a documentation problem everyone could describe: clinicians finishing notes after clinic, and patients getting less eye contact than they deserved. Ambient AI scribes looked like the answer, and several vendor pilots had been started. Each one stalled in the same place: security and privacy review. Reviewers could not get clear answers about where audio went, who could see transcripts, how long anything was kept, or how a wrong sentence in a note would be caught.</p>
-<p>The ask was not "pick a better vendor". It was to design a pipeline the organisation could own end to end, so those questions had answers before the first recording.</p>
-
-<h2>What had to be true</h2>
-<ul>
-<li><strong>Consent first</strong>: no recording without a recorded patient consent, and an easy way to stop.</li>
-<li><strong>Data stays inside the boundary</strong>: audio, transcripts and drafts processed on infrastructure the organisation controls.</li>
-<li><strong>A human signs every note</strong>: the model drafts, the clinician decides.</li>
-<li><strong>Least privilege into the EHR</strong>: the app sees the current patient and encounter, nothing more.</li>
-<li><strong>Provable history</strong>: who recorded, what was generated, what was changed, what was filed.</li>
-</ul>
-
-<h2>Architecture</h2>
-<p>The design split the problem into capture, private inference, review and filing, with audit running across all of them.</p>
-<figure class="dgm">
-<div class="dgm-stack">
-<div class="dgm-tier"><small>Capture</small><div class="dgm-nodes"><span>Clinic device app<em>consent check</em></span><span>Encrypted upload<em>short-lived tokens</em></span><span>Session context<em>patient, encounter</em></span></div></div>
-<div class="dgm-tier"><small>Private inference</small><div class="dgm-nodes"><span class="hl">Speech recognition<em>Whisper-class, private GPUs</em></span><span>Diarisation<em>clinician vs patient</em></span><span class="hl">Note drafting<em>LLM on vLLM</em></span></div></div>
-<div class="dgm-tier"><small>Review</small><div class="dgm-nodes"><span>Draft with sources<em>sentence to transcript links</em></span><span>Clinician editor<em>accept, edit, reject</em></span></div></div>
-<div class="dgm-tier"><small>EHR</small><div class="dgm-nodes"><span>SMART on FHIR launch<em>scoped access</em></span><span>DocumentReference<em>signed note only</em></span></div></div>
-<div class="dgm-tier"><small>Assure</small><div class="dgm-nodes"><span class="hl">Audit trail<em>AuditEvent per action</em></span><span>Evaluation harness<em>release gate</em></span><span>Retention jobs<em>audio deleted on schedule</em></span></div></div>
-</div>
-<figcaption>Layered architecture: inference stays private, the clinician sits between the model and the record, and audit spans every tier.</figcaption>
-</figure>
-<p>Speech recognition used a Whisper-class model, a family trained on large-scale weakly supervised audio and released with open weights<sup class="cite"><a href="#ref-1">1</a></sup>, which made private hosting practical. Note drafting ran on vLLM, whose PagedAttention memory management is designed for high-throughput serving on limited GPU memory<sup class="cite"><a href="#ref-2">2</a></sup>. Serving patterns are in <a href="https://asksumanta.com/insights/llm-inference-serving-vllm/">LLM inference serving with vLLM</a> and <a href="https://asksumanta.com/insights/private-llm-on-prem/">private LLMs on-premises</a>.</p>
-
-<h2>The data flow, end to end</h2>
-<figure class="dgm">
-<ol class="dgm-flow g3">
-<li><b>Consent</b><span>App checks recorded consent for this encounter before the microphone is enabled</span></li>
-<li><b>Capture</b><span>Audio encrypted on device and uploaded against the encounter context</span></li>
-<li><b>Transcribe</b><span>Private ASR with speaker separation; transcript stored with the session</span></li>
-<li class="hl"><b>Draft</b><span>LLM drafts the note in the specialty template, each sentence linked to transcript spans</span></li>
-<li class="hl"><b>Sign</b><span>Clinician reviews, edits and signs; unsupported sentences are flagged for attention</span></li>
-<li><b>File</b><span>Signed note written to the EHR; audio deleted on the agreed retention schedule</span></li>
-</ol>
-<figcaption>The model never writes to the record. Only a signed note crosses into the EHR.</figcaption>
-</figure>
-<p>The app launched inside the EHR using SMART on FHIR, requesting only the patient and encounter context and the narrow scopes it needed<sup class="cite"><a href="#ref-3">3</a></sup>. The signed note was filed as a FHIR DocumentReference<sup class="cite"><a href="#ref-4">4</a></sup>. More on scope design in <a href="https://asksumanta.com/insights/smart-on-fhir-ai-apps-authorisation/">SMART on FHIR authorisation for AI apps</a>.</p>
-
-<h2>The hard part: trust in the draft, not the transcript</h2>
-<p>Transcription quality was rarely the argument. The concern was a fluent note that said something the patient never said. Three choices addressed it:</p>
-<ul>
-<li><strong>Grounded drafting</strong>: every sentence in the draft carries a link to the transcript span it came from, and sentences without one are highlighted.</li>
-<li><strong>Clinician-scored evaluation</strong>: a curated set of consented encounters, scored by clinicians for omissions and unsupported statements, gated every model and prompt change. See <a href="https://asksumanta.com/insights/llm-evaluation-sets-that-predict-production/">evaluation sets that predict production</a>.</li>
-<li><strong>Edit capture</strong>: what clinicians changed was recorded, so recurring corrections fed back into templates and the evaluation set.</li>
-</ul>
-<div class="callout"><p>An AI scribe is approved on the strength of its failure handling. Reviewers need to see how a wrong sentence is caught, not how rarely it appears in a demo.</p></div>
-
-<h2>How it ran</h2>
-<figure class="dgm">
-<div class="dgm-lanes">
-<div class="dgm-lane"><small>Clinician</small><ol><li>Confirms consent</li><li class="hl">Reviews linked draft</li><li>Signs note</li></ol></div>
-<div class="dgm-lane"><small>Pipeline</small><ol><li>Transcribes privately</li><li>Drafts with sources</li><li>Files signed note</li></ol></div>
-<div class="dgm-lane"><small>Governance</small><ol><li>Audit every action</li><li class="hl">Gate releases on evaluation</li><li>Enforce retention</li></ol></div>
-</div>
-<figcaption>Who does what in a single encounter.</figcaption>
-</figure>
-<p>Audit records followed the shape of the FHIR AuditEvent resource (who, what, when, outcome), so the trail could be queried alongside other EHR audit data<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
-<figure class="dgm">
-<div class="dgm-phases">
-<div><small>Phase 1</small><b>Review first</b><ul><li>Threat model with security</li><li>Consent and retention policy</li><li>Data flow sign-off</li></ul></div>
-<div><small>Phase 2</small><b>Private pipeline</b><ul><li>ASR and LLM on private GPUs</li><li>SMART launch and scopes</li><li>Audit trail</li></ul></div>
-<div><small>Phase 3</small><b>Clinical pilot</b><ul><li>Small clinician cohort</li><li>Evaluation set from consented visits</li><li>Template tuning</li></ul></div>
-<div><small>Phase 4</small><b>Expand and hand off</b><ul><li>More specialties</li><li>Release gate runbook</li><li>Internal ownership</li></ul></div>
-</div>
-<figcaption>Security review was the first deliverable, not the last hurdle.</figcaption>
-</figure>
-
-<h2>Key decisions and trade-offs</h2>
-<table class="tbl">
-<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
-<tbody>
-<tr><td>Private inference</td><td>Hosted scribe API</td><td>Answers data residency and access questions directly; costs GPU operations effort</td></tr>
-<tr><td>Clinician signs every note</td><td>Auto-file low-risk notes</td><td>Keeps accountability with the clinician and the model out of the record</td></tr>
-<tr><td>Sentence-level source links</td><td>Free-text summary</td><td>Makes unsupported statements visible during review</td></tr>
-<tr><td>Narrow SMART scopes</td><td>Broad backend access</td><td>Least privilege that reviewers can verify</td></tr>
-<tr><td>Evaluation as release gate</td><td>Ad hoc spot checks</td><td>Model and prompt changes cannot silently regress</td></tr>
-</tbody>
-</table>
-
-<h2>What I'd do again, and differently</h2>
-<p>Again: take the design to the security board before building anything, and treat evaluation as infrastructure. Differently: involve clinicians in template design earlier. Most edits were about structure and specialty conventions, not model accuracy, and that work is cheaper before the pilot than during it. The broader architecture patterns are in <a href="https://asksumanta.com/insights/ambient-ai-scribes-architecture/">ambient AI scribe architecture</a>.</p>
-<p>If you have an AI pilot stuck in review, the <a href="https://asksumanta.com/ai-architect/">AI architect</a> page describes how I approach these engagements, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/ambient-clinical-documentation-private-ai/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
+<p>If you are planning for CMS-0057-F, the <a href="https://asksumanta.com/healthcare-data-architecture/">healthcare data architecture</a> page describes how I run these engagements, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/payer-prior-authorisation-fhir-apis/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>

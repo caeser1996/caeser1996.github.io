@@ -1,6 +1,85 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link><description>Fractional CTO and AI architect: insights, case studies and daily tech news.</description><language>en-gb</language><lastBuildDate>Sat, 31 Oct 2026 08:55:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link></image><item><title>Tech news, 31 October 2026: Binance&#x27;s record hack, Intel&#x27;s guidance shock, open weights at the top end, OpenAI&#x27;s new Model Spec, voice AI consolidation and New York&#x27;s chatbot law</title><link>https://asksumanta.com/insights/tech-news-2026-10-31/</link><guid isPermaLink="true">https://asksumanta.com/insights/tech-news-2026-10-31/</guid><pubDate>Sat, 31 Oct 2026 08:55:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>security</category><category>ai</category><category>governance</category><description>A CTO&#x27;s take: Binance&#x27;s record hack, Intel&#x27;s weak outlook, Mistral&#x27;s open 1T model, OpenAI&#x27;s new Model Spec, Deepgram buying Daily and New York&#x27;s chatbot law.</description><content:encoded><![CDATA[<p><em>The biggest story is a security one: Binance says a compromised laptop led to the largest crypto theft on record. Around it, Intel&#x27;s outlook rattled chip stocks, frontier-scale open weights arrived from Mistral, OpenAI rewrote the rules its models are meant to follow, a voice AI deal promised to keep a key open-source framework open, and New York moved to regulate chatbots for minors.</em></p><p>Today's brief covers stories from 28 to 30 October that earlier briefs did not include. Several have deeper analyses linked below.</p>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link><description>Fractional CTO and AI architect: insights, case studies and daily tech news.</description><language>en-gb</language><lastBuildDate>Sat, 31 Oct 2026 15:50:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link></image><item><title>Answering in under a breath: voice AI agents for a Mexican e-commerce marketplace</title><link>https://asksumanta.com/case-studies/mexico-ecommerce-voice-ai-agents/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/mexico-ecommerce-voice-ai-agents/</guid><pubDate>Sat, 31 Oct 2026 15:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>ai</category><category>agents</category><category>architecture</category><description>How a Mexican marketplace can run Spanish voice AI agents for order calls on an open framework, with latency budgets, human handover and data rights built in</description><content:encoded><![CDATA[<p><em>A Mexican marketplace took most of its customer calls about one thing: where is my order. Wait times grew every sales season. Voice AI agents could answer those calls, but only if they sounded natural in Mexican Spanish, responded fast enough to feel like a conversation, handed over to people gracefully and respected callers&#x27; data rights. The architecture had to make all four true at once.</em></p><h2>The situation</h2>
+<p>A marketplace in Mexico sold electronics, home goods and fashion from thousands of sellers, with deliveries handled by several carriers. Its contact centre took calls in Spanish, and most of them were about the same few things: where an order was, when it would arrive, how to change the address, how to start a return. During sales seasons, queues grew long enough that callers hung up and tried again, which made the queues longer.</p>
+<p><strong>Why now.</strong> On 29 October 2026, Deepgram announced it is acquiring Daily, the company behind Pipecat, a widely used open-source framework for real-time voice agents<sup class="cite"><a href="#ref-1">1</a></sup>. Both companies said Pipecat will stay under its BSD licence and move to an independent foundation whose steering committee includes Deepgram's competitors<sup class="cite"><a href="#ref-2">2</a></sup>. For a team choosing a voice agent stack, that settled the main worry about building on an open framework. On the legal side, Mexico's new personal data protection law took effect in March 2025<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>, and legal commentary notes a right to object to automated processing that significantly affects people without human involvement<sup class="cite"><a href="#ref-3">3</a></sup>. Callers would always need a route to a person.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>Natural Mexican Spanish</strong>, including regional accents, background noise and code-switching with English product names.</li>
+<li><strong>Conversational speed</strong>: replies quick enough that silence never feels like a dropped call.</li>
+<li><strong>Grounded answers only</strong>: order status from the systems, never from the model's imagination.</li>
+<li><strong>A person on request</strong>, with the conversation so far passed across.</li>
+<li><strong>Clear data rules</strong> for recordings and transcripts, and no lock-in to one speech vendor.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Caller</small><div class="dgm-nodes"><span>Phone<em>SIP trunk</em></span><span>App call button<em>WebRTC</em></span></div></div>
+<div class="dgm-tier"><small>Voice pipeline</small><div class="dgm-nodes"><span class="hl">Pipecat<em>streaming orchestration</em></span><span>Speech-to-text<em>streaming, Spanish models</em></span><span>Text-to-speech<em>streaming, Mexican voice</em></span></div></div>
+<div class="dgm-tier"><small>Reasoning</small><div class="dgm-nodes"><span class="hl">LLM with tool calls<em>structured, narrow tools</em></span><span>Turn-taking<em>interruptions, silence</em></span></div></div>
+<div class="dgm-tier"><small>Tools</small><div class="dgm-nodes"><span>Order lookup<em>verified caller only</em></span><span>Carrier tracking<em>live status</em></span><span>Address change and returns<em>rules first</em></span></div></div>
+<div class="dgm-tier"><small>People</small><div class="dgm-nodes"><span class="hl">Handover to agents<em>summary and transcript</em></span></div></div>
+<div class="dgm-tier"><small>Assure</small><div class="dgm-nodes"><span>Per-stage tracing<em>OpenTelemetry</em></span><span>Evaluations<em>real call samples</em></span><span>Retention rules<em>recordings and transcripts</em></span></div></div>
+</div>
+<figcaption>The framework streams every stage; tools ground every answer; people are one sentence away.</figcaption>
+</figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Answer</b><span>The call connects; the agent says it is an automated assistant and offers a person</span></li>
+<li><b>Verify</b><span>The caller is matched to an order with phone number and a light check</span></li>
+<li class="hl"><b>Understand</b><span>Streaming speech recognition feeds the model as the caller speaks</span></li>
+<li><b>Look up</b><span>The model calls order and carrier tools; it never guesses a status</span></li>
+<li class="hl"><b>Reply</b><span>Speech starts streaming as soon as the first words are ready</span></li>
+<li><b>Hand over</b><span>On request or low confidence, a person takes over with the summary</span></li>
+</ol>
+<figcaption>Streaming at every stage is what makes the pause short enough to feel human.</figcaption>
+</figure>
+
+<h2>The hard part: latency you can feel</h2>
+<p>In text chat, a two-second delay is fine. On a phone call it feels like the line has dropped. The delay a caller hears is the sum of several stages: detecting that they stopped speaking, finishing speech recognition, the model's first tokens, any tool calls, and the first audio from speech synthesis. Each stage looked acceptable alone; together they were too slow.</p>
+<p>The team set a latency budget per stage and traced every call end to end, so each turn showed exactly where the time went, in the same way distributed tracing shows which service in a request is slow<sup class="cite"><a href="#ref-5">5</a></sup>. That made the fixes obvious: stream everything instead of waiting for whole sentences; prefetch the caller's recent orders as soon as they are verified, so the first tool call is usually instant; use a smaller, faster model for routine turns; and play a short natural acknowledgement while a slow carrier API responds.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/mexico-ecommerce-voice-ai-agents/trace-latency.webp" alt="Trace view showing a request's entity map across frontend, cart, product catalogue, currency and feature flag services, with a span timeline below listing each call and its duration" width="1400" height="760" loading="lazy"></div><figcaption>A trace shows where every millisecond of a request goes; the same view, applied to each conversational turn, made latency fixable. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2024/demo-skyscanner/" target="_blank" rel="noopener">OpenTelemetry blog, Jordi Bisbal Ansaldo</a> · CC BY 4.0</span></figcaption></figure>
+<p>Turn-taking was the other half. Callers interrupt, pause mid-sentence and talk over the agent. The framework's interruption handling let the agent stop speaking when the caller started, and tuning silence detection for Spanish speech patterns cut the most awkward moments. See <a href="https://asksumanta.com/insights/llm-model-routing/">model routing</a> and <a href="https://asksumanta.com/insights/prompt-caching-llm-cost-latency/">prompt caching for latency</a>.</p>
+<div class="callout"><p>Voice agents are judged in hundreds of milliseconds. Budget latency per stage, trace every turn, and stream everything that can be streamed.</p></div>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Customer operations</small><ol><li>Top call reasons</li><li class="hl">Handover rules</li><li>Agent coaching</li></ol></div>
+<div class="dgm-lane"><small>Engineering</small><ol><li>Voice pipeline</li><li class="hl">Latency budget and tracing</li><li>Order and carrier tools</li></ol></div>
+<div class="dgm-lane"><small>Legal and privacy</small><ol><li>Disclosure script</li><li>Recording retention</li><li class="hl">Objection and access requests</li></ol></div>
+</div>
+<figcaption>Operations defined what the agent should handle; engineering made it fast; legal made it fair.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Listen</b><ul><li>Call reason analysis</li><li>Evaluation set from real calls</li><li>Provider tests in Spanish</li></ul></div>
+<div><small>Phase 2</small><b>Build</b><ul><li>Pipecat pipeline</li><li>Order and carrier tools</li><li>Handover</li></ul></div>
+<div><small>Phase 3</small><b>Tune</b><ul><li>Latency budget</li><li>Turn-taking</li><li>Shadow calls</li></ul></div>
+<div><small>Phase 4</small><b>Expand</b><ul><li>Off-peak first</li><li>Sales-season readiness</li><li>Returns flow</li></ul></div>
+</div>
+<figcaption>Off-peak hours first, then sales seasons once the latency budget held.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Open-source framework</td><td>A closed voice agent platform</td><td>Swap speech and model providers; no lock-in</td></tr>
+<tr><td>Stream every stage</td><td>Sentence-by-sentence processing</td><td>The only way to stay inside the latency budget</td></tr>
+<tr><td>Narrow tools for order data</td><td>Give the model raw order records</td><td>Grounded answers and less personal data exposed</td></tr>
+<tr><td>Disclose AI and offer a person upfront</td><td>Only hand over on failure</td><td>Trust, and respects the right to object</td></tr>
+<tr><td>Off-peak rollout first</td><td>Launch for a sales season</td><td>Learn under low risk before peak load</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: build the evaluation set from real call recordings before choosing providers. Speech models that tested well on clean audio struggled with real calls. Differently: trace latency per stage from the first prototype, not after the first complaints. Related: <a href="https://asksumanta.com/insights/evaluating-ai-agents-reliability/">evaluating AI agents</a>, <a href="https://asksumanta.com/case-studies/agent-ready-travel-marketplace-sea/">an agent-ready travel marketplace</a>, today's <a href="https://asksumanta.com/insights/tech-news-2026-10-31/">tech news</a> and <a href="https://asksumanta.com/regions/">where I work</a>.</p>
+<p>If you are building voice AI for customers in Mexico or elsewhere in Latin America, see my <a href="https://asksumanta.com/ai-architect/">AI architecture work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/mexico-ecommerce-voice-ai-agents/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Tech news, 31 October 2026: Binance&#x27;s record hack, Intel&#x27;s guidance shock, open weights at the top end, OpenAI&#x27;s new Model Spec, voice AI consolidation and New York&#x27;s chatbot law</title><link>https://asksumanta.com/insights/tech-news-2026-10-31/</link><guid isPermaLink="true">https://asksumanta.com/insights/tech-news-2026-10-31/</guid><pubDate>Sat, 31 Oct 2026 08:55:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>security</category><category>ai</category><category>governance</category><description>A CTO&#x27;s take: Binance&#x27;s record hack, Intel&#x27;s weak outlook, Mistral&#x27;s open 1T model, OpenAI&#x27;s new Model Spec, Deepgram buying Daily and New York&#x27;s chatbot law.</description><content:encoded><![CDATA[<p><em>The biggest story is a security one: Binance says a compromised laptop led to the largest crypto theft on record. Around it, Intel&#x27;s outlook rattled chip stocks, frontier-scale open weights arrived from Mistral, OpenAI rewrote the rules its models are meant to follow, a voice AI deal promised to keep a key open-source framework open, and New York moved to regulate chatbots for minors.</em></p><p>Today's brief covers stories from 28 to 30 October that earlier briefs did not include. Several have deeper analyses linked below.</p>
 
 <figure class="dgm">
 <div class="dgm-stack">
@@ -3464,88 +3543,4 @@
 
 <h2>What I'd do again, and differently</h2>
 <p>Again: start with ownership and allocation, and put every improvement into the templates so it spreads automatically. Differently: agree unit cost metrics with product leaders earlier. Cost per team tells you who spends; cost per customer action tells you whether the spend is worth it.</p>
-<p>If cloud costs are outgrowing the business, my <a href="https://asksumanta.com/fractional-cto/">fractional CTO</a> work covers platform and FinOps programmes like this, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/kubernetes-finops-platform-engineering/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>From MCP servers on laptops to a governed enterprise agent platform</title><link>https://asksumanta.com/case-studies/enterprise-mcp-agent-platform/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/enterprise-mcp-agent-platform/</guid><pubDate>Wed, 28 Oct 2026 05:20:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>ai</category><category>agents</category><category>mcp</category><category>security</category><category>platform</category><description>How an enterprise can move from ad hoc MCP servers on laptops to a governed agent platform: a private registry, central identity, scoped tokens, gateways and audit.</description><content:encoded><![CDATA[<p><em>Engineers had connected assistants to dozens of MCP servers, some internal, some from the internet, most with broad tokens. Security wanted to stop it; product teams wanted more of it. The goal was a platform that made the approved path the easiest one.</em></p><h2>The situation</h2>
-<p>An organisation had embraced AI assistants faster than it had governed them. Developers connected IDE assistants to MCP servers for the code host, the ticketing system and the data warehouse. Some servers were built internally in an afternoon; others were installed from public repositories. Many used personal access tokens with wide permissions, stored in local configuration files. Nobody could say which servers were in use, who had approved them, or what they had done.</p>
-<p>Security's first instinct was to block MCP outright. Leadership's instinct was the opposite: agents were becoming central to engineering and operations, and a ban would simply push usage further out of sight.</p>
-
-<h2>What had to be true</h2>
-<ul>
-<li><strong>One place to find approved servers</strong>, discoverable by the clients people already use.</li>
-<li><strong>No long-lived shared tokens.</strong> Access flows through the identity provider, per user, with the narrowest scopes that work.</li>
-<li><strong>Every tool call is attributable</strong> to a person, an agent, a server and a version.</li>
-<li><strong>Writes and destructive actions need explicit, visible consent.</strong></li>
-<li><strong>Publishing a new internal server is easy</strong> if it follows the standard; exceptions are rare and visible.</li>
-</ul>
-
-<h2>Architecture</h2>
-<figure class="dgm">
-<div class="dgm-stack">
-<div class="dgm-tier"><small>Clients</small><div class="dgm-nodes"><span>IDE assistants<em>developer tools</em></span><span>Chat assistants<em>knowledge work</em></span><span>Agent runtime<em>background jobs</em></span></div></div>
-<div class="dgm-tier"><small>Discover</small><div class="dgm-nodes"><span class="hl">Private MCP registry<em>approved, pinned versions</em></span><span>Server metadata<em>owner, data class, scopes</em></span></div></div>
-<div class="dgm-tier"><small>Control</small><div class="dgm-nodes"><span class="hl">MCP gateway<em>authn, policy, rate limits</em></span><span>Identity provider<em>SSO, scoped tokens</em></span><span>Policy as code<em>who, which tools, which data</em></span></div></div>
-<div class="dgm-tier"><small>Servers</small><div class="dgm-nodes"><span>Code and tickets<em>internal servers</em></span><span>Data warehouse<em>read-only views</em></span><span>Docs and search<em>permission-aware</em></span><span>Vetted public servers<em>mirrored, pinned</em></span></div></div>
-<div class="dgm-tier"><small>Observe</small><div class="dgm-nodes"><span class="hl">Audit log<em>user, agent, tool, args hash</em></span><span>Traces and metrics<em>OpenTelemetry</em></span><span>Usage reports<em>prune unused servers</em></span></div></div>
-</div>
-<figcaption>The registry decides what exists; the gateway decides who can use it; the audit trail shows what happened.</figcaption>
-</figure>
-<p>The design followed the ecosystem's own shape: the official MCP Registry is intended as an upstream that organisations build private subregistries on, adding internal servers that should never appear publicly<sup class="cite"><a href="#ref-3">3</a></sup>. The approach is described in more depth in <a href="https://asksumanta.com/insights/mcp-registry-enterprise-subregistry/">running an enterprise MCP registry</a>.</p>
-
-<h2>The data flow, end to end</h2>
-<figure class="dgm">
-<ol class="dgm-flow g3">
-<li><b>Discover</b><span>Client lists servers from the private registry, filtered by the user's groups</span></li>
-<li class="hl"><b>Authorise</b><span>User signs in through the identity provider; token issued for that server only</span></li>
-<li><b>Connect</b><span>Client reaches the server through the gateway, which checks token audience and policy</span></li>
-<li><b>Call a tool</b><span>Read tools run directly; write tools trigger a consent prompt</span></li>
-<li class="hl"><b>Act downstream</b><span>Server uses its own credentials or a token exchange, never the client's token</span></li>
-<li><b>Record</b><span>Call, result status and versions logged and traced</span></li>
-</ol>
-<figcaption>Each hop has one job, so a failure at any step is easy to see and explain.</figcaption>
-</figure>
-<p>Step five matters most. The MCP security guidance names token passthrough, where a server forwards a token it received from the client to a downstream API, as an anti-pattern that breaks OAuth security boundaries, and the authorisation specification forbids it<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. Every server on the platform validates that tokens were issued for it, and calls downstream systems with its own, separately scoped credentials.</p>
-
-<h2>The hard part: scopes people would actually accept</h2>
-<p>The technical controls were well understood. The difficult part was scope design. The MCP guidance warns that over-broad scopes granted up front expand the blast radius of a stolen token, make revocation disruptive and create consent dialogs that users abandon; it recommends a progressive, least-privilege model starting with a minimal read-only set<sup class="cite"><a href="#ref-1">1</a></sup>. In practice that meant:</p>
-<ul>
-<li>A small, named set of scopes per server, starting with read-only discovery.</li>
-<li>Write and admin scopes requested only when a user first invokes a tool that needs them.</li>
-<li>Central control through the identity provider using the authorisation extensions, so administrators can grant and revoke access in one place<sup class="cite"><a href="#ref-4">4</a></sup>.</li>
-<li>Metrics on which scopes are requested and used, so creep is visible.</li>
-</ul>
-<div class="callout"><p>Least privilege only works if the least-privilege path is also the least-friction path. Otherwise people find a personal token and work around it.</p></div>
-
-<h2>How it ran</h2>
-<figure class="dgm">
-<div class="dgm-lanes">
-<div class="dgm-lane"><small>Platform</small><ol><li>Registry and gateway</li><li class="hl">Server template and CI checks</li><li>Usage and audit reporting</li></ol></div>
-<div class="dgm-lane"><small>Security</small><ol><li>Review criteria</li><li>Scope and policy design</li><li class="hl">Approve and pin versions</li></ol></div>
-<div class="dgm-lane"><small>Server teams</small><ol><li>Build from the template</li><li>Declare scopes and data class</li><li>Own and patch their server</li></ol></div>
-</div>
-<figcaption>Platform builds the road, security sets the rules, teams own what they publish.</figcaption>
-</figure>
-<figure class="dgm">
-<div class="dgm-phases">
-<div><small>Phase 1</small><b>Inventory</b><ul><li>Find servers in use</li><li>Classify by data and risk</li><li>Agree review criteria</li></ul></div>
-<div><small>Phase 2</small><b>Paved road</b><ul><li>Private registry</li><li>Gateway and SSO</li><li>Server template</li></ul></div>
-<div><small>Phase 3</small><b>Migrate</b><ul><li>Top servers first</li><li>Retire personal tokens</li><li>Point clients at registry</li></ul></div>
-<div><small>Phase 4</small><b>Enforce</b><ul><li>Block unregistered sources</li><li>Usage-based pruning</li><li>Regular re-review</li></ul></div>
-</div>
-<figcaption>Enforcement came last, once the approved path was already the convenient one.</figcaption>
-</figure>
-
-<h2>Key decisions and trade-offs</h2>
-<table class="tbl">
-<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
-<tbody>
-<tr><td>Private registry mirroring the public one</td><td>Allow-list in a wiki</td><td>Clients can discover from it, and versions can be pinned</td></tr>
-<tr><td>Gateway in front of remote servers</td><td>Each server enforces policy alone</td><td>One place for authentication, policy, rate limits and audit</td></tr>
-<tr><td>Servers use their own downstream credentials</td><td>Pass client tokens through</td><td>Token passthrough is forbidden and breaks audit and audience checks</td></tr>
-<tr><td>Progressive scopes</td><td>Grant everything at first login</td><td>Smaller blast radius and consent people actually read</td></tr>
-<tr><td>Enforce after migration</td><td>Block first, build later</td><td>Avoids pushing usage underground</td></tr>
-</tbody>
-</table>
-<p>The prompt injection and excessive agency risks in the OWASP Top 10 for LLM applications shaped the server template, with tool descriptions treated as untrusted and write tools gated by consent<sup class="cite"><a href="#ref-5">5</a></sup>. The detailed controls are in <a href="https://asksumanta.com/insights/securing-mcp-servers-checklist/">securing MCP servers</a>, <a href="https://asksumanta.com/insights/prompt-injection-defence-for-agents/">prompt injection defence for agents</a> and <a href="https://asksumanta.com/insights/mcp-extensions-enterprise-strategy/">MCP extensions strategy</a>.</p>
-
-<h2>What I'd do again, and differently</h2>
-<p>Again: start with an inventory and make the approved path faster than the unapproved one before enforcing anything. Differently: publish the server template and its CI checks in the first phase. Teams wanted to build compliant servers early, and every week without a template produced another one-off that later needed migrating.</p>
-<p>If agents are spreading faster than your controls, my <a href="https://asksumanta.com/ai-architect/">AI architecture work</a> describes how I approach agent platforms, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/enterprise-mcp-agent-platform/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
+<p>If cloud costs are outgrowing the business, my <a href="https://asksumanta.com/fractional-cto/">fractional CTO</a> work covers platform and FinOps programmes like this, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/kubernetes-finops-platform-engineering/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
