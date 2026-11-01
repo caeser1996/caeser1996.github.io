@@ -1,6 +1,72 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights</title><link>https://asksumanta.com/</link><description>Articles on AI, data, cloud and technology leadership</description><language>en-gb</language><lastBuildDate>Sun, 01 Nov 2026 08:55:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/insights/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights</title><link>https://asksumanta.com/</link></image><item><title>Tech news, 1 November 2026: a backdoored Claude Code extension, a month of AI platform breaches, Binance attribution and Qwen in Apple Intelligence</title><link>https://asksumanta.com/insights/tech-news-2026-11-01/</link><guid isPermaLink="true">https://asksumanta.com/insights/tech-news-2026-11-01/</guid><pubDate>Sun, 01 Nov 2026 08:55:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>security</category><category>ai</category><category>platform</category><description>A CTO&#x27;s take: a trojanised Claude Code extension in Cursor&#x27;s marketplace, Wiz&#x27;s Black October report, North Korea linked to Binance, and Qwen in Apple Intelligence.</description><content:encoded><![CDATA[<p><em>A security-heavy end to October. A tampered build of a popular AI coding extension tried to plant SSH backdoors on developer machines, a Wiz report described a month of breaches at AI developer platforms feeding a market in stolen model access, and blockchain analysts tied the Binance theft to North Korea. Plus Apple&#x27;s route into China&#x27;s AI market.</em></p><p>Today's brief covers stories from 29 to 31 October that earlier briefs did not include.</p>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights</title><link>https://asksumanta.com/</link><description>Articles on AI, data, cloud and technology leadership</description><language>en-gb</language><lastBuildDate>Sun, 01 Nov 2026 21:25:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/insights/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights</title><link>https://asksumanta.com/</link></image><item><title>LLMjacking after Black October: how to stop stolen AI keys becoming somebody else&#x27;s compute budget</title><link>https://asksumanta.com/insights/llmjacking-stolen-ai-keys-black-october/</link><guid isPermaLink="true">https://asksumanta.com/insights/llmjacking-stolen-ai-keys-black-october/</guid><pubDate>Sun, 01 Nov 2026 21:25:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>security</category><category>ai</category><category>finops</category><description>Wiz&#x27;s Black October report shows stolen AI keys fuelling LLMjacking. A CTO&#x27;s take on where keys leak, how to cap damage and what to monitor across your AI stack.</description><content:encoded><![CDATA[<p><em>On 30 October, Wiz described a month of breaches at AI developer platforms, with stored AI credentials stolen and model access resold. LLMjacking is not new, but AI keys have quietly become some of the most valuable secrets a company holds, and many teams still treat them like a config value. Here is where they leak, how to limit the damage, and what to watch.</em></p><section class="block">
+<h2>What happened</h2>
+<p>Wiz published "Black October" on 30 October, describing a series of security incidents at AI developer and hosting platforms during the month<sup class="cite"><a href="#ref-1">1</a></sup>. Several platforms attributed their incidents to credential access, and the common thread was stored environment variables holding AI keys; Wiz found no single shared vulnerability and linked key-checking activity to resellers of model access, without claiming they carried out the intrusions<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. In the same week, a tampered coding extension tried to plant backdoors on developer machines, the kind of foothold that exposes whatever keys a laptop holds<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<p>The pattern has a name. Sysdig described LLMjacking in 2024: attackers use stolen cloud credentials to reach hosted model services, check which keys work, and resell the access, leaving victims with the bill<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>. What has changed is scale: more teams, more platforms and more keys, often with no spending limits.</p>
+</section>
+
+<section class="block">
+<h2>Why AI keys are different</h2>
+<p>A leaked database password is serious, but its damage is bounded by what is in the database. A leaked model key with no limits turns directly into spend, at machine speed, and the first sign is often the invoice. AI keys also spread more widely than most secrets: into notebooks, hosted dev platforms, CI variables, editor settings and personal accounts, because getting started with AI is designed to be easy.</p>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Where keys leak</small><div class="dgm-nodes"><span>Hosted dev platforms<em>environment variables</em></span><span>Laptops and editors<em>extensions, config files</em></span><span>CI and repos<em>variables, history</em></span></div></div>
+<div class="dgm-tier"><small>Contain</small><div class="dgm-nodes"><span class="hl">AI gateway<em>one route to every model</em></span><span>Per-team keys<em>small blast radius</em></span><span>Short-lived credentials<em>expire quickly</em></span></div></div>
+<div class="dgm-tier"><small>Cap</small><div class="dgm-nodes"><span class="hl">Spend limits<em>per key, per day</em></span><span>Rate limits<em>per key, per model</em></span></div></div>
+<div class="dgm-tier"><small>Detect</small><div class="dgm-nodes"><span class="hl">Usage telemetry<em>tokens by key and model</em></span><span>Anomaly alerts<em>new regions, models, hours</em></span></div></div>
+<div class="dgm-tier"><small>Respond</small><div class="dgm-nodes"><span>Revoke in minutes<em>from one place</em></span><span>Rotate everywhere<em>scripted</em></span></div></div>
+</div>
+<figcaption>You cannot stop every leak. You can make each leaked key small, visible and quick to kill.</figcaption>
+</figure>
+</section>
+
+<section class="block">
+<h2>A practical playbook</h2>
+<p><strong>1. Find every key.</strong> Inventory provider accounts, cloud model services and keys across teams, platforms and CI. Rotate anything stored on a platform named in the Wiz report or any third-party platform you cannot vouch for<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<p><strong>2. Put a gateway in front of models.</strong> Applications and developers call your gateway, not providers directly. The gateway holds the real provider credentials, issues per-team or per-application keys, and enforces quotas. A key stolen from a laptop is then a key to your gateway, with your limits and your logs. See <a href="https://asksumanta.com/insights/llm-model-routing/">model routing</a> and <a href="https://asksumanta.com/case-studies/uae-software-house-ai-developer-toolchain-security/">securing AI coding tools</a>.</p>
+<p><strong>3. Set spend and rate limits per key.</strong> Every key gets a daily budget and an alert well below it. Production keys get headroom; experiment keys do not.</p>
+<p><strong>4. Use cloud identity instead of static keys where you can.</strong> For cloud-hosted models, prefer workload identity and short-lived credentials over long-lived access keys, and restrict which models and regions each identity can use. Sysdig's research noted that not every model API call appeared in default cloud audit logs, so check that your logging covers the calls you rely on<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+<p><strong>5. Watch usage like a security signal.</strong> Record tokens, model and caller on every request. The OpenTelemetry generative AI conventions capture model and token usage per call, which gives you the baseline that anomaly alerts need<sup class="cite"><a href="#ref-6">6</a></sup>. See <a href="https://asksumanta.com/insights/focus-finops-ai-cost-allocation/">AI cost allocation</a>.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/llmjacking-stolen-ai-keys-black-october/token-usage-trace.webp" alt="Jaeger trace of a chat call to a language model showing span tags including requested model, response model, input tokens and output tokens" width="1400" height="622" loading="lazy"></div><figcaption>Model and token usage recorded on every call: the baseline that makes stolen-key abuse visible quickly. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2024/otel-generative-ai/" target="_blank" rel="noopener">OpenTelemetry blog, Drew Robbins and Liudmila Molkova</a> · CC BY 4.0</span></figcaption></figure>
+<p><strong>6. Rehearse revocation.</strong> Know how to revoke a key, rotate provider credentials behind the gateway and confirm usage stopped, in minutes, outside office hours.</p>
+<div class="callout"><p>Treat AI keys like payment cards: issue them per holder, set a limit, watch the statement daily and cancel at the first odd charge.</p></div>
+</section>
+
+<section class="block">
+<h2>What to alert on</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Baseline</b><span>Normal tokens per key by hour, model and region</span></li>
+<li><b>New model</b><span>A key starts calling a model it never used</span></li>
+<li class="hl"><b>Volume</b><span>Usage jumps well above the key's normal range</span></li>
+<li><b>Odd hours</b><span>Sustained traffic when the owning team is offline</span></li>
+<li class="hl"><b>New origin</b><span>Calls from networks or regions the key never used</span></li>
+<li><b>Act</b><span>Auto-throttle, page the owner, revoke if unexplained</span></li>
+</ol>
+<figcaption>Simple rules catch most abuse; the hard part is having per-key data at all.</figcaption>
+</figure>
+</section>
+
+<section class="block">
+<h2>Who should act</h2>
+<ul>
+<li><strong>Any team using hosted AI dev platforms</strong>: rotate keys stored there this week.</li>
+<li><strong>Companies with cloud-hosted models</strong>: review which identities can invoke which models, and in which regions.</li>
+<li><strong>Finance and FinOps</strong>: add AI spend to daily anomaly checks, not monthly reviews.</li>
+<li><strong>Regulated firms</strong>: a stolen key that can reach customer data through a model is a data incident, not just a cost problem; see <a href="https://asksumanta.com/regions/">where I work</a> for regional rules.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>CTO take</h2>
+<p>October showed that attackers now go after AI keys directly, because those keys turn straight into resellable compute. The fix is not exotic: one gateway, keys per team, limits per key, telemetry per call and practised revocation. Teams that already run AI through a gateway for cost and quality reasons get most of this for free. Teams that do not should start there. For the wider week, see the <a href="https://asksumanta.com/insights/tech-news-2026-11-01/">1 November tech news</a>.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I help teams design AI gateways, key management and spend controls that keep model access safe and affordable. I am based in India, the United States and the UAE, working globally. See <a href="https://asksumanta.com/ai-architect/">AI architecture</a> or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section><p><a href="https://asksumanta.com/insights/llmjacking-stolen-ai-keys-black-october/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Tech news, 1 November 2026: a backdoored Claude Code extension, a month of AI platform breaches, Binance attribution and Qwen in Apple Intelligence</title><link>https://asksumanta.com/insights/tech-news-2026-11-01/</link><guid isPermaLink="true">https://asksumanta.com/insights/tech-news-2026-11-01/</guid><pubDate>Sun, 01 Nov 2026 08:55:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>security</category><category>ai</category><category>platform</category><description>A CTO&#x27;s take: a trojanised Claude Code extension in Cursor&#x27;s marketplace, Wiz&#x27;s Black October report, North Korea linked to Binance, and Qwen in Apple Intelligence.</description><content:encoded><![CDATA[<p><em>A security-heavy end to October. A tampered build of a popular AI coding extension tried to plant SSH backdoors on developer machines, a Wiz report described a month of breaches at AI developer platforms feeding a market in stolen model access, and blockchain analysts tied the Binance theft to North Korea. Plus Apple&#x27;s route into China&#x27;s AI market.</em></p><p>Today's brief covers stories from 29 to 31 October that earlier briefs did not include.</p>
 
 <figure class="dgm">
 <ol class="dgm-flow g3">
@@ -2750,65 +2816,4 @@ tracer_provider:
 <section class="block">
 <h2>How I can help</h2>
 <p>I design LLM integrations that downstream systems can trust, from schemas and validation to evaluation and agent controls. See my <a href="https://asksumanta.com/ai-architect/">AI architecture work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
-</section><p><a href="https://asksumanta.com/insights/structured-outputs-reliable-llm-integration/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>OpenTelemetry goes &#x27;stable by default&#x27;: what it means for Kubernetes telemetry, and how to migrate</title><link>https://asksumanta.com/insights/opentelemetry-stable-by-default-kubernetes/</link><guid isPermaLink="true">https://asksumanta.com/insights/opentelemetry-stable-by-default-kubernetes/</guid><pubDate>Fri, 23 Oct 2026 20:15:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>observability</category><category>opentelemetry</category><category>kubernetes</category><category>platform</category><description>OpenTelemetry is prioritising stability, and the Kubernetes attributes processor hit v1.0.0 with stable conventions and breaking renames. What changed and how I&#x27;d plan the migration.</description><content:encoded><![CDATA[<p><em>OpenTelemetry has spent its first years growing fast. Its governance committee has now made stability the priority, and the first big results are landing in Kubernetes telemetry, including attribute renames that will touch dashboards and alerts.</em></p><p>Ask platform teams what frustrates them about OpenTelemetry and stability comes up quickly: components at different maturity levels, attribute names that change between releases, and upgrades that quietly break dashboards. The project has heard the same thing. In November 2025 its Governance Committee wrote that complexity and lack of stability were creating impediments to production deployments, and set out a plan to change priorities<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
-<p>A year on, the first concrete results are in, and Kubernetes telemetry is where most platform teams will feel them.</p>
-
-<section class="block">
-<h2>What 'stable by default' means</h2>
-<p>The committee's goals were explicit<sup class="cite"><a href="#ref-1">1</a></sup>:</p>
-<ul>
-<li>All OpenTelemetry distributions should be <strong>stable by default</strong>, with standard mechanisms to opt in to experimental features.</li>
-<li>A <strong>single, consistent set of stability criteria</strong>, including documentation, performance testing and benchmarks.</li>
-<li>Easier stabilisation of instrumentation libraries, and federation of semantic conventions.</li>
-<li><strong>Epoch releases</strong> that are easier for organisations to consume.</li>
-</ul>
-<p>For a platform team, the practical promise is fewer surprises: stable components you can rely on, and clearly marked opt-ins for anything that isn't.</p>
-</section>
-
-<section class="block">
-<h2>The Kubernetes example</h2>
-<p>The Kubernetes attributes processor, which enriches telemetry with metadata such as pod, namespace and node, shows what that journey involves. Its stability depended on the Kubernetes semantic conventions it emits, so the two efforts moved together<sup class="cite"><a href="#ref-2">2</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>:</p>
-<table class="tbl">
-<thead><tr><th>When</th><th>What happened</th></tr></thead>
-<tbody>
-<tr><td>Nov 2025</td><td>The Kubernetes semantic conventions group began focused work on stabilising Kubernetes attributes, in step with the Collector's stability goals<sup class="cite"><a href="#ref-2">2</a></sup></td></tr>
-<tr><td>Mar 2026</td><td>Kubernetes attributes reached release candidate; the processor offered feature gates to try the new schema<sup class="cite"><a href="#ref-2">2</a></sup></td></tr>
-<tr><td>Jun 2026</td><td>The attributes shipped as stable in Semantic Conventions v1.42.0<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-4">4</a></sup></td></tr>
-<tr><td>Sep 2026</td><td>The Kubernetes attributes processor reached v1.0.0, meeting the Collector's stable criteria<sup class="cite"><a href="#ref-3">3</a></sup></td></tr>
-</tbody>
-</table>
-<p>The v1.0.0 announcement is clear that moving to the new convention names means <strong>some breakage for existing users</strong>, and points to a migration guide<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-5">5</a></sup>. During the transition the processor provided feature gates, <code>processor.k8sattributes.EmitV1K8sConventions</code> and <code>processor.k8sattributes.DontEmitV0K8sConventions</code>, so teams could emit the new attributes before dropping the old ones<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
-<div class="callout"><p>Stability is a one-time cost paid up front: a final round of renames, then a long period where names stop moving. It's worth paying deliberately rather than discovering it in a broken dashboard.</p></div>
-</section>
-
-<section class="block">
-<h2>Why attribute renames hurt more than they look</h2>
-<p>Kubernetes attributes are everywhere in an observability estate: dashboard filters, alert rules, service level objectives, cost allocation by namespace, retention policies, access controls and the queries engineers keep in runbooks. A renamed attribute doesn't throw an error. It just makes a filter match nothing, so a dashboard goes quiet and an alert never fires.</p>
-</section>
-
-<section class="block">
-<h2>The migration plan I use</h2>
-<ol>
-<li><strong>Inventory dependencies on attribute names.</strong> Export dashboards, alert rules, recording rules and saved queries, and search them for the Kubernetes attributes in your telemetry. Include cost reports that group by namespace or workload, as in <a href="https://asksumanta.com/insights/kubernetes-finops-scale-to-zero/">Kubernetes FinOps</a>.</li>
-<li><strong>Read the migration guide for your exact version</strong> of the Collector and processor<sup class="cite"><a href="#ref-5">5</a></sup>, and list old and new names side by side.</li>
-<li><strong>Emit both, then switch.</strong> Where your version supports it, emit the new conventions alongside the old in a non-production environment, update dashboards and alerts to the new names, then stop emitting the old ones.</li>
-<li><strong>Use the gateway layer</strong> to manage the transition centrally rather than on every node, which is one reason I favour the agent-to-gateway pattern in <a href="https://asksumanta.com/insights/opentelemetry-collector-deployment-patterns/">Collector deployment patterns</a>.</li>
-<li><strong>Add canary checks</strong>: alerts that fire when a key dashboard query returns no data, so silent breakage is caught.</li>
-<li><strong>Pin Collector versions</strong> and upgrade deliberately, with a changelog review for every component you use.</li>
-</ol>
-</section>
-
-<section class="block">
-<h2>A broader stability strategy</h2>
-<p>The Kubernetes processor is one component among many working towards stability<sup class="cite"><a href="#ref-3">3</a></sup>. The same pattern applies elsewhere, from the <a href="https://asksumanta.com/insights/opentelemetry-span-events-deprecation/">span events deprecation</a> to GenAI conventions that are still evolving, covered in <a href="https://asksumanta.com/insights/llm-observability-opentelemetry-genai/">LLM observability</a>. My rules for platform teams:</p>
-<ul>
-<li><strong>Prefer stable components</strong> in production, and record each experimental component you depend on with the reason and an owner.</li>
-<li><strong>Treat telemetry schemas as interfaces</strong>, with the same versioning discipline as APIs and the contract thinking in <a href="https://asksumanta.com/insights/data-contracts-playbook/">data contracts</a>.</li>
-<li><strong>Budget a small, regular amount of time</strong> for observability upgrades, rather than a painful catch-up every two years.</li>
-</ul>
-</section>
-
-<section class="block">
-<h2>How I can help</h2>
-<p>I design and modernise observability platforms on OpenTelemetry and Kubernetes, including migrations like this one that keep dashboards and alerts working. As a <a href="https://asksumanta.com/fractional-cto/">fractional CTO</a> I can own that roadmap. Or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
-</section><p><a href="https://asksumanta.com/insights/opentelemetry-stable-by-default-kubernetes/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
+</section><p><a href="https://asksumanta.com/insights/structured-outputs-reliable-llm-integration/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>

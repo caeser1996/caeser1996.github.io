@@ -1,6 +1,72 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link><description>Fractional CTO and AI architect: insights, case studies and daily tech news.</description><language>en-gb</language><lastBuildDate>Sun, 01 Nov 2026 15:55:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link></image><item><title>Fast tools, short leashes: securing AI coding assistants and developer machines at a UAE software house</title><link>https://asksumanta.com/case-studies/uae-software-house-ai-developer-toolchain-security/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/uae-software-house-ai-developer-toolchain-security/</guid><pubDate>Sun, 01 Nov 2026 15:55:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>security</category><category>ai</category><category>platform</category><description>How a UAE software house serving banks and government can secure AI coding assistants, editor extensions and API keys after a month of developer-tool attacks.</description><content:encoded><![CDATA[<p><em>A software house in the UAE built systems for banks and government entities, and its engineers had adopted AI coding assistants, AI-native editors and a long tail of extensions. Then October 2026 showed how attackers use exactly those tools: a backdoored coding extension in an editor marketplace, and a run of breaches at AI developer platforms feeding a market in stolen model keys. The firm needed to keep the productivity and remove the blast radius.</em></p><h2>The situation</h2>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link><description>Fractional CTO and AI architect: insights, case studies and daily tech news.</description><language>en-gb</language><lastBuildDate>Sun, 01 Nov 2026 21:25:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link></image><item><title>LLMjacking after Black October: how to stop stolen AI keys becoming somebody else&#x27;s compute budget</title><link>https://asksumanta.com/insights/llmjacking-stolen-ai-keys-black-october/</link><guid isPermaLink="true">https://asksumanta.com/insights/llmjacking-stolen-ai-keys-black-october/</guid><pubDate>Sun, 01 Nov 2026 21:25:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>security</category><category>ai</category><category>finops</category><description>Wiz&#x27;s Black October report shows stolen AI keys fuelling LLMjacking. A CTO&#x27;s take on where keys leak, how to cap damage and what to monitor across your AI stack.</description><content:encoded><![CDATA[<p><em>On 30 October, Wiz described a month of breaches at AI developer platforms, with stored AI credentials stolen and model access resold. LLMjacking is not new, but AI keys have quietly become some of the most valuable secrets a company holds, and many teams still treat them like a config value. Here is where they leak, how to limit the damage, and what to watch.</em></p><section class="block">
+<h2>What happened</h2>
+<p>Wiz published "Black October" on 30 October, describing a series of security incidents at AI developer and hosting platforms during the month<sup class="cite"><a href="#ref-1">1</a></sup>. Several platforms attributed their incidents to credential access, and the common thread was stored environment variables holding AI keys; Wiz found no single shared vulnerability and linked key-checking activity to resellers of model access, without claiming they carried out the intrusions<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. In the same week, a tampered coding extension tried to plant backdoors on developer machines, the kind of foothold that exposes whatever keys a laptop holds<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<p>The pattern has a name. Sysdig described LLMjacking in 2024: attackers use stolen cloud credentials to reach hosted model services, check which keys work, and resell the access, leaving victims with the bill<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>. What has changed is scale: more teams, more platforms and more keys, often with no spending limits.</p>
+</section>
+
+<section class="block">
+<h2>Why AI keys are different</h2>
+<p>A leaked database password is serious, but its damage is bounded by what is in the database. A leaked model key with no limits turns directly into spend, at machine speed, and the first sign is often the invoice. AI keys also spread more widely than most secrets: into notebooks, hosted dev platforms, CI variables, editor settings and personal accounts, because getting started with AI is designed to be easy.</p>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Where keys leak</small><div class="dgm-nodes"><span>Hosted dev platforms<em>environment variables</em></span><span>Laptops and editors<em>extensions, config files</em></span><span>CI and repos<em>variables, history</em></span></div></div>
+<div class="dgm-tier"><small>Contain</small><div class="dgm-nodes"><span class="hl">AI gateway<em>one route to every model</em></span><span>Per-team keys<em>small blast radius</em></span><span>Short-lived credentials<em>expire quickly</em></span></div></div>
+<div class="dgm-tier"><small>Cap</small><div class="dgm-nodes"><span class="hl">Spend limits<em>per key, per day</em></span><span>Rate limits<em>per key, per model</em></span></div></div>
+<div class="dgm-tier"><small>Detect</small><div class="dgm-nodes"><span class="hl">Usage telemetry<em>tokens by key and model</em></span><span>Anomaly alerts<em>new regions, models, hours</em></span></div></div>
+<div class="dgm-tier"><small>Respond</small><div class="dgm-nodes"><span>Revoke in minutes<em>from one place</em></span><span>Rotate everywhere<em>scripted</em></span></div></div>
+</div>
+<figcaption>You cannot stop every leak. You can make each leaked key small, visible and quick to kill.</figcaption>
+</figure>
+</section>
+
+<section class="block">
+<h2>A practical playbook</h2>
+<p><strong>1. Find every key.</strong> Inventory provider accounts, cloud model services and keys across teams, platforms and CI. Rotate anything stored on a platform named in the Wiz report or any third-party platform you cannot vouch for<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<p><strong>2. Put a gateway in front of models.</strong> Applications and developers call your gateway, not providers directly. The gateway holds the real provider credentials, issues per-team or per-application keys, and enforces quotas. A key stolen from a laptop is then a key to your gateway, with your limits and your logs. See <a href="https://asksumanta.com/insights/llm-model-routing/">model routing</a> and <a href="https://asksumanta.com/case-studies/uae-software-house-ai-developer-toolchain-security/">securing AI coding tools</a>.</p>
+<p><strong>3. Set spend and rate limits per key.</strong> Every key gets a daily budget and an alert well below it. Production keys get headroom; experiment keys do not.</p>
+<p><strong>4. Use cloud identity instead of static keys where you can.</strong> For cloud-hosted models, prefer workload identity and short-lived credentials over long-lived access keys, and restrict which models and regions each identity can use. Sysdig's research noted that not every model API call appeared in default cloud audit logs, so check that your logging covers the calls you rely on<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+<p><strong>5. Watch usage like a security signal.</strong> Record tokens, model and caller on every request. The OpenTelemetry generative AI conventions capture model and token usage per call, which gives you the baseline that anomaly alerts need<sup class="cite"><a href="#ref-6">6</a></sup>. See <a href="https://asksumanta.com/insights/focus-finops-ai-cost-allocation/">AI cost allocation</a>.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/llmjacking-stolen-ai-keys-black-october/token-usage-trace.webp" alt="Jaeger trace of a chat call to a language model showing span tags including requested model, response model, input tokens and output tokens" width="1400" height="622" loading="lazy"></div><figcaption>Model and token usage recorded on every call: the baseline that makes stolen-key abuse visible quickly. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2024/otel-generative-ai/" target="_blank" rel="noopener">OpenTelemetry blog, Drew Robbins and Liudmila Molkova</a> · CC BY 4.0</span></figcaption></figure>
+<p><strong>6. Rehearse revocation.</strong> Know how to revoke a key, rotate provider credentials behind the gateway and confirm usage stopped, in minutes, outside office hours.</p>
+<div class="callout"><p>Treat AI keys like payment cards: issue them per holder, set a limit, watch the statement daily and cancel at the first odd charge.</p></div>
+</section>
+
+<section class="block">
+<h2>What to alert on</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Baseline</b><span>Normal tokens per key by hour, model and region</span></li>
+<li><b>New model</b><span>A key starts calling a model it never used</span></li>
+<li class="hl"><b>Volume</b><span>Usage jumps well above the key's normal range</span></li>
+<li><b>Odd hours</b><span>Sustained traffic when the owning team is offline</span></li>
+<li class="hl"><b>New origin</b><span>Calls from networks or regions the key never used</span></li>
+<li><b>Act</b><span>Auto-throttle, page the owner, revoke if unexplained</span></li>
+</ol>
+<figcaption>Simple rules catch most abuse; the hard part is having per-key data at all.</figcaption>
+</figure>
+</section>
+
+<section class="block">
+<h2>Who should act</h2>
+<ul>
+<li><strong>Any team using hosted AI dev platforms</strong>: rotate keys stored there this week.</li>
+<li><strong>Companies with cloud-hosted models</strong>: review which identities can invoke which models, and in which regions.</li>
+<li><strong>Finance and FinOps</strong>: add AI spend to daily anomaly checks, not monthly reviews.</li>
+<li><strong>Regulated firms</strong>: a stolen key that can reach customer data through a model is a data incident, not just a cost problem; see <a href="https://asksumanta.com/regions/">where I work</a> for regional rules.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>CTO take</h2>
+<p>October showed that attackers now go after AI keys directly, because those keys turn straight into resellable compute. The fix is not exotic: one gateway, keys per team, limits per key, telemetry per call and practised revocation. Teams that already run AI through a gateway for cost and quality reasons get most of this for free. Teams that do not should start there. For the wider week, see the <a href="https://asksumanta.com/insights/tech-news-2026-11-01/">1 November tech news</a>.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I help teams design AI gateways, key management and spend controls that keep model access safe and affordable. I am based in India, the United States and the UAE, working globally. See <a href="https://asksumanta.com/ai-architect/">AI architecture</a> or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section><p><a href="https://asksumanta.com/insights/llmjacking-stolen-ai-keys-black-october/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Fast tools, short leashes: securing AI coding assistants and developer machines at a UAE software house</title><link>https://asksumanta.com/case-studies/uae-software-house-ai-developer-toolchain-security/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/uae-software-house-ai-developer-toolchain-security/</guid><pubDate>Sun, 01 Nov 2026 15:55:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>security</category><category>ai</category><category>platform</category><description>How a UAE software house serving banks and government can secure AI coding assistants, editor extensions and API keys after a month of developer-tool attacks.</description><content:encoded><![CDATA[<p><em>A software house in the UAE built systems for banks and government entities, and its engineers had adopted AI coding assistants, AI-native editors and a long tail of extensions. Then October 2026 showed how attackers use exactly those tools: a backdoored coding extension in an editor marketplace, and a run of breaches at AI developer platforms feeding a market in stolen model keys. The firm needed to keep the productivity and remove the blast radius.</em></p><h2>The situation</h2>
 <p>A software house based in the UAE built and ran systems for banks, insurers and government entities across the Gulf. Its engineers had embraced AI: coding assistants in their editors, AI-native editors with their own extension marketplaces, hosted AI development platforms for experiments, and personal API keys for several model providers. Developers had local admin rights, long-lived cloud credentials and, in some cases, access to client environments from their laptops.</p>
 <p><strong>Why now.</strong> October 2026 made the risk concrete. On 29 October, tampered versions of the Claude Code extension were listed in Cursor's extension marketplace for a few hours; Microsoft's analysis describes a loader that tried to add an attacker SSH key and open a reverse tunnel on developer machines<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. Days earlier, a Wiz Research report described a month of breaches at AI developer platforms, with stolen AI credentials feeding LLMjacking, the resale of model access<sup class="cite"><a href="#ref-3">3</a></sup>. For a firm whose clients sit under the UAE's tightening expectations on cyber resilience and supply-chain security<sup class="cite"><a href="#ref-4">4</a></sup>, "a developer's editor was compromised" could not be allowed to mean "a client was compromised".</p>
 
@@ -3452,60 +3518,4 @@
 
 <h2>What I'd do again, and differently</h2>
 <p>Again: fix the record-keeping first, then add analytics. Differently: agree data access with real-world data partners at the start. Contracts and governance for external data take longer than building the screening pipeline, and evaluations wait on them. The data side is described in <a href="https://asksumanta.com/insights/federated-health-analytics-ohdsi/">federated health analytics</a> and <a href="https://asksumanta.com/insights/omop-data-quality-checks/">OMOP data quality checks</a>.</p>
-<p>If your safety, evidence or medical teams need a platform like this, the <a href="https://asksumanta.com/healthcare-data-architecture/">healthcare data architecture</a> page describes how I approach it, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/pharmacovigilance-signal-detection-platform/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Migrating to stateless MCP: a playbook for the 2026-07-28 specification</title><link>https://asksumanta.com/insights/mcp-stateless-migration-playbook/</link><guid isPermaLink="true">https://asksumanta.com/insights/mcp-stateless-migration-playbook/</guid><pubDate>Wed, 28 Oct 2026 12:20:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>ai</category><category>mcp</category><category>agents</category><category>platform</category><description>The MCP 2026-07-28 spec removed sessions and the handshake. A playbook for migrating servers, gateways and clients: state handles, MRTR, headers, caching and auth changes.</description><content:encoded><![CDATA[<p><em>The 2026-07-28 Model Context Protocol specification turned a stateful, bidirectional protocol into a stateless request and response one. That is good news for anyone running MCP servers at scale, and a real migration for anyone who built on sessions, server-initiated requests or long-lived streams.</em></p><p>Most early MCP servers were built like chat connections: a client connected, shook hands, held a session open and the server pushed requests back when it needed something. That worked on a laptop. It worked less well behind a load balancer, in serverless runtimes, or anywhere a connection could drop. The 2026-07-28 specification addresses that head on<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
-
-<section class="block">
-<h2>What changed, in one table</h2>
-<table class="tbl">
-<thead><tr><th>Before</th><th>From 2026-07-28</th><th>Why it matters</th></tr></thead>
-<tbody>
-<tr><td><code>initialize</code> handshake and <code>Mcp-Session-Id</code></td><td>Removed; each request carries protocol version and client capabilities in <code>_meta</code></td><td>Any request can land on any instance<sup class="cite"><a href="#ref-2">2</a></sup></td></tr>
-<tr><td>Capabilities learned at connect time</td><td>Optional <code>server/discover</code> call that servers must implement</td><td>Up-front version selection when clients want it<sup class="cite"><a href="#ref-2">2</a></sup></td></tr>
-<tr><td>Server-initiated elicitation, sampling and roots requests</td><td>Multi Round-Trip Requests: the server returns <code>input_required</code> and the client retries with answers</td><td>No held-open bidirectional stream<sup class="cite"><a href="#ref-3">3</a></sup></td></tr>
-<tr><td>Method and tool names only in the JSON body</td><td><code>Mcp-Method</code> and <code>Mcp-Name</code> headers required on Streamable HTTP</td><td>Gateways route and authorise on headers<sup class="cite"><a href="#ref-4">4</a></sup></td></tr>
-<tr><td>List results with no freshness hints</td><td><code>ttlMs</code> and <code>cacheScope</code>, plus deterministic tool order</td><td>Client caching and stable prompt caches<sup class="cite"><a href="#ref-2">2</a></sup></td></tr>
-<tr><td>SSE resumability with <code>Last-Event-ID</code></td><td>Removed; a broken stream means re-issuing the request</td><td>Simpler transport, but retries must be safe<sup class="cite"><a href="#ref-2">2</a></sup></td></tr>
-</tbody>
-</table>
-<p>The release also moved Tasks into an official extension, hardened authorisation with RFC 9207 issuer validation, deprecated Dynamic Client Registration in favour of client metadata documents, and introduced a formal deprecation policy with a twelve-month minimum window<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
-</section>
-
-<section class="block">
-<h2>The playbook</h2>
-<h3>1. Inventory what depends on sessions</h3>
-<p>List every server and find where it relies on connection state: per-session caches, "current project" set at connect time, server-pushed requests, resumable streams. Those are your migration items. Servers that only expose stateless tools usually need little more than an SDK upgrade.</p>
-
-<h3>2. Replace hidden state with explicit handles</h3>
-<p>The specification's answer to cross-call state is an explicit, server-minted handle returned by a tool and passed back as an ordinary argument<sup class="cite"><a href="#ref-2">2</a></sup>. The maintainers note this works better than transport-hidden state because the model can see the handle and thread it between tools<sup class="cite"><a href="#ref-1">1</a></sup>. Store the state behind the handle in a shared store, scoped to the user, with an expiry.</p>
-
-<h3>3. Rework interactive tools with MRTR</h3>
-<p>Tools that asked the user for confirmation or a missing parameter mid-call now return an interim result with <code>resultType: "input_required"</code>; the client gathers the answers and retries the original request with them<sup class="cite"><a href="#ref-3">3</a></sup>. Design these tools so a retry is safe, and keep any correlation data in the request state rather than server memory.</p>
-
-<h3>4. Make retries safe everywhere</h3>
-<p>Without stream resumability, a dropped response stream means the client re-issues the request with a new ID<sup class="cite"><a href="#ref-2">2</a></sup>. Any tool with side effects needs idempotency, the same discipline as in <a href="https://asksumanta.com/insights/idempotent-payments-order-pipelines/">idempotent payment pipelines</a>.</p>
-
-<h3>5. Move routing and policy to the gateway</h3>
-<p>With <code>Mcp-Method</code> and <code>Mcp-Name</code> on every Streamable HTTP request<sup class="cite"><a href="#ref-4">4</a></sup>, a gateway can rate-limit, authorise and meter per tool without parsing bodies. Plain round-robin load balancing now works. This is the natural place to enforce the controls in <a href="https://asksumanta.com/insights/securing-mcp-servers-checklist/">securing MCP servers</a>.</p>
-
-<h3>6. Use the cache hints</h3>
-<p>Return a deterministic tool order and sensible <code>ttlMs</code> values. Stable tool lists help clients cache catalogues and keep upstream prompt caches warm, which matters for cost, as covered in <a href="https://asksumanta.com/insights/prompt-caching-llm-cost-latency/">prompt caching</a>.</p>
-
-<h3>7. Plan the deprecations</h3>
-<p>Roots, Sampling and Logging are deprecated, with suggested migrations: pass paths through tool parameters or configuration instead of Roots, call model providers directly instead of Sampling, and use stderr or OpenTelemetry instead of protocol Logging<sup class="cite"><a href="#ref-2">2</a></sup><sup class="cite"><a href="#ref-5">5</a></sup>. Trace context now has documented conventions in <code>_meta</code>, which fits the approach in <a href="https://asksumanta.com/insights/llm-observability-opentelemetry-genai/">LLM observability</a>.</p>
-<div class="callout"><p>Stateless MCP doesn't make your system stateless. It makes your state visible, which is exactly where an auditor, an SRE and the model all need it to be.</p></div>
-</section>
-
-<section class="block">
-<h2>Sequencing for an enterprise estate</h2>
-<ol>
-<li><strong>Gateway first</strong>, so routing and policy work for both old and new protocol versions during the transition.</li>
-<li><strong>High-traffic, stateless servers next</strong>: the easiest wins for scalability.</li>
-<li><strong>Interactive and stateful servers last</strong>, with handles and MRTR designed and tested properly.</li>
-<li><strong>Registry metadata updated</strong> to show which protocol versions each server supports, as in <a href="https://asksumanta.com/insights/mcp-registry-enterprise-subregistry/">an enterprise MCP registry</a>.</li>
-</ol>
-</section>
-
-<section class="block">
-<h2>How I can help</h2>
-<p>I design and migrate enterprise MCP estates, from gateways and registries to server patterns that survive load balancers and retries. See my <a href="https://asksumanta.com/ai-architect/">AI architecture work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
-</section><p><a href="https://asksumanta.com/insights/mcp-stateless-migration-playbook/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
+<p>If your safety, evidence or medical teams need a platform like this, the <a href="https://asksumanta.com/healthcare-data-architecture/">healthcare data architecture</a> page describes how I approach it, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/pharmacovigilance-signal-detection-platform/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
