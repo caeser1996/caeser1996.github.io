@@ -1,0 +1,83 @@
+<!--{"title": "Case study: securing AI coding tools at a UAE software house", "description": "How a UAE software house serving banks and government can secure AI coding assistants, editor extensions and API keys after a month of developer-tool attacks.", "short": "Securing AI coding tools in the UAE", "h1": "Fast tools, short leashes: securing AI coding assistants and developer machines at a UAE software house", "kicker": "Case study · Developer and AI supply-chain security", "lede": "A software house in the UAE built systems for banks and government entities, and its engineers had adopted AI coding assistants, AI-native editors and a long tail of extensions. Then October 2026 showed how attackers use exactly those tools: a backdoored coding extension in an editor marketplace, and a run of breaches at AI developer platforms feeding a market in stolen model keys. The firm needed to keep the productivity and remove the blast radius.", "date": "2026-11-01", "datetime": "2026-11-01T15:55:00+04:00", "readtime": "9 min read", "sector": "Software services · UAE", "role": "Fractional CTO and principal architect", "engagement": "Assessment, architecture and delivery leadership", "scope": "Developer endpoints, editor extensions, AI assistant access, API key management, CI/CD signing, client environment isolation", "stack": ["Managed developer endpoints", "Extension allow-list and private mirror", "AI gateway for model access", "Secrets manager with short-lived credentials", "Signed builds and admission policy", "Isolated client environments", "Endpoint detection", "Infrastructure as code"], "outcomes": ["Editor extensions installed only from an approved, mirrored list", "No long-lived production or client credentials on developer laptops", "All AI model access through one gateway with per-team keys, limits and logs", "Only signed, verified builds admitted to client environments", "A rehearsed playbook for a compromised developer tool"], "tags": ["security", "ai", "platform"], "keywords": ["AI coding assistant security", "malicious VS Code extension", "Cursor extension backdoor", "LLMjacking", "AI API key security", "developer endpoint security", "software supply chain UAE", "signed container images", "fractional CTO UAE", "secure SDLC AI"], "faq": [["What happened with the malicious Claude Code extension?", "Cursor reported that tampered versions of the Claude Code extension were listed in its marketplace for a few hours on 29 October 2026. Microsoft's analysis describes a loader that tried to plant an SSH key and open a reverse tunnel. Anthropic said its own systems were not compromised."], ["What is LLMjacking and why does it matter to software companies?", "LLMjacking is the theft and resale of access to AI models, usually through stolen API keys or cloud credentials. Keys stored in developer platforms, laptops or CI systems can be used to run large volumes of model calls at the victim's expense."], ["Do we need to ban AI coding tools?", "No. The aim is to control what they can reach: approved extensions only, no long-lived secrets on laptops, model access through a gateway with limits, and verified builds before anything reaches a client."]], "related": ["/uae/", "/fractional-cto/", "/ai-architect/"], "citations": [{"title": "Inside a malicious Claude Code-branded extension and its persistent SSH backdoor", "url": "https://www.microsoft.com/en-us/security/blog/2026/10/30/inside-malicious-claude-code-branded-cursor-extension-persistent-ssh-backdoor/", "publisher": "Microsoft Security", "date": "30 Oct 2026"}, {"title": "Security notice: malicious version of Anthropic.claude-code (2.1.312 and 2.1.313) identified in the Cursor VS Code Extension Marketplace", "url": "https://cursor.com/blog/claude-code-extension-security-notice", "publisher": "Cursor", "date": "Oct 2026"}, {"title": "Black October: LLMJacking Wave Exposes AI Infrastructure's Credential Crisis", "url": "https://futurumgroup.com/insights/black-october-llmjacking-wave-exposes-ai-infrastructures-credential-crisis/", "publisher": "Futurum Group", "date": "Oct 2026"}, {"title": "Cybersecurity 2026: UAE, Trends and Developments", "url": "https://practiceguides.chambers.com/practice-guides/cybersecurity-2026/uae/trends-and-developments", "publisher": "Chambers and Partners", "date": "2026"}, {"title": "Verifying Container Image Signatures Within CRI Runtimes", "url": "https://kubernetes.io/blog/2023/06/29/container-image-signature-verification/", "publisher": "Kubernetes blog", "date": "29 Jun 2023"}]}-->
+<h2>The situation</h2>
+<p>A software house based in the UAE built and ran systems for banks, insurers and government entities across the Gulf. Its engineers had embraced AI: coding assistants in their editors, AI-native editors with their own extension marketplaces, hosted AI development platforms for experiments, and personal API keys for several model providers. Developers had local admin rights, long-lived cloud credentials and, in some cases, access to client environments from their laptops.</p>
+<p><strong>Why now.</strong> October 2026 made the risk concrete. On 29 October, tampered versions of the Claude Code extension were listed in Cursor's extension marketplace for a few hours; Microsoft's analysis describes a loader that tried to add an attacker SSH key and open a reverse tunnel on developer machines<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. Days earlier, a Wiz Research report described a month of breaches at AI developer platforms, with stolen AI credentials feeding LLMjacking, the resale of model access<sup class="cite"><a href="#ref-3">3</a></sup>. For a firm whose clients sit under the UAE's tightening expectations on cyber resilience and supply-chain security<sup class="cite"><a href="#ref-4">4</a></sup>, "a developer's editor was compromised" could not be allowed to mean "a client was compromised".</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>Only approved extensions and tools</strong> on developer machines, updated deliberately rather than automatically.</li>
+<li><strong>No long-lived secrets on laptops</strong>: nothing on a developer machine that can reach production or a client on its own.</li>
+<li><strong>One governed route to AI models</strong>, with per-team keys, limits and logs.</li>
+<li><strong>Only verified builds</strong> reach client environments.</li>
+<li><strong>Productivity kept</strong>: engineers still use AI assistants every day.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Developer machine</small><div class="dgm-nodes"><span class="hl">Managed endpoint<em>no standing admin, EDR</em></span><span>Approved extensions<em>from a private mirror</em></span></div></div>
+<div class="dgm-tier"><small>AI access</small><div class="dgm-nodes"><span class="hl">AI gateway<em>per-team keys, limits, logs</em></span><span>Approved models<em>by data classification</em></span></div></div>
+<div class="dgm-tier"><small>Identity and secrets</small><div class="dgm-nodes"><span class="hl">Short-lived credentials<em>issued on demand</em></span><span>Secrets manager<em>no keys in repos or env files</em></span></div></div>
+<div class="dgm-tier"><small>Build</small><div class="dgm-nodes"><span>CI runners<em>isolated, ephemeral</em></span><span class="hl">Signed artefacts<em>provenance recorded</em></span></div></div>
+<div class="dgm-tier"><small>Client environments</small><div class="dgm-nodes"><span>Admission policy<em>signed images only</em></span><span>Separate per client<em>no shared credentials</em></span></div></div>
+</div>
+<figcaption>Each layer assumes the one above it might be compromised.</figcaption>
+</figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Code</b><span>An engineer writes code with an AI assistant on a managed machine</span></li>
+<li class="hl"><b>Ask</b><span>Assistant calls go through the AI gateway with the team's key, not a personal one</span></li>
+<li><b>Commit</b><span>Code is pushed; secrets scanning blocks any credential in the change</span></li>
+<li class="hl"><b>Build</b><span>Ephemeral CI builds, signs the artefact and records its provenance</span></li>
+<li><b>Admit</b><span>The client environment admits only artefacts with a valid signature</span></li>
+<li><b>Operate</b><span>Production access is granted just in time, never from standing laptop credentials</span></li>
+</ol>
+<figcaption>A compromised laptop can affect code, which review and signing catch; it cannot reach a client directly.</figcaption>
+</figure>
+
+<h2>The hard part: controlling extensions without killing productivity</h2>
+<p>Extensions are the riskiest software on a developer's machine: they run with the user's rights, auto-update silently and can come from marketplaces the company does not control. The Cursor incident showed that even a well-known extension name is not a guarantee, and that auto-update can push a tampered build to thousands of machines in hours<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<p>Banning extensions would have failed; engineers would have worked around it. Instead the team built a private mirror. Approved extensions are pulled, scanned and pinned to a version; editors are configured to install only from the mirror; and updates are promoted after a short delay and a check of the publisher's security notices. Requests for new extensions go through a lightweight review with a target turnaround, so the approved list grows with real needs.</p>
+<p>The second control was removing what a compromised extension could steal. Long-lived cloud keys, client VPN profiles and personal model API keys were taken off laptops. Developers get short-lived credentials for the task at hand, and AI calls use the gateway, so a stolen key from a laptop or a third-party platform is limited by the gateway's quotas and visible in its logs. See <a href="/insights/ai-coding-policy-engineering-teams/">AI coding policy for engineering teams</a> and <a href="/insights/terraform-secrets-out-of-state/">keeping secrets out of state</a>.</p>
+<div class="callout"><p>Assume one developer tool will be compromised. Design so that the worst it can do is change code that review and signing will catch, not reach a client or spend unlimited money.</p></div>
+
+<h2>The last line: only verified builds reach clients</h2>
+<p>Even with good endpoint controls, code can be tampered with. The final check sits at the client environment: only container images signed by the firm's CI, with recorded provenance, are admitted. Kubernetes supports this pattern through admission policies that validate image signatures before a pod is allowed to run<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/uae-software-house-ai-developer-toolchain-security/signature-policy.webp" alt="Flowchart: create a policy instance and annotate the namespace to validate signatures, create a pod, run policy evaluation, then admit the pod and pull the image if it passes or refuse admission if it fails" width="560" height="1314" loading="lazy"></div><figcaption>Signature verification at admission: unsigned or tampered images never start. <span class="credit">Source: <a href="https://kubernetes.io/blog/2023/06/29/container-image-signature-verification/" target="_blank" rel="noopener">Kubernetes blog, Sascha Grunert</a> · CC BY 4.0</span></figcaption></figure>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Security</small><ol><li>Incident triage</li><li class="hl">Extension review</li><li>Detection rules</li></ol></div>
+<div class="dgm-lane"><small>Platform engineering</small><ol><li>Private mirror</li><li class="hl">AI gateway and secrets</li><li>Signing and admission</li></ol></div>
+<div class="dgm-lane"><small>Engineering leads</small><ol><li>Extension requests</li><li>Team AI budgets</li><li class="hl">Adoption and feedback</li></ol></div>
+</div>
+<figcaption>Security set the rules, platform made them easy, engineering leads kept them practical.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Week 1</small><b>Contain</b><ul><li>Check for known indicators</li><li>Rotate exposed keys</li><li>Disable auto-update</li></ul></div>
+<div><small>Weeks 2 to 4</small><b>Mirror and gateway</b><ul><li>Approved extension list</li><li>AI gateway</li><li>Team keys and limits</li></ul></div>
+<div><small>Weeks 5 to 8</small><b>Remove secrets</b><ul><li>Short-lived credentials</li><li>Client access just in time</li><li>Secrets scanning</li></ul></div>
+<div><small>Weeks 9 to 12</small><b>Verify</b><ul><li>Signed builds</li><li>Admission policies</li><li>Compromised-tool drill</li></ul></div>
+</div>
+<figcaption>Contain the immediate risk in week one; build the lasting controls over a quarter.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Private extension mirror</td><td>Ban extensions or allow any</td><td>Keeps productivity, removes silent updates</td></tr>
+<tr><td>AI access through a gateway</td><td>Personal API keys</td><td>Limits, logs and quick revocation</td></tr>
+<tr><td>Short-lived credentials</td><td>Long-lived keys on laptops</td><td>Stolen credentials expire before they are useful</td></tr>
+<tr><td>Signed builds and admission checks</td><td>Trust the CI pipeline</td><td>Tampered code cannot reach clients unnoticed</td></tr>
+<tr><td>Separate access per client</td><td>Shared credentials across clients</td><td>One incident cannot spread between clients</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: give engineers a fast path to request tools. The mirror only works if it says yes quickly to reasonable requests. Differently: put the AI gateway in place before AI tools spread, not after. Personal keys scattered across laptops and platforms were the slowest thing to clean up. Related: the <a href="/insights/tech-news-2026-11-01/">1 November tech news</a>, <a href="/insights/binance-hack-custody-architecture-lessons/">the Binance hack: architecture lessons</a>, <a href="/case-studies/us-utility-management-plane-hardening/">hardening a utility's management plane</a> and the <a href="/uae/">UAE page</a>.</p>
+<p>If your teams use AI coding tools and serve regulated clients, see my <a href="/fractional-cto/">fractional CTO work</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>

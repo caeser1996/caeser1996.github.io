@@ -1,6 +1,87 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link><description>Anonymised engagements with architecture and flow diagrams</description><language>en-gb</language><lastBuildDate>Sat, 31 Oct 2026 15:50:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/case-studies/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link></image><item><title>Answering in under a breath: voice AI agents for a Mexican e-commerce marketplace</title><link>https://asksumanta.com/case-studies/mexico-ecommerce-voice-ai-agents/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/mexico-ecommerce-voice-ai-agents/</guid><pubDate>Sat, 31 Oct 2026 15:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>ai</category><category>agents</category><category>architecture</category><description>How a Mexican marketplace can run Spanish voice AI agents for order calls on an open framework, with latency budgets, human handover and data rights built in.</description><content:encoded><![CDATA[<p><em>A Mexican marketplace took most of its customer calls about one thing: where is my order. Wait times grew every sales season. Voice AI agents could answer those calls, but only if they sounded natural in Mexican Spanish, responded fast enough to feel like a conversation, handed over to people gracefully and respected callers&#x27; data rights. The architecture had to make all four true at once.</em></p><h2>The situation</h2>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link><description>Anonymised engagements with architecture and flow diagrams</description><language>en-gb</language><lastBuildDate>Sun, 01 Nov 2026 15:55:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/case-studies/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link></image><item><title>Fast tools, short leashes: securing AI coding assistants and developer machines at a UAE software house</title><link>https://asksumanta.com/case-studies/uae-software-house-ai-developer-toolchain-security/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/uae-software-house-ai-developer-toolchain-security/</guid><pubDate>Sun, 01 Nov 2026 15:55:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>security</category><category>ai</category><category>platform</category><description>How a UAE software house serving banks and government can secure AI coding assistants, editor extensions and API keys after a month of developer-tool attacks.</description><content:encoded><![CDATA[<p><em>A software house in the UAE built systems for banks and government entities, and its engineers had adopted AI coding assistants, AI-native editors and a long tail of extensions. Then October 2026 showed how attackers use exactly those tools: a backdoored coding extension in an editor marketplace, and a run of breaches at AI developer platforms feeding a market in stolen model keys. The firm needed to keep the productivity and remove the blast radius.</em></p><h2>The situation</h2>
+<p>A software house based in the UAE built and ran systems for banks, insurers and government entities across the Gulf. Its engineers had embraced AI: coding assistants in their editors, AI-native editors with their own extension marketplaces, hosted AI development platforms for experiments, and personal API keys for several model providers. Developers had local admin rights, long-lived cloud credentials and, in some cases, access to client environments from their laptops.</p>
+<p><strong>Why now.</strong> October 2026 made the risk concrete. On 29 October, tampered versions of the Claude Code extension were listed in Cursor's extension marketplace for a few hours; Microsoft's analysis describes a loader that tried to add an attacker SSH key and open a reverse tunnel on developer machines<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. Days earlier, a Wiz Research report described a month of breaches at AI developer platforms, with stolen AI credentials feeding LLMjacking, the resale of model access<sup class="cite"><a href="#ref-3">3</a></sup>. For a firm whose clients sit under the UAE's tightening expectations on cyber resilience and supply-chain security<sup class="cite"><a href="#ref-4">4</a></sup>, "a developer's editor was compromised" could not be allowed to mean "a client was compromised".</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>Only approved extensions and tools</strong> on developer machines, updated deliberately rather than automatically.</li>
+<li><strong>No long-lived secrets on laptops</strong>: nothing on a developer machine that can reach production or a client on its own.</li>
+<li><strong>One governed route to AI models</strong>, with per-team keys, limits and logs.</li>
+<li><strong>Only verified builds</strong> reach client environments.</li>
+<li><strong>Productivity kept</strong>: engineers still use AI assistants every day.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Developer machine</small><div class="dgm-nodes"><span class="hl">Managed endpoint<em>no standing admin, EDR</em></span><span>Approved extensions<em>from a private mirror</em></span></div></div>
+<div class="dgm-tier"><small>AI access</small><div class="dgm-nodes"><span class="hl">AI gateway<em>per-team keys, limits, logs</em></span><span>Approved models<em>by data classification</em></span></div></div>
+<div class="dgm-tier"><small>Identity and secrets</small><div class="dgm-nodes"><span class="hl">Short-lived credentials<em>issued on demand</em></span><span>Secrets manager<em>no keys in repos or env files</em></span></div></div>
+<div class="dgm-tier"><small>Build</small><div class="dgm-nodes"><span>CI runners<em>isolated, ephemeral</em></span><span class="hl">Signed artefacts<em>provenance recorded</em></span></div></div>
+<div class="dgm-tier"><small>Client environments</small><div class="dgm-nodes"><span>Admission policy<em>signed images only</em></span><span>Separate per client<em>no shared credentials</em></span></div></div>
+</div>
+<figcaption>Each layer assumes the one above it might be compromised.</figcaption>
+</figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Code</b><span>An engineer writes code with an AI assistant on a managed machine</span></li>
+<li class="hl"><b>Ask</b><span>Assistant calls go through the AI gateway with the team's key, not a personal one</span></li>
+<li><b>Commit</b><span>Code is pushed; secrets scanning blocks any credential in the change</span></li>
+<li class="hl"><b>Build</b><span>Ephemeral CI builds, signs the artefact and records its provenance</span></li>
+<li><b>Admit</b><span>The client environment admits only artefacts with a valid signature</span></li>
+<li><b>Operate</b><span>Production access is granted just in time, never from standing laptop credentials</span></li>
+</ol>
+<figcaption>A compromised laptop can affect code, which review and signing catch; it cannot reach a client directly.</figcaption>
+</figure>
+
+<h2>The hard part: controlling extensions without killing productivity</h2>
+<p>Extensions are the riskiest software on a developer's machine: they run with the user's rights, auto-update silently and can come from marketplaces the company does not control. The Cursor incident showed that even a well-known extension name is not a guarantee, and that auto-update can push a tampered build to thousands of machines in hours<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<p>Banning extensions would have failed; engineers would have worked around it. Instead the team built a private mirror. Approved extensions are pulled, scanned and pinned to a version; editors are configured to install only from the mirror; and updates are promoted after a short delay and a check of the publisher's security notices. Requests for new extensions go through a lightweight review with a target turnaround, so the approved list grows with real needs.</p>
+<p>The second control was removing what a compromised extension could steal. Long-lived cloud keys, client VPN profiles and personal model API keys were taken off laptops. Developers get short-lived credentials for the task at hand, and AI calls use the gateway, so a stolen key from a laptop or a third-party platform is limited by the gateway's quotas and visible in its logs. See <a href="https://asksumanta.com/insights/ai-coding-policy-engineering-teams/">AI coding policy for engineering teams</a> and <a href="https://asksumanta.com/insights/terraform-secrets-out-of-state/">keeping secrets out of state</a>.</p>
+<div class="callout"><p>Assume one developer tool will be compromised. Design so that the worst it can do is change code that review and signing will catch, not reach a client or spend unlimited money.</p></div>
+
+<h2>The last line: only verified builds reach clients</h2>
+<p>Even with good endpoint controls, code can be tampered with. The final check sits at the client environment: only container images signed by the firm's CI, with recorded provenance, are admitted. Kubernetes supports this pattern through admission policies that validate image signatures before a pod is allowed to run<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/uae-software-house-ai-developer-toolchain-security/signature-policy.webp" alt="Flowchart: create a policy instance and annotate the namespace to validate signatures, create a pod, run policy evaluation, then admit the pod and pull the image if it passes or refuse admission if it fails" width="560" height="1314" loading="lazy"></div><figcaption>Signature verification at admission: unsigned or tampered images never start. <span class="credit">Source: <a href="https://kubernetes.io/blog/2023/06/29/container-image-signature-verification/" target="_blank" rel="noopener">Kubernetes blog, Sascha Grunert</a> · CC BY 4.0</span></figcaption></figure>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Security</small><ol><li>Incident triage</li><li class="hl">Extension review</li><li>Detection rules</li></ol></div>
+<div class="dgm-lane"><small>Platform engineering</small><ol><li>Private mirror</li><li class="hl">AI gateway and secrets</li><li>Signing and admission</li></ol></div>
+<div class="dgm-lane"><small>Engineering leads</small><ol><li>Extension requests</li><li>Team AI budgets</li><li class="hl">Adoption and feedback</li></ol></div>
+</div>
+<figcaption>Security set the rules, platform made them easy, engineering leads kept them practical.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Week 1</small><b>Contain</b><ul><li>Check for known indicators</li><li>Rotate exposed keys</li><li>Disable auto-update</li></ul></div>
+<div><small>Weeks 2 to 4</small><b>Mirror and gateway</b><ul><li>Approved extension list</li><li>AI gateway</li><li>Team keys and limits</li></ul></div>
+<div><small>Weeks 5 to 8</small><b>Remove secrets</b><ul><li>Short-lived credentials</li><li>Client access just in time</li><li>Secrets scanning</li></ul></div>
+<div><small>Weeks 9 to 12</small><b>Verify</b><ul><li>Signed builds</li><li>Admission policies</li><li>Compromised-tool drill</li></ul></div>
+</div>
+<figcaption>Contain the immediate risk in week one; build the lasting controls over a quarter.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Private extension mirror</td><td>Ban extensions or allow any</td><td>Keeps productivity, removes silent updates</td></tr>
+<tr><td>AI access through a gateway</td><td>Personal API keys</td><td>Limits, logs and quick revocation</td></tr>
+<tr><td>Short-lived credentials</td><td>Long-lived keys on laptops</td><td>Stolen credentials expire before they are useful</td></tr>
+<tr><td>Signed builds and admission checks</td><td>Trust the CI pipeline</td><td>Tampered code cannot reach clients unnoticed</td></tr>
+<tr><td>Separate access per client</td><td>Shared credentials across clients</td><td>One incident cannot spread between clients</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: give engineers a fast path to request tools. The mirror only works if it says yes quickly to reasonable requests. Differently: put the AI gateway in place before AI tools spread, not after. Personal keys scattered across laptops and platforms were the slowest thing to clean up. Related: the <a href="https://asksumanta.com/insights/tech-news-2026-11-01/">1 November tech news</a>, <a href="https://asksumanta.com/insights/binance-hack-custody-architecture-lessons/">the Binance hack: architecture lessons</a>, <a href="https://asksumanta.com/case-studies/us-utility-management-plane-hardening/">hardening a utility's management plane</a> and the <a href="https://asksumanta.com/uae/">UAE page</a>.</p>
+<p>If your teams use AI coding tools and serve regulated clients, see my <a href="https://asksumanta.com/fractional-cto/">fractional CTO work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/uae-software-house-ai-developer-toolchain-security/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Answering in under a breath: voice AI agents for a Mexican e-commerce marketplace</title><link>https://asksumanta.com/case-studies/mexico-ecommerce-voice-ai-agents/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/mexico-ecommerce-voice-ai-agents/</guid><pubDate>Sat, 31 Oct 2026 15:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>ai</category><category>agents</category><category>architecture</category><description>How a Mexican marketplace can run Spanish voice AI agents for order calls on an open framework, with latency budgets, human handover and data rights built in.</description><content:encoded><![CDATA[<p><em>A Mexican marketplace took most of its customer calls about one thing: where is my order. Wait times grew every sales season. Voice AI agents could answer those calls, but only if they sounded natural in Mexican Spanish, responded fast enough to feel like a conversation, handed over to people gracefully and respected callers&#x27; data rights. The architecture had to make all four true at once.</em></p><h2>The situation</h2>
 <p>A marketplace in Mexico sold electronics, home goods and fashion from thousands of sellers, with deliveries handled by several carriers. Its contact centre took calls in Spanish, and most of them were about the same few things: where an order was, when it would arrive, how to change the address, how to start a return. During sales seasons, queues grew long enough that callers hung up and tried again, which made the queues longer.</p>
 <p><strong>Why now.</strong> On 29 October 2026, Deepgram announced it is acquiring Daily, the company behind Pipecat, a widely used open-source framework for real-time voice agents<sup class="cite"><a href="#ref-1">1</a></sup>. Both companies said Pipecat will stay under its BSD licence and move to an independent foundation whose steering committee includes Deepgram's competitors<sup class="cite"><a href="#ref-2">2</a></sup>. For a team choosing a voice agent stack, that settled the main worry about building on an open framework. On the legal side, Mexico's new personal data protection law took effect in March 2025<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>, and legal commentary notes a right to object to automated processing that significantly affects people without human involvement<sup class="cite"><a href="#ref-3">3</a></sup>. Callers would always need a route to a person.</p>
 
@@ -4006,90 +4087,4 @@
 
 <h2>What I'd do again, and differently</h2>
 <p>Again: treat the archived study package as the deliverable, not the slide with the hazard ratio. Differently: invest earlier in partner data cards. Knowing each source's coverage, lag and coding habits up front would have saved feasibility rounds on questions some partners could never answer.</p>
-<p>If you are building evidence capability across data partners, the <a href="https://asksumanta.com/healthcare-data-architecture/">healthcare data architecture</a> page describes how I run these engagements, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/life-sciences-real-world-evidence-network/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Putting FHIR prior authorisation APIs in front of a payer&#x27;s legacy claims systems</title><link>https://asksumanta.com/case-studies/payer-prior-authorisation-fhir-apis/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/payer-prior-authorisation-fhir-apis/</guid><pubDate>Wed, 28 Oct 2026 01:12:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>healthcare</category><category>fhir</category><category>regulation</category><category>architecture</category><category>platform</category><description>How a health payer put Da Vinci CRD, DTR and PAS FHIR APIs in front of legacy claims systems, with decision tracking and metrics reporting for CMS-0057-F.</description><content:encoded><![CDATA[<p><em>Prior authorisation ran on fax, phone and portals, and a federal rule had set dates for API-based exchange. The goal was standards-based FHIR APIs that providers could call, wrapped around claims and utilisation management systems that could not be replaced in time.</em></p><h2>The situation</h2>
-<p>A regional health payer handled prior authorisation the way much of the industry still does: faxes, phone calls and a provider portal, feeding a utilisation management system that sat beside the core claims platform. Providers waited, reviewers re-keyed information, and nobody could easily answer how long decisions took or why requests were pended.</p>
-<p>The CMS Interoperability and Prior Authorization Final Rule (CMS-0057-F) changed the timetable. It requires impacted payers to implement a prior authorisation API, with API compliance dates from January 2027, and to publicly report prior authorisation metrics<sup class="cite"><a href="#ref-1">1</a></sup>. Replacing the claims and utilisation management systems in that window was not realistic, so the question became how to put a standards-based front door on them.</p>
-
-<h2>What had to be true</h2>
-<ul>
-<li><strong>Standards, not a bespoke API</strong>, so provider EHR vendors could integrate once.</li>
-<li><strong>No rip-and-replace</strong>: the existing systems remain the systems of record.</li>
-<li><strong>Every decision traceable</strong>, with a reason a provider could act on.</li>
-<li><strong>Humans for clinical judgement</strong>: automation handles completeness and clear-cut rules; reviewers handle the rest.</li>
-<li><strong>Metrics by construction</strong>, not by quarterly spreadsheet.</li>
-</ul>
-
-<h2>Architecture</h2>
-<p>The design followed the three HL7 Da Vinci guides that work together for prior authorisation: Coverage Requirements Discovery, Documentation Templates and Rules, and Prior Authorization Support.</p>
-<figure class="dgm">
-<div class="dgm-stack">
-<div class="dgm-tier"><small>Provider</small><div class="dgm-nodes"><span>EHR order workflow<em>CDS Hooks client</em></span><span>DTR app<em>questionnaires</em></span><span>PAS client<em>Claim bundle</em></span></div></div>
-<div class="dgm-tier"><small>API edge</small><div class="dgm-nodes"><span>CRD service<em>coverage requirements</em></span><span>DTR service<em>payer rules and forms</em></span><span class="hl">PAS endpoint<em>submit and inquire</em></span></div></div>
-<div class="dgm-tier"><small>Decisioning</small><div class="dgm-nodes"><span class="hl">Rules engine<em>versioned policies</em></span><span>Reviewer queue<em>clinical judgement</em></span><span>Decision record<em>status and reason</em></span></div></div>
-<div class="dgm-tier"><small>Core systems</small><div class="dgm-nodes"><span>Utilisation management<em>system of record</em></span><span>Claims platform<em>unchanged</em></span><span>Member and coverage<em>eligibility</em></span></div></div>
-<div class="dgm-tier"><small>Observe</small><div class="dgm-nodes"><span>Event bus<em>every state change</em></span><span>Metrics store<em>reporting views</em></span><span>Audit<em>who decided what</em></span></div></div>
-</div>
-<figcaption>Layered architecture: Da Vinci APIs at the edge, a thin decisioning layer, and core systems left in place.</figcaption>
-</figure>
-<p>CRD uses CDS Hooks so the payer can return coverage requirements inside the provider's ordering workflow<sup class="cite"><a href="#ref-2">2</a></sup>. DTR lets payer documentation rules run in the provider context so the required information is gathered up front<sup class="cite"><a href="#ref-3">3</a></sup>. PAS carries the request as a bundle built around a Claim resource, aligned to the X12 278 transaction, and is designed to be used together with CRD and DTR<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
-
-<h2>The data flow, end to end</h2>
-<figure class="dgm">
-<ol class="dgm-flow g3">
-<li><b>Discover</b><span>Order signed in the EHR triggers a CRD call; response says whether authorisation and documentation are needed</span></li>
-<li><b>Document</b><span>DTR gathers required information, pre-filled from the record where possible</span></li>
-<li class="hl"><b>Submit</b><span>PAS bundle received, validated and mapped to an internal work item</span></li>
-<li><b>Check</b><span>Rules engine checks eligibility, completeness and clear-cut policy criteria</span></li>
-<li class="hl"><b>Review</b><span>Anything needing clinical judgement goes to a reviewer queue with the evidence attached</span></li>
-<li><b>Respond</b><span>Decision and reason returned via PAS; every state change published as an event</span></li>
-</ol>
-<figcaption>Automation decides completeness; people decide clinical questions.</figcaption>
-</figure>
-<p>Status inquiries used the same decision record, so a provider checking on a pended request saw exactly what a reviewer saw, and the answer never depended on which internal system happened to hold the case.</p>
-<p>A deeper walkthrough of the rule and the APIs is in <a href="https://asksumanta.com/insights/cms-0057-prior-authorization-apis/">CMS-0057 prior authorisation APIs</a>.</p>
-
-<h2>The hard part: translating policy into rules people trust</h2>
-<p>The FHIR plumbing was well specified. Medical policy was not. Coverage criteria lived in documents written for human reviewers, and turning them into DTR questionnaires and rules required:</p>
-<ul>
-<li>A policy backlog ranked by request volume, so the most common services were automated first.</li>
-<li>Clinical owners for every rule, with versioning so a decision could be traced to the policy text in force at the time.</li>
-<li>A firm boundary: rules could approve or route to review, but a denial on clinical grounds always went through a reviewer.</li>
-<li>Specific, actionable reasons in every pended or denied response, rather than generic codes.</li>
-</ul>
-<div class="callout"><p>An API that returns "pended" faster is not an improvement. The value is in returning the right question to the provider at the moment they can still answer it.</p></div>
-
-<h2>How the engagement ran</h2>
-<figure class="dgm">
-<div class="dgm-lanes">
-<div class="dgm-lane"><small>Provider</small><ol><li>Signs order</li><li>Completes DTR form</li><li class="hl">Receives decision and reason</li></ol></div>
-<div class="dgm-lane"><small>Payer platform</small><ol><li>Returns requirements</li><li>Validates and checks rules</li><li>Publishes events</li></ol></div>
-<div class="dgm-lane"><small>Reviewer</small><ol><li>Receives routed case</li><li class="hl">Decides with evidence</li><li>Records reason</li></ol></div>
-</div>
-<figcaption>One request, three actors, one traceable record.</figcaption>
-</figure>
-<figure class="dgm">
-<div class="dgm-phases">
-<div><small>Phase 1</small><b>Assess</b><ul><li>Rule requirements mapped</li><li>Current workflow and systems</li><li>Highest-volume services</li></ul></div>
-<div><small>Phase 2</small><b>Front door</b><ul><li>PAS endpoint and mapping</li><li>Decision record and events</li><li>Partner testing</li></ul></div>
-<div><small>Phase 3</small><b>Upstream</b><ul><li>CRD responses</li><li>DTR questionnaires</li><li>Rules for top services</li></ul></div>
-<div><small>Phase 4</small><b>Operate</b><ul><li>Metrics reporting</li><li>Policy change process</li><li>Runbooks and hand-off</li></ul></div>
-</div>
-<figcaption>PAS first, because it gives every later step a single place to record decisions.</figcaption>
-</figure>
-<p>For the security model of provider-facing apps, see <a href="https://asksumanta.com/insights/smart-on-fhir-ai-apps-authorisation/">SMART on FHIR authorisation</a>; for the event backbone, <a href="https://asksumanta.com/insights/change-data-capture-event-streams/">change data capture and event streams</a>.</p>
-
-<h2>Key decisions and trade-offs</h2>
-<table class="tbl">
-<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
-<tbody>
-<tr><td>Da Vinci CRD, DTR and PAS</td><td>Proprietary REST API</td><td>EHR vendors integrate once across payers</td></tr>
-<tr><td>Façade over existing systems</td><td>Replace utilisation management</td><td>Meets the timetable without core system risk</td></tr>
-<tr><td>Versioned, owned rules</td><td>Rules embedded in code</td><td>Policy changes are auditable and owned by clinicians</td></tr>
-<tr><td>Clinical denials always reviewed</td><td>Full automation</td><td>Keeps clinical judgement with qualified people</td></tr>
-<tr><td>Metrics from the event stream</td><td>Periodic reporting extracts</td><td>Published numbers match operational reality</td></tr>
-</tbody>
-</table>
-
-<h2>What I'd do again, and differently</h2>
-<p>Again: start with the decision record and event stream, because everything else (reporting, audit, provider status checks) hangs off it. Differently: bring provider-side EHR partners into testing earlier. Real Claim bundles from real ordering workflows surface mapping gaps that synthetic tests never do.</p>
-<p>If you are planning for CMS-0057-F, the <a href="https://asksumanta.com/healthcare-data-architecture/">healthcare data architecture</a> page describes how I run these engagements, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/payer-prior-authorisation-fhir-apis/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
+<p>If you are building evidence capability across data partners, the <a href="https://asksumanta.com/healthcare-data-architecture/">healthcare data architecture</a> page describes how I run these engagements, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/life-sciences-real-world-evidence-network/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
