@@ -1,6 +1,50 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link><description>Fractional CTO and AI architect: insights, case studies and daily tech news.</description><language>en-gb</language><lastBuildDate>Sun, 01 Nov 2026 21:25:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link></image><item><title>LLMjacking after Black October: how to stop stolen AI keys becoming somebody else&#x27;s compute budget</title><link>https://asksumanta.com/insights/llmjacking-stolen-ai-keys-black-october/</link><guid isPermaLink="true">https://asksumanta.com/insights/llmjacking-stolen-ai-keys-black-october/</guid><pubDate>Sun, 01 Nov 2026 21:25:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>security</category><category>ai</category><category>finops</category><description>Wiz&#x27;s Black October report shows stolen AI keys fuelling LLMjacking. A CTO&#x27;s take on where keys leak, how to cap damage and what to monitor across your AI stack.</description><content:encoded><![CDATA[<p><em>On 30 October, Wiz described a month of breaches at AI developer platforms, with stored AI credentials stolen and model access resold. LLMjacking is not new, but AI keys have quietly become some of the most valuable secrets a company holds, and many teams still treat them like a config value. Here is where they leak, how to limit the damage, and what to watch.</em></p><section class="block">
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link><description>Fractional CTO and AI architect: insights, case studies and daily tech news.</description><language>en-gb</language><lastBuildDate>Mon, 02 Nov 2026 08:55:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link></image><item><title>Tech news, 2 November 2026: the FBI names the Binance attacker, a vendor script drains Polymarket traders, a CVSS 10 LXD flaw and Aramco buys into HUMAIN</title><link>https://asksumanta.com/insights/tech-news-2026-11-02/</link><guid isPermaLink="true">https://asksumanta.com/insights/tech-news-2026-11-02/</guid><pubDate>Mon, 02 Nov 2026 08:55:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>security</category><category>platform</category><category>ai</category><description>A CTO&#x27;s take: the FBI ties the Binance theft to North Korea, a hijacked vendor script drains Polymarket traders, a CVSS 10 LXD flaw and Aramco&#x27;s stake in HUMAIN.</description><content:encoded><![CDATA[<p><em>A weekend dominated by follow-through on October&#x27;s security stories: an official attribution for the Binance theft, a reminder that one third-party script can empty user accounts, and a maximum-severity flaw in a widely used container and VM manager. In the Gulf, Saudi Arabia consolidated its national AI champion.</em></p><p>Today's brief covers stories from 30 October to 1 November.</p>
+
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Users and browsers</small><div class="dgm-nodes"><span class="hl">Polymarket<em>third-party script abused live sessions</em></span></div></div>
+<div class="dgm-tier"><small>Platforms</small><div class="dgm-nodes"><span class="hl">Binance<em>signing systems, now attributed</em></span><span>HUMAIN<em>Saudi AI infrastructure</em></span></div></div>
+<div class="dgm-tier"><small>Infrastructure</small><div class="dgm-nodes"><span class="hl">LXD and MicroCloud<em>certificate check bypass</em></span></div></div>
+</div>
+<figcaption>Attackers hit every layer this week: the browser, the signing service and the virtualisation layer underneath.</figcaption>
+</figure>
+
+<section class="block">
+<h2>1. The FBI attributes the Binance theft to North Korea</h2>
+<p>The FBI attributed the theft of more than $6 billion from Binance to North Korea's TraderTraitor group, according to BleepingComputer, in line with earlier assessments from blockchain analytics firms; the agency did not publish the evidence behind the finding<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. Security Affairs reports the FBI expects the stolen assets to be laundered through decentralised finance platforms and instant swap services<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<p><strong>CTO take:</strong> a state attribution changes little technically but a lot commercially: boards, insurers and regulators will ask every firm that moves money how its signing and withdrawal paths are protected. Have the answer ready; <a href="https://asksumanta.com/insights/binance-hack-custody-architecture-lessons/">the Binance hack: architecture lessons</a> sets out the controls.</p>
+</section>
+
+<section class="block">
+<h2>2. A hijacked vendor script drains Polymarket traders</h2>
+<p>Malicious code replaced a third-party performance-monitoring script loaded by Polymarket's website on 29 October and used signed-in traders' sessions to withdraw funds; Polymarket puts the loss at about $2.7 million and says it is reimbursing users<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>. No seed phrases or private keys were needed, because the code acted with the access the open page already had<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+<p><strong>CTO take:</strong> every third-party script on a page where users can move money runs with their authority. Remove non-essential scripts from those pages, self-host the ones you keep with integrity checks, use a strict Content Security Policy, and require a fresh confirmation for withdrawals. This applies to fintechs, marketplaces and any app with stored balances.</p>
+</section>
+
+<section class="block">
+<h2>3. A maximum-severity flaw in LXD and MicroCloud</h2>
+<p>Canonical rated CVE-2026-112816 at CVSS 10.0: vulnerable LXD versions checked every certificate in a presented chain against the trust store, letting an attacker with network access to the API impersonate a trusted client using only its public certificate<sup class="cite"><a href="#ref-5">5</a></sup>. Fixed releases are available for the supported LXD tracks and MicroCloud, and the Incus project, which reported the issue, has also released a fix<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<p><strong>CTO take:</strong> if you run LXD, MicroCloud or Incus, patch now and confirm the installed version, then make sure the management API is not reachable from untrusted networks. It is another reminder to put infrastructure management interfaces behind a dedicated admin path, as in <a href="https://asksumanta.com/case-studies/us-utility-management-plane-hardening/">hardening a utility's management plane</a>.</p>
+</section>
+
+<section class="block">
+<h2>4. Aramco takes 49% of Saudi AI company HUMAIN</h2>
+<p>Aramco and the Public Investment Fund closed a deal giving an Aramco subsidiary 49% of HUMAIN, with PIF keeping 51%; Aramco is contributing about $2.6 billion in cash plus AI and digital assets<sup class="cite"><a href="#ref-6">6</a></sup><sup class="cite"><a href="#ref-7">7</a></sup>.</p>
+<p><strong>CTO take:</strong> Saudi Arabia is concentrating its AI investment in one national platform with an industrial anchor customer. For companies selling AI into the Kingdom, expect more opportunities to build on local infrastructure and more questions about data residency under the PDPL. See <a href="https://asksumanta.com/fractional-cto-saudi-arabia/">fractional CTO in Saudi Arabia</a> and <a href="https://asksumanta.com/insights/saudi-pdpl-cross-border-ai/">Saudi PDPL and cross-border AI</a>.</p>
+</section>
+
+<section class="block">
+<h2>What I'd do this week</h2>
+<ul>
+<li>List every third-party script on pages where users can move money, and remove what you can.</li>
+<li>Patch LXD, MicroCloud or Incus if you run them, and check the management API's exposure.</li>
+<li>Prepare a one-page answer on how your withdrawal and payment paths are protected.</li>
+<li>If you sell into Saudi Arabia, review your hosting and data residency plan.</li>
+</ul>
+<p>See <a href="https://asksumanta.com/regions/">where I work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section><p><a href="https://asksumanta.com/insights/tech-news-2026-11-02/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>LLMjacking after Black October: how to stop stolen AI keys becoming somebody else&#x27;s compute budget</title><link>https://asksumanta.com/insights/llmjacking-stolen-ai-keys-black-october/</link><guid isPermaLink="true">https://asksumanta.com/insights/llmjacking-stolen-ai-keys-black-october/</guid><pubDate>Sun, 01 Nov 2026 21:25:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>security</category><category>ai</category><category>finops</category><description>Wiz&#x27;s Black October report shows stolen AI keys fuelling LLMjacking. A CTO&#x27;s take on where keys leak, how to cap damage and what to monitor across your AI stack.</description><content:encoded><![CDATA[<p><em>On 30 October, Wiz described a month of breaches at AI developer platforms, with stored AI credentials stolen and model access resold. LLMjacking is not new, but AI keys have quietly become some of the most valuable secrets a company holds, and many teams still treat them like a config value. Here is where they leak, how to limit the damage, and what to watch.</em></p><section class="block">
 <h2>What happened</h2>
 <p>Wiz published "Black October" on 30 October, describing a series of security incidents at AI developer and hosting platforms during the month<sup class="cite"><a href="#ref-1">1</a></sup>. Several platforms attributed their incidents to credential access, and the common thread was stored environment variables holding AI keys; Wiz found no single shared vulnerability and linked key-checking activity to resellers of model access, without claiming they carried out the intrusions<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. In the same week, a tampered coding extension tried to plant backdoors on developer machines, the kind of foothold that exposes whatever keys a laptop holds<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
 <p>The pattern has a name. Sysdig described LLMjacking in 2024: attackers use stolen cloud credentials to reach hosted model services, check which keys work, and resell the access, leaving victims with the bill<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>. What has changed is scale: more teams, more platforms and more keys, often with no spending limits.</p>
@@ -3436,86 +3480,4 @@
 
 <h2>What I'd do again, and differently</h2>
 <p>Again: one study end to end before building the shared library, and quality at the table from the first week. Differently: negotiate transfer agreements with vendors as part of platform work, not study start-up. Consistent vendor formats are what make shared mappings possible. Related approaches are in <a href="https://asksumanta.com/insights/data-contracts-playbook/">data contracts</a> and <a href="https://asksumanta.com/insights/fhir-to-omop-architecture/">FHIR to OMOP architecture</a>.</p>
-<p>If your clinical data is growing faster than your ability to trace it, the <a href="https://asksumanta.com/healthcare-data-architecture/">healthcare data architecture</a> page describes how I work, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/clinical-trial-data-platform/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>From spreadsheets to an auditable pharmacovigilance signal platform</title><link>https://asksumanta.com/case-studies/pharmacovigilance-signal-detection-platform/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/pharmacovigilance-signal-detection-platform/</guid><pubDate>Wed, 28 Oct 2026 12:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>healthcare</category><category>omop</category><category>data</category><category>governance</category><description>How a pharma safety team can combine spontaneous reports, literature and real-world data on OMOP to detect, prioritise and evaluate safety signals with an audit trail.</description><content:encoded><![CDATA[<p><em>A drug safety team tracked potential signals across spreadsheets, email and slide decks. Each evaluation meant a bespoke data request and weeks of analysis. The goal was one platform that detects candidate signals, keeps the reasoning auditable and lets the team test them quickly against real-world data.</em></p><h2>The situation</h2>
-<p>A pharmaceutical company's drug safety team handled case processing well; their safety database and regulatory reporting were mature. Signal management was not. Potential signals arrived from periodic report reviews, literature, partners and occasional regulator queries, and were tracked in a spreadsheet. Evaluating one meant a custom data request, an analyst working for weeks, and conclusions summarised in slides that did not record which data or method they came from.</p>
-<p>The head of safety wanted three things: consistent screening, faster evaluation and a record any inspector could follow from first observation to final decision.</p>
-
-<h2>What had to be true</h2>
-<ul>
-<li><strong>Every signal has one record</strong>, from source to decision, with who did what and why.</li>
-<li><strong>Screening is consistent</strong>: the same methods on the same schedule, not ad hoc queries.</li>
-<li><strong>Detection is not confused with evidence.</strong> Report counts start investigations; they don't conclude them.</li>
-<li><strong>Evaluation is fast and reproducible</strong>, using standardised real-world data and versioned study code.</li>
-<li><strong>Validated where it matters</strong>, with the computerised system controls a regulated safety function expects.</li>
-</ul>
-<p>The EU's good pharmacovigilance practice guidance on signal management frames the lifecycle the platform needed to support, and EMA presentations on it emphasise that marketing authorisation holders should keep an audit trail of their signal management activities<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
-
-<h2>Architecture</h2>
-<figure class="dgm">
-<div class="dgm-stack">
-<div class="dgm-tier"><small>Sources</small><div class="dgm-nodes"><span>Safety database<em>individual case reports</em></span><span>Public reports<em>e.g. FAERS</em></span><span>Literature<em>screened articles</em></span><span>Real-world data<em>claims and EHR</em></span></div></div>
-<div class="dgm-tier"><small>Standardise</small><div class="dgm-nodes"><span>Coded events<em>MedDRA terms</em></span><span>Product mapping<em>ingredients, brands</em></span><span class="hl">OMOP CDM<em>RWD partners</em></span></div></div>
-<div class="dgm-tier"><small>Detect</small><div class="dgm-nodes"><span class="hl">Disproportionality screen<em>scheduled runs</em></span><span>Change detection<em>new or rising pairs</em></span><span>Literature triage<em>flagged articles</em></span></div></div>
-<div class="dgm-tier"><small>Manage</small><div class="dgm-nodes"><span class="hl">Signal tracker<em>one record per signal</em></span><span>Workflow<em>validate, prioritise, assess</em></span><span>Audit trail<em>every action and version</em></span></div></div>
-<div class="dgm-tier"><small>Evaluate</small><div class="dgm-nodes"><span>Study packages<em>HADES, versioned</em></span><span>Diagnostics<em>negative controls</em></span><span>Assessment report<em>linked to data and code</em></span></div></div>
-</div>
-<figcaption>Detection, management and evaluation are separate layers, so a statistical flag never becomes a conclusion by accident.</figcaption>
-</figure>
-
-<h2>The data flow, end to end</h2>
-<figure class="dgm">
-<ol class="dgm-flow g3">
-<li><b>Ingest</b><span>Case extracts, public reports and literature flags loaded on schedule</span></li>
-<li><b>Screen</b><span>Disproportionality and change detection for product and event pairs</span></li>
-<li class="hl"><b>Validate</b><span>Safety physician reviews cases behind each flag and opens or closes a signal</span></li>
-<li><b>Prioritise</b><span>Seriousness, novelty and public health impact recorded with reasons</span></li>
-<li class="hl"><b>Evaluate</b><span>Study package run on OMOP data with diagnostics</span></li>
-<li><b>Decide</b><span>Assessment and action recorded, linked to the evidence used</span></li>
-</ol>
-<figcaption>Each step leaves a record, so the path from first flag to final decision can be replayed.</figcaption>
-</figure>
-
-<h2>The hard part: not over-reading spontaneous reports</h2>
-<p>Spontaneous reports are the backbone of signal detection and also easy to misuse. The FDA states plainly that a report does not mean the product caused the event, that report counts cannot establish how often an event occurs, and that reports can be duplicated, incomplete or stimulated by publicity<sup class="cite"><a href="#ref-2">2</a></sup>. The platform's design reflected that:</p>
-<ul>
-<li>Disproportionality scores were labelled as screening statistics, never as risk estimates, everywhere they appeared.</li>
-<li>Every flag required case-level review by a safety physician before becoming a validated signal.</li>
-<li>Evaluation used designed studies on population data, not more report counting.</li>
-</ul>
-<p>For evaluation, self-controlled designs suited many acute safety questions because they compare time periods within the same people, removing confounding by stable characteristics<sup class="cite"><a href="#ref-3">3</a></sup>. Negative control outcomes and empirical calibration showed whether residual bias could explain a result<sup class="cite"><a href="#ref-4">4</a></sup>. The designs are compared in <a href="https://asksumanta.com/insights/real-world-evidence-study-designs-omop/">real-world evidence study designs</a>.</p>
-<div class="callout"><p>A signal platform's most important feature is the line it draws between "worth investigating" and "evidence of harm". Blur that line and you get both false alarms and false reassurance.</p></div>
-
-<h2>How it ran</h2>
-<figure class="dgm">
-<div class="dgm-lanes">
-<div class="dgm-lane"><small>Safety physicians</small><ol><li>Define screening scope</li><li class="hl">Validate and assess signals</li><li>Record decisions</li></ol></div>
-<div class="dgm-lane"><small>Epidemiology</small><ol><li>Design study templates</li><li class="hl">Run evaluations on OMOP</li><li>Interpret diagnostics</li></ol></div>
-<div class="dgm-lane"><small>Data platform</small><ol><li>Ingest and standardise</li><li>Scheduled screening</li><li>Validation and audit</li></ol></div>
-</div>
-<figcaption>Clinical judgement stays with safety physicians; the platform makes their work faster and traceable.</figcaption>
-</figure>
-<figure class="dgm">
-<div class="dgm-phases">
-<div><small>Phase 1</small><b>Tracker</b><ul><li>One record per signal</li><li>Workflow and audit</li><li>Migrate open signals</li></ul></div>
-<div><small>Phase 2</small><b>Screening</b><ul><li>Scheduled disproportionality</li><li>Change detection</li><li>Review queues</li></ul></div>
-<div><small>Phase 3</small><b>Evaluation</b><ul><li>OMOP data partners</li><li>Study templates</li><li>Negative controls</li></ul></div>
-<div><small>Phase 4</small><b>Validate</b><ul><li>System validation</li><li>SOP updates</li><li>Inspection readiness</li></ul></div>
-</div>
-<figcaption>The tracker came first because it fixed the audit problem immediately, before any new analytics existed.</figcaption>
-</figure>
-
-<h2>Key decisions and trade-offs</h2>
-<table class="tbl">
-<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
-<tbody>
-<tr><td>Tracker before analytics</td><td>Start with detection algorithms</td><td>Audit trail and consistency were the biggest gaps</td></tr>
-<tr><td>Physician validation of every flag</td><td>Auto-open signals above a threshold</td><td>Screening statistics are not evidence of harm</td></tr>
-<tr><td>OMOP for evaluation data</td><td>Bespoke extracts per question</td><td>Reusable study packages across data partners</td></tr>
-<tr><td>Negative controls by default</td><td>Report estimates alone</td><td>Shows when bias could explain a result</td></tr>
-<tr><td>Separate detection and evaluation layers</td><td>One combined risk score</td><td>Keeps the reasoning legible to inspectors</td></tr>
-</tbody>
-</table>
-
-<h2>What I'd do again, and differently</h2>
-<p>Again: fix the record-keeping first, then add analytics. Differently: agree data access with real-world data partners at the start. Contracts and governance for external data take longer than building the screening pipeline, and evaluations wait on them. The data side is described in <a href="https://asksumanta.com/insights/federated-health-analytics-ohdsi/">federated health analytics</a> and <a href="https://asksumanta.com/insights/omop-data-quality-checks/">OMOP data quality checks</a>.</p>
-<p>If your safety, evidence or medical teams need a platform like this, the <a href="https://asksumanta.com/healthcare-data-architecture/">healthcare data architecture</a> page describes how I approach it, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/pharmacovigilance-signal-detection-platform/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
+<p>If your clinical data is growing faster than your ability to trace it, the <a href="https://asksumanta.com/healthcare-data-architecture/">healthcare data architecture</a> page describes how I work, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/clinical-trial-data-platform/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
