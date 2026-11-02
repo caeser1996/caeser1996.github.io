@@ -1,6 +1,84 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link><description>Anonymised engagements with architecture and flow diagrams</description><language>en-gb</language><lastBuildDate>Sun, 01 Nov 2026 15:55:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/case-studies/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link></image><item><title>Fast tools, short leashes: securing AI coding assistants and developer machines at a UAE software house</title><link>https://asksumanta.com/case-studies/uae-software-house-ai-developer-toolchain-security/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/uae-software-house-ai-developer-toolchain-security/</guid><pubDate>Sun, 01 Nov 2026 15:55:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>security</category><category>ai</category><category>platform</category><description>How a UAE software house serving banks and government can secure AI coding assistants, editor extensions and API keys after a month of developer-tool attacks.</description><content:encoded><![CDATA[<p><em>A software house in the UAE built systems for banks and government entities, and its engineers had adopted AI coding assistants, AI-native editors and a long tail of extensions. Then October 2026 showed how attackers use exactly those tools: a backdoored coding extension in an editor marketplace, and a run of breaches at AI developer platforms feeding a market in stolen model keys. The firm needed to keep the productivity and remove the blast radius.</em></p><h2>The situation</h2>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link><description>Anonymised engagements with architecture and flow diagrams</description><language>en-gb</language><lastBuildDate>Mon, 02 Nov 2026 15:55:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/case-studies/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link></image><item><title>Every script runs as the user: locking down third-party code on an Indonesian e-wallet&#x27;s web app</title><link>https://asksumanta.com/case-studies/indonesia-ewallet-payment-page-script-security/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/indonesia-ewallet-payment-page-script-security/</guid><pubDate>Mon, 02 Nov 2026 15:55:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>security</category><category>architecture</category><category>platform</category><description>How an Indonesian e-wallet can stop third-party scripts acting with users&#x27; sessions: script inventory, a backend-for-frontend, CSP, integrity checks and step-up.</description><content:encoded><![CDATA[<p><em>An Indonesian e-wallet&#x27;s web app loaded a long list of third-party scripts for analytics, chat, performance and marketing, all running with the signed-in user&#x27;s authority on pages that could move money. When a hijacked performance script drained traders on another platform in October 2026, the team asked the obvious question: what could our scripts do with our users&#x27; sessions? The answer led to a new front-end architecture.</em></p><h2>The situation</h2>
+<p>An e-wallet in Indonesia served users through a mobile app and a web app. The web app let users top up, pay merchants, transfer to bank accounts and withdraw. Over the years, marketing, product and support had added scripts from analytics providers, a tag manager, a chat widget, a session recorder, a performance monitor and several advertising pixels. Most loaded on every page, including the transfer and withdrawal flows, and several were loaded directly from vendors' servers.</p>
+<p><strong>Why now.</strong> On 29 October 2026, malicious code replaced a third-party performance script loaded by Polymarket's website and used signed-in traders' sessions to withdraw funds; Polymarket put the loss at about $2.7 million<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. No passwords or keys were needed: the script simply acted with the access the open page already had<sup class="cite"><a href="#ref-1">1</a></sup>. The card side of the business was already subject to PCI DSS v4 requirements that scripts on payment pages be authorised and protected from tampering, and that changes to payment pages be detected<sup class="cite"><a href="#ref-3">3</a></sup>, and Indonesia's Personal Data Protection Law applies to the personal data those scripts could see<sup class="cite"><a href="#ref-4">4</a></sup>. The board wanted the risk removed, not just documented.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>No third-party code on money-moving pages.</strong></li>
+<li><strong>Every remaining script known, justified and integrity-checked</strong>, served from the e-wallet's own domain.</li>
+<li><strong>The browser holds as little power as possible</strong>: no long-lived tokens, no direct calls to vendors.</li>
+<li><strong>A live session is not enough to move money</strong>: transfers and withdrawals need fresh confirmation.</li>
+<li><strong>Changes are noticed</strong>: unexpected scripts or header changes on sensitive pages raise alerts.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Browser</small><div class="dgm-nodes"><span class="hl">Sensitive pages<em>first-party code only</em></span><span>Other pages<em>approved scripts, self-hosted</em></span></div></div>
+<div class="dgm-tier"><small>Browser controls</small><div class="dgm-nodes"><span class="hl">Content Security Policy<em>allow-list, with reporting</em></span><span>Subresource Integrity<em>pinned script hashes</em></span></div></div>
+<div class="dgm-tier"><small>Backend-for-frontend</small><div class="dgm-nodes"><span class="hl">BFF<em>sessions and tokens server-side</em></span><span>Server-side events<em>analytics without browser tags</em></span></div></div>
+<div class="dgm-tier"><small>Money movement</small><div class="dgm-nodes"><span class="hl">Step-up confirmation<em>PIN or biometric per transfer</em></span><span>Limits and velocity checks<em>per user, per device</em></span></div></div>
+<div class="dgm-tier"><small>Detect</small><div class="dgm-nodes"><span>Payment page monitoring<em>scripts and headers</em></span><span>CSP violation reports<em>alerts</em></span><span>Tracing<em>OpenTelemetry</em></span></div></div>
+</div>
+<figcaption>Remove third-party code where money moves; contain it everywhere else; require fresh intent for every transfer.</figcaption>
+</figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Load</b><span>The transfer page loads only first-party scripts under a strict policy</span></li>
+<li><b>Request</b><span>The browser calls the e-wallet's backend-for-frontend, never a vendor directly</span></li>
+<li class="hl"><b>Confirm</b><span>The user confirms the transfer with a PIN or biometric, bound to the amount and recipient</span></li>
+<li><b>Check</b><span>Limits and velocity rules run server-side before execution</span></li>
+<li class="hl"><b>Execute</b><span>The transfer runs; analytics events are sent server-side, not from the page</span></li>
+<li><b>Watch</b><span>Monitoring compares the delivered page and headers with the approved version</span></li>
+</ol>
+<figcaption>A malicious script on another page cannot complete this flow without the user's fresh confirmation.</figcaption>
+</figure>
+
+<h2>The hard part: taking scripts away from the teams that rely on them</h2>
+<p>Every script had an owner who needed it: marketing measured campaigns, support used the chat widget, product watched session recordings. Simply deleting them would have failed politically and practically. The team ran an inventory first, recording for each script what it did, who owned it, which pages it loaded on and what data it could read. Many turned out to duplicate each other or to have no current owner.</p>
+<p>The bigger change was architectural. The web app moved to a backend-for-frontend: the browser talks only to the e-wallet's own server layer, which holds session tokens and calls internal services and vendors on the user's behalf. The OpenTelemetry demo's front-end shows the same shape: client-side code calls the app's own API routes, which then call the backend services<sup class="cite"><a href="#ref-5">5</a></sup>. With that in place, analytics and marketing events could be sent server-side, so most tags no longer needed to run in the browser at all.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/indonesia-ewallet-payment-page-script-security/bff-data-flow.webp" alt="Front-end data flow diagram: inside a Next.js application, client-side rendering calls REST endpoints on the app's own API routes, which call cart, product catalogue, recommendation and other backend services over gRPC" width="1000" height="894" loading="lazy"></div><figcaption>The browser calls the app's own API layer, which calls everything else: the backend-for-frontend shape that keeps tokens and vendors off the page. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2022/frontend-overhaul/" target="_blank" rel="noopener">OpenTelemetry blog, Oscar Reyes</a> · CC BY 4.0</span></figcaption></figure>
+<p>For the scripts that remained, such as the chat widget on help pages, the team self-hosted pinned versions with integrity hashes, so a change at the vendor could not silently change the code running in users' browsers, and listed every allowed source in a Content Security Policy with violation reporting turned on. Vendor updates became a deliberate change, reviewed like any other dependency.</p>
+<div class="callout"><p>Treat every third-party script as a contractor with your user's keys. Keep contractors off the floor where money moves, and check the ones you keep every time they change.</p></div>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Security</small><ol><li>Script inventory</li><li class="hl">CSP and integrity rules</li><li>Page monitoring</li></ol></div>
+<div class="dgm-lane"><small>Engineering</small><ol><li>Backend-for-frontend</li><li class="hl">Step-up confirmation</li><li>Server-side events</li></ol></div>
+<div class="dgm-lane"><small>Marketing, support, product</small><ol><li>Justify each script</li><li class="hl">Move to server-side data</li><li>Approve vendor changes</li></ol></div>
+</div>
+<figcaption>Every script got an owner, a reason and a home; most moved off the page entirely.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Week 1</small><b>Contain</b><ul><li>Strip scripts from transfer pages</li><li>Step-up on withdrawals</li><li>Lower limits for new devices</li></ul></div>
+<div><small>Weeks 2 to 6</small><b>Inventory and policy</b><ul><li>Script register</li><li>CSP in report mode</li><li>Self-host kept scripts</li></ul></div>
+<div><small>Weeks 7 to 12</small><b>Re-architect</b><ul><li>Backend-for-frontend</li><li>Server-side analytics</li><li>CSP enforced</li></ul></div>
+<div><small>Ongoing</small><b>Watch</b><ul><li>Page change monitoring</li><li>Violation alerts</li><li>Vendor change reviews</li></ul></div>
+</div>
+<figcaption>Week one removes the biggest risk; the quarter removes the cause.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>No third-party scripts on money pages</td><td>Monitor them closely</td><td>Removal beats detection where money moves</td></tr>
+<tr><td>Backend-for-frontend</td><td>Browser calls services and vendors directly</td><td>Tokens and integrations stay server-side</td></tr>
+<tr><td>Server-side analytics</td><td>Browser tags</td><td>Same insight, far less code in the page</td></tr>
+<tr><td>Self-hosted, integrity-checked scripts</td><td>Load from vendor servers</td><td>Vendor compromise cannot change running code</td></tr>
+<tr><td>Fresh confirmation per transfer</td><td>Trust the active session</td><td>A hijacked session alone cannot move money</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: strip the money pages in week one. It removed most of the risk before the longer re-architecture began. Differently: run the Content Security Policy in report-only mode from the first day of the inventory; its reports found scripts that nobody had listed. Related: <a href="https://asksumanta.com/insights/binance-hack-custody-architecture-lessons/">architecture lessons from the Binance hack</a>, <a href="https://asksumanta.com/insights/tech-news-2026-11-02/">the 2 November tech news</a>, <a href="https://asksumanta.com/case-studies/uae-software-house-ai-developer-toolchain-security/">securing AI coding tools</a> and <a href="https://asksumanta.com/regions/">where I work</a>.</p>
+<p>If you run a wallet, marketplace or fintech in Indonesia or across Southeast Asia, see the <a href="https://asksumanta.com/fractional-cto-singapore/">Singapore and Southeast Asia page</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/indonesia-ewallet-payment-page-script-security/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Fast tools, short leashes: securing AI coding assistants and developer machines at a UAE software house</title><link>https://asksumanta.com/case-studies/uae-software-house-ai-developer-toolchain-security/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/uae-software-house-ai-developer-toolchain-security/</guid><pubDate>Sun, 01 Nov 2026 15:55:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>security</category><category>ai</category><category>platform</category><description>How a UAE software house serving banks and government can secure AI coding assistants, editor extensions and API keys after a month of developer-tool attacks.</description><content:encoded><![CDATA[<p><em>A software house in the UAE built systems for banks and government entities, and its engineers had adopted AI coding assistants, AI-native editors and a long tail of extensions. Then October 2026 showed how attackers use exactly those tools: a backdoored coding extension in an editor marketplace, and a run of breaches at AI developer platforms feeding a market in stolen model keys. The firm needed to keep the productivity and remove the blast radius.</em></p><h2>The situation</h2>
 <p>A software house based in the UAE built and ran systems for banks, insurers and government entities across the Gulf. Its engineers had embraced AI: coding assistants in their editors, AI-native editors with their own extension marketplaces, hosted AI development platforms for experiments, and personal API keys for several model providers. Developers had local admin rights, long-lived cloud credentials and, in some cases, access to client environments from their laptops.</p>
 <p><strong>Why now.</strong> October 2026 made the risk concrete. On 29 October, tampered versions of the Claude Code extension were listed in Cursor's extension marketplace for a few hours; Microsoft's analysis describes a loader that tried to add an attacker SSH key and open a reverse tunnel on developer machines<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. Days earlier, a Wiz Research report described a month of breaches at AI developer platforms, with stolen AI credentials feeding LLMjacking, the resale of model access<sup class="cite"><a href="#ref-3">3</a></sup>. For a firm whose clients sit under the UAE's tightening expectations on cyber resilience and supply-chain security<sup class="cite"><a href="#ref-4">4</a></sup>, "a developer's editor was compromised" could not be allowed to mean "a client was compromised".</p>
 
@@ -4003,88 +4081,4 @@
 
 <h2>What I'd do again, and differently</h2>
 <p>Again: start with historical confirmed cases and show investigators the rings the graph would have surfaced. Differently: build the shared-infrastructure entity list on day one. It is the main source of false rings, and it is easier to design for than to clean up.</p>
-<p>If you are considering a knowledge graph for risk or investigations, the <a href="https://asksumanta.com/ontology-knowledge-graph/">ontology and knowledge graph</a> page describes how I run these engagements, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/fintech-fraud-ring-knowledge-graph/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Building a reproducible real-world evidence network across external data partners</title><link>https://asksumanta.com/case-studies/life-sciences-real-world-evidence-network/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/life-sciences-real-world-evidence-network/</guid><pubDate>Wed, 28 Oct 2026 01:14:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>healthcare</category><category>omop</category><category>data</category><category>governance</category><category>regulation</category><description>How a life sciences evidence team ran reproducible OMOP studies across external data partners: pre-specified designs, negative controls and packaged study code.</description><content:encoded><![CDATA[<p><em>A pharmaceutical evidence team licensed data from several partners and started every study with a new data pull and months of cleaning. The goal was a study pipeline that ran the same pre-specified design at every partner, measured its own bias, and could be re-run exactly when a regulator asked.</em></p><h2>The situation</h2>
-<p>A life sciences evidence team answered questions about treatment patterns, comparative safety and outcomes using data licensed from several external partners: claims databases, EHR-derived datasets and a disease registry. Each study started the same way: negotiate an extract, receive files in the partner's format, spend months cleaning and harmonising, then write analysis code that only worked on that one extract. When a reviewer later asked a question, re-creating the original analysis was an archaeology project.</p>
-<p>The partners were also reluctant to send patient-level data at all. The team needed a way to run studies where the data lived, with results the organisation would be comfortable defending to a regulator.</p>
-
-<h2>What had to be true</h2>
-<ul>
-<li><strong>One common model at every partner</strong>, so study code runs unchanged.</li>
-<li><strong>Design before data</strong>: protocols, cohorts and analyses pre-specified and locked before results are seen.</li>
-<li><strong>Bias measured, not assumed</strong>, using controls with a known answer.</li>
-<li><strong>Exact reproducibility</strong> of any result, months or years later.</li>
-<li><strong>Data stays with the partner</strong>; only reviewed aggregates come back.</li>
-</ul>
-<p>The FDA's framework for its real-world evidence programme frames the questions such evidence will face, including whether the data are fit for use and whether the study design can provide adequate evidence<sup class="cite"><a href="#ref-1">1</a></sup>. Those questions shaped the architecture from the start.</p>
-
-<h2>Architecture</h2>
-<figure class="dgm">
-<div class="dgm-stack">
-<div class="dgm-tier"><small>Partners</small><div class="dgm-nodes"><span>Claims partner<em>OMOP CDM</em></span><span>EHR-derived partner<em>OMOP CDM</em></span><span>Registry partner<em>OMOP CDM</em></span></div></div>
-<div class="dgm-tier"><small>Fitness</small><div class="dgm-nodes"><span>Data Quality Dashboard<em>per release</em></span><span>Characterisation<em>feasibility counts</em></span><span>Partner data card<em>coverage, lag, gaps</em></span></div></div>
-<div class="dgm-tier"><small>Study design</small><div class="dgm-nodes"><span>Protocol<em>locked before execution</em></span><span>Cohort library<em>versioned definitions</em></span><span class="hl">Negative controls<em>outcomes with no known effect</em></span></div></div>
-<div class="dgm-tier"><small>Execution</small><div class="dgm-nodes"><span class="hl">Study package<em>Strategus spec, pinned renv</em></span><span>HADES modules<em>estimation, characterisation</em></span><span>Partner run<em>local, aggregates out</em></span></div></div>
-<div class="dgm-tier"><small>Evidence</small><div class="dgm-nodes"><span>Diagnostics review<em>before unblinding</em></span><span>Meta-analysis<em>across partners</em></span><span>Archive<em>package, versions, results</em></span></div></div>
-</div>
-<figcaption>Layered architecture: partners keep their data in OMOP; the team ships locked study packages and receives diagnostics and aggregates.</figcaption>
-</figure>
-<p>Analytics used OHDSI's HADES packages, open-source R tools for characterisation, population-level effect estimation and patient-level prediction against the OMOP CDM<sup class="cite"><a href="#ref-2">2</a></sup>. Partner conversions followed the patterns in <a href="https://asksumanta.com/insights/fhir-to-omop-architecture/">FHIR to OMOP architecture</a> and <a href="https://asksumanta.com/insights/clinical-terminologies-omop-vocabularies/">OMOP vocabularies</a> where partners started from scratch.</p>
-
-<h2>The data flow, end to end</h2>
-<figure class="dgm">
-<ol class="dgm-flow g3">
-<li><b>Question</b><span>Research question and protocol written; estimand, cohorts and comparators fixed</span></li>
-<li><b>Feasibility</b><span>Aggregate counts from each partner confirm the question is answerable there</span></li>
-<li class="hl"><b>Package</b><span>Cohorts, analyses and negative controls bundled as one specification with a pinned environment</span></li>
-<li><b>Execute</b><span>Each partner runs the package locally against its current OMOP release</span></li>
-<li class="hl"><b>Diagnose</b><span>Balance, power and negative control results reviewed before any effect estimate is unblinded</span></li>
-<li><b>Synthesise</b><span>Calibrated estimates combined across partners; everything archived with versions</span></li>
-</ol>
-<figcaption>Diagnostics come before results. A study that fails them stops, whatever its estimate would have been.</figcaption>
-</figure>
-<p>Cohort practice is covered in <a href="https://asksumanta.com/insights/omop-cohort-definitions/">OMOP cohort definitions</a>, and study design choices in <a href="https://asksumanta.com/insights/real-world-evidence-study-designs-omop/">real-world evidence study designs on OMOP</a>.</p>
-
-<h2>The hard part: proving the design is not fooling you</h2>
-<p>Observational studies can produce confident, wrong answers. OHDSI's approach to method validity uses negative controls, exposure and outcome pairs believed to have no causal effect, to measure residual systematic error, and empirical calibration to adjust confidence intervals and p-values for it<sup class="cite"><a href="#ref-3">3</a></sup>. Making that routine required:</p>
-<ul>
-<li>A curated negative control list per study, reviewed by clinical scientists rather than generated and forgotten.</li>
-<li>A rule that effect estimates stay blinded until diagnostics (covariate balance, equipoise, negative control distribution) pass.</li>
-<li>Diagnostics reported per partner, because bias that appears in one data source and not another is itself a finding.</li>
-</ul>
-<div class="callout"><p>The most valuable output of a negative control analysis is permission to say "this design should not be trusted here". Building that into the process is what makes the other results credible.</p></div>
-
-<h2>How the engagement ran</h2>
-<figure class="dgm">
-<div class="dgm-lanes">
-<div class="dgm-lane"><small>Evidence team</small><ol><li>Locks protocol</li><li class="hl">Builds study package</li><li>Reviews diagnostics</li></ol></div>
-<div class="dgm-lane"><small>Data partner</small><ol><li>Maintains OMOP release</li><li class="hl">Runs package locally</li><li>Releases aggregates</li></ol></div>
-<div class="dgm-lane"><small>Archive</small><ol><li>Package and environment</li><li>Data and vocabulary versions</li><li>Results and diagnostics</li></ol></div>
-</div>
-<figcaption>Study code travels to partners; diagnostics and aggregates travel back and are archived together.</figcaption>
-</figure>
-<p>Execution used Strategus, which runs HADES modules from a JSON analysis specification and restores a pinned R environment, separating study design from site-specific execution settings<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
-<figure class="dgm">
-<div class="dgm-phases">
-<div><small>Phase 1</small><b>Foundations</b><ul><li>Partner OMOP readiness</li><li>Data cards and quality baselines</li><li>Governance with partners</li></ul></div>
-<div><small>Phase 2</small><b>Pilot study</b><ul><li>One question, two partners</li><li>Full diagnostics</li><li>Archive format</li></ul></div>
-<div><small>Phase 3</small><b>Library</b><ul><li>Reusable cohorts</li><li>Negative control sets</li><li>Package templates</li></ul></div>
-<div><small>Phase 4</small><b>Network</b><ul><li>More partners</li><li>Study intake process</li><li>Hand-off and training</li></ul></div>
-</div>
-<figcaption>A complete pilot study end to end before scaling partners.</figcaption>
-</figure>
-
-<h2>Key decisions and trade-offs</h2>
-<table class="tbl">
-<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
-<tbody>
-<tr><td>OMOP at every partner</td><td>Harmonise extracts centrally</td><td>Study code runs unchanged; data stays with the partner</td></tr>
-<tr><td>Locked, packaged studies</td><td>Analysts iterate on live data</td><td>Prevents result-driven design changes; enables exact re-runs</td></tr>
-<tr><td>Negative controls in every estimation study</td><td>Rely on adjustment alone</td><td>Measures residual bias instead of assuming it away</td></tr>
-<tr><td>Blind estimates until diagnostics pass</td><td>Review everything together</td><td>Keeps the decision to trust a design independent of its answer</td></tr>
-<tr><td>Open-source OHDSI tooling</td><td>Proprietary analytics platform</td><td>Transparent methods reviewers can inspect and partners already run</td></tr>
-</tbody>
-</table>
-
-<h2>What I'd do again, and differently</h2>
-<p>Again: treat the archived study package as the deliverable, not the slide with the hazard ratio. Differently: invest earlier in partner data cards. Knowing each source's coverage, lag and coding habits up front would have saved feasibility rounds on questions some partners could never answer.</p>
-<p>If you are building evidence capability across data partners, the <a href="https://asksumanta.com/healthcare-data-architecture/">healthcare data architecture</a> page describes how I run these engagements, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/life-sciences-real-world-evidence-network/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
+<p>If you are considering a knowledge graph for risk or investigations, the <a href="https://asksumanta.com/ontology-knowledge-graph/">ontology and knowledge graph</a> page describes how I run these engagements, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/fintech-fraud-ring-knowledge-graph/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>

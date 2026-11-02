@@ -1,0 +1,80 @@
+<!--{"title": "Case study: third-party script security for an Indonesian e-wallet", "description": "How an Indonesian e-wallet can stop third-party scripts acting with users' sessions: script inventory, a backend-for-frontend, CSP, integrity checks and step-up.", "short": "Third-party script security for an e-wallet", "h1": "Every script runs as the user: locking down third-party code on an Indonesian e-wallet's web app", "kicker": "Case study · Client-side and payment security", "lede": "An Indonesian e-wallet's web app loaded a long list of third-party scripts for analytics, chat, performance and marketing, all running with the signed-in user's authority on pages that could move money. When a hijacked performance script drained traders on another platform in October 2026, the team asked the obvious question: what could our scripts do with our users' sessions? The answer led to a new front-end architecture.", "date": "2026-11-02", "datetime": "2026-11-02T15:55:00+04:00", "readtime": "9 min read", "sector": "Fintech · Indonesia", "role": "Fractional CTO and principal architect", "engagement": "Assessment, architecture and delivery leadership", "scope": "Script inventory, backend-for-frontend, Content Security Policy, integrity checks, step-up confirmation, monitoring", "stack": ["Backend-for-frontend (BFF)", "Content Security Policy with reporting", "Subresource Integrity", "Self-hosted vendor scripts", "Server-side analytics events", "Step-up authentication", "Payment page change monitoring", "OpenTelemetry"], "outcomes": ["No third-party scripts on pages that can move money", "Remaining vendor scripts self-hosted, pinned and integrity-checked", "Browser talks only to the e-wallet's own backend-for-frontend", "Transfers and withdrawals need fresh confirmation, not just a live session", "Unexpected script or header changes on sensitive pages raise alerts"], "tags": ["security", "architecture", "platform"], "keywords": ["third-party script security", "Polymarket hack", "client-side supply chain attack", "PCI DSS 6.4.3 11.6.1", "Content Security Policy", "Subresource Integrity", "backend for frontend", "e-wallet security Indonesia", "Indonesia PDP Law", "fractional CTO Southeast Asia"], "faq": [["Why are third-party scripts dangerous on payment pages?", "A script loaded into a page runs with the same access as the page itself. If a vendor's script is replaced with malicious code, it can act with the signed-in user's session, as happened to Polymarket traders in October 2026, without needing passwords or keys."], ["What do PCI DSS requirements 6.4.3 and 11.6.1 require?", "In summary, 6.4.3 requires that scripts on payment pages are authorised, justified and protected from tampering, and 11.6.1 requires detecting unauthorised changes to payment pages and their security-relevant headers. Confirm scope and detail with your assessor."], ["What is a backend-for-frontend?", "A server-side layer owned by the app that the browser talks to instead of calling many services and vendors directly. It keeps tokens and vendor integrations on the server, so less code in the browser can act for the user."]], "related": ["/fractional-cto-singapore/", "/regions/", "/fractional-cto/"], "citations": [{"title": "Hackers Steal About $2.7 Million From Polymarket Traders via Hijacked DebugBear Script", "url": "https://thehackernews.com/2026/11/hackers-steal-about-27-million-from.html", "publisher": "The Hacker News", "date": "Nov 2026"}, {"title": "$2 Million+ Drained From Polymarket Traders in New Supply Chain Attack", "url": "https://www.securityweek.com/2-million-drained-from-polymarket-traders-in-new-supply-chain-attack/", "publisher": "SecurityWeek", "date": "Oct 2026"}, {"title": "PCI DSS 4.0.1 and Requirements 6.4.3 and 11.6.1: What Changed for Payment Page Scripts", "url": "https://blog.report-uri.com/pci-dss-4-0-1-and-requirements-6-4-3-and-11-6-1-what-changed-for-payment-page-scripts/", "publisher": "Report URI", "date": "2025"}, {"title": "Data Protection & Privacy 2026: Indonesia, Trends and Developments", "url": "https://practiceguides.chambers.com/practice-guides/data-protection-privacy-2026/indonesia/trends-and-developments", "publisher": "Chambers and Partners", "date": "2026"}, {"title": "Front-end Overhaul of the OpenTelemetry Demo (Go to Next.js)", "url": "https://opentelemetry.io/blog/2022/frontend-overhaul/", "publisher": "OpenTelemetry blog", "date": "16 Nov 2022"}]}-->
+<h2>The situation</h2>
+<p>An e-wallet in Indonesia served users through a mobile app and a web app. The web app let users top up, pay merchants, transfer to bank accounts and withdraw. Over the years, marketing, product and support had added scripts from analytics providers, a tag manager, a chat widget, a session recorder, a performance monitor and several advertising pixels. Most loaded on every page, including the transfer and withdrawal flows, and several were loaded directly from vendors' servers.</p>
+<p><strong>Why now.</strong> On 29 October 2026, malicious code replaced a third-party performance script loaded by Polymarket's website and used signed-in traders' sessions to withdraw funds; Polymarket put the loss at about $2.7 million<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. No passwords or keys were needed: the script simply acted with the access the open page already had<sup class="cite"><a href="#ref-1">1</a></sup>. The card side of the business was already subject to PCI DSS v4 requirements that scripts on payment pages be authorised and protected from tampering, and that changes to payment pages be detected<sup class="cite"><a href="#ref-3">3</a></sup>, and Indonesia's Personal Data Protection Law applies to the personal data those scripts could see<sup class="cite"><a href="#ref-4">4</a></sup>. The board wanted the risk removed, not just documented.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>No third-party code on money-moving pages.</strong></li>
+<li><strong>Every remaining script known, justified and integrity-checked</strong>, served from the e-wallet's own domain.</li>
+<li><strong>The browser holds as little power as possible</strong>: no long-lived tokens, no direct calls to vendors.</li>
+<li><strong>A live session is not enough to move money</strong>: transfers and withdrawals need fresh confirmation.</li>
+<li><strong>Changes are noticed</strong>: unexpected scripts or header changes on sensitive pages raise alerts.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Browser</small><div class="dgm-nodes"><span class="hl">Sensitive pages<em>first-party code only</em></span><span>Other pages<em>approved scripts, self-hosted</em></span></div></div>
+<div class="dgm-tier"><small>Browser controls</small><div class="dgm-nodes"><span class="hl">Content Security Policy<em>allow-list, with reporting</em></span><span>Subresource Integrity<em>pinned script hashes</em></span></div></div>
+<div class="dgm-tier"><small>Backend-for-frontend</small><div class="dgm-nodes"><span class="hl">BFF<em>sessions and tokens server-side</em></span><span>Server-side events<em>analytics without browser tags</em></span></div></div>
+<div class="dgm-tier"><small>Money movement</small><div class="dgm-nodes"><span class="hl">Step-up confirmation<em>PIN or biometric per transfer</em></span><span>Limits and velocity checks<em>per user, per device</em></span></div></div>
+<div class="dgm-tier"><small>Detect</small><div class="dgm-nodes"><span>Payment page monitoring<em>scripts and headers</em></span><span>CSP violation reports<em>alerts</em></span><span>Tracing<em>OpenTelemetry</em></span></div></div>
+</div>
+<figcaption>Remove third-party code where money moves; contain it everywhere else; require fresh intent for every transfer.</figcaption>
+</figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Load</b><span>The transfer page loads only first-party scripts under a strict policy</span></li>
+<li><b>Request</b><span>The browser calls the e-wallet's backend-for-frontend, never a vendor directly</span></li>
+<li class="hl"><b>Confirm</b><span>The user confirms the transfer with a PIN or biometric, bound to the amount and recipient</span></li>
+<li><b>Check</b><span>Limits and velocity rules run server-side before execution</span></li>
+<li class="hl"><b>Execute</b><span>The transfer runs; analytics events are sent server-side, not from the page</span></li>
+<li><b>Watch</b><span>Monitoring compares the delivered page and headers with the approved version</span></li>
+</ol>
+<figcaption>A malicious script on another page cannot complete this flow without the user's fresh confirmation.</figcaption>
+</figure>
+
+<h2>The hard part: taking scripts away from the teams that rely on them</h2>
+<p>Every script had an owner who needed it: marketing measured campaigns, support used the chat widget, product watched session recordings. Simply deleting them would have failed politically and practically. The team ran an inventory first, recording for each script what it did, who owned it, which pages it loaded on and what data it could read. Many turned out to duplicate each other or to have no current owner.</p>
+<p>The bigger change was architectural. The web app moved to a backend-for-frontend: the browser talks only to the e-wallet's own server layer, which holds session tokens and calls internal services and vendors on the user's behalf. The OpenTelemetry demo's front-end shows the same shape: client-side code calls the app's own API routes, which then call the backend services<sup class="cite"><a href="#ref-5">5</a></sup>. With that in place, analytics and marketing events could be sent server-side, so most tags no longer needed to run in the browser at all.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/indonesia-ewallet-payment-page-script-security/bff-data-flow.webp" alt="Front-end data flow diagram: inside a Next.js application, client-side rendering calls REST endpoints on the app's own API routes, which call cart, product catalogue, recommendation and other backend services over gRPC" width="1000" height="894" loading="lazy"></div><figcaption>The browser calls the app's own API layer, which calls everything else: the backend-for-frontend shape that keeps tokens and vendors off the page. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2022/frontend-overhaul/" target="_blank" rel="noopener">OpenTelemetry blog, Oscar Reyes</a> · CC BY 4.0</span></figcaption></figure>
+<p>For the scripts that remained, such as the chat widget on help pages, the team self-hosted pinned versions with integrity hashes, so a change at the vendor could not silently change the code running in users' browsers, and listed every allowed source in a Content Security Policy with violation reporting turned on. Vendor updates became a deliberate change, reviewed like any other dependency.</p>
+<div class="callout"><p>Treat every third-party script as a contractor with your user's keys. Keep contractors off the floor where money moves, and check the ones you keep every time they change.</p></div>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Security</small><ol><li>Script inventory</li><li class="hl">CSP and integrity rules</li><li>Page monitoring</li></ol></div>
+<div class="dgm-lane"><small>Engineering</small><ol><li>Backend-for-frontend</li><li class="hl">Step-up confirmation</li><li>Server-side events</li></ol></div>
+<div class="dgm-lane"><small>Marketing, support, product</small><ol><li>Justify each script</li><li class="hl">Move to server-side data</li><li>Approve vendor changes</li></ol></div>
+</div>
+<figcaption>Every script got an owner, a reason and a home; most moved off the page entirely.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Week 1</small><b>Contain</b><ul><li>Strip scripts from transfer pages</li><li>Step-up on withdrawals</li><li>Lower limits for new devices</li></ul></div>
+<div><small>Weeks 2 to 6</small><b>Inventory and policy</b><ul><li>Script register</li><li>CSP in report mode</li><li>Self-host kept scripts</li></ul></div>
+<div><small>Weeks 7 to 12</small><b>Re-architect</b><ul><li>Backend-for-frontend</li><li>Server-side analytics</li><li>CSP enforced</li></ul></div>
+<div><small>Ongoing</small><b>Watch</b><ul><li>Page change monitoring</li><li>Violation alerts</li><li>Vendor change reviews</li></ul></div>
+</div>
+<figcaption>Week one removes the biggest risk; the quarter removes the cause.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>No third-party scripts on money pages</td><td>Monitor them closely</td><td>Removal beats detection where money moves</td></tr>
+<tr><td>Backend-for-frontend</td><td>Browser calls services and vendors directly</td><td>Tokens and integrations stay server-side</td></tr>
+<tr><td>Server-side analytics</td><td>Browser tags</td><td>Same insight, far less code in the page</td></tr>
+<tr><td>Self-hosted, integrity-checked scripts</td><td>Load from vendor servers</td><td>Vendor compromise cannot change running code</td></tr>
+<tr><td>Fresh confirmation per transfer</td><td>Trust the active session</td><td>A hijacked session alone cannot move money</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: strip the money pages in week one. It removed most of the risk before the longer re-architecture began. Differently: run the Content Security Policy in report-only mode from the first day of the inventory; its reports found scripts that nobody had listed. Related: <a href="/insights/binance-hack-custody-architecture-lessons/">architecture lessons from the Binance hack</a>, <a href="/insights/tech-news-2026-11-02/">the 2 November tech news</a>, <a href="/case-studies/uae-software-house-ai-developer-toolchain-security/">securing AI coding tools</a> and <a href="/regions/">where I work</a>.</p>
+<p>If you run a wallet, marketplace or fintech in Indonesia or across Southeast Asia, see the <a href="/fractional-cto-singapore/">Singapore and Southeast Asia page</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>

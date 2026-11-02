@@ -1,6 +1,84 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link><description>Fractional CTO and AI architect: insights, case studies and daily tech news.</description><language>en-gb</language><lastBuildDate>Mon, 02 Nov 2026 08:55:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link></image><item><title>Tech news, 2 November 2026: the FBI names the Binance attacker, a vendor script drains Polymarket traders, a CVSS 10 LXD flaw and Aramco buys into HUMAIN</title><link>https://asksumanta.com/insights/tech-news-2026-11-02/</link><guid isPermaLink="true">https://asksumanta.com/insights/tech-news-2026-11-02/</guid><pubDate>Mon, 02 Nov 2026 08:55:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>security</category><category>platform</category><category>ai</category><description>A CTO&#x27;s take: the FBI ties the Binance theft to North Korea, a hijacked vendor script drains Polymarket traders, a CVSS 10 LXD flaw and Aramco&#x27;s stake in HUMAIN.</description><content:encoded><![CDATA[<p><em>A weekend dominated by follow-through on October&#x27;s security stories: an official attribution for the Binance theft, a reminder that one third-party script can empty user accounts, and a maximum-severity flaw in a widely used container and VM manager. In the Gulf, Saudi Arabia consolidated its national AI champion.</em></p><p>Today's brief covers stories from 30 October to 1 November.</p>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link><description>Fractional CTO and AI architect: insights, case studies and daily tech news.</description><language>en-gb</language><lastBuildDate>Mon, 02 Nov 2026 15:55:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link></image><item><title>Every script runs as the user: locking down third-party code on an Indonesian e-wallet&#x27;s web app</title><link>https://asksumanta.com/case-studies/indonesia-ewallet-payment-page-script-security/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/indonesia-ewallet-payment-page-script-security/</guid><pubDate>Mon, 02 Nov 2026 15:55:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>security</category><category>architecture</category><category>platform</category><description>How an Indonesian e-wallet can stop third-party scripts acting with users&#x27; sessions: script inventory, a backend-for-frontend, CSP, integrity checks and step-up.</description><content:encoded><![CDATA[<p><em>An Indonesian e-wallet&#x27;s web app loaded a long list of third-party scripts for analytics, chat, performance and marketing, all running with the signed-in user&#x27;s authority on pages that could move money. When a hijacked performance script drained traders on another platform in October 2026, the team asked the obvious question: what could our scripts do with our users&#x27; sessions? The answer led to a new front-end architecture.</em></p><h2>The situation</h2>
+<p>An e-wallet in Indonesia served users through a mobile app and a web app. The web app let users top up, pay merchants, transfer to bank accounts and withdraw. Over the years, marketing, product and support had added scripts from analytics providers, a tag manager, a chat widget, a session recorder, a performance monitor and several advertising pixels. Most loaded on every page, including the transfer and withdrawal flows, and several were loaded directly from vendors' servers.</p>
+<p><strong>Why now.</strong> On 29 October 2026, malicious code replaced a third-party performance script loaded by Polymarket's website and used signed-in traders' sessions to withdraw funds; Polymarket put the loss at about $2.7 million<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. No passwords or keys were needed: the script simply acted with the access the open page already had<sup class="cite"><a href="#ref-1">1</a></sup>. The card side of the business was already subject to PCI DSS v4 requirements that scripts on payment pages be authorised and protected from tampering, and that changes to payment pages be detected<sup class="cite"><a href="#ref-3">3</a></sup>, and Indonesia's Personal Data Protection Law applies to the personal data those scripts could see<sup class="cite"><a href="#ref-4">4</a></sup>. The board wanted the risk removed, not just documented.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>No third-party code on money-moving pages.</strong></li>
+<li><strong>Every remaining script known, justified and integrity-checked</strong>, served from the e-wallet's own domain.</li>
+<li><strong>The browser holds as little power as possible</strong>: no long-lived tokens, no direct calls to vendors.</li>
+<li><strong>A live session is not enough to move money</strong>: transfers and withdrawals need fresh confirmation.</li>
+<li><strong>Changes are noticed</strong>: unexpected scripts or header changes on sensitive pages raise alerts.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Browser</small><div class="dgm-nodes"><span class="hl">Sensitive pages<em>first-party code only</em></span><span>Other pages<em>approved scripts, self-hosted</em></span></div></div>
+<div class="dgm-tier"><small>Browser controls</small><div class="dgm-nodes"><span class="hl">Content Security Policy<em>allow-list, with reporting</em></span><span>Subresource Integrity<em>pinned script hashes</em></span></div></div>
+<div class="dgm-tier"><small>Backend-for-frontend</small><div class="dgm-nodes"><span class="hl">BFF<em>sessions and tokens server-side</em></span><span>Server-side events<em>analytics without browser tags</em></span></div></div>
+<div class="dgm-tier"><small>Money movement</small><div class="dgm-nodes"><span class="hl">Step-up confirmation<em>PIN or biometric per transfer</em></span><span>Limits and velocity checks<em>per user, per device</em></span></div></div>
+<div class="dgm-tier"><small>Detect</small><div class="dgm-nodes"><span>Payment page monitoring<em>scripts and headers</em></span><span>CSP violation reports<em>alerts</em></span><span>Tracing<em>OpenTelemetry</em></span></div></div>
+</div>
+<figcaption>Remove third-party code where money moves; contain it everywhere else; require fresh intent for every transfer.</figcaption>
+</figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Load</b><span>The transfer page loads only first-party scripts under a strict policy</span></li>
+<li><b>Request</b><span>The browser calls the e-wallet's backend-for-frontend, never a vendor directly</span></li>
+<li class="hl"><b>Confirm</b><span>The user confirms the transfer with a PIN or biometric, bound to the amount and recipient</span></li>
+<li><b>Check</b><span>Limits and velocity rules run server-side before execution</span></li>
+<li class="hl"><b>Execute</b><span>The transfer runs; analytics events are sent server-side, not from the page</span></li>
+<li><b>Watch</b><span>Monitoring compares the delivered page and headers with the approved version</span></li>
+</ol>
+<figcaption>A malicious script on another page cannot complete this flow without the user's fresh confirmation.</figcaption>
+</figure>
+
+<h2>The hard part: taking scripts away from the teams that rely on them</h2>
+<p>Every script had an owner who needed it: marketing measured campaigns, support used the chat widget, product watched session recordings. Simply deleting them would have failed politically and practically. The team ran an inventory first, recording for each script what it did, who owned it, which pages it loaded on and what data it could read. Many turned out to duplicate each other or to have no current owner.</p>
+<p>The bigger change was architectural. The web app moved to a backend-for-frontend: the browser talks only to the e-wallet's own server layer, which holds session tokens and calls internal services and vendors on the user's behalf. The OpenTelemetry demo's front-end shows the same shape: client-side code calls the app's own API routes, which then call the backend services<sup class="cite"><a href="#ref-5">5</a></sup>. With that in place, analytics and marketing events could be sent server-side, so most tags no longer needed to run in the browser at all.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/indonesia-ewallet-payment-page-script-security/bff-data-flow.webp" alt="Front-end data flow diagram: inside a Next.js application, client-side rendering calls REST endpoints on the app's own API routes, which call cart, product catalogue, recommendation and other backend services over gRPC" width="1000" height="894" loading="lazy"></div><figcaption>The browser calls the app's own API layer, which calls everything else: the backend-for-frontend shape that keeps tokens and vendors off the page. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2022/frontend-overhaul/" target="_blank" rel="noopener">OpenTelemetry blog, Oscar Reyes</a> · CC BY 4.0</span></figcaption></figure>
+<p>For the scripts that remained, such as the chat widget on help pages, the team self-hosted pinned versions with integrity hashes, so a change at the vendor could not silently change the code running in users' browsers, and listed every allowed source in a Content Security Policy with violation reporting turned on. Vendor updates became a deliberate change, reviewed like any other dependency.</p>
+<div class="callout"><p>Treat every third-party script as a contractor with your user's keys. Keep contractors off the floor where money moves, and check the ones you keep every time they change.</p></div>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Security</small><ol><li>Script inventory</li><li class="hl">CSP and integrity rules</li><li>Page monitoring</li></ol></div>
+<div class="dgm-lane"><small>Engineering</small><ol><li>Backend-for-frontend</li><li class="hl">Step-up confirmation</li><li>Server-side events</li></ol></div>
+<div class="dgm-lane"><small>Marketing, support, product</small><ol><li>Justify each script</li><li class="hl">Move to server-side data</li><li>Approve vendor changes</li></ol></div>
+</div>
+<figcaption>Every script got an owner, a reason and a home; most moved off the page entirely.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Week 1</small><b>Contain</b><ul><li>Strip scripts from transfer pages</li><li>Step-up on withdrawals</li><li>Lower limits for new devices</li></ul></div>
+<div><small>Weeks 2 to 6</small><b>Inventory and policy</b><ul><li>Script register</li><li>CSP in report mode</li><li>Self-host kept scripts</li></ul></div>
+<div><small>Weeks 7 to 12</small><b>Re-architect</b><ul><li>Backend-for-frontend</li><li>Server-side analytics</li><li>CSP enforced</li></ul></div>
+<div><small>Ongoing</small><b>Watch</b><ul><li>Page change monitoring</li><li>Violation alerts</li><li>Vendor change reviews</li></ul></div>
+</div>
+<figcaption>Week one removes the biggest risk; the quarter removes the cause.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>No third-party scripts on money pages</td><td>Monitor them closely</td><td>Removal beats detection where money moves</td></tr>
+<tr><td>Backend-for-frontend</td><td>Browser calls services and vendors directly</td><td>Tokens and integrations stay server-side</td></tr>
+<tr><td>Server-side analytics</td><td>Browser tags</td><td>Same insight, far less code in the page</td></tr>
+<tr><td>Self-hosted, integrity-checked scripts</td><td>Load from vendor servers</td><td>Vendor compromise cannot change running code</td></tr>
+<tr><td>Fresh confirmation per transfer</td><td>Trust the active session</td><td>A hijacked session alone cannot move money</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: strip the money pages in week one. It removed most of the risk before the longer re-architecture began. Differently: run the Content Security Policy in report-only mode from the first day of the inventory; its reports found scripts that nobody had listed. Related: <a href="https://asksumanta.com/insights/binance-hack-custody-architecture-lessons/">architecture lessons from the Binance hack</a>, <a href="https://asksumanta.com/insights/tech-news-2026-11-02/">the 2 November tech news</a>, <a href="https://asksumanta.com/case-studies/uae-software-house-ai-developer-toolchain-security/">securing AI coding tools</a> and <a href="https://asksumanta.com/regions/">where I work</a>.</p>
+<p>If you run a wallet, marketplace or fintech in Indonesia or across Southeast Asia, see the <a href="https://asksumanta.com/fractional-cto-singapore/">Singapore and Southeast Asia page</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/indonesia-ewallet-payment-page-script-security/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Tech news, 2 November 2026: the FBI names the Binance attacker, a vendor script drains Polymarket traders, a CVSS 10 LXD flaw and Aramco buys into HUMAIN</title><link>https://asksumanta.com/insights/tech-news-2026-11-02/</link><guid isPermaLink="true">https://asksumanta.com/insights/tech-news-2026-11-02/</guid><pubDate>Mon, 02 Nov 2026 08:55:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>security</category><category>platform</category><category>ai</category><description>A CTO&#x27;s take: the FBI ties the Binance theft to North Korea, a hijacked vendor script drains Polymarket traders, a CVSS 10 LXD flaw and Aramco&#x27;s stake in HUMAIN.</description><content:encoded><![CDATA[<p><em>A weekend dominated by follow-through on October&#x27;s security stories: an official attribution for the Binance theft, a reminder that one third-party script can empty user accounts, and a maximum-severity flaw in a widely used container and VM manager. In the Gulf, Saudi Arabia consolidated its national AI champion.</em></p><p>Today's brief covers stories from 30 October to 1 November.</p>
 
 <figure class="dgm">
 <div class="dgm-stack">
@@ -3396,88 +3474,4 @@
 <section class="block">
 <h2>How I can help</h2>
 <p>I design Kubernetes platforms with identity, policy and isolation built in, so security reviews become a walkthrough rather than a negotiation. As a <a href="https://asksumanta.com/fractional-cto/">fractional CTO</a> I can own that roadmap. Or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
-</section><p><a href="https://asksumanta.com/insights/kubernetes-pod-certificates-workload-identity/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>One governed clinical trial data platform, from site data to submission datasets</title><link>https://asksumanta.com/case-studies/clinical-trial-data-platform/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/clinical-trial-data-platform/</guid><pubDate>Wed, 28 Oct 2026 14:20:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>healthcare</category><category>data</category><category>governance</category><category>regulation</category><category>architecture</category><description>How a biotech can unify trial data from EDC, labs and devices into one governed platform, with lineage to SDTM submissions and audit trails for GCP and Part 11.</description><content:encoded><![CDATA[<p><em>A growing biotech ran several trials through different vendors: an EDC system, central labs, eCOA, wearables and imaging. Each study rebuilt its data pipelines from scratch, and the path from raw data to submission datasets lived in programmers&#x27; heads. The goal was one platform with lineage, quality and audit trails built in.</em></p><h2>The situation</h2>
-<p>A biotech with several programmes in clinical development worked, like most of its peers, through vendors: one for electronic data capture, others for central labs, patient-reported outcomes, wearable devices and imaging. Each study's data team built its own transfers, mappings and checks. Submission datasets were produced by statistical programmers working from extracts, and the reasoning behind many transformations existed only in their code and memory.</p>
-<p>As the pipeline grew, leadership saw the risk: every new study cost the same effort as the last, and an inspection question about where a value came from could take days to answer.</p>
-
-<h2>What had to be true</h2>
-<ul>
-<li><strong>Traceability</strong> from every submission value back to its source record and every transformation in between.</li>
-<li><strong>Reuse across studies</strong>: shared ingestion, mapping patterns and checks, not bespoke pipelines per protocol.</li>
-<li><strong>Quality visible early</strong>, to data managers during the study, not at database lock.</li>
-<li><strong>Audit trails and access control by design</strong>, suitable for computerised system validation.</li>
-<li><strong>Vendor independence</strong>: changing an EDC or lab vendor should not mean rebuilding the platform.</li>
-</ul>
-<p>The regulatory direction supported this. ICH finalised the revised Good Clinical Practice guideline, E6(R3), in January 2025, and commentary highlights its risk-proportionate approach and a new data governance section that acknowledges digital trial data handling<sup class="cite"><a href="#ref-1">1</a></sup>. In the EU, the principles and Annex 1 applied from 23 July 2025<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
-
-<h2>Architecture</h2>
-<figure class="dgm">
-<div class="dgm-stack">
-<div class="dgm-tier"><small>Sources</small><div class="dgm-nodes"><span>EDC<em>case report forms</em></span><span>Central labs<em>results and ranges</em></span><span>eCOA<em>patient-reported outcomes</em></span><span>Devices and imaging<em>streams and reads</em></span></div></div>
-<div class="dgm-tier"><small>Land</small><div class="dgm-nodes"><span>Raw zone<em>immutable, per transfer</em></span><span>Transfer agreements<em>versioned specs</em></span><span>Access control<em>blinded and unblinded</em></span></div></div>
-<div class="dgm-tier"><small>Standardise</small><div class="dgm-nodes"><span class="hl">Mapping to SDTM<em>versioned, reviewed</em></span><span>Controlled terminology<em>managed centrally</em></span><span>Derivations<em>shared library</em></span></div></div>
-<div class="dgm-tier"><small>Assure</small><div class="dgm-nodes"><span class="hl">Validation rules<em>every load</em></span><span>Data review<em>data managers</em></span><span class="hl">Lineage and audit<em>who, what, when, why</em></span></div></div>
-<div class="dgm-tier"><small>Use</small><div class="dgm-nodes"><span>Statistical computing<em>analysis datasets</em></span><span>Submission package<em>datasets, define, guides</em></span><span>Cross-study analytics<em>governed access</em></span></div></div>
-</div>
-<figcaption>Raw data never changes; every transformation above it is versioned, checked and traceable.</figcaption>
-</figure>
-
-<h2>The data flow, end to end</h2>
-<figure class="dgm">
-<ol class="dgm-flow g3">
-<li><b>Receive</b><span>Vendor transfers land as-is in the raw zone, checked against the transfer agreement</span></li>
-<li><b>Validate</b><span>Structural and content checks; failures returned to the vendor with reasons</span></li>
-<li class="hl"><b>Map</b><span>Versioned mappings produce SDTM domains with controlled terminology</span></li>
-<li><b>Review</b><span>Data managers work issues in a shared review queue during the study</span></li>
-<li class="hl"><b>Trace</b><span>Lineage records each value's source and transformations</span></li>
-<li><b>Deliver</b><span>Analysis and submission datasets built from locked, traceable versions</span></li>
-</ol>
-<figcaption>Quality problems are found while the study runs, when they are cheap to fix at the site.</figcaption>
-</figure>
-<p>Submission requirements anchored the design. The FDA lists the study data standards it supports and requires, including SDTM versions, with dates from which each version is supported and then required<sup class="cite"><a href="#ref-3">3</a></sup>. Building SDTM mappings as versioned, reviewable assets meant a standards update became a controlled change rather than a scramble.</p>
-
-<h2>The hard part: one mapping layer for many protocols</h2>
-<p>Every protocol is different, and the temptation is to treat every study as a special case. The platform separated what genuinely varies by study, such as visit schedules, endpoints and specific forms, from what doesn't, such as demographics, adverse events, concomitant medications and lab structures.</p>
-<ul>
-<li>A shared library of mappings and derivations for common domains, with study-level extensions rather than copies.</li>
-<li>Controlled terminology managed centrally, so the same concept is coded the same way across studies.</li>
-<li>Mapping specifications stored with the code, reviewed like code and versioned with each data cut.</li>
-<li>Blinded and unblinded data separated by access control and environment, not convention.</li>
-</ul>
-<div class="callout"><p>The question an inspector asks is simple: where did this number come from? A platform is ready when anyone on the team can answer it in minutes.</p></div>
-
-<h2>How it ran</h2>
-<figure class="dgm">
-<div class="dgm-lanes">
-<div class="dgm-lane"><small>Data management</small><ol><li>Transfer agreements</li><li class="hl">Ongoing data review</li><li>Database lock</li></ol></div>
-<div class="dgm-lane"><small>Platform</small><ol><li>Ingestion and checks</li><li class="hl">Mapping library and lineage</li><li>Environments and access</li></ol></div>
-<div class="dgm-lane"><small>Quality</small><ol><li>Validation plan</li><li>Audit trail review</li><li>Inspection readiness</li></ol></div>
-</div>
-<figcaption>Quality involved from the start, so validation followed the build rather than chasing it.</figcaption>
-</figure>
-<figure class="dgm">
-<div class="dgm-phases">
-<div><small>Phase 1</small><b>Foundations</b><ul><li>Raw zone and access model</li><li>Transfer agreements</li><li>Validation plan</li></ul></div>
-<div><small>Phase 2</small><b>Pilot study</b><ul><li>Core SDTM domains</li><li>Checks on every load</li><li>Lineage captured</li></ul></div>
-<div><small>Phase 3</small><b>Shared library</b><ul><li>Common mappings</li><li>Central terminology</li><li>Second study onboarded</li></ul></div>
-<div><small>Phase 4</small><b>Validate and scale</b><ul><li>System validation</li><li>SOPs and training</li><li>Portfolio onboarding</li></ul></div>
-</div>
-<figcaption>A single study end to end before generalising, so the shared library was based on real needs.</figcaption>
-</figure>
-
-<h2>Key decisions and trade-offs</h2>
-<table class="tbl">
-<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
-<tbody>
-<tr><td>Immutable raw zone per transfer</td><td>Overwrite with latest vendor file</td><td>Any result can be reproduced from the exact data received</td></tr>
-<tr><td>Mappings as versioned code</td><td>Specifications in spreadsheets</td><td>Reviewable, testable and traceable changes</td></tr>
-<tr><td>Shared library with study extensions</td><td>Copy and modify per study</td><td>Fixes and standards updates apply everywhere</td></tr>
-<tr><td>Checks during the study</td><td>Clean-up before lock</td><td>Issues resolved with sites while they are fresh</td></tr>
-<tr><td>Audit trail designed in</td><td>Rely on system logs</td><td>Part 11 expects secure, time-stamped audit trails of record changes</td></tr>
-</tbody>
-</table>
-<p>For systems that create or modify records required by FDA regulations, 21 CFR Part 11 sets expectations for electronic records, including secure, computer-generated, time-stamped audit trails<sup class="cite"><a href="#ref-4">4</a></sup>. Designing those in from the first phase was far cheaper than retrofitting them.</p>
-
-<h2>What I'd do again, and differently</h2>
-<p>Again: one study end to end before building the shared library, and quality at the table from the first week. Differently: negotiate transfer agreements with vendors as part of platform work, not study start-up. Consistent vendor formats are what make shared mappings possible. Related approaches are in <a href="https://asksumanta.com/insights/data-contracts-playbook/">data contracts</a> and <a href="https://asksumanta.com/insights/fhir-to-omop-architecture/">FHIR to OMOP architecture</a>.</p>
-<p>If your clinical data is growing faster than your ability to trace it, the <a href="https://asksumanta.com/healthcare-data-architecture/">healthcare data architecture</a> page describes how I work, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/clinical-trial-data-platform/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
+</section><p><a href="https://asksumanta.com/insights/kubernetes-pod-certificates-workload-identity/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
