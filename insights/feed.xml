@@ -1,6 +1,61 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights</title><link>https://asksumanta.com/</link><description>Articles on AI, data, cloud and technology leadership</description><language>en-gb</language><lastBuildDate>Mon, 02 Nov 2026 08:55:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/insights/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights</title><link>https://asksumanta.com/</link></image><item><title>Tech news, 2 November 2026: the FBI names the Binance attacker, a vendor script drains Polymarket traders, a CVSS 10 LXD flaw and Aramco buys into HUMAIN</title><link>https://asksumanta.com/insights/tech-news-2026-11-02/</link><guid isPermaLink="true">https://asksumanta.com/insights/tech-news-2026-11-02/</guid><pubDate>Mon, 02 Nov 2026 08:55:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>security</category><category>platform</category><category>ai</category><description>A CTO&#x27;s take: the FBI ties the Binance theft to North Korea, a hijacked vendor script drains Polymarket traders, a CVSS 10 LXD flaw and Aramco&#x27;s stake in HUMAIN.</description><content:encoded><![CDATA[<p><em>A weekend dominated by follow-through on October&#x27;s security stories: an official attribution for the Binance theft, a reminder that one third-party script can empty user accounts, and a maximum-severity flaw in a widely used container and VM manager. In the Gulf, Saudi Arabia consolidated its national AI champion.</em></p><p>Today's brief covers stories from 30 October to 1 November.</p>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights</title><link>https://asksumanta.com/</link><description>Articles on AI, data, cloud and technology leadership</description><language>en-gb</language><lastBuildDate>Mon, 02 Nov 2026 21:40:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/insights/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights</title><link>https://asksumanta.com/</link></image><item><title>One product, many models: what Apple&#x27;s Qwen deal teaches about building AI for different markets</title><link>https://asksumanta.com/insights/per-market-ai-models-apple-qwen-china/</link><guid isPermaLink="true">https://asksumanta.com/insights/per-market-ai-models-apple-qwen-china/</guid><pubDate>Mon, 02 Nov 2026 21:40:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>ai</category><category>architecture</category><category>regulation</category><description>Apple will use Alibaba&#x27;s Qwen for Apple Intelligence in China. A CTO&#x27;s take on per-market AI: one interface, regional models, local evaluation and data paths.</description><content:encoded><![CDATA[<p><em>On 31 October, Apple and Alibaba said Qwen will power the China edition of Apple Intelligence. Even Apple now ships a different AI model in one of its largest markets, to meet local rules. For any company selling AI products internationally, that is not a curiosity; it is an architecture requirement to plan for.</em></p><section class="block">
+<h2>What happened</h2>
+<p>Apple and Alibaba said on 31 October that Alibaba's Qwen will power the China edition of Apple Intelligence, covering features such as Writing Tools and Visual Intelligence, with a developer beta from 4 November and a public release planned for December<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. The rebuilt Siri is not part of this release, and eligibility depends on the device being bought in China or the device and account region being set to China<sup class="cite"><a href="#ref-1">1</a></sup>. Alibaba says it will not use user requests or responses to train its models<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<p>The regulatory backdrop explains the shape of the deal. China's Interim Measures for generative AI services require qualifying public-facing services to go through a filing process with the Cyberspace Administration of China<sup class="cite"><a href="#ref-3">3</a></sup>, which publishes lists of filed services in batches<sup class="cite"><a href="#ref-4">4</a></sup>, and a 2026 list of on-device generative AI filings reportedly named Apple Intelligence<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+</section>
+
+<section class="block">
+<h2>Why this matters beyond Apple</h2>
+<p>Most AI products are built as if there will be one model provider, one region and one set of rules. That assumption is breaking. China is the clearest case, but data residency rules in the GCC, India and elsewhere, sector rules in financial services and health, and customers' own procurement policies all push towards different models or deployments per market. Apple has the resources to build a separate edition. Most companies need an architecture that makes it routine.</p>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Product</small><div class="dgm-nodes"><span>One codebase<em>features flagged by market</em></span></div></div>
+<div class="dgm-tier"><small>Model interface</small><div class="dgm-nodes"><span class="hl">Internal AI API<em>tasks, not vendors</em></span><span>Router<em>market, task, data class</em></span></div></div>
+<div class="dgm-tier"><small>Per-market models</small><div class="dgm-nodes"><span>Global provider<em>where permitted</em></span><span class="hl">Local provider<em>approved in market</em></span><span>Self-hosted<em>sovereign or sensitive</em></span></div></div>
+<div class="dgm-tier"><small>Per-market assets</small><div class="dgm-nodes"><span>Prompts and safety rules<em>localised</em></span><span class="hl">Evaluation sets<em>per market and language</em></span></div></div>
+<div class="dgm-tier"><small>Boundaries</small><div class="dgm-nodes"><span>Data paths<em>prompts stay in market</em></span><span>Logs and telemetry<em>stored in market</em></span></div></div>
+</div>
+<figcaption>Products call tasks; the router picks the model each market allows; evidence stays where the data does.</figcaption>
+</figure>
+</section>
+
+<section class="block">
+<h2>Five design rules</h2>
+<p><strong>1. Call tasks, not vendors.</strong> Application code should ask for "summarise", "rewrite" or "describe image", not for a specific provider's API. That single change is what makes a per-market model a configuration choice rather than a rewrite. See <a href="https://asksumanta.com/insights/llm-model-routing/">model routing</a>.</p>
+<p><strong>2. Route on market, task and data class.</strong> The router decides which model may serve a request based on where the user is, what the task needs and how sensitive the data is. Some markets get the global model, some a local one, some a self-hosted one; see <a href="https://asksumanta.com/insights/mistral-large-4-open-weights-self-hosting/">running a large open model yourself</a>.</p>
+<p><strong>3. Evaluate per market and language.</strong> A model that tests well in English may behave differently in Simplified Chinese, Arabic or Bahasa, and local safety expectations differ. Keep an evaluation set per market and run it on every model change; see <a href="https://asksumanta.com/insights/llm-evaluation-sets-that-predict-production/">evaluation sets that predict production</a>.</p>
+<p><strong>4. Keep data paths and evidence in the market.</strong> Prompts, outputs and logs often carry personal data. If the model runs in-country but your logs ship elsewhere, you have moved the problem, not solved it. Separate telemetry pipelines per market or tenant give strong isolation, at the cost of running more of them<sup class="cite"><a href="#ref-6">6</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/per-market-ai-models-apple-qwen-china/per-tenant-pipelines.webp" alt="Diagram of one OpenTelemetry Collector per tenant: tenant A and tenant B in a product each send data through their own collector pipeline to their own backend, with notes on strong isolation and higher resource usage" width="1400" height="783" loading="lazy"></div><figcaption>Separate pipelines per tenant or market keep telemetry inside its boundary, at the cost of more infrastructure. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2026/otel-native-by-design/" target="_blank" rel="noopener">OpenTelemetry blog, Nityananda Gohain and Dhruv Ahuja</a> · CC BY 4.0</span></figcaption></figure>
+<p><strong>5. Ship features by market, not all at once.</strong> Apple is launching some features in China and holding others back<sup class="cite"><a href="#ref-1">1</a></sup>. Feature flags per market let you launch what the local model and rules support, and add the rest when they do.</p>
+<div class="callout"><p>Build as if every market will eventually want its own model, because the ones that matter most to you probably will.</p></div>
+</section>
+
+<section class="block">
+<h2>A plan for adding a market</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Rules</b><span>Confirm filing, residency and sector rules for AI in the market</span></li>
+<li><b>Model</b><span>Choose a permitted model and deployment: global, local or self-hosted</span></li>
+<li class="hl"><b>Evaluate</b><span>Build a local evaluation set in the market's languages and run it</span></li>
+<li><b>Localise</b><span>Adapt prompts, safety rules and disclosures</span></li>
+<li class="hl"><b>Contain</b><span>Keep prompts, outputs and logs within the market boundary</span></li>
+<li><b>Launch</b><span>Enable the features the market supports; flag the rest</span></li>
+</ol>
+<figcaption>The same steps work for China, the GCC, India or any market with its own AI rules.</figcaption>
+</figure>
+</section>
+
+<section class="block">
+<h2>CTO take</h2>
+<p>Apple's deal is a large-scale proof that "one global model" is not a viable plan for products sold everywhere. The good news is that the architecture to handle it is not exotic: a task-level AI interface, a router, per-market evaluations and data boundaries. Teams that build those now can enter a new market by configuring a model and running an evaluation; teams that hard-code a single provider will face a rewrite each time. For examples by region, see <a href="https://asksumanta.com/case-studies/eu-telecom-sovereign-llm-platform/">a sovereign LLM platform in Europe</a>, <a href="https://asksumanta.com/case-studies/kenya-telehealth-ai-triage-data-protection/">privacy-first AI triage in Kenya</a> and <a href="https://asksumanta.com/regions/">where I work</a>.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I help teams design AI platforms that can run different models per market without forking the product. I am based in India, the United States and the UAE, working globally. See <a href="https://asksumanta.com/ai-architect/">AI architecture</a> or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section><p><a href="https://asksumanta.com/insights/per-market-ai-models-apple-qwen-china/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Tech news, 2 November 2026: the FBI names the Binance attacker, a vendor script drains Polymarket traders, a CVSS 10 LXD flaw and Aramco buys into HUMAIN</title><link>https://asksumanta.com/insights/tech-news-2026-11-02/</link><guid isPermaLink="true">https://asksumanta.com/insights/tech-news-2026-11-02/</guid><pubDate>Mon, 02 Nov 2026 08:55:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>security</category><category>platform</category><category>ai</category><description>A CTO&#x27;s take: the FBI ties the Binance theft to North Korea, a hijacked vendor script drains Polymarket traders, a CVSS 10 LXD flaw and Aramco&#x27;s stake in HUMAIN.</description><content:encoded><![CDATA[<p><em>A weekend dominated by follow-through on October&#x27;s security stories: an official attribution for the Binance theft, a reminder that one third-party script can empty user accounts, and a maximum-severity flaw in a widely used container and VM manager. In the Gulf, Saudi Arabia consolidated its national AI champion.</em></p><p>Today's brief covers stories from 30 October to 1 November.</p>
 
 <figure class="dgm">
 <div class="dgm-stack">
@@ -2755,52 +2810,4 @@ tracer_provider:
 <section class="block">
 <h2>How I can help</h2>
 <p>I design clinical data platforms that combine persistence, exchange and analytics standards sensibly, for health systems and health tech companies in the US, Europe and the Gulf. See <a href="https://asksumanta.com/healthcare-data-architecture/">healthcare data architecture</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
-</section><p><a href="https://asksumanta.com/insights/openehr-vs-fhir/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Inference gateways on Kubernetes: model-aware routing for self-hosted LLMs</title><link>https://asksumanta.com/insights/kubernetes-inference-gateway/</link><guid isPermaLink="true">https://asksumanta.com/insights/kubernetes-inference-gateway/</guid><pubDate>Sat, 24 Oct 2026 04:15:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>kubernetes</category><category>ai</category><category>llm</category><category>platform</category><description>LLM traffic breaks ordinary load balancing. How the Gateway API Inference Extension routes on live model-server metrics, what the benchmarks showed, and how I&#x27;d adopt it.</description><content:encoded><![CDATA[<p><em>Round-robin load balancing assumes requests are short and roughly equal. LLM requests are neither. The Kubernetes Gateway API Inference Extension adds model-aware routing to an ordinary gateway, and it changes how I design private model platforms.</em></p><p>When teams first put a self-hosted model behind Kubernetes, they usually reach for the familiar pattern: a Deployment of model servers, a Service in front, and a load balancer spreading requests evenly. It works in a demo. Under real load, some replicas sit with long queues and nearly full GPU memory while others are idle, and tail latency climbs even though the cluster as a whole has spare capacity.</p>
-
-<section class="block">
-<h2>Why LLM traffic breaks ordinary load balancing</h2>
-<p>The Kubernetes project's introduction to the Inference Extension puts it plainly: LLM inference sessions are often long-running, resource-intensive and partially stateful, and a single GPU-backed server may hold several sessions and in-memory token caches. Load balancers that route by HTTP path or round-robin don't account for model identity, request criticality or the current state of each server<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
-<p>Two requests to the same model can differ in cost by orders of magnitude, depending on prompt and output length. And as covered in <a href="https://asksumanta.com/insights/llm-inference-serving-vllm/">LLM inference serving</a>, sending a request to a replica that already holds its prompt prefix in cache is far cheaper than sending it anywhere else.</p>
-</section>
-
-<section class="block">
-<h2>How the extension works</h2>
-<p>The Gateway API Inference Extension builds on <a href="https://asksumanta.com/insights/ingress-nginx-to-gateway-api/">Gateway API</a>, keeping the familiar Gateway and HTTPRoute model and adding inference-specific steps<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-5">5</a></sup>. Its central resource is the <strong>InferencePool</strong>: a pool of model-server pods on shared compute, similar to a Service but aware of model serving<sup class="cite"><a href="#ref-1">1</a></sup>. The project documentation lists InferencePool as generally available since v1.0.0<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
-<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/kubernetes-inference-gateway/resource-model.webp" alt="Diagram of the Gateway API Inference Extension resource model: cluster operators own the Gateway, application developers own the HTTPRoute, inference platform owners own the InferencePool, and inference workload owners own InferenceModel resources beneath it" width="800" height="572" loading="lazy"></div><figcaption>The resource model as introduced in 2025: platform operators manage pools of model servers; model owners manage what is served. <span class="credit">Source: <a href="https://kubernetes.io/blog/2025/06/05/introducing-gateway-api-inference-extension/" target="_blank" rel="noopener">Kubernetes blog, Introducing Gateway API Inference Extension</a> · CC BY 4.0</span></figcaption></figure>
-<p>The original design separated responsibilities by persona: platform operators manage where and how models are served through pools, while model owners manage what is served, including traffic splitting between versions<sup class="cite"><a href="#ref-1">1</a></sup>. The model-facing APIs have continued to evolve, so check the current documentation for your version.</p>
-</section>
-
-<section class="block">
-<h2>The request flow</h2>
-<p>A request reaches the gateway, which matches an HTTPRoute to an InferencePool. Instead of forwarding to any pod, the gateway consults an endpoint selection extension, often called the endpoint picker, which examines live pod metrics such as queue length, memory use and loaded adapters, and chooses the pod that can serve the request most efficiently<sup class="cite"><a href="#ref-1">1</a></sup>. Gateway implementations describe the picker tracking signals such as KV-cache utilisation and queue length<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
-<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/kubernetes-inference-gateway/request-flow.webp" alt="Diagram of the inference request flow: a client completion request reaches the Kubernetes Gateway, which uses body-based routing to select an InferencePool by model name and an endpoint selection step to pick the least-loaded model replica, then routes to that replica in the pool" width="802" height="751" loading="lazy"></div><figcaption>Request flow with the endpoint selection extension choosing a model-server pod based on live metrics. <span class="credit">Source: <a href="https://kubernetes.io/blog/2025/06/05/introducing-gateway-api-inference-extension/" target="_blank" rel="noopener">Kubernetes blog, Introducing Gateway API Inference Extension</a> · CC BY 4.0</span></figcaption></figure>
-<p>To the client it's still one ordinary request. The intelligence lives in the gateway layer, where the platform team controls it.</p>
-</section>
-
-<section class="block">
-<h2>What the benchmark showed</h2>
-<p>The project compared the extension with a standard Kubernetes Service for a vLLM deployment on H100 GPUs, ramping traffic from 100 to 1,000 queries per second. Throughput was roughly on par, but the extension showed significantly lower p90 per-output-token latency at higher load, and lower end-to-end tail latency as traffic rose beyond about 400 to 500 queries per second<sup class="cite"><a href="#ref-1">1</a></sup>. The authors attribute this to avoiding hotspots that ordinary load balancing creates for long-running inference requests<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
-<div class="callout"><p>Tail latency is what users feel, and GPU hotspots are what finance pays for. Model-aware routing improves both without buying another GPU.</p></div>
-</section>
-
-<section class="block">
-<h2>How I'd adopt it</h2>
-<ol>
-<li><strong>Start from Gateway API.</strong> If your clusters still use an Ingress controller, the move to Gateway API is the prerequisite and has its own value.</li>
-<li><strong>Pick a gateway implementation</strong> that supports the Inference Extension, and confirm which version of the APIs it implements.</li>
-<li><strong>Expose metrics from your model servers</strong> that the endpoint picker needs, and check them under load before trusting the routing.</li>
-<li><strong>Load test against your own traffic</strong>, comparing tail latency and cost per request with your current setup, as in <a href="https://asksumanta.com/insights/llm-inference-serving-vllm/">LLM inference serving</a>.</li>
-<li><strong>Use pools to separate concerns</strong>: interactive and batch traffic, regulated and general workloads, or different hardware classes.</li>
-<li><strong>Combine with scheduling and cost controls</strong>: GPU allocation through <a href="https://asksumanta.com/insights/kubernetes-dra-gpu-scheduling/">DRA</a>, training jobs through <a href="https://asksumanta.com/insights/kubernetes-gang-scheduling-ai/">gang scheduling</a>, and spend visibility through <a href="https://asksumanta.com/insights/focus-finops-ai-cost-allocation/">FOCUS-based cost allocation</a>.</li>
-</ol>
-</section>
-
-<section class="block">
-<h2>Where it fits in a private AI platform</h2>
-<p>An inference gateway is the routing layer in the platform described in <a href="https://asksumanta.com/insights/private-llm-on-prem/">private LLMs on-prem</a> and <a href="https://asksumanta.com/insights/uae-ai-infrastructure-where-to-run-models/">where to run models in the UAE</a>. Above it sits the policy gateway that handles authentication, model approval and logging; below it, the serving engines and GPUs. Keeping those layers distinct makes each easier to change.</p>
-</section>
-
-<section class="block">
-<h2>How I can help</h2>
-<p>I design Kubernetes platforms for private and sovereign AI, from GPU scheduling to model-aware routing and cost control. See my <a href="https://asksumanta.com/ai-architect/">AI architecture work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
-</section><p><a href="https://asksumanta.com/insights/kubernetes-inference-gateway/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
+</section><p><a href="https://asksumanta.com/insights/openehr-vs-fhir/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>

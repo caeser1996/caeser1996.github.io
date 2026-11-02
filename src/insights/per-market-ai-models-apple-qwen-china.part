@@ -1,0 +1,57 @@
+<!--{"title": "Apple, Qwen and China: designing AI products with a model per market", "description": "Apple will use Alibaba's Qwen for Apple Intelligence in China. A CTO's take on per-market AI: one interface, regional models, local evaluation and data paths.", "h1": "One product, many models: what Apple's Qwen deal teaches about building AI for different markets", "kicker": "Analysis · AI architecture across markets", "lede": "On 31 October, Apple and Alibaba said Qwen will power the China edition of Apple Intelligence. Even Apple now ships a different AI model in one of its largest markets, to meet local rules. For any company selling AI products internationally, that is not a curiosity; it is an architecture requirement to plan for.", "date": "2026-11-02", "datetime": "2026-11-02T21:40:00+04:00", "readtime": "8 min read", "format": "news-analysis", "tags": ["news", "ai", "architecture", "regulation"], "keywords": ["Apple Intelligence China", "Alibaba Qwen", "per-market AI models", "China generative AI filing", "CAC Interim Measures", "AI data residency", "model abstraction layer", "multi-region AI architecture", "AI evaluation by market", "AI architect"], "faq": [["What did Apple and Alibaba announce?", "On 31 October 2026, they said Alibaba's Qwen will power the China edition of Apple Intelligence, including Writing Tools and Visual Intelligence, with a developer beta from 4 November and a public release planned for December. The rebuilt Siri is not included in this release."], ["Why do AI products need different models in different markets?", "Some markets require generative AI services to be filed with or approved by regulators, and data protection rules can restrict where prompts and outputs are processed. Using a locally approved model and local infrastructure is often the practical route."], ["How should a product be designed for multiple models?", "Put one internal interface in front of every model, route by market and task, keep prompts and evaluations per market, and keep data paths and logs within each market's boundary."]], "related": ["/ai-architect/", "/regions/", "/fractional-cto/"], "citations": [{"title": "Apple confirms its AI features reach China in December, with Qwen", "url": "https://thenextweb.com/news/apple-intelligence-china-ios-27-3-alibaba-qwen", "publisher": "The Next Web", "date": "Oct 2026"}, {"title": "Alibaba's Qwen AI model to integrate into Apple Intelligence in landmark partnership", "url": "https://news.cgtn.com/news/2026-10-31/Alibaba-s-Qwen-to-integrate-into-Apple-Intelligence-in-landmark-deal-1RHilSeJsbK/p.html", "publisher": "CGTN", "date": "31 Oct 2026"}, {"title": "Interim Measures for the Management of Generative AI Services", "url": "https://comparativeai.org/rules/china/generative-ai-interim-measures/", "publisher": "ComparativeAI", "date": "2026"}, {"title": "Cyberspace Administration's domestic generative AI services filing list", "url": "https://digitalpolicyalert.org/change/12565-chinese-cyberspace-administration-registration-of-generative-ai-services", "publisher": "Digital Policy Alert", "date": "2026"}, {"title": "China Publishes On-Device GenAI Filing List, Names Apple", "url": "https://www.theleveragedyears.com/ai-regulation-news/china-cac-on-device-generative-ai-filing-apple-intelligence-2026", "publisher": "The Leveraged Years", "date": "2026"}, {"title": "OTel-Native by Design: Building Products That Export to Any Observability Stack", "url": "https://opentelemetry.io/blog/2026/otel-native-by-design/", "publisher": "OpenTelemetry blog", "date": "8 Oct 2026"}]}-->
+<section class="block">
+<h2>What happened</h2>
+<p>Apple and Alibaba said on 31 October that Alibaba's Qwen will power the China edition of Apple Intelligence, covering features such as Writing Tools and Visual Intelligence, with a developer beta from 4 November and a public release planned for December<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. The rebuilt Siri is not part of this release, and eligibility depends on the device being bought in China or the device and account region being set to China<sup class="cite"><a href="#ref-1">1</a></sup>. Alibaba says it will not use user requests or responses to train its models<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<p>The regulatory backdrop explains the shape of the deal. China's Interim Measures for generative AI services require qualifying public-facing services to go through a filing process with the Cyberspace Administration of China<sup class="cite"><a href="#ref-3">3</a></sup>, which publishes lists of filed services in batches<sup class="cite"><a href="#ref-4">4</a></sup>, and a 2026 list of on-device generative AI filings reportedly named Apple Intelligence<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+</section>
+
+<section class="block">
+<h2>Why this matters beyond Apple</h2>
+<p>Most AI products are built as if there will be one model provider, one region and one set of rules. That assumption is breaking. China is the clearest case, but data residency rules in the GCC, India and elsewhere, sector rules in financial services and health, and customers' own procurement policies all push towards different models or deployments per market. Apple has the resources to build a separate edition. Most companies need an architecture that makes it routine.</p>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Product</small><div class="dgm-nodes"><span>One codebase<em>features flagged by market</em></span></div></div>
+<div class="dgm-tier"><small>Model interface</small><div class="dgm-nodes"><span class="hl">Internal AI API<em>tasks, not vendors</em></span><span>Router<em>market, task, data class</em></span></div></div>
+<div class="dgm-tier"><small>Per-market models</small><div class="dgm-nodes"><span>Global provider<em>where permitted</em></span><span class="hl">Local provider<em>approved in market</em></span><span>Self-hosted<em>sovereign or sensitive</em></span></div></div>
+<div class="dgm-tier"><small>Per-market assets</small><div class="dgm-nodes"><span>Prompts and safety rules<em>localised</em></span><span class="hl">Evaluation sets<em>per market and language</em></span></div></div>
+<div class="dgm-tier"><small>Boundaries</small><div class="dgm-nodes"><span>Data paths<em>prompts stay in market</em></span><span>Logs and telemetry<em>stored in market</em></span></div></div>
+</div>
+<figcaption>Products call tasks; the router picks the model each market allows; evidence stays where the data does.</figcaption>
+</figure>
+</section>
+
+<section class="block">
+<h2>Five design rules</h2>
+<p><strong>1. Call tasks, not vendors.</strong> Application code should ask for "summarise", "rewrite" or "describe image", not for a specific provider's API. That single change is what makes a per-market model a configuration choice rather than a rewrite. See <a href="/insights/llm-model-routing/">model routing</a>.</p>
+<p><strong>2. Route on market, task and data class.</strong> The router decides which model may serve a request based on where the user is, what the task needs and how sensitive the data is. Some markets get the global model, some a local one, some a self-hosted one; see <a href="/insights/mistral-large-4-open-weights-self-hosting/">running a large open model yourself</a>.</p>
+<p><strong>3. Evaluate per market and language.</strong> A model that tests well in English may behave differently in Simplified Chinese, Arabic or Bahasa, and local safety expectations differ. Keep an evaluation set per market and run it on every model change; see <a href="/insights/llm-evaluation-sets-that-predict-production/">evaluation sets that predict production</a>.</p>
+<p><strong>4. Keep data paths and evidence in the market.</strong> Prompts, outputs and logs often carry personal data. If the model runs in-country but your logs ship elsewhere, you have moved the problem, not solved it. Separate telemetry pipelines per market or tenant give strong isolation, at the cost of running more of them<sup class="cite"><a href="#ref-6">6</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/per-market-ai-models-apple-qwen-china/per-tenant-pipelines.webp" alt="Diagram of one OpenTelemetry Collector per tenant: tenant A and tenant B in a product each send data through their own collector pipeline to their own backend, with notes on strong isolation and higher resource usage" width="1400" height="783" loading="lazy"></div><figcaption>Separate pipelines per tenant or market keep telemetry inside its boundary, at the cost of more infrastructure. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2026/otel-native-by-design/" target="_blank" rel="noopener">OpenTelemetry blog, Nityananda Gohain and Dhruv Ahuja</a> · CC BY 4.0</span></figcaption></figure>
+<p><strong>5. Ship features by market, not all at once.</strong> Apple is launching some features in China and holding others back<sup class="cite"><a href="#ref-1">1</a></sup>. Feature flags per market let you launch what the local model and rules support, and add the rest when they do.</p>
+<div class="callout"><p>Build as if every market will eventually want its own model, because the ones that matter most to you probably will.</p></div>
+</section>
+
+<section class="block">
+<h2>A plan for adding a market</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Rules</b><span>Confirm filing, residency and sector rules for AI in the market</span></li>
+<li><b>Model</b><span>Choose a permitted model and deployment: global, local or self-hosted</span></li>
+<li class="hl"><b>Evaluate</b><span>Build a local evaluation set in the market's languages and run it</span></li>
+<li><b>Localise</b><span>Adapt prompts, safety rules and disclosures</span></li>
+<li class="hl"><b>Contain</b><span>Keep prompts, outputs and logs within the market boundary</span></li>
+<li><b>Launch</b><span>Enable the features the market supports; flag the rest</span></li>
+</ol>
+<figcaption>The same steps work for China, the GCC, India or any market with its own AI rules.</figcaption>
+</figure>
+</section>
+
+<section class="block">
+<h2>CTO take</h2>
+<p>Apple's deal is a large-scale proof that "one global model" is not a viable plan for products sold everywhere. The good news is that the architecture to handle it is not exotic: a task-level AI interface, a router, per-market evaluations and data boundaries. Teams that build those now can enter a new market by configuring a model and running an evaluation; teams that hard-code a single provider will face a rewrite each time. For examples by region, see <a href="/case-studies/eu-telecom-sovereign-llm-platform/">a sovereign LLM platform in Europe</a>, <a href="/case-studies/kenya-telehealth-ai-triage-data-protection/">privacy-first AI triage in Kenya</a> and <a href="/regions/">where I work</a>.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I help teams design AI platforms that can run different models per market without forking the product. I am based in India, the United States and the UAE, working globally. See <a href="/ai-architect/">AI architecture</a> or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
