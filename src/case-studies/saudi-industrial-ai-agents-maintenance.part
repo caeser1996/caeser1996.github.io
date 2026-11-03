@@ -1,0 +1,79 @@
+<!--{"title": "Case study: AI agents for industrial maintenance in Saudi Arabia", "description": "How a Saudi industrial operator can use AI agents to plan maintenance from equipment data, hosted in-Kingdom, with an asset graph, read-only tools and engineer sign-off.", "short": "Industrial AI agents in Saudi Arabia", "h1": "Agents that advise, engineers who decide: AI for maintenance planning at a Saudi industrial operator", "kicker": "Case study · Industrial AI agents", "lede": "A Saudi industrial operator had decades of equipment history, a work-order system, sensor data from its plants and a backlog of maintenance decisions waiting on scarce senior engineers. AI agents could read all of it faster than any team. The challenge was to let them help without letting them touch the plant, and to keep the data in the Kingdom.", "date": "2026-11-03", "datetime": "2026-11-03T15:55:00+04:00", "readtime": "9 min read", "sector": "Industrial operations · Saudi Arabia", "role": "Fractional CTO and AI architect", "engagement": "Assessment, architecture and delivery leadership", "scope": "Asset graph, event pipeline, read-only agent tools, recommendation workflow, OT/IT boundary, in-Kingdom hosting", "stack": ["Event pipeline from plant historians", "Durable event log", "Asset knowledge graph", "MCP servers with read-only tools", "LLM agents hosted in-Kingdom", "Work-order system integration", "Engineer review workbench", "OpenTelemetry tracing"], "outcomes": ["One live view of assets, their history and their dependencies", "Agents that draft maintenance recommendations with evidence attached", "No agent write access to control systems; all actions through approved work orders", "Engineers approve, edit or reject every recommendation, and the reasons are kept", "Plant and personnel data processed in the Kingdom"], "tags": ["ai", "agents", "knowledge-graph"], "keywords": ["industrial AI agents", "predictive maintenance AI", "Saudi Arabia AI", "HUMAIN Aramco", "asset knowledge graph", "MCP industrial", "OT IT boundary", "Saudi PDPL", "fractional CTO Saudi Arabia", "human in the loop AI"], "faq": [["Can AI agents safely work with industrial plant data?", "Yes, if they only read data and draft recommendations. In this design, agents have read-only tools, never connect to control systems, and every action becomes a work order that an engineer approves."], ["Why use an asset knowledge graph?", "Maintenance decisions depend on relationships: which pump feeds which unit, what failed last time and which spares are in stock. A graph gives agents and engineers the same connected view, with history."], ["Does Saudi data protection law apply to plant data?", "Plant telemetry is mostly not personal data, but work orders, shift logs and inspection notes often name people. The PDPL applies to that personal data, including its rules on transfers outside the Kingdom."]], "related": ["/fractional-cto-saudi-arabia/", "/ai-architect/", "/ontology-knowledge-graph/"], "citations": [{"title": "PIF and Aramco close HUMAIN transaction to accelerate HUMAIN's global growth", "url": "https://www.aramco.com/en/news-media/news/2026/pif-and-aramco-close-humain-transaction-to-accelerate-humains-global-growth", "publisher": "Aramco", "date": "1 Nov 2026"}, {"title": "ADNOC signs deal with OpenAI and G42 to deploy Frontier AI agents", "url": "https://thenextweb.com/news/adnoc-openai-g42-frontier-ai-deal", "publisher": "The Next Web", "date": "Nov 2026"}, {"title": "Saudi Arabia's Personal Data Protection Law becomes enforceable: essential insights for businesses", "url": "https://www.clydeco.com/en/insights/2024/09/saudi-arabia-s-personal-data-protection-law-become", "publisher": "Clyde & Co", "date": "Sep 2024"}, {"title": "Saudi Arabia updates Data Transfer Regulations and introduces the first set of Standard Contractual Clauses", "url": "https://insightplus.bakermckenzie.com/bm/data-technology/saudi-arabia-updates-data-transfer-regulations-and-introduces-the-first-set-of-standard-contractual-clauses", "publisher": "Baker McKenzie", "date": "2024"}, {"title": "What can you do with OpenTelemetry entity events?", "url": "https://opentelemetry.io/blog/2026/consuming-opentelemetry-entity-events/", "publisher": "OpenTelemetry blog", "date": "14 Aug 2026"}]}-->
+<h2>The situation</h2>
+<p>An industrial operator in Saudi Arabia ran several processing plants. Maintenance planning depended on a small group of senior engineers who knew the equipment's history, read sensor trends, checked past work orders and decided what to fix, when and with which spares. Their backlog grew every quarter. Data was everywhere: plant historians, a work-order system, inspection reports and spreadsheets of spares, but connecting it for one decision took days.</p>
+<p><strong>Why now.</strong> Large Gulf industrial companies are moving AI agents into core operations. On 1 November 2026, Aramco and the Public Investment Fund closed a deal giving Aramco 49% of HUMAIN, with Aramco planning to use HUMAIN's AI infrastructure for industrial applications<sup class="cite"><a href="#ref-1">1</a></sup>. A day later, ADNOC announced it would run AI agents on OpenAI's Frontier platform across its operations, hosted on UAE-based infrastructure with human oversight of consequential decisions<sup class="cite"><a href="#ref-2">2</a></sup>. The operator's board wanted the same benefits, with clear limits on what agents could do and where data would live, under Saudi Arabia's Personal Data Protection Law<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>Agents never touch the plant.</strong> No connection to control systems; read-only access to copies of data.</li>
+<li><strong>One connected view of assets</strong>: equipment, relationships, history and spares, current and as at any past date.</li>
+<li><strong>Every recommendation carries its evidence</strong>, so an engineer can check it quickly.</li>
+<li><strong>Engineers decide.</strong> Agents draft; approved changes become normal work orders.</li>
+<li><strong>Data in the Kingdom</strong>, including the personal data in work orders and shift logs.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Plant (OT)</small><div class="dgm-nodes"><span>Control systems<em>no AI access</em></span><span>Historians<em>sensor time series</em></span></div></div>
+<div class="dgm-tier"><small>Boundary</small><div class="dgm-nodes"><span class="hl">One-way data export<em>OT to IT, never back</em></span></div></div>
+<div class="dgm-tier"><small>Data (IT)</small><div class="dgm-nodes"><span>Durable event log<em>equipment and work events</em></span><span class="hl">Asset knowledge graph<em>relationships and history</em></span><span>Work orders and spares<em>replicated</em></span></div></div>
+<div class="dgm-tier"><small>Agents</small><div class="dgm-nodes"><span class="hl">MCP servers<em>read-only tools</em></span><span>LLM agents<em>hosted in-Kingdom</em></span></div></div>
+<div class="dgm-tier"><small>People</small><div class="dgm-nodes"><span class="hl">Review workbench<em>approve, edit, reject</em></span><span>Work-order system<em>the only path to action</em></span></div></div>
+</div>
+<figcaption>Data flows one way out of the plant; recommendations flow to people; only people create work orders.</figcaption>
+</figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Export</b><span>Historian data and equipment events leave the plant through a one-way export</span></li>
+<li><b>Record</b><span>Events land in a durable log, so history can be replayed</span></li>
+<li class="hl"><b>Connect</b><span>The asset graph links equipment, failures, work orders and spares</span></li>
+<li><b>Analyse</b><span>Agents query the graph through read-only tools and draft recommendations</span></li>
+<li class="hl"><b>Decide</b><span>An engineer reviews the recommendation and its evidence, then approves, edits or rejects</span></li>
+<li><b>Act</b><span>Approved items become work orders through the normal system</span></li>
+</ol>
+<figcaption>The agent shortens the analysis; the engineer still owns the decision and the action.</figcaption>
+</figure>
+
+<h2>The hard part: giving agents the plant's context, safely</h2>
+<p>A maintenance recommendation is only as good as its context: what this pump is connected to, how it has behaved, what failed last time and whether the spare is on site. That context was spread across systems that did not agree on names. The team built an asset knowledge graph from an event log rather than from periodic copies. The OpenTelemetry community describes the same pattern for infrastructure: producers emit entity events into a durable, event-sourced log, a live graph is rebuilt from it with full history, and both people and AI assistants query it, the latter through an MCP server<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/saudi-industrial-ai-agents-maintenance/entity-graph-pipeline.webp" alt="Pipeline diagram: OpenTelemetry producers send entity events to a durable event-sourced log, which is replayed into a live bi-temporal entity graph, queried through a GraphQL API by humans and dashboards and through an MCP server by an AI assistant" width="1400" height="325" loading="lazy"></div><figcaption>Events into a durable log, a live graph with history, and an MCP server for AI assistants: the same shape the asset graph followed. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2026/consuming-opentelemetry-entity-events/" target="_blank" rel="noopener">OpenTelemetry blog, Matthieu Noirbusson</a> · CC BY 4.0</span></figcaption></figure>
+<p>Because the graph records when facts were true, an agent can ask what the plant looked like before a past failure, not only what it looks like now. And because agents reach the graph only through read-only MCP tools, with no route back into the plant, the worst a misbehaving agent can do is draft a poor recommendation that an engineer rejects. See <a href="/insights/entity-resolution-knowledge-graphs/">entity resolution for knowledge graphs</a> and <a href="/insights/securing-mcp-servers-checklist/">securing MCP servers</a>.</p>
+<div class="callout"><p>In industrial settings, the safest agent is one that cannot act. Give it rich context and no levers; let engineers pull the levers.</p></div>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Reliability engineering</small><ol><li>Asset model</li><li class="hl">Recommendation review</li><li>Feedback on quality</li></ol></div>
+<div class="dgm-lane"><small>OT and security</small><ol><li>One-way export</li><li>Boundary testing</li><li class="hl">No-write guarantees</li></ol></div>
+<div class="dgm-lane"><small>Data and AI</small><ol><li>Event log and graph</li><li class="hl">MCP tools and agents</li><li>Evaluations</li></ol></div>
+</div>
+<figcaption>Engineers defined good recommendations; OT security defined the boundary; the AI team worked inside both.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Boundary</b><ul><li>One-way export</li><li>In-Kingdom hosting</li><li>Data classification</li></ul></div>
+<div><small>Phase 2</small><b>Graph</b><ul><li>Event log</li><li>Asset model</li><li>History back-filled</li></ul></div>
+<div><small>Phase 3</small><b>Shadow</b><ul><li>Agents draft silently</li><li>Compare with engineers</li><li>Refine tools</li></ul></div>
+<div><small>Phase 4</small><b>Assist</b><ul><li>Recommendations in workbench</li><li>Reasons recorded</li><li>More asset classes</li></ul></div>
+</div>
+<figcaption>Shadow mode first: agents' drafts were compared with engineers' own decisions before anyone relied on them.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>One-way export from OT</td><td>Agents query plant systems directly</td><td>No path from AI back into control systems</td></tr>
+<tr><td>Event log feeding a graph</td><td>Nightly copies into a warehouse</td><td>Current state and full history in one model</td></tr>
+<tr><td>Read-only MCP tools</td><td>Agents with write access</td><td>Bad drafts get rejected; no bad actions happen</td></tr>
+<tr><td>Recommendations, not actions</td><td>Agents raise work orders</td><td>Engineers stay accountable for the plant</td></tr>
+<tr><td>In-Kingdom hosting</td><td>Overseas model endpoints</td><td>Simpler PDPL position and board comfort</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: record why engineers rejected or edited recommendations. Those reasons were the best training material for better tools and prompts. Differently: start the asset model with the reliability engineers on day one; naming and relationships were the slowest part to agree. Related: <a href="/case-studies/energy-asset-knowledge-graph/">an energy asset knowledge graph</a>, <a href="/insights/agents-replace-seats-enterprise-saas/">when agents become the user</a>, the <a href="/insights/tech-news-2026-11-03/">3 November tech news</a> and the <a href="/fractional-cto-saudi-arabia/">Saudi Arabia page</a>.</p>
+<p>If you are bringing AI agents into industrial operations in Saudi Arabia or the wider Gulf, see my <a href="/ontology-knowledge-graph/">knowledge graph work</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>

@@ -1,6 +1,83 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link><description>Anonymised engagements with architecture and flow diagrams</description><language>en-gb</language><lastBuildDate>Mon, 02 Nov 2026 15:55:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/case-studies/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link></image><item><title>Every script runs as the user: locking down third-party code on an Indonesian e-wallet&#x27;s web app</title><link>https://asksumanta.com/case-studies/indonesia-ewallet-payment-page-script-security/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/indonesia-ewallet-payment-page-script-security/</guid><pubDate>Mon, 02 Nov 2026 15:55:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>security</category><category>architecture</category><category>platform</category><description>How an Indonesian e-wallet can stop third-party scripts acting with users&#x27; sessions: script inventory, a backend-for-frontend, CSP, integrity checks and step-up.</description><content:encoded><![CDATA[<p><em>An Indonesian e-wallet&#x27;s web app loaded a long list of third-party scripts for analytics, chat, performance and marketing, all running with the signed-in user&#x27;s authority on pages that could move money. When a hijacked performance script drained traders on another platform in October 2026, the team asked the obvious question: what could our scripts do with our users&#x27; sessions? The answer led to a new front-end architecture.</em></p><h2>The situation</h2>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link><description>Anonymised engagements with architecture and flow diagrams</description><language>en-gb</language><lastBuildDate>Tue, 03 Nov 2026 15:55:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/case-studies/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link></image><item><title>Agents that advise, engineers who decide: AI for maintenance planning at a Saudi industrial operator</title><link>https://asksumanta.com/case-studies/saudi-industrial-ai-agents-maintenance/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/saudi-industrial-ai-agents-maintenance/</guid><pubDate>Tue, 03 Nov 2026 15:55:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>ai</category><category>agents</category><category>knowledge-graph</category><description>How a Saudi industrial operator can use AI agents to plan maintenance from equipment data, hosted in-Kingdom, with an asset graph, read-only tools and engineer sign-off.</description><content:encoded><![CDATA[<p><em>A Saudi industrial operator had decades of equipment history, a work-order system, sensor data from its plants and a backlog of maintenance decisions waiting on scarce senior engineers. AI agents could read all of it faster than any team. The challenge was to let them help without letting them touch the plant, and to keep the data in the Kingdom.</em></p><h2>The situation</h2>
+<p>An industrial operator in Saudi Arabia ran several processing plants. Maintenance planning depended on a small group of senior engineers who knew the equipment's history, read sensor trends, checked past work orders and decided what to fix, when and with which spares. Their backlog grew every quarter. Data was everywhere: plant historians, a work-order system, inspection reports and spreadsheets of spares, but connecting it for one decision took days.</p>
+<p><strong>Why now.</strong> Large Gulf industrial companies are moving AI agents into core operations. On 1 November 2026, Aramco and the Public Investment Fund closed a deal giving Aramco 49% of HUMAIN, with Aramco planning to use HUMAIN's AI infrastructure for industrial applications<sup class="cite"><a href="#ref-1">1</a></sup>. A day later, ADNOC announced it would run AI agents on OpenAI's Frontier platform across its operations, hosted on UAE-based infrastructure with human oversight of consequential decisions<sup class="cite"><a href="#ref-2">2</a></sup>. The operator's board wanted the same benefits, with clear limits on what agents could do and where data would live, under Saudi Arabia's Personal Data Protection Law<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>Agents never touch the plant.</strong> No connection to control systems; read-only access to copies of data.</li>
+<li><strong>One connected view of assets</strong>: equipment, relationships, history and spares, current and as at any past date.</li>
+<li><strong>Every recommendation carries its evidence</strong>, so an engineer can check it quickly.</li>
+<li><strong>Engineers decide.</strong> Agents draft; approved changes become normal work orders.</li>
+<li><strong>Data in the Kingdom</strong>, including the personal data in work orders and shift logs.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Plant (OT)</small><div class="dgm-nodes"><span>Control systems<em>no AI access</em></span><span>Historians<em>sensor time series</em></span></div></div>
+<div class="dgm-tier"><small>Boundary</small><div class="dgm-nodes"><span class="hl">One-way data export<em>OT to IT, never back</em></span></div></div>
+<div class="dgm-tier"><small>Data (IT)</small><div class="dgm-nodes"><span>Durable event log<em>equipment and work events</em></span><span class="hl">Asset knowledge graph<em>relationships and history</em></span><span>Work orders and spares<em>replicated</em></span></div></div>
+<div class="dgm-tier"><small>Agents</small><div class="dgm-nodes"><span class="hl">MCP servers<em>read-only tools</em></span><span>LLM agents<em>hosted in-Kingdom</em></span></div></div>
+<div class="dgm-tier"><small>People</small><div class="dgm-nodes"><span class="hl">Review workbench<em>approve, edit, reject</em></span><span>Work-order system<em>the only path to action</em></span></div></div>
+</div>
+<figcaption>Data flows one way out of the plant; recommendations flow to people; only people create work orders.</figcaption>
+</figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Export</b><span>Historian data and equipment events leave the plant through a one-way export</span></li>
+<li><b>Record</b><span>Events land in a durable log, so history can be replayed</span></li>
+<li class="hl"><b>Connect</b><span>The asset graph links equipment, failures, work orders and spares</span></li>
+<li><b>Analyse</b><span>Agents query the graph through read-only tools and draft recommendations</span></li>
+<li class="hl"><b>Decide</b><span>An engineer reviews the recommendation and its evidence, then approves, edits or rejects</span></li>
+<li><b>Act</b><span>Approved items become work orders through the normal system</span></li>
+</ol>
+<figcaption>The agent shortens the analysis; the engineer still owns the decision and the action.</figcaption>
+</figure>
+
+<h2>The hard part: giving agents the plant's context, safely</h2>
+<p>A maintenance recommendation is only as good as its context: what this pump is connected to, how it has behaved, what failed last time and whether the spare is on site. That context was spread across systems that did not agree on names. The team built an asset knowledge graph from an event log rather than from periodic copies. The OpenTelemetry community describes the same pattern for infrastructure: producers emit entity events into a durable, event-sourced log, a live graph is rebuilt from it with full history, and both people and AI assistants query it, the latter through an MCP server<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/saudi-industrial-ai-agents-maintenance/entity-graph-pipeline.webp" alt="Pipeline diagram: OpenTelemetry producers send entity events to a durable event-sourced log, which is replayed into a live bi-temporal entity graph, queried through a GraphQL API by humans and dashboards and through an MCP server by an AI assistant" width="1400" height="325" loading="lazy"></div><figcaption>Events into a durable log, a live graph with history, and an MCP server for AI assistants: the same shape the asset graph followed. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2026/consuming-opentelemetry-entity-events/" target="_blank" rel="noopener">OpenTelemetry blog, Matthieu Noirbusson</a> · CC BY 4.0</span></figcaption></figure>
+<p>Because the graph records when facts were true, an agent can ask what the plant looked like before a past failure, not only what it looks like now. And because agents reach the graph only through read-only MCP tools, with no route back into the plant, the worst a misbehaving agent can do is draft a poor recommendation that an engineer rejects. See <a href="https://asksumanta.com/insights/entity-resolution-knowledge-graphs/">entity resolution for knowledge graphs</a> and <a href="https://asksumanta.com/insights/securing-mcp-servers-checklist/">securing MCP servers</a>.</p>
+<div class="callout"><p>In industrial settings, the safest agent is one that cannot act. Give it rich context and no levers; let engineers pull the levers.</p></div>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Reliability engineering</small><ol><li>Asset model</li><li class="hl">Recommendation review</li><li>Feedback on quality</li></ol></div>
+<div class="dgm-lane"><small>OT and security</small><ol><li>One-way export</li><li>Boundary testing</li><li class="hl">No-write guarantees</li></ol></div>
+<div class="dgm-lane"><small>Data and AI</small><ol><li>Event log and graph</li><li class="hl">MCP tools and agents</li><li>Evaluations</li></ol></div>
+</div>
+<figcaption>Engineers defined good recommendations; OT security defined the boundary; the AI team worked inside both.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Boundary</b><ul><li>One-way export</li><li>In-Kingdom hosting</li><li>Data classification</li></ul></div>
+<div><small>Phase 2</small><b>Graph</b><ul><li>Event log</li><li>Asset model</li><li>History back-filled</li></ul></div>
+<div><small>Phase 3</small><b>Shadow</b><ul><li>Agents draft silently</li><li>Compare with engineers</li><li>Refine tools</li></ul></div>
+<div><small>Phase 4</small><b>Assist</b><ul><li>Recommendations in workbench</li><li>Reasons recorded</li><li>More asset classes</li></ul></div>
+</div>
+<figcaption>Shadow mode first: agents' drafts were compared with engineers' own decisions before anyone relied on them.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>One-way export from OT</td><td>Agents query plant systems directly</td><td>No path from AI back into control systems</td></tr>
+<tr><td>Event log feeding a graph</td><td>Nightly copies into a warehouse</td><td>Current state and full history in one model</td></tr>
+<tr><td>Read-only MCP tools</td><td>Agents with write access</td><td>Bad drafts get rejected; no bad actions happen</td></tr>
+<tr><td>Recommendations, not actions</td><td>Agents raise work orders</td><td>Engineers stay accountable for the plant</td></tr>
+<tr><td>In-Kingdom hosting</td><td>Overseas model endpoints</td><td>Simpler PDPL position and board comfort</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: record why engineers rejected or edited recommendations. Those reasons were the best training material for better tools and prompts. Differently: start the asset model with the reliability engineers on day one; naming and relationships were the slowest part to agree. Related: <a href="https://asksumanta.com/case-studies/energy-asset-knowledge-graph/">an energy asset knowledge graph</a>, <a href="https://asksumanta.com/insights/agents-replace-seats-enterprise-saas/">when agents become the user</a>, the <a href="https://asksumanta.com/insights/tech-news-2026-11-03/">3 November tech news</a> and the <a href="https://asksumanta.com/fractional-cto-saudi-arabia/">Saudi Arabia page</a>.</p>
+<p>If you are bringing AI agents into industrial operations in Saudi Arabia or the wider Gulf, see my <a href="https://asksumanta.com/ontology-knowledge-graph/">knowledge graph work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/saudi-industrial-ai-agents-maintenance/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Every script runs as the user: locking down third-party code on an Indonesian e-wallet&#x27;s web app</title><link>https://asksumanta.com/case-studies/indonesia-ewallet-payment-page-script-security/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/indonesia-ewallet-payment-page-script-security/</guid><pubDate>Mon, 02 Nov 2026 15:55:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>security</category><category>architecture</category><category>platform</category><description>How an Indonesian e-wallet can stop third-party scripts acting with users&#x27; sessions: script inventory, a backend-for-frontend, CSP, integrity checks and step-up.</description><content:encoded><![CDATA[<p><em>An Indonesian e-wallet&#x27;s web app loaded a long list of third-party scripts for analytics, chat, performance and marketing, all running with the signed-in user&#x27;s authority on pages that could move money. When a hijacked performance script drained traders on another platform in October 2026, the team asked the obvious question: what could our scripts do with our users&#x27; sessions? The answer led to a new front-end architecture.</em></p><h2>The situation</h2>
 <p>An e-wallet in Indonesia served users through a mobile app and a web app. The web app let users top up, pay merchants, transfer to bank accounts and withdraw. Over the years, marketing, product and support had added scripts from analytics providers, a tag manager, a chat widget, a session recorder, a performance monitor and several advertising pixels. Most loaded on every page, including the transfer and withdrawal flows, and several were loaded directly from vendors' servers.</p>
 <p><strong>Why now.</strong> On 29 October 2026, malicious code replaced a third-party performance script loaded by Polymarket's website and used signed-in traders' sessions to withdraw funds; Polymarket put the loss at about $2.7 million<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. No passwords or keys were needed: the script simply acted with the access the open page already had<sup class="cite"><a href="#ref-1">1</a></sup>. The card side of the business was already subject to PCI DSS v4 requirements that scripts on payment pages be authorised and protected from tampering, and that changes to payment pages be detected<sup class="cite"><a href="#ref-3">3</a></sup>, and Indonesia's Personal Data Protection Law applies to the personal data those scripts could see<sup class="cite"><a href="#ref-4">4</a></sup>. The board wanted the risk removed, not just documented.</p>
 
@@ -3996,89 +4073,4 @@
 
 <h2>What I'd do again, and differently</h2>
 <p>Again: name the ambiguous states in the data model and design for them explicitly. Differently: build reconciliation earlier. It is the system that tells you whether everything else is working, and it is the first place a new failure mode shows up.</p>
-<p>If your platform is outgrowing its original design, the <a href="https://asksumanta.com/fractional-cto/">fractional CTO</a> page describes how I work with teams on this, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/payments-platform-1m-transactions-a-day/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Finding coordinated fraud rings with entity resolution and a knowledge graph</title><link>https://asksumanta.com/case-studies/fintech-fraud-ring-knowledge-graph/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/fintech-fraud-ring-knowledge-graph/</guid><pubDate>Wed, 28 Oct 2026 01:16:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>knowledge-graph</category><category>ontology</category><category>streaming</category><category>data</category><category>security</category><description>How a fintech moved beyond row-by-row fraud rules: streaming entity resolution into a graph of customers, devices and payees, with graph features for risk scoring.</description><content:encoded><![CDATA[<p><em>Fraud rules scored one transaction or one account at a time, while organised fraud spread across many accounts sharing devices, addresses and payees. The goal was to resolve those shared entities, connect them in a graph, and give risk models and investigators the network view the rules were missing.</em></p><h2>The situation</h2>
-<p>A fintech offering accounts, cards and small loans had a mature rules engine and a transaction-level risk model. Both looked at one event or one account at a time. The losses that hurt most came from coordinated activity: clusters of new accounts opened from the same few devices, with addresses written slightly differently, paying out to a shared set of payees. Each account looked unremarkable alone. The pattern only appeared when someone noticed the connections by hand, usually after the money had moved.</p>
-<p>The question was how to make those connections visible automatically, fast enough to matter, without replacing the decisioning stack that already worked.</p>
-
-<h2>What had to be true</h2>
-<ul>
-<li><strong>Resolve before you connect</strong>: one entity per real person, device, address and payee.</li>
-<li><strong>Explainable links</strong>: every edge in a ring traceable to the evidence behind it.</li>
-<li><strong>Features, not a new decision engine</strong>: graph signals feed existing models and rules.</li>
-<li><strong>Fresh enough for onboarding and payouts</strong>, the two moments where stopping fraud pays.</li>
-<li><strong>Investigators in the loop</strong>, able to confirm, split or merge entities.</li>
-</ul>
-
-<h2>Architecture</h2>
-<figure class="dgm">
-<div class="dgm-stack">
-<div class="dgm-tier"><small>Events</small><div class="dgm-nodes"><span>Onboarding<em>identity, device</em></span><span>Logins<em>device, network</em></span><span>Payments<em>payer, payee</em></span><span>Case outcomes<em>confirmed fraud</em></span></div></div>
-<div class="dgm-tier"><small>Stream</small><div class="dgm-nodes"><span>Kafka topics<em>keyed by entity</em></span><span>Normalisation<em>addresses, names, devices</em></span></div></div>
-<div class="dgm-tier"><small>Resolve</small><div class="dgm-nodes"><span>Blocking<em>candidate pairs</em></span><span class="hl">Probabilistic matching<em>scored, explainable</em></span><span>Analyst overrides<em>merge, split</em></span></div></div>
-<div class="dgm-tier"><small>Graph</small><div class="dgm-nodes"><span class="hl">Entity graph<em>people, devices, addresses, payees</em></span><span>Connected components<em>ring candidates</em></span><span>Graph features<em>size, proximity to fraud</em></span></div></div>
-<div class="dgm-tier"><small>Use</small><div class="dgm-nodes"><span>Feature store<em>online lookups</em></span><span>Risk scoring<em>existing models</em></span><span>Investigator UI<em>ring view with evidence</em></span></div></div>
-</div>
-<figcaption>Layered architecture: events are resolved into entities, connected in a graph, and returned to existing scoring as features.</figcaption>
-</figure>
-<p>Confirmed fraud outcomes from closed cases were fed back as events too, so proximity to known fraud stayed current and the risk models had better labels over time.</p>
-<p>The graph model was kept deliberately small, a handful of entity and relationship types with clear definitions, following the approach in <a href="https://asksumanta.com/insights/ontology-vs-knowledge-graph-vs-semantic-layer/">ontology vs knowledge graph vs semantic layer</a>.</p>
-
-<h2>The data flow, end to end</h2>
-<figure class="dgm">
-<ol class="dgm-flow g3">
-<li><b>Stream</b><span>Onboarding, login and payment events published to Kafka, keyed by source identifiers</span></li>
-<li><b>Normalise</b><span>Standardise addresses, names, phone numbers and device fingerprints</span></li>
-<li class="hl"><b>Resolve</b><span>Block into candidate pairs, score matches, assign stable entity IDs with match evidence</span></li>
-<li><b>Connect</b><span>Upsert entities and relationships into the graph incrementally</span></li>
-<li class="hl"><b>Featurise</b><span>Compute component size, shared-attribute counts and distance to confirmed fraud</span></li>
-<li><b>Act</b><span>Features served to risk scoring; high-risk rings opened as investigator cases</span></li>
-</ol>
-<figcaption>Entity resolution sits before the graph, so the graph only ever connects resolved entities.</figcaption>
-</figure>
-<p>Current entity state was held in compacted topics, where Kafka retains the latest value for each key, so downstream services could rebuild their view without replaying full history<sup class="cite"><a href="#ref-4">4</a></sup>. Streaming patterns are in <a href="https://asksumanta.com/insights/change-data-capture-event-streams/">change data capture and event streams</a>.</p>
-
-<h2>The hard part: entity resolution you can defend</h2>
-<p>Matching everything to everything is quadratic, so resolution started with blocking: cheap keys that limit comparisons to plausible candidates, a well-studied family of techniques<sup class="cite"><a href="#ref-1">1</a></sup>. Matching then used a probabilistic, Fellegi-Sunter style model of the kind implemented in Splink, which scores each comparison field and can be trained without labelled pairs<sup class="cite"><a href="#ref-2">2</a></sup>. What made it defensible:</p>
-<ul>
-<li>Every merge stored the field-level evidence and score, so an investigator could see why two records became one entity.</li>
-<li>Thresholds were set separately for automatic merges and for "possible match" links that investigators saw but models treated with caution.</li>
-<li>Shared infrastructure entities (a popular office address, a carrier-grade NAT IP) were flagged so they did not collapse unrelated customers into giant false rings.</li>
-<li>Analyst merges and splits were written back as overrides that survived reprocessing.</li>
-</ul>
-<p>Ring candidates came from connected components over the resolved graph, which groups nodes reachable from one another regardless of edge direction<sup class="cite"><a href="#ref-3">3</a></sup>. More detail in <a href="https://asksumanta.com/insights/entity-resolution-knowledge-graphs/">entity resolution for knowledge graphs</a>.</p>
-<div class="callout"><p>In fraud work a false merge is not a modelling error, it is an accusation. Explainable matches and reversible overrides are what make a graph usable by investigators.</p></div>
-
-<h2>How it ran</h2>
-<figure class="dgm">
-<div class="dgm-lanes">
-<div class="dgm-lane"><small>Platform</small><ol><li>Resolves entities</li><li>Updates graph</li><li class="hl">Serves ring features</li></ol></div>
-<div class="dgm-lane"><small>Risk scoring</small><ol><li>Reads features</li><li>Scores event</li><li>Opens case on high risk</li></ol></div>
-<div class="dgm-lane"><small>Investigator</small><ol><li>Reviews ring and evidence</li><li class="hl">Confirms, splits or merges</li><li>Records outcome</li></ol></div>
-</div>
-<figcaption>Investigator outcomes flow back as labels and overrides.</figcaption>
-</figure>
-<figure class="dgm">
-<div class="dgm-phases">
-<div><small>Phase 1</small><b>Model</b><ul><li>Entity and relationship types</li><li>Known fraud cases mapped</li><li>Data sources inventoried</li></ul></div>
-<div><small>Phase 2</small><b>Batch proof</b><ul><li>Historical resolution</li><li>Rings found in past cases</li><li>Investigator feedback</li></ul></div>
-<div><small>Phase 3</small><b>Streaming</b><ul><li>Incremental resolution</li><li>Online features</li><li>Model integration</li></ul></div>
-<div><small>Phase 4</small><b>Operate</b><ul><li>Investigator UI</li><li>Override workflow</li><li>Runbooks and hand-off</li></ul></div>
-</div>
-<figcaption>A batch proof on historical cases before any real-time work.</figcaption>
-</figure>
-
-<h2>Key decisions and trade-offs</h2>
-<table class="tbl">
-<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
-<tbody>
-<tr><td>Probabilistic, explainable matching</td><td>Exact keys only</td><td>Catches variant spellings while keeping evidence for every merge</td></tr>
-<tr><td>Graph features into existing models</td><td>Separate graph-based decision engine</td><td>Adds signal without replacing a working decision stack</td></tr>
-<tr><td>Small, defined graph model</td><td>Load every attribute as a node</td><td>Fewer false connections and simpler queries</td></tr>
-<tr><td>Batch proof before streaming</td><td>Build real-time first</td><td>Validates value on known cases before paying for latency</td></tr>
-<tr><td>Durable analyst overrides</td><td>Recompute from scratch each run</td><td>Human corrections are not lost on reprocessing</td></tr>
-</tbody>
-</table>
-
-<h2>What I'd do again, and differently</h2>
-<p>Again: start with historical confirmed cases and show investigators the rings the graph would have surfaced. Differently: build the shared-infrastructure entity list on day one. It is the main source of false rings, and it is easier to design for than to clean up.</p>
-<p>If you are considering a knowledge graph for risk or investigations, the <a href="https://asksumanta.com/ontology-knowledge-graph/">ontology and knowledge graph</a> page describes how I run these engagements, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/fintech-fraud-ring-knowledge-graph/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
+<p>If your platform is outgrowing its original design, the <a href="https://asksumanta.com/fractional-cto/">fractional CTO</a> page describes how I work with teams on this, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/payments-platform-1m-transactions-a-day/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
