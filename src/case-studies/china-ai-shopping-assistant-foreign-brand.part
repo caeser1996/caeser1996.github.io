@@ -1,0 +1,80 @@
+<!--{"title": "Case study: an AI shopping assistant in China for a foreign brand", "description": "How a foreign consumer brand can launch an AI shopping assistant in China: a locally filed model, in-country data, PIPL transfer rules and one shared codebase.", "short": "AI shopping assistant in China", "h1": "Same assistant, different model: launching an AI shopping assistant in China for a foreign consumer brand", "kicker": "Case study · AI products across markets", "lede": "A European consumer brand had an AI shopping assistant that answered product questions and built routines for customers in Europe and the US. China was its fastest-growing market, and the global assistant could not simply be switched on there. The task was to launch a Chinese edition that met local rules, ran on a locally permitted model and kept customer data in China, without forking the product.", "date": "2026-11-04", "datetime": "2026-11-04T15:55:00+04:00", "readtime": "9 min read", "sector": "Consumer goods · China", "role": "Fractional CTO and AI architect", "engagement": "Assessment, architecture and delivery leadership", "scope": "Per-market model routing, China deployment, data boundaries, cross-border transfer review, localised evaluation, filing support", "stack": ["Task-level AI interface", "Market-aware model router", "Locally filed large language model", "In-China cloud deployment", "Product catalogue sync (non-personal data)", "Localised prompts and safety rules", "Per-market evaluation sets", "OpenTelemetry with in-country pipelines"], "outcomes": ["One product codebase serving global and China editions", "Chinese customers' prompts, answers and profiles kept in China", "Only non-personal catalogue data flowing into China, nothing personal flowing out", "Chinese-language quality measured on its own evaluation set before launch", "Filing and transfer documentation prepared from the architecture, not after it"], "tags": ["ai", "architecture", "regulation"], "keywords": ["AI shopping assistant China", "China generative AI filing", "CAC Interim Measures", "PIPL cross-border transfer", "per-market AI models", "Qwen Apple Intelligence China", "in-country data residency", "localised LLM evaluation", "fractional CTO China", "foreign brand China AI"], "faq": [["Can a foreign company launch a generative AI assistant in China?", "Yes, but public-facing generative AI services are subject to China's Interim Measures and a filing process with the Cyberspace Administration of China. Building on a model that has already completed filing, and registering the application where required, is the common route."], ["Can Chinese customer data be processed outside China?", "Only under PIPL's cross-border transfer rules, which use a security assessment, standard contract or certification depending on volumes and data types. Keeping personal data in China avoids most of that complexity."], ["Does this mean maintaining two separate products?", "Not if the product calls tasks rather than a specific model. A router can send Chinese users to a locally permitted model and keep their data in China, while the rest of the product stays shared."]], "related": ["/ai-architect/", "/regions/", "/fractional-cto/"], "citations": [{"title": "Apple confirms its AI features reach China in December, with Qwen", "url": "https://thenextweb.com/news/apple-intelligence-china-ios-27-3-alibaba-qwen", "publisher": "The Next Web", "date": "Oct 2026"}, {"title": "Interim Measures for the Management of Generative AI Services", "url": "https://comparativeai.org/rules/china/generative-ai-interim-measures/", "publisher": "ComparativeAI", "date": "2026"}, {"title": "Cyberspace Administration's domestic generative AI services filing list", "url": "https://digitalpolicyalert.org/change/12565-chinese-cyberspace-administration-registration-of-generative-ai-services", "publisher": "Digital Policy Alert", "date": "2026"}, {"title": "China's Data Outbound Rules Update: Measures for the Certification", "url": "https://www.morganlewis.com/pubs/2025/10/chinas-data-outbound-rules-update-measures-for-the-certification", "publisher": "Morgan Lewis", "date": "Oct 2025"}, {"title": "OTel-Native by Design: Building Products That Export to Any Observability Stack", "url": "https://opentelemetry.io/blog/2026/otel-native-by-design/", "publisher": "OpenTelemetry blog", "date": "8 Oct 2026"}]}-->
+<h2>The situation</h2>
+<p>A European skincare and personal care brand sold online and through partners in Europe, the US and China. Its AI shopping assistant answered questions about ingredients and products, built routines from a short questionnaire and handed off to customer service when needed. It ran on a global model provider, with logs and customer profiles in the brand's European cloud. China had its own app, mini-programme and marketplace stores, but no assistant.</p>
+<p><strong>Why now.</strong> On 31 October 2026, Apple and Alibaba said Alibaba's Qwen will power the China edition of Apple Intelligence, a clear signal that even global platforms ship a different model in China to meet local rules<sup class="cite"><a href="#ref-1">1</a></sup>. China's Interim Measures for generative AI services require qualifying public-facing services to go through filing with the Cyberspace Administration of China<sup class="cite"><a href="#ref-2">2</a></sup>, which publishes lists of filed services in batches<sup class="cite"><a href="#ref-3">3</a></sup>. And the Personal Information Protection Law governs any transfer of Chinese customers' data abroad, with certification measures in effect from 1 January 2026 alongside the standard contract and security assessment routes<sup class="cite"><a href="#ref-4">4</a></sup>. The brand's leadership wanted a Chinese edition for the next sales season, built the right way.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>A locally permitted model</strong> for Chinese users, with the application registered where required.</li>
+<li><strong>Personal data stays in China</strong>: prompts, answers, profiles and logs.</li>
+<li><strong>One product, not two</strong>: shared code and features, with market-specific configuration.</li>
+<li><strong>Chinese-language quality proven</strong> on a local evaluation set before launch.</li>
+<li><strong>Documentation that follows the design</strong>: filing, impact assessment and transfer analysis drawn from the architecture.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Channels</small><div class="dgm-nodes"><span>Global web and app<em>Europe and US</em></span><span>China app and mini-programme<em>separate front ends</em></span></div></div>
+<div class="dgm-tier"><small>Shared product</small><div class="dgm-nodes"><span class="hl">Task-level AI interface<em>answer, recommend, hand off</em></span><span>Market-aware router<em>by user's market</em></span></div></div>
+<div class="dgm-tier"><small>Global region</small><div class="dgm-nodes"><span>Global model provider<em>existing</em></span><span>Profiles and logs<em>European cloud</em></span></div></div>
+<div class="dgm-tier"><small>China region</small><div class="dgm-nodes"><span class="hl">Locally filed model<em>via a Chinese cloud provider</em></span><span class="hl">Profiles, logs, telemetry<em>in-country only</em></span></div></div>
+<div class="dgm-tier"><small>Shared content</small><div class="dgm-nodes"><span>Product catalogue<em>non-personal, synced in</em></span><span>Prompts and safety rules<em>localised per market</em></span></div></div>
+</div>
+<figcaption>Shared code and catalogue, separate models and data per market. Nothing personal crosses the boundary.</figcaption>
+</figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Ask</b><span>A customer in the China app asks about a product or a routine</span></li>
+<li><b>Route</b><span>The router sees the market and sends the task to the China region</span></li>
+<li class="hl"><b>Ground</b><span>The answer is grounded in the locally synced catalogue and the customer's in-country profile</span></li>
+<li><b>Generate</b><span>The locally filed model drafts the answer under localised safety rules</span></li>
+<li class="hl"><b>Record</b><span>Prompts, answers and telemetry are stored in China only</span></li>
+<li><b>Hand off</b><span>If needed, the conversation passes to the China customer service team</span></li>
+</ol>
+<figcaption>Catalogue data flows in; personal data never flows out.</figcaption>
+</figure>
+
+<h2>The hard part: one product, two data worlds</h2>
+<p>The tempting path was a separate Chinese build: copy the code, swap the model, deploy in China. That would have doubled every future feature and fix. Instead the team moved the product to a task-level AI interface. The application asks for "answer a product question" or "build a routine", and a router decides which model serves it, based on the user's market. Prompts and safety rules became configuration per market, so Chinese prompts could reflect local language, product names and expectations without forking code. See <a href="/insights/per-market-ai-models-apple-qwen-china/">designing AI products with a model per market</a>.</p>
+<p>Data was the second half. Product catalogue data is not personal, so it is synced into China. Customer profiles, conversations and logs are created and stored in China and never leave. Telemetry was the easiest thing to get wrong: the global observability stack would have pulled Chinese traces out of the country by default. The team ran a separate telemetry pipeline inside the China environment, using a shared collector with separate pipelines per channel to keep operations simple<sup class="cite"><a href="#ref-5">5</a></sup>, and only aggregated, non-personal metrics are reported to the global dashboard.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/china-ai-shopping-assistant-foreign-brand/shared-collector.webp" alt="Diagram of a shared OpenTelemetry Collector with static pipelines per tenant: tenants A, B and C in a product send data through separate pipelines in one collector to separate backends, with notes on resource efficiency and limited per-tenant customisation" width="1200" height="800" loading="lazy"></div><figcaption>One collector, separate pipelines: inside China, each channel's telemetry kept apart without running a collector per channel. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2026/otel-native-by-design/" target="_blank" rel="noopener">OpenTelemetry blog, Nityananda Gohain and Dhruv Ahuja</a> · CC BY 4.0</span></figcaption></figure>
+<p>Keeping personal data in China also simplified the legal work. With nothing personal designed to leave the country, the assistant did not rely on any of PIPL's transfer mechanisms, a position counsel reviewed, and the impact assessment could describe a clean boundary rather than a set of exceptions<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+<div class="callout"><p>Design the boundary first and the paperwork follows. Bolt on compliance after launch and the paperwork becomes the design.</p></div>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>China team</small><ol><li>Channels and use cases</li><li class="hl">Chinese evaluation set</li><li>Customer service handover</li></ol></div>
+<div class="dgm-lane"><small>Platform and AI</small><ol><li>Task interface and router</li><li class="hl">China region deployment</li><li>In-country telemetry</li></ol></div>
+<div class="dgm-lane"><small>Legal and compliance</small><ol><li>Filing route with provider</li><li>Impact assessment</li><li class="hl">Data boundary sign-off</li></ol></div>
+</div>
+<figcaption>The China team owned quality, the platform team owned the boundary, legal owned the filing and assessment.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Refactor</b><ul><li>Task-level interface</li><li>Market-aware router</li><li>Prompts as configuration</li></ul></div>
+<div><small>Phase 2</small><b>Build China region</b><ul><li>Local model and cloud</li><li>Catalogue sync</li><li>In-country telemetry</li></ul></div>
+<div><small>Phase 3</small><b>Prove</b><ul><li>Chinese evaluation set</li><li>Safety rule tuning</li><li>Filing documentation</li></ul></div>
+<div><small>Phase 4</small><b>Launch</b><ul><li>App first, then mini-programme</li><li>Customer service handover</li><li>Monitoring</li></ul></div>
+</div>
+<figcaption>The refactor came first; it is what made the China region a configuration rather than a fork.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Task-level interface and router</td><td>Fork the product for China</td><td>One codebase, features ship to both</td></tr>
+<tr><td>Locally filed model via a Chinese provider</td><td>Use the global model in China</td><td>Fits the filing regime and local expectations</td></tr>
+<tr><td>Personal data stays in China</td><td>Central profiles with transfer paperwork</td><td>Simpler legal position and lower risk</td></tr>
+<tr><td>Separate in-country telemetry</td><td>Global observability stack</td><td>Traces carry personal data; they stay local</td></tr>
+<tr><td>Chinese evaluation set before launch</td><td>Translate the English tests</td><td>Quality depends on local language and products</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: refactor to a task-level interface before building the China region. It turned a risky fork into configuration. Differently: build the Chinese evaluation set with the China customer service team from day one; their real questions were the best test material. Related: <a href="/insights/llm-model-routing/">model routing</a>, <a href="/insights/llm-evaluation-sets-that-predict-production/">evaluation sets that predict production</a>, <a href="/case-studies/india-diagnostics-consent-data-platform/">consent-aware data in India</a> and <a href="/regions/">where I work</a>.</p>
+<p>If you are taking an AI product into China or other markets with their own AI rules, see my <a href="/ai-architect/">AI architecture work</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>

@@ -1,6 +1,84 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link><description>Anonymised engagements with architecture and flow diagrams</description><language>en-gb</language><lastBuildDate>Tue, 03 Nov 2026 15:55:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/case-studies/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link></image><item><title>Agents that advise, engineers who decide: AI for maintenance planning at a Saudi industrial operator</title><link>https://asksumanta.com/case-studies/saudi-industrial-ai-agents-maintenance/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/saudi-industrial-ai-agents-maintenance/</guid><pubDate>Tue, 03 Nov 2026 15:55:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>ai</category><category>agents</category><category>knowledge-graph</category><description>How a Saudi industrial operator can use AI agents to plan maintenance from equipment data, hosted in-Kingdom, with an asset graph, read-only tools and engineer sign-off.</description><content:encoded><![CDATA[<p><em>A Saudi industrial operator had decades of equipment history, a work-order system, sensor data from its plants and a backlog of maintenance decisions waiting on scarce senior engineers. AI agents could read all of it faster than any team. The challenge was to let them help without letting them touch the plant, and to keep the data in the Kingdom.</em></p><h2>The situation</h2>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link><description>Anonymised engagements with architecture and flow diagrams</description><language>en-gb</language><lastBuildDate>Wed, 04 Nov 2026 15:55:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/case-studies/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link></image><item><title>Same assistant, different model: launching an AI shopping assistant in China for a foreign consumer brand</title><link>https://asksumanta.com/case-studies/china-ai-shopping-assistant-foreign-brand/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/china-ai-shopping-assistant-foreign-brand/</guid><pubDate>Wed, 04 Nov 2026 15:55:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>ai</category><category>architecture</category><category>regulation</category><description>How a foreign consumer brand can launch an AI shopping assistant in China: a locally filed model, in-country data, PIPL transfer rules and one shared codebase.</description><content:encoded><![CDATA[<p><em>A European consumer brand had an AI shopping assistant that answered product questions and built routines for customers in Europe and the US. China was its fastest-growing market, and the global assistant could not simply be switched on there. The task was to launch a Chinese edition that met local rules, ran on a locally permitted model and kept customer data in China, without forking the product.</em></p><h2>The situation</h2>
+<p>A European skincare and personal care brand sold online and through partners in Europe, the US and China. Its AI shopping assistant answered questions about ingredients and products, built routines from a short questionnaire and handed off to customer service when needed. It ran on a global model provider, with logs and customer profiles in the brand's European cloud. China had its own app, mini-programme and marketplace stores, but no assistant.</p>
+<p><strong>Why now.</strong> On 31 October 2026, Apple and Alibaba said Alibaba's Qwen will power the China edition of Apple Intelligence, a clear signal that even global platforms ship a different model in China to meet local rules<sup class="cite"><a href="#ref-1">1</a></sup>. China's Interim Measures for generative AI services require qualifying public-facing services to go through filing with the Cyberspace Administration of China<sup class="cite"><a href="#ref-2">2</a></sup>, which publishes lists of filed services in batches<sup class="cite"><a href="#ref-3">3</a></sup>. And the Personal Information Protection Law governs any transfer of Chinese customers' data abroad, with certification measures in effect from 1 January 2026 alongside the standard contract and security assessment routes<sup class="cite"><a href="#ref-4">4</a></sup>. The brand's leadership wanted a Chinese edition for the next sales season, built the right way.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>A locally permitted model</strong> for Chinese users, with the application registered where required.</li>
+<li><strong>Personal data stays in China</strong>: prompts, answers, profiles and logs.</li>
+<li><strong>One product, not two</strong>: shared code and features, with market-specific configuration.</li>
+<li><strong>Chinese-language quality proven</strong> on a local evaluation set before launch.</li>
+<li><strong>Documentation that follows the design</strong>: filing, impact assessment and transfer analysis drawn from the architecture.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Channels</small><div class="dgm-nodes"><span>Global web and app<em>Europe and US</em></span><span>China app and mini-programme<em>separate front ends</em></span></div></div>
+<div class="dgm-tier"><small>Shared product</small><div class="dgm-nodes"><span class="hl">Task-level AI interface<em>answer, recommend, hand off</em></span><span>Market-aware router<em>by user's market</em></span></div></div>
+<div class="dgm-tier"><small>Global region</small><div class="dgm-nodes"><span>Global model provider<em>existing</em></span><span>Profiles and logs<em>European cloud</em></span></div></div>
+<div class="dgm-tier"><small>China region</small><div class="dgm-nodes"><span class="hl">Locally filed model<em>via a Chinese cloud provider</em></span><span class="hl">Profiles, logs, telemetry<em>in-country only</em></span></div></div>
+<div class="dgm-tier"><small>Shared content</small><div class="dgm-nodes"><span>Product catalogue<em>non-personal, synced in</em></span><span>Prompts and safety rules<em>localised per market</em></span></div></div>
+</div>
+<figcaption>Shared code and catalogue, separate models and data per market. Nothing personal crosses the boundary.</figcaption>
+</figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Ask</b><span>A customer in the China app asks about a product or a routine</span></li>
+<li><b>Route</b><span>The router sees the market and sends the task to the China region</span></li>
+<li class="hl"><b>Ground</b><span>The answer is grounded in the locally synced catalogue and the customer's in-country profile</span></li>
+<li><b>Generate</b><span>The locally filed model drafts the answer under localised safety rules</span></li>
+<li class="hl"><b>Record</b><span>Prompts, answers and telemetry are stored in China only</span></li>
+<li><b>Hand off</b><span>If needed, the conversation passes to the China customer service team</span></li>
+</ol>
+<figcaption>Catalogue data flows in; personal data never flows out.</figcaption>
+</figure>
+
+<h2>The hard part: one product, two data worlds</h2>
+<p>The tempting path was a separate Chinese build: copy the code, swap the model, deploy in China. That would have doubled every future feature and fix. Instead the team moved the product to a task-level AI interface. The application asks for "answer a product question" or "build a routine", and a router decides which model serves it, based on the user's market. Prompts and safety rules became configuration per market, so Chinese prompts could reflect local language, product names and expectations without forking code. See <a href="https://asksumanta.com/insights/per-market-ai-models-apple-qwen-china/">designing AI products with a model per market</a>.</p>
+<p>Data was the second half. Product catalogue data is not personal, so it is synced into China. Customer profiles, conversations and logs are created and stored in China and never leave. Telemetry was the easiest thing to get wrong: the global observability stack would have pulled Chinese traces out of the country by default. The team ran a separate telemetry pipeline inside the China environment, using a shared collector with separate pipelines per channel to keep operations simple<sup class="cite"><a href="#ref-5">5</a></sup>, and only aggregated, non-personal metrics are reported to the global dashboard.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/china-ai-shopping-assistant-foreign-brand/shared-collector.webp" alt="Diagram of a shared OpenTelemetry Collector with static pipelines per tenant: tenants A, B and C in a product send data through separate pipelines in one collector to separate backends, with notes on resource efficiency and limited per-tenant customisation" width="1200" height="800" loading="lazy"></div><figcaption>One collector, separate pipelines: inside China, each channel's telemetry kept apart without running a collector per channel. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2026/otel-native-by-design/" target="_blank" rel="noopener">OpenTelemetry blog, Nityananda Gohain and Dhruv Ahuja</a> · CC BY 4.0</span></figcaption></figure>
+<p>Keeping personal data in China also simplified the legal work. With nothing personal designed to leave the country, the assistant did not rely on any of PIPL's transfer mechanisms, a position counsel reviewed, and the impact assessment could describe a clean boundary rather than a set of exceptions<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+<div class="callout"><p>Design the boundary first and the paperwork follows. Bolt on compliance after launch and the paperwork becomes the design.</p></div>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>China team</small><ol><li>Channels and use cases</li><li class="hl">Chinese evaluation set</li><li>Customer service handover</li></ol></div>
+<div class="dgm-lane"><small>Platform and AI</small><ol><li>Task interface and router</li><li class="hl">China region deployment</li><li>In-country telemetry</li></ol></div>
+<div class="dgm-lane"><small>Legal and compliance</small><ol><li>Filing route with provider</li><li>Impact assessment</li><li class="hl">Data boundary sign-off</li></ol></div>
+</div>
+<figcaption>The China team owned quality, the platform team owned the boundary, legal owned the filing and assessment.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Refactor</b><ul><li>Task-level interface</li><li>Market-aware router</li><li>Prompts as configuration</li></ul></div>
+<div><small>Phase 2</small><b>Build China region</b><ul><li>Local model and cloud</li><li>Catalogue sync</li><li>In-country telemetry</li></ul></div>
+<div><small>Phase 3</small><b>Prove</b><ul><li>Chinese evaluation set</li><li>Safety rule tuning</li><li>Filing documentation</li></ul></div>
+<div><small>Phase 4</small><b>Launch</b><ul><li>App first, then mini-programme</li><li>Customer service handover</li><li>Monitoring</li></ul></div>
+</div>
+<figcaption>The refactor came first; it is what made the China region a configuration rather than a fork.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Task-level interface and router</td><td>Fork the product for China</td><td>One codebase, features ship to both</td></tr>
+<tr><td>Locally filed model via a Chinese provider</td><td>Use the global model in China</td><td>Fits the filing regime and local expectations</td></tr>
+<tr><td>Personal data stays in China</td><td>Central profiles with transfer paperwork</td><td>Simpler legal position and lower risk</td></tr>
+<tr><td>Separate in-country telemetry</td><td>Global observability stack</td><td>Traces carry personal data; they stay local</td></tr>
+<tr><td>Chinese evaluation set before launch</td><td>Translate the English tests</td><td>Quality depends on local language and products</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: refactor to a task-level interface before building the China region. It turned a risky fork into configuration. Differently: build the Chinese evaluation set with the China customer service team from day one; their real questions were the best test material. Related: <a href="https://asksumanta.com/insights/llm-model-routing/">model routing</a>, <a href="https://asksumanta.com/insights/llm-evaluation-sets-that-predict-production/">evaluation sets that predict production</a>, <a href="https://asksumanta.com/case-studies/india-diagnostics-consent-data-platform/">consent-aware data in India</a> and <a href="https://asksumanta.com/regions/">where I work</a>.</p>
+<p>If you are taking an AI product into China or other markets with their own AI rules, see my <a href="https://asksumanta.com/ai-architect/">AI architecture work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/china-ai-shopping-assistant-foreign-brand/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Agents that advise, engineers who decide: AI for maintenance planning at a Saudi industrial operator</title><link>https://asksumanta.com/case-studies/saudi-industrial-ai-agents-maintenance/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/saudi-industrial-ai-agents-maintenance/</guid><pubDate>Tue, 03 Nov 2026 15:55:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>ai</category><category>agents</category><category>knowledge-graph</category><description>How a Saudi industrial operator can use AI agents to plan maintenance from equipment data, hosted in-Kingdom, with an asset graph, read-only tools and engineer sign-off.</description><content:encoded><![CDATA[<p><em>A Saudi industrial operator had decades of equipment history, a work-order system, sensor data from its plants and a backlog of maintenance decisions waiting on scarce senior engineers. AI agents could read all of it faster than any team. The challenge was to let them help without letting them touch the plant, and to keep the data in the Kingdom.</em></p><h2>The situation</h2>
 <p>An industrial operator in Saudi Arabia ran several processing plants. Maintenance planning depended on a small group of senior engineers who knew the equipment's history, read sensor trends, checked past work orders and decided what to fix, when and with which spares. Their backlog grew every quarter. Data was everywhere: plant historians, a work-order system, inspection reports and spreadsheets of spares, but connecting it for one decision took days.</p>
 <p><strong>Why now.</strong> Large Gulf industrial companies are moving AI agents into core operations. On 1 November 2026, Aramco and the Public Investment Fund closed a deal giving Aramco 49% of HUMAIN, with Aramco planning to use HUMAIN's AI infrastructure for industrial applications<sup class="cite"><a href="#ref-1">1</a></sup>. A day later, ADNOC announced it would run AI agents on OpenAI's Frontier platform across its operations, hosted on UAE-based infrastructure with human oversight of consequential decisions<sup class="cite"><a href="#ref-2">2</a></sup>. The operator's board wanted the same benefits, with clear limits on what agents could do and where data would live, under Saudi Arabia's Personal Data Protection Law<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>.</p>
 
@@ -3988,89 +4066,4 @@
 
 <h2>What I'd do again, and differently</h2>
 <p>Again: write the evaluation set before the first prompt, and put entitlements in the data path from day one. Differently: start the source clean-up sooner. Superseded policy versions and inconsistent case notes caused more wrong answers than the model did, and fixing content is slower than fixing code.</p>
-<p>If you are weighing something similar, the <a href="https://asksumanta.com/ai-architect/">AI architect</a> page describes how I run these engagements, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/bank-kyc-policy-assistant-rag/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Scaling a payments platform past a million transactions a day without double charges</title><link>https://asksumanta.com/case-studies/payments-platform-1m-transactions-a-day/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/payments-platform-1m-transactions-a-day/</guid><pubDate>Wed, 28 Oct 2026 01:18:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>architecture</category><category>streaming</category><category>platform</category><category>kubernetes</category><category>observability</category><description>How a payments platform scaled past 1M+ transactions a day without double charges: idempotency keys, a transactional outbox and event-driven reconciliation.</description><content:encoded><![CDATA[<p><em>As volume grew, retries and timeouts started producing duplicate charges and a growing manual reconciliation queue. The goal was a payment path that was safe to retry at every step, published events reliably, and reconciled itself, sized for more than a million transactions a day.</em></p><h2>The situation</h2>
-<p>A payments platform processing card and bank transfers for merchants was growing quickly. The architecture had served it well at lower volume: a payments service writing to Postgres, calling external providers, then publishing an event for the ledger and notifications. As traffic climbed towards and past 1M+ transactions a day, the edges started to fray. Mobile clients retried on timeouts. Providers occasionally responded slowly and then succeeded anyway. Events were sometimes published for writes that rolled back, or not published for writes that committed.</p>
-<p>The symptoms were familiar: occasional duplicate charges, refunds issued by hand, and a reconciliation team matching provider settlement files to internal records in spreadsheets.</p>
-
-<h2>What had to be true</h2>
-<ul>
-<li><strong>Every step safe to retry</strong>, from the client to the provider call.</li>
-<li><strong>One source of truth per payment</strong>, with state changes that cannot be lost or invented.</li>
-<li><strong>Reliable events</strong>: published exactly when the database change commits.</li>
-<li><strong>A ledger that balances</strong>, and reconciliation that runs itself for the normal cases.</li>
-<li><strong>Operable by the in-house team</strong>, with clear signals when something drifts.</li>
-</ul>
-
-<h2>Architecture</h2>
-<figure class="dgm">
-<div class="dgm-stack">
-<div class="dgm-tier"><small>Edge</small><div class="dgm-nodes"><span>Merchant and app clients<em>send Idempotency-Key</em></span><span>API gateway<em>auth, rate limits</em></span></div></div>
-<div class="dgm-tier"><small>Payments service</small><div class="dgm-nodes"><span class="hl">Idempotency store<em>key, request hash, response</em></span><span>Payment state machine<em>explicit transitions</em></span><span>Provider adapters<em>provider-side keys</em></span></div></div>
-<div class="dgm-tier"><small>Data</small><div class="dgm-nodes"><span>Postgres<em>payments and outbox, one transaction</em></span><span class="hl">Outbox relay<em>log-based CDC</em></span></div></div>
-<div class="dgm-tier"><small>Events</small><div class="dgm-nodes"><span>Kafka<em>keyed by payment</em></span><span>Ledger service<em>double-entry, idempotent consumer</em></span><span>Notifications<em>idempotent consumer</em></span></div></div>
-<div class="dgm-tier"><small>Assure</small><div class="dgm-nodes"><span class="hl">Reconciliation<em>provider files vs ledger</em></span><span>Exception queue<em>human review</em></span><span>Tracing and SLOs<em>end to end</em></span></div></div>
-</div>
-<figcaption>Layered architecture: idempotency at the edge, a single write plus outbox, and reconciliation closing the loop.</figcaption>
-</figure>
-
-<h2>The data flow, end to end</h2>
-<figure class="dgm">
-<ol class="dgm-flow g3">
-<li class="hl"><b>Key</b><span>Client sends an Idempotency-Key; a repeat with the same key returns the stored result</span></li>
-<li><b>Write</b><span>Payment row and outbox record written in one Postgres transaction</span></li>
-<li><b>Call</b><span>Provider called with its own idempotency key derived from the payment ID</span></li>
-<li><b>Publish</b><span>Relay reads committed outbox records from the database log and publishes to Kafka</span></li>
-<li><b>Post</b><span>Ledger consumes events idempotently and records balanced double entries</span></li>
-<li class="hl"><b>Reconcile</b><span>Provider settlement data matched to ledger entries; mismatches become exceptions</span></li>
-</ol>
-<figcaption>Each hop either deduplicates or is safe to repeat, so retries anywhere are harmless.</figcaption>
-</figure>
-<p>The edge followed the IETF Idempotency-Key header draft, which defines how clients make non-idempotent methods such as POST fault-tolerant<sup class="cite"><a href="#ref-1">1</a></sup>, and borrowed conventions familiar from established payment APIs, such as rejecting a reused key with different parameters<sup class="cite"><a href="#ref-2">2</a></sup>. The full pattern is in <a href="https://asksumanta.com/insights/idempotent-payments-order-pipelines/">idempotent payments and order pipelines</a>.</p>
-
-<h2>The hard part: the ambiguous middle</h2>
-<p>Duplicates at the edge are the easy case. The hard case is a request that times out somewhere in the middle: did the provider charge or not? The design handled it explicitly:</p>
-<ul>
-<li>The payment state machine had an "unknown" state for ambiguous provider outcomes, rather than guessing success or failure.</li>
-<li>Unknown payments were resolved by querying the provider, never by blindly retrying a charge.</li>
-<li>Provider calls carried their own idempotency keys, so a retry that did happen could not create a second charge on the provider's side.</li>
-<li>Events were produced through a transactional outbox: the change and the outbox record commit together and a relay publishes afterwards, which removes the dual-write problem without distributed transactions<sup class="cite"><a href="#ref-3">3</a></sup>. The relay used Debezium's outbox event router to turn outbox rows into routed Kafka events<sup class="cite"><a href="#ref-4">4</a></sup>.</li>
-</ul>
-<p>Because the relay can deliver a message more than once, every consumer was idempotent too, keyed by event ID. CDC details are in <a href="https://asksumanta.com/insights/change-data-capture-event-streams/">change data capture and event streams</a>.</p>
-<div class="callout"><p>Exactly-once is not a property you buy from a broker. It is what you get when every producer is reliable and every consumer is idempotent.</p></div>
-
-<h2>How the engagement ran</h2>
-<figure class="dgm">
-<div class="dgm-lanes">
-<div class="dgm-lane"><small>Client</small><ol><li>Generates key</li><li>Retries on timeout</li><li>Gets the same result</li></ol></div>
-<div class="dgm-lane"><small>Payments service</small><ol><li class="hl">Deduplicates by key</li><li>Writes payment and outbox</li><li>Resolves unknown states</li></ol></div>
-<div class="dgm-lane"><small>Ledger and recon</small><ol><li>Consumes idempotently</li><li>Posts double entries</li><li class="hl">Matches provider data</li></ol></div>
-</div>
-<figcaption>Retries are expected at every lane; none of them changes the outcome.</figcaption>
-</figure>
-<figure class="dgm">
-<div class="dgm-phases">
-<div><small>Phase 1</small><b>Stabilise</b><ul><li>Map failure modes</li><li>Idempotency at the edge</li><li>Tracing across hops</li></ul></div>
-<div><small>Phase 2</small><b>Outbox</b><ul><li>Single write plus outbox</li><li>CDC relay</li><li>Idempotent consumers</li></ul></div>
-<div><small>Phase 3</small><b>Ledger</b><ul><li>Double-entry postings</li><li>Unknown-state handling</li><li>Provider-side keys</li></ul></div>
-<div><small>Phase 4</small><b>Reconcile and hand off</b><ul><li>Automated matching</li><li>Exception queue</li><li>SLOs and runbooks</li></ul></div>
-</div>
-<figcaption>Stop the bleeding at the edge first, then fix the event path, then close the loop.</figcaption>
-</figure>
-<p>Every hop carried a trace context, so a single payment could be followed from the client request through the provider call, the outbox, the ledger posting and reconciliation when something looked wrong.</p>
-<p>Service level objectives and alerting followed <a href="https://asksumanta.com/insights/slos-error-budgets-small-teams/">SLOs and error budgets for small teams</a>.</p>
-
-<h2>Key decisions and trade-offs</h2>
-<table class="tbl">
-<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
-<tbody>
-<tr><td>Idempotency keys at the API edge</td><td>Deduplicate downstream</td><td>Stops duplicates before any side effect happens</td></tr>
-<tr><td>Transactional outbox with CDC</td><td>Write to database then publish</td><td>Events exist if and only if the write committed</td></tr>
-<tr><td>Explicit unknown state</td><td>Treat timeouts as failures</td><td>Avoids both double charges and lost payments</td></tr>
-<tr><td>Postgres as the payment source of truth</td><td>Event-sourced payments</td><td>Familiar to the team; strong transactional guarantees</td></tr>
-<tr><td>Automated reconciliation with exceptions</td><td>Manual matching</td><td>Scales with volume; people handle only real anomalies</td></tr>
-</tbody>
-</table>
-
-<h2>What I'd do again, and differently</h2>
-<p>Again: name the ambiguous states in the data model and design for them explicitly. Differently: build reconciliation earlier. It is the system that tells you whether everything else is working, and it is the first place a new failure mode shows up.</p>
-<p>If your platform is outgrowing its original design, the <a href="https://asksumanta.com/fractional-cto/">fractional CTO</a> page describes how I work with teams on this, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/payments-platform-1m-transactions-a-day/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
+<p>If you are weighing something similar, the <a href="https://asksumanta.com/ai-architect/">AI architect</a> page describes how I run these engagements, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/bank-kyc-policy-assistant-rag/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
