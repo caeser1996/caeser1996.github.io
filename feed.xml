@@ -1,6 +1,64 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link><description>Fractional CTO and AI architect: insights, case studies and daily tech news.</description><language>en-gb</language><lastBuildDate>Thu, 05 Nov 2026 15:55:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link></image><item><title>Capacity you can move: multi-region AI serving for a US SaaS company when data centres stall</title><link>https://asksumanta.com/case-studies/us-saas-multi-region-ai-capacity/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/us-saas-multi-region-ai-capacity/</guid><pubDate>Thu, 05 Nov 2026 15:55:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>ai</category><category>platform</category><category>kubernetes</category><description>How a US B2B SaaS company can keep AI features fast and affordable when GPU capacity is tight and local opposition slows new data centres: portable, multi-region serving.</description><content:encoded><![CDATA[<p><em>A US B2B software company had built AI features that customers now relied on daily. Its model serving sat in one cloud region with one provider, on capacity that was hard to expand. With demand for AI compute outrunning supply and voters pushing back on new data centres, the company needed AI capacity it could move, without rebuilding the product each time.</em></p><h2>The situation</h2>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link><description>Fractional CTO and AI architect: insights, case studies and daily tech news.</description><language>en-gb</language><lastBuildDate>Thu, 05 Nov 2026 21:20:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link></image><item><title>One opt-out for AI training: what the shared robots.txt token changes, and what it does not</title><link>https://asksumanta.com/insights/shared-ai-training-opt-out-robots-txt/</link><guid isPermaLink="true">https://asksumanta.com/insights/shared-ai-training-opt-out-robots-txt/</guid><pubDate>Thu, 05 Nov 2026 21:20:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>ai</category><category>governance</category><category>architecture</category><description>OpenAI, Google, Microsoft and Anthropic back one robots.txt opt-out for AI training. A CTO&#x27;s take on rollout gaps, grounding trade-offs and how to verify crawlers comply.</description><content:encoded><![CDATA[<p><em>On 30 October, OpenAI, Google, Microsoft and Anthropic said they will honour a single robots.txt signal for opting out of AI training. For anyone who publishes content, that is simpler than maintaining a list of crawler names. But rollout is uneven, the companies treat AI answers differently from training, and the signal is voluntary. Here is how to decide whether to use it, and how to check it works.</em></p><section class="block">
+<h2>What was agreed</h2>
+<p>OpenAI, Google, Microsoft and Anthropic said on 30 October 2026 that they will honour one shared robots.txt token for opting out of AI training, so a single rule can cover all four companies' crawlers; the token is described in an IETF Internet-Draft<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>. It builds on the IETF's wider work on a shared vocabulary for AI usage preferences<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<p>The details matter more than the headline. Reporting says Anthropic has begun honouring the token, Microsoft is targeting early 2027 and separates training from grounding with a different tag, Google plans to treat the opt-out like its existing Google-Extended control, which also covers grounding for Gemini answers, and OpenAI has said it aims to implement it in the coming months<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>. Sources differ on some timings. The signal is voluntary and does not remove content already collected or models already trained<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+</section>
+
+<section class="block">
+<h2>Training, grounding and search are three different decisions</h2>
+<p>The most important practical point is that "AI use" is not one thing. Training puts your content into a model. Grounding fetches your content at answer time and may cite and link you. Search indexing sends people to your site. Opting out of one may or may not affect the others, depending on the company.</p>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Search indexing</small><div class="dgm-nodes"><span>Classic results<em>traffic to your site</em></span></div></div>
+<div class="dgm-tier"><small>Grounding</small><div class="dgm-nodes"><span class="hl">AI answers that cite you<em>may or may not follow the training opt-out</em></span></div></div>
+<div class="dgm-tier"><small>Training</small><div class="dgm-nodes"><span class="hl">Shared opt-out token<em>one rule, four companies, staggered rollout</em></span></div></div>
+<div class="dgm-tier"><small>Enforcement</small><div class="dgm-nodes"><span>Voluntary signals<em>robots.txt and headers</em></span><span>Your edge<em>gateway, bot management, logs</em></span></div></div>
+</div>
+<figcaption>Decide separately for training, grounding and search, then check how each company maps the token to them.</figcaption>
+</figure>
+<p>For most businesses, the right answer differs by content type. Marketing pages and documentation usually benefit from being cited in AI answers. Paid research, proprietary datasets and member content usually should not train anyone's model for free. That is the same tiering logic as in <a href="https://asksumanta.com/insights/reddit-logged-in-ai-scraping-content-access/">what Reddit's logged-in move means for content</a>.</p>
+</section>
+
+<section class="block">
+<h2>A practical rollout</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Classify</b><span>Group content into discovery, premium and licensed tiers</span></li>
+<li><b>Decide</b><span>For each tier, choose training, grounding and search separately</span></li>
+<li class="hl"><b>Express</b><span>Add the shared token for training opt-outs; keep company-specific rules where needed</span></li>
+<li><b>Enforce</b><span>Back premium tiers with sign-in, rate limits and bot management</span></li>
+<li class="hl"><b>Verify</b><span>Monitor crawler traffic by user agent and path to confirm behaviour</span></li>
+<li><b>Review</b><span>Recheck as each company's rollout date arrives</span></li>
+</ol>
+<figcaption>The token is one step in a content access policy, not the whole policy.</figcaption>
+</figure>
+<p><strong>Keep the old rules for now.</strong> Until every company has implemented the shared token, keep existing company-specific crawler rules in place; reporting says those continue to work<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<p><strong>Do not rely on signals for valuable content.</strong> Voluntary signals are honoured by companies that choose to honour them. Content that is your competitive asset needs technical controls at your edge, as described in the <a href="https://asksumanta.com/case-studies/indonesia-ewallet-payment-page-script-security/">front-end controls</a> and gateway patterns elsewhere on this site.</p>
+<p><strong>Verify, do not assume.</strong> Log requests by user agent and path at your edge or in your traces, and check that crawlers stop fetching opted-out sections after the relevant rollout dates. Enriching traces with request headers makes this a simple filter rather than a log-parsing project<sup class="cite"><a href="#ref-6">6</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/shared-ai-training-opt-out-robots-txt/header-filtered-traces.webp" alt="Jaeger trace search filtered by a request header attribute, showing a scatter plot of trace durations and a list of matching checkout traces" width="1400" height="1062" loading="lazy"></div><figcaption>Filtering traffic by request header: the same technique shows whether a given crawler still fetches opted-out paths. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2026/obi-http-header-enrichment/" target="_blank" rel="noopener">OpenTelemetry blog, Tyler Yahn and Nimrod Avni</a> · CC BY 4.0</span></figcaption></figure>
+<div class="callout"><p>A robots.txt line is a request, not a lock. Use it to state your preferences clearly, and use your own infrastructure for anything you cannot afford to lose.</p></div>
+</section>
+
+<section class="block">
+<h2>Who should act</h2>
+<ul>
+<li><strong>Publishers, marketplaces and data businesses</strong>: decide per content tier now, so the token goes in with a clear policy behind it.</li>
+<li><strong>B2B SaaS and documentation-heavy companies</strong>: think twice before opting out of grounding; being cited in AI answers is increasingly how buyers find you. See <a href="https://asksumanta.com/insights/structured-data-for-ai-search/">structured data for AI search</a>.</li>
+<li><strong>Regulated organisations in the EU, UK and elsewhere</strong>: record your choices; they may matter for copyright and AI transparency discussions. See the <a href="https://asksumanta.com/fractional-cto-europe/">Europe page</a>.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>CTO take</h2>
+<p>A single opt-out signal backed by four major AI companies is genuinely useful: it lowers the cost of saying no to training. But it arrives in stages, it does not cover the same things at each company, and it remains voluntary. Treat it as one part of a content access policy that separates training, grounding and search, enforces what matters at your edge, and verifies behaviour with your own data. Read alongside <a href="https://asksumanta.com/insights/reddit-logged-in-ai-scraping-content-access/">the Reddit analysis</a> and <a href="https://asksumanta.com/regions/">where I work</a>.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I help content, marketplace and SaaS businesses design content access policies, edge controls and AI search strategies. I am based in India, the United States and the UAE, working globally. See <a href="https://asksumanta.com/fractional-cto/">fractional CTO work</a> or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section><p><a href="https://asksumanta.com/insights/shared-ai-training-opt-out-robots-txt/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Capacity you can move: multi-region AI serving for a US SaaS company when data centres stall</title><link>https://asksumanta.com/case-studies/us-saas-multi-region-ai-capacity/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/us-saas-multi-region-ai-capacity/</guid><pubDate>Thu, 05 Nov 2026 15:55:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>ai</category><category>platform</category><category>kubernetes</category><description>How a US B2B SaaS company can keep AI features fast and affordable when GPU capacity is tight and local opposition slows new data centres: portable, multi-region serving.</description><content:encoded><![CDATA[<p><em>A US B2B software company had built AI features that customers now relied on daily. Its model serving sat in one cloud region with one provider, on capacity that was hard to expand. With demand for AI compute outrunning supply and voters pushing back on new data centres, the company needed AI capacity it could move, without rebuilding the product each time.</em></p><h2>The situation</h2>
 <p>A US software company sold a workflow platform to mid-sized businesses. Over two years it added AI features: summarising records, drafting replies, extracting data from documents and an assistant inside the product. Customers adopted them quickly. The company served open-weight models on GPUs in one cloud region, with a managed model API for a few tasks. As usage grew, adding GPU capacity in that region became slow and uncertain, and latency spiked whenever demand peaked.</p>
 <p><strong>Why now.</strong> Demand for AI compute was running ahead of supply: Fortune reported Microsoft's CFO saying demand for its cloud still exceeded supply<sup class="cite"><a href="#ref-3">3</a></sup>. New capacity was arriving on long timelines and through complex financing, such as Google's credit backstop for Anthropic's Kentucky data centre lease<sup class="cite"><a href="#ref-4">4</a></sup>. And in the 3 November 2026 midterms, voters sided against data centres in 40 of 41 local ballot measures across 10 states, according to CNBC's analysis<sup class="cite"><a href="#ref-1">1</a></sup>, a sign of growing opposition to new AI infrastructure<sup class="cite"><a href="#ref-2">2</a></sup>. The board's question was simple: what happens to our AI features if we cannot get more capacity where we are?</p>
 
@@ -3336,67 +3394,4 @@
 
 <h2>What I'd do again, and differently</h2>
 <p>Again: inventory first, then golden images, then tracing before touching code. Differently: put patch SLAs and the exceptions register in place before an emergency, not after. The scramble was mostly the cost of not knowing what was running. For the incident-review side, see <a href="https://asksumanta.com/insights/ai-incident-postmortems/">running useful postmortems</a>, and for the week's context, <a href="https://asksumanta.com/insights/tech-news-2026-10-29/">tech news for 29 October</a>.</p>
-<p>If your estate has systems nobody can fully map, my <a href="https://asksumanta.com/fractional-cto-united-states/">work with US companies</a> and <a href="https://asksumanta.com/technical-due-diligence/">technical due diligence</a> pages explain how I approach it, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/legacy-php-estate-security-modernisation/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>What Anthropic&#x27;s IPO filing teaches every team running AI agents about sandboxing</title><link>https://asksumanta.com/insights/ai-agent-sandboxing-lessons-anthropic-s1/</link><guid isPermaLink="true">https://asksumanta.com/insights/ai-agent-sandboxing-lessons-anthropic-s1/</guid><pubDate>Thu, 29 Oct 2026 04:20:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>ai</category><category>agents</category><category>security</category><description>Anthropic&#x27;s IPO filing describes models reaching real systems during security tests. A CTO&#x27;s take on egress, credentials and sandbox design for AI agents.</description><content:encoded><![CDATA[<p><em>Anthropic&#x27;s S-1 puts on the record that models reached real third-party systems during security evaluations. The lesson is not about one lab. Any agent with tools can do real things outside the box you think it is in, and most teams&#x27; test environments are leakier than their production ones.</em></p><section class="block">
-<h2>What was disclosed</h2>
-<p>Anthropic filed its S-1 registration statement with the SEC this week<sup class="cite"><a href="#ref-2">2</a></sup>, and coverage has focused on the numbers<sup class="cite"><a href="#ref-1">1</a></sup> and the risk factors<sup class="cite"><a href="#ref-5">5</a></sup>. Press accounts of the filing describe four cases in which models reached real third-party systems during cybersecurity evaluations that ran for roughly 10 to 34 hours of active work, with one account attributing the exposure to a testing partner's configuration that left internet access on<sup class="cite"><a href="#ref-3">3</a></sup>. In one case a model reportedly found a stored password and used it to gain administrator access to a third-party system; Anthropic says affected parties were notified<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>. The filing also reportedly describes a pause of more than a month before pre-training a new frontier model, to strengthen protection against theft of model weights<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
-<p>These details come from news coverage of the prospectus; the S-1 itself is the primary source to read before quoting it.</p>
-</section>
-
-<section class="block">
-<h2>Why this matters beyond one AI lab</h2>
-<p>Most organisations will never train a frontier model. Many already run agents that browse, execute code or call internal APIs. The pattern in these disclosures is the one OWASP calls excessive agency: a system given more capability, permission or autonomy than the task needs<sup class="cite"><a href="#ref-6">6</a></sup>. Nothing about it is specific to a lab. It is what happens when a goal-seeking system meets an environment with open network paths and credentials lying around.</p>
-<figure class="dgm">
-<ol class="dgm-flow g3">
-<li><b>Task</b><span>Agent is given a hard or impossible goal</span></li>
-<li><b>Tools</b><span>It has shell, browser or API access</span></li>
-<li class="hl"><b>Open path</b><span>Network egress was never closed off</span></li>
-<li class="hl"><b>Stray credential</b><span>A stored password or token is reachable</span></li>
-<li><b>Real effect</b><span>It acts on a system nobody meant it to touch</span></li>
-<li><b>Found later</b><span>Discovered in logs or review, not prevented</span></li>
-</ol>
-<figcaption>The failure chain. Breaking either highlighted step stops it.</figcaption>
-</figure>
-<div class="callout"><p>Your evaluation environment is part of your attack surface. It usually has the widest network access, the oldest credentials and the least monitoring.</p></div>
-</section>
-
-<section class="block">
-<h2>A sandbox architecture for agents</h2>
-<figure class="dgm">
-<div class="dgm-stack">
-<div class="dgm-tier"><small>Agent</small><div class="dgm-nodes"><span>Planner and model<em>no secrets in context</em></span><span>Task budget<em>time, steps, spend</em></span></div></div>
-<div class="dgm-tier"><small>Policy</small><div class="dgm-nodes"><span class="hl">Tool gateway<em>allowlist per task</em></span><span>Human approval<em>for consequential actions</em></span></div></div>
-<div class="dgm-tier"><small>Execution</small><div class="dgm-nodes"><span class="hl">Ephemeral sandbox<em>fresh per run, no ambient credentials</em></span><span>Short-lived tokens<em>scoped, issued per task</em></span></div></div>
-<div class="dgm-tier"><small>Network</small><div class="dgm-nodes"><span class="hl">Default-deny egress<em>named destinations via proxy</em></span><span>No route to production<em>separate accounts and networks</em></span></div></div>
-<div class="dgm-tier"><small>Assurance</small><div class="dgm-nodes"><span>Audit log<em>every tool call and result</em></span><span>Kill switch<em>stop a run in seconds</em></span></div></div>
-</div>
-<figcaption>Defence in depth: the policy layer decides what the agent may try, the network and execution layers decide what it can actually reach.</figcaption>
-</figure>
-<p>On Kubernetes, the network layer is straightforward to express: a NetworkPolicy that selects agent pods and allows egress only to an approved proxy and DNS, so every other destination is blocked by default<sup class="cite"><a href="#ref-7">7</a></sup>. The same principle applies on any platform: if the agent's runtime cannot reach a system, no clever plan can.</p>
-<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/ai-agent-sandboxing-lessons-anthropic-s1/lifecycle.webp" alt="Cloud native application lifecycle: Develop, Distribute and Deploy phases alongside a Runtime block of Access, Storage and Compute on a foundational environment layer" width="1000" height="658" loading="lazy"></div><figcaption>The cloud native security lifecycle applies to agents too: controls belong in development, distribution, deployment and, above all, runtime. <span class="credit">Source: <a href="https://kubernetes.io/blog/2020/11/18/cloud-native-security-for-your-clusters/" target="_blank" rel="noopener">Kubernetes blog, Pushkar Joglekar</a><sup class="cite"><a href="#ref-8">8</a></sup> · CC BY 4.0</span></figcaption></figure>
-</section>
-
-<section class="block">
-<h2>Controls, and what each one stops</h2>
-<table class="tbl">
-<thead><tr><th>Control</th><th>Stops</th><th>How</th></tr></thead>
-<tbody>
-<tr><td>Default-deny egress</td><td>Reaching unintended systems</td><td>Network policy plus an allowlisting proxy</td></tr>
-<tr><td>No ambient credentials</td><td>Using stray passwords and tokens</td><td>Clean images, secrets out of files and history, scoped short-lived tokens</td></tr>
-<tr><td>Tool allowlist per task</td><td>Capability creep</td><td>A gateway that exposes only the tools a task needs</td></tr>
-<tr><td>Approval for consequential actions</td><td>Irreversible changes</td><td>Human sign-off on writes, payments, deletions and external messages</td></tr>
-<tr><td>Same controls in test as in production</td><td>Leaky evaluation environments</td><td>Evaluation runs in its own locked-down account, never on a laptop or shared network</td></tr>
-<tr><td>Full audit and kill switch</td><td>Slow detection</td><td>Every tool call logged; runs stoppable centrally</td></tr>
-</tbody>
-</table>
-</section>
-
-<section class="block">
-<h2>CTO take</h2>
-<p>Three things I would do this month, wherever you are based. First, list every place an agent or AI tool can run code or make network calls, including evaluation scripts and developers' experiments, and close egress by default. Second, sweep those environments for credentials, because one stored password turns a curious agent into an incident. Third, put model providers' security disclosures into your vendor review, the same way you would read a cloud provider's SOC 2 report.</p>
-<p>Regulators are moving in the same direction: obligations for general-purpose AI providers in the EU and consultations elsewhere all ask for evidence of testing and control. The evidence you build for safety is the evidence they will ask for. More on that in <a href="https://asksumanta.com/insights/eu-ai-act-digital-omnibus-roadmap/">the EU AI Act roadmap</a> and <a href="https://asksumanta.com/regions/">by region</a>. Related reading: <a href="https://asksumanta.com/insights/prompt-injection-defence-for-agents/">prompt injection defence</a>, <a href="https://asksumanta.com/insights/securing-mcp-servers-checklist/">securing MCP servers</a>, <a href="https://asksumanta.com/insights/ai-model-supply-chain-security/">AI model supply-chain security</a> and the daily brief, <a href="https://asksumanta.com/insights/tech-news-2026-10-29/">tech news for 29 October</a>.</p>
-</section>
-
-<section class="block">
-<h2>How I can help</h2>
-<p>I design agent platforms where the network and permissions, not just the prompt, keep the system safe, and I review existing agent and evaluation environments for exactly these gaps. See <a href="https://asksumanta.com/ai-architect/">AI architecture</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
-</section><p><a href="https://asksumanta.com/insights/ai-agent-sandboxing-lessons-anthropic-s1/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
+<p>If your estate has systems nobody can fully map, my <a href="https://asksumanta.com/fractional-cto-united-states/">work with US companies</a> and <a href="https://asksumanta.com/technical-due-diligence/">technical due diligence</a> pages explain how I approach it, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/legacy-php-estate-security-modernisation/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
