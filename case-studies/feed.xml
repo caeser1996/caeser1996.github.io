@@ -1,6 +1,84 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link><description>Anonymised engagements with architecture and flow diagrams</description><language>en-gb</language><lastBuildDate>Wed, 04 Nov 2026 15:55:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/case-studies/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link></image><item><title>Same assistant, different model: launching an AI shopping assistant in China for a foreign consumer brand</title><link>https://asksumanta.com/case-studies/china-ai-shopping-assistant-foreign-brand/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/china-ai-shopping-assistant-foreign-brand/</guid><pubDate>Wed, 04 Nov 2026 15:55:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>ai</category><category>architecture</category><category>regulation</category><description>How a foreign consumer brand can launch an AI shopping assistant in China: a locally filed model, in-country data, PIPL transfer rules and one shared codebase.</description><content:encoded><![CDATA[<p><em>A European consumer brand had an AI shopping assistant that answered product questions and built routines for customers in Europe and the US. China was its fastest-growing market, and the global assistant could not simply be switched on there. The task was to launch a Chinese edition that met local rules, ran on a locally permitted model and kept customer data in China, without forking the product.</em></p><h2>The situation</h2>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link><description>Anonymised engagements with architecture and flow diagrams</description><language>en-gb</language><lastBuildDate>Thu, 05 Nov 2026 15:55:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/case-studies/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link></image><item><title>Capacity you can move: multi-region AI serving for a US SaaS company when data centres stall</title><link>https://asksumanta.com/case-studies/us-saas-multi-region-ai-capacity/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/us-saas-multi-region-ai-capacity/</guid><pubDate>Thu, 05 Nov 2026 15:55:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>ai</category><category>platform</category><category>kubernetes</category><description>How a US B2B SaaS company can keep AI features fast and affordable when GPU capacity is tight and local opposition slows new data centres: portable, multi-region serving.</description><content:encoded><![CDATA[<p><em>A US B2B software company had built AI features that customers now relied on daily. Its model serving sat in one cloud region with one provider, on capacity that was hard to expand. With demand for AI compute outrunning supply and voters pushing back on new data centres, the company needed AI capacity it could move, without rebuilding the product each time.</em></p><h2>The situation</h2>
+<p>A US software company sold a workflow platform to mid-sized businesses. Over two years it added AI features: summarising records, drafting replies, extracting data from documents and an assistant inside the product. Customers adopted them quickly. The company served open-weight models on GPUs in one cloud region, with a managed model API for a few tasks. As usage grew, adding GPU capacity in that region became slow and uncertain, and latency spiked whenever demand peaked.</p>
+<p><strong>Why now.</strong> Demand for AI compute was running ahead of supply: Fortune reported Microsoft's CFO saying demand for its cloud still exceeded supply<sup class="cite"><a href="#ref-3">3</a></sup>. New capacity was arriving on long timelines and through complex financing, such as Google's credit backstop for Anthropic's Kentucky data centre lease<sup class="cite"><a href="#ref-4">4</a></sup>. And in the 3 November 2026 midterms, voters sided against data centres in 40 of 41 local ballot measures across 10 states, according to CNBC's analysis<sup class="cite"><a href="#ref-1">1</a></sup>, a sign of growing opposition to new AI infrastructure<sup class="cite"><a href="#ref-2">2</a></sup>. The board's question was simple: what happens to our AI features if we cannot get more capacity where we are?</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>No single point of capacity</strong>: AI features served from more than one region and provider.</li>
+<li><strong>Moving traffic is configuration</strong>, not a code change or a rebuild.</li>
+<li><strong>Customer data rules respected</strong>: some customers required US-only processing; some required specific providers.</li>
+<li><strong>Costs visible per feature and per customer</strong>, so capacity decisions follow value.</li>
+<li><strong>Quality held</strong> when traffic moves between models or providers.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Product</small><div class="dgm-nodes"><span>AI features<em>call tasks, not models</em></span></div></div>
+<div class="dgm-tier"><small>Routing</small><div class="dgm-nodes"><span class="hl">Inference gateway<em>capacity, latency, data rules</em></span><span>Per-customer policy<em>allowed regions and providers</em></span></div></div>
+<div class="dgm-tier"><small>Capacity</small><div class="dgm-nodes"><span class="hl">Primary region<em>reserved GPUs, vLLM</em></span><span>Secondary region<em>smaller, warm</em></span><span>Managed APIs<em>overflow and failover</em></span></div></div>
+<div class="dgm-tier"><small>Operations</small><div class="dgm-nodes"><span>Infrastructure as code<em>identical clusters</em></span><span class="hl">Multi-cluster view<em>one place to operate</em></span></div></div>
+<div class="dgm-tier"><small>Evidence</small><div class="dgm-nodes"><span>Telemetry<em>model, provider, tokens, customer</em></span><span>Evaluations<em>per model and task</em></span><span>Cost reports<em>per feature and customer</em></span></div></div>
+</div>
+<figcaption>The gateway decides where each request runs; identical clusters and evaluations make moving safe.</figcaption>
+</figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Request</b><span>A product feature asks for a task, such as "summarise this record"</span></li>
+<li><b>Policy</b><span>The gateway checks the customer's allowed regions and providers</span></li>
+<li class="hl"><b>Route</b><span>It picks the primary region if it has capacity, else the secondary or an approved API</span></li>
+<li><b>Serve</b><span>The model runs; the response streams back to the product</span></li>
+<li class="hl"><b>Record</b><span>Model, provider, region, tokens, latency and customer are recorded</span></li>
+<li><b>Review</b><span>Weekly reports show cost and quality per feature, feeding capacity decisions</span></li>
+</ol>
+<figcaption>Every request carries enough metadata to answer "where did it run, what did it cost, was it good?".</figcaption>
+</figure>
+
+<h2>The hard part: moving traffic without changing behaviour</h2>
+<p>Routing is easy to draw and hard to trust. A summary from one model in one region should not read differently from a summary produced somewhere else. The team built a small evaluation set for each AI feature from real, consented examples, and ran it against every model and provider combination the gateway was allowed to use. A route was only enabled for a feature when it passed that feature's evaluation; see <a href="https://asksumanta.com/insights/llm-evaluation-sets-that-predict-production/">evaluation sets that predict production</a>.</p>
+<p>The second difficulty was operations. Running identical clusters in two regions doubles the surface area unless they are managed as one. All clusters were built from the same infrastructure code, ran the same serving stack, and were operated from a single multi-cluster view, so engineers could see and act on every region from one place<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/us-saas-multi-region-ai-capacity/multi-cluster-view.webp" alt="Headlamp user interface showing a Nodes list that spans two clusters, with a Cluster column identifying which cluster each node belongs to, alongside CPU, memory, readiness and version" width="1200" height="745" loading="lazy"></div><figcaption>One view across clusters: operating several regions as a single estate rather than separate silos. <span class="credit">Source: <a href="https://kubernetes.io/blog/2026/06/01/dashboard-to-headlamp/" target="_blank" rel="noopener">Kubernetes blog, Will Case</a> · CC BY 4.0</span></figcaption></figure>
+<p>Customer data rules shaped routing as much as capacity did. Some contracts required US-only processing or excluded certain providers. Those rules lived in a per-customer policy the gateway checked on every request, so overflow never sent a restricted customer's data somewhere it should not go. See <a href="https://asksumanta.com/insights/kubernetes-inference-gateway/">Kubernetes inference gateway</a> and <a href="https://asksumanta.com/insights/llm-model-routing/">model routing</a>.</p>
+<div class="callout"><p>Capacity you cannot move is a dependency you cannot manage. Make moving cheap: same code, same clusters, same evaluations, different place.</p></div>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Platform team</small><ol><li>Second region and clusters</li><li class="hl">Gateway and routing</li><li>Failover drills</li></ol></div>
+<div class="dgm-lane"><small>AI and product</small><ol><li>Task-level interfaces</li><li class="hl">Per-feature evaluations</li><li>Quality monitoring</li></ol></div>
+<div class="dgm-lane"><small>Finance and legal</small><ol><li>Customer data rules</li><li>Provider contracts</li><li class="hl">Cost per feature</li></ol></div>
+</div>
+<figcaption>Platform made moving possible, product made it safe, finance made it worth it.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>See</b><ul><li>Telemetry per request</li><li>Cost per feature</li><li>Capacity forecast</li></ul></div>
+<div><small>Phase 2</small><b>Decouple</b><ul><li>Task-level interfaces</li><li>Inference gateway</li><li>Customer policies</li></ul></div>
+<div><small>Phase 3</small><b>Expand</b><ul><li>Secondary region</li><li>Managed API overflow</li><li>Per-route evaluations</li></ul></div>
+<div><small>Phase 4</small><b>Operate</b><ul><li>Failover drills</li><li>Quarterly capacity review</li><li>Contract renegotiation</li></ul></div>
+</div>
+<figcaption>Measure first; the data showed which features needed reserved capacity and which could use overflow.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Primary plus secondary region</td><td>Active-active everywhere</td><td>Resilience without doubling cost</td></tr>
+<tr><td>Managed APIs as overflow</td><td>Self-host all capacity</td><td>Absorbs peaks without buying idle GPUs</td></tr>
+<tr><td>Routes enabled per feature after evaluation</td><td>Route anywhere with capacity</td><td>Quality stays consistent when traffic moves</td></tr>
+<tr><td>Per-customer data policy in the gateway</td><td>Rules in each feature</td><td>One place to enforce contracts</td></tr>
+<tr><td>Cost per feature and customer</td><td>Total AI spend only</td><td>Capacity follows value</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: start with per-request telemetry. It showed that a few features drove most of the cost, which changed the whole capacity plan. Differently: write customer data rules into the gateway before adding the second region; retrofitting them slowed the rollout. Related: <a href="https://asksumanta.com/insights/ai-capacity-crunch-cloud-planning/">planning around the AI capacity crunch</a>, <a href="https://asksumanta.com/insights/focus-finops-ai-cost-allocation/">AI cost allocation</a>, <a href="https://asksumanta.com/insights/tech-news-2026-11-05/">the 5 November tech news</a> and the <a href="https://asksumanta.com/fractional-cto-united-states/">US page</a>.</p>
+<p>If your AI features depend on capacity you cannot easily expand, see my <a href="https://asksumanta.com/ai-architect/">AI architecture work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/us-saas-multi-region-ai-capacity/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Same assistant, different model: launching an AI shopping assistant in China for a foreign consumer brand</title><link>https://asksumanta.com/case-studies/china-ai-shopping-assistant-foreign-brand/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/china-ai-shopping-assistant-foreign-brand/</guid><pubDate>Wed, 04 Nov 2026 15:55:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>ai</category><category>architecture</category><category>regulation</category><description>How a foreign consumer brand can launch an AI shopping assistant in China: a locally filed model, in-country data, PIPL transfer rules and one shared codebase.</description><content:encoded><![CDATA[<p><em>A European consumer brand had an AI shopping assistant that answered product questions and built routines for customers in Europe and the US. China was its fastest-growing market, and the global assistant could not simply be switched on there. The task was to launch a Chinese edition that met local rules, ran on a locally permitted model and kept customer data in China, without forking the product.</em></p><h2>The situation</h2>
 <p>A European skincare and personal care brand sold online and through partners in Europe, the US and China. Its AI shopping assistant answered questions about ingredients and products, built routines from a short questionnaire and handed off to customer service when needed. It ran on a global model provider, with logs and customer profiles in the brand's European cloud. China had its own app, mini-programme and marketplace stores, but no assistant.</p>
 <p><strong>Why now.</strong> On 31 October 2026, Apple and Alibaba said Alibaba's Qwen will power the China edition of Apple Intelligence, a clear signal that even global platforms ship a different model in China to meet local rules<sup class="cite"><a href="#ref-1">1</a></sup>. China's Interim Measures for generative AI services require qualifying public-facing services to go through filing with the Cyberspace Administration of China<sup class="cite"><a href="#ref-2">2</a></sup>, which publishes lists of filed services in batches<sup class="cite"><a href="#ref-3">3</a></sup>. And the Personal Information Protection Law governs any transfer of Chinese customers' data abroad, with certification measures in effect from 1 January 2026 alongside the standard contract and security assessment routes<sup class="cite"><a href="#ref-4">4</a></sup>. The brand's leadership wanted a Chinese edition for the next sales season, built the right way.</p>
 
@@ -3981,89 +4059,4 @@
 
 <h2>What I'd do again, and differently</h2>
 <p>Again: start from search logs and the categories that matter commercially, and make validation a gate rather than a report. Differently: put merchandising ownership and the review workflow in place before the model grows, not after. A taxonomy without a clear owner drifts back to where it started.</p>
-<p>If your catalogue or knowledge model has the same symptoms, the <a href="https://asksumanta.com/ontology-knowledge-graph/">ontology and knowledge graph</a> page describes how I approach it, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/ecommerce-product-ontology-search/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Giving KYC analysts cited answers from policy, without giving up control</title><link>https://asksumanta.com/case-studies/bank-kyc-policy-assistant-rag/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/bank-kyc-policy-assistant-rag/</guid><pubDate>Wed, 28 Oct 2026 01:20:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>ai</category><category>llm</category><category>governance</category><category>security</category><category>regulation</category><description>How a bank gave KYC analysts a cited, permission-aware policy assistant: hybrid retrieval, evaluation sets signed off by compliance and auditable answers.</description><content:encoded><![CDATA[<p><em>Onboarding analysts were searching hundreds of policy pages and past case notes for every decision. The goal was an assistant that answers from approved sources only, shows its citations, respects who is allowed to see what, and is measured against questions compliance has signed off.</em></p><h2>The situation</h2>
-<p>A bank's onboarding analysts spent much of each case looking things up. Policy lived across hundreds of pages of procedures, risk appetite statements and local addenda, and the most useful guidance was often in past case notes: how a similar ownership structure or jurisdiction had been handled before. Senior analysts carried that knowledge in their heads; newer analysts asked them, or searched a document portal that matched keywords and returned whole documents.</p>
-<p>Customer due diligence obligations come from the FATF Recommendations and their national implementations, which require institutions to identify and verify customers and beneficial owners<sup class="cite"><a href="#ref-1">1</a></sup>. None of that changes because an assistant exists. The aim was narrower and more useful: help analysts find the right rule and the right precedent faster, with the evidence in front of them.</p>
-
-<h2>What had to be true</h2>
-<ul>
-<li><strong>Answers come from approved sources only</strong>, and every answer cites them.</li>
-<li><strong>Entitlements are enforced at retrieval</strong>: a user only ever sees passages they could already open in the source system.</li>
-<li><strong>The analyst decides</strong>. The assistant informs a decision; it never records one.</li>
-<li><strong>Quality is measured before release</strong>, against questions compliance agrees are representative.</li>
-<li><strong>Everything is auditable</strong>: question, retrieved sources, model version and answer.</li>
-</ul>
-
-<h2>Architecture</h2>
-<p>The pattern is retrieval-augmented generation: a retriever selects relevant passages and a generator answers conditioned on them, which keeps knowledge in an index that can be updated without retraining<sup class="cite"><a href="#ref-2">2</a></sup>. The work was in making each layer governable.</p>
-<figure class="dgm">
-<div class="dgm-stack">
-<div class="dgm-tier"><small>Sources</small><div class="dgm-nodes"><span>Policy library<em>approved versions</em></span><span>Procedures<em>by business line</em></span><span>Case notes<em>closed cases</em></span><span>Regulatory guidance<em>curated</em></span></div></div>
-<div class="dgm-tier"><small>Index</small><div class="dgm-nodes"><span>Chunking<em>clause-aware</em></span><span>Hybrid index<em>keyword + vector</em></span><span class="hl">ACL metadata<em>per chunk</em></span></div></div>
-<div class="dgm-tier"><small>Retrieve</small><div class="dgm-nodes"><span>SSO identity<em>groups, region</em></span><span class="hl">Entitlement filter<em>before ranking</em></span><span>Re-ranker<em>top passages</em></span></div></div>
-<div class="dgm-tier"><small>Answer</small><div class="dgm-nodes"><span>Grounded prompt<em>cite or decline</em></span><span>LLM<em>pinned version</em></span><span>Citation check<em>claims to sources</em></span></div></div>
-<div class="dgm-tier"><small>Assure</small><div class="dgm-nodes"><span class="hl">Evaluation set<em>compliance-owned</em></span><span>Audit log<em>immutable</em></span><span>Traces<em>OpenTelemetry</em></span></div></div>
-</div>
-<figcaption>Layered architecture: entitlements travel with every chunk, and nothing ships without passing the evaluation set.</figcaption>
-</figure>
-
-<h2>The data flow, end to end</h2>
-<figure class="dgm">
-<ol class="dgm-flow g3">
-<li><b>Ingest</b><span>Only published policy versions and closed case notes, with owner and effective date</span></li>
-<li><b>Index</b><span>Split on clause boundaries; attach source permissions to every chunk</span></li>
-<li class="hl"><b>Retrieve</b><span>Filter by the analyst's entitlements, then hybrid search and re-rank</span></li>
-<li><b>Answer</b><span>Generate only from retrieved passages, or say the sources do not cover it</span></li>
-<li class="hl"><b>Cite</b><span>Link each statement to a clause or case; flag unsupported sentences</span></li>
-<li><b>Learn</b><span>Analyst feedback becomes candidate evaluation cases for compliance review</span></li>
-</ol>
-<figcaption>The assistant declines rather than guesses when the retrieved sources do not answer the question.</figcaption>
-</figure>
-<p>Hybrid retrieval mattered because KYC questions mix exact terms (a form name, a jurisdiction, a document type) with paraphrase. Keyword search finds the former and vectors the latter. The detail is in <a href="https://asksumanta.com/insights/mongodb-hybrid-search-rag/">hybrid search for RAG</a> and <a href="https://asksumanta.com/insights/choosing-embedding-models-rag/">choosing embedding models</a>.</p>
-
-<h2>The hard part: permissions that survive retrieval</h2>
-<p>The tempting shortcut is one index for everyone and an instruction to the model not to reveal restricted material. That is not access control. OWASP's Top 10 for LLM applications lists sensitive information disclosure and vector and embedding weaknesses as distinct risks for exactly this kind of system<sup class="cite"><a href="#ref-3">3</a></sup>. The approach was:</p>
-<ul>
-<li>Carry the source system's permissions onto every chunk at index time, and re-sync them when they change.</li>
-<li>Apply the entitlement filter inside the retrieval query, so restricted passages are never ranked, let alone sent to the model.</li>
-<li>Treat case notes as more sensitive than policy by default, with access scoped by business line and region.</li>
-<li>Test it: evaluation cases that ask, as a restricted user, for content they should not see, and fail the release if anything leaks.</li>
-</ul>
-<p>The same thinking applies to retrieved text as untrusted input; see <a href="https://asksumanta.com/insights/prompt-injection-defence-for-agents/">prompt injection defence</a>.</p>
-<div class="callout"><p>If a user could not open the document, the model should never read it on their behalf. Enforce that in the query, not the prompt.</p></div>
-
-<h2>How it ran</h2>
-<figure class="dgm">
-<div class="dgm-lanes">
-<div class="dgm-lane"><small>Analyst</small><ol><li>Asks in plain language</li><li class="hl">Checks cited clauses</li><li>Records own decision</li></ol></div>
-<div class="dgm-lane"><small>Assistant</small><ol><li>Filters by entitlement</li><li>Retrieves and answers</li><li>Logs sources and version</li></ol></div>
-<div class="dgm-lane"><small>Compliance</small><ol><li>Owns the evaluation set</li><li class="hl">Approves releases</li><li>Samples the audit log</li></ol></div>
-</div>
-<figcaption>The analyst stays the decision-maker; compliance owns the definition of "good enough".</figcaption>
-</figure>
-<figure class="dgm">
-<div class="dgm-phases">
-<div><small>Phase 1</small><b>Frame</b><ul><li>Top analyst questions</li><li>Source inventory and owners</li><li>Risk and control mapping</li></ul></div>
-<div><small>Phase 2</small><b>Evaluate first</b><ul><li>Evaluation set drafted</li><li>Compliance sign-off</li><li>Baseline retrieval quality</li></ul></div>
-<div><small>Phase 3</small><b>Build</b><ul><li>Entitlement-aware index</li><li>Citation checking</li><li>Audit and tracing</li></ul></div>
-<div><small>Phase 4</small><b>Pilot and hand off</b><ul><li>One team, then more</li><li>Feedback loop into evals</li><li>Runbooks and ownership</li></ul></div>
-</div>
-<figcaption>The evaluation set came before the build, so every later change had a fixed bar to clear.</figcaption>
-</figure>
-<p>Framing the work against the NIST AI RMF's govern, map, measure and manage functions gave risk and compliance teams a familiar structure for their review<sup class="cite"><a href="#ref-4">4</a></sup>. The release checklist followed <a href="https://asksumanta.com/insights/rag-to-production-checklist/">RAG to production</a>, and the evaluation design followed <a href="https://asksumanta.com/insights/llm-evaluation-sets-that-predict-production/">evaluation sets that predict production</a>.</p>
-
-<h2>Key decisions and trade-offs</h2>
-<table class="tbl">
-<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
-<tbody>
-<tr><td>Entitlement filter in the retrieval query</td><td>Prompt-level instructions</td><td>Restricted content never reaches the model; testable</td></tr>
-<tr><td>Hybrid keyword and vector search</td><td>Vector-only retrieval</td><td>KYC questions mix exact terms with paraphrase</td></tr>
-<tr><td>Cite or decline</td><td>Best-effort answers</td><td>An uncited answer is not usable as evidence</td></tr>
-<tr><td>Compliance-owned evaluation set</td><td>Engineering-owned benchmarks</td><td>The people accountable for the outcome define the bar</td></tr>
-<tr><td>Pinned model versions</td><td>Always-latest model</td><td>Changes are deliberate, evaluated and logged</td></tr>
-</tbody>
-</table>
-
-<h2>What I'd do again, and differently</h2>
-<p>Again: write the evaluation set before the first prompt, and put entitlements in the data path from day one. Differently: start the source clean-up sooner. Superseded policy versions and inconsistent case notes caused more wrong answers than the model did, and fixing content is slower than fixing code.</p>
-<p>If you are weighing something similar, the <a href="https://asksumanta.com/ai-architect/">AI architect</a> page describes how I run these engagements, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/bank-kyc-policy-assistant-rag/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
+<p>If your catalogue or knowledge model has the same symptoms, the <a href="https://asksumanta.com/ontology-knowledge-graph/">ontology and knowledge graph</a> page describes how I approach it, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/ecommerce-product-ontology-search/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>

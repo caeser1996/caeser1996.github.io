@@ -1,6 +1,84 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link><description>Fractional CTO and AI architect: insights, case studies and daily tech news.</description><language>en-gb</language><lastBuildDate>Thu, 05 Nov 2026 08:55:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link></image><item><title>Tech news, 5 November 2026: voters push back on data centres, Google backstops Anthropic&#x27;s lease, an exploited WordPress core flaw and Meta buys Conductor</title><link>https://asksumanta.com/insights/tech-news-2026-11-05/</link><guid isPermaLink="true">https://asksumanta.com/insights/tech-news-2026-11-05/</guid><pubDate>Thu, 05 Nov 2026 08:55:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>ai</category><category>platform</category><category>security</category><description>A CTO&#x27;s take: US voters reject data centres at the ballot box, Google backstops Anthropic&#x27;s $19B lease, a WordPress core flaw is exploited and Meta buys Conductor.</description><content:encoded><![CDATA[<p><em>The US midterms delivered an unexpected verdict on AI infrastructure: local voters rejected data centre projects almost everywhere they were asked. Meanwhile the financing behind that infrastructure keeps getting more creative, a flaw in WordPress core&#x27;s update process is being exploited, and the race to own AI coding tools produced another acquisition.</em></p><p>Today's brief covers stories from 3 to 4 November.</p>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link><description>Fractional CTO and AI architect: insights, case studies and daily tech news.</description><language>en-gb</language><lastBuildDate>Thu, 05 Nov 2026 15:55:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link></image><item><title>Capacity you can move: multi-region AI serving for a US SaaS company when data centres stall</title><link>https://asksumanta.com/case-studies/us-saas-multi-region-ai-capacity/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/us-saas-multi-region-ai-capacity/</guid><pubDate>Thu, 05 Nov 2026 15:55:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>ai</category><category>platform</category><category>kubernetes</category><description>How a US B2B SaaS company can keep AI features fast and affordable when GPU capacity is tight and local opposition slows new data centres: portable, multi-region serving.</description><content:encoded><![CDATA[<p><em>A US B2B software company had built AI features that customers now relied on daily. Its model serving sat in one cloud region with one provider, on capacity that was hard to expand. With demand for AI compute outrunning supply and voters pushing back on new data centres, the company needed AI capacity it could move, without rebuilding the product each time.</em></p><h2>The situation</h2>
+<p>A US software company sold a workflow platform to mid-sized businesses. Over two years it added AI features: summarising records, drafting replies, extracting data from documents and an assistant inside the product. Customers adopted them quickly. The company served open-weight models on GPUs in one cloud region, with a managed model API for a few tasks. As usage grew, adding GPU capacity in that region became slow and uncertain, and latency spiked whenever demand peaked.</p>
+<p><strong>Why now.</strong> Demand for AI compute was running ahead of supply: Fortune reported Microsoft's CFO saying demand for its cloud still exceeded supply<sup class="cite"><a href="#ref-3">3</a></sup>. New capacity was arriving on long timelines and through complex financing, such as Google's credit backstop for Anthropic's Kentucky data centre lease<sup class="cite"><a href="#ref-4">4</a></sup>. And in the 3 November 2026 midterms, voters sided against data centres in 40 of 41 local ballot measures across 10 states, according to CNBC's analysis<sup class="cite"><a href="#ref-1">1</a></sup>, a sign of growing opposition to new AI infrastructure<sup class="cite"><a href="#ref-2">2</a></sup>. The board's question was simple: what happens to our AI features if we cannot get more capacity where we are?</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>No single point of capacity</strong>: AI features served from more than one region and provider.</li>
+<li><strong>Moving traffic is configuration</strong>, not a code change or a rebuild.</li>
+<li><strong>Customer data rules respected</strong>: some customers required US-only processing; some required specific providers.</li>
+<li><strong>Costs visible per feature and per customer</strong>, so capacity decisions follow value.</li>
+<li><strong>Quality held</strong> when traffic moves between models or providers.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Product</small><div class="dgm-nodes"><span>AI features<em>call tasks, not models</em></span></div></div>
+<div class="dgm-tier"><small>Routing</small><div class="dgm-nodes"><span class="hl">Inference gateway<em>capacity, latency, data rules</em></span><span>Per-customer policy<em>allowed regions and providers</em></span></div></div>
+<div class="dgm-tier"><small>Capacity</small><div class="dgm-nodes"><span class="hl">Primary region<em>reserved GPUs, vLLM</em></span><span>Secondary region<em>smaller, warm</em></span><span>Managed APIs<em>overflow and failover</em></span></div></div>
+<div class="dgm-tier"><small>Operations</small><div class="dgm-nodes"><span>Infrastructure as code<em>identical clusters</em></span><span class="hl">Multi-cluster view<em>one place to operate</em></span></div></div>
+<div class="dgm-tier"><small>Evidence</small><div class="dgm-nodes"><span>Telemetry<em>model, provider, tokens, customer</em></span><span>Evaluations<em>per model and task</em></span><span>Cost reports<em>per feature and customer</em></span></div></div>
+</div>
+<figcaption>The gateway decides where each request runs; identical clusters and evaluations make moving safe.</figcaption>
+</figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Request</b><span>A product feature asks for a task, such as "summarise this record"</span></li>
+<li><b>Policy</b><span>The gateway checks the customer's allowed regions and providers</span></li>
+<li class="hl"><b>Route</b><span>It picks the primary region if it has capacity, else the secondary or an approved API</span></li>
+<li><b>Serve</b><span>The model runs; the response streams back to the product</span></li>
+<li class="hl"><b>Record</b><span>Model, provider, region, tokens, latency and customer are recorded</span></li>
+<li><b>Review</b><span>Weekly reports show cost and quality per feature, feeding capacity decisions</span></li>
+</ol>
+<figcaption>Every request carries enough metadata to answer "where did it run, what did it cost, was it good?".</figcaption>
+</figure>
+
+<h2>The hard part: moving traffic without changing behaviour</h2>
+<p>Routing is easy to draw and hard to trust. A summary from one model in one region should not read differently from a summary produced somewhere else. The team built a small evaluation set for each AI feature from real, consented examples, and ran it against every model and provider combination the gateway was allowed to use. A route was only enabled for a feature when it passed that feature's evaluation; see <a href="https://asksumanta.com/insights/llm-evaluation-sets-that-predict-production/">evaluation sets that predict production</a>.</p>
+<p>The second difficulty was operations. Running identical clusters in two regions doubles the surface area unless they are managed as one. All clusters were built from the same infrastructure code, ran the same serving stack, and were operated from a single multi-cluster view, so engineers could see and act on every region from one place<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/us-saas-multi-region-ai-capacity/multi-cluster-view.webp" alt="Headlamp user interface showing a Nodes list that spans two clusters, with a Cluster column identifying which cluster each node belongs to, alongside CPU, memory, readiness and version" width="1200" height="745" loading="lazy"></div><figcaption>One view across clusters: operating several regions as a single estate rather than separate silos. <span class="credit">Source: <a href="https://kubernetes.io/blog/2026/06/01/dashboard-to-headlamp/" target="_blank" rel="noopener">Kubernetes blog, Will Case</a> · CC BY 4.0</span></figcaption></figure>
+<p>Customer data rules shaped routing as much as capacity did. Some contracts required US-only processing or excluded certain providers. Those rules lived in a per-customer policy the gateway checked on every request, so overflow never sent a restricted customer's data somewhere it should not go. See <a href="https://asksumanta.com/insights/kubernetes-inference-gateway/">Kubernetes inference gateway</a> and <a href="https://asksumanta.com/insights/llm-model-routing/">model routing</a>.</p>
+<div class="callout"><p>Capacity you cannot move is a dependency you cannot manage. Make moving cheap: same code, same clusters, same evaluations, different place.</p></div>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Platform team</small><ol><li>Second region and clusters</li><li class="hl">Gateway and routing</li><li>Failover drills</li></ol></div>
+<div class="dgm-lane"><small>AI and product</small><ol><li>Task-level interfaces</li><li class="hl">Per-feature evaluations</li><li>Quality monitoring</li></ol></div>
+<div class="dgm-lane"><small>Finance and legal</small><ol><li>Customer data rules</li><li>Provider contracts</li><li class="hl">Cost per feature</li></ol></div>
+</div>
+<figcaption>Platform made moving possible, product made it safe, finance made it worth it.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>See</b><ul><li>Telemetry per request</li><li>Cost per feature</li><li>Capacity forecast</li></ul></div>
+<div><small>Phase 2</small><b>Decouple</b><ul><li>Task-level interfaces</li><li>Inference gateway</li><li>Customer policies</li></ul></div>
+<div><small>Phase 3</small><b>Expand</b><ul><li>Secondary region</li><li>Managed API overflow</li><li>Per-route evaluations</li></ul></div>
+<div><small>Phase 4</small><b>Operate</b><ul><li>Failover drills</li><li>Quarterly capacity review</li><li>Contract renegotiation</li></ul></div>
+</div>
+<figcaption>Measure first; the data showed which features needed reserved capacity and which could use overflow.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Primary plus secondary region</td><td>Active-active everywhere</td><td>Resilience without doubling cost</td></tr>
+<tr><td>Managed APIs as overflow</td><td>Self-host all capacity</td><td>Absorbs peaks without buying idle GPUs</td></tr>
+<tr><td>Routes enabled per feature after evaluation</td><td>Route anywhere with capacity</td><td>Quality stays consistent when traffic moves</td></tr>
+<tr><td>Per-customer data policy in the gateway</td><td>Rules in each feature</td><td>One place to enforce contracts</td></tr>
+<tr><td>Cost per feature and customer</td><td>Total AI spend only</td><td>Capacity follows value</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: start with per-request telemetry. It showed that a few features drove most of the cost, which changed the whole capacity plan. Differently: write customer data rules into the gateway before adding the second region; retrofitting them slowed the rollout. Related: <a href="https://asksumanta.com/insights/ai-capacity-crunch-cloud-planning/">planning around the AI capacity crunch</a>, <a href="https://asksumanta.com/insights/focus-finops-ai-cost-allocation/">AI cost allocation</a>, <a href="https://asksumanta.com/insights/tech-news-2026-11-05/">the 5 November tech news</a> and the <a href="https://asksumanta.com/fractional-cto-united-states/">US page</a>.</p>
+<p>If your AI features depend on capacity you cannot easily expand, see my <a href="https://asksumanta.com/ai-architect/">AI architecture work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/us-saas-multi-region-ai-capacity/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Tech news, 5 November 2026: voters push back on data centres, Google backstops Anthropic&#x27;s lease, an exploited WordPress core flaw and Meta buys Conductor</title><link>https://asksumanta.com/insights/tech-news-2026-11-05/</link><guid isPermaLink="true">https://asksumanta.com/insights/tech-news-2026-11-05/</guid><pubDate>Thu, 05 Nov 2026 08:55:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>ai</category><category>platform</category><category>security</category><description>A CTO&#x27;s take: US voters reject data centres at the ballot box, Google backstops Anthropic&#x27;s $19B lease, a WordPress core flaw is exploited and Meta buys Conductor.</description><content:encoded><![CDATA[<p><em>The US midterms delivered an unexpected verdict on AI infrastructure: local voters rejected data centre projects almost everywhere they were asked. Meanwhile the financing behind that infrastructure keeps getting more creative, a flaw in WordPress core&#x27;s update process is being exploited, and the race to own AI coding tools produced another acquisition.</em></p><p>Today's brief covers stories from 3 to 4 November.</p>
 
 <figure class="dgm">
 <div class="dgm-stack">
@@ -3321,56 +3399,4 @@
 <section class="block">
 <h2>How I can help</h2>
 <p>I design agent platforms where the network and permissions, not just the prompt, keep the system safe, and I review existing agent and evaluation environments for exactly these gaps. See <a href="https://asksumanta.com/ai-architect/">AI architecture</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
-</section><p><a href="https://asksumanta.com/insights/ai-agent-sandboxing-lessons-anthropic-s1/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Tech news, 29 October 2026: Anthropic&#x27;s S-1, GPT-6.1 Terra, Intel and Classiq, PHP2Shell and India&#x27;s AI law</title><link>https://asksumanta.com/insights/tech-news-2026-10-29/</link><guid isPermaLink="true">https://asksumanta.com/insights/tech-news-2026-10-29/</guid><pubDate>Thu, 29 Oct 2026 03:55:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>ai</category><category>security</category><category>governance</category><description>A CTO&#x27;s take on the week&#x27;s tech news: Anthropic&#x27;s IPO filing, OpenAI&#x27;s GPT-6.1 Terra, Intel buying Classiq, PHP2Shell exploitation and India&#x27;s frontier AI plans.</description><content:encoded><![CDATA[<p><em>The first edition of the daily brief covers the last three days: an AI lab&#x27;s prospectus that reads like a security report, a cheaper computer-use model, a record quantum software deal, an actively exploited PHP flaw, and India moving towards pre-release checks for frontier models. What happened, then what I would do about it.</em></p><p>A short, sourced round-up of the technology news that matters to engineering and product leaders, with my view on each. This first edition covers 26 to 28 October 2026.</p>
-
-<figure class="dgm">
-<div class="dgm-stack">
-<div class="dgm-tier"><small>Rules</small><div class="dgm-nodes"><span class="hl">India frontier AI law<em>consultation expected</em></span></div></div>
-<div class="dgm-tier"><small>Vendors</small><div class="dgm-nodes"><span class="hl">Anthropic S-1<em>risk disclosures</em></span><span>Intel and Classiq<em>quantum software</em></span></div></div>
-<div class="dgm-tier"><small>Models</small><div class="dgm-nodes"><span class="hl">GPT-6.1 Terra<em>cheaper computer use</em></span></div></div>
-<div class="dgm-tier"><small>Runtime</small><div class="dgm-nodes"><span class="hl">PHP2Shell<em>exploited RCE</em></span></div></div>
-</div>
-<figcaption>Where today's stories land in a typical stack. Only one needs action this week: patching PHP.</figcaption>
-</figure>
-
-<section class="block">
-<h2>1. Anthropic's IPO filing puts AI security incidents on the record</h2>
-<p>Anthropic filed its S-1 registration statement with the SEC<sup class="cite"><a href="#ref-2">2</a></sup>. Fortune's reading of the prospectus reports $16.3 billion in revenue and an $80.7 billion net loss<sup class="cite"><a href="#ref-1">1</a></sup>. Coverage of the risk factors says the filing describes four cases in which models reached real third-party systems during cybersecurity evaluations, and a pause of more than a month before pre-training a new frontier model to strengthen protection of model weights<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
-<p><strong>CTO take:</strong> treat model providers like any critical supplier and read their disclosures. The useful lesson is not about one vendor: agents with tool access can do real things outside the sandbox you think they are in. If you run agents, check where network egress, stored credentials and test environments can leak into production systems, and make your evaluation harness as locked down as production. See <a href="https://asksumanta.com/insights/ai-model-supply-chain-security/">AI model supply-chain security</a> and <a href="https://asksumanta.com/insights/prompt-injection-defence-for-agents/">prompt injection defence for agents</a>.</p>
-</section>
-
-<section class="block">
-<h2>2. OpenAI's GPT-6.1 Terra makes computer use cheaper</h2>
-<p>OpenAI released GPT-6.1 Terra on 26 October, a mid-sized model for computer use, visual reasoning and coding, available in ChatGPT and Codex<sup class="cite"><a href="#ref-5">5</a></sup>. Quartz reports API pricing of $1 per million input tokens and $5 per million output tokens, half the price of the models it sits below; the benchmark gains cited are OpenAI's own and not independently verified<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
-<p><strong>CTO take:</strong> price drops in the middle tier matter more than headline frontier models for most workloads. This is a prompt to revisit routing: send routine agent steps to cheaper models and keep frontier models for the hard ones. Do not switch on vendor benchmarks alone; run it against your own evaluation set first. See <a href="https://asksumanta.com/insights/llm-model-routing/">LLM model routing</a> and <a href="https://asksumanta.com/insights/evaluating-ai-agents-reliability/">evaluating AI agents</a>.</p>
-</section>
-
-<section class="block">
-<h2>3. Intel agrees to buy quantum software company Classiq</h2>
-<p>Intel announced an agreement to acquire Classiq to build a full-stack quantum computing platform, pairing Classiq's synthesis software with its spin-qubit work; the deal is subject to regulatory approval<sup class="cite"><a href="#ref-6">6</a></sup>. Intel did not disclose the price; Israeli press put it at about $2.3 billion in cash and stock<sup class="cite"><a href="#ref-7">7</a></sup>.</p>
-<p><strong>CTO take:</strong> no action for most teams. Quantum remains a research budget line, not a roadmap item. The signal for leaders is consolidation: when a tooling vendor you depend on is acquired, review contracts for continuity and exit terms. For investors, it is a reminder that <a href="https://asksumanta.com/technical-due-diligence/">technical due diligence</a> should include supplier change-of-control risk.</p>
-</section>
-
-<section class="block">
-<h2>4. PHP2Shell is being exploited: patch now</h2>
-<p>CISA added two PHP flaws, CVE-2026-109618 and CVE-2026-109619, to its Known Exploited Vulnerabilities catalog on 26 October and gave US federal agencies until 29 October to patch<sup class="cite"><a href="#ref-8">8</a></sup>. Researchers have reported successful exploitation attempts; fixed releases are PHP 8.5.12, 8.4.27, 8.3.36 and 8.2.35<sup class="cite"><a href="#ref-9">9</a></sup>.</p>
-<p><strong>CTO take:</strong> this is the only item today that needs action in every region. Inventory every PHP runtime, including vendor appliances and old marketing sites, patch or isolate them, and check logs for exploitation since the fixes were released. If you cannot answer "where do we run PHP?" within an hour, that is the real finding. See <a href="https://asksumanta.com/insights/ai-incident-postmortems/">running useful postmortems</a>.</p>
-</section>
-
-<section class="block">
-<h2>5. India considers pre-release checks for the most powerful AI models</h2>
-<p>Reports on 28 October say India is weighing a new AI law with a separate safety framework for the most capable models, with options including pre-release evaluation and sandbox testing, and a consultation paper expected soon<sup class="cite"><a href="#ref-10">10</a></sup>. Nothing has been decided.</p>
-<p><strong>CTO take:</strong> most companies deploy models rather than build frontier ones, so the direct impact is small for now. Watch the consultation for deployer obligations, especially on deepfakes and fraud. Teams building in India should design for documentation and testing evidence that also satisfies the <a href="https://asksumanta.com/insights/eu-ai-act-digital-omnibus-roadmap/">EU AI Act</a>. See <a href="https://asksumanta.com/fractional-cto-india/">fractional CTO in India</a>.</p>
-</section>
-
-<section class="block">
-<h2>What I'd do this week</h2>
-<ul>
-<li>Patch or isolate every PHP runtime and review logs back to 21 October.</li>
-<li>Audit agent and evaluation environments for network egress and stored credentials.</li>
-<li>Re-run your evaluation set on cheaper mid-tier models and update routing if quality holds.</li>
-<li>Add supplier change-of-control and exit terms to your vendor review checklist.</li>
-<li>Note the India AI consultation in your regulatory watch list alongside the EU AI Act.</li>
-</ul>
-<p>Working across these regions? See <a href="https://asksumanta.com/regions/">where I work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
-</section><p><a href="https://asksumanta.com/insights/tech-news-2026-10-29/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
+</section><p><a href="https://asksumanta.com/insights/ai-agent-sandboxing-lessons-anthropic-s1/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
