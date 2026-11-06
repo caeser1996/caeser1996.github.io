@@ -1,6 +1,89 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link><description>Fractional CTO and AI architect: insights, case studies and daily tech news.</description><language>en-gb</language><lastBuildDate>Fri, 06 Nov 2026 08:50:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link></image><item><title>Tech news, 6 November 2026: OpenAI&#x27;s GPT-6 Cyber, an AI stock selloff, Google in Wyoming, Micron pauses in Taiwan and an exploited Apple flaw</title><link>https://asksumanta.com/insights/tech-news-2026-11-06/</link><guid isPermaLink="true">https://asksumanta.com/insights/tech-news-2026-11-06/</guid><pubDate>Fri, 06 Nov 2026 08:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>ai</category><category>security</category><category>platform</category><description>A CTO&#x27;s take: OpenAI&#x27;s gated GPT-6 Cyber, a 5.5% Nasdaq drop on AI fears, Google&#x27;s $17B Wyoming data centre, Micron&#x27;s Taiwan pause and an exploited Apple flaw.</description><content:encoded><![CDATA[<p><em>OpenAI released a cyber model that it rates at its highest risk tier and gates behind an application process. The same day, AI and chip stocks fell sharply as investors weighed the political backlash against data centres, Google answered that backlash with a $17 billion project that pays its own power bill, and a labour dispute paused a memory plant in Taiwan.</em></p><p>Today's brief covers stories from 4 to 5 November.</p>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link><description>Fractional CTO and AI architect: insights, case studies and daily tech news.</description><language>en-gb</language><lastBuildDate>Fri, 06 Nov 2026 15:50:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link></image><item><title>Clock-ready: Cyber Resilience Act vulnerability handling for a German industrial software maker, as AI-found reports surge</title><link>https://asksumanta.com/case-studies/germany-industrial-software-cra-vulnerability-handling/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/germany-industrial-software-cra-vulnerability-handling/</guid><pubDate>Fri, 06 Nov 2026 15:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>security</category><category>governance</category><category>ai</category><description>How a German industrial software maker can meet EU Cyber Resilience Act reporting duties as AI-found vulnerability reports surge: triage, SBOMs and signed fixes.</description><content:encoded><![CDATA[<p><em>A German company sold machine-monitoring software to manufacturers across Europe: an edge gateway installed in factories and a cloud application. From September 2026 the EU Cyber Resilience Act required it to report actively exploited vulnerabilities on tight deadlines. At the same time, vulnerability reports were arriving faster, many of them written with AI. The company needed a product security process that could separate signal from noise, know which customers were exposed and start the regulatory clock at the right moment.</em></p><h2>The situation</h2>
+<p>A German software company sold machine-monitoring software to manufacturers across Europe. Its product had two parts: an edge gateway installed on factory networks that collected data from machines, and a cloud application where customers viewed dashboards and alerts. Both were built on many open-source components. Security reports came in through a shared email address, were picked up by whichever engineer had time, and were tracked in the general bug tracker. Nobody could quickly say which customers ran which gateway release, or which releases contained a given library.</p>
+<p>The product counted as a product with digital elements under the EU Cyber Resilience Act. From 11 September 2026, manufacturers must report actively exploited vulnerabilities and severe incidents, once, through ENISA's Single Reporting Platform, which passes them to the relevant national CSIRT and ENISA<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. The first step is an early warning within 24 hours of becoming aware of active exploitation, followed by a fuller notification and a final report<sup class="cite"><a href="#ref-2">2</a></sup>. An email inbox and goodwill could not meet those deadlines reliably.</p>
+<p><strong>Why now.</strong> Vulnerability reports were getting more numerous and harder to judge. On 5 November 2026 OpenAI released GPT-6 Cyber, a model for authorised vulnerability research that it rates at its highest cybersecurity risk level<sup class="cite"><a href="#ref-3">3</a></sup>. OpenAI's own security leadership has said AI-generated reports are overwhelming some open-source maintainers<sup class="cite"><a href="#ref-4">4</a></sup>, and projects such as Debian have begun experimenting with AI-assisted triage to cope<sup class="cite"><a href="#ref-5">5</a></sup>. The company was seeing the same pattern at its own scale: more reports, some excellent, many duplicated or unreproducible.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>One way in</strong>: every report, from researchers, customers, suppliers or internal scanners, reaches one queue with an owner.</li>
+<li><strong>Noise filtered cheaply</strong>, without letting a real vulnerability sit unread.</li>
+<li><strong>Exposure answerable fast</strong>: for any component, which releases contain it and which customers run them.</li>
+<li><strong>A consistent start to the clock</strong>: a written rule for when the company is "aware" of active exploitation.</li>
+<li><strong>Fixes customers can trust</strong>: signed releases and advisories that say what to do.</li>
+<li><strong>Evidence kept</strong>: who knew what, when, and what was reported.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Intake</small><div class="dgm-nodes"><span>Disclosure policy<em>security.txt and web form</em></span><span>Internal scanners<em>dependencies and code</em></span><span>Customer and supplier reports<em>same queue</em></span></div></div>
+<div class="dgm-tier"><small>Triage</small><div class="dgm-nodes"><span class="hl">AI-assisted sorting<em>deduplicate, summarise, no tools</em></span><span>Security on-call<em>owns every case</em></span></div></div>
+<div class="dgm-tier"><small>Analysis</small><div class="dgm-nodes"><span>Isolated reproduction<em>gateway and cloud test rigs</em></span><span class="hl">SBOM per release<em>joined to customer inventory</em></span><span>VEX statements<em>not affected, and why</em></span></div></div>
+<div class="dgm-tier"><small>Decision and reporting</small><div class="dgm-nodes"><span class="hl">Exploitation rule<em>when the clock starts</em></span><span>Single Reporting Platform<em>early warning, notification, final report</em></span></div></div>
+<div class="dgm-tier"><small>Delivery</small><div class="dgm-nodes"><span>Signed releases<em>gateway and cloud</em></span><span>Customer advisories<em>affected versions, actions</em></span><span>Case record<em>timestamps and decisions</em></span></div></div>
+</div>
+<figcaption>AI helps at the noisy front; people own the decisions that start legal clocks.</figcaption>
+</figure>
+<p>The core was a security case record, separate from the general bug tracker, with restricted access. Every report became a case with an owner, a status and a timeline. The build pipeline produced a CycloneDX SBOM for every gateway and cloud release, and the licensing system already knew which customer ran which gateway release, so joining the two gave a direct answer to "who is exposed?". When a vulnerable library was present but its vulnerable code was not reachable, the team published a VEX statement saying so, which cut down repeated questions from customers' scanners.</p>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Receive</b><span>A report arrives through the form, security.txt address or a scanner, and opens a case</span></li>
+<li><b>Sort</b><span>An AI model groups duplicates, summarises the claim and flags missing details</span></li>
+<li class="hl"><b>Reproduce</b><span>An engineer tests credible reports on isolated gateway and cloud rigs</span></li>
+<li><b>Scope</b><span>The SBOM and customer inventory show affected releases and customers</span></li>
+<li class="hl"><b>Decide</b><span>The on-call lead applies the exploitation rule and severity; reporting starts if needed</span></li>
+<li><b>Fix and tell</b><span>A signed release ships with an advisory; the case closes with a final report</span></li>
+</ol>
+<figcaption>Each step adds evidence to the case, so the final report writes itself from the record.</figcaption>
+</figure>
+
+<h2>The hard part: AI triage and the start of the clock</h2>
+<p><strong>Treating reports as untrusted input.</strong> Using a language model to read incoming reports helped with volume, but reports are written by strangers, and some could contain instructions aimed at the model. The triage model therefore had no tools, no access to code or customer data, and only produced a structured summary: claimed component, claimed impact, duplicate candidates and missing information. It could not close a case. Anything it marked as low quality still had a person glance at it before closing. See <a href="https://asksumanta.com/insights/prompt-injection-defence-for-agents/">prompt injection defence for agents</a>.</p>
+<p><strong>Defining "aware".</strong> The 24-hour early warning runs from when the manufacturer becomes aware of active exploitation<sup class="cite"><a href="#ref-1">1</a></sup>. A report that a flaw exists is not the same as evidence that someone is exploiting it. With the company's lawyers, we wrote a short rule: credible evidence of exploitation, such as a customer incident, a national CERT notice, a public exploit used in attacks or an entry in an exploited-vulnerability catalogue, starts the clock, and the on-call lead records the time and the evidence. Borderline cases went to a named second person within working hours, with a bias toward reporting early.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/germany-industrial-software-cra-vulnerability-handling/signature-verification-flow.webp" alt="Flowchart: create a policy instance and annotate the namespace to validate signatures, create a pod, then policy evaluation; if it passes the pod is admitted and the image pulled if necessary, if it fails the pod is not admitted" width="1500" height="1400" loading="lazy"></div><figcaption>Verify before you run: the same idea let customers check that a gateway update really came from the vendor. <span class="credit">Source: <a href="https://kubernetes.io/blog/2023/06/29/container-image-signature-verification/" target="_blank" rel="noopener">Kubernetes blog, Sascha Grunert</a> · CC BY 4.0</span></figcaption></figure>
+<p><strong>Shipping fixes to factories.</strong> Gateways sat on factory networks where customers controlled update timing. Signed releases, verifiable before installation, meant customers' operations teams could accept updates without a call to the vendor<sup class="cite"><a href="#ref-6">6</a></sup>. Advisories listed affected versions, the fixed version and a workaround for sites that could not update immediately.</p>
+<div class="callout"><p>Regulation sets the deadline; your inventory decides whether you can meet it. If you cannot say who runs which release, no process can report on time.</p></div>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Security on-call</small><ol><li>Own every case</li><li class="hl">Apply the exploitation rule</li><li>Submit reports</li></ol></div>
+<div class="dgm-lane"><small>Engineering</small><ol><li>Reproduce and fix</li><li class="hl">SBOM and signing in the pipeline</li><li>Signed releases</li></ol></div>
+<div class="dgm-lane"><small>Legal and customer success</small><ol><li>Agree "aware" rule</li><li>Advisories</li><li class="hl">Tell affected customers</li></ol></div>
+</div>
+<figcaption>Engineering produced the evidence, on-call made the call, legal and customer success made it land.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Inventory</b><ul><li>SBOM per release</li><li>Customer release map</li><li>Disclosure policy live</li></ul></div>
+<div><small>Phase 2</small><b>Intake</b><ul><li>One case queue</li><li>On-call rota</li><li>AI-assisted sorting</li></ul></div>
+<div><small>Phase 3</small><b>Decide</b><ul><li>Exploitation rule</li><li>Reporting runbook</li><li>Platform access tested</li></ul></div>
+<div><small>Phase 4</small><b>Deliver</b><ul><li>Signed releases</li><li>Advisory template</li><li>Tabletop exercises</li></ul></div>
+</div>
+<figcaption>Inventory first: every later step depends on knowing what is deployed where.</figcaption>
+</figure>
+<p>A tabletop exercise, run before any real case, walked through a mock exploited vulnerability from report to final submission. It found gaps that documents had hidden: who held access to the reporting platform at weekends, and which customer contacts were out of date.</p>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Separate security case record</td><td>General bug tracker</td><td>Restricted access and a clean timeline for reporting</td></tr>
+<tr><td>AI sorts, people decide</td><td>AI closes low-quality reports</td><td>A missed real vulnerability costs far more than review time</td></tr>
+<tr><td>Triage model with no tools or data access</td><td>Agent that inspects code</td><td>Reports are untrusted input</td></tr>
+<tr><td>Written exploitation rule agreed with legal</td><td>Judgement case by case</td><td>The clock starts consistently and defensibly</td></tr>
+<tr><td>SBOM joined to customer inventory</td><td>SBOM files on their own</td><td>Answers "who is exposed?", not just "what is inside?"</td></tr>
+<tr><td>Signed releases with advisories</td><td>Release notes only</td><td>Factory teams can verify and act without a call</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: build the release-to-customer map before anything else. It turned every later question from an investigation into a lookup. Differently: run the tabletop exercise in the first weeks, not after the process was written; it would have shaped the runbook rather than corrected it. Related: <a href="https://asksumanta.com/insights/defender-first-ai-models-vulnerability-management/">defender-first AI models and vulnerability management</a>, <a href="https://asksumanta.com/insights/ai-model-supply-chain-security/">AI model supply chain security</a>, <a href="https://asksumanta.com/insights/tech-news-2026-11-06/">the 6 November tech news</a> and the <a href="https://asksumanta.com/fractional-cto-europe/">Europe page</a>.</p>
+<p>If you sell software or connected products in the EU and need to be ready for Cyber Resilience Act reporting, see my <a href="https://asksumanta.com/fractional-cto/">fractional CTO work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/germany-industrial-software-cra-vulnerability-handling/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Tech news, 6 November 2026: OpenAI&#x27;s GPT-6 Cyber, an AI stock selloff, Google in Wyoming, Micron pauses in Taiwan and an exploited Apple flaw</title><link>https://asksumanta.com/insights/tech-news-2026-11-06/</link><guid isPermaLink="true">https://asksumanta.com/insights/tech-news-2026-11-06/</guid><pubDate>Fri, 06 Nov 2026 08:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>ai</category><category>security</category><category>platform</category><description>A CTO&#x27;s take: OpenAI&#x27;s gated GPT-6 Cyber, a 5.5% Nasdaq drop on AI fears, Google&#x27;s $17B Wyoming data centre, Micron&#x27;s Taiwan pause and an exploited Apple flaw.</description><content:encoded><![CDATA[<p><em>OpenAI released a cyber model that it rates at its highest risk tier and gates behind an application process. The same day, AI and chip stocks fell sharply as investors weighed the political backlash against data centres, Google answered that backlash with a $17 billion project that pays its own power bill, and a labour dispute paused a memory plant in Taiwan.</em></p><p>Today's brief covers stories from 4 to 5 November.</p>
 
 <figure class="dgm">
 <div class="dgm-stack">
@@ -3289,67 +3372,4 @@
 <li>Keep DPDP readiness on the plan if you operate in India.</li>
 </ul>
 <p>Working across these markets? See <a href="https://asksumanta.com/regions/">where I work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
-</section><p><a href="https://asksumanta.com/insights/tech-news-2026-10-29-2/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>GPT-6.1 Terra and the new economics of computer-use agents: what to change, and what to test first</title><link>https://asksumanta.com/insights/gpt-6-1-terra-computer-use-agent-economics/</link><guid isPermaLink="true">https://asksumanta.com/insights/gpt-6-1-terra-computer-use-agent-economics/</guid><pubDate>Thu, 29 Oct 2026 08:20:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>ai</category><category>llm</category><category>agents</category><description>OpenAI&#x27;s GPT-6.1 Terra cuts the price of computer-use agents. A CTO&#x27;s take on routing, evaluation and cost tracking before you switch models.</description><content:encoded><![CDATA[<p><em>OpenAI&#x27;s new mid-tier model is pitched at computer use and coding at half the price of the models above it. Cheaper capable models change agent architecture more than frontier launches do, but only for teams that can measure quality and cost per task.</em></p><section class="block">
-<h2>What was released</h2>
-<p>OpenAI released GPT-6.1 Terra on 26 October 2026, a mid-sized model aimed at computer use, visual reasoning and coding, available in ChatGPT and Codex<sup class="cite"><a href="#ref-2">2</a></sup>. Quartz reports API pricing of $1 per million input tokens and $5 per million output tokens, half the price of the models it sits below, along with benchmark gains that come from OpenAI's own testing<sup class="cite"><a href="#ref-1">1</a></sup>. Coverage of the cost per task compared with competing frontier models varies between outlets, from about nine to about twelve times lower<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>, which is a reminder that these are vendor-sourced comparisons, not independent results.</p>
-</section>
-
-<section class="block">
-<h2>Why mid-tier releases matter more than frontier ones</h2>
-<p>Agents that operate software make many model calls per task: read the screen, decide, act, check, repeat. Most of those steps are routine. A capable, cheaper model in the middle tier changes the cost of the whole loop, while frontier models are only needed for the hard decisions. The architecture that benefits is one that already routes by step difficulty and measures cost per completed task.</p>
-<figure class="dgm">
-<div class="dgm-stack">
-<div class="dgm-tier"><small>Task</small><div class="dgm-nodes"><span>Agent plan<em>goal, budget, tools</em></span></div></div>
-<div class="dgm-tier"><small>Router</small><div class="dgm-nodes"><span class="hl">Step classifier<em>routine, hard or risky</em></span><span>Budget guard<em>stop when spend exceeds value</em></span></div></div>
-<div class="dgm-tier"><small>Models</small><div class="dgm-nodes"><span class="hl">Mid-tier model<em>routine computer-use steps</em></span><span>Frontier model<em>hard reasoning and recovery</em></span><span>Small model<em>classification and checks</em></span></div></div>
-<div class="dgm-tier"><small>Safety</small><div class="dgm-nodes"><span>Tool allowlist<em>per task</em></span><span>Approval<em>for consequential actions</em></span></div></div>
-<div class="dgm-tier"><small>Measure</small><div class="dgm-nodes"><span class="hl">Eval set<em>quality per step type</em></span><span>GenAI telemetry<em>tokens, latency, cost per task</em></span></div></div>
-</div>
-<figcaption>Routing by step type lets cheaper models take the routine work without lowering the quality bar for the hard steps.</figcaption>
-</figure>
-<p>More on the pattern in <a href="https://asksumanta.com/insights/llm-model-routing/">LLM model routing</a>.</p>
-</section>
-
-<section class="block">
-<h2>How to decide whether to switch</h2>
-<figure class="dgm">
-<ol class="dgm-flow g3">
-<li><b>Baseline</b><span>Measure current quality and cost per completed task, not per token</span></li>
-<li><b>Replay</b><span>Run your evaluation set and recorded tasks against the new model</span></li>
-<li class="hl"><b>Compare by step</b><span>Find which step types match quality and which degrade</span></li>
-<li><b>Route</b><span>Move only the matching steps, behind a feature flag</span></li>
-<li class="hl"><b>Watch</b><span>Track cost, latency and task success in production telemetry</span></li>
-<li><b>Decide</b><span>Keep, widen or roll back based on your numbers, not the launch post</span></li>
-</ol>
-<figcaption>Small, reversible changes driven by your own evaluation set.</figcaption>
-</figure>
-<p>The measurement layer is where most teams fall short. OpenTelemetry's GenAI conventions record each model call with the requested model, token usage split into input and output, and latency, so you can compare models side by side and estimate cost per request<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
-<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/gpt-6-1-terra-computer-use-agent-economics/genai-metrics.webp" alt="Dashboard chart of gen_ai.client.token.usage over time with filters for operation, provider, requested model, response model and token type" width="1200" height="553" loading="lazy"></div><figcaption>Token usage by model from OpenTelemetry GenAI metrics: the raw material for cost per task. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2026/genai-observability/" target="_blank" rel="noopener">OpenTelemetry blog, James Newton-King</a> · CC BY 4.0</span></figcaption></figure>
-<div class="callout"><p>Price per token is a vendor's number. Cost per completed task is yours. Only the second one should drive a model switch.</p></div>
-</section>
-
-<section class="block">
-<h2>Risks to price in</h2>
-<table class="tbl">
-<thead><tr><th>Risk</th><th>Why it matters</th><th>Mitigation</th></tr></thead>
-<tbody>
-<tr><td>Benchmarks that do not match your work</td><td>Vendor results use their tasks, not yours</td><td>Your own evaluation set per step type</td></tr>
-<tr><td>Cheaper steps, more steps</td><td>A weaker model can loop longer and cost more per task</td><td>Budget guards and cost per completed task</td></tr>
-<tr><td>Excessive agency</td><td>Computer-use agents act on real systems<sup class="cite"><a href="#ref-6">6</a></sup></td><td>Tool allowlists, sandboxing and approvals</td></tr>
-<tr><td>Data location</td><td>Screens and files may hold personal or regulated data</td><td>Check region, retention and contract terms in each market</td></tr>
-<tr><td>Single-vendor lock-in</td><td>Prices and models change quickly</td><td>A provider-neutral routing layer</td></tr>
-</tbody>
-</table>
-<p>Sandboxing matters even more when agents get cheaper and run more often; see <a href="https://asksumanta.com/insights/ai-agent-sandboxing-lessons-anthropic-s1/">what Anthropic's S-1 teaches about sandboxing agents</a>.</p>
-</section>
-
-<section class="block">
-<h2>CTO take</h2>
-<p>Treat this release as a prompt to build the plumbing, not as a reason to switch. If you can already measure quality and cost per task by step type, a cheaper capable model is close to free money: route the routine steps and keep the hard ones where they are. If you cannot, the first job is the evaluation set and the telemetry. That is true whether your teams are in the US, Europe, India or Asia-Pacific; data-location rules differ by market, so check them before sending screens and documents to any new model (<a href="https://asksumanta.com/regions/">by region</a>).</p>
-<p>Related reading: <a href="https://asksumanta.com/insights/llm-evaluation-sets-that-predict-production/">evaluation sets that predict production</a>, <a href="https://asksumanta.com/insights/llm-observability-opentelemetry-genai/">LLM observability with OpenTelemetry</a>, <a href="https://asksumanta.com/insights/evaluating-ai-agents-reliability/">evaluating AI agents</a> and the <a href="https://asksumanta.com/insights/tech-news-2026-10-29/">daily tech news for 29 October</a>.</p>
-</section>
-
-<section class="block">
-<h2>How I can help</h2>
-<p>I design agent platforms with routing, evaluation and cost telemetry built in, so model launches become a measured decision rather than a gamble. See <a href="https://asksumanta.com/ai-architect/">AI architecture</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
-</section><p><a href="https://asksumanta.com/insights/gpt-6-1-terra-computer-use-agent-economics/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
+</section><p><a href="https://asksumanta.com/insights/tech-news-2026-10-29-2/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>

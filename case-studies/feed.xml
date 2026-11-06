@@ -1,6 +1,89 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link><description>Anonymised engagements with architecture and flow diagrams</description><language>en-gb</language><lastBuildDate>Thu, 05 Nov 2026 15:55:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/case-studies/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link></image><item><title>Capacity you can move: multi-region AI serving for a US SaaS company when data centres stall</title><link>https://asksumanta.com/case-studies/us-saas-multi-region-ai-capacity/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/us-saas-multi-region-ai-capacity/</guid><pubDate>Thu, 05 Nov 2026 15:55:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>ai</category><category>platform</category><category>kubernetes</category><description>How a US B2B SaaS company can keep AI features fast and affordable when GPU capacity is tight and local opposition slows new data centres: portable, multi-region serving.</description><content:encoded><![CDATA[<p><em>A US B2B software company had built AI features that customers now relied on daily. Its model serving sat in one cloud region with one provider, on capacity that was hard to expand. With demand for AI compute outrunning supply and voters pushing back on new data centres, the company needed AI capacity it could move, without rebuilding the product each time.</em></p><h2>The situation</h2>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link><description>Anonymised engagements with architecture and flow diagrams</description><language>en-gb</language><lastBuildDate>Fri, 06 Nov 2026 15:50:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/case-studies/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link></image><item><title>Clock-ready: Cyber Resilience Act vulnerability handling for a German industrial software maker, as AI-found reports surge</title><link>https://asksumanta.com/case-studies/germany-industrial-software-cra-vulnerability-handling/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/germany-industrial-software-cra-vulnerability-handling/</guid><pubDate>Fri, 06 Nov 2026 15:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>security</category><category>governance</category><category>ai</category><description>How a German industrial software maker can meet EU Cyber Resilience Act reporting duties as AI-found vulnerability reports surge: triage, SBOMs and signed fixes.</description><content:encoded><![CDATA[<p><em>A German company sold machine-monitoring software to manufacturers across Europe: an edge gateway installed in factories and a cloud application. From September 2026 the EU Cyber Resilience Act required it to report actively exploited vulnerabilities on tight deadlines. At the same time, vulnerability reports were arriving faster, many of them written with AI. The company needed a product security process that could separate signal from noise, know which customers were exposed and start the regulatory clock at the right moment.</em></p><h2>The situation</h2>
+<p>A German software company sold machine-monitoring software to manufacturers across Europe. Its product had two parts: an edge gateway installed on factory networks that collected data from machines, and a cloud application where customers viewed dashboards and alerts. Both were built on many open-source components. Security reports came in through a shared email address, were picked up by whichever engineer had time, and were tracked in the general bug tracker. Nobody could quickly say which customers ran which gateway release, or which releases contained a given library.</p>
+<p>The product counted as a product with digital elements under the EU Cyber Resilience Act. From 11 September 2026, manufacturers must report actively exploited vulnerabilities and severe incidents, once, through ENISA's Single Reporting Platform, which passes them to the relevant national CSIRT and ENISA<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. The first step is an early warning within 24 hours of becoming aware of active exploitation, followed by a fuller notification and a final report<sup class="cite"><a href="#ref-2">2</a></sup>. An email inbox and goodwill could not meet those deadlines reliably.</p>
+<p><strong>Why now.</strong> Vulnerability reports were getting more numerous and harder to judge. On 5 November 2026 OpenAI released GPT-6 Cyber, a model for authorised vulnerability research that it rates at its highest cybersecurity risk level<sup class="cite"><a href="#ref-3">3</a></sup>. OpenAI's own security leadership has said AI-generated reports are overwhelming some open-source maintainers<sup class="cite"><a href="#ref-4">4</a></sup>, and projects such as Debian have begun experimenting with AI-assisted triage to cope<sup class="cite"><a href="#ref-5">5</a></sup>. The company was seeing the same pattern at its own scale: more reports, some excellent, many duplicated or unreproducible.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>One way in</strong>: every report, from researchers, customers, suppliers or internal scanners, reaches one queue with an owner.</li>
+<li><strong>Noise filtered cheaply</strong>, without letting a real vulnerability sit unread.</li>
+<li><strong>Exposure answerable fast</strong>: for any component, which releases contain it and which customers run them.</li>
+<li><strong>A consistent start to the clock</strong>: a written rule for when the company is "aware" of active exploitation.</li>
+<li><strong>Fixes customers can trust</strong>: signed releases and advisories that say what to do.</li>
+<li><strong>Evidence kept</strong>: who knew what, when, and what was reported.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Intake</small><div class="dgm-nodes"><span>Disclosure policy<em>security.txt and web form</em></span><span>Internal scanners<em>dependencies and code</em></span><span>Customer and supplier reports<em>same queue</em></span></div></div>
+<div class="dgm-tier"><small>Triage</small><div class="dgm-nodes"><span class="hl">AI-assisted sorting<em>deduplicate, summarise, no tools</em></span><span>Security on-call<em>owns every case</em></span></div></div>
+<div class="dgm-tier"><small>Analysis</small><div class="dgm-nodes"><span>Isolated reproduction<em>gateway and cloud test rigs</em></span><span class="hl">SBOM per release<em>joined to customer inventory</em></span><span>VEX statements<em>not affected, and why</em></span></div></div>
+<div class="dgm-tier"><small>Decision and reporting</small><div class="dgm-nodes"><span class="hl">Exploitation rule<em>when the clock starts</em></span><span>Single Reporting Platform<em>early warning, notification, final report</em></span></div></div>
+<div class="dgm-tier"><small>Delivery</small><div class="dgm-nodes"><span>Signed releases<em>gateway and cloud</em></span><span>Customer advisories<em>affected versions, actions</em></span><span>Case record<em>timestamps and decisions</em></span></div></div>
+</div>
+<figcaption>AI helps at the noisy front; people own the decisions that start legal clocks.</figcaption>
+</figure>
+<p>The core was a security case record, separate from the general bug tracker, with restricted access. Every report became a case with an owner, a status and a timeline. The build pipeline produced a CycloneDX SBOM for every gateway and cloud release, and the licensing system already knew which customer ran which gateway release, so joining the two gave a direct answer to "who is exposed?". When a vulnerable library was present but its vulnerable code was not reachable, the team published a VEX statement saying so, which cut down repeated questions from customers' scanners.</p>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Receive</b><span>A report arrives through the form, security.txt address or a scanner, and opens a case</span></li>
+<li><b>Sort</b><span>An AI model groups duplicates, summarises the claim and flags missing details</span></li>
+<li class="hl"><b>Reproduce</b><span>An engineer tests credible reports on isolated gateway and cloud rigs</span></li>
+<li><b>Scope</b><span>The SBOM and customer inventory show affected releases and customers</span></li>
+<li class="hl"><b>Decide</b><span>The on-call lead applies the exploitation rule and severity; reporting starts if needed</span></li>
+<li><b>Fix and tell</b><span>A signed release ships with an advisory; the case closes with a final report</span></li>
+</ol>
+<figcaption>Each step adds evidence to the case, so the final report writes itself from the record.</figcaption>
+</figure>
+
+<h2>The hard part: AI triage and the start of the clock</h2>
+<p><strong>Treating reports as untrusted input.</strong> Using a language model to read incoming reports helped with volume, but reports are written by strangers, and some could contain instructions aimed at the model. The triage model therefore had no tools, no access to code or customer data, and only produced a structured summary: claimed component, claimed impact, duplicate candidates and missing information. It could not close a case. Anything it marked as low quality still had a person glance at it before closing. See <a href="https://asksumanta.com/insights/prompt-injection-defence-for-agents/">prompt injection defence for agents</a>.</p>
+<p><strong>Defining "aware".</strong> The 24-hour early warning runs from when the manufacturer becomes aware of active exploitation<sup class="cite"><a href="#ref-1">1</a></sup>. A report that a flaw exists is not the same as evidence that someone is exploiting it. With the company's lawyers, we wrote a short rule: credible evidence of exploitation, such as a customer incident, a national CERT notice, a public exploit used in attacks or an entry in an exploited-vulnerability catalogue, starts the clock, and the on-call lead records the time and the evidence. Borderline cases went to a named second person within working hours, with a bias toward reporting early.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/germany-industrial-software-cra-vulnerability-handling/signature-verification-flow.webp" alt="Flowchart: create a policy instance and annotate the namespace to validate signatures, create a pod, then policy evaluation; if it passes the pod is admitted and the image pulled if necessary, if it fails the pod is not admitted" width="1500" height="1400" loading="lazy"></div><figcaption>Verify before you run: the same idea let customers check that a gateway update really came from the vendor. <span class="credit">Source: <a href="https://kubernetes.io/blog/2023/06/29/container-image-signature-verification/" target="_blank" rel="noopener">Kubernetes blog, Sascha Grunert</a> · CC BY 4.0</span></figcaption></figure>
+<p><strong>Shipping fixes to factories.</strong> Gateways sat on factory networks where customers controlled update timing. Signed releases, verifiable before installation, meant customers' operations teams could accept updates without a call to the vendor<sup class="cite"><a href="#ref-6">6</a></sup>. Advisories listed affected versions, the fixed version and a workaround for sites that could not update immediately.</p>
+<div class="callout"><p>Regulation sets the deadline; your inventory decides whether you can meet it. If you cannot say who runs which release, no process can report on time.</p></div>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Security on-call</small><ol><li>Own every case</li><li class="hl">Apply the exploitation rule</li><li>Submit reports</li></ol></div>
+<div class="dgm-lane"><small>Engineering</small><ol><li>Reproduce and fix</li><li class="hl">SBOM and signing in the pipeline</li><li>Signed releases</li></ol></div>
+<div class="dgm-lane"><small>Legal and customer success</small><ol><li>Agree "aware" rule</li><li>Advisories</li><li class="hl">Tell affected customers</li></ol></div>
+</div>
+<figcaption>Engineering produced the evidence, on-call made the call, legal and customer success made it land.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Inventory</b><ul><li>SBOM per release</li><li>Customer release map</li><li>Disclosure policy live</li></ul></div>
+<div><small>Phase 2</small><b>Intake</b><ul><li>One case queue</li><li>On-call rota</li><li>AI-assisted sorting</li></ul></div>
+<div><small>Phase 3</small><b>Decide</b><ul><li>Exploitation rule</li><li>Reporting runbook</li><li>Platform access tested</li></ul></div>
+<div><small>Phase 4</small><b>Deliver</b><ul><li>Signed releases</li><li>Advisory template</li><li>Tabletop exercises</li></ul></div>
+</div>
+<figcaption>Inventory first: every later step depends on knowing what is deployed where.</figcaption>
+</figure>
+<p>A tabletop exercise, run before any real case, walked through a mock exploited vulnerability from report to final submission. It found gaps that documents had hidden: who held access to the reporting platform at weekends, and which customer contacts were out of date.</p>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Separate security case record</td><td>General bug tracker</td><td>Restricted access and a clean timeline for reporting</td></tr>
+<tr><td>AI sorts, people decide</td><td>AI closes low-quality reports</td><td>A missed real vulnerability costs far more than review time</td></tr>
+<tr><td>Triage model with no tools or data access</td><td>Agent that inspects code</td><td>Reports are untrusted input</td></tr>
+<tr><td>Written exploitation rule agreed with legal</td><td>Judgement case by case</td><td>The clock starts consistently and defensibly</td></tr>
+<tr><td>SBOM joined to customer inventory</td><td>SBOM files on their own</td><td>Answers "who is exposed?", not just "what is inside?"</td></tr>
+<tr><td>Signed releases with advisories</td><td>Release notes only</td><td>Factory teams can verify and act without a call</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: build the release-to-customer map before anything else. It turned every later question from an investigation into a lookup. Differently: run the tabletop exercise in the first weeks, not after the process was written; it would have shaped the runbook rather than corrected it. Related: <a href="https://asksumanta.com/insights/defender-first-ai-models-vulnerability-management/">defender-first AI models and vulnerability management</a>, <a href="https://asksumanta.com/insights/ai-model-supply-chain-security/">AI model supply chain security</a>, <a href="https://asksumanta.com/insights/tech-news-2026-11-06/">the 6 November tech news</a> and the <a href="https://asksumanta.com/fractional-cto-europe/">Europe page</a>.</p>
+<p>If you sell software or connected products in the EU and need to be ready for Cyber Resilience Act reporting, see my <a href="https://asksumanta.com/fractional-cto/">fractional CTO work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/germany-industrial-software-cra-vulnerability-handling/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Capacity you can move: multi-region AI serving for a US SaaS company when data centres stall</title><link>https://asksumanta.com/case-studies/us-saas-multi-region-ai-capacity/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/us-saas-multi-region-ai-capacity/</guid><pubDate>Thu, 05 Nov 2026 15:55:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>ai</category><category>platform</category><category>kubernetes</category><description>How a US B2B SaaS company can keep AI features fast and affordable when GPU capacity is tight and local opposition slows new data centres: portable, multi-region serving.</description><content:encoded><![CDATA[<p><em>A US B2B software company had built AI features that customers now relied on daily. Its model serving sat in one cloud region with one provider, on capacity that was hard to expand. With demand for AI compute outrunning supply and voters pushing back on new data centres, the company needed AI capacity it could move, without rebuilding the product each time.</em></p><h2>The situation</h2>
 <p>A US software company sold a workflow platform to mid-sized businesses. Over two years it added AI features: summarising records, drafting replies, extracting data from documents and an assistant inside the product. Customers adopted them quickly. The company served open-weight models on GPUs in one cloud region, with a managed model API for a few tasks. As usage grew, adding GPU capacity in that region became slow and uncertain, and latency spiked whenever demand peaked.</p>
 <p><strong>Why now.</strong> Demand for AI compute was running ahead of supply: Fortune reported Microsoft's CFO saying demand for its cloud still exceeded supply<sup class="cite"><a href="#ref-3">3</a></sup>. New capacity was arriving on long timelines and through complex financing, such as Google's credit backstop for Anthropic's Kentucky data centre lease<sup class="cite"><a href="#ref-4">4</a></sup>. And in the 3 November 2026 midterms, voters sided against data centres in 40 of 41 local ballot measures across 10 states, according to CNBC's analysis<sup class="cite"><a href="#ref-1">1</a></sup>, a sign of growing opposition to new AI infrastructure<sup class="cite"><a href="#ref-2">2</a></sup>. The board's question was simple: what happens to our AI features if we cannot get more capacity where we are?</p>
 
@@ -3975,88 +4058,4 @@
 
 <h2>What I'd do again, and differently</h2>
 <p>Again: a thin slice end to end before scaling, shadow running against the old feed, and reconciliation from the start. Differently: agree the reservation and allocation rules with operations earlier. Live data exposed business rules that had never been written down, and those took longer to settle than the streaming platform.</p>
-<p>If you are planning a similar move off batch, the <a href="https://asksumanta.com/fractional-cto/">fractional CTO</a> page describes how I work with teams on it, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/retail-real-time-inventory-cdc/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Fixing product search and AI shopping by fixing what the catalogue means</title><link>https://asksumanta.com/case-studies/ecommerce-product-ontology-search/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/ecommerce-product-ontology-search/</guid><pubDate>Wed, 28 Oct 2026 01:22:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>ontology</category><category>knowledge-graph</category><category>data</category><category>ai</category><category>governance</category><description>How an online retailer replaced inconsistent categories with a SKOS taxonomy, a small OWL core and SHACL validation, making search, filters and AI shopping reliable.</description><content:encoded><![CDATA[<p><em>Supplier feeds arrived with their own categories, attribute names and units. Search filters broke, facets contradicted each other and an AI shopping assistant gave confident answers from messy data. The fix was a governed product ontology that every catalogue load is mapped to and validated against.</em></p><h2>The situation</h2>
-<p>An online retailer sold products from many suppliers. Each supplier feed brought its own category tree, attribute names and conventions: one sent "colour", another "color_name", a third put colour in the title. Sizes, materials and units varied by feed. The internal category tree had grown by accretion, with near-duplicate branches and categories that meant different things to different teams.</p>
-<p>The symptoms were familiar. Filters returned partial results because half the products lacked the attribute being filtered. Search relied on hand-maintained synonym lists. A new AI shopping assistant made the problem more visible: asked to compare products, it reasoned confidently over data that was inconsistent underneath.</p>
-
-<h2>What had to be true</h2>
-<ul>
-<li><strong>One model of meaning</strong> for categories and attributes, shared by search, filters, feeds and the assistant.</li>
-<li><strong>Mapping, not rewriting</strong>: supplier data is mapped to the model, with the original preserved.</li>
-<li><strong>Validation on every load</strong>, so bad data is caught before customers see it.</li>
-<li><strong>Business ownership</strong>: merchandisers change the taxonomy through review, without engineering in the loop for every edit.</li>
-<li><strong>Standards, not a bespoke format</strong>, so the model outlives any one tool.</li>
-</ul>
-
-<h2>Architecture</h2>
-<p>The taxonomy was modelled in SKOS, which is designed for concept schemes with broader and narrower relations and preferred and alternative labels<sup class="cite"><a href="#ref-1">1</a></sup>. A deliberately small OWL core covered the classes and properties that needed formal definitions<sup class="cite"><a href="#ref-2">2</a></sup>. The reasoning behind that split is in <a href="https://asksumanta.com/insights/skos-vs-owl-enterprise-taxonomies/">SKOS vs OWL for enterprise taxonomies</a>.</p>
-<figure class="dgm">
-<div class="dgm-stack">
-<div class="dgm-tier"><small>Sources</small><div class="dgm-nodes"><span>Supplier feeds<em>CSV, XML, API</em></span><span>Product master<em>internal</em></span><span>Search logs<em>queries, zero results</em></span></div></div>
-<div class="dgm-tier"><small>Model</small><div class="dgm-nodes"><span class="hl">Category scheme<em>SKOS</em></span><span>Attribute core<em>small OWL model</em></span><span>Units and value lists<em>controlled</em></span></div></div>
-<div class="dgm-tier"><small>Map</small><div class="dgm-nodes"><span>Supplier mappings<em>versioned, reviewed</em></span><span>Attribute extraction<em>rules, then ML</em></span><span>Unit normalisation<em>canonical units</em></span></div></div>
-<div class="dgm-tier"><small>Validate</small><div class="dgm-nodes"><span class="hl">SHACL shapes<em>per category</em></span><span>Quarantine<em>with reasons</em></span><span>Quality report<em>per supplier</em></span></div></div>
-<div class="dgm-tier"><small>Use</small><div class="dgm-nodes"><span>Search index<em>labels as synonyms</em></span><span>Facets and filters<em>from the model</em></span><span>AI assistant<em>structured attributes</em></span><span>Structured data<em>schema.org</em></span></div></div>
-</div>
-<figcaption>Layered architecture: one model of meaning, mapped into from every feed and published to every consumer.</figcaption>
-</figure>
-
-<h2>The data flow, end to end</h2>
-<figure class="dgm">
-<ol class="dgm-flow g3">
-<li><b>Receive</b><span>Supplier feed lands raw, unchanged, with supplier and load identifiers</span></li>
-<li class="hl"><b>Map</b><span>Supplier categories and attributes mapped to concepts and properties</span></li>
-<li><b>Normalise</b><span>Units converted, values matched to controlled lists, originals kept</span></li>
-<li class="hl"><b>Validate</b><span>SHACL shapes check required attributes and values per category</span></li>
-<li><b>Publish</b><span>Valid products to search, facets and the assistant; failures quarantined</span></li>
-<li><b>Improve</b><span>Zero-result queries and quarantine reasons feed the taxonomy backlog</span></li>
-</ol>
-<figcaption>Validation is a gate: a product that fails its category's shape is held back with a readable reason.</figcaption>
-</figure>
-<p>SHACL describes the conditions data must meet and produces a validation report, which made it a natural release gate for each load<sup class="cite"><a href="#ref-3">3</a></sup>. Patterns for writing shapes are in <a href="https://asksumanta.com/insights/shacl-validation-knowledge-graphs/">SHACL validation for knowledge graphs</a>.</p>
-
-<h2>The hard part: attributes, not categories</h2>
-<p>Agreeing a category tree was comparatively quick. Agreeing attributes was not, because attributes are where search filters and assistant answers actually come from. The work that made a difference:</p>
-<ul>
-<li><strong>Attributes defined per category</strong>, with required, recommended and optional tiers, so a shape knows what "complete" means for a sofa versus a shoe.</li>
-<li><strong>Controlled value lists</strong> with preferred and alternative labels, so "navy", "dark blue" and supplier codes resolve to one value while search still matches all of them.</li>
-<li><strong>Canonical units</strong> with conversion at load, never in the search layer.</li>
-<li><strong>Duplicate and variant handling</strong>, the same product from two suppliers, which is an entity resolution problem in its own right; see <a href="https://asksumanta.com/insights/entity-resolution-knowledge-graphs/">entity resolution for knowledge graphs</a>.</li>
-</ul>
-<div class="callout"><p>An AI assistant is only as consistent as the attributes it reads. Many apparent "hallucinations" about products turn out to be faithful readings of contradictory data.</p></div>
-
-<h2>How the engagement ran</h2>
-<figure class="dgm">
-<div class="dgm-lanes">
-<div class="dgm-lane"><small>Merchandising</small><ol><li>Proposes category changes</li><li class="hl">Approves attribute rules</li><li>Owns value lists</li></ol></div>
-<div class="dgm-lane"><small>Data team</small><ol><li>Maintains supplier mappings</li><li>Runs validation</li><li>Works the quarantine</li></ol></div>
-<div class="dgm-lane"><small>Search and AI</small><ol><li>Consume published model</li><li class="hl">Report zero-result gaps</li><li>Test assistant answers</li></ol></div>
-</div>
-<figcaption>Ownership split: the business owns meaning, the data team owns mapping, consumers report gaps.</figcaption>
-</figure>
-<figure class="dgm">
-<div class="dgm-phases">
-<div><small>Phase 1</small><b>Discover</b><ul><li>Feed and attribute inventory</li><li>Search log analysis</li><li>Highest-value categories</li></ul></div>
-<div><small>Phase 2</small><b>Model</b><ul><li>SKOS category scheme</li><li>Attribute core</li><li>First SHACL shapes</li></ul></div>
-<div><small>Phase 3</small><b>Pipeline</b><ul><li>Supplier mappings</li><li>Validation gate</li><li>Quarantine and reports</li></ul></div>
-<div><small>Phase 4</small><b>Consume and hand off</b><ul><li>Search and facets</li><li>Assistant integration</li><li>Governance workflow</li></ul></div>
-</div>
-<figcaption>Phased delivery, starting with the categories that drove the most search traffic.</figcaption>
-</figure>
-<p>Product pages also emitted schema.org Product markup generated from the same model<sup class="cite"><a href="#ref-4">4</a></sup>, so structured data for external search stayed consistent with internal search. More in <a href="https://asksumanta.com/insights/structured-data-for-ai-search/">structured data for AI search</a>.</p>
-
-<h2>Key decisions and trade-offs</h2>
-<table class="tbl">
-<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
-<tbody>
-<tr><td>SKOS for the taxonomy</td><td>Full OWL ontology</td><td>Labels and hierarchy are what categories need; easier for the business to own</td></tr>
-<tr><td>Small OWL core</td><td>No formal model at all</td><td>Precise definitions where products are compared and filtered</td></tr>
-<tr><td>SHACL as a load gate</td><td>Ad hoc scripts in the pipeline</td><td>Declarative, standard rules with readable reports</td></tr>
-<tr><td>Keep supplier originals</td><td>Overwrite on mapping</td><td>Mappings can be corrected and replayed</td></tr>
-<tr><td>Assistant reads structured attributes</td><td>Assistant reads raw descriptions</td><td>Comparisons and filters grounded in validated facts</td></tr>
-</tbody>
-</table>
-
-<h2>What I'd do again, and differently</h2>
-<p>Again: start from search logs and the categories that matter commercially, and make validation a gate rather than a report. Differently: put merchandising ownership and the review workflow in place before the model grows, not after. A taxonomy without a clear owner drifts back to where it started.</p>
-<p>If your catalogue or knowledge model has the same symptoms, the <a href="https://asksumanta.com/ontology-knowledge-graph/">ontology and knowledge graph</a> page describes how I approach it, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/ecommerce-product-ontology-search/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
+<p>If you are planning a similar move off batch, the <a href="https://asksumanta.com/fractional-cto/">fractional CTO</a> page describes how I work with teams on it, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/retail-real-time-inventory-cdc/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
