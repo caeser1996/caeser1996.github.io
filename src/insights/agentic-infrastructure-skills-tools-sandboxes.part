@@ -1,0 +1,82 @@
+<!--{"title": "Agentic infrastructure: skills, tools, sandboxes and the control plane", "description": "The layers a company needs to run AI agents in production: skills, MCP tools, sandboxes, identity, workflows and telemetry, and what to build first.", "h1": "Agentic infrastructure: the skills, tools, sandboxes and controls that let AI agents do real work safely", "kicker": "Explainer · Agentic AI architecture", "lede": "Most companies started with agents as a chat window and a few API calls. Agents that do real work need more underneath them: packaged know-how they can load when needed, tools with clear permissions, somewhere safe to run code, an identity for every action, and a record of what happened. This is the stack I design for teams moving agents from demos to production, layer by layer, with the standards that now exist for each.", "date": "2026-11-06", "datetime": "2026-11-06T19:40:00+04:00", "readtime": "10 min read", "format": "explainer", "tags": ["ai", "agents", "architecture", "mcp"], "keywords": ["agentic infrastructure", "AI agent platform architecture", "Agent Skills SKILL.md", "Model Context Protocol tools", "Kubernetes Agent Sandbox", "agent identity and authorisation", "Enterprise-Managed Authorization MCP", "OpenTelemetry GenAI agent spans", "tool automation with agents", "agent control plane"], "faq": [["What is the difference between an agent skill and a tool?", "A skill is packaged know-how: a folder with a SKILL.md file of instructions, plus optional scripts and reference files, that the agent loads only when relevant. A tool is a capability the agent can call, such as an API exposed through an MCP server. Skills tell the agent how to do a task; tools let it act."], ["Do AI agents need their own sandbox?", "Any agent that writes or runs code, or handles untrusted content, should run in an isolated environment with limited network access and short-lived credentials. Kubernetes now has an Agent Sandbox project for this, but isolation alone does not replace scoped permissions and monitoring."], ["What should a company build first for agentic infrastructure?", "Identity and telemetry. Give each agent and each action a traceable identity, and record every model call and tool call. Without those, you cannot safely grant more permissions, debug failures or show auditors what happened."]], "related": ["/ai-architect/", "/fractional-cto/", "/regions/"], "citations": [{"title": "Equipping agents for the real world with Agent Skills", "url": "https://www.anthropic.com/engineering/equipping-agents-for-the-real-world-with-agent-skills", "publisher": "Anthropic", "date": "Oct 2025"}, {"title": "Agent Skills specification", "url": "https://agentskills.io/specification", "publisher": "Agent Skills", "date": "2026"}, {"title": "The 2026-07-28 Specification", "url": "https://blog.modelcontextprotocol.io/posts/2026-07-28/", "publisher": "Model Context Protocol Blog", "date": "28 Jul 2026"}, {"title": "Enterprise-Managed Authorization: Zero-touch OAuth for MCP", "url": "https://blog.modelcontextprotocol.io/posts/enterprise-managed-auth/", "publisher": "Model Context Protocol Blog", "date": "18 Jun 2026"}, {"title": "Running Agents on Kubernetes with Agent Sandbox", "url": "https://kubernetes.io/blog/2026/03/20/running-agents-on-kubernetes-with-agent-sandbox/", "publisher": "Kubernetes blog", "date": "20 Mar 2026"}, {"title": "Why sandboxing your agent is not enough", "url": "https://www.cncf.io/blog/2026/07/07/why-sandboxing-your-agent-is-not-enough/", "publisher": "CNCF", "date": "7 Jul 2026"}, {"title": "Semantic conventions for generative AI systems", "url": "https://opentelemetry.io/docs/specs/semconv/gen-ai/", "publisher": "OpenTelemetry", "date": "2026"}]}-->
+<section class="block">
+<h2>From chat window to infrastructure</h2>
+<p>An agent is a model in a loop: it reads a goal, decides on a step, calls a tool, looks at the result and repeats. That loop is easy to demo and hard to run at scale. Once agents touch real systems, the same questions come up in every company: how does the agent know <em>how</em> we do things here, what is it allowed to touch, where does its code run, whose authority is it acting on, and how do we find out what it did? Each question maps to a layer of infrastructure, and in 2026 most layers have an emerging standard.</p>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Know-how</small><div class="dgm-nodes"><span class="hl">Skills<em>SKILL.md, scripts, references</em></span><span>Context and memory<em>what the agent knows now</em></span></div></div>
+<div class="dgm-tier"><small>Capabilities</small><div class="dgm-nodes"><span class="hl">Tools<em>MCP servers and APIs</em></span><span>Registry<em>approved servers and skills</em></span></div></div>
+<div class="dgm-tier"><small>Execution</small><div class="dgm-nodes"><span>Sandboxes<em>isolated code and files</em></span><span>Workflows<em>queues, retries, approvals</em></span></div></div>
+<div class="dgm-tier"><small>Control</small><div class="dgm-nodes"><span class="hl">Identity<em>agent and user, per action</em></span><span>Policy<em>what each agent may do</em></span><span>Stop<em>pause or revoke instantly</em></span></div></div>
+<div class="dgm-tier"><small>Evidence</small><div class="dgm-nodes"><span>Telemetry<em>agent and tool spans</em></span><span>Evaluations<em>does it still work?</em></span><span>Cost<em>per agent and task</em></span></div></div>
+</div>
+<figcaption>The agentic stack. Models sit beside it; the hard engineering is in these layers.</figcaption>
+</figure>
+</section>
+
+<section class="block">
+<h2>Skills: packaged know-how, loaded when needed</h2>
+<p>A skill is a folder with a SKILL.md file: a short name and description, then instructions, optionally alongside scripts, templates and reference documents<sup class="cite"><a href="#ref-1">1</a></sup>. The agent sees only the names and descriptions up front and reads the full skill when a task calls for it, so a company can give an agent hundreds of procedures without filling its context window<sup class="cite"><a href="#ref-1">1</a></sup>. Anthropic published the format as an open specification, and many agent tools now read the same files<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<p>For a business, skills are the natural home for "how we do things here": how to write a release note, how to reconcile a payment file, which checks to run before changing a database. They are also where tool automation becomes reliable. If a step is deterministic, put a script in the skill and tell the agent to run it, rather than letting the model regenerate the logic each time. The model handles judgement; code handles the parts that must be the same every time.</p>
+<p><strong>Treat skills as code.</strong> A skill can contain scripts that run with the agent's permissions, so a skill from the internet deserves the same scrutiny as a dependency. Keep company skills in version control, review changes, publish them through an internal registry and only allow approved sources. See <a href="/insights/mcp-registry-enterprise-subregistry/">running an enterprise MCP sub-registry</a> for the same pattern applied to tools.</p>
+</section>
+
+<section class="block">
+<h2>Tools: what the agent can actually do</h2>
+<p>Tools are how agents act: query a database, open a ticket, send a message, deploy a change. The Model Context Protocol has become the common way to expose them, and its 2026-07-28 specification made the protocol core stateless and added a formal extensions framework, which makes MCP servers easier to run behind ordinary load balancers<sup class="cite"><a href="#ref-3">3</a></sup>. See <a href="/insights/mcp-stateless-migration-playbook/">the MCP stateless migration playbook</a>.</p>
+<p>Design tools for agents, not for humans. Fewer, task-shaped tools ("create refund up to a limit") are safer and easier for a model to use than thin wrappers around every API endpoint. Mark which tools only read and which change things, and require approval for the ones that are hard to undo. The <a href="/insights/securing-mcp-servers-checklist/">MCP server security checklist</a> covers the details.</p>
+<table class="tbl">
+<thead><tr><th></th><th>Skill</th><th>Tool</th><th>Workflow</th></tr></thead>
+<tbody>
+<tr><td>What it is</td><td>Instructions and scripts</td><td>A callable capability</td><td>A fixed sequence of steps</td></tr>
+<tr><td>Best for</td><td>How to do a task well</td><td>Acting on a system</td><td>Steps that must always happen in order</td></tr>
+<tr><td>Who decides the next step</td><td>The agent, guided</td><td>The agent</td><td>The code</td></tr>
+<tr><td>Main risk</td><td>Malicious or stale content</td><td>Too much permission</td><td>Rigid when reality differs</td></tr>
+</tbody>
+</table>
+</section>
+
+<section class="block">
+<h2>Execution: sandboxes and workflows</h2>
+<p>Agents that write and run code need somewhere disposable to do it. The Kubernetes Agent Sandbox project, under SIG Apps, adds a Sandbox resource for isolated, stateful, single-instance workloads, with support for runtimes such as gVisor and Kata Containers, scale to zero when idle and warm pools to avoid cold starts<sup class="cite"><a href="#ref-5">5</a></sup>. That fills a real gap: an agent's workspace looks nothing like a stateless web service. See <a href="/insights/kubernetes-finops-scale-to-zero/">scale to zero on Kubernetes</a> for the cost side.</p>
+<p>Isolation is necessary but not sufficient, as the CNCF has argued<sup class="cite"><a href="#ref-6">6</a></sup>. A perfectly isolated sandbox holding a broad API key can still do damage through that key. Pair sandboxes with limited outbound network access, short-lived credentials scoped to the task, and monitoring of what leaves the sandbox; see <a href="/insights/ai-agent-sandboxing-lessons-anthropic-s1/">agent sandboxing lessons</a> and <a href="/insights/prompt-injection-defence-for-agents/">prompt injection defence</a>.</p>
+<p>Long-running work also needs a workflow layer: durable queues, retries, timeouts and human approval steps that survive restarts. Let the workflow own the order of steps that must always happen, such as "approve before payment", and let the agent work inside each step.</p>
+</section>
+
+<section class="block">
+<h2>Control: identity, policy and a stop button</h2>
+<p>Every action an agent takes should answer two questions: which agent did it, and on whose authority. The MCP Enterprise-Managed Authorization extension, now stable, lets organisations grant MCP server access centrally through their identity provider, scoped to users' groups and roles, instead of each user authorising each server<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/briefings/mcp-ema-comparison.webp" alt="Diagram comparing standard MCP authorisation, where the user authenticates to each server separately, with Enterprise-Managed Authorization, where one identity provider login connects all approved servers" width="1400" height="769" loading="lazy"></div><figcaption>Central authorisation through the identity provider: the basis for knowing whose authority an agent acts on. <span class="credit">Source: <a href="https://blog.modelcontextprotocol.io/posts/enterprise-managed-auth/" target="_blank" rel="noopener">Model Context Protocol Blog, Paul Carleton</a> · CC BY 4.0</span></figcaption></figure>
+<p>On top of identity, define policy per agent: which tools, which data, what spending or volume limits. And keep a stop button: a way to pause one agent, or revoke its credentials, in seconds. See <a href="/insights/tech-news-2026-11-04/">the 4 November tech news</a> on agent kill switches.</p>
+</section>
+
+<section class="block">
+<h2>Evidence: telemetry, evaluations and cost</h2>
+<p>OpenTelemetry's generative AI semantic conventions define spans for agent invocations and tool executions alongside model calls, so a single trace can show what the agent was asked, which tools it called and what each cost in time and tokens<sup class="cite"><a href="#ref-7">7</a></sup>. Use them from the start; retrofitting telemetry onto agents in production is painful. Then run evaluations on real tasks whenever a model, skill or tool changes; see <a href="/insights/evaluating-ai-agents-reliability/">evaluating AI agents</a>.</p>
+</section>
+
+<section class="block">
+<h2>What to build, in order</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li class="hl"><b>Identity</b><span>Each agent and action traceable to an agent and a person</span></li>
+<li class="hl"><b>Telemetry</b><span>Every model and tool call recorded with cost</span></li>
+<li><b>Tools</b><span>A few task-shaped MCP tools, read-only first</span></li>
+<li><b>Skills</b><span>Company procedures as reviewed, versioned skills</span></li>
+<li><b>Sandboxes</b><span>Isolated execution with scoped credentials</span></li>
+<li><b>Workflows</b><span>Durable steps and approvals for high-risk actions</span></li>
+</ol>
+<figcaption>Control and visibility first; capability grows as the evidence allows.</figcaption>
+</figure>
+<div class="callout"><p>Agents get more useful as you give them more skills and tools. They get safe enough to keep only when every action has an identity, a limit and a record.</p></div>
+</section>
+
+<section class="block">
+<h2>CTO take</h2>
+<p>The interesting work in agentic AI has moved from the model to the infrastructure around it. Skills turn tacit company knowledge into something an agent can use and a reviewer can read. MCP makes tools portable. Sandboxes and workflows make execution safe and durable. Identity and telemetry make the whole thing governable. None of these needs a large platform team to start: a registry of approved skills and tools, agent identities in your existing identity provider and OpenTelemetry on every call will take most teams a long way. For how far to let agents run unattended, see <a href="/insights/dark-factories-automating-work/">dark factories and automating work</a>, and for a worked example, the <a href="/case-studies/enterprise-mcp-agent-platform/">enterprise MCP agent platform case study</a>.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I design agent platforms: skills and tool registries, sandboxed execution, identity and policy, and the telemetry that shows what agents actually do. I am based in India, the United States and the UAE, working globally. See <a href="/ai-architect/">AI architecture</a>, <a href="/regions/">where I work</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
