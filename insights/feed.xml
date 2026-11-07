@@ -1,6 +1,57 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights</title><link>https://asksumanta.com/</link><description>Articles on AI, data, cloud and technology leadership</description><language>en-gb</language><lastBuildDate>Fri, 06 Nov 2026 19:40:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/insights/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights</title><link>https://asksumanta.com/</link></image><item><title>Agentic infrastructure: the skills, tools, sandboxes and controls that let AI agents do real work safely</title><link>https://asksumanta.com/insights/agentic-infrastructure-skills-tools-sandboxes/</link><guid isPermaLink="true">https://asksumanta.com/insights/agentic-infrastructure-skills-tools-sandboxes/</guid><pubDate>Fri, 06 Nov 2026 19:40:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>ai</category><category>agents</category><category>architecture</category><category>mcp</category><description>The layers a company needs to run AI agents in production: skills, MCP tools, sandboxes, identity, workflows and telemetry, and what to build first.</description><content:encoded><![CDATA[<p><em>Most companies started with agents as a chat window and a few API calls. Agents that do real work need more underneath them: packaged know-how they can load when needed, tools with clear permissions, somewhere safe to run code, an identity for every action, and a record of what happened. This is the stack I design for teams moving agents from demos to production, layer by layer, with the standards that now exist for each.</em></p><section class="block">
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights</title><link>https://asksumanta.com/</link><description>Articles on AI, data, cloud and technology leadership</description><language>en-gb</language><lastBuildDate>Sat, 07 Nov 2026 08:50:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/insights/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights</title><link>https://asksumanta.com/</link></image><item><title>Tech news, 7 November 2026: an exploited OpenSSH flaw, browser extensions and Claude Dispatch, Microsoft and Oracle, and child online safety in California and Canada</title><link>https://asksumanta.com/insights/tech-news-2026-11-07/</link><guid isPermaLink="true">https://asksumanta.com/insights/tech-news-2026-11-07/</guid><pubDate>Sat, 07 Nov 2026 08:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>security</category><category>ai</category><category>governance</category><description>A CTO&#x27;s take: an OpenSSH flaw on Alpine exploited within hours, Claude Dispatch research, Microsoft winds down Oracle capacity, and new child online safety fights.</description><content:encoded><![CDATA[<p><em>A password bypass in OpenSSH on musl-based Linux, including Alpine, was reportedly exploited within hours of disclosure, a reminder of how much runs on small container images. Researchers showed how a browser extension could steer a desktop AI agent, Microsoft stepped back from older rented AI capacity, and two governments moved in opposite directions on child online safety.</em></p><p>Today's brief covers stories from 5 to 6 November.</p>
+
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Rules</small><div class="dgm-nodes"><span>California and Canada<em>child online safety</em></span></div></div>
+<div class="dgm-tier"><small>AI agents</small><div class="dgm-nodes"><span class="hl">Claude Dispatch research<em>browser extension to desktop agent</em></span></div></div>
+<div class="dgm-tier"><small>Capacity</small><div class="dgm-nodes"><span>Microsoft and Oracle<em>older GPUs retired</em></span></div></div>
+<div class="dgm-tier"><small>Base images</small><div class="dgm-nodes"><span class="hl">OpenSSH on Alpine<em>exploited password bypass</em></span></div></div>
+</div>
+<figcaption>Two of today's stories are about trust boundaries: the smallest base image and the browser next to your agent.</figcaption>
+</figure>
+
+<section class="block">
+<h2>1. An OpenSSH flaw on Alpine Linux is exploited within hours</h2>
+<p>CVE-2026-123158, nicknamed "sshole", lets attackers log in over SSH without a password to certain accounts on Linux systems built on the musl C library without PAM, most notably Alpine Linux; OpenSSH released a fix in version 10.6p2 on 5 November<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. Help Net Security reports exploitation began within hours of disclosure, mainly against accounts with no usable password, such as key-only users<sup class="cite"><a href="#ref-1">1</a></sup>. glibc-based distributions such as Debian, Ubuntu and Fedora are reported as not affected<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<p><strong>CTO take:</strong> Alpine is everywhere in containers, appliances and cloud images, often in places nobody thinks of as "a server". Find every Alpine or other musl-based system that runs sshd, patch and rebuild images, and in the meantime disable password authentication or SSH entirely where it is not needed. Longer term, containers should not run SSH at all, and management access belongs on a separate, tightly controlled path; see <a href="https://asksumanta.com/case-studies/us-utility-management-plane-hardening/">hardening a management plane</a>.</p>
+</section>
+
+<section class="block">
+<h2>2. Researchers show a browser extension steering Claude Desktop through Dispatch</h2>
+<p>Security researchers reported that a malicious or compromised browser extension with access to claude.ai could use Claude's Dispatch feature to make Claude Desktop run commands on a connected computer, which they demonstrated in testing<sup class="cite"><a href="#ref-3">3</a></sup>. They reported no attacks in the wild; coverage differs on whether and how Anthropic will change the feature<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+<p><strong>CTO take:</strong> once a desktop agent can act on a machine, everything that can talk to that agent is part of its attack surface, including browser extensions. Manage extensions with an allowlist on company browsers, keep human approval for agents running commands locally, and avoid automatic approval settings on machines with sensitive access. See <a href="https://asksumanta.com/insights/agentic-infrastructure-skills-tools-sandboxes/">agentic infrastructure</a> and <a href="https://asksumanta.com/insights/prompt-injection-defence-for-agents/">prompt injection defence for agents</a>.</p>
+</section>
+
+<section class="block">
+<h2>3. Microsoft winds down rented AI capacity from Oracle</h2>
+<p>Microsoft is winding down a 2023 arrangement to rent AI computing from Oracle, reportedly because the capacity ran on older Nvidia chips that no longer met its needs, The Next Web reports, citing Bloomberg<sup class="cite"><a href="#ref-5">5</a></sup>. Oracle said demand for its AI infrastructure remains strong, including for earlier-generation GPUs<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<p><strong>CTO take:</strong> AI hardware ages fast, and a contract for a specific chip generation can become poor value well before it ends. When you reserve capacity, prefer terms tied to performance or allowing upgrades, keep commitments shorter than the hardware's useful life, and keep workloads able to move. See <a href="https://asksumanta.com/insights/ai-capacity-crunch-cloud-planning/">planning around the AI capacity crunch</a> and the <a href="https://asksumanta.com/case-studies/us-saas-multi-region-ai-capacity/">multi-region AI capacity case study</a>.</p>
+</section>
+
+<section class="block">
+<h2>4. Google, Meta and TikTok sue to block California's youth social media law</h2>
+<p>Google, Meta and TikTok filed separate lawsuits to block a California law, due to take effect on 1 January 2027, that restricts features such as addictive feeds, endless scrolling and autoplay for users under 16, arguing it violates the First Amendment<sup class="cite"><a href="#ref-6">6</a></sup>.</p>
+<p><strong>CTO take:</strong> whatever the courts decide, the direction of travel is clear: age-aware product behaviour is becoming a legal requirement in more places. Products with younger users should be able to switch features on or off by age and jurisdiction through configuration, not code changes. See <a href="https://asksumanta.com/insights/new-york-youth-chatbot-law-ai-assistants/">New York's youth chatbot law</a> and the <a href="https://asksumanta.com/fractional-cto-united-states/">US page</a>.</p>
+</section>
+
+<section class="block">
+<h2>5. Canada funds a new online safety regulator covering AI chatbots</h2>
+<p>Canada's Budget 2026, released on 5 November, proposes $176.3 million over five years for a Digital Safety and Data Protection Commission<sup class="cite"><a href="#ref-7">7</a></sup>. BetaKit reports the commission would enforce proposed legislation covering social media and AI chatbot services, with powers including binding orders, audits and fines<sup class="cite"><a href="#ref-8">8</a></sup>.</p>
+<p><strong>CTO take:</strong> AI chatbots are now named directly in online safety regimes, not just social networks. If you offer a chatbot to the public in Canada, start recording how you assess and reduce risks of harmful content, especially for younger users; the same evidence will serve in other markets. See <a href="https://asksumanta.com/regions/">where I work</a>.</p>
+</section>
+
+<section class="block">
+<h2>What I'd do this week</h2>
+<ul>
+<li>Inventory Alpine and other musl-based systems running sshd, patch to OpenSSH 10.6p2 and rebuild images.</li>
+<li>Review browser extension policies on machines that run desktop AI agents.</li>
+<li>Check reserved AI capacity contracts for chip generation and upgrade terms.</li>
+<li>Make age and jurisdiction a configuration in consumer products.</li>
+</ul>
+<p>I am based in India, the United States and the UAE, working globally. <a href="https://asksumanta.com/#assess">Analyse your challenge</a> and bring the result to a call.</p>
+</section><p><a href="https://asksumanta.com/insights/tech-news-2026-11-07/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Agentic infrastructure: the skills, tools, sandboxes and controls that let AI agents do real work safely</title><link>https://asksumanta.com/insights/agentic-infrastructure-skills-tools-sandboxes/</link><guid isPermaLink="true">https://asksumanta.com/insights/agentic-infrastructure-skills-tools-sandboxes/</guid><pubDate>Fri, 06 Nov 2026 19:40:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>ai</category><category>agents</category><category>architecture</category><category>mcp</category><description>The layers a company needs to run AI agents in production: skills, MCP tools, sandboxes, identity, workflows and telemetry, and what to build first.</description><content:encoded><![CDATA[<p><em>Most companies started with agents as a chat window and a few API calls. Agents that do real work need more underneath them: packaged know-how they can load when needed, tools with clear permissions, somewhere safe to run code, an identity for every action, and a record of what happened. This is the stack I design for teams moving agents from demos to production, layer by layer, with the standards that now exist for each.</em></p><section class="block">
 <h2>From chat window to infrastructure</h2>
 <p>An agent is a model in a loop: it reads a goal, decides on a step, calls a tool, looks at the result and repeats. That loop is easy to demo and hard to run at scale. Once agents touch real systems, the same questions come up in every company: how does the agent know <em>how</em> we do things here, what is it allowed to touch, where does its code run, whose authority is it acting on, and how do we find out what it did? Each question maps to a layer of infrastructure, and in 2026 most layers have an emerging standard.</p>
 <figure class="dgm">
@@ -2792,52 +2843,4 @@ tracer_provider:
 <section class="block">
 <h2>How I can help</h2>
 <p>I design enterprise MCP platforms, including extension policy, identity integration and server governance, so agent capabilities can grow without fragmenting. See my <a href="https://asksumanta.com/ai-architect/">AI architecture work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
-</section><p><a href="https://asksumanta.com/insights/mcp-extensions-enterprise-strategy/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Colorado&#x27;s AI law reset: what changed in 2026, and what to build regardless</title><link>https://asksumanta.com/insights/colorado-ai-act-2026-reset/</link><guid isPermaLink="true">https://asksumanta.com/insights/colorado-ai-act-2026-reset/</guid><pubDate>Sun, 25 Oct 2026 20:15:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>regulation</category><category>ai</category><category>governance</category><category>leadership</category><description>Colorado&#x27;s 2024 AI Act was delayed, blocked in court and replaced in 2026 by a narrower notice-based law effective 2027. What changed, and the AI governance worth building anyway.</description><content:encoded><![CDATA[<p><em>Colorado passed the first broad US state law on high-risk AI in 2024. By mid-2026 it had been delayed, blocked in federal court and replaced with a narrower notice-based law. For companies selling AI into the US, the lesson goes beyond Colorado.</em></p><p>For two years, the Colorado AI Act was the US law that AI governance teams planned around. It was the first broad state statute aimed at high-risk AI used in consequential decisions such as hiring, lending and housing. Many companies built programmes around its risk management and impact assessment requirements. In 2026 the ground moved.</p>
-<p>This is an architect's summary of public commentary, not legal advice. Confirm current obligations with counsel.</p>
-
-<section class="block">
-<h2>What happened</h2>
-<table class="tbl">
-<thead><tr><th>When</th><th>Event</th></tr></thead>
-<tbody>
-<tr><td>2024</td><td>SB 24-205 enacted, originally effective February 2026, requiring deployers of high-risk AI to adopt risk management programmes, run impact assessments and notify consumers<sup class="cite"><a href="#ref-1">1</a></sup></td></tr>
-<tr><td>Aug 2025</td><td>A special-session bill delayed the effective date to 30 June 2026<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup></td></tr>
-<tr><td>Apr 2026</td><td>A federal court blocked enforcement after a constitutional challenge, with the US Department of Justice intervening in support of the challenge<sup class="cite"><a href="#ref-3">3</a></sup></td></tr>
-<tr><td>May 2026</td><td>SB 26-189 enacted, repealing and reenacting the framework with a narrower, notice-based approach effective 1 January 2027<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-4">4</a></sup></td></tr>
-</tbody>
-</table>
-</section>
-
-<section class="block">
-<h2>What the new law looks like</h2>
-<p>Commentary describes SB 26-189 as built around automated decision-making technology used in consequential decisions, including employment decisions about Colorado applicants and employees<sup class="cite"><a href="#ref-4">4</a></sup>. The headline change is what it no longer requires: covered employers no longer need risk management programmes or annual impact assessments. Instead, the law focuses on notice and disclosure, specific consumer rights and record retention, with duties split between developers and deployers<sup class="cite"><a href="#ref-4">4</a></sup><sup class="cite"><a href="#ref-5">5</a></sup>. The Attorney General is to adopt implementing rules before it takes effect, so operational details may still change<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
-<div class="callout"><p>Regulation can lighten. Customer expectations rarely do. Enterprise buyers will keep asking how your AI makes decisions about people, whatever Colorado requires.</p></div>
-</section>
-
-<section class="block">
-<h2>The broader lesson</h2>
-<p>Colorado's path mirrors what has happened elsewhere. The EU delayed parts of its AI Act through the <a href="https://asksumanta.com/insights/eu-ai-act-digital-omnibus-roadmap/">Digital Omnibus</a>. US federal health IT rules proposed removing AI transparency requirements, as covered in <a href="https://asksumanta.com/insights/hti-1-to-hti-5-health-it-ai-rules/">HTI-1 to HTI-5</a>. Requirements are moving in different directions in different places, and quickly.</p>
-<p>Building a compliance programme around one statute's exact wording is fragile in that environment. Building core governance capabilities that map to several regimes is robust.</p>
-</section>
-
-<section class="block">
-<h2>What I'd build regardless</h2>
-<ol>
-<li><strong>An inventory of automated decisions about people</strong>: which systems influence hiring, credit, pricing, eligibility or access, and how much weight the AI carries.</li>
-<li><strong>Notices generated from the inventory</strong>, so disclosures stay accurate as systems change. Notice is the obligation that survived in Colorado, and it is common elsewhere.</li>
-<li><strong>Records that can answer "why"</strong>: inputs, model versions and outputs for consequential decisions, retained for a defined period, using the logging in <a href="https://asksumanta.com/insights/llm-observability-opentelemetry-genai/">LLM observability</a>.</li>
-<li><strong>A route for people to contest decisions</strong> and reach a human.</li>
-<li><strong>Testing for bias and quality</strong> before release and on a schedule, even where no longer mandated, because it is what customers and courts will ask about. See <a href="https://asksumanta.com/insights/evaluating-ai-agents-reliability/">evaluating AI agents</a>.</li>
-<li><strong>A framework to map against</strong>, such as those compared in <a href="https://asksumanta.com/insights/iso-42001-vs-nist-ai-rmf/">ISO 42001 and the NIST AI RMF</a>, so new state laws become a mapping exercise rather than a new programme.</li>
-</ol>
-</section>
-
-<section class="block">
-<h2>For companies selling into the US from the Gulf or Europe</h2>
-<p>For companies selling from the UAE or Europe into US enterprises, the practical answer is one governance core, evidenced well, then mapped to each market: the EU AI Act, US state laws as they settle, and Gulf rules such as <a href="https://asksumanta.com/insights/difc-regulation-10-ai-systems/">DIFC Regulation 10</a>. That's cheaper than chasing each statute separately, and it survives the next reset.</p>
-</section>
-
-<section class="block">
-<h2>How I can help</h2>
-<p>I help AI companies build governance into their products and platforms, so changing laws mean updated mappings, not rebuilt programmes. As a <a href="https://asksumanta.com/fractional-cto/">fractional CTO</a> I can own that work. Or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
-</section><p><a href="https://asksumanta.com/insights/colorado-ai-act-2026-reset/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
+</section><p><a href="https://asksumanta.com/insights/mcp-extensions-enterprise-strategy/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
