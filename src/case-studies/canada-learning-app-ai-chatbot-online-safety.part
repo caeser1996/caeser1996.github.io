@@ -1,0 +1,85 @@
+<!--{"title": "Case study: AI chatbot safety for a Canadian learning app", "description": "How a Canadian learning app for young people can prepare its AI study chatbot for proposed online safety duties: crisis escalation, no manipulative design, evidence.", "short": "AI chatbot safety for a Canadian app", "h1": "Safe by design: preparing a Canadian learning app's AI study companion for chatbot safety duties", "kicker": "Case study · AI safety and online regulation", "lede": "A Canadian learning app gave secondary students and young adults an AI study companion. Students used it for homework, and sometimes for things that had nothing to do with homework. With Canada proposing duties for AI chatbot services, including emergency measures for crisis situations and limits on manipulative engagement, the company wanted its chatbot to be safe by design and able to show it, before any rules took effect.", "date": "2026-11-07", "datetime": "2026-11-07T15:50:00+04:00", "readtime": "9 min read", "sector": "Consumer education · Canada", "role": "Fractional CTO and AI architect", "engagement": "Assessment, safety architecture and delivery leadership", "scope": "Chatbot safety layer, crisis detection and escalation, engagement design review, evaluation sets, conversation review, safety plan and evidence", "stack": ["LLM gateway with policy enforcement", "Input and output safety classifiers", "Crisis detection and escalation flow", "Human review queue", "Safety evaluation sets", "OpenTelemetry GenAI tracing", "Privacy-minimised conversation logging", "Safety plan and incident register"], "outcomes": ["Every conversation screened for crisis signals, with a defined escalation path to people and crisis resources", "Engagement features that relied on guilt or emotional attachment removed or redesigned", "Safety behaviour tested on every model, prompt or feature change, not only at launch", "A written safety plan backed by evidence the company could show a regulator, parents or schools", "Conversation data kept to what safety review needs, with access limited and logged"], "tags": ["ai", "governance", "llm"], "keywords": ["AI chatbot online safety Canada", "Bill C-34 Safe Social Media Act", "Digital Safety Commission of Canada", "AI chatbot crisis escalation", "manipulative engagement AI companion", "youth AI chatbot safety", "edtech AI study companion", "LLM safety evaluation", "Digital Safety Plan", "fractional CTO Canada"], "faq": [["What would Canada's proposed law require from AI chatbot services?", "Bill C-34, introduced in June 2026 and not yet law, proposes a duty for AI chatbot services to mitigate the risk of harmful content, put emergency measures in place for crisis situations and mitigate harmful chatbot behaviour, with a Digital Safety Commission to oversee compliance."], ["How should an AI chatbot handle a user in crisis?", "Detect crisis signals on every message, switch to a fixed, tested response that gives crisis resources such as Canada's 9-8-8 line, route the case to trained people where the service offers that, and never let the model improvise in those moments."], ["What counts as manipulative engagement in a chatbot?", "Design that encourages emotional dependence or keeps people engaged against their interests, such as a companion persona that guilts users for leaving. The safest approach is to review every engagement feature against the user's interests, not only retention."]], "related": ["/ai-architect/", "/fractional-cto/", "/regions/"], "citations": [{"title": "Bill C-34, the Safe Social Media Act", "url": "https://www.canada.ca/en/canadian-heritage/services/safe-social-media-act.html", "publisher": "Government of Canada", "date": "2026"}, {"title": "Bill C-34: Canada proposes legislation to regulate social media, AI chatbot, and online services", "url": "https://www.torys.com/our-latest-thinking/publications/2026/06/bill-c-34", "publisher": "Torys", "date": "Jun 2026"}, {"title": "Bill C-34 at a glance: Canada's new Digital Safety Act", "url": "https://www.osler.com/en/insights/updates/bill-c-34-at-a-glance-canadas-new-digital-safety-act/", "publisher": "Osler", "date": "2026"}, {"title": "Chapter 5: A safe and sovereign Canada", "url": "https://budget.canada.ca/2026/report-rapport/chap5-en.html", "publisher": "Government of Canada", "date": "5 Nov 2026"}, {"title": "Inside the LLM Call: GenAI Observability with OpenTelemetry", "url": "https://opentelemetry.io/blog/2026/genai-observability/", "publisher": "OpenTelemetry blog", "date": "14 May 2026"}]}-->
+<h2>The situation</h2>
+<p>A Canadian education company ran a learning app used by secondary school students and young adults. Its most popular feature was an AI study companion: a chatbot that explained concepts, quizzed students and helped plan revision. It had a friendly persona, remembered past sessions and was tied into the app's streaks and reminders. Most conversations were about schoolwork. Some were not: exam stress, trouble at home, and occasionally something more serious. The chatbot answered those with whatever the model produced in the moment.</p>
+<p>In June 2026 the Government of Canada introduced Bill C-34, the Safe Social Media Act, which would create duties for social media and AI chatbot services and a Digital Safety Commission to oversee them<sup class="cite"><a href="#ref-1">1</a></sup>. For chatbots, the proposed duty to act responsibly includes mitigating the risk of harmful content, putting emergency measures in place for crisis situations and mitigating harmful chatbot behaviour<sup class="cite"><a href="#ref-2">2</a></sup>. Osler notes the proposals also address manipulative engagement techniques that encourage emotional attachment<sup class="cite"><a href="#ref-3">3</a></sup>. The bill was not yet law, but the company's school and parent customers were already asking the same questions.</p>
+<p><strong>Why now.</strong> Canada's Budget 2026, released on 5 November, proposed $176.3 million over five years for the new commission, a sign that enforcement would be funded, not just legislated<sup class="cite"><a href="#ref-4">4</a></sup>. Building safety in before the rules settled was cheaper than retrofitting it under a deadline.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>Crisis handled every time</strong>: signals detected on every message, with a fixed, tested response and a route to people.</li>
+<li><strong>No manipulative design</strong>: no feature that kept students engaged against their interests.</li>
+<li><strong>Age-appropriate by default</strong>, with stricter settings for younger users.</li>
+<li><strong>Tested continuously</strong>: safety behaviour checked whenever the model, prompts or features change.</li>
+<li><strong>Evidence on hand</strong>: a written safety plan and records that show it works.</li>
+<li><strong>Privacy respected</strong>: conversation data kept only as far as safety needs, under Canada's privacy laws.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Experience</small><div class="dgm-nodes"><span>Study companion<em>explain, quiz, plan</em></span><span>Persona rules<em>helpful, not attached</em></span></div></div>
+<div class="dgm-tier"><small>Safety layer</small><div class="dgm-nodes"><span class="hl">Crisis detector<em>every message</em></span><span>Input and output checks<em>harmful content</em></span><span>Age policy<em>stricter for younger users</em></span></div></div>
+<div class="dgm-tier"><small>Escalation</small><div class="dgm-nodes"><span class="hl">Fixed crisis response<em>resources, no improvising</em></span><span>Human review queue<em>trained staff</em></span></div></div>
+<div class="dgm-tier"><small>Model</small><div class="dgm-nodes"><span>LLM gateway<em>policy and routing</em></span><span>Safety evaluation sets<em>run on every change</em></span></div></div>
+<div class="dgm-tier"><small>Evidence</small><div class="dgm-nodes"><span>Traces<em>minimised, access logged</em></span><span>Incident register<em>what happened, what changed</em></span><span>Safety plan<em>risks and measures</em></span></div></div>
+</div>
+<figcaption>The safety layer sits outside the model, so it holds when the model or prompt changes.</figcaption>
+</figure>
+<p>All model calls went through a gateway that applied policy before and after the model. A dedicated crisis detector ran on every user message, separate from the general content checks, because the cost of missing a crisis is different from the cost of missing an off-topic question. When it fired, the gateway did not call the study model at all. It returned a fixed response, reviewed by clinicians the company worked with, that acknowledged the student and gave crisis resources, including Canada's 9-8-8 helpline, then offered to continue only if the student wanted to.</p>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Message</b><span>A student writes to the study companion</span></li>
+<li class="hl"><b>Screen</b><span>Crisis detector and content checks run before any model call</span></li>
+<li><b>Respond</b><span>If clear, the study model answers within persona and age rules</span></li>
+<li><b>Check</b><span>The output is checked before the student sees it</span></li>
+<li class="hl"><b>Escalate</b><span>Crisis signals switch to the fixed response and queue a human review</span></li>
+<li><b>Learn</b><span>Reviewed cases update evaluation sets and the incident register</span></li>
+</ol>
+<figcaption>The model never decides alone what happens when a student may be at risk.</figcaption>
+</figure>
+
+<h2>The hard part: crisis handling and engagement design</h2>
+<p><strong>Not missing, not over-blocking.</strong> A detector tuned too loosely misses students who need help; tuned too tightly, it interrupts a student revising a history essay about war or a novel about grief. We built evaluation sets from reviewed conversations, written with clinicians and teachers, covering clear crises, ambiguous messages and schoolwork that only looks alarming. Every change to the detector, model or prompts ran against them, and misses were treated as serious defects. See <a href="/insights/llm-evaluation-sets-that-predict-production/">evaluation sets that predict production</a>.</p>
+<p><strong>Reviewing conversations without over-collecting.</strong> Reviewers needed to see what the student said and what the companion replied, as a trace with prompts and outputs, which OpenTelemetry's generative AI conventions make possible to capture as opt-in content<sup class="cite"><a href="#ref-5">5</a></sup>. Conversation content was captured only for flagged cases and samples for evaluation, stored separately with short retention and access logged, rather than logging everything by default; see <a href="/insights/llm-observability-opentelemetry-genai/">LLM observability with OpenTelemetry</a>.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/canada-learning-app-ai-chatbot-online-safety/conversation-review.webp" alt="Aspire dashboard showing an invoke_agent trace with the user message, the assistant output, the number of tool calls, the duration and the token count" width="1464" height="982" loading="lazy"></div><figcaption>A trace with input and output side by side: the view safety reviewers need, applied only to flagged and sampled conversations. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2026/genai-observability/" target="_blank" rel="noopener">OpenTelemetry blog, James Newton-King</a> · CC BY 4.0</span></figcaption></figure>
+<p><strong>Taking manipulation out.</strong> The harder conversation was about engagement. The companion had been tuned to keep sessions going, and some streak reminders used guilt ("your companion misses you"). We reviewed every engagement feature against one question: does this serve the student's learning, or only our retention numbers? Guilt-based messages went, the persona stopped expressing feelings about the student's absence, and late-night nudges were switched off for younger users.</p>
+<div class="callout"><p>A chatbot for young people should be judged by what it does on its worst conversation, not its average one. Design for that conversation first.</p></div>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Product</small><ol><li>Engagement review</li><li class="hl">Persona and age rules</li><li>Parent and school comms</li></ol></div>
+<div class="dgm-lane"><small>Engineering and ML</small><ol><li>Gateway and safety layer</li><li class="hl">Evaluation sets</li><li>Minimised tracing</li></ol></div>
+<div class="dgm-lane"><small>Trust and safety</small><ol><li>Crisis response with clinicians</li><li class="hl">Review queue</li><li>Incident register</li></ol></div>
+<div class="dgm-lane"><small>Legal and privacy</small><ol><li>Track Bill C-34</li><li>Data retention rules</li><li class="hl">Safety plan</li></ol></div>
+</div>
+<figcaption>Safety was a product decision first, an engineering build second and a legal record third.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Assess</b><ul><li>Sample conversations</li><li>Engagement review</li><li>Risk list</li></ul></div>
+<div><small>Phase 2</small><b>Protect</b><ul><li>Crisis detector</li><li>Fixed response</li><li>Review queue</li></ul></div>
+<div><small>Phase 3</small><b>Redesign</b><ul><li>Persona rules</li><li>Engagement changes</li><li>Age settings</li></ul></div>
+<div><small>Phase 4</small><b>Prove</b><ul><li>Evaluation on every change</li><li>Safety plan</li><li>Regular review</li></ul></div>
+</div>
+<figcaption>Protect students first; redesign and documentation follow.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Separate crisis detector before the model</td><td>Rely on the model's own safety behaviour</td><td>Holds when the model or prompt changes</td></tr>
+<tr><td>Fixed, clinician-reviewed crisis response</td><td>Let the model respond with care</td><td>No improvising in the highest-risk moment</td></tr>
+<tr><td>Evaluation sets including schoolwork that looks alarming</td><td>Crisis examples only</td><td>Measures over-blocking as well as misses</td></tr>
+<tr><td>Remove guilt-based engagement</td><td>Keep and soften wording</td><td>Retention is not worth emotional pressure on young users</td></tr>
+<tr><td>Capture content only for flagged and sampled cases</td><td>Log every conversation</td><td>Enough for safety, less exposure for students</td></tr>
+<tr><td>Build before the bill passes</td><td>Wait for final rules</td><td>The core measures make sense under any version</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: put the crisis path outside the model. It meant model upgrades never put the most important behaviour at risk. Differently: involve teachers in building evaluation sets from the start; they knew exactly which schoolwork topics would trip a detector. Related: <a href="/insights/new-york-youth-chatbot-law-ai-assistants/">New York's youth chatbot law</a>, <a href="/insights/prompt-injection-defence-for-agents/">prompt injection defence</a>, the <a href="/case-studies/edtech-curriculum-grounded-tutor/">curriculum-grounded tutor case study</a>, <a href="/insights/tech-news-2026-11-07/">the 7 November tech news</a> and <a href="/regions/">where I work</a>.</p>
+<p>If you run an AI chatbot used by young people, in Canada or elsewhere, see my <a href="/ai-architect/">AI architecture work</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
