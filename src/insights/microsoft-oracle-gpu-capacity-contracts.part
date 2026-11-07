@@ -1,0 +1,68 @@
+<!--{"title": "Microsoft drops older Oracle GPUs: what it means for AI capacity deals", "description": "Microsoft is winding down rented AI capacity on older Nvidia chips. A CTO's take on GPU ageing, contract terms and keeping AI workloads portable across generations.", "h1": "Microsoft drops older Oracle GPUs: what it means for anyone signing AI capacity deals", "kicker": "Analysis · AI infrastructure and cost", "lede": "Microsoft is winding down a 2023 arrangement to rent AI computing from Oracle, reportedly because the capacity ran on older Nvidia chips that no longer met its needs. If one of the largest AI buyers can find rented GPUs falling short within a few years, smaller buyers committing to multi-year capacity should look hard at what they are signing. Here is how I think about GPU ageing, contract terms and the architecture that keeps you free to move.", "date": "2026-11-07", "datetime": "2026-11-07T21:20:00+04:00", "readtime": "8 min read", "format": "news-analysis", "tags": ["news", "ai", "platform", "architecture"], "keywords": ["Microsoft Oracle AI capacity", "GPU depreciation", "GPU useful life", "AI capacity contracts", "neocloud contracts", "reserved GPU capacity", "AI infrastructure cost", "inference portability", "Karpenter instance selection", "CTO AI infrastructure strategy"], "faq": [["Why is Microsoft winding down its Oracle AI capacity deal?", "According to reporting citing Bloomberg, the 2023 arrangement ran on older-generation Nvidia chips that no longer met Microsoft's needs, and Microsoft did not renew it. Oracle said demand for its AI infrastructure remains strong, including for earlier-generation GPUs."], ["How long do AI GPUs stay useful?", "It is disputed. Large cloud companies depreciate servers over roughly five to six years, while critics argue the competitive life of AI chips is much shorter. Older GPUs often remain useful for smaller models and batch work even when they no longer suit the most demanding workloads."], ["What should a company look for in an AI capacity contract?", "Terms shorter than the hardware's useful life for your workload, rights to move to newer generations, pricing tied to performance where possible, and clear exit terms. Keep your workloads portable so you can use those rights."]], "related": ["/ai-architect/", "/fractional-cto/", "/regions/"], "citations": [{"title": "Microsoft is winding down its deal to rent AI computing from Oracle", "url": "https://thenextweb.com/news/microsoft-winds-down-oracle-ai-cloud-capacity-deal", "publisher": "The Next Web", "date": "Nov 2026"}, {"title": "The question everyone in AI is asking: How long before a GPU depreciates?", "url": "https://www.cnbc.com/2025/11/14/ai-gpu-depreciation-coreweave-nvidia-michael-burry.html", "publisher": "CNBC", "date": "14 Nov 2025"}, {"title": "Resetting GPU depreciation: Why AI factories bend, but don't break, useful life assumptions", "url": "https://siliconangle.com/2025/11/22/resetting-gpu-depreciation-ai-factories-bend-dont-break-useful-life-assumptions/", "publisher": "SiliconANGLE", "date": "22 Nov 2025"}, {"title": "Amazon Server and Networking Equipment Useful Life Changes: Last Four Years", "url": "https://www.hudson-labs.com/research/amazon-server-depreciation-amzn", "publisher": "Hudson Labs", "date": "2025"}, {"title": "Introducing Headlamp Plugin for Karpenter: Scaling and Visibility", "url": "https://kubernetes.io/blog/2025/10/06/introducing-headlamp-plugin-for-karpenter/", "publisher": "Kubernetes blog", "date": "6 Oct 2025"}]}-->
+<section class="block">
+<h2>What happened</h2>
+<p>Microsoft is winding down a 2023 arrangement to rent AI computing capacity from Oracle and did not renew it, The Next Web reports, citing Bloomberg; the capacity reportedly ran on older-generation Nvidia chips that no longer met Microsoft's needs<sup class="cite"><a href="#ref-1">1</a></sup>. Oracle responded that demand for its AI infrastructure remains strong, including for earlier-generation GPUs<sup class="cite"><a href="#ref-1">1</a></sup>. Both statements can be true, and the gap between them is the useful lesson: a GPU can be obsolete for one buyer's workload and perfectly good for another's.</p>
+</section>
+
+<section class="block">
+<h2>How fast do AI chips age?</h2>
+<p>Nobody agrees. Large cloud companies depreciate servers over roughly five to six years, while some critics argue the real useful life of AI chips is two to three years and that profits are overstated as a result<sup class="cite"><a href="#ref-2">2</a></sup>. Others argue that older GPUs "cascade" to less demanding work, so long accounting lives bend rather than break<sup class="cite"><a href="#ref-3">3</a></sup>. Amazon moved the other way from its peers in 2025, shortening the assumed life of a subset of servers from six years to five and citing the pace of AI and machine learning development<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+<p>For a buyer, the accounting debate matters less than a simpler distinction: a chip has a <em>physical</em> life, how long it keeps working, and an <em>economic</em> life for a given workload, how long it stays the cheapest way to do that job. Economic life is short for frontier training and large-model serving, and much longer for smaller models, embeddings and batch work.</p>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Newest generation</small><b>Frontier work</b><ul><li>Training</li><li>Largest models</li><li>Latency-critical serving</li></ul></div>
+<div><small>Previous generation</small><b>Mainstream serving</b><ul><li>Mid-sized models</li><li>Fine-tuning</li><li>Most production inference</li></ul></div>
+<div><small>Older generations</small><b>Efficient work</b><ul><li>Small and quantised models</li><li>Embeddings and batch jobs</li><li>Evaluation runs</li></ul></div>
+<div><small>End of life</small><b>Retire</b><ul><li>Cost per output too high</li><li>Power better spent elsewhere</li><li>Support ends</li></ul></div>
+</div>
+<figcaption>The same chip moves down the value chain. Match your workloads to where each generation is still the cheapest option.</figcaption>
+</figure>
+</section>
+
+<section class="block">
+<h2>What this means for capacity contracts</h2>
+<p>Most companies do not rent AI capacity at Microsoft's scale, but many now sign reserved GPU commitments with cloud providers or specialist GPU clouds. The terms that matter most are the ones that protect you when a generation ages faster than expected.</p>
+<table class="tbl">
+<thead><tr><th>Term</th><th>Risky version</th><th>Safer version</th></tr></thead>
+<tbody>
+<tr><td>Length</td><td>Longer than the chip's economic life for your workload</td><td>Matched to that life, with renewal options</td></tr>
+<tr><td>Hardware</td><td>Fixed to one named generation</td><td>Right to move to newer generations on agreed terms</td></tr>
+<tr><td>Price</td><td>Per GPU-hour only</td><td>Per GPU-hour with a path to performance-based or per-output pricing</td></tr>
+<tr><td>Flexibility</td><td>Fixed region and volume</td><td>Ability to shift between regions and step volume up or down</td></tr>
+<tr><td>Exit</td><td>No break clause</td><td>Defined exit or conversion terms</td></tr>
+</tbody>
+</table>
+<p>Providers will not offer all of these, and each one costs something. The point is to price the risk deliberately rather than discover it in year three. See <a href="/insights/ai-capacity-crunch-cloud-planning/">planning around the AI capacity crunch</a> and <a href="/insights/focus-finops-ai-cost-allocation/">AI cost allocation</a>.</p>
+</section>
+
+<section class="block">
+<h2>The architecture that keeps you free to move</h2>
+<p>Contract rights are only useful if your workloads can actually move. Four habits make that cheap:</p>
+<ul>
+<li><strong>Ask for capabilities, not machines.</strong> Describe what a workload needs (memory, accelerator type, zone) and let the platform pick the hardware. Kubernetes node provisioners such as Karpenter choose instance types from requirements, so changing hardware becomes a configuration change<sup class="cite"><a href="#ref-5">5</a></sup>.</li>
+<li><strong>Route by task.</strong> Put a gateway between product features and models, so a task can move to a different model, size or provider without code changes; see <a href="/insights/llm-model-routing/">model routing</a>.</li>
+<li><strong>Make models fit older hardware.</strong> Quantised and smaller models extend the economic life of older GPUs for many tasks, if your evaluations confirm the quality holds.</li>
+<li><strong>Evaluate per generation.</strong> Run the same evaluation set on each hardware and model combination before moving traffic; see <a href="/insights/llm-evaluation-sets-that-predict-production/">evaluation sets that predict production</a>.</li>
+</ul>
+<figure class="fig"><div class="im"><img src="/assets/img/microsoft-oracle-gpu-capacity-contracts/node-claims.webp" alt="Headlamp Karpenter plugin showing a node claim with its name, Ready status, the instance type chosen by the provisioner, CPU, zone and age" width="1521" height="225" loading="lazy"></div><figcaption>The provisioner picked the instance type from the workload's requirements: the pattern that turns a hardware change into a configuration change. <span class="credit">Source: <a href="https://kubernetes.io/blog/2025/10/06/introducing-headlamp-plugin-for-karpenter/" target="_blank" rel="noopener">Kubernetes blog, René Dudfield and Anirban Singha</a> · CC BY 4.0</span></figcaption></figure>
+<div class="callout"><p>Buy GPU capacity the way you would buy any fast-depreciating asset: short enough to stay current, flexible enough to move, and with workloads designed to use whatever generation is cheapest for the job.</p></div>
+</section>
+
+<section class="block">
+<h2>Who should act</h2>
+<ul>
+<li><strong>Companies with reserved GPU commitments</strong>: list each contract's term, hardware generation and exit terms against your workload mix.</li>
+<li><strong>Companies about to sign</strong>: negotiate generation and region flexibility before price; it is worth more over the term.</li>
+<li><strong>Teams running their own GPUs</strong>: plan how each generation moves down to cheaper work, rather than treating hardware as either current or scrap. See the <a href="/case-studies/us-saas-multi-region-ai-capacity/">multi-region AI capacity case study</a>.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>CTO take</h2>
+<p>Microsoft's decision is less a verdict on Oracle than a reminder that AI hardware has the economics of a fast-moving consumable, not a building. The buyers who do well will treat capacity as a portfolio: newest chips for the few workloads that need them, older ones for everything they can still do cheaply, and contracts and architecture that let work move between them as prices and needs change. Read alongside <a href="/insights/tech-news-2026-11-07/">the 7 November tech news</a>.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I help companies plan AI capacity, review GPU and model contracts, and build platforms that move workloads between providers and hardware generations. I am based in India, the United States and the UAE, working globally. See <a href="/ai-architect/">AI architecture</a>, <a href="/regions/">where I work</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
