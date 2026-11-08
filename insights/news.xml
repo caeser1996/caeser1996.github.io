@@ -1,6 +1,63 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Daily tech news</title><link>https://asksumanta.com/</link><description>A CTO&#x27;s take on the day&#x27;s releases, deals and rules</description><language>en-gb</language><lastBuildDate>Sun, 08 Nov 2026 08:50:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/insights/news.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Daily tech news</title><link>https://asksumanta.com/</link></image><item><title>Tech news, 8 November 2026: the Chainalysis breach widens, Palo Alto eyes agent identity, Moonshot looks to Europe for GPUs and China blocks SoftBank&#x27;s robotics deal</title><link>https://asksumanta.com/insights/tech-news-2026-11-08/</link><guid isPermaLink="true">https://asksumanta.com/insights/tech-news-2026-11-08/</guid><pubDate>Sun, 08 Nov 2026 08:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>security</category><category>ai</category><category>governance</category><description>A CTO&#x27;s take: Chainalysis says an agentic attack exposed credentials for all users, Palo Alto eyes agent identity, Moonshot seeks GPUs in Europe and China blocks ABB.</description><content:encoded><![CDATA[<p><em>A blockchain analytics company said an attack it describes as using offensive agentic techniques exposed credentials and live tokens for all its users. Security vendors are buying their way into identity for AI agents, a Chinese AI lab reportedly sought GPU capacity in Europe that it cannot import, and China stopped a robotics takeover in a security review.</em></p><p>Today's brief covers stories from 5 to 7 November.</p>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Daily tech news</title><link>https://asksumanta.com/</link><description>A CTO&#x27;s take on the day&#x27;s releases, deals and rules</description><language>en-gb</language><lastBuildDate>Sun, 08 Nov 2026 21:20:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/insights/news.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Daily tech news</title><link>https://asksumanta.com/</link></image><item><title>OpenSSH sshole: what an exploited Alpine login bypass says about the images you run</title><link>https://asksumanta.com/insights/openssh-sshole-alpine-images/</link><guid isPermaLink="true">https://asksumanta.com/insights/openssh-sshole-alpine-images/</guid><pubDate>Sun, 08 Nov 2026 21:20:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>security</category><category>platform</category><category>kubernetes</category><description>An OpenSSH flaw on musl-based Linux such as Alpine was exploited within hours. A CTO&#x27;s take on base images, key-only accounts and why containers should not run SSH.</description><content:encoded><![CDATA[<p><em>CVE-2026-123158, nicknamed sshole, let attackers log in over SSH without a password to accounts that were never meant to accept one, on Linux systems built on the musl C library without PAM, most notably Alpine. A fix shipped on 5 November and exploitation was reported within hours. The patch is simple. The lessons about base images, implicit assumptions and SSH in places it does not belong are worth more.</em></p><section class="block">
+<h2>What happened</h2>
+<p>On musl-based Linux systems without PAM, OpenSSH before 10.6p2 could let an attacker log in to accounts that have no usable password, such as key-only users, by sending an over-long password<sup class="cite"><a href="#ref-2">2</a></sup><sup class="cite"><a href="#ref-5">5</a></sup>. Alpine Linux's default openssh-server build fits that description, and other musl-based images may too; glibc-based distributions such as Debian, Ubuntu and Fedora are reported as not affected<sup class="cite"><a href="#ref-2">2</a></sup>. OpenSSH released 10.6p2 on 5 November, and Help Net Security reports exploitation began within hours<sup class="cite"><a href="#ref-1">1</a></sup>. The Hacker News reports attackers gained root on an Alpine honeypot<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+<p>Reporting describes the mechanism as an interaction between two components rather than a bug in either alone: musl's password hashing function rejects oversized input with a value that happens to match how locked accounts are marked, and sshd compares the two<sup class="cite"><a href="#ref-5">5</a></sup>. OpenSSH and musl maintainers have publicly disagreed about where the fault lies<sup class="cite"><a href="#ref-4">4</a></sup>. For defenders, that debate matters less than the fact that each component behaved as its own authors expected.</p>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Reach</b><span>An attacker finds sshd exposed on a musl-based host or image</span></li>
+<li><b>Send</b><span>A login attempt with an over-long password for a known account</span></li>
+<li class="hl"><b>Mismatch</b><span>The hashing result matches the marker for "no password"</span></li>
+<li class="hl"><b>Log in</b><span>A key-only account accepts the login</span></li>
+<li><b>Escalate</b><span>If that account can become root, the host is lost</span></li>
+<li><b>Spread</b><span>Credentials and network access on the host are used next</span></li>
+</ol>
+<figcaption>Every step relied on an assumption: that a key-only account cannot accept a password.</figcaption>
+</figure>
+</section>
+
+<section class="block">
+<h2>Lesson 1: "minimal" images are not minimal attack surface</h2>
+<p>Alpine is popular because it is small, and small images are usually safer. But a small image that ships an SSH server is a small image with an internet-facing login service. The question to ask of every base image is not "how big is it?" but "what does it listen on, and who can log in?".</p>
+<p>The flaw also only affected one C library. Many organisations do not know which of their images, appliances and embedded devices use musl rather than glibc, because nobody needed to. Add the C library and the presence of sshd to your image inventory; an SBOM per image makes this a query rather than a hunt. See <a href="https://asksumanta.com/insights/ai-model-supply-chain-security/">supply chain security</a>.</p>
+</section>
+
+<section class="block">
+<h2>Lesson 2: state your intent, do not rely on side effects</h2>
+<p>Many hosts were exposed because password logins were never explicitly disabled; operators relied on accounts having no password. OpenSSH's developers advised setting PasswordAuthentication to no, or disabling SSH, until systems are patched<sup class="cite"><a href="#ref-2">2</a></sup>. That is good practice regardless of this bug: configuration should say what you mean ("no password logins") rather than depend on the state of every account.</p>
+<p>The same applies to default users in cloud images. Reporting notes that the default user on some official Alpine cloud images could become root, which turned a login bypass into full control<sup class="cite"><a href="#ref-2">2</a></sup>. Review which default accounts your images ship with and what they can do.</p>
+</section>
+
+<section class="block">
+<h2>Lesson 3: containers should not run SSH</h2>
+<p>A container that runs sshd invites people to log in and change it, and invites attackers to do the same. Containers should be rebuilt and replaced, not maintained by hand. Where engineers need to debug, use the orchestrator's audited access, and treat any container that someone has changed interactively as untrusted until it is replaced. The Kubernetes community has described exactly that pattern: tag pods that have been accessed interactively and evict them after a set time<sup class="cite"><a href="#ref-6">6</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/openssh-sshole-alpine-images/exec-drift-eviction.webp" alt="Sequence diagram: a developer runs kubectl exec, the API server calls an admission controller webhook which tags the pod as interacted and allows the request, and the controller later evicts tagged pods after a predefined interval" width="1400" height="988" loading="lazy"></div><figcaption>Interactive access is allowed but recorded, and the touched pod is replaced: a better model than SSH into containers. <span class="credit">Source: <a href="https://kubernetes.io/blog/2021/12/21/admission-controllers-for-container-drift/" target="_blank" rel="noopener">Kubernetes blog, Saifuding Diliyaer</a> · CC BY 4.0</span></figcaption></figure>
+<p>For hosts that genuinely need SSH, put it behind a management network or an access broker, with short-lived certificates rather than static keys, and never on the open internet. See the <a href="https://asksumanta.com/case-studies/us-utility-management-plane-hardening/">management plane hardening case study</a>.</p>
+</section>
+
+<section class="block">
+<h2>What to do this week</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Today</small><div class="dgm-nodes"><span class="hl">Patch<em>OpenSSH 10.6p2, rebuild images</em></span><span>Disable password logins<em>explicitly, everywhere</em></span></div></div>
+<div class="dgm-tier"><small>This month</small><div class="dgm-nodes"><span>Inventory<em>C library and sshd per image</em></span><span>Default users<em>remove or restrict</em></span></div></div>
+<div class="dgm-tier"><small>This quarter</small><div class="dgm-nodes"><span class="hl">No SSH in containers<em>audited access instead</em></span><span>Access broker<em>short-lived certificates for hosts</em></span></div></div>
+</div>
+<figcaption>Patch now, then remove the conditions that made a login bypass so dangerous.</figcaption>
+</figure>
+<div class="callout"><p>The fix for sshole is one package update. The fix for the next one is knowing what runs SSH, saying explicitly how it may be used, and not running it where it does not belong.</p></div>
+</section>
+
+<section class="block">
+<h2>CTO take</h2>
+<p>This was not an exotic attack. It exploited an assumption almost every team makes, on a base image almost every team uses, and attackers moved within hours. Teams with an image inventory, explicit SSH configuration and no SSH in containers will spend this week on a routine patch. Teams without them will spend it finding out where Alpine is running. Read alongside <a href="https://asksumanta.com/insights/tech-news-2026-11-07/">the 7 November tech news</a>, where the flaw first appeared on this site.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I help teams harden platforms, from base images and access paths to Kubernetes and management planes. I am based in India, the United States and the UAE, working globally. See <a href="https://asksumanta.com/fractional-cto/">fractional CTO work</a>, <a href="https://asksumanta.com/regions/">where I work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section><p><a href="https://asksumanta.com/insights/openssh-sshole-alpine-images/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Tech news, 8 November 2026: the Chainalysis breach widens, Palo Alto eyes agent identity, Moonshot looks to Europe for GPUs and China blocks SoftBank&#x27;s robotics deal</title><link>https://asksumanta.com/insights/tech-news-2026-11-08/</link><guid isPermaLink="true">https://asksumanta.com/insights/tech-news-2026-11-08/</guid><pubDate>Sun, 08 Nov 2026 08:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>security</category><category>ai</category><category>governance</category><description>A CTO&#x27;s take: Chainalysis says an agentic attack exposed credentials for all users, Palo Alto eyes agent identity, Moonshot seeks GPUs in Europe and China blocks ABB.</description><content:encoded><![CDATA[<p><em>A blockchain analytics company said an attack it describes as using offensive agentic techniques exposed credentials and live tokens for all its users. Security vendors are buying their way into identity for AI agents, a Chinese AI lab reportedly sought GPU capacity in Europe that it cannot import, and China stopped a robotics takeover in a security review.</em></p><p>Today's brief covers stories from 5 to 7 November.</p>
 
 <figure class="dgm">
 <div class="dgm-stack">

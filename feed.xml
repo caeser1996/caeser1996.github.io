@@ -1,6 +1,63 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link><description>Fractional CTO and AI architect: insights, case studies and daily tech news.</description><language>en-gb</language><lastBuildDate>Sun, 08 Nov 2026 15:50:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link></image><item><title>Every key has an owner: machine and AI agent identity for a South African fintech</title><link>https://asksumanta.com/case-studies/south-africa-fintech-machine-agent-identity/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/south-africa-fintech-machine-agent-identity/</guid><pubDate>Sun, 08 Nov 2026 15:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>security</category><category>governance</category><category>ai</category><description>How a South African fintech can control the credentials its services and AI agents use: inventory, short-lived tokens, agent identities and a tested revoke-all.</description><content:encoded><![CDATA[<p><em>A South African investment and payments platform had tightened staff logins years ago. The credentials its software used were another matter: cloud keys in CI, database passwords in configuration, partner API keys shared between services, and now AI agents with their own tool access. After an attack elsewhere showed how quickly automated attackers turn one foothold into every reachable token, the company set out to know, own, shorten and be able to revoke every machine credential it had.</em></p><h2>The situation</h2>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link><description>Fractional CTO and AI architect: insights, case studies and daily tech news.</description><language>en-gb</language><lastBuildDate>Sun, 08 Nov 2026 21:20:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link></image><item><title>OpenSSH sshole: what an exploited Alpine login bypass says about the images you run</title><link>https://asksumanta.com/insights/openssh-sshole-alpine-images/</link><guid isPermaLink="true">https://asksumanta.com/insights/openssh-sshole-alpine-images/</guid><pubDate>Sun, 08 Nov 2026 21:20:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>security</category><category>platform</category><category>kubernetes</category><description>An OpenSSH flaw on musl-based Linux such as Alpine was exploited within hours. A CTO&#x27;s take on base images, key-only accounts and why containers should not run SSH.</description><content:encoded><![CDATA[<p><em>CVE-2026-123158, nicknamed sshole, let attackers log in over SSH without a password to accounts that were never meant to accept one, on Linux systems built on the musl C library without PAM, most notably Alpine. A fix shipped on 5 November and exploitation was reported within hours. The patch is simple. The lessons about base images, implicit assumptions and SSH in places it does not belong are worth more.</em></p><section class="block">
+<h2>What happened</h2>
+<p>On musl-based Linux systems without PAM, OpenSSH before 10.6p2 could let an attacker log in to accounts that have no usable password, such as key-only users, by sending an over-long password<sup class="cite"><a href="#ref-2">2</a></sup><sup class="cite"><a href="#ref-5">5</a></sup>. Alpine Linux's default openssh-server build fits that description, and other musl-based images may too; glibc-based distributions such as Debian, Ubuntu and Fedora are reported as not affected<sup class="cite"><a href="#ref-2">2</a></sup>. OpenSSH released 10.6p2 on 5 November, and Help Net Security reports exploitation began within hours<sup class="cite"><a href="#ref-1">1</a></sup>. The Hacker News reports attackers gained root on an Alpine honeypot<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+<p>Reporting describes the mechanism as an interaction between two components rather than a bug in either alone: musl's password hashing function rejects oversized input with a value that happens to match how locked accounts are marked, and sshd compares the two<sup class="cite"><a href="#ref-5">5</a></sup>. OpenSSH and musl maintainers have publicly disagreed about where the fault lies<sup class="cite"><a href="#ref-4">4</a></sup>. For defenders, that debate matters less than the fact that each component behaved as its own authors expected.</p>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Reach</b><span>An attacker finds sshd exposed on a musl-based host or image</span></li>
+<li><b>Send</b><span>A login attempt with an over-long password for a known account</span></li>
+<li class="hl"><b>Mismatch</b><span>The hashing result matches the marker for "no password"</span></li>
+<li class="hl"><b>Log in</b><span>A key-only account accepts the login</span></li>
+<li><b>Escalate</b><span>If that account can become root, the host is lost</span></li>
+<li><b>Spread</b><span>Credentials and network access on the host are used next</span></li>
+</ol>
+<figcaption>Every step relied on an assumption: that a key-only account cannot accept a password.</figcaption>
+</figure>
+</section>
+
+<section class="block">
+<h2>Lesson 1: "minimal" images are not minimal attack surface</h2>
+<p>Alpine is popular because it is small, and small images are usually safer. But a small image that ships an SSH server is a small image with an internet-facing login service. The question to ask of every base image is not "how big is it?" but "what does it listen on, and who can log in?".</p>
+<p>The flaw also only affected one C library. Many organisations do not know which of their images, appliances and embedded devices use musl rather than glibc, because nobody needed to. Add the C library and the presence of sshd to your image inventory; an SBOM per image makes this a query rather than a hunt. See <a href="https://asksumanta.com/insights/ai-model-supply-chain-security/">supply chain security</a>.</p>
+</section>
+
+<section class="block">
+<h2>Lesson 2: state your intent, do not rely on side effects</h2>
+<p>Many hosts were exposed because password logins were never explicitly disabled; operators relied on accounts having no password. OpenSSH's developers advised setting PasswordAuthentication to no, or disabling SSH, until systems are patched<sup class="cite"><a href="#ref-2">2</a></sup>. That is good practice regardless of this bug: configuration should say what you mean ("no password logins") rather than depend on the state of every account.</p>
+<p>The same applies to default users in cloud images. Reporting notes that the default user on some official Alpine cloud images could become root, which turned a login bypass into full control<sup class="cite"><a href="#ref-2">2</a></sup>. Review which default accounts your images ship with and what they can do.</p>
+</section>
+
+<section class="block">
+<h2>Lesson 3: containers should not run SSH</h2>
+<p>A container that runs sshd invites people to log in and change it, and invites attackers to do the same. Containers should be rebuilt and replaced, not maintained by hand. Where engineers need to debug, use the orchestrator's audited access, and treat any container that someone has changed interactively as untrusted until it is replaced. The Kubernetes community has described exactly that pattern: tag pods that have been accessed interactively and evict them after a set time<sup class="cite"><a href="#ref-6">6</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/openssh-sshole-alpine-images/exec-drift-eviction.webp" alt="Sequence diagram: a developer runs kubectl exec, the API server calls an admission controller webhook which tags the pod as interacted and allows the request, and the controller later evicts tagged pods after a predefined interval" width="1400" height="988" loading="lazy"></div><figcaption>Interactive access is allowed but recorded, and the touched pod is replaced: a better model than SSH into containers. <span class="credit">Source: <a href="https://kubernetes.io/blog/2021/12/21/admission-controllers-for-container-drift/" target="_blank" rel="noopener">Kubernetes blog, Saifuding Diliyaer</a> · CC BY 4.0</span></figcaption></figure>
+<p>For hosts that genuinely need SSH, put it behind a management network or an access broker, with short-lived certificates rather than static keys, and never on the open internet. See the <a href="https://asksumanta.com/case-studies/us-utility-management-plane-hardening/">management plane hardening case study</a>.</p>
+</section>
+
+<section class="block">
+<h2>What to do this week</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Today</small><div class="dgm-nodes"><span class="hl">Patch<em>OpenSSH 10.6p2, rebuild images</em></span><span>Disable password logins<em>explicitly, everywhere</em></span></div></div>
+<div class="dgm-tier"><small>This month</small><div class="dgm-nodes"><span>Inventory<em>C library and sshd per image</em></span><span>Default users<em>remove or restrict</em></span></div></div>
+<div class="dgm-tier"><small>This quarter</small><div class="dgm-nodes"><span class="hl">No SSH in containers<em>audited access instead</em></span><span>Access broker<em>short-lived certificates for hosts</em></span></div></div>
+</div>
+<figcaption>Patch now, then remove the conditions that made a login bypass so dangerous.</figcaption>
+</figure>
+<div class="callout"><p>The fix for sshole is one package update. The fix for the next one is knowing what runs SSH, saying explicitly how it may be used, and not running it where it does not belong.</p></div>
+</section>
+
+<section class="block">
+<h2>CTO take</h2>
+<p>This was not an exotic attack. It exploited an assumption almost every team makes, on a base image almost every team uses, and attackers moved within hours. Teams with an image inventory, explicit SSH configuration and no SSH in containers will spend this week on a routine patch. Teams without them will spend it finding out where Alpine is running. Read alongside <a href="https://asksumanta.com/insights/tech-news-2026-11-07/">the 7 November tech news</a>, where the flaw first appeared on this site.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I help teams harden platforms, from base images and access paths to Kubernetes and management planes. I am based in India, the United States and the UAE, working globally. See <a href="https://asksumanta.com/fractional-cto/">fractional CTO work</a>, <a href="https://asksumanta.com/regions/">where I work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section><p><a href="https://asksumanta.com/insights/openssh-sshole-alpine-images/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Every key has an owner: machine and AI agent identity for a South African fintech</title><link>https://asksumanta.com/case-studies/south-africa-fintech-machine-agent-identity/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/south-africa-fintech-machine-agent-identity/</guid><pubDate>Sun, 08 Nov 2026 15:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>security</category><category>governance</category><category>ai</category><description>How a South African fintech can control the credentials its services and AI agents use: inventory, short-lived tokens, agent identities and a tested revoke-all.</description><content:encoded><![CDATA[<p><em>A South African investment and payments platform had tightened staff logins years ago. The credentials its software used were another matter: cloud keys in CI, database passwords in configuration, partner API keys shared between services, and now AI agents with their own tool access. After an attack elsewhere showed how quickly automated attackers turn one foothold into every reachable token, the company set out to know, own, shorten and be able to revoke every machine credential it had.</em></p><h2>The situation</h2>
 <p>A South African platform offered investment accounts and payments to retail customers and small businesses. Staff identity was in good shape: single sign-on, multi-factor authentication and quarterly access reviews. Software identity was not. Pipelines deployed with long-lived cloud access keys. Services read database passwords from configuration files. Partner API keys were shared between several services, and nobody was sure which. Over the past year, teams had added AI agents: a support assistant that looked up account status, and internal agents that triaged alerts and drafted reconciliation reports, each with its own set of keys.</p>
 <p>As a financial institution in scope of Joint Standard 2 of 2024, issued by the FSCA and the Prudential Authority and effective from 1 June 2025, the company had to maintain cybersecurity and cyber resilience controls, including identity and access management<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>. A security compromise involving personal information would also trigger notification duties under POPIA. The company's access controls were written around people; its regulator would not see the distinction as an excuse.</p>
 <p><strong>Why now.</strong> In late October, Chainalysis disclosed an intrusion by an actor using "offensive agentic techniques"<sup class="cite"><a href="#ref-2">2</a></sup>. On 6 November it said the attack had exposed password hashes and live tokens for all users, and it took key products offline<sup class="cite"><a href="#ref-1">1</a></sup>. The lesson for the board was simple: automated attackers find and use every credential they can reach, quickly. Industry research suggested the company was not unusual: a 2026 identity survey reported that only a small minority of organisations automate the lifecycle of machine identities<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
@@ -3304,82 +3361,4 @@
 
 <h2>What I'd do again, and differently</h2>
 <p>Again: build the inventory and tracing first; everything else depended on them. Differently: design the candidate-facing review process earlier. Explaining an AI-assisted outcome in plain language was harder than producing the technical evidence. For broader governance context, see <a href="https://asksumanta.com/case-studies/ai-governance-programme-eu-us-uae/">an AI governance programme across jurisdictions</a> and <a href="https://asksumanta.com/insights/iso-42001-vs-nist-ai-rmf/">ISO 42001 vs NIST AI RMF</a>.</p>
-<p>If you deploy AI in hiring, lending or other high-impact decisions in Asia-Pacific or elsewhere, my <a href="https://asksumanta.com/ai-architect/">AI architecture work</a> and <a href="https://asksumanta.com/regions/">regional pages</a> explain how I approach it, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/korea-ai-basic-act-hiring-platform/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Ready before it is law: preparing a UK managed service provider for the Cyber Security and Resilience Bill</title><link>https://asksumanta.com/case-studies/uk-msp-cyber-resilience-bill-readiness/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/uk-msp-cyber-resilience-bill-readiness/</guid><pubDate>Thu, 29 Oct 2026 17:20:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>security</category><category>governance</category><category>platform</category><description>How a UK managed service provider can prepare for regulation under the Cyber Security and Resilience Bill: privileged access, incident reporting and customer notice.</description><content:encoded><![CDATA[<p><em>A mid-sized UK managed service provider held administrator access to hundreds of customer environments. The Cyber Security and Resilience Bill would bring providers like it under the NIS regulations for the first time. The goal was to get ahead of it: control privileged access centrally, detect and report incidents quickly, and tell affected customers promptly.</em></p><h2>The situation</h2>
-<p>A UK managed service provider looked after IT for several hundred organisations: small businesses, schools, professional services firms and a few public-sector suppliers. Its technicians held administrator access to customer networks, cloud tenants and line-of-business systems. Over the years, access had accumulated in shared accounts, remote management tools and scripts with stored credentials.</p>
-<p><strong>Why now.</strong> The Cyber Security and Resilience Bill would bring medium and large managed service providers within the scope of the NIS regulations, because of the privileged access they hold to customer systems<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. It also proposes duties to report significant incidents and to identify and notify customers likely to be affected<sup class="cite"><a href="#ref-3">3</a></sup>. In October 2026 the Bill was still before Parliament<sup class="cite"><a href="#ref-4">4</a></sup>, but the direction was clear, and customers were already asking about it in renewals.</p>
-
-<h2>What had to be true</h2>
-<ul>
-<li><strong>No standing administrator access</strong> to customer environments.</li>
-<li><strong>Every privileged session attributable</strong> to a named technician, approved and recorded.</li>
-<li><strong>Incidents detected and escalated fast</strong>, with a process that can support early notification and a fuller report.</li>
-<li><strong>Affected customers identifiable within minutes</strong>, not days of spreadsheet work.</li>
-<li><strong>Automation under the same rules</strong> as people, including AI-assisted tools.</li>
-</ul>
-
-<h2>Architecture</h2>
-<figure class="dgm">
-<div class="dgm-stack">
-<div class="dgm-tier"><small>People and tools</small><div class="dgm-nodes"><span>Technicians<em>named identities</em></span><span>Automation and agents<em>scoped service identities</em></span></div></div>
-<div class="dgm-tier"><small>Identity</small><div class="dgm-nodes"><span class="hl">Central identity provider<em>MFA, groups, roles</em></span><span>Just-in-time elevation<em>approved, time-limited</em></span></div></div>
-<div class="dgm-tier"><small>Access</small><div class="dgm-nodes"><span class="hl">Privileged access broker<em>no shared passwords</em></span><span>Session recording<em>per customer</em></span><span>Remote tools<em>behind the broker</em></span></div></div>
-<div class="dgm-tier"><small>Detect</small><div class="dgm-nodes"><span>Security event pipeline<em>from tools and tenants</em></span><span class="hl">Incident case management<em>clock starts on detection</em></span></div></div>
-<div class="dgm-tier"><small>Notify</small><div class="dgm-nodes"><span class="hl">Customer impact map<em>which tools touch which customers</em></span><span>Notification service<em>templates and audit</em></span></div></div>
-</div>
-<figcaption>Identity is the control point; the impact map turns an incident into a list of customers to notify.</figcaption>
-</figure>
-
-<h2>The data flow, end to end</h2>
-<figure class="dgm">
-<ol class="dgm-flow g3">
-<li><b>Request</b><span>A technician asks for access to a customer system for a ticket</span></li>
-<li><b>Approve</b><span>Time-limited elevation approved against the ticket</span></li>
-<li><b>Connect</b><span>Access through the broker; the session is recorded</span></li>
-<li class="hl"><b>Detect</b><span>Anomalies in tools or tenants open an incident automatically</span></li>
-<li class="hl"><b>Assess</b><span>The impact map lists affected customers and services</span></li>
-<li><b>Notify</b><span>Early notifications sent, followed by a fuller report</span></li>
-</ol>
-<figcaption>The same identity and access records that make work auditable also answer "who is affected?".</figcaption>
-</figure>
-
-<h2>The hard part: one front door for hundreds of environments</h2>
-<p>Access was spread across per-customer accounts in dozens of tools, each with its own login and its own way of revoking access. The design moved to a single identity provider for all technician and automation access, with customers' systems trusting it for scoped, time-limited sessions. The same principle is spreading in AI tooling: the Model Context Protocol's Enterprise-Managed Authorization lets an organisation provision access to many servers through its identity provider, scoped to users' groups and roles, instead of authenticating to each one separately<sup class="cite"><a href="#ref-6">6</a></sup>.</p>
-<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/uk-msp-cyber-resilience-bill-readiness/central-authorisation.webp" alt="Side-by-side diagram: on the left a user authenticates separately to five servers, on the right the user signs in once through an identity provider which connects to all authorised servers" width="1200" height="659" loading="lazy"></div><figcaption>Per-system logins versus one identity provider: central control is what makes access revocable and auditable. <span class="credit">Source: <a href="https://blog.modelcontextprotocol.io/posts/enterprise-managed-auth/" target="_blank" rel="noopener">Model Context Protocol blog, Paul Carleton</a> · CC BY 4.0</span></figcaption></figure>
-<div class="callout"><p>An MSP's biggest risk is its own access. Make every privileged session temporary, attributable and recorded, and most of the regulatory work follows.</p></div>
-<p>Automation got no exemption. Scripts and AI-assisted tools used scoped service identities through the same broker, with no stored administrator passwords. More on that in <a href="https://asksumanta.com/insights/securing-mcp-servers-checklist/">securing MCP servers</a> and <a href="https://asksumanta.com/insights/ai-agent-sandboxing-lessons-anthropic-s1/">sandboxing AI agents</a>.</p>
-
-<h2>How it ran</h2>
-<figure class="dgm">
-<div class="dgm-lanes">
-<div class="dgm-lane"><small>Security</small><ol><li>Privileged access inventory</li><li class="hl">Broker and recording</li><li>CAF mapping</li></ol></div>
-<div class="dgm-lane"><small>Service delivery</small><ol><li>Ticket-linked access</li><li>Technician training</li><li class="hl">Incident drills</li></ol></div>
-<div class="dgm-lane"><small>Commercial</small><ol><li>Customer impact map</li><li>Notification templates</li><li>Contract updates</li></ol></div>
-</div>
-<figcaption>Security built the controls; service delivery made them part of everyday work; commercial owned the customer side.</figcaption>
-</figure>
-<figure class="dgm">
-<div class="dgm-phases">
-<div><small>Phase 1</small><b>Inventory</b><ul><li>Every privileged account</li><li>Every remote tool</li><li>Customer to tool map</li></ul></div>
-<div><small>Phase 2</small><b>Centralise</b><ul><li>Identity provider</li><li>Privileged access broker</li><li>Remove shared credentials</li></ul></div>
-<div><small>Phase 3</small><b>Detect</b><ul><li>Event pipeline</li><li>Incident case management</li><li>Reporting timelines</li></ul></div>
-<div><small>Phase 4</small><b>Prove</b><ul><li>Notification drills</li><li>CAF assessment</li><li>Customer assurance pack</li></ul></div>
-</div>
-<figcaption>Inventory first: you cannot remove access you have not found.</figcaption>
-</figure>
-<p>Controls were mapped to the NCSC Cyber Assessment Framework, which organises security into outcomes for managing risk, protecting against attack, detecting events and minimising impact<sup class="cite"><a href="#ref-5">5</a></sup>. That gave customers and, later, a regulator a recognised way to read the programme.</p>
-
-<h2>Key decisions and trade-offs</h2>
-<table class="tbl">
-<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
-<tbody>
-<tr><td>Prepare before the Bill passes</td><td>Wait for the final text</td><td>The core controls are good practice either way, and customers were asking now</td></tr>
-<tr><td>Just-in-time access only</td><td>Standing admin accounts with strong passwords</td><td>No standing access means less to steal</td></tr>
-<tr><td>One identity provider for people and automation</td><td>Per-tool accounts</td><td>Central revocation and a single audit trail</td></tr>
-<tr><td>Customer impact map as a system</td><td>Spreadsheets</td><td>Prompt notification needs answers in minutes</td></tr>
-<tr><td>Map to the NCSC CAF</td><td>A home-grown checklist</td><td>A recognised framework customers and regulators understand</td></tr>
-</tbody>
-</table>
-
-<h2>What I'd do again, and differently</h2>
-<p>Again: start with the privileged access inventory, because it surfaced most of the risk. Differently: run the first notification drill earlier. It showed that knowing which customers were affected was harder than detecting the incident. Related reading: <a href="https://asksumanta.com/insights/defender-first-ai-models-vulnerability-management/">defender-first AI and patch cycles</a> and <a href="https://asksumanta.com/case-studies/security-operations-ai-copilot/">an AI copilot for the security operations centre</a>.</p>
-<p>If you run or rely on managed services in the UK, my <a href="https://asksumanta.com/fractional-cto-united-kingdom/">work with UK companies</a> explains how I approach it, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/uk-msp-cyber-resilience-bill-readiness/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
+<p>If you deploy AI in hiring, lending or other high-impact decisions in Asia-Pacific or elsewhere, my <a href="https://asksumanta.com/ai-architect/">AI architecture work</a> and <a href="https://asksumanta.com/regions/">regional pages</a> explain how I approach it, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/korea-ai-basic-act-hiring-platform/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>

@@ -1,6 +1,63 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights</title><link>https://asksumanta.com/</link><description>Articles on AI, data, cloud and technology leadership</description><language>en-gb</language><lastBuildDate>Sun, 08 Nov 2026 08:50:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/insights/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights</title><link>https://asksumanta.com/</link></image><item><title>Tech news, 8 November 2026: the Chainalysis breach widens, Palo Alto eyes agent identity, Moonshot looks to Europe for GPUs and China blocks SoftBank&#x27;s robotics deal</title><link>https://asksumanta.com/insights/tech-news-2026-11-08/</link><guid isPermaLink="true">https://asksumanta.com/insights/tech-news-2026-11-08/</guid><pubDate>Sun, 08 Nov 2026 08:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>security</category><category>ai</category><category>governance</category><description>A CTO&#x27;s take: Chainalysis says an agentic attack exposed credentials for all users, Palo Alto eyes agent identity, Moonshot seeks GPUs in Europe and China blocks ABB.</description><content:encoded><![CDATA[<p><em>A blockchain analytics company said an attack it describes as using offensive agentic techniques exposed credentials and live tokens for all its users. Security vendors are buying their way into identity for AI agents, a Chinese AI lab reportedly sought GPU capacity in Europe that it cannot import, and China stopped a robotics takeover in a security review.</em></p><p>Today's brief covers stories from 5 to 7 November.</p>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights</title><link>https://asksumanta.com/</link><description>Articles on AI, data, cloud and technology leadership</description><language>en-gb</language><lastBuildDate>Sun, 08 Nov 2026 21:20:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/insights/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights</title><link>https://asksumanta.com/</link></image><item><title>OpenSSH sshole: what an exploited Alpine login bypass says about the images you run</title><link>https://asksumanta.com/insights/openssh-sshole-alpine-images/</link><guid isPermaLink="true">https://asksumanta.com/insights/openssh-sshole-alpine-images/</guid><pubDate>Sun, 08 Nov 2026 21:20:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>security</category><category>platform</category><category>kubernetes</category><description>An OpenSSH flaw on musl-based Linux such as Alpine was exploited within hours. A CTO&#x27;s take on base images, key-only accounts and why containers should not run SSH.</description><content:encoded><![CDATA[<p><em>CVE-2026-123158, nicknamed sshole, let attackers log in over SSH without a password to accounts that were never meant to accept one, on Linux systems built on the musl C library without PAM, most notably Alpine. A fix shipped on 5 November and exploitation was reported within hours. The patch is simple. The lessons about base images, implicit assumptions and SSH in places it does not belong are worth more.</em></p><section class="block">
+<h2>What happened</h2>
+<p>On musl-based Linux systems without PAM, OpenSSH before 10.6p2 could let an attacker log in to accounts that have no usable password, such as key-only users, by sending an over-long password<sup class="cite"><a href="#ref-2">2</a></sup><sup class="cite"><a href="#ref-5">5</a></sup>. Alpine Linux's default openssh-server build fits that description, and other musl-based images may too; glibc-based distributions such as Debian, Ubuntu and Fedora are reported as not affected<sup class="cite"><a href="#ref-2">2</a></sup>. OpenSSH released 10.6p2 on 5 November, and Help Net Security reports exploitation began within hours<sup class="cite"><a href="#ref-1">1</a></sup>. The Hacker News reports attackers gained root on an Alpine honeypot<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+<p>Reporting describes the mechanism as an interaction between two components rather than a bug in either alone: musl's password hashing function rejects oversized input with a value that happens to match how locked accounts are marked, and sshd compares the two<sup class="cite"><a href="#ref-5">5</a></sup>. OpenSSH and musl maintainers have publicly disagreed about where the fault lies<sup class="cite"><a href="#ref-4">4</a></sup>. For defenders, that debate matters less than the fact that each component behaved as its own authors expected.</p>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Reach</b><span>An attacker finds sshd exposed on a musl-based host or image</span></li>
+<li><b>Send</b><span>A login attempt with an over-long password for a known account</span></li>
+<li class="hl"><b>Mismatch</b><span>The hashing result matches the marker for "no password"</span></li>
+<li class="hl"><b>Log in</b><span>A key-only account accepts the login</span></li>
+<li><b>Escalate</b><span>If that account can become root, the host is lost</span></li>
+<li><b>Spread</b><span>Credentials and network access on the host are used next</span></li>
+</ol>
+<figcaption>Every step relied on an assumption: that a key-only account cannot accept a password.</figcaption>
+</figure>
+</section>
+
+<section class="block">
+<h2>Lesson 1: "minimal" images are not minimal attack surface</h2>
+<p>Alpine is popular because it is small, and small images are usually safer. But a small image that ships an SSH server is a small image with an internet-facing login service. The question to ask of every base image is not "how big is it?" but "what does it listen on, and who can log in?".</p>
+<p>The flaw also only affected one C library. Many organisations do not know which of their images, appliances and embedded devices use musl rather than glibc, because nobody needed to. Add the C library and the presence of sshd to your image inventory; an SBOM per image makes this a query rather than a hunt. See <a href="https://asksumanta.com/insights/ai-model-supply-chain-security/">supply chain security</a>.</p>
+</section>
+
+<section class="block">
+<h2>Lesson 2: state your intent, do not rely on side effects</h2>
+<p>Many hosts were exposed because password logins were never explicitly disabled; operators relied on accounts having no password. OpenSSH's developers advised setting PasswordAuthentication to no, or disabling SSH, until systems are patched<sup class="cite"><a href="#ref-2">2</a></sup>. That is good practice regardless of this bug: configuration should say what you mean ("no password logins") rather than depend on the state of every account.</p>
+<p>The same applies to default users in cloud images. Reporting notes that the default user on some official Alpine cloud images could become root, which turned a login bypass into full control<sup class="cite"><a href="#ref-2">2</a></sup>. Review which default accounts your images ship with and what they can do.</p>
+</section>
+
+<section class="block">
+<h2>Lesson 3: containers should not run SSH</h2>
+<p>A container that runs sshd invites people to log in and change it, and invites attackers to do the same. Containers should be rebuilt and replaced, not maintained by hand. Where engineers need to debug, use the orchestrator's audited access, and treat any container that someone has changed interactively as untrusted until it is replaced. The Kubernetes community has described exactly that pattern: tag pods that have been accessed interactively and evict them after a set time<sup class="cite"><a href="#ref-6">6</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/openssh-sshole-alpine-images/exec-drift-eviction.webp" alt="Sequence diagram: a developer runs kubectl exec, the API server calls an admission controller webhook which tags the pod as interacted and allows the request, and the controller later evicts tagged pods after a predefined interval" width="1400" height="988" loading="lazy"></div><figcaption>Interactive access is allowed but recorded, and the touched pod is replaced: a better model than SSH into containers. <span class="credit">Source: <a href="https://kubernetes.io/blog/2021/12/21/admission-controllers-for-container-drift/" target="_blank" rel="noopener">Kubernetes blog, Saifuding Diliyaer</a> · CC BY 4.0</span></figcaption></figure>
+<p>For hosts that genuinely need SSH, put it behind a management network or an access broker, with short-lived certificates rather than static keys, and never on the open internet. See the <a href="https://asksumanta.com/case-studies/us-utility-management-plane-hardening/">management plane hardening case study</a>.</p>
+</section>
+
+<section class="block">
+<h2>What to do this week</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Today</small><div class="dgm-nodes"><span class="hl">Patch<em>OpenSSH 10.6p2, rebuild images</em></span><span>Disable password logins<em>explicitly, everywhere</em></span></div></div>
+<div class="dgm-tier"><small>This month</small><div class="dgm-nodes"><span>Inventory<em>C library and sshd per image</em></span><span>Default users<em>remove or restrict</em></span></div></div>
+<div class="dgm-tier"><small>This quarter</small><div class="dgm-nodes"><span class="hl">No SSH in containers<em>audited access instead</em></span><span>Access broker<em>short-lived certificates for hosts</em></span></div></div>
+</div>
+<figcaption>Patch now, then remove the conditions that made a login bypass so dangerous.</figcaption>
+</figure>
+<div class="callout"><p>The fix for sshole is one package update. The fix for the next one is knowing what runs SSH, saying explicitly how it may be used, and not running it where it does not belong.</p></div>
+</section>
+
+<section class="block">
+<h2>CTO take</h2>
+<p>This was not an exotic attack. It exploited an assumption almost every team makes, on a base image almost every team uses, and attackers moved within hours. Teams with an image inventory, explicit SSH configuration and no SSH in containers will spend this week on a routine patch. Teams without them will spend it finding out where Alpine is running. Read alongside <a href="https://asksumanta.com/insights/tech-news-2026-11-07/">the 7 November tech news</a>, where the flaw first appeared on this site.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I help teams harden platforms, from base images and access paths to Kubernetes and management planes. I am based in India, the United States and the UAE, working globally. See <a href="https://asksumanta.com/fractional-cto/">fractional CTO work</a>, <a href="https://asksumanta.com/regions/">where I work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section><p><a href="https://asksumanta.com/insights/openssh-sshole-alpine-images/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Tech news, 8 November 2026: the Chainalysis breach widens, Palo Alto eyes agent identity, Moonshot looks to Europe for GPUs and China blocks SoftBank&#x27;s robotics deal</title><link>https://asksumanta.com/insights/tech-news-2026-11-08/</link><guid isPermaLink="true">https://asksumanta.com/insights/tech-news-2026-11-08/</guid><pubDate>Sun, 08 Nov 2026 08:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>security</category><category>ai</category><category>governance</category><description>A CTO&#x27;s take: Chainalysis says an agentic attack exposed credentials for all users, Palo Alto eyes agent identity, Moonshot seeks GPUs in Europe and China blocks ABB.</description><content:encoded><![CDATA[<p><em>A blockchain analytics company said an attack it describes as using offensive agentic techniques exposed credentials and live tokens for all its users. Security vendors are buying their way into identity for AI agents, a Chinese AI lab reportedly sought GPU capacity in Europe that it cannot import, and China stopped a robotics takeover in a security review.</em></p><p>Today's brief covers stories from 5 to 7 November.</p>
 
 <figure class="dgm">
 <div class="dgm-stack">
@@ -2795,66 +2852,4 @@ tracer_provider:
 <section class="block">
 <h2>How I can help</h2>
 <p>I design EHR integrations for AI products that pass hospital security reviews the first time, from scope design to agent tooling and audit. See <a href="https://asksumanta.com/healthcare-data-architecture/">healthcare data architecture</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
-</section><p><a href="https://asksumanta.com/insights/smart-on-fhir-ai-apps-authorisation/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>In-place Pod resize on Kubernetes: field notes for right-sizing without restarts</title><link>https://asksumanta.com/insights/kubernetes-in-place-pod-resize/</link><guid isPermaLink="true">https://asksumanta.com/insights/kubernetes-in-place-pod-resize/</guid><pubDate>Mon, 26 Oct 2026 08:15:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>kubernetes</category><category>finops</category><category>platform</category><category>cloud</category><description>In-place Pod resize is stable in Kubernetes 1.35, letting CPU and memory change without recreating Pods. How it works, where it bites, and how I&#x27;d use it to cut cost.</description><content:encoded><![CDATA[<p><em>For years, changing a Pod&#x27;s CPU or memory meant replacing the Pod. That made right-sizing disruptive, so most teams over-provisioned and left it there. With in-place resize stable since Kubernetes 1.35, the excuse is gone. The operational details still matter.</em></p><p>Almost every Kubernetes cost review finds the same thing: requests set generously at launch and never touched again. Teams know the numbers are wrong. They leave them because changing them used to mean rolling every Pod, and nobody wants to explain a restart to a stateful service, a long-running batch job or a model server that takes minutes to warm up.</p>
-<p>That constraint has gone. These are notes on what changed and how I would put it to work.</p>
-
-<section class="block">
-<h2>What changed</h2>
-<p>In-place Pod resize arrived as alpha in Kubernetes 1.27, reached beta in 1.33 and graduated to stable in 1.35<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>. It makes CPU and memory requests and limits mutable on a running Pod. You send the change to the Pod's <code>resize</code> subresource, for example with <code>kubectl patch --subresource resize</code>, which needs kubectl 1.32 or later<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
-<p>Each container declares a <code>resizePolicy</code> per resource. <code>NotRequired</code> asks for the change to be applied without a restart; <code>RestartContainer</code> restarts that container to apply it. A common pattern in the documentation is CPU set to <code>NotRequired</code> and memory set to <code>RestartContainer</code><sup class="cite"><a href="#ref-2">2</a></sup>.</p>
-<p>The stable release added two things operators will notice. Memory limits can now be decreased, with the kubelet only allowing it when current usage is below the new limit, a best-effort check rather than a guarantee. And when a node can't fit every pending resize, retries are ordered by PriorityClass, then QoS class, then how long the request has waited<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
-</section>
-
-<section class="block">
-<h2>Watch the conditions, not just the spec</h2>
-<p>A resize is a request, not a guarantee. The kubelet reports progress through Pod conditions<sup class="cite"><a href="#ref-2">2</a></sup>:</p>
-<table class="tbl">
-<thead><tr><th>Condition</th><th>Reason</th><th>Meaning</th></tr></thead>
-<tbody>
-<tr><td>PodResizePending</td><td>Deferred</td><td>Doesn't fit now, might fit later; the kubelet keeps retrying</td></tr>
-<tr><td>PodResizePending</td><td>Infeasible</td><td>Can never fit on this node as it stands</td></tr>
-<tr><td>PodResizeInProgress</td><td>(none) or Error</td><td>Accepted and being applied; errors in actuation surface here</td></tr>
-</tbody>
-</table>
-<p>The practical rule: alert on long-lived <code>PodResizePending</code>. A spec that says 4 CPUs while the container still runs on 2 is a quiet source of confusion in incidents and cost reports alike.</p>
-<div class="callout"><p>The spec says what you asked for. The status says what you got. Right-sizing dashboards should read the status.</p></div>
-</section>
-
-<section class="block">
-<h2>Where the VPA fits</h2>
-<p>The Vertical Pod Autoscaler recommends requests from observed usage and applies them. Its <code>InPlaceOrRecreate</code> update mode tries an in-place resize first and falls back to recreating the Pod when that isn't possible; the 1.35 release blog described that mode as graduating to beta<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-5">5</a></sup>.</p>
-<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/kubernetes-in-place-pod-resize/vpa-architecture.webp" alt="Architecture diagram of the Vertical Pod Autoscaler: the metrics server feeds the VPA recommender, which stores recommendations in the VerticalPodAutoscaler custom resource; the admission controller injects resource values into new Pods via the API server, and the VPA updater either evicts Pods or updates them in place" width="1600" height="900" loading="lazy"></div><figcaption>VPA components: the updater can now update Pods in place rather than only evicting them. <span class="credit">Source: <a href="https://kubernetes.io/docs/concepts/workloads/autoscaling/vertical-pod-autoscale/" target="_blank" rel="noopener">Kubernetes documentation, Vertical Pod Autoscaling</a> · CC BY 4.0</span></figcaption></figure>
-<p>This is the combination that changes cost economics. Recommendations used to sit in a report because applying them was disruptive. With in-place updates they can be applied continuously, within limits you set.</p>
-</section>
-
-<section class="block">
-<h2>Pod-level resources are next</h2>
-<p>Kubernetes 1.36 promoted in-place resize of Pod-level resources to beta, meaning a shared budget for all containers in a Pod can also change without recreating it<sup class="cite"><a href="#ref-4">4</a></sup>. That is useful for Pods with sidecars, where per-container numbers are hard to tune separately. I would treat it as beta: pilot it, but don't build a platform default on it yet.</p>
-</section>
-
-<section class="block">
-<h2>Where it bites</h2>
-<ul>
-<li><strong>Applications that size themselves at start-up.</strong> A runtime that reads its memory limit once, such as a JVM heap or a worker pool sized to CPU count, won't notice a change. For those, a restart policy on memory is the honest choice.</li>
-<li><strong>Memory decreases.</strong> The usage check is best-effort, so shrinking memory on a busy Pod still carries OOM risk<sup class="cite"><a href="#ref-1">1</a></sup>. Shrink gradually and watch.</li>
-<li><strong>Node fragmentation.</strong> Growing in place only works if the node has room. Busy nodes produce Deferred resizes; plan headroom or accept fallback to recreation.</li>
-<li><strong>Quotas and policy.</strong> Resizes still count against namespace quotas, and teams will need guardrails on how far they can go, enforced with <a href="https://asksumanta.com/insights/kubernetes-admission-policies-cel/">admission policies</a> in <a href="https://asksumanta.com/insights/kubernetes-multi-tenancy/">multi-tenant clusters</a>.</li>
-</ul>
-</section>
-
-<section class="block">
-<h2>How I'd roll it out</h2>
-<ol>
-<li><strong>Measure first.</strong> Compare requests with real usage by namespace and team, using the allocation approach in <a href="https://asksumanta.com/insights/focus-finops-ai-cost-allocation/">FOCUS-based cost allocation</a>.</li>
-<li><strong>Start with CPU on stateless services</strong>, using <code>NotRequired</code>, where the risk is lowest and the savings show quickly.</li>
-<li><strong>Run the VPA in recommendation mode</strong> for a few weeks, then enable <code>InPlaceOrRecreate</code> on workloads that tolerate the fallback.</li>
-<li><strong>Use it for warm-up spikes.</strong> Services that need extra CPU at start-up, including model servers like those in <a href="https://asksumanta.com/insights/llm-inference-serving-vllm/">vLLM serving</a>, can start large and shrink once warm.</li>
-<li><strong>Alert on pending resizes</strong> and report status, not spec, in cost dashboards.</li>
-<li><strong>Combine with scale-to-zero</strong> from <a href="https://asksumanta.com/insights/kubernetes-finops-scale-to-zero/">Kubernetes FinOps</a>: horizontal scaling for traffic shape, vertical for per-Pod fit.</li>
-</ol>
-</section>
-
-<section class="block">
-<h2>How I can help</h2>
-<p>I run Kubernetes cost and platform reviews that turn right-sizing from a one-off report into a continuous, safe process. As a <a href="https://asksumanta.com/fractional-cto/">fractional CTO</a> I can own that roadmap. Or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
-</section><p><a href="https://asksumanta.com/insights/kubernetes-in-place-pod-resize/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
+</section><p><a href="https://asksumanta.com/insights/smart-on-fhir-ai-apps-authorisation/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
