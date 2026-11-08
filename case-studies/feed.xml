@@ -1,6 +1,88 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link><description>Anonymised engagements with architecture and flow diagrams</description><language>en-gb</language><lastBuildDate>Sat, 07 Nov 2026 15:50:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/case-studies/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link></image><item><title>Safe by design: preparing a Canadian learning app&#x27;s AI study companion for chatbot safety duties</title><link>https://asksumanta.com/case-studies/canada-learning-app-ai-chatbot-online-safety/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/canada-learning-app-ai-chatbot-online-safety/</guid><pubDate>Sat, 07 Nov 2026 15:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>ai</category><category>governance</category><category>llm</category><description>How a Canadian learning app for young people can prepare its AI study chatbot for proposed online safety duties: crisis escalation, no manipulative design, evidence.</description><content:encoded><![CDATA[<p><em>A Canadian learning app gave secondary students and young adults an AI study companion. Students used it for homework, and sometimes for things that had nothing to do with homework. With Canada proposing duties for AI chatbot services, including emergency measures for crisis situations and limits on manipulative engagement, the company wanted its chatbot to be safe by design and able to show it, before any rules took effect.</em></p><h2>The situation</h2>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link><description>Anonymised engagements with architecture and flow diagrams</description><language>en-gb</language><lastBuildDate>Sun, 08 Nov 2026 15:50:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/case-studies/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link></image><item><title>Every key has an owner: machine and AI agent identity for a South African fintech</title><link>https://asksumanta.com/case-studies/south-africa-fintech-machine-agent-identity/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/south-africa-fintech-machine-agent-identity/</guid><pubDate>Sun, 08 Nov 2026 15:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>security</category><category>governance</category><category>ai</category><description>How a South African fintech can control the credentials its services and AI agents use: inventory, short-lived tokens, agent identities and a tested revoke-all.</description><content:encoded><![CDATA[<p><em>A South African investment and payments platform had tightened staff logins years ago. The credentials its software used were another matter: cloud keys in CI, database passwords in configuration, partner API keys shared between services, and now AI agents with their own tool access. After an attack elsewhere showed how quickly automated attackers turn one foothold into every reachable token, the company set out to know, own, shorten and be able to revoke every machine credential it had.</em></p><h2>The situation</h2>
+<p>A South African platform offered investment accounts and payments to retail customers and small businesses. Staff identity was in good shape: single sign-on, multi-factor authentication and quarterly access reviews. Software identity was not. Pipelines deployed with long-lived cloud access keys. Services read database passwords from configuration files. Partner API keys were shared between several services, and nobody was sure which. Over the past year, teams had added AI agents: a support assistant that looked up account status, and internal agents that triaged alerts and drafted reconciliation reports, each with its own set of keys.</p>
+<p>As a financial institution in scope of Joint Standard 2 of 2024, issued by the FSCA and the Prudential Authority and effective from 1 June 2025, the company had to maintain cybersecurity and cyber resilience controls, including identity and access management<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>. A security compromise involving personal information would also trigger notification duties under POPIA. The company's access controls were written around people; its regulator would not see the distinction as an excuse.</p>
+<p><strong>Why now.</strong> In late October, Chainalysis disclosed an intrusion by an actor using "offensive agentic techniques"<sup class="cite"><a href="#ref-2">2</a></sup>. On 6 November it said the attack had exposed password hashes and live tokens for all users, and it took key products offline<sup class="cite"><a href="#ref-1">1</a></sup>. The lesson for the board was simple: automated attackers find and use every credential they can reach, quickly. Industry research suggested the company was not unusual: a 2026 identity survey reported that only a small minority of organisations automate the lifecycle of machine identities<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>Known</strong>: every machine and agent credential in one inventory.</li>
+<li><strong>Owned</strong>: each with a named team and a purpose.</li>
+<li><strong>Short-lived</strong>: static keys replaced by credentials that expire in minutes or hours wherever possible.</li>
+<li><strong>Narrow</strong>: each identity allowed only what its job needs.</li>
+<li><strong>Revocable</strong>: all machine credentials can be rotated or revoked quickly, in a tested way.</li>
+<li><strong>Visible</strong>: every action attributable to a specific identity, and unusual use detected.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Callers</small><div class="dgm-nodes"><span>Pipelines<em>build and deploy</em></span><span>Services<em>APIs and jobs</em></span><span class="hl">AI agents<em>support and operations</em></span></div></div>
+<div class="dgm-tier"><small>Identity</small><div class="dgm-nodes"><span class="hl">Workload identity<em>who is this software?</em></span><span>Agent identities<em>one per agent</em></span><span>Delegation<em>acting for which user?</em></span></div></div>
+<div class="dgm-tier"><small>Issuing</small><div class="dgm-nodes"><span>OIDC federation<em>CI to cloud</em></span><span class="hl">Secrets manager<em>dynamic database credentials</em></span><span>Token broker<em>scoped, short-lived agent tokens</em></span></div></div>
+<div class="dgm-tier"><small>Targets</small><div class="dgm-nodes"><span>Cloud accounts</span><span>Databases</span><span>Partner APIs</span><span>Internal tools</span></div></div>
+<div class="dgm-tier"><small>Evidence</small><div class="dgm-nodes"><span>Inventory<em>owner, scope, expiry</em></span><span>Identity-aware logs<em>who did what</em></span><span>Alerts<em>unusual machine behaviour</em></span></div></div>
+</div>
+<figcaption>Software proves who it is, then receives a short-lived credential for one job. Nothing holds a key it does not need right now.</figcaption>
+</figure>
+<p>Pipelines stopped storing cloud keys and instead exchanged a signed identity token from the CI system for short-lived cloud credentials. Services on Kubernetes used their service account identities to obtain credentials from the cloud and the secrets manager, which issued database users that expired after a few hours. Kubernetes itself follows the same principle for image pulls, where credential provider plugins fetch registry credentials on demand instead of storing them<sup class="cite"><a href="#ref-6">6</a></sup>. Partner API keys that could not be made short-lived were split so each service had its own, stored only in the secrets manager and rotated on a schedule.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/south-africa-fintech-machine-agent-identity/short-lived-credentials.webp" alt="Diagram of the kubelet calling a credential provider plugin with a CredentialProviderRequest for an image, the plugin authenticating to the registry and returning a CredentialProviderResponse with credentials" width="1218" height="591" loading="lazy"></div><figcaption>Fetch credentials when needed instead of storing them: Kubernetes applies the pattern to image pulls, and the same idea drove the platform's design. <span class="credit">Source: <a href="https://kubernetes.io/blog/2022/12/22/kubelet-credential-providers/" target="_blank" rel="noopener">Kubernetes blog, Andrew Sy Kim and Dixita Narang</a> · CC BY 4.0</span></figcaption></figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Prove</b><span>A pipeline, service or agent presents its workload or agent identity</span></li>
+<li><b>Check</b><span>The issuer checks policy: which identity, which target, which action</span></li>
+<li class="hl"><b>Issue</b><span>A credential scoped to the job is issued with a short expiry</span></li>
+<li><b>Act</b><span>The caller uses it; agents acting for a customer carry that delegation</span></li>
+<li class="hl"><b>Record</b><span>Every action is logged against the identity, and the user where delegated</span></li>
+<li><b>Expire</b><span>The credential lapses; nothing long-lived is left behind to steal</span></li>
+</ol>
+<figcaption>The question changes from "where is this key stored?" to "who was allowed to get one, and when?".</figcaption>
+</figure>
+
+<h2>The hard part: agents, delegation and revoking without an outage</h2>
+<p><strong>Agents acting for customers.</strong> The support assistant needed to look up a specific customer's account, but must never be able to look up any account. The token broker issued it a token only after the customer had authenticated in the conversation, scoped to that customer, read-only and expiring with the session. Internal agents had their own identities and could only call tools on an approved list. Every action was logged against both the agent and, where relevant, the person it acted for. See <a href="https://asksumanta.com/insights/agentic-infrastructure-skills-tools-sandboxes/">agentic infrastructure</a>.</p>
+<p><strong>Revoking everything, safely.</strong> The scenario the board cared about was "assume every machine credential is compromised". The first tabletop exercise showed that revoking everything at once would take the platform down, because some services could not obtain new credentials without a restart and a few partner keys had no rotation process at all. Fixing that became its own workstream: services that refresh credentials automatically, a documented rotation for each partner key, and a staged revoke-all runbook rehearsed in a test environment.</p>
+<div class="callout"><p>If you cannot revoke a credential without breaking production, you do not control it. Make rotation routine before you need it in an emergency.</p></div>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Security</small><ol><li>Inventory and owners</li><li class="hl">Policy and token broker</li><li>Alerts and drills</li></ol></div>
+<div class="dgm-lane"><small>Platform</small><ol><li>CI federation</li><li class="hl">Workload identity</li><li>Dynamic credentials</li></ol></div>
+<div class="dgm-lane"><small>Product and AI teams</small><ol><li>Agent tool lists</li><li class="hl">Delegation flows</li><li>Credential refresh in services</li></ol></div>
+<div class="dgm-lane"><small>Risk and compliance</small><ol><li>Map to Joint Standard</li><li>Breach playbooks</li><li class="hl">Evidence for the regulator</li></ol></div>
+</div>
+<figcaption>Security set the rules, platform made them easy, product teams adopted them, and compliance turned them into evidence.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Find</b><ul><li>Scan code and config</li><li>List cloud and API keys</li><li>Assign owners</li></ul></div>
+<div><small>Phase 2</small><b>Shorten</b><ul><li>CI federation</li><li>Dynamic database users</li><li>Split shared keys</li></ul></div>
+<div><small>Phase 3</small><b>Agents</b><ul><li>Agent identities</li><li>Token broker</li><li>Delegation and logging</li></ul></div>
+<div><small>Phase 4</small><b>Rehearse</b><ul><li>Rotation drills</li><li>Revoke-all runbook</li><li>Detection tuning</li></ul></div>
+</div>
+<figcaption>Find first, shorten the riskiest next, then bring agents and drills into the same model.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Inventory before tooling</td><td>Buy a non-human identity product first</td><td>A tool cannot assign owners or decide scopes</td></tr>
+<tr><td>Federated, short-lived CI credentials</td><td>Rotate static keys more often</td><td>Removes the key rather than shrinking its life</td></tr>
+<tr><td>One identity per agent</td><td>Agents share a service account</td><td>Actions attributable and revocable per agent</td></tr>
+<tr><td>Customer-scoped tokens for the support agent</td><td>Broad read access with prompt rules</td><td>Limits enforced in code, not in instructions</td></tr>
+<tr><td>Staged revoke-all runbook</td><td>Revoke everything at once</td><td>Contains an incident without causing an outage</td></tr>
+<tr><td>Partner keys split per service</td><td>One shared key per partner</td><td>A leak exposes one service, not all</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: start with the inventory and owners. It found credentials nobody remembered creating, and it made every later decision concrete. Differently: run the revoke-all tabletop in the first month; it exposed the services that could not refresh credentials, which shaped the whole plan. Related: <a href="https://asksumanta.com/insights/llmjacking-stolen-ai-keys-black-october/">LLMjacking and stolen AI keys</a>, <a href="https://asksumanta.com/insights/securing-mcp-servers-checklist/">securing MCP servers</a>, <a href="https://asksumanta.com/insights/tech-news-2026-11-08/">the 8 November tech news</a> and <a href="https://asksumanta.com/regions/">where I work</a>.</p>
+<p>If your services and AI agents hold credentials you cannot list, own or revoke, see my <a href="https://asksumanta.com/fractional-cto/">fractional CTO work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/south-africa-fintech-machine-agent-identity/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Safe by design: preparing a Canadian learning app&#x27;s AI study companion for chatbot safety duties</title><link>https://asksumanta.com/case-studies/canada-learning-app-ai-chatbot-online-safety/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/canada-learning-app-ai-chatbot-online-safety/</guid><pubDate>Sat, 07 Nov 2026 15:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>ai</category><category>governance</category><category>llm</category><description>How a Canadian learning app for young people can prepare its AI study chatbot for proposed online safety duties: crisis escalation, no manipulative design, evidence.</description><content:encoded><![CDATA[<p><em>A Canadian learning app gave secondary students and young adults an AI study companion. Students used it for homework, and sometimes for things that had nothing to do with homework. With Canada proposing duties for AI chatbot services, including emergency measures for crisis situations and limits on manipulative engagement, the company wanted its chatbot to be safe by design and able to show it, before any rules took effect.</em></p><h2>The situation</h2>
 <p>A Canadian education company ran a learning app used by secondary school students and young adults. Its most popular feature was an AI study companion: a chatbot that explained concepts, quizzed students and helped plan revision. It had a friendly persona, remembered past sessions and was tied into the app's streaks and reminders. Most conversations were about schoolwork. Some were not: exam stress, trouble at home, and occasionally something more serious. The chatbot answered those with whatever the model produced in the moment.</p>
 <p>In June 2026 the Government of Canada introduced Bill C-34, the Safe Social Media Act, which would create duties for social media and AI chatbot services and a Digital Safety Commission to oversee them<sup class="cite"><a href="#ref-1">1</a></sup>. For chatbots, the proposed duty to act responsibly includes mitigating the risk of harmful content, putting emergency measures in place for crisis situations and mitigating harmful chatbot behaviour<sup class="cite"><a href="#ref-2">2</a></sup>. Osler notes the proposals also address manipulative engagement techniques that encourage emotional attachment<sup class="cite"><a href="#ref-3">3</a></sup>. The bill was not yet law, but the company's school and parent customers were already asking the same questions.</p>
 <p><strong>Why now.</strong> Canada's Budget 2026, released on 5 November, proposed $176.3 million over five years for the new commission, a sign that enforcement would be funded, not just legislated<sup class="cite"><a href="#ref-4">4</a></sup>. Building safety in before the rules settled was cheaper than retrofitting it under a deadline.</p>
@@ -3972,89 +4054,4 @@
 
 <h2>What I'd do again, and differently</h2>
 <p>Again: get tenant context right before anything else, and make isolation a test suite rather than a document. Differently: agree the tier definitions with product and sales earlier. The engineering was straightforward once everyone agreed what "dedicated" promised and who could buy it.</p>
-<p>If your platform is facing the same pressures, the <a href="https://asksumanta.com/fractional-cto/">fractional CTO</a> page describes how I work with teams on it, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/saas-multi-tenant-re-architecture/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Triaging shipment exceptions with agents that ask before they act</title><link>https://asksumanta.com/case-studies/logistics-exception-handling-agents/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/logistics-exception-handling-agents/</guid><pubDate>Wed, 28 Oct 2026 01:26:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>agents</category><category>ai</category><category>llm</category><category>mcp</category><category>security</category><description>How a logistics operator used AI agents to triage shipment exception emails: classification, governed MCP tool calls to the TMS and human-approved actions.</description><content:encoded><![CDATA[<p><em>Every delayed shipment produced emails: carriers, customers, warehouses, customs brokers. Staff read, classified and chased each one by hand. The goal was agents that classify exceptions, look up shipment state through governed tools and draft the next action, with a person approving anything that changes the world.</em></p><h2>The situation</h2>
-<p>A logistics operator's customer service and operations teams handled shipment exceptions largely by email. A late container, a failed delivery, a missing customs document or an address query each arrived as free text, often with attachments, sometimes in a long thread. Staff read each message, worked out which shipment it concerned, looked it up in the transport management system (TMS), decided what to do and then did it, across several screens.</p>
-<p>The work was repetitive but not trivial. The hard part of each email was usually the same: identify the shipment, understand the exception, gather the facts. The decision itself was often quick once the facts were on one screen.</p>
-
-<h2>What had to be true</h2>
-<ul>
-<li><strong>Structured, not chatty</strong>: every email becomes a typed exception record, or is routed to a person as unclassifiable.</li>
-<li><strong>Governed tools</strong>: the agent reaches systems only through a defined, permissioned tool layer.</li>
-<li><strong>Read freely, write with approval</strong>: lookups are automatic; anything with side effects needs a person.</li>
-<li><strong>Inbound email is untrusted</strong> and never treated as instructions.</li>
-<li><strong>Measured and traceable</strong>: behaviour evaluated before release, every run inspectable afterwards.</li>
-</ul>
-
-<h2>Architecture</h2>
-<p>The design favoured a defined workflow with agentic steps over an open-ended autonomous agent. Anthropic's guidance on building agents makes the same distinction, recommending the simplest pattern that works and adding autonomy only where it earns its keep<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
-<figure class="dgm">
-<div class="dgm-stack">
-<div class="dgm-tier"><small>Intake</small><div class="dgm-nodes"><span>Shared mailboxes<em>carriers, customers</em></span><span>Queue<em>one message per job</em></span><span>Attachment parsing<em>PDF, images</em></span></div></div>
-<div class="dgm-tier"><small>Understand</small><div class="dgm-nodes"><span class="hl">Classifier<em>structured output</em></span><span>Extractor<em>references, dates, parties</em></span><span>Shipment matcher<em>confidence scored</em></span></div></div>
-<div class="dgm-tier"><small>Orchestrate</small><div class="dgm-nodes"><span>LangGraph workflow<em>per exception type</em></span><span>State checkpoint<em>durable</em></span><span>Interrupts<em>human approval</em></span></div></div>
-<div class="dgm-tier"><small>Tools</small><div class="dgm-nodes"><span class="hl">MCP servers<em>scoped tools</em></span><span>TMS read tools<em>status, events</em></span><span>TMS write tools<em>approval only</em></span><span>Messaging tools<em>drafts only</em></span></div></div>
-<div class="dgm-tier"><small>Assure</small><div class="dgm-nodes"><span>Labelled eval set<em>real exceptions</em></span><span>Traces<em>OpenTelemetry</em></span><span>Audit log<em>who approved what</em></span></div></div>
-</div>
-<figcaption>Layered architecture: a fixed workflow, typed outputs at each step, and every system reached through scoped tools.</figcaption>
-</figure>
-
-<h2>The data flow, end to end</h2>
-<figure class="dgm">
-<ol class="dgm-flow g3">
-<li><b>Receive</b><span>Email lands on a queue with its thread and attachments</span></li>
-<li class="hl"><b>Classify</b><span>Exception type, shipment references and key facts as a typed record</span></li>
-<li><b>Match</b><span>References resolved to a shipment; low confidence routed to a person</span></li>
-<li><b>Look up</b><span>Read-only MCP tools fetch status, milestones and contacts from the TMS</span></li>
-<li class="hl"><b>Propose</b><span>Draft action and reply prepared; workflow pauses for approval</span></li>
-<li><b>Act</b><span>On approval, write tool executes; outcome logged and thread updated</span></li>
-</ol>
-<figcaption>The workflow pauses before any side effect, and resumes from a durable checkpoint after a person decides.</figcaption>
-</figure>
-<p>Classification and extraction used structured outputs, where the model's response is constrained to a supplied JSON schema<sup class="cite"><a href="#ref-5">5</a></sup>, so downstream steps receive valid records rather than prose. Approval pauses used LangGraph interrupts, which persist graph state while waiting for human input and resume with that input<sup class="cite"><a href="#ref-3">3</a></sup>. More in <a href="https://asksumanta.com/insights/structured-outputs-reliable-llm-integration/">structured outputs for reliable LLM integration</a>.</p>
-
-<h2>The hard part: tools you can trust an agent with</h2>
-<p>The model was rarely the weak point. The tool layer was where safety lived. The MCP specification describes tools as model-invoked and recommends that a human can always deny a tool invocation<sup class="cite"><a href="#ref-2">2</a></sup>. The design took that literally:</p>
-<ul>
-<li><strong>Separate read and write servers</strong>, with write tools reachable only from the post-approval step of the workflow.</li>
-<li><strong>Narrow tools</strong>: "get shipment milestones" and "request redelivery", not a general API passthrough.</li>
-<li><strong>Service identity per tool</strong>, scoped to the minimum permissions in the TMS.</li>
-<li><strong>Email as data</strong>: inbound text is passed as content to classify, never as instructions, because prompt injection and excessive agency both appear in the OWASP Top 10 for LLM applications<sup class="cite"><a href="#ref-4">4</a></sup>.</li>
-</ul>
-<p>The checklist used is in <a href="https://asksumanta.com/insights/securing-mcp-servers-checklist/">securing MCP servers</a> and <a href="https://asksumanta.com/insights/prompt-injection-defence-for-agents/">prompt injection defence for agents</a>.</p>
-<div class="callout"><p>Give an agent the narrowest tools that do the job, and put approval in the workflow, not in the prompt.</p></div>
-
-<h2>How it ran</h2>
-<figure class="dgm">
-<div class="dgm-lanes">
-<div class="dgm-lane"><small>Agent</small><ol><li>Classifies and extracts</li><li>Looks up shipment state</li><li class="hl">Drafts action and reply</li></ol></div>
-<div class="dgm-lane"><small>Operator</small><ol><li>Reviews the case card</li><li class="hl">Approves, edits or rejects</li><li>Handles unclassified mail</li></ol></div>
-<div class="dgm-lane"><small>Systems</small><ol><li>TMS via MCP tools</li><li>Messaging via drafts</li><li>Traces and audit log</li></ol></div>
-</div>
-<figcaption>The operator sees one case card with facts gathered; the decision stays with them.</figcaption>
-</figure>
-<figure class="dgm">
-<div class="dgm-phases">
-<div><small>Phase 1</small><b>Understand</b><ul><li>Exception taxonomy</li><li>Labelled sample of emails</li><li>Current handling steps</li></ul></div>
-<div><small>Phase 2</small><b>Read-only</b><ul><li>Classification and matching</li><li>Lookup tools</li><li>Case cards in shadow</li></ul></div>
-<div><small>Phase 3</small><b>Assisted actions</b><ul><li>Write tools behind approval</li><li>Draft replies</li><li>Evaluation gate</li></ul></div>
-<div><small>Phase 4</small><b>Extend and hand off</b><ul><li>More exception types</li><li>Runbooks and owners</li><li>Autonomy reviews</li></ul></div>
-</div>
-<figcaption>Read-only first; write tools added only once classification and matching were measured.</figcaption>
-</figure>
-<p>Evaluation followed <a href="https://asksumanta.com/insights/evaluating-ai-agents-reliability/">evaluating AI agents for reliability</a>, scoring classification, shipment matching and proposed actions separately, so a regression could be located rather than just noticed.</p>
-
-<h2>Key decisions and trade-offs</h2>
-<table class="tbl">
-<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
-<tbody>
-<tr><td>Fixed workflow with agentic steps</td><td>Open-ended autonomous agent</td><td>Predictable, testable paths per exception type</td></tr>
-<tr><td>MCP tool layer</td><td>Direct API calls from prompts</td><td>Standard, reusable tools with permissions in one place</td></tr>
-<tr><td>Approval before side effects</td><td>Full autonomy</td><td>Trust earned with evidence, not assumed</td></tr>
-<tr><td>Structured outputs everywhere</td><td>Free-text parsing</td><td>Typed records that downstream code can rely on</td></tr>
-<tr><td>Separate scores per step</td><td>One end-to-end score</td><td>Regressions can be traced to a step</td></tr>
-</tbody>
-</table>
-
-<h2>What I'd do again, and differently</h2>
-<p>Again: start read-only, build the labelled set from real emails, and keep write tools behind approval. Differently: invest earlier in shipment matching. Ambiguous references caused more escalations than misclassification did, and better matching would have improved every downstream step.</p>
-<p>If you are designing agents that touch operational systems, the <a href="https://asksumanta.com/ai-architect/">AI architect</a> page describes how I approach it, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/logistics-exception-handling-agents/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
+<p>If your platform is facing the same pressures, the <a href="https://asksumanta.com/fractional-cto/">fractional CTO</a> page describes how I work with teams on it, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/saas-multi-tenant-re-architecture/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>

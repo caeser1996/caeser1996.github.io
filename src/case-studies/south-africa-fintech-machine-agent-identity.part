@@ -1,0 +1,84 @@
+<!--{"title": "Case study: machine and agent identity for a South African fintech", "description": "How a South African fintech can control the credentials its services and AI agents use: inventory, short-lived tokens, agent identities and a tested revoke-all.", "short": "Machine and agent identity in South Africa", "h1": "Every key has an owner: machine and AI agent identity for a South African fintech", "kicker": "Case study · Identity and cyber resilience", "lede": "A South African investment and payments platform had tightened staff logins years ago. The credentials its software used were another matter: cloud keys in CI, database passwords in configuration, partner API keys shared between services, and now AI agents with their own tool access. After an attack elsewhere showed how quickly automated attackers turn one foothold into every reachable token, the company set out to know, own, shorten and be able to revoke every machine credential it had.", "date": "2026-11-08", "datetime": "2026-11-08T15:50:00+04:00", "readtime": "9 min read", "sector": "Financial services · South Africa", "role": "Fractional CTO and security architect", "engagement": "Assessment, architecture and delivery leadership", "scope": "Machine credential inventory, workload identity, short-lived credentials, AI agent identities and delegation, revocation, detection, regulatory evidence", "stack": ["Machine credential inventory", "OIDC federation for CI pipelines", "Cloud workload identity", "Secrets manager with dynamic credentials", "Token broker for AI agents", "Kubernetes service account tokens", "Identity-aware logging and alerts", "Revoke-all runbook"], "outcomes": ["A single inventory of machine and agent credentials, each with an owner and an expiry", "Long-lived cloud keys removed from CI in favour of short-lived federated credentials", "AI agents given their own identities with narrow, short-lived permissions", "Revoking all machine credentials became a rehearsed action rather than an improvised one", "Evidence for identity and access controls ready for the regulator and auditors"], "tags": ["security", "governance", "ai"], "keywords": ["non-human identity", "machine identity management", "AI agent identity", "short-lived credentials", "workload identity federation", "Joint Standard 2 of 2024", "South Africa cyber resilience financial sector", "POPIA security compromise", "agentic cyber attack", "fractional CTO South Africa"], "faq": [["What is a machine or non-human identity?", "Any identity used by software rather than a person: cloud access keys, service accounts, API keys, database credentials, CI tokens and, increasingly, AI agents. They often outnumber human users and are harder to track."], ["Why do short-lived credentials matter after an agentic attack?", "Automated attackers move quickly from first access to every credential they can reach. Credentials that expire in minutes or hours limit what a stolen token can do and how long it stays useful."], ["How should AI agents be given access to systems?", "Give each agent its own identity, issue short-lived tokens scoped to the task through a broker, act on a user's behalf only with explicit delegation, and log every action against both the agent and the user."]], "related": ["/fractional-cto/", "/ai-architect/", "/regions/"], "citations": [{"title": "Chainalysis Breach Exposes All Users' Credentials, Forces Shutdown of Key Services", "url": "https://thehackernews.com/2026/11/chainalysis-breach-exposes-all-users.html", "publisher": "The Hacker News", "date": "Nov 2026"}, {"title": "Chainalysis discloses data breach from \"offensive agentic techniques\"", "url": "https://www.bleepingcomputer.com/news/security/chainalysis-discloses-data-breach-from-offensive-agentic-techniques/", "publisher": "BleepingComputer", "date": "Oct 2026"}, {"title": "Financial Sector Regulation and the Prudential Authority published Joint Standard 2 of 2024 on Cybersecurity and Cyber Resilience Requirements", "url": "https://www.webberwentzel.com/News/Pages/financial-sector-regulation-and-prudential-authority-joint-standard-on-cybersecurity-and-cyber-resilience-requirements.aspx", "publisher": "Webber Wentzel", "date": "2024"}, {"title": "Joint Standard 2 of 2024: What South African financial institutions need to know and do", "url": "https://itlawco.com/joint-standard-2-of-2024-what-south-african-financial-institutions-need-to-know-and-do/", "publisher": "ITLawCo", "date": "2025"}, {"title": "Identity security planning for 2026 is shifting under pressure", "url": "https://www.helpnetsecurity.com/2026/01/07/identity-security-outlook-2026-report/", "publisher": "Help Net Security", "date": "7 Jan 2026"}, {"title": "Kubernetes v1.26: GA Support for Kubelet Credential Providers", "url": "https://kubernetes.io/blog/2022/12/22/kubelet-credential-providers/", "publisher": "Kubernetes blog", "date": "22 Dec 2022"}]}-->
+<h2>The situation</h2>
+<p>A South African platform offered investment accounts and payments to retail customers and small businesses. Staff identity was in good shape: single sign-on, multi-factor authentication and quarterly access reviews. Software identity was not. Pipelines deployed with long-lived cloud access keys. Services read database passwords from configuration files. Partner API keys were shared between several services, and nobody was sure which. Over the past year, teams had added AI agents: a support assistant that looked up account status, and internal agents that triaged alerts and drafted reconciliation reports, each with its own set of keys.</p>
+<p>As a financial institution in scope of Joint Standard 2 of 2024, issued by the FSCA and the Prudential Authority and effective from 1 June 2025, the company had to maintain cybersecurity and cyber resilience controls, including identity and access management<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>. A security compromise involving personal information would also trigger notification duties under POPIA. The company's access controls were written around people; its regulator would not see the distinction as an excuse.</p>
+<p><strong>Why now.</strong> In late October, Chainalysis disclosed an intrusion by an actor using "offensive agentic techniques"<sup class="cite"><a href="#ref-2">2</a></sup>. On 6 November it said the attack had exposed password hashes and live tokens for all users, and it took key products offline<sup class="cite"><a href="#ref-1">1</a></sup>. The lesson for the board was simple: automated attackers find and use every credential they can reach, quickly. Industry research suggested the company was not unusual: a 2026 identity survey reported that only a small minority of organisations automate the lifecycle of machine identities<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>Known</strong>: every machine and agent credential in one inventory.</li>
+<li><strong>Owned</strong>: each with a named team and a purpose.</li>
+<li><strong>Short-lived</strong>: static keys replaced by credentials that expire in minutes or hours wherever possible.</li>
+<li><strong>Narrow</strong>: each identity allowed only what its job needs.</li>
+<li><strong>Revocable</strong>: all machine credentials can be rotated or revoked quickly, in a tested way.</li>
+<li><strong>Visible</strong>: every action attributable to a specific identity, and unusual use detected.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Callers</small><div class="dgm-nodes"><span>Pipelines<em>build and deploy</em></span><span>Services<em>APIs and jobs</em></span><span class="hl">AI agents<em>support and operations</em></span></div></div>
+<div class="dgm-tier"><small>Identity</small><div class="dgm-nodes"><span class="hl">Workload identity<em>who is this software?</em></span><span>Agent identities<em>one per agent</em></span><span>Delegation<em>acting for which user?</em></span></div></div>
+<div class="dgm-tier"><small>Issuing</small><div class="dgm-nodes"><span>OIDC federation<em>CI to cloud</em></span><span class="hl">Secrets manager<em>dynamic database credentials</em></span><span>Token broker<em>scoped, short-lived agent tokens</em></span></div></div>
+<div class="dgm-tier"><small>Targets</small><div class="dgm-nodes"><span>Cloud accounts</span><span>Databases</span><span>Partner APIs</span><span>Internal tools</span></div></div>
+<div class="dgm-tier"><small>Evidence</small><div class="dgm-nodes"><span>Inventory<em>owner, scope, expiry</em></span><span>Identity-aware logs<em>who did what</em></span><span>Alerts<em>unusual machine behaviour</em></span></div></div>
+</div>
+<figcaption>Software proves who it is, then receives a short-lived credential for one job. Nothing holds a key it does not need right now.</figcaption>
+</figure>
+<p>Pipelines stopped storing cloud keys and instead exchanged a signed identity token from the CI system for short-lived cloud credentials. Services on Kubernetes used their service account identities to obtain credentials from the cloud and the secrets manager, which issued database users that expired after a few hours. Kubernetes itself follows the same principle for image pulls, where credential provider plugins fetch registry credentials on demand instead of storing them<sup class="cite"><a href="#ref-6">6</a></sup>. Partner API keys that could not be made short-lived were split so each service had its own, stored only in the secrets manager and rotated on a schedule.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/south-africa-fintech-machine-agent-identity/short-lived-credentials.webp" alt="Diagram of the kubelet calling a credential provider plugin with a CredentialProviderRequest for an image, the plugin authenticating to the registry and returning a CredentialProviderResponse with credentials" width="1218" height="591" loading="lazy"></div><figcaption>Fetch credentials when needed instead of storing them: Kubernetes applies the pattern to image pulls, and the same idea drove the platform's design. <span class="credit">Source: <a href="https://kubernetes.io/blog/2022/12/22/kubelet-credential-providers/" target="_blank" rel="noopener">Kubernetes blog, Andrew Sy Kim and Dixita Narang</a> · CC BY 4.0</span></figcaption></figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Prove</b><span>A pipeline, service or agent presents its workload or agent identity</span></li>
+<li><b>Check</b><span>The issuer checks policy: which identity, which target, which action</span></li>
+<li class="hl"><b>Issue</b><span>A credential scoped to the job is issued with a short expiry</span></li>
+<li><b>Act</b><span>The caller uses it; agents acting for a customer carry that delegation</span></li>
+<li class="hl"><b>Record</b><span>Every action is logged against the identity, and the user where delegated</span></li>
+<li><b>Expire</b><span>The credential lapses; nothing long-lived is left behind to steal</span></li>
+</ol>
+<figcaption>The question changes from "where is this key stored?" to "who was allowed to get one, and when?".</figcaption>
+</figure>
+
+<h2>The hard part: agents, delegation and revoking without an outage</h2>
+<p><strong>Agents acting for customers.</strong> The support assistant needed to look up a specific customer's account, but must never be able to look up any account. The token broker issued it a token only after the customer had authenticated in the conversation, scoped to that customer, read-only and expiring with the session. Internal agents had their own identities and could only call tools on an approved list. Every action was logged against both the agent and, where relevant, the person it acted for. See <a href="/insights/agentic-infrastructure-skills-tools-sandboxes/">agentic infrastructure</a>.</p>
+<p><strong>Revoking everything, safely.</strong> The scenario the board cared about was "assume every machine credential is compromised". The first tabletop exercise showed that revoking everything at once would take the platform down, because some services could not obtain new credentials without a restart and a few partner keys had no rotation process at all. Fixing that became its own workstream: services that refresh credentials automatically, a documented rotation for each partner key, and a staged revoke-all runbook rehearsed in a test environment.</p>
+<div class="callout"><p>If you cannot revoke a credential without breaking production, you do not control it. Make rotation routine before you need it in an emergency.</p></div>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Security</small><ol><li>Inventory and owners</li><li class="hl">Policy and token broker</li><li>Alerts and drills</li></ol></div>
+<div class="dgm-lane"><small>Platform</small><ol><li>CI federation</li><li class="hl">Workload identity</li><li>Dynamic credentials</li></ol></div>
+<div class="dgm-lane"><small>Product and AI teams</small><ol><li>Agent tool lists</li><li class="hl">Delegation flows</li><li>Credential refresh in services</li></ol></div>
+<div class="dgm-lane"><small>Risk and compliance</small><ol><li>Map to Joint Standard</li><li>Breach playbooks</li><li class="hl">Evidence for the regulator</li></ol></div>
+</div>
+<figcaption>Security set the rules, platform made them easy, product teams adopted them, and compliance turned them into evidence.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Find</b><ul><li>Scan code and config</li><li>List cloud and API keys</li><li>Assign owners</li></ul></div>
+<div><small>Phase 2</small><b>Shorten</b><ul><li>CI federation</li><li>Dynamic database users</li><li>Split shared keys</li></ul></div>
+<div><small>Phase 3</small><b>Agents</b><ul><li>Agent identities</li><li>Token broker</li><li>Delegation and logging</li></ul></div>
+<div><small>Phase 4</small><b>Rehearse</b><ul><li>Rotation drills</li><li>Revoke-all runbook</li><li>Detection tuning</li></ul></div>
+</div>
+<figcaption>Find first, shorten the riskiest next, then bring agents and drills into the same model.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Inventory before tooling</td><td>Buy a non-human identity product first</td><td>A tool cannot assign owners or decide scopes</td></tr>
+<tr><td>Federated, short-lived CI credentials</td><td>Rotate static keys more often</td><td>Removes the key rather than shrinking its life</td></tr>
+<tr><td>One identity per agent</td><td>Agents share a service account</td><td>Actions attributable and revocable per agent</td></tr>
+<tr><td>Customer-scoped tokens for the support agent</td><td>Broad read access with prompt rules</td><td>Limits enforced in code, not in instructions</td></tr>
+<tr><td>Staged revoke-all runbook</td><td>Revoke everything at once</td><td>Contains an incident without causing an outage</td></tr>
+<tr><td>Partner keys split per service</td><td>One shared key per partner</td><td>A leak exposes one service, not all</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: start with the inventory and owners. It found credentials nobody remembered creating, and it made every later decision concrete. Differently: run the revoke-all tabletop in the first month; it exposed the services that could not refresh credentials, which shaped the whole plan. Related: <a href="/insights/llmjacking-stolen-ai-keys-black-october/">LLMjacking and stolen AI keys</a>, <a href="/insights/securing-mcp-servers-checklist/">securing MCP servers</a>, <a href="/insights/tech-news-2026-11-08/">the 8 November tech news</a> and <a href="/regions/">where I work</a>.</p>
+<p>If your services and AI agents hold credentials you cannot list, own or revoke, see my <a href="/fractional-cto/">fractional CTO work</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
