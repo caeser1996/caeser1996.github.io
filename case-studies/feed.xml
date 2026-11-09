@@ -1,6 +1,88 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link><description>Anonymised engagements with architecture and flow diagrams</description><language>en-gb</language><lastBuildDate>Sun, 08 Nov 2026 15:50:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/case-studies/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link></image><item><title>Every key has an owner: machine and AI agent identity for a South African fintech</title><link>https://asksumanta.com/case-studies/south-africa-fintech-machine-agent-identity/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/south-africa-fintech-machine-agent-identity/</guid><pubDate>Sun, 08 Nov 2026 15:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>security</category><category>governance</category><category>ai</category><description>How a South African fintech can control the credentials its services and AI agents use: inventory, short-lived tokens, agent identities and a tested revoke-all.</description><content:encoded><![CDATA[<p><em>A South African investment and payments platform had tightened staff logins years ago. The credentials its software used were another matter: cloud keys in CI, database passwords in configuration, partner API keys shared between services, and now AI agents with their own tool access. After an attack elsewhere showed how quickly automated attackers turn one foothold into every reachable token, the company set out to know, own, shorten and be able to revoke every machine credential it had.</em></p><h2>The situation</h2>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link><description>Anonymised engagements with architecture and flow diagrams</description><language>en-gb</language><lastBuildDate>Mon, 09 Nov 2026 15:50:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/case-studies/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link></image><item><title>One GPU, many models: consolidating small AI models for an Indian multilingual marketplace</title><link>https://asksumanta.com/case-studies/india-marketplace-small-model-gpu-consolidation/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/india-marketplace-small-model-gpu-consolidation/</guid><pubDate>Mon, 09 Nov 2026 15:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>ai</category><category>platform</category><category>kubernetes</category><description>How an Indian multilingual marketplace can serve many small AI models without a GPU each: partitioned GPUs, shared base models with adapters and routing by model.</description><content:encoded><![CDATA[<p><em>An Indian online marketplace served buyers and sellers in many Indian languages. Behind its search, listings and support sat a growing collection of small AI models: embedding models, rerankers, classifiers and fine-tuned language variants. Each had been given a whole GPU, most of which sat idle. As new GPU partitioning options reached mainstream cloud services, the company set out to serve the same models on far less hardware, without one model&#x27;s traffic slowing another.</em></p><h2>The situation</h2>
+<p>An Indian online marketplace connected buyers with small and mid-sized sellers across the country, in English and many Indian languages. Over several years its teams had added small AI models wherever they helped: embedding models and rerankers for search in each major language, classifiers for listing quality and support routing, language identification, and fine-tuned language models that helped sellers write listings. Each team had deployed its models independently, and the simplest way to get a model into production had been to give it its own GPU.</p>
+<p>The result was a large GPU bill for hardware that was mostly idle. Many models needed only a fraction of a GPU's memory and compute, and traffic followed Indian daily patterns, with quiet nights and sharp peaks around sales. Adding support for another language meant another set of models and, by habit, more GPUs. Finance wanted the bill down; product wanted more languages.</p>
+<p><strong>Why now.</strong> GPU partitioning was moving into mainstream managed services. AWS added GPU partitioning to SageMaker AI real-time inference, using NVIDIA Multi-Instance GPU so one GPU can be split into isolated partitions, each with dedicated compute and memory<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. At the same time, reports that Microsoft was winding down rented capacity on older GPUs underlined how quickly hardware choices age<sup class="cite"><a href="#ref-5">5</a></sup>. Using every GPU fully had become a design goal, not an afterthought.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>Far fewer GPUs</strong> for the same models and traffic.</li>
+<li><strong>No noisy neighbours</strong> for latency-critical models such as search.</li>
+<li><strong>Quality held</strong> per language and task after any consolidation.</li>
+<li><strong>New languages cheap to add</strong>, without new hardware by default.</li>
+<li><strong>Cost visible per model and language</strong>, so decisions follow value.</li>
+<li><strong>Teams still independent</strong>: shared infrastructure, not a central bottleneck.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Product</small><div class="dgm-nodes"><span>Search<em>embeddings, rerankers</em></span><span>Listings<em>quality, generation</em></span><span>Support<em>routing, language ID</em></span></div></div>
+<div class="dgm-tier"><small>Routing</small><div class="dgm-nodes"><span class="hl">Inference gateway<em>model and adapter aware</em></span><span>Batch queues<em>offline work</em></span></div></div>
+<div class="dgm-tier"><small>Serving</small><div class="dgm-nodes"><span class="hl">GPU partitions<em>isolated small models</em></span><span>Shared base model<em>language and task adapters</em></span><span>Whole GPUs<em>only where needed</em></span></div></div>
+<div class="dgm-tier"><small>Platform</small><div class="dgm-nodes"><span>Kubernetes<em>GPU-aware scheduling</em></span><span>Partition profiles<em>planned per node pool</em></span></div></div>
+<div class="dgm-tier"><small>Evidence</small><div class="dgm-nodes"><span>Per-language evaluations</span><span>Latency per model</span><span>Cost per model and language</span></div></div>
+</div>
+<figcaption>Three ways to share a GPU, chosen per model: partitions, adapters on a shared base, or batch.</figcaption>
+</figure>
+<p>We sorted every model into one of three groups. <strong>Small, latency-critical models</strong>, such as search embeddings and rerankers, went onto Multi-Instance GPU partitions, which give each model its own slice of compute and memory with isolation enforced in hardware<sup class="cite"><a href="#ref-3">3</a></sup>. <strong>Language and task variants of the same base language model</strong> were rebuilt as LoRA adapters on one shared base model, where evaluations showed quality held. <strong>Offline work</strong>, such as re-embedding the catalogue or scoring listing quality overnight, moved to batch queues that filled spare capacity.</p>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Request</b><span>A feature asks for a task in a language, such as "rerank results in Tamil"</span></li>
+<li><b>Resolve</b><span>The gateway maps the task and language to a model or adapter</span></li>
+<li class="hl"><b>Route</b><span>It picks a server with that model or adapter loaded and spare capacity</span></li>
+<li><b>Serve</b><span>The model runs on its partition or the shared base model</span></li>
+<li class="hl"><b>Record</b><span>Model, adapter, language, latency and GPU share are recorded</span></li>
+<li><b>Review</b><span>Weekly reports guide which models to consolidate next</span></li>
+</ol>
+<figcaption>Product features ask for tasks; the platform decides where they run.</figcaption>
+</figure>
+
+<h2>The hard part: isolation, adapters and fixed partitions</h2>
+<p><strong>Choosing the right kind of sharing.</strong> Not all GPU sharing is equal. Partitions give each model guaranteed memory and compute; looser sharing lets models contend for the same resources, so one model's spike or failure can affect others. We kept partitions for anything on the search path and accepted looser sharing only for internal and offline models.</p>
+<p><strong>Routing to the right adapter.</strong> Adapters only save money if requests reach a server that already has the right adapter loaded; otherwise servers spend time loading and evicting them. The gateway therefore routed by model and adapter as well as load, the pattern the Kubernetes Gateway API Inference Extension describes, where an endpoint picker considers queue length, memory and loaded adapters before choosing a server<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/india-marketplace-small-model-gpu-consolidation/adapter-aware-scheduling.webp" alt="Flowchart of an inference endpoint picker: apply a default filter, check whether the request is critical, prefer pods with the required LoRA adapter or with capacity, then filter by lowest waiting queue and lowest KV cache use before choosing a pod" width="600" height="685" loading="lazy"></div><figcaption>Adapter- and load-aware scheduling: how requests reach a server that already has the right adapter loaded. <span class="credit">Source: <a href="https://kubernetes.io/blog/2025/06/05/introducing-gateway-api-inference-extension/" target="_blank" rel="noopener">Kubernetes blog, Daneyon Hansen, Kaushik Mitra, Jiaxin Shan and Kellen Swain</a> · CC BY 4.0</span></figcaption></figure>
+<p><strong>Living with fixed partition layouts.</strong> Partition profiles are set per GPU and changing them means draining the workloads on it. Rather than reshaping partitions on demand, we defined a small number of node pools, each with a fixed layout suited to a class of model, and let the scheduler place models on the right pool. Reshaping happened in planned maintenance, not in response to traffic.</p>
+<div class="callout"><p>The cheapest GPU is the one you already pay for. Before buying more, find out how much of each one your models actually use.</p></div>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Platform</small><ol><li>Usage measurement</li><li class="hl">Partitioned node pools</li><li>Gateway and batch queues</li></ol></div>
+<div class="dgm-lane"><small>ML teams</small><ol><li>Model inventory</li><li class="hl">Adapters where quality holds</li><li>Per-language evaluations</li></ol></div>
+<div class="dgm-lane"><small>Product and finance</small><ol><li>Latency targets per feature</li><li>Language roadmap</li><li class="hl">Cost per model and language</li></ol></div>
+</div>
+<figcaption>Platform made sharing safe, ML teams proved quality, product and finance set the targets.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Measure</b><ul><li>Inventory every model</li><li>GPU use per model</li><li>Latency targets</li></ul></div>
+<div><small>Phase 2</small><b>Partition</b><ul><li>Partitioned node pools</li><li>Move small models</li><li>Watch latency</li></ul></div>
+<div><small>Phase 3</small><b>Adapt</b><ul><li>Shared base model</li><li>Adapter-aware routing</li><li>Per-language evaluations</li></ul></div>
+<div><small>Phase 4</small><b>Batch</b><ul><li>Offline jobs to queues</li><li>Fill spare capacity</li><li>Retire idle GPUs</li></ul></div>
+</div>
+<figcaption>Measure before moving anything; the data showed which models could share and which could not.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Hardware partitions for search models</td><td>Looser GPU sharing everywhere</td><td>Search latency cannot depend on other models' traffic</td></tr>
+<tr><td>Adapters on a shared base model</td><td>One full model per language</td><td>Less memory, faster to add languages, if quality holds</td></tr>
+<tr><td>Adapter-aware routing</td><td>Round-robin load balancing</td><td>Avoids constant adapter loading and eviction</td></tr>
+<tr><td>Fixed partition layouts per node pool</td><td>Reshape partitions dynamically</td><td>Reshaping needs draining; stability beats perfect packing</td></tr>
+<tr><td>Offline work in batch queues</td><td>Run everything on real-time servers</td><td>Uses spare capacity without hurting live traffic</td></tr>
+<tr><td>Evaluations per language</td><td>One overall quality score</td><td>Averages hide regressions in smaller languages</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: measure real GPU use per model before changing anything. It showed most of the waste sat in a few teams' habits, not in the models themselves. Differently: build per-language evaluation sets before moving to adapters; the first adapter rollout exposed a regression in a smaller language that an overall score had hidden. Related: <a href="https://asksumanta.com/insights/kubernetes-inference-gateway/">Kubernetes inference gateways</a>, <a href="https://asksumanta.com/insights/kubernetes-dra-gpu-scheduling/">GPU scheduling with DRA</a>, <a href="https://asksumanta.com/insights/microsoft-oracle-gpu-capacity-contracts/">AI capacity contracts</a> and the <a href="https://asksumanta.com/fractional-cto-india/">India page</a>.</p>
+<p>If your GPU bill is growing faster than your AI usage, see my <a href="https://asksumanta.com/ai-architect/">AI architecture work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/india-marketplace-small-model-gpu-consolidation/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Every key has an owner: machine and AI agent identity for a South African fintech</title><link>https://asksumanta.com/case-studies/south-africa-fintech-machine-agent-identity/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/south-africa-fintech-machine-agent-identity/</guid><pubDate>Sun, 08 Nov 2026 15:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>security</category><category>governance</category><category>ai</category><description>How a South African fintech can control the credentials its services and AI agents use: inventory, short-lived tokens, agent identities and a tested revoke-all.</description><content:encoded><![CDATA[<p><em>A South African investment and payments platform had tightened staff logins years ago. The credentials its software used were another matter: cloud keys in CI, database passwords in configuration, partner API keys shared between services, and now AI agents with their own tool access. After an attack elsewhere showed how quickly automated attackers turn one foothold into every reachable token, the company set out to know, own, shorten and be able to revoke every machine credential it had.</em></p><h2>The situation</h2>
 <p>A South African platform offered investment accounts and payments to retail customers and small businesses. Staff identity was in good shape: single sign-on, multi-factor authentication and quarterly access reviews. Software identity was not. Pipelines deployed with long-lived cloud access keys. Services read database passwords from configuration files. Partner API keys were shared between several services, and nobody was sure which. Over the past year, teams had added AI agents: a support assistant that looked up account status, and internal agents that triaged alerts and drafted reconciliation reports, each with its own set of keys.</p>
 <p>As a financial institution in scope of Joint Standard 2 of 2024, issued by the FSCA and the Prudential Authority and effective from 1 June 2025, the company had to maintain cybersecurity and cyber resilience controls, including identity and access management<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>. A security compromise involving personal information would also trigger notification duties under POPIA. The company's access controls were written around people; its regulator would not see the distinction as an excuse.</p>
 <p><strong>Why now.</strong> In late October, Chainalysis disclosed an intrusion by an actor using "offensive agentic techniques"<sup class="cite"><a href="#ref-2">2</a></sup>. On 6 November it said the attack had exposed password hashes and live tokens for all users, and it took key products offline<sup class="cite"><a href="#ref-1">1</a></sup>. The lesson for the board was simple: automated attackers find and use every credential they can reach, quickly. Industry research suggested the company was not unusual: a 2026 identity survey reported that only a small minority of organisations automate the lifecycle of machine identities<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
@@ -3970,88 +4052,4 @@
 
 <h2>What I'd do again, and differently</h2>
 <p>Again: put the gateway and the audit log in before the first use case, and make departments bring their own evaluation examples. Differently: start capacity planning earlier. In-country GPU capacity is finite and slow to expand, so demand forecasting deserves the same attention as the architecture.</p>
-<p>If you're planning sovereign AI in the region, the <a href="https://asksumanta.com/uae/">UAE</a> page describes how I work there, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/uae-government-sovereign-llm-service/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Re-architecting a SaaS platform so one tenant can&#x27;t slow down the rest</title><link>https://asksumanta.com/case-studies/saas-multi-tenant-re-architecture/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/saas-multi-tenant-re-architecture/</guid><pubDate>Wed, 28 Oct 2026 01:28:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>platform</category><category>architecture</category><category>kubernetes</category><category>security</category><category>observability</category><description>How a B2B SaaS platform tamed noisy neighbours and met enterprise isolation demands with pooled and dedicated tiers, per-tenant limits and tested isolation.</description><content:encoded><![CDATA[<p><em>A few heavy tenants could degrade the service for everyone, and enterprise buyers were asking for isolation guarantees the platform could not evidence. The goal was tiered tenancy: pooled by default, dedicated where it is worth paying for, with per-tenant limits and isolation proven by tests rather than asserted in a questionnaire.</em></p><h2>The situation</h2>
-<p>A B2B SaaS platform had grown on a single shared architecture: one application deployment, one database cluster, every tenant in the same collections. That served it well while tenants were similar in size. As larger customers arrived, two problems appeared together. A heavy import or reporting job from one tenant could slow the service for everyone. And enterprise prospects began asking, in security reviews, how their data was isolated and whether they could have dedicated infrastructure.</p>
-<p>The team's instinct was to give big customers their own copy of everything. That answers the sales question and creates an operations problem: many stacks to upgrade, monitor and pay for.</p>
-
-<h2>What had to be true</h2>
-<ul>
-<li><strong>Isolation as a choice per tenant</strong>, not one model forced on all.</li>
-<li><strong>One codebase and one release process</strong> across every tier.</li>
-<li><strong>Per-tenant limits</strong> at every shared resource.</li>
-<li><strong>Tenant context everywhere</strong>: in routing, data access, logs, traces and cost.</li>
-<li><strong>Isolation proven by tests</strong>, so the answer to a security review is evidence.</li>
-</ul>
-
-<h2>Architecture</h2>
-<p>AWS's tenant isolation guidance frames the options as silo (dedicated resources), pool (shared resources) and bridge (a mix chosen per layer)<sup class="cite"><a href="#ref-1">1</a></sup>. The design adopted that vocabulary directly: a pooled tier for most tenants and a dedicated tier for those whose requirements justify it, running the same services.</p>
-<figure class="dgm">
-<div class="dgm-stack">
-<div class="dgm-tier"><small>Edge</small><div class="dgm-nodes"><span>Identity<em>tenant in token</em></span><span class="hl">Gateway API<em>tenant-aware routing</em></span><span>Rate limits<em>per tenant</em></span></div></div>
-<div class="dgm-tier"><small>Control plane</small><div class="dgm-nodes"><span>Tenant registry<em>tier, region, limits</em></span><span>Provisioning<em>infrastructure as code</em></span><span>Plan and quota config<em>versioned</em></span></div></div>
-<div class="dgm-tier"><small>Compute</small><div class="dgm-nodes"><span>Pooled namespace<em>shared services</em></span><span>Dedicated namespaces<em>per tenant</em></span><span>ResourceQuotas<em>per namespace</em></span></div></div>
-<div class="dgm-tier"><small>Data</small><div class="dgm-nodes"><span>Pooled cluster<em>tenantId on every document</em></span><span>Dedicated database or cluster<em>enterprise tier</em></span><span class="hl">Data access layer<em>tenant filter enforced</em></span></div></div>
-<div class="dgm-tier"><small>Assure</small><div class="dgm-nodes"><span class="hl">Isolation tests<em>every build</em></span><span>OpenTelemetry<em>tenant attributes</em></span><span>Per-tenant usage<em>cost and capacity</em></span></div></div>
-</div>
-<figcaption>Layered architecture: one control plane decides where each tenant runs; the same code serves both tiers.</figcaption>
-</figure>
-
-<h2>The data flow, end to end</h2>
-<figure class="dgm">
-<ol class="dgm-flow g3">
-<li><b>Authenticate</b><span>Token carries the tenant identifier; nothing downstream trusts a header alone</span></li>
-<li class="hl"><b>Route</b><span>Gateway looks up the tenant's tier and sends the request to pooled or dedicated services</span></li>
-<li><b>Limit</b><span>Per-tenant rate and concurrency limits applied before work starts</span></li>
-<li class="hl"><b>Access data</b><span>Data layer injects the tenant filter or selects the tenant's database</span></li>
-<li><b>Observe</b><span>Tenant context propagated on traces, metrics and logs</span></li>
-<li><b>Account</b><span>Usage aggregated per tenant for capacity, cost and plan enforcement</span></li>
-</ol>
-<figcaption>Tenant context is set once at the edge and carried through every hop.</figcaption>
-</figure>
-<p>On the data side, MongoDB's guidance compares database-per-tenant with shared collections keyed by a tenant field, and notes that the shared model needs every query to filter by tenant<sup class="cite"><a href="#ref-3">3</a></sup>. That requirement was moved out of individual queries and into one data access layer. Detail in <a href="https://asksumanta.com/insights/mongodb-multi-tenant-saas-patterns/">MongoDB multi-tenant SaaS patterns</a>.</p>
-
-<h2>The hard part: noisy neighbours at every layer</h2>
-<p>Noisy neighbours are rarely one bottleneck. Limits had to exist at each shared resource, or load simply moved to the next one. The Kubernetes documentation treats noisy neighbours as a core multi-tenancy concern and points to resource quotas and node isolation as controls<sup class="cite"><a href="#ref-2">2</a></sup>; quotas cap aggregate consumption per namespace<sup class="cite"><a href="#ref-5">5</a></sup>. The layers addressed were:</p>
-<ul>
-<li><strong>Requests</strong>: per-tenant rate and concurrency limits at the gateway.</li>
-<li><strong>Background work</strong>: per-tenant queues or fair scheduling, so one tenant's bulk import cannot starve others.</li>
-<li><strong>Compute</strong>: dedicated namespaces with quotas for the dedicated tier; resource requests and limits in the pool.</li>
-<li><strong>Database</strong>: indexes that start with the tenant key, query timeouts, and heavy reporting moved off the primary path.</li>
-</ul>
-<p>None of that is manageable without seeing it per tenant. OpenTelemetry baggage carries key-value context such as a tenant identifier across service boundaries<sup class="cite"><a href="#ref-4">4</a></sup>, which let traces and metrics be broken down by tenant. More in <a href="https://asksumanta.com/insights/kubernetes-multi-tenancy/">Kubernetes multi-tenancy</a>.</p>
-<div class="callout"><p>Isolation you cannot test is a claim. Isolation with a failing test when it breaks is a control.</p></div>
-
-<h2>How the engagement ran</h2>
-<figure class="dgm">
-<div class="dgm-lanes">
-<div class="dgm-lane"><small>Product and sales</small><ol><li>Define tier offers</li><li class="hl">Agree who qualifies</li><li>Use isolation evidence</li></ol></div>
-<div class="dgm-lane"><small>Engineering</small><ol><li>Tenant context and data layer</li><li>Limits at each layer</li><li class="hl">Isolation test suite</li></ol></div>
-<div class="dgm-lane"><small>Platform</small><ol><li>Provision dedicated tier</li><li>Per-tenant dashboards</li><li>Migrate tenants between tiers</li></ol></div>
-</div>
-<figcaption>Tiering is a product decision as much as an engineering one.</figcaption>
-</figure>
-<figure class="dgm">
-<div class="dgm-phases">
-<div><small>Phase 1</small><b>Assess</b><ul><li>Shared resource inventory</li><li>Noisy neighbour incidents</li><li>Enterprise requirements</li></ul></div>
-<div><small>Phase 2</small><b>Foundations</b><ul><li>Tenant context end to end</li><li>Data access layer</li><li>Per-tenant observability</li></ul></div>
-<div><small>Phase 3</small><b>Limits and tiers</b><ul><li>Gateway limits</li><li>Fair background work</li><li>Dedicated tier provisioning</li></ul></div>
-<div><small>Phase 4</small><b>Prove and hand off</b><ul><li>Isolation tests in CI</li><li>Tier migration runbook</li><li>Security review pack</li></ul></div>
-</div>
-<figcaption>Foundations first: without tenant context, neither limits nor evidence are possible.</figcaption>
-</figure>
-
-<h2>Key decisions and trade-offs</h2>
-<table class="tbl">
-<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
-<tbody>
-<tr><td>Pooled default, dedicated by exception</td><td>A stack per enterprise tenant</td><td>Isolation where it pays, without multiplying operations</td></tr>
-<tr><td>One codebase across tiers</td><td>Forked enterprise edition</td><td>One release process; no drift between tiers</td></tr>
-<tr><td>Tenant filter in a data access layer</td><td>Filter in each query</td><td>One place to enforce and test</td></tr>
-<tr><td>Gateway API for routing</td><td>Routing logic in each service</td><td>Tier routing declared at the edge</td></tr>
-<tr><td>Isolation tests in CI</td><td>Annual manual review</td><td>Continuous evidence; regressions caught before release</td></tr>
-</tbody>
-</table>
-
-<h2>What I'd do again, and differently</h2>
-<p>Again: get tenant context right before anything else, and make isolation a test suite rather than a document. Differently: agree the tier definitions with product and sales earlier. The engineering was straightforward once everyone agreed what "dedicated" promised and who could buy it.</p>
-<p>If your platform is facing the same pressures, the <a href="https://asksumanta.com/fractional-cto/">fractional CTO</a> page describes how I work with teams on it, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/saas-multi-tenant-re-architecture/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
+<p>If you're planning sovereign AI in the region, the <a href="https://asksumanta.com/uae/">UAE</a> page describes how I work there, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/uae-government-sovereign-llm-service/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>

@@ -1,0 +1,84 @@
+<!--{"title": "Case study: serving many small AI models on shared GPUs in India", "description": "How an Indian multilingual marketplace can serve many small AI models without a GPU each: partitioned GPUs, shared base models with adapters and routing by model.", "short": "Small models on shared GPUs in India", "h1": "One GPU, many models: consolidating small AI models for an Indian multilingual marketplace", "kicker": "Case study · AI infrastructure and cost", "lede": "An Indian online marketplace served buyers and sellers in many Indian languages. Behind its search, listings and support sat a growing collection of small AI models: embedding models, rerankers, classifiers and fine-tuned language variants. Each had been given a whole GPU, most of which sat idle. As new GPU partitioning options reached mainstream cloud services, the company set out to serve the same models on far less hardware, without one model's traffic slowing another.", "date": "2026-11-09", "datetime": "2026-11-09T15:50:00+04:00", "readtime": "9 min read", "sector": "E-commerce · India", "role": "Fractional CTO and AI architect", "engagement": "Assessment, architecture and delivery leadership", "scope": "Model inventory, GPU partitioning, shared base models with adapters, model-aware routing, evaluations, per-model cost", "stack": ["NVIDIA Multi-Instance GPU partitions", "Kubernetes with GPU-aware scheduling", "Inference gateway with model-aware routing", "Shared base model with LoRA adapters", "vLLM and lightweight model servers", "Batch queues for offline jobs", "Per-language evaluation sets", "OpenTelemetry and per-model cost reports"], "outcomes": ["Small models served from partitions of shared GPUs instead of one GPU each", "Language and task variants served as adapters on a shared base model where quality allowed", "Hardware isolation between models whose traffic must not interfere", "Offline work moved to batch queues, freeing real-time capacity", "Cost and latency visible per model and per language, guiding further consolidation"], "tags": ["ai", "platform", "kubernetes"], "keywords": ["GPU partitioning", "NVIDIA MIG", "multi-model serving", "LoRA adapter serving", "SageMaker GPU partitioning", "Gateway API inference extension", "Indian language AI models", "AI inference cost India", "small model serving", "fractional CTO India"], "faq": [["What is GPU partitioning and when does it help?", "Technologies such as NVIDIA Multi-Instance GPU split one physical GPU into several isolated instances, each with its own compute and memory. It helps when you serve many small models that each need far less than a full GPU."], ["Should every small model share a GPU?", "No. Latency-critical models whose traffic must not interfere need hardware isolation, such as separate partitions. Models that tolerate some contention, or offline jobs, can share more aggressively or move to batch queues."], ["When are adapters on a shared base model better than separate models?", "When variants differ mainly by language, domain or task and quality holds on evaluation sets. Serving adapters on one base model saves memory and simplifies operations, provided routing sends each request to a server with the right adapter loaded."]], "related": ["/fractional-cto-india/", "/ai-architect/", "/fractional-cto/"], "citations": [{"title": "Amazon SageMaker AI inference now supports GPU partitioning for real-time endpoints", "url": "https://aws.amazon.com/about-aws/whats-new/2026/10/sagemaker-gpu-partitioning/", "publisher": "AWS", "date": "2026"}, {"title": "AWS Adds NVIDIA GPU Partitioning to SageMaker Inference Endpoints", "url": "https://www.unite.ai/aws-adds-nvidia-gpu-partitioning-to-sagemaker-inference-endpoints/", "publisher": "Unite.AI", "date": "Nov 2026"}, {"title": "NVIDIA Multi-Instance GPU User Guide", "url": "https://docs.nvidia.com/datacenter/tesla/mig-user-guide/", "publisher": "NVIDIA", "date": "2026"}, {"title": "Introducing Gateway API Inference Extension", "url": "https://kubernetes.io/blog/2025/06/05/introducing-gateway-api-inference-extension/", "publisher": "Kubernetes blog", "date": "5 Jun 2025"}, {"title": "Microsoft is winding down its deal to rent AI computing from Oracle", "url": "https://thenextweb.com/news/microsoft-winds-down-oracle-ai-cloud-capacity-deal", "publisher": "The Next Web", "date": "Nov 2026"}]}-->
+<h2>The situation</h2>
+<p>An Indian online marketplace connected buyers with small and mid-sized sellers across the country, in English and many Indian languages. Over several years its teams had added small AI models wherever they helped: embedding models and rerankers for search in each major language, classifiers for listing quality and support routing, language identification, and fine-tuned language models that helped sellers write listings. Each team had deployed its models independently, and the simplest way to get a model into production had been to give it its own GPU.</p>
+<p>The result was a large GPU bill for hardware that was mostly idle. Many models needed only a fraction of a GPU's memory and compute, and traffic followed Indian daily patterns, with quiet nights and sharp peaks around sales. Adding support for another language meant another set of models and, by habit, more GPUs. Finance wanted the bill down; product wanted more languages.</p>
+<p><strong>Why now.</strong> GPU partitioning was moving into mainstream managed services. AWS added GPU partitioning to SageMaker AI real-time inference, using NVIDIA Multi-Instance GPU so one GPU can be split into isolated partitions, each with dedicated compute and memory<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. At the same time, reports that Microsoft was winding down rented capacity on older GPUs underlined how quickly hardware choices age<sup class="cite"><a href="#ref-5">5</a></sup>. Using every GPU fully had become a design goal, not an afterthought.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>Far fewer GPUs</strong> for the same models and traffic.</li>
+<li><strong>No noisy neighbours</strong> for latency-critical models such as search.</li>
+<li><strong>Quality held</strong> per language and task after any consolidation.</li>
+<li><strong>New languages cheap to add</strong>, without new hardware by default.</li>
+<li><strong>Cost visible per model and language</strong>, so decisions follow value.</li>
+<li><strong>Teams still independent</strong>: shared infrastructure, not a central bottleneck.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Product</small><div class="dgm-nodes"><span>Search<em>embeddings, rerankers</em></span><span>Listings<em>quality, generation</em></span><span>Support<em>routing, language ID</em></span></div></div>
+<div class="dgm-tier"><small>Routing</small><div class="dgm-nodes"><span class="hl">Inference gateway<em>model and adapter aware</em></span><span>Batch queues<em>offline work</em></span></div></div>
+<div class="dgm-tier"><small>Serving</small><div class="dgm-nodes"><span class="hl">GPU partitions<em>isolated small models</em></span><span>Shared base model<em>language and task adapters</em></span><span>Whole GPUs<em>only where needed</em></span></div></div>
+<div class="dgm-tier"><small>Platform</small><div class="dgm-nodes"><span>Kubernetes<em>GPU-aware scheduling</em></span><span>Partition profiles<em>planned per node pool</em></span></div></div>
+<div class="dgm-tier"><small>Evidence</small><div class="dgm-nodes"><span>Per-language evaluations</span><span>Latency per model</span><span>Cost per model and language</span></div></div>
+</div>
+<figcaption>Three ways to share a GPU, chosen per model: partitions, adapters on a shared base, or batch.</figcaption>
+</figure>
+<p>We sorted every model into one of three groups. <strong>Small, latency-critical models</strong>, such as search embeddings and rerankers, went onto Multi-Instance GPU partitions, which give each model its own slice of compute and memory with isolation enforced in hardware<sup class="cite"><a href="#ref-3">3</a></sup>. <strong>Language and task variants of the same base language model</strong> were rebuilt as LoRA adapters on one shared base model, where evaluations showed quality held. <strong>Offline work</strong>, such as re-embedding the catalogue or scoring listing quality overnight, moved to batch queues that filled spare capacity.</p>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Request</b><span>A feature asks for a task in a language, such as "rerank results in Tamil"</span></li>
+<li><b>Resolve</b><span>The gateway maps the task and language to a model or adapter</span></li>
+<li class="hl"><b>Route</b><span>It picks a server with that model or adapter loaded and spare capacity</span></li>
+<li><b>Serve</b><span>The model runs on its partition or the shared base model</span></li>
+<li class="hl"><b>Record</b><span>Model, adapter, language, latency and GPU share are recorded</span></li>
+<li><b>Review</b><span>Weekly reports guide which models to consolidate next</span></li>
+</ol>
+<figcaption>Product features ask for tasks; the platform decides where they run.</figcaption>
+</figure>
+
+<h2>The hard part: isolation, adapters and fixed partitions</h2>
+<p><strong>Choosing the right kind of sharing.</strong> Not all GPU sharing is equal. Partitions give each model guaranteed memory and compute; looser sharing lets models contend for the same resources, so one model's spike or failure can affect others. We kept partitions for anything on the search path and accepted looser sharing only for internal and offline models.</p>
+<p><strong>Routing to the right adapter.</strong> Adapters only save money if requests reach a server that already has the right adapter loaded; otherwise servers spend time loading and evicting them. The gateway therefore routed by model and adapter as well as load, the pattern the Kubernetes Gateway API Inference Extension describes, where an endpoint picker considers queue length, memory and loaded adapters before choosing a server<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/india-marketplace-small-model-gpu-consolidation/adapter-aware-scheduling.webp" alt="Flowchart of an inference endpoint picker: apply a default filter, check whether the request is critical, prefer pods with the required LoRA adapter or with capacity, then filter by lowest waiting queue and lowest KV cache use before choosing a pod" width="600" height="685" loading="lazy"></div><figcaption>Adapter- and load-aware scheduling: how requests reach a server that already has the right adapter loaded. <span class="credit">Source: <a href="https://kubernetes.io/blog/2025/06/05/introducing-gateway-api-inference-extension/" target="_blank" rel="noopener">Kubernetes blog, Daneyon Hansen, Kaushik Mitra, Jiaxin Shan and Kellen Swain</a> · CC BY 4.0</span></figcaption></figure>
+<p><strong>Living with fixed partition layouts.</strong> Partition profiles are set per GPU and changing them means draining the workloads on it. Rather than reshaping partitions on demand, we defined a small number of node pools, each with a fixed layout suited to a class of model, and let the scheduler place models on the right pool. Reshaping happened in planned maintenance, not in response to traffic.</p>
+<div class="callout"><p>The cheapest GPU is the one you already pay for. Before buying more, find out how much of each one your models actually use.</p></div>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Platform</small><ol><li>Usage measurement</li><li class="hl">Partitioned node pools</li><li>Gateway and batch queues</li></ol></div>
+<div class="dgm-lane"><small>ML teams</small><ol><li>Model inventory</li><li class="hl">Adapters where quality holds</li><li>Per-language evaluations</li></ol></div>
+<div class="dgm-lane"><small>Product and finance</small><ol><li>Latency targets per feature</li><li>Language roadmap</li><li class="hl">Cost per model and language</li></ol></div>
+</div>
+<figcaption>Platform made sharing safe, ML teams proved quality, product and finance set the targets.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Measure</b><ul><li>Inventory every model</li><li>GPU use per model</li><li>Latency targets</li></ul></div>
+<div><small>Phase 2</small><b>Partition</b><ul><li>Partitioned node pools</li><li>Move small models</li><li>Watch latency</li></ul></div>
+<div><small>Phase 3</small><b>Adapt</b><ul><li>Shared base model</li><li>Adapter-aware routing</li><li>Per-language evaluations</li></ul></div>
+<div><small>Phase 4</small><b>Batch</b><ul><li>Offline jobs to queues</li><li>Fill spare capacity</li><li>Retire idle GPUs</li></ul></div>
+</div>
+<figcaption>Measure before moving anything; the data showed which models could share and which could not.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Hardware partitions for search models</td><td>Looser GPU sharing everywhere</td><td>Search latency cannot depend on other models' traffic</td></tr>
+<tr><td>Adapters on a shared base model</td><td>One full model per language</td><td>Less memory, faster to add languages, if quality holds</td></tr>
+<tr><td>Adapter-aware routing</td><td>Round-robin load balancing</td><td>Avoids constant adapter loading and eviction</td></tr>
+<tr><td>Fixed partition layouts per node pool</td><td>Reshape partitions dynamically</td><td>Reshaping needs draining; stability beats perfect packing</td></tr>
+<tr><td>Offline work in batch queues</td><td>Run everything on real-time servers</td><td>Uses spare capacity without hurting live traffic</td></tr>
+<tr><td>Evaluations per language</td><td>One overall quality score</td><td>Averages hide regressions in smaller languages</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: measure real GPU use per model before changing anything. It showed most of the waste sat in a few teams' habits, not in the models themselves. Differently: build per-language evaluation sets before moving to adapters; the first adapter rollout exposed a regression in a smaller language that an overall score had hidden. Related: <a href="/insights/kubernetes-inference-gateway/">Kubernetes inference gateways</a>, <a href="/insights/kubernetes-dra-gpu-scheduling/">GPU scheduling with DRA</a>, <a href="/insights/microsoft-oracle-gpu-capacity-contracts/">AI capacity contracts</a> and the <a href="/fractional-cto-india/">India page</a>.</p>
+<p>If your GPU bill is growing faster than your AI usage, see my <a href="/ai-architect/">AI architecture work</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
