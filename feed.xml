@@ -1,6 +1,89 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link><description>Fractional CTO and AI architect: insights, case studies and daily tech news.</description><language>en-gb</language><lastBuildDate>Tue, 10 Nov 2026 08:50:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link></image><item><title>Tech news, 10 November 2026: Claude Fable 5.2 and Mythos 5.2, N-able takes N-central offline, Qubole&#x27;s AWS access abused, Norway pauses data centre grid bookings and Meta&#x27;s Muse Ember</title><link>https://asksumanta.com/insights/tech-news-2026-11-10/</link><guid isPermaLink="true">https://asksumanta.com/insights/tech-news-2026-11-10/</guid><pubDate>Tue, 10 Nov 2026 08:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>ai</category><category>security</category><category>platform</category><description>A CTO&#x27;s take: Anthropic ships Claude Fable 5.2 and Mythos 5.2, N-able pulls N-central offline, Qubole&#x27;s AWS trust abused, Norway pauses data centre grid bookings.</description><content:encoded><![CDATA[<p><em>Anthropic released new Claude models with a lower price for its general model. A remote management platform used by managed service providers went offline after a researcher published alleged zero-days, and attackers used a data platform&#x27;s trusted access into its customers&#x27; AWS accounts. Norway paused new grid reservations for data centres, and Meta launched a small, cheap model aimed at agent work.</em></p><p>Today's brief covers stories from 8 to 9 November.</p>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link><description>Fractional CTO and AI architect: insights, case studies and daily tech news.</description><language>en-gb</language><lastBuildDate>Tue, 10 Nov 2026 15:50:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link></image><item><title>Every door has a lock and an owner: governing third-party access for a Japanese online securities firm</title><link>https://asksumanta.com/case-studies/japan-securities-third-party-cloud-access/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/japan-securities-third-party-cloud-access/</guid><pubDate>Tue, 10 Nov 2026 15:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>security</category><category>governance</category><category>platform</category><description>How a Japanese online securities firm can govern vendor access to its cloud and machines: an access ledger, narrow roles, behaviour alerts and a per-vendor kill switch.</description><content:encoded><![CDATA[<p><em>A Japanese online securities firm ran on AWS and relied on a long list of suppliers: a data platform, an observability vendor, a managed service provider for office devices, SaaS tools connected to its email and files. Each had been given access when it was onboarded, and nobody had a single view of who could reach what. When attackers used one data platform&#x27;s trusted access to raid its customers&#x27; AWS accounts, the firm set out to know, narrow, watch and be able to cut every supplier&#x27;s access.</em></p><h2>The situation</h2>
+<p>A Japanese online securities firm ran its trading and account platforms on AWS. Over the years it had connected a long list of suppliers: a data platform that read market and customer data through a cross-account role, an observability vendor with read access to logs and metrics, a managed service provider that ran remote management agents on office devices, and SaaS tools connected to the firm's email and file storage through OAuth grants. Each connection had been approved by the team that needed it, at the time it was needed. Nobody had a complete list.</p>
+<p>The FSA's cybersecurity guidelines for the financial sector, in effect since October 2024, treat third-party risk management as a core area, including outsourcing and cloud services<sup class="cite"><a href="#ref-5">5</a></sup>. The firm's supplier assessments were thorough on paper: questionnaires, certifications and contract clauses. What they did not show was what each supplier could technically do inside the firm's systems today.</p>
+<p><strong>Why now.</strong> In early November 2026, Wiz reported that an attacker had used credentials tied to Qubole's AWS account to assume integration roles that customers had created to trust Qubole, then collected secrets and data from those customers' accounts<sup class="cite"><a href="#ref-1">1</a></sup>. Days later, N-able took its hosted N-central remote management platform offline after a researcher published alleged zero-days<sup class="cite"><a href="#ref-2">2</a></sup>. Both showed the same thing: a supplier's access is only as safe as the supplier.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>Known</strong>: every supplier's technical access in one ledger.</li>
+<li><strong>Owned</strong>: an internal owner and a business reason for each.</li>
+<li><strong>Narrow</strong>: each supplier can do only what its service needs.</li>
+<li><strong>Watched</strong>: unusual supplier activity raises an alert.</li>
+<li><strong>Revocable</strong>: any supplier's access can be cut quickly, without guesswork.</li>
+<li><strong>Evidenced</strong>: supervisors and auditors can see all of the above.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Suppliers</small><div class="dgm-nodes"><span>Data platform<em>cross-account role</em></span><span>Observability<em>read-only role</em></span><span>Managed service provider<em>device agents</em></span><span>SaaS tools<em>OAuth grants</em></span></div></div>
+<div class="dgm-tier"><small>Access</small><div class="dgm-nodes"><span class="hl">Narrow roles<em>specific actions and resources</em></span><span>Unique external IDs<em>per relationship</em></span><span>Just-in-time access<em>for remote management</em></span></div></div>
+<div class="dgm-tier"><small>Guardrails</small><div class="dgm-nodes"><span>Service control policies<em>what no vendor may ever do</em></span><span class="hl">Data perimeter<em>expected networks only</em></span><span>Secrets out of reach<em>not in vendor-readable places</em></span></div></div>
+<div class="dgm-tier"><small>Detection</small><div class="dgm-nodes"><span>CloudTrail<em>every vendor action</em></span><span class="hl">Behaviour alerts<em>new source, time or action</em></span></div></div>
+<div class="dgm-tier"><small>Governance</small><div class="dgm-nodes"><span>Vendor access ledger</span><span>Revocation runbooks</span><span>Contract terms</span></div></div>
+</div>
+<figcaption>Each layer assumes the one above it might fail: narrow roles, then guardrails, then detection, then a way to cut access.</figcaption>
+</figure>
+<p>Every cross-account role was rebuilt following AWS's guidance for third-party access: a trust policy naming the vendor's account, a unique external ID for the relationship and permissions limited to the specific actions and resources the service needed<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>. Service control policies set limits no supplier role could exceed, such as never reading the secrets manager or changing identity settings. Where a vendor could commit to fixed source networks, resource policies only accepted vendor access from those networks. The model is the one Kubernetes teaches for role-based access: a narrowly defined role, bound explicitly to named identities<sup class="cite"><a href="#ref-6">6</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/japan-securities-third-party-cloud-access/narrow-role-binding.webp" alt="Diagram of a pod-reader role allowing only get and list on pods, bound through a role binding to a user, a group and a service account" width="624" height="271" loading="lazy"></div><figcaption>A narrow role bound to named identities: the same shape the firm used for every supplier's access, whatever the platform. <span class="credit">Source: <a href="https://kubernetes.io/blog/2018/07/18/11-ways-not-to-get-hacked/" target="_blank" rel="noopener">Kubernetes blog, Andrew Martin</a> · CC BY 4.0</span></figcaption></figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Request</b><span>A supplier's system asks to assume its role in the firm's account</span></li>
+<li><b>Check trust</b><span>The trust policy checks the vendor account and external ID</span></li>
+<li class="hl"><b>Limit</b><span>The role, guardrails and data perimeter decide what is allowed</span></li>
+<li><b>Act</b><span>The supplier performs only the actions its service needs</span></li>
+<li class="hl"><b>Watch</b><span>CloudTrail records each action; unusual patterns raise an alert</span></li>
+<li><b>Cut</b><span>If needed, the runbook disables the trust and revokes sessions</span></li>
+</ol>
+<figcaption>Trust is checked at the door, limited inside and watched throughout.</figcaption>
+</figure>
+
+<h2>The hard part: when the supplier itself is compromised</h2>
+<p><strong>External IDs are not enough.</strong> An external ID protects against the confused deputy problem, where one customer tricks a vendor into acting on someone else's account<sup class="cite"><a href="#ref-3">3</a></sup>. It does not help when the vendor's own systems are compromised; in the Qubole case, the attacker's requests were accepted by customers' roles<sup class="cite"><a href="#ref-1">1</a></sup>. So the firm assumed every supplier could one day be the attacker, and designed so that a compromised supplier could reach only a narrow slice of data, could not read secrets and would trigger alerts by behaving differently.</p>
+<p><strong>Detecting "normal but wrong".</strong> A compromised supplier uses valid credentials, so authentication alerts stay quiet. The firm built a simple baseline per supplier: usual source networks, usual hours, usual API actions and usual data volumes. Departures from that baseline, such as a new network, listing every bucket or reading parameters it had never read, raised alerts to the security team and the supplier's internal owner.</p>
+<p><strong>Remote management tools.</strong> The managed service provider's agents could run commands on every office device, so they received the strictest treatment: access only to office devices, never to trading systems; just-in-time sessions approved per task; and a tested way to stop the agents across the fleet if the provider was compromised. See the <a href="https://asksumanta.com/case-studies/uk-msp-cyber-resilience-bill-readiness/">MSP cyber resilience case study</a>.</p>
+<div class="callout"><p>Assume every supplier will one day be breached. Design so that day costs you a narrow slice of data and an alert, not your whole estate.</p></div>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Security</small><ol><li>Access inventory</li><li class="hl">Guardrails and alerts</li><li>Revocation drills</li></ol></div>
+<div class="dgm-lane"><small>Platform</small><ol><li>Rebuild vendor roles</li><li class="hl">Data perimeter</li><li>Move secrets out of reach</li></ol></div>
+<div class="dgm-lane"><small>Vendor owners</small><ol><li>Confirm business need</li><li class="hl">Define normal behaviour</li><li>Review quarterly</li></ol></div>
+<div class="dgm-lane"><small>Risk, legal and procurement</small><ol><li>Map to FSA guidelines</li><li>Notification clauses</li><li class="hl">Evidence for supervisors</li></ol></div>
+</div>
+<figcaption>Security and platform built the controls; the people who own each supplier relationship kept them accurate.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Find</b><ul><li>Roles trusting outside accounts</li><li>OAuth grants and agents</li><li>Owners and reasons</li></ul></div>
+<div><small>Phase 2</small><b>Narrow</b><ul><li>Rebuild roles</li><li>Remove unused access</li><li>Guardrails</li></ul></div>
+<div><small>Phase 3</small><b>Watch</b><ul><li>Behaviour baselines</li><li>Alerts to owners</li><li>Data perimeter</li></ul></div>
+<div><small>Phase 4</small><b>Rehearse</b><ul><li>Revoke-a-vendor drills</li><li>Contract updates</li><li>Quarterly reviews</li></ul></div>
+</div>
+<figcaption>The first phase alone removed access nobody could justify.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Technical ledger of access, not only questionnaires</td><td>Rely on supplier assessments</td><td>Shows what suppliers can actually do today</td></tr>
+<tr><td>Assume supplier compromise</td><td>Trust certified suppliers</td><td>Valid credentials are exactly what attackers use</td></tr>
+<tr><td>Guardrails no vendor role can exceed</td><td>Careful role design only</td><td>One mistake in a role does not expose everything</td></tr>
+<tr><td>Behaviour alerts per supplier</td><td>Generic anomaly detection</td><td>Small baselines are cheap and catch "normal but wrong"</td></tr>
+<tr><td>Just-in-time remote management</td><td>Always-on agent access</td><td>Limits what a compromised provider can do at any moment</td></tr>
+<tr><td>Rehearsed per-vendor revocation</td><td>Revoke when needed</td><td>Cutting access in a crisis needs a known, safe procedure</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: start with the inventory of roles trusting outside accounts. It found integrations for services the firm had stopped using years earlier, still active. Differently: involve procurement from the start, so new suppliers are onboarded into the ledger rather than discovered later. Related: <a href="https://asksumanta.com/insights/tech-news-2026-11-10/">the 10 November tech news</a>, the <a href="https://asksumanta.com/case-studies/south-africa-fintech-machine-agent-identity/">machine and agent identity case study</a>, <a href="https://asksumanta.com/insights/securing-mcp-servers-checklist/">securing MCP servers</a> and <a href="https://asksumanta.com/regions/">where I work</a>.</p>
+<p>If you cannot list every supplier that can reach your cloud, or cut one off quickly, see my <a href="https://asksumanta.com/fractional-cto/">fractional CTO work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/japan-securities-third-party-cloud-access/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Tech news, 10 November 2026: Claude Fable 5.2 and Mythos 5.2, N-able takes N-central offline, Qubole&#x27;s AWS access abused, Norway pauses data centre grid bookings and Meta&#x27;s Muse Ember</title><link>https://asksumanta.com/insights/tech-news-2026-11-10/</link><guid isPermaLink="true">https://asksumanta.com/insights/tech-news-2026-11-10/</guid><pubDate>Tue, 10 Nov 2026 08:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>ai</category><category>security</category><category>platform</category><description>A CTO&#x27;s take: Anthropic ships Claude Fable 5.2 and Mythos 5.2, N-able pulls N-central offline, Qubole&#x27;s AWS trust abused, Norway pauses data centre grid bookings.</description><content:encoded><![CDATA[<p><em>Anthropic released new Claude models with a lower price for its general model. A remote management platform used by managed service providers went offline after a researcher published alleged zero-days, and attackers used a data platform&#x27;s trusted access into its customers&#x27; AWS accounts. Norway paused new grid reservations for data centres, and Meta launched a small, cheap model aimed at agent work.</em></p><p>Today's brief covers stories from 8 to 9 November.</p>
 
 <figure class="dgm">
 <div class="dgm-stack">
@@ -3259,81 +3342,4 @@
 <li>Ask SaaS vendors how agent-based pricing will work before your next renewal.</li>
 </ul>
 <p>Building in Korea, the US or anywhere else? See <a href="https://asksumanta.com/regions/">where I work</a>, the <a href="https://asksumanta.com/fractional-cto-united-states/">US page</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
-</section><p><a href="https://asksumanta.com/insights/tech-news-2026-10-30/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Decisions people can question: explainable AI credit scoring for a Brazilian digital lender</title><link>https://asksumanta.com/case-studies/brazil-credit-ai-lgpd-explainability/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/brazil-credit-ai-lgpd-explainability/</guid><pubDate>Fri, 30 Oct 2026 01:20:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>ai</category><category>governance</category><category>data</category><description>How a Brazilian digital lender can make AI credit decisions reviewable under the LGPD and ready for Brazil&#x27;s AI bill: reason codes, human review and traceable decisions.</description><content:encoded><![CDATA[<p><em>A Brazilian digital lender approved and priced loans in seconds with machine learning models. Customers could not easily find out why they were declined, and reviewing a decision meant digging through logs. The goal was to make every automated credit decision explainable, reviewable by a person and ready for the AI rules Brazil is debating.</em></p><h2>The situation</h2>
-<p>A digital lender in Brazil offered personal loans and credit lines through its app. Machine learning models approved, declined and priced applications in seconds, using bureau data, open finance data shared with consent and in-app behaviour. Growth was strong. Complaints were the warning sign: declined customers could not get a useful answer about why, and when the team reviewed a decision it meant piecing together logs from several services.</p>
-<p><strong>Why now.</strong> Brazil's data protection law, the LGPD, already gives people the right to request review of decisions taken solely through automated processing that affect their interests, including credit profiling, and to receive clear information about the criteria used<sup class="cite"><a href="#ref-1">1</a></sup>. The national data protection authority, ANPD, oversees it<sup class="cite"><a href="#ref-2">2</a></sup>. On top of that, Brazil's AI bill, PL 2338/2023, passed the Senate in December 2024 and was pending in the Chamber of Deputies, with a vote reported as expected after the October 2026 elections<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-4">4</a></sup><sup class="cite"><a href="#ref-5">5</a></sup>. It is not law yet, but a lender relying on automated credit decisions could not afford to wait.</p>
-
-<h2>What had to be true</h2>
-<ul>
-<li><strong>Every decision reconstructable</strong>: model version, data used and outcome, stored together.</li>
-<li><strong>Clear reasons</strong> a customer can understand, without exposing trade secrets.</li>
-<li><strong>Human review on request</strong>, handled quickly with full context.</li>
-<li><strong>Governed models</strong>: tested before release and monitored after.</li>
-<li><strong>Data minimised and documented</strong>, especially open finance data used with consent.</li>
-</ul>
-
-<h2>Architecture</h2>
-<figure class="dgm">
-<div class="dgm-stack">
-<div class="dgm-tier"><small>Channels</small><div class="dgm-nodes"><span>App<em>application and result</em></span><span>Customer service<em>review requests</em></span></div></div>
-<div class="dgm-tier"><small>Decision</small><div class="dgm-nodes"><span class="hl">Credit decision service<em>one entry point</em></span><span>Policy rules<em>hard limits first</em></span><span>Scoring models<em>versioned</em></span></div></div>
-<div class="dgm-tier"><small>Explain</small><div class="dgm-nodes"><span class="hl">Reason codes<em>top factors, plain language</em></span><span>Decision record<em>inputs, versions, outcome</em></span></div></div>
-<div class="dgm-tier"><small>Review</small><div class="dgm-nodes"><span class="hl">Review workbench<em>full context for analysts</em></span><span>Outcome feedback<em>overturns tracked</em></span></div></div>
-<div class="dgm-tier"><small>Govern</small><div class="dgm-nodes"><span>Model registry<em>tests and approvals</em></span><span>Monitoring<em>drift and stability</em></span><span>Data catalogue<em>purpose and consent</em></span></div></div>
-</div>
-<figcaption>One decision service produces the outcome, the reasons and the record in the same step.</figcaption>
-</figure>
-
-<h2>The data flow, end to end</h2>
-<figure class="dgm">
-<ol class="dgm-flow g3">
-<li><b>Apply</b><span>Application submitted with consented data sources</span></li>
-<li><b>Rules</b><span>Policy rules applied first, with their own reasons</span></li>
-<li><b>Score</b><span>Versioned model scores; top factors extracted</span></li>
-<li class="hl"><b>Record</b><span>Decision, inputs, versions and reason codes stored together</span></li>
-<li class="hl"><b>Explain</b><span>Customer sees outcome, main reasons and how to ask for review</span></li>
-<li><b>Review</b><span>An analyst reviews with full context and can overturn</span></li>
-</ol>
-<figcaption>The record is written at decision time, not reconstructed later.</figcaption>
-</figure>
-
-<h2>The hard part: reconstructing a decision months later</h2>
-<p>A review request can arrive weeks or months after the decision. By then models have been retrained and data has changed. The team made the decision record immutable and complete at the moment of decision, and linked each application event to the processing that handled it with distributed tracing. OpenTelemetry instrumentation for Kafka links the receive and process steps of a message in one trace, so analysts can follow an application from arrival to outcome<sup class="cite"><a href="#ref-6">6</a></sup>.</p>
-<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/brazil-credit-ai-lgpd-explainability/decision-trace.webp" alt="Jaeger trace view showing a Kafka receive span and a linked process span for the same message, with messaging attributes and references between spans" width="1200" height="345" loading="lazy"></div><figcaption>Receive and process steps linked in one trace: the same pattern ties each application to the decision made about it. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2022/instrument-kafka-clients/" target="_blank" rel="noopener">OpenTelemetry blog, Paolo Patierno</a> · CC BY 4.0</span></figcaption></figure>
-<div class="callout"><p>An explanation you generate later is a story. An explanation recorded at decision time is evidence. Build for the second.</p></div>
-<p>Reason codes were generated from the model's own attributions and mapped to plain-language statements reviewed by legal and customer teams, so explanations were truthful without revealing model internals. More on evidence and evaluation in <a href="https://asksumanta.com/insights/llm-evaluation-sets-that-predict-production/">evaluation sets that predict production</a> and <a href="https://asksumanta.com/case-studies/korea-ai-basic-act-hiring-platform/">high-impact AI in hiring</a>.</p>
-
-<h2>How it ran</h2>
-<figure class="dgm">
-<div class="dgm-lanes">
-<div class="dgm-lane"><small>Credit risk</small><ol><li>Policy rules</li><li class="hl">Reason code library</li><li>Model approval</li></ol></div>
-<div class="dgm-lane"><small>Engineering and data</small><ol><li>Decision service</li><li class="hl">Decision record and tracing</li><li>Monitoring</li></ol></div>
-<div class="dgm-lane"><small>Legal and customer service</small><ol><li>LGPD requirements</li><li>Customer wording</li><li class="hl">Review process</li></ol></div>
-</div>
-<figcaption>Risk owned the reasons, engineering the evidence, customer service the review.</figcaption>
-</figure>
-<figure class="dgm">
-<div class="dgm-phases">
-<div><small>Phase 1</small><b>Consolidate</b><ul><li>One decision service</li><li>Policy rules separated</li><li>Model registry</li></ul></div>
-<div><small>Phase 2</small><b>Record</b><ul><li>Immutable decision records</li><li>Tracing</li><li>Data catalogue</li></ul></div>
-<div><small>Phase 3</small><b>Explain</b><ul><li>Reason codes</li><li>Customer messages</li><li>Review workbench</li></ul></div>
-<div><small>Phase 4</small><b>Govern</b><ul><li>Release gate</li><li>Drift monitoring</li><li>Overturn analysis</li></ul></div>
-</div>
-<figcaption>Consolidating decision logic first made everything else possible.</figcaption>
-</figure>
-
-<h2>Key decisions and trade-offs</h2>
-<table class="tbl">
-<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
-<tbody>
-<tr><td>One decision service</td><td>Scoring spread across services</td><td>One place to record, explain and govern</td></tr>
-<tr><td>Record at decision time</td><td>Reconstruct from logs on request</td><td>Models and data change; records must not</td></tr>
-<tr><td>Reason codes from model attributions</td><td>Generic decline messages</td><td>Truthful, useful and consistent explanations</td></tr>
-<tr><td>Policy rules before models</td><td>Model-only decisions</td><td>Hard limits are easy to explain and audit</td></tr>
-<tr><td>Prepare for the AI bill now</td><td>Wait for the final text</td><td>The LGPD already requires most of this</td></tr>
-</tbody>
-</table>
-
-<h2>What I'd do again, and differently</h2>
-<p>Again: consolidate decisions into one service before adding explanations; scattered logic cannot be explained. Differently: track overturned decisions from day one. They were the clearest signal of where models or rules needed work. Related: <a href="https://asksumanta.com/insights/structured-outputs-reliable-llm-integration/">structured outputs</a> and <a href="https://asksumanta.com/regions/">where I work</a>.</p>
-<p>If you make automated decisions about customers in Brazil or elsewhere in Latin America, my <a href="https://asksumanta.com/ai-architect/">AI architecture work</a> explains how I approach it, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/brazil-credit-ai-lgpd-explainability/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
+</section><p><a href="https://asksumanta.com/insights/tech-news-2026-10-30/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
