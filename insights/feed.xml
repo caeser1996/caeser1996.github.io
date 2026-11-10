@@ -1,6 +1,64 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights</title><link>https://asksumanta.com/</link><description>Articles on AI, data, cloud and technology leadership</description><language>en-gb</language><lastBuildDate>Tue, 10 Nov 2026 08:50:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/insights/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights</title><link>https://asksumanta.com/</link></image><item><title>Tech news, 10 November 2026: Claude Fable 5.2 and Mythos 5.2, N-able takes N-central offline, Qubole&#x27;s AWS access abused, Norway pauses data centre grid bookings and Meta&#x27;s Muse Ember</title><link>https://asksumanta.com/insights/tech-news-2026-11-10/</link><guid isPermaLink="true">https://asksumanta.com/insights/tech-news-2026-11-10/</guid><pubDate>Tue, 10 Nov 2026 08:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>ai</category><category>security</category><category>platform</category><description>A CTO&#x27;s take: Anthropic ships Claude Fable 5.2 and Mythos 5.2, N-able pulls N-central offline, Qubole&#x27;s AWS trust abused, Norway pauses data centre grid bookings.</description><content:encoded><![CDATA[<p><em>Anthropic released new Claude models with a lower price for its general model. A remote management platform used by managed service providers went offline after a researcher published alleged zero-days, and attackers used a data platform&#x27;s trusted access into its customers&#x27; AWS accounts. Norway paused new grid reservations for data centres, and Meta launched a small, cheap model aimed at agent work.</em></p><p>Today's brief covers stories from 8 to 9 November.</p>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights</title><link>https://asksumanta.com/</link><description>Articles on AI, data, cloud and technology leadership</description><language>en-gb</language><lastBuildDate>Tue, 10 Nov 2026 21:20:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/insights/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights</title><link>https://asksumanta.com/</link></image><item><title>Claude Fable 5.2 and Mythos 5.2: what a price cut, gated access and evaluation-aware models mean for teams building on them</title><link>https://asksumanta.com/insights/claude-fable-5-2-mythos-pricing-tiered-access/</link><guid isPermaLink="true">https://asksumanta.com/insights/claude-fable-5-2-mythos-pricing-tiered-access/</guid><pubDate>Tue, 10 Nov 2026 21:20:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>ai</category><category>llm</category><category>architecture</category><description>Anthropic cut Fable&#x27;s price and kept Mythos for vetted organisations. A CTO&#x27;s take on cost per task, access to gated cyber models and why your evaluations must look real.</description><content:encoded><![CDATA[<p><em>Anthropic released Claude Fable 5.2 for everyone and Claude Mythos 5.2 for vetted organisations, with Fable&#x27;s price cut and both models reported to be faster. Three things in this release matter more than the benchmarks: what a lower price does to your routing, what gated access means for security and life sciences teams, and what models that often recognise testing mean for your own evaluations.</em></p><section class="block">
+<h2>What was released</h2>
+<p>Anthropic released Claude Fable 5.2, available to all users and through major cloud platforms, and Claude Mythos 5.2, limited to vetted organisations, on 9 November 2026<sup class="cite"><a href="#ref-1">1</a></sup>. Anthropic says both produce output about 30% faster than their 5.1 predecessors<sup class="cite"><a href="#ref-1">1</a></sup>. Fable 5.2's standard price fell to $8 per million input tokens and $40 per million output tokens, from $10 and $50<sup class="cite"><a href="#ref-2">2</a></sup>; Fortune reports this undercuts OpenAI's GPT-6 Astra<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<p>Reporting describes the two as one underlying model with different safeguards: Mythos 5.2 has looser cybersecurity and biology safeguards and is available only to organisations verified through Anthropic's cyber and life sciences programmes, while Fable 5.2 keeps stronger safeguards for general use<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+</section>
+
+<section class="block">
+<h2>1. A price cut changes your routing, not just your bill</h2>
+<p>When a top model gets cheaper, some tasks that were routed to smaller models for cost reasons may now be better value on the larger one, especially where the smaller model needed retries, longer prompts or human correction. The reverse can also be true: a faster, cheaper large model does not make it the right choice for simple, high-volume steps.</p>
+<p>The useful measure is cost per completed task, not cost per token: tokens used, retries, tool calls and the human time spent fixing results. Record model, tokens and outcome for every call so you can compare like for like; OpenTelemetry's generative AI conventions give you a standard way to capture token usage by model<sup class="cite"><a href="#ref-6">6</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/gpt-6-1-terra-computer-use-agent-economics/genai-metrics.webp" alt="Dashboard chart of gen_ai.client.token.usage over time with filters for operation, provider, requested model, response model and token type" width="1200" height="553" loading="lazy"></div><figcaption>Token usage by model and token type: the raw material for comparing cost per task when prices change. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2026/genai-observability/" target="_blank" rel="noopener">OpenTelemetry blog, James Newton-King</a> · CC BY 4.0</span></figcaption></figure>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Price change</b><span>A model's price or speed changes</span></li>
+<li><b>Re-run</b><span>Run your evaluation set for each affected route</span></li>
+<li class="hl"><b>Cost per task</b><span>Compare tokens, retries, tool calls and fixes, not list price</span></li>
+<li><b>Shadow</b><span>Send a copy of real traffic to the candidate, compare quietly</span></li>
+<li class="hl"><b>Shift</b><span>Move a share of traffic where quality and cost both win</span></li>
+<li><b>Watch</b><span>Track outcomes in production and roll back if they slip</span></li>
+</ol>
+<figcaption>A repeatable path for every price change, so routing follows evidence rather than announcements.</figcaption>
+</figure>
+<p>See <a href="https://asksumanta.com/insights/llm-model-routing/">model routing</a> and <a href="https://asksumanta.com/insights/microsoft-oracle-gpu-capacity-contracts/">AI capacity contracts</a>.</p>
+</section>
+
+<section class="block">
+<h2>2. Gated access is becoming normal for the most capable models</h2>
+<p>Mythos 5.2 follows a pattern now common across frontier labs: the most capable versions for dual-use work, such as vulnerability research or biology, are available only to verified organisations, as with OpenAI's GPT-6 Cyber. For security and life sciences teams, access is now a procurement and compliance task, not just an API key.</p>
+<ul>
+<li><strong>Security teams</strong>: if you qualify, apply early, and plan how findings from these models flow into your vulnerability process. Attackers will find bugs faster too; see <a href="https://asksumanta.com/insights/defender-first-ai-models-vulnerability-management/">defender-first AI models</a>.</li>
+<li><strong>Life sciences teams</strong>: expect verification to ask about your organisation, use cases and controls. Keep that evidence ready.</li>
+<li><strong>Everyone else</strong>: design so that a feature does not depend on a gated model you may lose access to.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>3. Models that recognise tests make your evaluations harder</h2>
+<p>Coverage of the system card highlights that the new models often appear to recognise when they are being evaluated, which Anthropic says makes it harder to judge real-world behaviour<sup class="cite"><a href="#ref-4">4</a></sup>. That is a challenge for the lab's safety testing, but it also matters for your own evaluations: if your test prompts look artificial, results may not predict production.</p>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Weakest</small><div class="dgm-nodes"><span>Synthetic prompts<em>easy to write, easy to spot</em></span></div></div>
+<div class="dgm-tier"><small>Better</small><div class="dgm-nodes"><span class="hl">Real, anonymised cases<em>from production traffic</em></span></div></div>
+<div class="dgm-tier"><small>Best</small><div class="dgm-nodes"><span class="hl">Shadow traffic and outcomes<em>behaviour where it counts</em></span><span>Ongoing sampling<em>human review of live results</em></span></div></div>
+</div>
+<figcaption>The closer an evaluation is to real use, the less it matters whether a model can tell it is being tested.</figcaption>
+</figure>
+<p>Build evaluation sets from real, anonymised production cases, use shadow traffic before switching, and keep sampling live outputs after launch. See <a href="https://asksumanta.com/insights/llm-evaluation-sets-that-predict-production/">evaluation sets that predict production</a>.</p>
+<div class="callout"><p>Treat every model release as a hypothesis to test on your own traffic. Price, speed and benchmarks tell you what to try; your evaluations and production data tell you what to ship.</p></div>
+</section>
+
+<section class="block">
+<h2>CTO take</h2>
+<p>The headline is a faster, cheaper model. The lasting change is in how teams should work with model providers: routing decisions revisited whenever prices move, access to the most capable models treated as something you qualify for, and evaluations built from real use rather than test prompts. Teams with per-call telemetry and a routing layer can act on this release this week. Teams without them should build those first. Read alongside <a href="https://asksumanta.com/insights/tech-news-2026-11-10/">the 10 November tech news</a> and <a href="https://asksumanta.com/insights/agentic-infrastructure-skills-tools-sandboxes/">agentic infrastructure</a>.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I help teams choose and switch models with evidence: evaluation sets, routing, cost per task and production monitoring. I am based in India, the United States and the UAE, working globally. See <a href="https://asksumanta.com/ai-architect/">AI architecture</a>, <a href="https://asksumanta.com/regions/">where I work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section><p><a href="https://asksumanta.com/insights/claude-fable-5-2-mythos-pricing-tiered-access/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Tech news, 10 November 2026: Claude Fable 5.2 and Mythos 5.2, N-able takes N-central offline, Qubole&#x27;s AWS access abused, Norway pauses data centre grid bookings and Meta&#x27;s Muse Ember</title><link>https://asksumanta.com/insights/tech-news-2026-11-10/</link><guid isPermaLink="true">https://asksumanta.com/insights/tech-news-2026-11-10/</guid><pubDate>Tue, 10 Nov 2026 08:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>ai</category><category>security</category><category>platform</category><description>A CTO&#x27;s take: Anthropic ships Claude Fable 5.2 and Mythos 5.2, N-able pulls N-central offline, Qubole&#x27;s AWS trust abused, Norway pauses data centre grid bookings.</description><content:encoded><![CDATA[<p><em>Anthropic released new Claude models with a lower price for its general model. A remote management platform used by managed service providers went offline after a researcher published alleged zero-days, and attackers used a data platform&#x27;s trusted access into its customers&#x27; AWS accounts. Norway paused new grid reservations for data centres, and Meta launched a small, cheap model aimed at agent work.</em></p><p>Today's brief covers stories from 8 to 9 November.</p>
 
 <figure class="dgm">
 <div class="dgm-stack">
@@ -2783,56 +2841,4 @@ tracer_provider:
 <section class="block">
 <h2>How I can help</h2>
 <p>I design event and data platforms that stay simple as they scale, including when to consolidate systems and when not to. As a <a href="https://asksumanta.com/fractional-cto/">fractional CTO</a> I can own that architecture. Or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
-</section><p><a href="https://asksumanta.com/insights/kafka-queues-share-groups/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Running an enterprise MCP registry: a playbook for governed tool discovery</title><link>https://asksumanta.com/insights/mcp-registry-enterprise-subregistry/</link><guid isPermaLink="true">https://asksumanta.com/insights/mcp-registry-enterprise-subregistry/</guid><pubDate>Tue, 27 Oct 2026 00:20:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>ai</category><category>mcp</category><category>agents</category><category>governance</category><description>The official MCP Registry is designed to feed subregistries. A playbook for running a private enterprise MCP registry: curation, namespaces, approvals and client rollout.</description><content:encoded><![CDATA[<p><em>Once a few teams adopt MCP, the question shifts from &#x27;how do I build a server?&#x27; to &#x27;which servers are we allowed to use?&#x27;. The MCP Registry was designed with that in mind: a public upstream that organisations can mirror, filter and extend with their own private servers.</em></p><p>A typical enterprise MCP adoption follows a pattern. A few engineers connect assistants to useful servers. A platform team builds internal servers for the CRM, the data warehouse and the ticketing system. Within months there are dozens of servers, nobody knows which are approved, and security finds a community server with broad file system access on a developer laptop. The fix is not to ban MCP. It is to give people a catalogue of servers they're allowed to use.</p>
-
-<section class="block">
-<h2>How the MCP Registry is designed</h2>
-<p>The official MCP Registry launched in preview in September 2025 as an open catalogue of publicly available servers<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>. Three design choices matter for enterprises:</p>
-<ul>
-<li><strong>Metadata, not code.</strong> Entries describe servers and point to packages in existing registries such as npm, PyPI and Docker Hub<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>.</li>
-<li><strong>Verified namespaces.</strong> Server names use a reverse-DNS format, such as <code>io.github.username/server</code> or <code>com.example/server</code>, tied to a verified GitHub account or domain<sup class="cite"><a href="#ref-2">2</a></sup>. That gives you a basis for trusting who published what.</li>
-<li><strong>Built to be extended.</strong> The registry and its API specification are open source, so others can build compatible subregistries that pull from it, filter it and add their own servers<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>.</li>
-</ul>
-<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/mcp-registry-enterprise-subregistry/ecosystem.webp" alt="Diagram of the MCP registry ecosystem: server developers publish to the official MCP Registry, which references packages on npm, PyPI and Docker; public subregistries pull its data, an enterprise registry adds private internal servers, and clients such as IDEs and chat assistants consume from these registries" width="1600" height="1040" loading="lazy"></div><figcaption>The intended ecosystem: an official upstream, subregistries that build on it, and an enterprise registry that adds private servers. <span class="credit">Source: <a href="https://modelcontextprotocol.io/registry/about" target="_blank" rel="noopener">Model Context Protocol documentation</a> · CC BY 4.0</span></figcaption></figure>
-<p>The registry remains in preview, and its documentation warns that breaking changes or data resets may occur before general availability<sup class="cite"><a href="#ref-2">2</a></sup>. Build against it, but pin and mirror what you depend on.</p>
-</section>
-
-<section class="block">
-<h2>The playbook</h2>
-<h3>1. Decide what "approved" means</h3>
-<p>Write down the criteria before choosing tools: publisher verified, source available, package signed or pinned, permissions documented, data classification of what it touches, and an internal owner. The controls in <a href="https://asksumanta.com/insights/securing-mcp-servers-checklist/">securing MCP servers</a> make a good starting checklist.</p>
-
-<h3>2. Stand up a private subregistry</h3>
-<p>Run a registry that implements the same API, so clients that understand the official registry can use yours<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-5">5</a></sup>. Servers on internal hostnames or private package feeds belong here, not in the public registry<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
-
-<h3>3. Mirror, don't proxy</h3>
-<p>Pull public entries into a staging area, review them, then promote approved versions. Pin to specific package versions so an upstream update can't change what your users run without review. This is the same discipline as <a href="https://asksumanta.com/insights/ai-model-supply-chain-security/">AI supply chain security</a>.</p>
-
-<h3>4. Enrich entries with your context</h3>
-<p>Add what the public registry can't know: owner, data classification, allowed user groups, required auth extension, and a link to the review record. Tool annotations and UI capabilities, covered in <a href="https://asksumanta.com/insights/mcp-apps-tool-annotations/">MCP Apps and tool annotations</a>, should be part of the review.</p>
-
-<h3>5. Point clients at it</h3>
-<p>Configure managed IDEs and assistants to discover servers from your registry, and where clients support it, block unapproved sources. A catalogue nobody is pointed at is just documentation.</p>
-
-<h3>6. Tie it to identity</h3>
-<p>Approval should map to who can use a server. Pair the registry with the enterprise authorisation patterns in <a href="https://asksumanta.com/insights/mcp-extensions-enterprise-strategy/">MCP extensions</a>, so access is granted through your identity provider rather than per-server credentials.</p>
-
-<h3>7. Measure and prune</h3>
-<p>Track which servers are used, by whom and how often, using the telemetry approach in <a href="https://asksumanta.com/insights/llm-observability-opentelemetry-genai/">LLM observability</a>. Retire servers without owners or usage, and re-review on major version changes.</p>
-<div class="callout"><p>A registry turns MCP from a collection of personal integrations into a platform. The governance lives in the promotion step, not the protocol.</p></div>
-</section>
-
-<section class="block">
-<h2>Common mistakes</h2>
-<ul>
-<li><strong>Treating the public registry as an allow-list.</strong> Listing proves a verified namespace, not safety.</li>
-<li><strong>Floating versions.</strong> "Latest" from upstream means unreviewed code on every laptop.</li>
-<li><strong>No owner per server.</strong> Internal servers without owners become the next unpatched dependency.</li>
-<li><strong>Registry without enforcement.</strong> If clients can still add any server, the registry is advisory only.</li>
-</ul>
-</section>
-
-<section class="block">
-<h2>How I can help</h2>
-<p>I design enterprise agent platforms, including MCP registries, approval workflows and identity integration, so teams can adopt tools quickly and safely. See my <a href="https://asksumanta.com/ai-architect/">AI architecture work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
-</section><p><a href="https://asksumanta.com/insights/mcp-registry-enterprise-subregistry/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
+</section><p><a href="https://asksumanta.com/insights/kafka-queues-share-groups/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>

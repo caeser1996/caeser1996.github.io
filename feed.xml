@@ -1,6 +1,64 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link><description>Fractional CTO and AI architect: insights, case studies and daily tech news.</description><language>en-gb</language><lastBuildDate>Tue, 10 Nov 2026 15:50:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link></image><item><title>Every door has a lock and an owner: governing third-party access for a Japanese online securities firm</title><link>https://asksumanta.com/case-studies/japan-securities-third-party-cloud-access/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/japan-securities-third-party-cloud-access/</guid><pubDate>Tue, 10 Nov 2026 15:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>security</category><category>governance</category><category>platform</category><description>How a Japanese online securities firm can govern vendor access to its cloud and machines: an access ledger, narrow roles, behaviour alerts and a per-vendor kill switch.</description><content:encoded><![CDATA[<p><em>A Japanese online securities firm ran on AWS and relied on a long list of suppliers: a data platform, an observability vendor, a managed service provider for office devices, SaaS tools connected to its email and files. Each had been given access when it was onboarded, and nobody had a single view of who could reach what. When attackers used one data platform&#x27;s trusted access to raid its customers&#x27; AWS accounts, the firm set out to know, narrow, watch and be able to cut every supplier&#x27;s access.</em></p><h2>The situation</h2>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link><description>Fractional CTO and AI architect: insights, case studies and daily tech news.</description><language>en-gb</language><lastBuildDate>Tue, 10 Nov 2026 21:20:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link></image><item><title>Claude Fable 5.2 and Mythos 5.2: what a price cut, gated access and evaluation-aware models mean for teams building on them</title><link>https://asksumanta.com/insights/claude-fable-5-2-mythos-pricing-tiered-access/</link><guid isPermaLink="true">https://asksumanta.com/insights/claude-fable-5-2-mythos-pricing-tiered-access/</guid><pubDate>Tue, 10 Nov 2026 21:20:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>ai</category><category>llm</category><category>architecture</category><description>Anthropic cut Fable&#x27;s price and kept Mythos for vetted organisations. A CTO&#x27;s take on cost per task, access to gated cyber models and why your evaluations must look real.</description><content:encoded><![CDATA[<p><em>Anthropic released Claude Fable 5.2 for everyone and Claude Mythos 5.2 for vetted organisations, with Fable&#x27;s price cut and both models reported to be faster. Three things in this release matter more than the benchmarks: what a lower price does to your routing, what gated access means for security and life sciences teams, and what models that often recognise testing mean for your own evaluations.</em></p><section class="block">
+<h2>What was released</h2>
+<p>Anthropic released Claude Fable 5.2, available to all users and through major cloud platforms, and Claude Mythos 5.2, limited to vetted organisations, on 9 November 2026<sup class="cite"><a href="#ref-1">1</a></sup>. Anthropic says both produce output about 30% faster than their 5.1 predecessors<sup class="cite"><a href="#ref-1">1</a></sup>. Fable 5.2's standard price fell to $8 per million input tokens and $40 per million output tokens, from $10 and $50<sup class="cite"><a href="#ref-2">2</a></sup>; Fortune reports this undercuts OpenAI's GPT-6 Astra<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<p>Reporting describes the two as one underlying model with different safeguards: Mythos 5.2 has looser cybersecurity and biology safeguards and is available only to organisations verified through Anthropic's cyber and life sciences programmes, while Fable 5.2 keeps stronger safeguards for general use<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+</section>
+
+<section class="block">
+<h2>1. A price cut changes your routing, not just your bill</h2>
+<p>When a top model gets cheaper, some tasks that were routed to smaller models for cost reasons may now be better value on the larger one, especially where the smaller model needed retries, longer prompts or human correction. The reverse can also be true: a faster, cheaper large model does not make it the right choice for simple, high-volume steps.</p>
+<p>The useful measure is cost per completed task, not cost per token: tokens used, retries, tool calls and the human time spent fixing results. Record model, tokens and outcome for every call so you can compare like for like; OpenTelemetry's generative AI conventions give you a standard way to capture token usage by model<sup class="cite"><a href="#ref-6">6</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/gpt-6-1-terra-computer-use-agent-economics/genai-metrics.webp" alt="Dashboard chart of gen_ai.client.token.usage over time with filters for operation, provider, requested model, response model and token type" width="1200" height="553" loading="lazy"></div><figcaption>Token usage by model and token type: the raw material for comparing cost per task when prices change. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2026/genai-observability/" target="_blank" rel="noopener">OpenTelemetry blog, James Newton-King</a> · CC BY 4.0</span></figcaption></figure>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Price change</b><span>A model's price or speed changes</span></li>
+<li><b>Re-run</b><span>Run your evaluation set for each affected route</span></li>
+<li class="hl"><b>Cost per task</b><span>Compare tokens, retries, tool calls and fixes, not list price</span></li>
+<li><b>Shadow</b><span>Send a copy of real traffic to the candidate, compare quietly</span></li>
+<li class="hl"><b>Shift</b><span>Move a share of traffic where quality and cost both win</span></li>
+<li><b>Watch</b><span>Track outcomes in production and roll back if they slip</span></li>
+</ol>
+<figcaption>A repeatable path for every price change, so routing follows evidence rather than announcements.</figcaption>
+</figure>
+<p>See <a href="https://asksumanta.com/insights/llm-model-routing/">model routing</a> and <a href="https://asksumanta.com/insights/microsoft-oracle-gpu-capacity-contracts/">AI capacity contracts</a>.</p>
+</section>
+
+<section class="block">
+<h2>2. Gated access is becoming normal for the most capable models</h2>
+<p>Mythos 5.2 follows a pattern now common across frontier labs: the most capable versions for dual-use work, such as vulnerability research or biology, are available only to verified organisations, as with OpenAI's GPT-6 Cyber. For security and life sciences teams, access is now a procurement and compliance task, not just an API key.</p>
+<ul>
+<li><strong>Security teams</strong>: if you qualify, apply early, and plan how findings from these models flow into your vulnerability process. Attackers will find bugs faster too; see <a href="https://asksumanta.com/insights/defender-first-ai-models-vulnerability-management/">defender-first AI models</a>.</li>
+<li><strong>Life sciences teams</strong>: expect verification to ask about your organisation, use cases and controls. Keep that evidence ready.</li>
+<li><strong>Everyone else</strong>: design so that a feature does not depend on a gated model you may lose access to.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>3. Models that recognise tests make your evaluations harder</h2>
+<p>Coverage of the system card highlights that the new models often appear to recognise when they are being evaluated, which Anthropic says makes it harder to judge real-world behaviour<sup class="cite"><a href="#ref-4">4</a></sup>. That is a challenge for the lab's safety testing, but it also matters for your own evaluations: if your test prompts look artificial, results may not predict production.</p>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Weakest</small><div class="dgm-nodes"><span>Synthetic prompts<em>easy to write, easy to spot</em></span></div></div>
+<div class="dgm-tier"><small>Better</small><div class="dgm-nodes"><span class="hl">Real, anonymised cases<em>from production traffic</em></span></div></div>
+<div class="dgm-tier"><small>Best</small><div class="dgm-nodes"><span class="hl">Shadow traffic and outcomes<em>behaviour where it counts</em></span><span>Ongoing sampling<em>human review of live results</em></span></div></div>
+</div>
+<figcaption>The closer an evaluation is to real use, the less it matters whether a model can tell it is being tested.</figcaption>
+</figure>
+<p>Build evaluation sets from real, anonymised production cases, use shadow traffic before switching, and keep sampling live outputs after launch. See <a href="https://asksumanta.com/insights/llm-evaluation-sets-that-predict-production/">evaluation sets that predict production</a>.</p>
+<div class="callout"><p>Treat every model release as a hypothesis to test on your own traffic. Price, speed and benchmarks tell you what to try; your evaluations and production data tell you what to ship.</p></div>
+</section>
+
+<section class="block">
+<h2>CTO take</h2>
+<p>The headline is a faster, cheaper model. The lasting change is in how teams should work with model providers: routing decisions revisited whenever prices move, access to the most capable models treated as something you qualify for, and evaluations built from real use rather than test prompts. Teams with per-call telemetry and a routing layer can act on this release this week. Teams without them should build those first. Read alongside <a href="https://asksumanta.com/insights/tech-news-2026-11-10/">the 10 November tech news</a> and <a href="https://asksumanta.com/insights/agentic-infrastructure-skills-tools-sandboxes/">agentic infrastructure</a>.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I help teams choose and switch models with evidence: evaluation sets, routing, cost per task and production monitoring. I am based in India, the United States and the UAE, working globally. See <a href="https://asksumanta.com/ai-architect/">AI architecture</a>, <a href="https://asksumanta.com/regions/">where I work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section><p><a href="https://asksumanta.com/insights/claude-fable-5-2-mythos-pricing-tiered-access/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Every door has a lock and an owner: governing third-party access for a Japanese online securities firm</title><link>https://asksumanta.com/case-studies/japan-securities-third-party-cloud-access/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/japan-securities-third-party-cloud-access/</guid><pubDate>Tue, 10 Nov 2026 15:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>security</category><category>governance</category><category>platform</category><description>How a Japanese online securities firm can govern vendor access to its cloud and machines: an access ledger, narrow roles, behaviour alerts and a per-vendor kill switch.</description><content:encoded><![CDATA[<p><em>A Japanese online securities firm ran on AWS and relied on a long list of suppliers: a data platform, an observability vendor, a managed service provider for office devices, SaaS tools connected to its email and files. Each had been given access when it was onboarded, and nobody had a single view of who could reach what. When attackers used one data platform&#x27;s trusted access to raid its customers&#x27; AWS accounts, the firm set out to know, narrow, watch and be able to cut every supplier&#x27;s access.</em></p><h2>The situation</h2>
 <p>A Japanese online securities firm ran its trading and account platforms on AWS. Over the years it had connected a long list of suppliers: a data platform that read market and customer data through a cross-account role, an observability vendor with read access to logs and metrics, a managed service provider that ran remote management agents on office devices, and SaaS tools connected to the firm's email and file storage through OAuth grants. Each connection had been approved by the team that needed it, at the time it was needed. Nobody had a complete list.</p>
 <p>The FSA's cybersecurity guidelines for the financial sector, in effect since October 2024, treat third-party risk management as a core area, including outsourcing and cloud services<sup class="cite"><a href="#ref-5">5</a></sup>. The firm's supplier assessments were thorough on paper: questionnaires, certifications and contract clauses. What they did not show was what each supplier could technically do inside the firm's systems today.</p>
 <p><strong>Why now.</strong> In early November 2026, Wiz reported that an attacker had used credentials tied to Qubole's AWS account to assume integration roles that customers had created to trust Qubole, then collected secrets and data from those customers' accounts<sup class="cite"><a href="#ref-1">1</a></sup>. Days later, N-able took its hosted N-central remote management platform offline after a researcher published alleged zero-days<sup class="cite"><a href="#ref-2">2</a></sup>. Both showed the same thing: a supplier's access is only as safe as the supplier.</p>
@@ -3285,61 +3343,4 @@
 <section class="block">
 <h2>How I can help</h2>
 <p>I help teams design agent platforms with proper identity, tracing and cost controls, and review SaaS and AI contracts before renewal. I am based in India, the United States and the UAE, working globally. See <a href="https://asksumanta.com/ai-architect/">AI architecture</a> or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
-</section><p><a href="https://asksumanta.com/insights/agents-replace-seats-enterprise-saas/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Tech news, 30 October 2026: the AI capex bill arrives, Samsung&#x27;s HBM record, FuriosaAI, ServiceNow and an ESX zero-day</title><link>https://asksumanta.com/insights/tech-news-2026-10-30/</link><guid isPermaLink="true">https://asksumanta.com/insights/tech-news-2026-10-30/</guid><pubDate>Fri, 30 Oct 2026 09:45:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>ai</category><category>platform</category><category>security</category><description>A CTO&#x27;s take: Alphabet and Amazon burn cash on AI capex, Samsung&#x27;s HBM record, FuriosaAI&#x27;s $620M round, ServiceNow&#x27;s slide and an ESX zero-day chain.</description><content:encoded><![CDATA[<p><em>Big Tech&#x27;s AI spending showed up in the cash flow statements this week: Google Cloud doubled and AWS beat estimates, but both companies spent more than they brought in. Memory makers are the clear winners, Korea is backing a GPU alternative, investors are questioning SaaS, and attackers are chaining old and new flaws to get root.</em></p><p>Today's brief covers stories published on 28 and 29 October that yesterday's <a href="https://asksumanta.com/insights/tech-news-2026-10-29/">morning brief</a> and <a href="https://asksumanta.com/insights/tech-news-2026-10-29-2/">update</a> did not include.</p>
-
-<figure class="dgm">
-<div class="dgm-stack">
-<div class="dgm-tier"><small>Applications</small><div class="dgm-nodes"><span>ServiceNow<em>AI targets up, shares down</em></span></div></div>
-<div class="dgm-tier"><small>Cloud</small><div class="dgm-nodes"><span class="hl">Google Cloud<em>revenue doubled</em></span><span class="hl">AWS<em>beat, cash flow negative</em></span></div></div>
-<div class="dgm-tier"><small>Silicon</small><div class="dgm-nodes"><span class="hl">Samsung HBM<em>record profit</em></span><span>FuriosaAI RNGD<em>inference chips</em></span></div></div>
-<div class="dgm-tier"><small>Infrastructure security</small><div class="dgm-nodes"><span class="hl">ESX zero-day<em>hypervisor logging</em></span><span>PHP2Shell + Fragnesia<em>chained to root</em></span></div></div>
-</div>
-<figcaption>Where today's stories land. Money is flowing down the stack to memory and chips, while attackers work at the hypervisor and kernel layer.</figcaption>
-</figure>
-
-<section class="block">
-<h2>1. Google Cloud doubles, but Alphabet's cash flow turns negative</h2>
-<p>Alphabet reported Google Cloud revenue of about $31 billion for the quarter, roughly double a year earlier, while free cash flow was negative as capital spending on AI infrastructure rose<sup class="cite"><a href="#ref-1">1</a></sup>. CNBC reported the shares were heading for a record post-earnings loss on 29 October<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
-<p><strong>CTO take:</strong> demand for cloud AI is real, and so is the bill for building it. Providers carrying that much capex will push for long commitments and premium AI services. Before signing multi-year deals, know which workloads truly need a specific provider's models or TPUs and which could move. Our note on <a href="https://asksumanta.com/insights/ai-capacity-crunch-cloud-planning/">planning around the AI capacity crunch</a> covers how to keep that leverage.</p>
-</section>
-
-<section class="block">
-<h2>2. AWS beats estimates as Amazon's free cash flow hits minus $42.4 billion</h2>
-<p>Amazon's third-quarter results showed AWS revenue ahead of estimates, but trailing free cash flow of negative $42.4 billion; the company held its 2026 capital spending forecast unchanged and shares fell in extended trading<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
-<p><strong>CTO take:</strong> two of the three largest clouds are now spending more cash than they make to build AI capacity. That does not threaten service, but it does shape commercial behaviour. Expect committed-spend discounts to be tied to AI products, and make sure your <a href="https://asksumanta.com/insights/focus-finops-ai-cost-allocation/">AI cost allocation</a> is good enough to tell which teams are driving the spend before renewal season.</p>
-</section>
-
-<section class="block">
-<h2>3. Samsung posts a record quarter on AI memory</h2>
-<p>Samsung Electronics confirmed record third-quarter operating profit of about 107.4 trillion won on 29 October, driven by its chip business and high-bandwidth memory for AI servers<sup class="cite"><a href="#ref-4">4</a></sup>. The Next Web reports the memory unit set records for both sales and profit on server demand and higher prices<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
-<p><strong>CTO take:</strong> memory, not only GPUs, is now a cost driver for AI hardware, and server memory prices have risen sharply this year. If you are buying on-premises inference kit, as in <a href="https://asksumanta.com/insights/private-llm-on-prem/">private LLMs on-premises</a>, get quotes early and size models to the memory you can actually buy. Techniques such as <a href="https://asksumanta.com/insights/speculative-decoding-private-llms/">speculative decoding</a> and quantisation get more valuable when memory is the expensive part.</p>
-</section>
-
-<section class="block">
-<h2>4. Korea backs FuriosaAI's inference chips with a $620 million round</h2>
-<p>FuriosaAI closed a $620 million Series D to scale its RNGD inference chip, which it says is in mass production, and to fund a third-generation chip; Korea's National Growth Fund is the largest investor<sup class="cite"><a href="#ref-6">6</a></sup>. Jon Peddie Research notes the company's performance claims come without published test conditions<sup class="cite"><a href="#ref-7">7</a></sup>.</p>
-<p><strong>CTO take:</strong> alternatives to Nvidia for inference are maturing, and governments are funding them for sovereignty reasons. Keep your serving stack portable, for example behind <a href="https://asksumanta.com/insights/llm-inference-serving-vllm/">vLLM</a> and an <a href="https://asksumanta.com/insights/kubernetes-inference-gateway/">inference gateway</a>, so you can benchmark a new accelerator on your own workloads rather than trusting vendor numbers.</p>
-</section>
-
-<section class="block">
-<h2>5. ServiceNow raises its AI target and suffers a record share fall</h2>
-<p>ServiceNow reported third-quarter subscription revenue up 21% and raised its 2026 target for AI annual contract value to $1.7 billion<sup class="cite"><a href="#ref-8">8</a></sup>. The shares still fell about 19% in trading on 29 October, which Yahoo Finance links to investor fears that AI agents will erode traditional software seats<sup class="cite"><a href="#ref-9">9</a></sup>.</p>
-<p><strong>CTO take:</strong> the market is betting that agents will change how enterprise software is priced and bought. For buyers, that means more leverage on per-seat renewals and more vendors bundling agents. Ask vendors how pricing works when an agent does the work of a seat, and test their agents against your own <a href="https://asksumanta.com/insights/evaluating-ai-agents-reliability/">reliability evaluations</a> before paying for them.</p>
-</section>
-
-<section class="block">
-<h2>6. Attackers chain an ESX zero-day and PHP2Shell to get root</h2>
-<p>Help Net Security reports that a China-nexus group used a VMware ESX logging flaw, fixed by Broadcom in July 2026, as a zero-day to hide its activity, and separately that attackers chained the PHP2Shell flaws with a Linux kernel bug called Fragnesia to gain root on servers and firewalls<sup class="cite"><a href="#ref-10">10</a></sup>.</p>
-<p><strong>CTO take:</strong> PHP2Shell is no longer just a web-tier problem once it is chained to a kernel flaw. If you have not finished patching after <a href="https://asksumanta.com/insights/tech-news-2026-10-29/">Tuesday's warning</a>, do it now, patch kernels too, and check that hypervisor logs are shipped somewhere an attacker on the host cannot edit. Our <a href="https://asksumanta.com/case-studies/legacy-php-estate-security-modernisation/">legacy PHP estate case study</a> shows how to triage an older estate quickly.</p>
-</section>
-
-<section class="block">
-<h2>What I'd do this week</h2>
-<ul>
-<li>Confirm ESX hosts, PHP runtimes and Linux kernels are on patched versions, and ship hypervisor logs off-host.</li>
-<li>List cloud commitments due for renewal in the next year and identify which workloads could move.</li>
-<li>Get updated quotes for any planned GPU or memory purchases; prices are moving.</li>
-<li>Ask SaaS vendors how agent-based pricing will work before your next renewal.</li>
-</ul>
-<p>Building in Korea, the US or anywhere else? See <a href="https://asksumanta.com/regions/">where I work</a>, the <a href="https://asksumanta.com/fractional-cto-united-states/">US page</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
-</section><p><a href="https://asksumanta.com/insights/tech-news-2026-10-30/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
+</section><p><a href="https://asksumanta.com/insights/agents-replace-seats-enterprise-saas/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
