@@ -833,6 +833,86 @@ def privacy_page(pages, posts):
 """
 
 
+def finarb_page(pages, posts):
+    url = f"{SITE}/how-i-work/finarb/"
+    title = "How I solve problems at Finarb | Sumanta Mukhopadhyay"
+    desc = ("How Sumanta Mukhopadhyay, AVP of Engineering at Finarb Analytics Consulting, approaches data and AI problems, "
+            "and how Finarb's team can help healthcare and pharma.")
+    org = {"@type": "Organization", "name": "Finarb Analytics Consulting", "url": "https://finarb.ai"}
+    ld = {"@context": "https://schema.org", "@graph": [
+        {"@type": "WebPage", "@id": url, "url": url, "name": title, "description": desc, "dateModified": "2026-11-10",
+         "isPartOf": {"@type": "WebSite", "url": f"{SITE}/", "name": NAME}, "about": [person_ref(), org]},
+        crumbs([("Home", f"{SITE}/"), ("How I work", f"{SITE}/how-i-work/"), ("Finarb", url)])]}
+    kw = ["Finarb", "Finarb Analytics Consulting", "AVP of Engineering", "data and AI consulting",
+          "healthcare and pharma AI", "consult-to-operate"]
+    return f"""{head(title, desc, kw, url, f"{SITE}/assets/og/how-i-work.png", "website", ld)}
+<body class="sub">
+{nav()}
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/how-i-work/">How I work</a> <span>/</span> <em>Finarb</em></div>
+    <div class="kicker">How I work · Finarb</div>
+    <h1>How I solve problems at Finarb, and how Finarb can help</h1>
+    <p class="sub-lede">Alongside my independent work, I am AVP of Engineering at Finarb Analytics Consulting, a data and AI consultancy. This page explains how I approach problems there, and when it makes sense to work with Finarb's team rather than with me alone.</p>
+  </header>
+  <article class="prose">
+    <h2>About Finarb</h2>
+    <p><a href="https://finarb.ai" target="_blank" rel="noopener">Finarb Analytics Consulting</a> is a "consult-to-operate" data, analytics and AI company: it helps organisations from the first question through to running the system in production. Its work centres on data and AI consulting, with a strong focus on healthcare and pharma.</p>
+
+    <h2>How I solve problems at Finarb</h2>
+    <p>Most data and AI problems are not model problems. They are problems of unclear decisions, data nobody trusts and prototypes that never reach production. The way I lead engineering at Finarb is built around that.</p>
+    <figure class="dgm">
+    <ol class="dgm-flow g3">
+    <li><b>Decision</b><span>Start from the business decision the work must improve, and who makes it</span></li>
+    <li><b>Data</b><span>Map the data behind it, its quality, its owners and the rules that apply</span></li>
+    <li class="hl"><b>Prove</b><span>Show value on a small, real slice before building anything large</span></li>
+    <li><b>Build</b><span>Engineer for production: pipelines, security, monitoring and cost</span></li>
+    <li class="hl"><b>Measure</b><span>Evaluate quality continuously, not once at launch</span></li>
+    <li><b>Operate</b><span>Run it with the client, then hand over what they want to own</span></li>
+    </ol>
+    <figcaption>Consult to operate: the same team that designs a system helps run it.</figcaption>
+    </figure>
+    <p><strong>Decisions before models.</strong> We agree what decision changes, how we will know it improved, and what would make us stop. That keeps projects small enough to finish.</p>
+    <p><strong>Data before AI.</strong> Clean, well-described data with clear ownership does more for AI quality than any model choice. Where meaning matters across systems, I use shared data models and ontologies so every report and AI answer means the same thing; see <a href="/ontology-knowledge-graph/">ontology and knowledge graphs</a>.</p>
+    <p><strong>Evaluation before scale.</strong> Every AI feature has an evaluation set built from real cases, and runs against it whenever a model, prompt or data source changes; see <a href="/insights/evaluating-ai-agents-reliability/">evaluating AI agents</a>.</p>
+    <p><strong>Regulated by design.</strong> In healthcare and pharma, privacy, consent, audit trails and explainability are part of the architecture from the first sprint, not a review at the end; see <a href="/healthcare-data-architecture/">healthcare data architecture</a>.</p>
+    <p><strong>Engineering that lasts.</strong> As AVP of Engineering, my focus is the standards that let a team deliver reliably: clear architecture decisions written down, code and design reviews, sensible automation, and engineers who understand the systems they run.</p>
+
+    <h2>How Finarb can help</h2>
+    <figure class="dgm">
+    <div class="dgm-stack">
+    <div class="dgm-tier"><small>Healthcare and pharma</small><div class="dgm-nodes"><span class="hl">Domain-aware data and AI<em>built for regulated data</em></span></div></div>
+    <div class="dgm-tier"><small>Data and AI consulting</small><div class="dgm-nodes"><span>Strategy<em>where data and AI pay off</em></span><span>Data platforms<em>trusted, governed data</em></span><span>Analytics and AI<em>from prototype to production</em></span></div></div>
+    <div class="dgm-tier"><small>Consult to operate</small><div class="dgm-nodes"><span class="hl">A team that stays<em>designs, builds and helps run it</em></span></div></div>
+    </div>
+    <figcaption>One team from the first question to a system running in production.</figcaption>
+    </figure>
+    <p><strong>Data and AI consulting.</strong> Finarb helps organisations decide where data and AI will pay off, build the data foundations, and take analytics and AI from a prototype to a system people rely on.</p>
+    <p><strong>Healthcare and pharma.</strong> For healthcare and pharma teams, Finarb brings data and AI work shaped around the realities of the sector: sensitive data, strict rules and the need for results clinicians and regulators can trust.</p>
+
+    <h2>Me or Finarb?</h2>
+    <table class="tbl">
+    <thead><tr><th>You need</th><th>Best fit</th></tr></thead>
+    <tbody>
+    <tr><td>Senior technology leadership, a second opinion or technical due diligence</td><td>Me, as a fractional CTO or advisor</td></tr>
+    <tr><td>A team to build and run a data, analytics or AI system</td><td>Finarb</td></tr>
+    <tr><td>Healthcare or pharma data and AI delivery</td><td>Finarb, with me involved in the architecture</td></tr>
+    <tr><td>Both direction and delivery</td><td>Talk to me first, and we will shape the right mix</td></tr>
+    </tbody>
+    </table>
+    <p>To talk about a Finarb engagement, visit <a href="https://finarb.ai" target="_blank" rel="noopener">finarb.ai</a> or book a call with me and I will point you to the right people. For my independent work, see <a href="/how-i-work/">how I work</a>. I am based in India, the United States and the UAE, working globally.</p>
+  </article>
+  {cta_html('Finarb')}
+</main>
+{modal()}
+{footer(pages, posts)}
+{SCRIPTS}
+</body>
+</html>
+"""
+
+
 PLAY_FAQ = [
     ("What is Orbital Ops?", "A free browser arcade game on this site. You pilot a ship defending a production system from incidents such as latency spikes, memory leaks, schema drift, traffic floods and prompt injections, with a legacy monolith boss every fifth wave."),
     ("How do I play?", "Move with the mouse, a finger, the arrow keys or WASD. Firing is automatic. Collect power-ups, keep your streak for a higher multiplier and protect your error budget of three hits. Press P to pause."),
@@ -1259,9 +1339,11 @@ def main():
         (ROOT / k / "index.html").write_text(hub_page(k, pages, posts))
     (ROOT / "play").mkdir(exist_ok=True)
     (ROOT / "play/index.html").write_text(play_page(pages, posts))
+    (ROOT / "how-i-work/finarb").mkdir(parents=True, exist_ok=True)
+    (ROOT / "how-i-work/finarb/index.html").write_text(finarb_page(pages, posts))
 
     urls = [("/", "1.0", "monthly"), ("/insights/", "0.8", "weekly"), ("/privacy/", "0.2", "yearly"), ("/play/", "0.5", "monthly")]
-    urls += [(f"/{k}/", "0.8", "monthly") for k in HUB_PAGES] + [("/regions/", "0.8", "monthly"), ("/subscribe/", "0.4", "monthly")]
+    urls += [(f"/{k}/", "0.8", "monthly") for k in HUB_PAGES] + [("/regions/", "0.8", "monthly"), ("/subscribe/", "0.4", "monthly"), ("/how-i-work/finarb/", "0.5", "monthly")]
     urls += [(f"/{m['slug']}/", "0.8", "monthly") for m in regions]
     urls += [(f"/{m['slug']}/", "0.9", "monthly") for m in pages]
     # Articles report their own publish date; listing and service pages report the latest content date.
