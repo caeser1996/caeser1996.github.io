@@ -218,7 +218,7 @@ def footer(pages, posts):
         <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
       </ul></div>
     </div>
-    <div class="fbot"><span>© <span id="yr">{TODAY[:4]}</span> {NAME}</span><span class="sp"></span><a href="/privacy/">Privacy &amp; cookies</a><button type="button" class="cookie-link" data-cookie-settings>Cookie settings</button><a href="/subscribe/">RSS</a><a href="/sitemap.xml">Sitemap</a></div>
+    <div class="fbot"><span>© <span id="yr">{TODAY[:4]}</span> {NAME}</span><a class="vbadge" href="https://www.toptal.com/developers/resume/sumanta-mukhopadhyay#zVO76D" target="_blank" rel="noopener" title="Top 3% talent, vetted by Toptal"><i aria-hidden="true"></i>Top 3% · Vetted by Toptal</a><span class="sp"></span><a href="/privacy/">Privacy &amp; cookies</a><button type="button" class="cookie-link" data-cookie-settings>Cookie settings</button><a href="/subscribe/">RSS</a><a href="/sitemap.xml">Sitemap</a></div>
   </div>
 </footer>"""
 
