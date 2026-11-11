@@ -1,0 +1,85 @@
+<!--{"title": "Case study: preparing a Chilean retailer for data protection law", "description": "How a Chilean omnichannel retailer with a store card can prepare for Ley 21.719: a data map, consent, a rights workflow, breach response and personal data out of logs.", "short": "Chile's Ley 21.719 for a retailer", "h1": "Ready for the new rules: preparing a Chilean omnichannel retailer for personal data protection law 21.719", "kicker": "Case study · Data protection and platforms", "lede": "A Chilean retailer sold in stores and online, ran a loyalty programme and offered its own store credit card. Personal data sat in dozens of systems built over two decades under an older, lighter law. With Ley 21.719 creating a new data protection agency and stronger rights from December 2026, the company needed to know what data it held and why, answer customers' requests reliably, and handle a breach quickly, without stopping the business.", "date": "2026-11-11", "datetime": "2026-11-11T15:50:00+04:00", "readtime": "9 min read", "sector": "Retail and consumer credit · Chile", "role": "Fractional CTO and data architect", "engagement": "Assessment, architecture and delivery leadership", "scope": "Personal data inventory, legal bases and consent, data subject rights workflow, retention, breach response, processor contracts, telemetry redaction", "stack": ["Data catalogue with personal data tags", "Consent and preference service", "Rights request workflow", "Identity verification for requests", "Retention and deletion jobs", "OpenTelemetry Collector with redaction", "Incident response runbooks", "Processor register"], "outcomes": ["A map of where personal data lives, why it is processed and who owns it", "Customer rights requests handled through one tracked workflow across systems", "Consent and marketing preferences held in one place and respected everywhere", "Personal data removed from logs and traces before they leave applications", "A breach response plan that decides quickly who must be told, and how"], "tags": ["governance", "data", "platform"], "keywords": ["Chile Ley 21.719", "Chile data protection law 2026", "Agencia de Protección de Datos Personales", "data subject rights workflow", "personal data inventory", "consent management retail", "breach notification Chile", "PII redaction OpenTelemetry", "retail credit card data protection", "fractional CTO Latin America"], "faq": [["When does Chile's Ley 21.719 take effect?", "The law was published in December 2024 and its main provisions take effect on 1 December 2026. A bill to postpone that date has been reported, so organisations should check the current status, but the work needed is the same either way."], ["What does Ley 21.719 change for companies?", "It replaces Chile's older data protection rules with a modern regime: stronger rights for individuals, clearer legal bases for processing, breach notification duties and a new Personal Data Protection Agency able to investigate and sanction."], ["Why remove personal data from logs and traces?", "Logs and traces are copied to many tools and kept for long periods, often outside the controls applied to production databases. Redacting personal data before telemetry leaves applications reduces exposure, simplifies rights requests and shrinks the impact of a breach."]], "related": ["/fractional-cto/", "/ai-architect/", "/regions/"], "citations": [{"title": "Ley 21.719: Regula la protección y el tratamiento de los datos personales y crea la Agencia de Protección de Datos Personales", "url": "https://www.bcn.cl/leychile/navegar?idLey=21719", "publisher": "Biblioteca del Congreso Nacional de Chile", "date": "13 Dec 2024"}, {"title": "Law No. 21,719 amending Law No. 19,628 on the protection of private life is published in the Chilean Official Gazette", "url": "https://www.carey.cl/law-no-21719-amending-law-no-19628-on-the-protection-of-private-life-is-published-in-the-chilean-official-gazette", "publisher": "Carey", "date": "Dec 2024"}, {"title": "Chile Data Privacy Laws: Ley 21.719 Reform, New Agency, and December 2026 Entry into Force", "url": "https://www.recordinglaw.com/world-laws/world-data-privacy-laws/chile-data-privacy-laws/", "publisher": "Recording Law", "date": "2026"}, {"title": "Chile's New Data Protection Law: What Really Changes", "url": "https://www.dsn-group.com/privacy-notes/chiles-new-data-protection-law-what-really-changes", "publisher": "DSN Group", "date": "2026"}, {"title": "Collecting OpenTelemetry-compliant Java logs from files", "url": "https://opentelemetry.io/blog/2024/collecting-otel-compliant-java-logs-from-files/", "publisher": "OpenTelemetry blog", "date": "9 Dec 2024"}]}-->
+<h2>The situation</h2>
+<p>A Chilean retailer sold through stores, a website and an app. It ran a loyalty programme and offered its own store credit card, so alongside names and addresses it held purchase histories, credit decisions and payment behaviour. Over twenty years, teams had built and bought systems under Chile's older data protection law: point of sale, e-commerce, loyalty, card servicing, marketing tools, a data warehouse and a growing set of analytics and AI models. Personal data had been copied into most of them.</p>
+<p>Ley 21.719, published in December 2024, replaces that regime: it regulates how personal data is processed and protected and creates a new Personal Data Protection Agency to supervise compliance, handle complaints and impose sanctions<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. Its main provisions take effect on 1 December 2026<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<p><strong>Why now.</strong> With the effective date weeks away, the company had no single view of its personal data. A bill to postpone the date by a year was reported to be in the Senate, but not enacted<sup class="cite"><a href="#ref-3">3</a></sup>. The board decided to plan for December 2026: the work would be needed either way, and much of it reduced breach risk on its own merits.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>Known</strong>: where personal data lives, why it is processed and who owns each system.</li>
+<li><strong>Lawful</strong>: a legal basis recorded for each purpose, with consent where needed.</li>
+<li><strong>Answerable</strong>: customer requests to access, correct, delete or move their data handled reliably across systems.</li>
+<li><strong>Minimised</strong>: data kept only as long as needed, and kept out of places it does not belong, such as logs.</li>
+<li><strong>Ready for incidents</strong>: a fast way to decide who must be told about a breach, and how.</li>
+<li><strong>Business as usual</strong>: stores, card servicing and marketing keep running throughout.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Channels</small><div class="dgm-nodes"><span>Stores<em>point of sale</em></span><span>Web and app</span><span>Contact centre</span></div></div>
+<div class="dgm-tier"><small>Customer controls</small><div class="dgm-nodes"><span class="hl">Consent and preferences<em>one source of truth</em></span><span class="hl">Rights requests<em>one tracked workflow</em></span></div></div>
+<div class="dgm-tier"><small>Knowledge</small><div class="dgm-nodes"><span>Data catalogue<em>personal data tagged</em></span><span>Purposes and legal bases</span><span>Processor register</span></div></div>
+<div class="dgm-tier"><small>Systems</small><div class="dgm-nodes"><span>Loyalty</span><span>Card servicing</span><span>E-commerce</span><span>Warehouse and models</span></div></div>
+<div class="dgm-tier"><small>Hygiene</small><div class="dgm-nodes"><span>Retention jobs<em>delete on schedule</em></span><span>Telemetry redaction<em>no personal data in logs</em></span><span>Breach runbooks</span></div></div>
+</div>
+<figcaption>Customers interact with two services, consent and rights; the catalogue tells those services where to act.</figcaption>
+</figure>
+<p>The data catalogue was the backbone. Each system, table and data feed was tagged with the personal data it held, the purposes it served, the legal basis for each purpose and an owner. The rights workflow and retention jobs read from the catalogue, so adding a new system meant registering it once rather than updating every process.</p>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Request</b><span>A customer asks to see, correct or delete their data, in store or online</span></li>
+<li><b>Verify</b><span>Identity is confirmed in proportion to the request's risk</span></li>
+<li class="hl"><b>Locate</b><span>The catalogue lists every system holding that customer's data</span></li>
+<li><b>Act</b><span>Each system's owner fulfils its part; automated where possible</span></li>
+<li class="hl"><b>Check</b><span>Exceptions, such as credit records that must be kept, are recorded with reasons</span></li>
+<li><b>Respond</b><span>The customer receives one answer; the case is kept as evidence</span></li>
+</ol>
+<figcaption>One request, many systems, one tracked answer.</figcaption>
+</figure>
+
+<h2>The hard part: deletion, credit records and logs</h2>
+<p><strong>Deleting without breaking the business.</strong> A deletion request cannot simply remove every trace of a customer: card accounts, credit decisions and tax records have their own retention duties. The workflow therefore decided per system and per purpose: marketing profiles and loyalty preferences were deleted, credit records were kept for their required period and flagged so they were no longer used for marketing, and the customer was told which data was kept and why.</p>
+<p><strong>Personal data in telemetry.</strong> The inventory found customer identifiers, emails and sometimes card fragments in application logs and traces, copied into monitoring tools and kept far longer than the source data. Fixing every application would take years, so personal data was removed centrally: logs and traces flowed through an OpenTelemetry Collector pipeline, where processors masked or dropped sensitive fields before export<sup class="cite"><a href="#ref-5">5</a></sup>. Application teams then fixed the worst sources at their own pace.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/chile-retailer-data-protection-law-21719/collector-pipeline.webp" alt="OpenTelemetry Collector pipeline view: a filelog receiver and otlpjson connector feeding a logs pipeline with otlp and otlpjson receivers, resourcedetection and batch processors, and otlphttp and debug exporters" width="1600" height="464" loading="lazy"></div><figcaption>A collector pipeline with a processing stage between receivers and exporters: the place where personal data can be masked before telemetry leaves. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2024/collecting-otel-compliant-java-logs-from-files/" target="_blank" rel="noopener">OpenTelemetry blog, Cyrille Le Clerc and Gregor Zeitlinger</a> · CC BY 4.0</span></figcaption></figure>
+<p><strong>Breach decisions under uncertainty.</strong> Commentators differ on exactly how the law's breach notification timing will be applied<sup class="cite"><a href="#ref-4">4</a></sup>, so the company designed for speed rather than a deadline: a runbook that uses the catalogue to identify affected data types within hours, including whether credit or other sensitive data is involved, and pre-drafted notices for the Agency and for customers.</p>
+<div class="callout"><p>Most of the work for a new data protection law is not legal. It is knowing where your data is, and being able to act on it everywhere at once.</p></div>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Data and platform</small><ol><li>Catalogue and tagging</li><li class="hl">Rights workflow</li><li>Telemetry redaction</li></ol></div>
+<div class="dgm-lane"><small>System owners</small><ol><li>Confirm data and purposes</li><li class="hl">Automate their part</li><li>Retention jobs</li></ol></div>
+<div class="dgm-lane"><small>Legal and privacy</small><ol><li>Legal bases per purpose</li><li>Processor contracts</li><li class="hl">Breach runbooks</li></ol></div>
+<div class="dgm-lane"><small>Customer service</small><ol><li>Request intake in store and online</li><li>Identity checks</li><li class="hl">Clear answers</li></ol></div>
+</div>
+<figcaption>Engineering built the plumbing; system owners and legal decided what it should do.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Map</b><ul><li>Inventory systems</li><li>Tag personal data</li><li>Assign owners</li></ul></div>
+<div><small>Phase 2</small><b>Control</b><ul><li>Consent service</li><li>Rights workflow</li><li>Identity checks</li></ul></div>
+<div><small>Phase 3</small><b>Minimise</b><ul><li>Retention jobs</li><li>Telemetry redaction</li><li>Processor review</li></ul></div>
+<div><small>Phase 4</small><b>Rehearse</b><ul><li>Breach tabletop</li><li>Rights request drills</li><li>Agency-ready evidence</li></ul></div>
+</div>
+<figcaption>Map first; every later phase depends on knowing where the data is.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Plan for December 2026</td><td>Wait for the postponement bill</td><td>The work is needed either way and reduces risk now</td></tr>
+<tr><td>Catalogue as the backbone</td><td>Spreadsheets per department</td><td>Workflows and retention read from one source</td></tr>
+<tr><td>One rights workflow</td><td>Each system handles its own requests</td><td>Customers get one answer; evidence in one place</td></tr>
+<tr><td>Deletion per purpose with recorded exceptions</td><td>Delete everything or nothing</td><td>Respects rights and legal retention duties</td></tr>
+<tr><td>Central telemetry redaction</td><td>Fix every application first</td><td>Immediate reduction in exposure while teams catch up</td></tr>
+<tr><td>Design breach response for speed</td><td>Design to a specific deadline</td><td>Holds whatever interpretation prevails</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: tag personal data in a catalogue that workflows actually use, rather than a register nobody reads. Differently: include analytics and AI models in the first inventory; training datasets copied from production were the last place anyone looked, and the hardest to clean. Related: <a href="/insights/data-contracts-playbook/">data contracts</a>, <a href="/case-studies/india-dpdp-consent-platform-lending/">a consent platform for lending in India</a>, <a href="/case-studies/brazil-credit-ai-lgpd-explainability/">credit AI under Brazil's LGPD</a> and <a href="/regions/">where I work</a>.</p>
+<p>If a new data protection law is coming and you cannot yet say where your personal data lives, see my <a href="/fractional-cto/">fractional CTO work</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
