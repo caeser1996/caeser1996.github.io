@@ -1,0 +1,86 @@
+<!--{"title": "Case study: securing self-hosted LLM inference for a Korean fintech", "description": "How a South Korean fintech can run open-weight models on its own GPUs safely: patched inference engines, isolated serving, no exposed ports, egress limits and model provenance.", "short": "Self-hosted LLM security in Korea", "h1": "Inference is a server too: securing self-hosted LLM serving for a South Korean fintech", "kicker": "Case study · AI infrastructure security", "lede": "A South Korean fintech moved its AI features from external APIs to open-weight models served on its own GPUs, to keep customer data in-house and control cost. The data science team had made it work. The security team had not yet looked. When inference engines like vLLM and SGLang started appearing in advisories and breach reports, the company treated its model servers as what they are: internet-adjacent services running complex code, with customer data passing through them.", "date": "2026-11-12", "datetime": "2026-11-12T15:50:00+04:00", "readtime": "9 min read", "sector": "Financial services · South Korea", "role": "Fractional CTO and AI architect", "engagement": "Assessment, architecture and delivery leadership", "scope": "Inference engine patching, serving isolation, network policy, egress control, model provenance, secrets, telemetry and incident response", "stack": ["vLLM and SGLang model servers", "Kubernetes with network policies", "Sandboxed container runtime for serving", "Internal inference gateway", "Private model registry with signatures", "Egress proxy with allowlists", "Secrets manager", "OpenTelemetry and runtime alerts"], "outcomes": ["Inference engines tracked and patched like any other critical software", "Model servers reachable only through an authenticated internal gateway", "Serving processes isolated, with no route to the internet or to unrelated systems", "Models loaded only from an internal registry, with remote code execution disabled", "Prompts, keys and customer data kept out of logs, with alerts on unusual server behaviour"], "tags": ["security", "ai", "kubernetes"], "keywords": ["self-hosted LLM security", "vLLM security", "SGLang vulnerability", "inference server hardening", "trust_remote_code", "Kubernetes network policy AI", "model provenance", "confidential computing limits", "AI Basic Act Korea", "fractional CTO Korea"], "faq": [["Why are inference engines a security risk?", "Engines such as vLLM and SGLang are large, fast-moving codebases that parse untrusted input, load model files and often expose internal APIs. Recent advisories and incidents have included remote code execution flaws, so they need the same patching and isolation as any internet-facing service."], ["Does confidential computing make self-hosted inference safe?", "It protects data from the host and operator, but not from vulnerabilities in the software running inside the protected environment. A flaw in the inference engine can still expose requests, so patching and isolation remain essential."], ["What is trust_remote_code and why disable it?", "It is an option that lets a model repository run its own Python code when loaded. With it enabled, a malicious or tampered model can execute code on your server. Keep it disabled and load models only from a vetted internal registry."]], "related": ["/ai-architect/", "/fractional-cto/", "/regions/"], "citations": [{"title": "Inside the Enclave, Still Exposed: The NEAR AI SGLang Breach", "url": "https://labs.cloudsecurityalliance.org/research/csa-research-note-near-ai-sglang-confidential-inference-brea/", "publisher": "Cloud Security Alliance", "date": "Nov 2026"}, {"title": "Near AI Breach Exposes User Details and Data From 18 AI Agents", "url": "https://tech.yahoo.com/cybersecurity/articles/near-ai-breach-exposes-user-201603825.html", "publisher": "Yahoo Tech", "date": "Nov 2026"}, {"title": "vLLM has Hardcoded Trust Override in Model Files Enables RCE Despite Explicit User Opt-Out (CVE-2026-27893)", "url": "https://github.com/advisories/GHSA-7972-pg2x-xr59", "publisher": "GitHub Advisory Database", "date": "2026"}, {"title": "Critical vLLM RCE Lets Attackers Take Over via Video Link (CVE-2026-22778)", "url": "https://www.ox.security/blog/cve-2026-22778-vllm-rce-vulnerability/", "publisher": "OX Security", "date": "2026"}, {"title": "South Korea's AI Basic Act: overview and key takeaways", "url": "https://www.cooley.com/news/insight/2026/2026-01-27-south-koreas-ai-basic-act-overview-and-key-takeaways", "publisher": "Cooley", "date": "27 Jan 2026"}, {"title": "kubernetes-cluster-network.svg (Kubernetes documentation images)", "url": "https://github.com/kubernetes/website/blob/main/content/en/docs/images/kubernetes-cluster-network.svg", "publisher": "Kubernetes", "date": "2026"}]}-->
+<h2>The situation</h2>
+<p>A South Korean fintech offered payments, savings and investment features in a mobile app. Its AI features, a support assistant, transaction categorisation and document reading, had started on external model APIs. To keep customer data in-house and control cost, the company moved them to open-weight models served on its own GPUs, using vLLM for most models and SGLang for a few latency-sensitive ones. The data science team had done it quickly: models pulled from public repositories, servers running in the same Kubernetes cluster as other services, and serving APIs reachable from anything inside that cluster.</p>
+<p>Korea's AI Basic Act, in force from January 2026, adds transparency and risk management expectations for AI systems, particularly high-impact ones<sup class="cite"><a href="#ref-5">5</a></sup>. The more immediate concern for the board was simpler: customer financial data now flowed through software the security team had never reviewed.</p>
+<p><strong>Why now.</strong> Inference engines had become a target. In November 2026, NEAR AI disclosed that an attacker used a remote code execution flaw in SGLang to run code on one of its inference servers and observe in-flight requests, including ones protected by confidential computing<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. vLLM had its own advisories during 2026, including a flaw that let a malicious model repository run code even when remote code was disabled, and a remote code execution path through video inputs<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>Patched</strong>: inference engines tracked and updated like any critical dependency.</li>
+<li><strong>Unreachable</strong>: model servers accessible only through an authenticated gateway.</li>
+<li><strong>Contained</strong>: a compromised server cannot reach the internet or unrelated systems.</li>
+<li><strong>Trusted models</strong>: only vetted models, loaded without running their own code.</li>
+<li><strong>Clean logs</strong>: prompts, customer data and keys kept out of telemetry.</li>
+<li><strong>Watched</strong>: unusual behaviour on serving nodes raises an alert.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Callers</small><div class="dgm-nodes"><span>App services<em>support, categorisation, documents</em></span></div></div>
+<div class="dgm-tier"><small>Gateway</small><div class="dgm-nodes"><span class="hl">Inference gateway<em>authentication, quotas, input checks</em></span></div></div>
+<div class="dgm-tier"><small>Serving</small><div class="dgm-nodes"><span class="hl">Isolated namespace<em>sandboxed runtime, non-root</em></span><span>vLLM and SGLang<em>pinned, patched versions</em></span></div></div>
+<div class="dgm-tier"><small>Boundaries</small><div class="dgm-nodes"><span>Network policies<em>gateway in, nothing else</em></span><span>Egress proxy<em>registry and telemetry only</em></span><span>Model registry<em>signed, scanned models</em></span></div></div>
+<div class="dgm-tier"><small>Evidence</small><div class="dgm-nodes"><span>Telemetry<em>metadata, no prompts by default</em></span><span>Runtime alerts<em>new processes, new connections</em></span></div></div>
+</div>
+<figcaption>The model server sits in a box with one door in, one narrow door out and someone watching.</figcaption>
+</figure>
+<p>All application calls went through an internal inference gateway that authenticated callers, enforced quotas and rejected input types a route did not need, such as video or arbitrary URLs. Model servers moved to a dedicated namespace and node pool, ran as non-root in a sandboxed container runtime, and accepted traffic only from the gateway.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/korea-fintech-self-hosted-inference-security/flat-pod-network.webp" alt="Kubernetes cluster networking diagram showing services routing to pods across three nodes, with all pods on one shared pod network and all nodes on one node network" width="1440" height="810" loading="lazy"></div><figcaption>By default, pods share one flat network: a compromised model server could reach everything else. Network policies turn that into explicit, narrow paths. <span class="credit">Source: <a href="https://github.com/kubernetes/website/blob/main/content/en/docs/images/kubernetes-cluster-network.svg" target="_blank" rel="noopener">Kubernetes documentation</a> · CC BY 4.0</span></figcaption></figure>
+<p>Network policies blocked all traffic to and from the serving namespace except from the gateway and to an egress proxy, which allowed only the internal model registry and the telemetry endpoint<sup class="cite"><a href="#ref-6">6</a></sup>. A compromised server would find no route to the internet, to databases or to other services.</p>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Call</b><span>An app service sends a request to the gateway with its service identity</span></li>
+<li><b>Check</b><span>The gateway authenticates, applies quotas and strips unneeded input types</span></li>
+<li class="hl"><b>Serve</b><span>An isolated model server processes the request</span></li>
+<li><b>Return</b><span>The answer goes back through the gateway, which applies output checks</span></li>
+<li class="hl"><b>Record</b><span>Metadata is logged: route, model, latency and tokens, not the prompt</span></li>
+<li><b>Watch</b><span>Runtime sensors flag unexpected processes or connections on serving nodes</span></li>
+</ol>
+<figcaption>Customer data passes through the model server but nothing else can reach it there.</figcaption>
+</figure>
+
+<h2>The hard part: keeping up with engines and models</h2>
+<p><strong>Patching fast-moving engines.</strong> Inference engines release often, and upgrades can change performance or model support. The team pinned versions per model, subscribed to the projects' security advisories, and kept an evaluation and load test for each model so an upgrade could be validated within days rather than deferred for months.</p>
+<p><strong>Trusting models, not just code.</strong> A model is not just weights; some repositories include code that runs when loaded. The vLLM advisory showed that disabling remote code was not always enough<sup class="cite"><a href="#ref-3">3</a></sup>. Models were therefore imported once into an internal registry after review, scanned, signed and loaded only from there, with remote code disabled and serving processes unable to reach public repositories.</p>
+<p><strong>Not over-trusting confidential computing.</strong> The team evaluated confidential computing for the most sensitive workloads, and the NEAR AI incident shaped how: it protects data from the host and operator, not from flaws in the engine inside the enclave<sup class="cite"><a href="#ref-1">1</a></sup>. Confidential computing became one layer, alongside patching and isolation, not a replacement for them.</p>
+<div class="callout"><p>Treat a model server like any other service that handles customer data: patch it, hide it, box it in and watch it. The AI part does not earn it an exemption.</p></div>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Platform</small><ol><li>Serving namespace and node pool</li><li class="hl">Network policies and egress</li><li>Sandboxed runtime</li></ol></div>
+<div class="dgm-lane"><small>ML engineering</small><ol><li>Version pinning</li><li class="hl">Internal model registry</li><li>Upgrade evaluations</li></ol></div>
+<div class="dgm-lane"><small>Security</small><ol><li>Advisory tracking</li><li>Runtime alerts</li><li class="hl">Incident runbook</li></ol></div>
+<div class="dgm-lane"><small>Risk and compliance</small><ol><li>Data flow records</li><li>AI Basic Act mapping</li><li class="hl">Evidence for auditors</li></ol></div>
+</div>
+<figcaption>ML engineering kept models current; platform and security made sure a bad day stayed small.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Inventory</b><ul><li>Engines and versions</li><li>Models and sources</li><li>Who can reach servers</li></ul></div>
+<div><small>Phase 2</small><b>Contain</b><ul><li>Gateway in front</li><li>Network policies</li><li>Egress proxy</li></ul></div>
+<div><small>Phase 3</small><b>Trust</b><ul><li>Internal registry</li><li>Remote code disabled</li><li>Signed models</li></ul></div>
+<div><small>Phase 4</small><b>Sustain</b><ul><li>Advisory tracking</li><li>Upgrade tests</li><li>Runtime alerts</li></ul></div>
+</div>
+<figcaption>Containment came first: it reduced risk immediately while patching processes matured.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Gateway in front of every model server</td><td>Services call model servers directly</td><td>One place to authenticate, limit and filter input</td></tr>
+<tr><td>Deny-by-default network policies</td><td>Rely on the cluster being internal</td><td>A compromised server finds nowhere to go</td></tr>
+<tr><td>Internal model registry only</td><td>Pull models from public repositories at start-up</td><td>Models are reviewed once and cannot change underneath you</td></tr>
+<tr><td>Strip unneeded input types at the gateway</td><td>Let engines handle everything</td><td>Shrinks the attack surface, as the video flaw showed</td></tr>
+<tr><td>Metadata-only telemetry by default</td><td>Log prompts for debugging</td><td>Customer data stays out of logging systems</td></tr>
+<tr><td>Confidential computing as one layer</td><td>Treat it as sufficient</td><td>It does not protect against flaws inside the enclave</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: put the gateway and network policies in place first; they cut exposure in days. Differently: build the upgrade evaluation for each model at the start, so security patches never waited on performance testing. Related: <a href="/insights/tech-news-2026-11-12/">the 12 November tech news</a>, <a href="/insights/ai-model-supply-chain-security/">AI model supply chain security</a>, <a href="/insights/kubernetes-inference-gateway/">Kubernetes inference gateways</a>, the <a href="/case-studies/korea-ai-basic-act-hiring-platform/">Korean hiring platform case study</a> and <a href="/regions/">where I work</a>.</p>
+<p>If you serve your own models and have not reviewed them as you would any other service, see my <a href="/ai-architect/">AI architecture work</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>

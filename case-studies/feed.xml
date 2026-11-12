@@ -1,6 +1,90 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link><description>Anonymised engagements with architecture and flow diagrams</description><language>en-gb</language><lastBuildDate>Wed, 11 Nov 2026 15:50:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/case-studies/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link></image><item><title>Ready for the new rules: preparing a Chilean omnichannel retailer for personal data protection law 21.719</title><link>https://asksumanta.com/case-studies/chile-retailer-data-protection-law-21719/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/chile-retailer-data-protection-law-21719/</guid><pubDate>Wed, 11 Nov 2026 15:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>governance</category><category>data</category><category>platform</category><description>How a Chilean omnichannel retailer with a store card can prepare for Ley 21.719: a data map, consent, a rights workflow, breach response and personal data out of logs.</description><content:encoded><![CDATA[<p><em>A Chilean retailer sold in stores and online, ran a loyalty programme and offered its own store credit card. Personal data sat in dozens of systems built over two decades under an older, lighter law. With Ley 21.719 creating a new data protection agency and stronger rights from December 2026, the company needed to know what data it held and why, answer customers&#x27; requests reliably, and handle a breach quickly, without stopping the business.</em></p><h2>The situation</h2>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link><description>Anonymised engagements with architecture and flow diagrams</description><language>en-gb</language><lastBuildDate>Thu, 12 Nov 2026 15:50:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/case-studies/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link></image><item><title>Inference is a server too: securing self-hosted LLM serving for a South Korean fintech</title><link>https://asksumanta.com/case-studies/korea-fintech-self-hosted-inference-security/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/korea-fintech-self-hosted-inference-security/</guid><pubDate>Thu, 12 Nov 2026 15:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>security</category><category>ai</category><category>kubernetes</category><description>How a South Korean fintech can run open-weight models on its own GPUs safely: patched inference engines, isolated serving, no exposed ports, egress limits and model provenance.</description><content:encoded><![CDATA[<p><em>A South Korean fintech moved its AI features from external APIs to open-weight models served on its own GPUs, to keep customer data in-house and control cost. The data science team had made it work. The security team had not yet looked. When inference engines like vLLM and SGLang started appearing in advisories and breach reports, the company treated its model servers as what they are: internet-adjacent services running complex code, with customer data passing through them.</em></p><h2>The situation</h2>
+<p>A South Korean fintech offered payments, savings and investment features in a mobile app. Its AI features, a support assistant, transaction categorisation and document reading, had started on external model APIs. To keep customer data in-house and control cost, the company moved them to open-weight models served on its own GPUs, using vLLM for most models and SGLang for a few latency-sensitive ones. The data science team had done it quickly: models pulled from public repositories, servers running in the same Kubernetes cluster as other services, and serving APIs reachable from anything inside that cluster.</p>
+<p>Korea's AI Basic Act, in force from January 2026, adds transparency and risk management expectations for AI systems, particularly high-impact ones<sup class="cite"><a href="#ref-5">5</a></sup>. The more immediate concern for the board was simpler: customer financial data now flowed through software the security team had never reviewed.</p>
+<p><strong>Why now.</strong> Inference engines had become a target. In November 2026, NEAR AI disclosed that an attacker used a remote code execution flaw in SGLang to run code on one of its inference servers and observe in-flight requests, including ones protected by confidential computing<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. vLLM had its own advisories during 2026, including a flaw that let a malicious model repository run code even when remote code was disabled, and a remote code execution path through video inputs<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>Patched</strong>: inference engines tracked and updated like any critical dependency.</li>
+<li><strong>Unreachable</strong>: model servers accessible only through an authenticated gateway.</li>
+<li><strong>Contained</strong>: a compromised server cannot reach the internet or unrelated systems.</li>
+<li><strong>Trusted models</strong>: only vetted models, loaded without running their own code.</li>
+<li><strong>Clean logs</strong>: prompts, customer data and keys kept out of telemetry.</li>
+<li><strong>Watched</strong>: unusual behaviour on serving nodes raises an alert.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Callers</small><div class="dgm-nodes"><span>App services<em>support, categorisation, documents</em></span></div></div>
+<div class="dgm-tier"><small>Gateway</small><div class="dgm-nodes"><span class="hl">Inference gateway<em>authentication, quotas, input checks</em></span></div></div>
+<div class="dgm-tier"><small>Serving</small><div class="dgm-nodes"><span class="hl">Isolated namespace<em>sandboxed runtime, non-root</em></span><span>vLLM and SGLang<em>pinned, patched versions</em></span></div></div>
+<div class="dgm-tier"><small>Boundaries</small><div class="dgm-nodes"><span>Network policies<em>gateway in, nothing else</em></span><span>Egress proxy<em>registry and telemetry only</em></span><span>Model registry<em>signed, scanned models</em></span></div></div>
+<div class="dgm-tier"><small>Evidence</small><div class="dgm-nodes"><span>Telemetry<em>metadata, no prompts by default</em></span><span>Runtime alerts<em>new processes, new connections</em></span></div></div>
+</div>
+<figcaption>The model server sits in a box with one door in, one narrow door out and someone watching.</figcaption>
+</figure>
+<p>All application calls went through an internal inference gateway that authenticated callers, enforced quotas and rejected input types a route did not need, such as video or arbitrary URLs. Model servers moved to a dedicated namespace and node pool, ran as non-root in a sandboxed container runtime, and accepted traffic only from the gateway.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/korea-fintech-self-hosted-inference-security/flat-pod-network.webp" alt="Kubernetes cluster networking diagram showing services routing to pods across three nodes, with all pods on one shared pod network and all nodes on one node network" width="1440" height="810" loading="lazy"></div><figcaption>By default, pods share one flat network: a compromised model server could reach everything else. Network policies turn that into explicit, narrow paths. <span class="credit">Source: <a href="https://github.com/kubernetes/website/blob/main/content/en/docs/images/kubernetes-cluster-network.svg" target="_blank" rel="noopener">Kubernetes documentation</a> · CC BY 4.0</span></figcaption></figure>
+<p>Network policies blocked all traffic to and from the serving namespace except from the gateway and to an egress proxy, which allowed only the internal model registry and the telemetry endpoint<sup class="cite"><a href="#ref-6">6</a></sup>. A compromised server would find no route to the internet, to databases or to other services.</p>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Call</b><span>An app service sends a request to the gateway with its service identity</span></li>
+<li><b>Check</b><span>The gateway authenticates, applies quotas and strips unneeded input types</span></li>
+<li class="hl"><b>Serve</b><span>An isolated model server processes the request</span></li>
+<li><b>Return</b><span>The answer goes back through the gateway, which applies output checks</span></li>
+<li class="hl"><b>Record</b><span>Metadata is logged: route, model, latency and tokens, not the prompt</span></li>
+<li><b>Watch</b><span>Runtime sensors flag unexpected processes or connections on serving nodes</span></li>
+</ol>
+<figcaption>Customer data passes through the model server but nothing else can reach it there.</figcaption>
+</figure>
+
+<h2>The hard part: keeping up with engines and models</h2>
+<p><strong>Patching fast-moving engines.</strong> Inference engines release often, and upgrades can change performance or model support. The team pinned versions per model, subscribed to the projects' security advisories, and kept an evaluation and load test for each model so an upgrade could be validated within days rather than deferred for months.</p>
+<p><strong>Trusting models, not just code.</strong> A model is not just weights; some repositories include code that runs when loaded. The vLLM advisory showed that disabling remote code was not always enough<sup class="cite"><a href="#ref-3">3</a></sup>. Models were therefore imported once into an internal registry after review, scanned, signed and loaded only from there, with remote code disabled and serving processes unable to reach public repositories.</p>
+<p><strong>Not over-trusting confidential computing.</strong> The team evaluated confidential computing for the most sensitive workloads, and the NEAR AI incident shaped how: it protects data from the host and operator, not from flaws in the engine inside the enclave<sup class="cite"><a href="#ref-1">1</a></sup>. Confidential computing became one layer, alongside patching and isolation, not a replacement for them.</p>
+<div class="callout"><p>Treat a model server like any other service that handles customer data: patch it, hide it, box it in and watch it. The AI part does not earn it an exemption.</p></div>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Platform</small><ol><li>Serving namespace and node pool</li><li class="hl">Network policies and egress</li><li>Sandboxed runtime</li></ol></div>
+<div class="dgm-lane"><small>ML engineering</small><ol><li>Version pinning</li><li class="hl">Internal model registry</li><li>Upgrade evaluations</li></ol></div>
+<div class="dgm-lane"><small>Security</small><ol><li>Advisory tracking</li><li>Runtime alerts</li><li class="hl">Incident runbook</li></ol></div>
+<div class="dgm-lane"><small>Risk and compliance</small><ol><li>Data flow records</li><li>AI Basic Act mapping</li><li class="hl">Evidence for auditors</li></ol></div>
+</div>
+<figcaption>ML engineering kept models current; platform and security made sure a bad day stayed small.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Inventory</b><ul><li>Engines and versions</li><li>Models and sources</li><li>Who can reach servers</li></ul></div>
+<div><small>Phase 2</small><b>Contain</b><ul><li>Gateway in front</li><li>Network policies</li><li>Egress proxy</li></ul></div>
+<div><small>Phase 3</small><b>Trust</b><ul><li>Internal registry</li><li>Remote code disabled</li><li>Signed models</li></ul></div>
+<div><small>Phase 4</small><b>Sustain</b><ul><li>Advisory tracking</li><li>Upgrade tests</li><li>Runtime alerts</li></ul></div>
+</div>
+<figcaption>Containment came first: it reduced risk immediately while patching processes matured.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Gateway in front of every model server</td><td>Services call model servers directly</td><td>One place to authenticate, limit and filter input</td></tr>
+<tr><td>Deny-by-default network policies</td><td>Rely on the cluster being internal</td><td>A compromised server finds nowhere to go</td></tr>
+<tr><td>Internal model registry only</td><td>Pull models from public repositories at start-up</td><td>Models are reviewed once and cannot change underneath you</td></tr>
+<tr><td>Strip unneeded input types at the gateway</td><td>Let engines handle everything</td><td>Shrinks the attack surface, as the video flaw showed</td></tr>
+<tr><td>Metadata-only telemetry by default</td><td>Log prompts for debugging</td><td>Customer data stays out of logging systems</td></tr>
+<tr><td>Confidential computing as one layer</td><td>Treat it as sufficient</td><td>It does not protect against flaws inside the enclave</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: put the gateway and network policies in place first; they cut exposure in days. Differently: build the upgrade evaluation for each model at the start, so security patches never waited on performance testing. Related: <a href="https://asksumanta.com/insights/tech-news-2026-11-12/">the 12 November tech news</a>, <a href="https://asksumanta.com/insights/ai-model-supply-chain-security/">AI model supply chain security</a>, <a href="https://asksumanta.com/insights/kubernetes-inference-gateway/">Kubernetes inference gateways</a>, the <a href="https://asksumanta.com/case-studies/korea-ai-basic-act-hiring-platform/">Korean hiring platform case study</a> and <a href="https://asksumanta.com/regions/">where I work</a>.</p>
+<p>If you serve your own models and have not reviewed them as you would any other service, see my <a href="https://asksumanta.com/ai-architect/">AI architecture work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/korea-fintech-self-hosted-inference-security/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Ready for the new rules: preparing a Chilean omnichannel retailer for personal data protection law 21.719</title><link>https://asksumanta.com/case-studies/chile-retailer-data-protection-law-21719/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/chile-retailer-data-protection-law-21719/</guid><pubDate>Wed, 11 Nov 2026 15:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>governance</category><category>data</category><category>platform</category><description>How a Chilean omnichannel retailer with a store card can prepare for Ley 21.719: a data map, consent, a rights workflow, breach response and personal data out of logs.</description><content:encoded><![CDATA[<p><em>A Chilean retailer sold in stores and online, ran a loyalty programme and offered its own store credit card. Personal data sat in dozens of systems built over two decades under an older, lighter law. With Ley 21.719 creating a new data protection agency and stronger rights from December 2026, the company needed to know what data it held and why, answer customers&#x27; requests reliably, and handle a breach quickly, without stopping the business.</em></p><h2>The situation</h2>
 <p>A Chilean retailer sold through stores, a website and an app. It ran a loyalty programme and offered its own store credit card, so alongside names and addresses it held purchase histories, credit decisions and payment behaviour. Over twenty years, teams had built and bought systems under Chile's older data protection law: point of sale, e-commerce, loyalty, card servicing, marketing tools, a data warehouse and a growing set of analytics and AI models. Personal data had been copied into most of them.</p>
 <p>Ley 21.719, published in December 2024, replaces that regime: it regulates how personal data is processed and protected and creates a new Personal Data Protection Agency to supervise compliance, handle complaints and impose sanctions<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. Its main provisions take effect on 1 December 2026<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
 <p><strong>Why now.</strong> With the effective date weeks away, the company had no single view of its personal data. A bill to postpone the date by a year was reported to be in the Senate, but not enacted<sup class="cite"><a href="#ref-3">3</a></sup>. The board decided to plan for December 2026: the work would be needed either way, and much of it reduced breach risk on its own merits.</p>
@@ -3960,91 +4044,4 @@
 
 <h2>What I'd do again, and differently</h2>
 <p>Again: turn the playbook into data before writing a prompt, and treat lawyer decisions as the evaluation signal. Differently: involve lawyers in schema design from the start. The clause taxonomy is a legal decision, and the earlier they own it, the fewer rework cycles follow.</p>
-<p>If you're considering AI for review work like this, the <a href="https://asksumanta.com/ai-architect/">AI architect</a> page describes how I run these engagements, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/legal-contract-review-ai/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Joining quality, production and supplier data so defects surface earlier</title><link>https://asksumanta.com/case-studies/manufacturing-quality-lakehouse/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/manufacturing-quality-lakehouse/</guid><pubDate>Wed, 28 Oct 2026 01:34:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>data</category><category>platform</category><category>governance</category><category>streaming</category><category>architecture</category><description>How a manufacturer joined quality, production and supplier data across plants: an Iceberg lakehouse, data contracts per plant and governed quality metrics.</description><content:encoded><![CDATA[<p><em>Quality data in one system, production data in each plant&#x27;s own stack, supplier data in spreadsheets and portals. Defects were found late because nobody could join the three. The goal was an open lakehouse fed by contracted data from every plant, with quality metrics everyone agreed on.</em></p><h2>The situation</h2>
-<p>A manufacturer with several plants had good systems and poor connections. Quality inspection results lived in a central quality system. Production parameters lived in each plant's execution and historian stack, configured differently at every site. Supplier certificates and incoming inspection data arrived as spreadsheets and portal exports. When a customer complaint came in, tracing it back to a material lot, a line, a shift and a process setting took days of manual joining, and by then more product had shipped.</p>
-<p>Previous attempts at a central warehouse had stalled. Every plant change broke a pipeline, and every report defined "first-pass yield" slightly differently.</p>
-
-<h2>What had to be true</h2>
-<ul>
-<li><strong>Joinable at the right grain</strong>: batch, lot, line and time, across quality, production and supplier data.</li>
-<li><strong>Plants accountable for their feeds</strong>, with a clear owner and a written promise for each.</li>
-<li><strong>Open storage</strong>, so different teams and engines could use the same tables.</li>
-<li><strong>One definition per metric</strong>, shared by dashboards, analysts and any future AI use.</li>
-<li><strong>No rip and replace</strong> of plant systems.</li>
-</ul>
-<p>ISA-95 framed the boundaries. It addresses the interface between enterprise business systems and manufacturing operations and control<sup class="cite"><a href="#ref-1">1</a></sup>, which is exactly where the lakehouse sat: reading from plant-level systems, serving enterprise-level analysis, owning neither.</p>
-
-<h2>Architecture</h2>
-<figure class="dgm">
-<div class="dgm-stack">
-<div class="dgm-tier"><small>Plants</small><div class="dgm-nodes"><span>Execution systems<em>orders, genealogy</em></span><span>Historians<em>process parameters</em></span><span>Quality system<em>inspections, NCRs</em></span><span>Supplier data<em>certificates, incoming QC</em></span></div></div>
-<div class="dgm-tier"><small>Contract</small><div class="dgm-nodes"><span class="hl">Data contracts<em>one per feed, owned</em></span><span>Contract checks<em>schema, freshness, rules</em></span><span>Quarantine<em>failed batches</em></span></div></div>
-<div class="dgm-tier"><small>Lakehouse</small><div class="dgm-nodes"><span class="hl">Iceberg tables<em>raw, conformed, curated</em></span><span>REST catalog<em>one namespace per domain</em></span><span>Spark jobs<em>conform and join</em></span></div></div>
-<div class="dgm-tier"><small>Semantics</small><div class="dgm-nodes"><span class="hl">Semantic layer<em>governed metrics</em></span><span>Genealogy model<em>lot to product</em></span><span>Reference data<em>defect codes, sites</em></span></div></div>
-<div class="dgm-tier"><small>Use</small><div class="dgm-nodes"><span>Quality dashboards<em>per plant, per supplier</em></span><span>Alerts<em>drift and repeat defects</em></span><span>Analyst notebooks<em>root cause</em></span></div></div>
-</div>
-<figcaption>Layered architecture: contracts at the plant boundary, open tables in the middle, governed metrics on top.</figcaption>
-</figure>
-<p>Apache Iceberg tracks table state through metadata files replaced by atomic swaps, with snapshots and schema evolution defined in the specification<sup class="cite"><a href="#ref-2">2</a></sup>. That gave reproducible reads for investigations and safe schema changes when a plant added a parameter. See <a href="https://asksumanta.com/insights/apache-iceberg-v3-lakehouse/">Apache Iceberg v3 for the lakehouse</a> and <a href="https://asksumanta.com/insights/lakehouse-catalog-strategy-iceberg/">lakehouse catalog strategy</a>.</p>
-
-<h2>The data flow, end to end</h2>
-<figure class="dgm">
-<ol class="dgm-flow g3">
-<li><b>Capture</b><span>Change data capture or scheduled extracts from each plant system</span></li>
-<li class="hl"><b>Check</b><span>Validate against the feed's contract; quarantine and notify the owner on failure</span></li>
-<li><b>Land</b><span>Append to raw Iceberg tables with source and contract version recorded</span></li>
-<li><b>Conform</b><span>Map plant codes to shared reference data; build lot genealogy</span></li>
-<li class="hl"><b>Define</b><span>Compute quality metrics once, in the semantic layer</span></li>
-<li><b>Act</b><span>Dashboards, alerts and investigations read governed metrics only</span></li>
-</ol>
-<figcaption>Every number on a dashboard traces back to a contracted feed and a table snapshot.</figcaption>
-</figure>
-<p>Capture patterns are covered in <a href="https://asksumanta.com/insights/change-data-capture-event-streams/">change data capture and event streams</a>.</p>
-
-<h2>The hard part: getting plants to own a promise</h2>
-<p>The technology was well understood. The hard part was organisational: plants had never been asked to promise anything about their data, and a central team had always absorbed the breakage. Contracts changed that, but only once they were written in terms plants recognised.</p>
-<p>We used the Open Data Contract Standard, a YAML-based, platform-neutral format for agreements between data producers and consumers<sup class="cite"><a href="#ref-3">3</a></sup>; version 3 organises a contract into sections that include schema, data quality, service levels and team<sup class="cite"><a href="#ref-4">4</a></sup>. In practice:</p>
-<ul>
-<li>Contracts started small: schema, owner, freshness and a handful of rules the plant itself agreed were reasonable.</li>
-<li>A failed check went to the plant's named owner, not to the central team's backlog.</li>
-<li>Breaking changes required a new contract version and a notice period, agreed in a short change process.</li>
-<li>Plant-specific codes stayed in the feed; mapping to shared reference data was a central, versioned step.</li>
-</ul>
-<div class="callout"><p>A data contract is an organisational tool that happens to be written in YAML. Its value is the conversation it forces between producer and consumer.</p></div>
-<p>More in the <a href="https://asksumanta.com/insights/data-contracts-playbook/">data contracts playbook</a>.</p>
-
-<h2>How the engagement ran</h2>
-<figure class="dgm">
-<div class="dgm-lanes">
-<div class="dgm-lane"><small>Plant data owner</small><ol><li>Agree the contract</li><li class="hl">Fix failed checks at source</li><li>Announce changes</li></ol></div>
-<div class="dgm-lane"><small>Platform team</small><ol><li>Run checks and quarantine</li><li>Conform and join</li><li>Publish curated tables</li></ol></div>
-<div class="dgm-lane"><small>Quality leads</small><ol><li>Define metrics once</li><li class="hl">Review alerts</li><li>Drive supplier actions</li></ol></div>
-</div>
-<figcaption>Ownership by role: plants own feeds, the platform owns pipes, quality owns definitions.</figcaption>
-</figure>
-<figure class="dgm">
-<div class="dgm-phases">
-<div><small>Phase 1</small><b>Trace one complaint</b><ul><li>Walk an investigation end to end</li><li>Source inventory</li><li>Metric disagreements</li></ul></div>
-<div><small>Phase 2</small><b>Pilot plant</b><ul><li>First contracts</li><li>Iceberg tables and catalog</li><li>Lot genealogy</li></ul></div>
-<div><small>Phase 3</small><b>Metrics</b><ul><li>Semantic layer</li><li>Agreed definitions</li><li>Dashboards and alerts</li></ul></div>
-<div><small>Phase 4</small><b>Roll out</b><ul><li>Further plants</li><li>Supplier feeds</li><li>Change process</li></ul></div>
-</div>
-<figcaption>Phased delivery: one plant and one real investigation before scaling.</figcaption>
-</figure>
-
-<h2>Key decisions and trade-offs</h2>
-<table class="tbl">
-<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
-<tbody>
-<tr><td>Apache Iceberg tables</td><td>Proprietary warehouse storage</td><td>Multiple engines on one copy; no lock-in</td></tr>
-<tr><td>Contracts at the plant boundary</td><td>Central team fixes breakages</td><td>Fixes happen where the change was made</td></tr>
-<tr><td>Metrics in a semantic layer</td><td>Definitions in each dashboard</td><td>One answer to "what is our yield?"</td></tr>
-<tr><td>Keep plant codes, map centrally</td><td>Force plants to standardise first</td><td>Delivery without waiting on every plant</td></tr>
-<tr><td>Pilot one plant end to end</td><td>All plants at once</td><td>Contract and genealogy lessons learned once</td></tr>
-</tbody>
-</table>
-<p>Why metrics belong in a semantic layer, especially if AI will query them later, is covered in <a href="https://asksumanta.com/insights/text-to-sql-semantic-layer/">text-to-SQL and the semantic layer</a>.</p>
-
-<h2>What I'd do again, and differently</h2>
-<p>Again: start by tracing one real complaint end to end, and make plants owners rather than suppliers of data. Differently: agree metric definitions with quality leads before building dashboards, not alongside them. Every disagreement found late cost a rebuild.</p>
-<p>If you're facing something similar, the <a href="https://asksumanta.com/fractional-cto/">fractional CTO</a> page describes how I run these engagements, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/manufacturing-quality-lakehouse/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
+<p>If you're considering AI for review work like this, the <a href="https://asksumanta.com/ai-architect/">AI architect</a> page describes how I run these engagements, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/legal-contract-review-ai/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
