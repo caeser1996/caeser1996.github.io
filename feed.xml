@@ -1,6 +1,75 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link><description>Fractional CTO and AI architect: insights, case studies and daily tech news.</description><language>en-gb</language><lastBuildDate>Thu, 12 Nov 2026 15:50:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link></image><item><title>Inference is a server too: securing self-hosted LLM serving for a South Korean fintech</title><link>https://asksumanta.com/case-studies/korea-fintech-self-hosted-inference-security/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/korea-fintech-self-hosted-inference-security/</guid><pubDate>Thu, 12 Nov 2026 15:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>security</category><category>ai</category><category>kubernetes</category><description>How a South Korean fintech can run open-weight models on its own GPUs safely: patched inference engines, isolated serving, egress limits and trusted models.</description><content:encoded><![CDATA[<p><em>A South Korean fintech moved its AI features from external APIs to open-weight models served on its own GPUs, to keep customer data in-house and control cost. The data science team had made it work. The security team had not yet looked. When inference engines like vLLM and SGLang started appearing in advisories and breach reports, the company treated its model servers as what they are: internet-adjacent services running complex code, with customer data passing through them.</em></p><h2>The situation</h2>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link><description>Fractional CTO and AI architect: insights, case studies and daily tech news.</description><language>en-gb</language><lastBuildDate>Thu, 12 Nov 2026 21:20:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link></image><item><title>AI inference providers are now supply chain: what the NEAR AI and Fireworks breaches teach buyers</title><link>https://asksumanta.com/insights/ai-inference-provider-breaches-supply-chain/</link><guid isPermaLink="true">https://asksumanta.com/insights/ai-inference-provider-breaches-supply-chain/</guid><pubDate>Thu, 12 Nov 2026 21:20:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>security</category><category>ai</category><category>governance</category><description>Two AI inference providers disclosed breaches in a week. A CTO&#x27;s take on what you hand a provider, what leaked and the questions to ask before trusting one with data.</description><content:encoded><![CDATA[<p><em>Within days of each other, NEAR AI and Fireworks AI disclosed breaches. One came through a flaw in an open-source inference engine running inside a confidential computing enclave; the other through a cloud provider hosting research machines, reaching customers&#x27; secrets, datasets and partial model weights. Most companies now send prompts, documents and fine-tuning data to providers like these. Here is what to learn, and what to ask.</em></p><section class="block">
+<h2>What happened</h2>
+<p><strong>Fireworks AI</strong> reported two October incidents. In the first, internal credentials were used to read environment variables in evaluation jobs for a limited number of customer accounts, which The Register reports included customers' API keys and tokens<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. In the second, an attacker reached Fireworks' development machines through a cloud provider hosting its research machines, accessing billing records and, for a limited set of accounts, stored secrets, datasets and incomplete model weights<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+<p><strong>NEAR AI</strong> disclosed that an attacker used a remote code execution flaw in the open-source SGLang inference engine to run code on one inference server, where in-flight requests, including confidential-mode ones, could be observed; API keys for two customers were exposed through logs<sup class="cite"><a href="#ref-4">4</a></sup><sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+</section>
+
+<section class="block">
+<h2>What you hand an inference provider</h2>
+<p>Using an inference provider feels like calling an API. In practice, you often give them much more than prompts.</p>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Every request</small><div class="dgm-nodes"><span class="hl">Prompts and responses<em>customer data in transit</em></span></div></div>
+<div class="dgm-tier"><small>Often stored</small><div class="dgm-nodes"><span>Logs<em>sometimes with keys or content</em></span><span class="hl">Secrets<em>keys for tools and other APIs</em></span></div></div>
+<div class="dgm-tier"><small>For fine-tuning</small><div class="dgm-nodes"><span class="hl">Datasets<em>often your most sensitive data</em></span><span>Model weights<em>your tuned models</em></span></div></div>
+<div class="dgm-tier"><small>Behind them</small><div class="dgm-nodes"><span>Inference engines<em>open-source, fast-moving</em></span><span>Their cloud providers<em>a further supply chain</em></span></div></div>
+</div>
+<figcaption>Both incidents reached layers below the API: logs, stored secrets, datasets and the providers' own suppliers.</figcaption>
+</figure>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/canada-learning-app-ai-chatbot-online-safety/conversation-review.webp" alt="Aspire dashboard showing an invoke_agent trace with the user message, the assistant output, the number of tool calls, the duration and the token count" width="1464" height="982" loading="lazy"></div><figcaption>A single agent call carries the user's message, the model's answer and tool activity: all of it passes through, and may be logged by, whoever serves the model. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2026/genai-observability/" target="_blank" rel="noopener">OpenTelemetry blog, James Newton-King</a> · CC BY 4.0</span></figcaption></figure>
+</section>
+
+<section class="block">
+<h2>Four lessons</h2>
+<p><strong>1. Do not give providers long-lived keys to other systems.</strong> Both incidents involved secrets stored with the provider: environment variables in evaluation jobs and stored secrets in accounts. If an inference job needs to reach another service, give it a short-lived, narrowly scoped credential, or call that service from your side instead. See the <a href="https://asksumanta.com/case-studies/south-africa-fintech-machine-agent-identity/">machine identity case study</a>.</p>
+<p><strong>2. Send the minimum, keep the rest.</strong> Fine-tuning datasets uploaded months ago often stay with the provider long after the experiment ended. Delete what you no longer need, prefer providers that let you set retention, and remove personal data from training sets where you can.</p>
+<p><strong>3. Confidential computing is a layer, not a guarantee.</strong> The NEAR AI case shows that a flaw in the engine inside the enclave can still expose requests<sup class="cite"><a href="#ref-4">4</a></sup>. Ask providers how quickly they patch inference engines and what egress controls apply inside protected environments.</p>
+<p><strong>4. Your provider has providers.</strong> The second Fireworks intrusion came through a cloud provider hosting research machines<sup class="cite"><a href="#ref-1">1</a></sup>. Ask which third parties host the provider's infrastructure, including research and development environments, not just production.</p>
+</section>
+
+<section class="block">
+<h2>Questions to ask before trusting a provider with data</h2>
+<table class="tbl">
+<thead><tr><th>Ask</th><th>Why it matters</th></tr></thead>
+<tbody>
+<tr><td>What do you store from my requests, and for how long?</td><td>Logs and caches outlive the request</td></tr>
+<tr><td>How are customers isolated from each other?</td><td>One compromised account should not expose others</td></tr>
+<tr><td>How fast do you patch inference engines?</td><td>Engine flaws were the entry point at NEAR AI</td></tr>
+<tr><td>How are secrets I give you stored and who can read them?</td><td>Stored secrets were exposed at Fireworks</td></tr>
+<tr><td>Which third parties host any of your environments?</td><td>Development environments were the route in</td></tr>
+<tr><td>How and when will you notify me of an incident?</td><td>You need time to rotate keys and assess impact</td></tr>
+<tr><td>Can I delete datasets and fine-tuned weights on demand?</td><td>What is gone cannot leak</td></tr>
+</tbody>
+</table>
+<div class="callout"><p>An inference provider is a data processor holding some of your most sensitive information. Choose and manage it the way you would a payments processor, not a developer tool.</p></div>
+</section>
+
+<section class="block">
+<h2>If you use an affected provider</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li class="hl"><b>Rotate</b><span>Rotate any keys or tokens stored with the provider</span></li>
+<li><b>Review</b><span>Check activity on services those keys could reach</span></li>
+<li><b>Inventory</b><span>List datasets and weights you have uploaded</span></li>
+<li><b>Delete</b><span>Remove what you no longer need</span></li>
+<li class="hl"><b>Prepare</b><span>Make sure traffic can move to another provider</span></li>
+<li><b>Record</b><span>Document your assessment for customers and regulators</span></li>
+</ol>
+<figcaption>A short checklist for this week, whichever provider you use.</figcaption>
+</figure>
+</section>
+
+<section class="block">
+<h2>CTO take</h2>
+<p>AI providers have grown faster than their security, and attackers have noticed: LLMjacking gangs want keys, and fine-tuning datasets are valuable in their own right. The answer is not to stop using providers, but to treat them as critical suppliers: minimise what you send, avoid leaving secrets with them, demand clear answers on patching and third parties, and keep the ability to move. Read alongside <a href="https://asksumanta.com/insights/tech-news-2026-11-12/">the 12 November tech news</a>, <a href="https://asksumanta.com/insights/llmjacking-stolen-ai-keys-black-october/">LLMjacking and stolen AI keys</a> and the <a href="https://asksumanta.com/case-studies/korea-fintech-self-hosted-inference-security/">self-hosted inference security case study</a>.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I help companies choose and govern AI providers, design data flows that minimise exposure, and keep the option to self-host or switch. I am based in India, the United States and the UAE, working globally. See <a href="https://asksumanta.com/ai-architect/">AI architecture</a>, <a href="https://asksumanta.com/regions/">where I work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section><p><a href="https://asksumanta.com/insights/ai-inference-provider-breaches-supply-chain/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Inference is a server too: securing self-hosted LLM serving for a South Korean fintech</title><link>https://asksumanta.com/case-studies/korea-fintech-self-hosted-inference-security/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/korea-fintech-self-hosted-inference-security/</guid><pubDate>Thu, 12 Nov 2026 15:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>security</category><category>ai</category><category>kubernetes</category><description>How a South Korean fintech can run open-weight models on its own GPUs safely: patched inference engines, isolated serving, egress limits and trusted models.</description><content:encoded><![CDATA[<p><em>A South Korean fintech moved its AI features from external APIs to open-weight models served on its own GPUs, to keep customer data in-house and control cost. The data science team had made it work. The security team had not yet looked. When inference engines like vLLM and SGLang started appearing in advisories and breach reports, the company treated its model servers as what they are: internet-adjacent services running complex code, with customer data passing through them.</em></p><h2>The situation</h2>
 <p>A South Korean fintech offered payments, savings and investment features in a mobile app. Its AI features, a support assistant, transaction categorisation and document reading, had started on external model APIs. To keep customer data in-house and control cost, the company moved them to open-weight models served on its own GPUs, using vLLM for most models and SGLang for a few latency-sensitive ones. The data science team had done it quickly: models pulled from public repositories, servers running in the same Kubernetes cluster as other services, and serving APIs reachable from anything inside that cluster.</p>
 <p>Korea's AI Basic Act, in force from January 2026, adds transparency and risk management expectations for AI systems, particularly high-impact ones<sup class="cite"><a href="#ref-5">5</a></sup>. The more immediate concern for the board was simpler: customer financial data now flowed through software the security team had never reviewed.</p>
 <p><strong>Why now.</strong> Inference engines had become a target. In November 2026, NEAR AI disclosed that an attacker used a remote code execution flaw in SGLang to run code on one of its inference servers and observe in-flight requests, including ones protected by confidential computing<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. vLLM had its own advisories during 2026, including a flaw that let a malicious model repository run code even when remote code was disabled, and a remote code execution path through video inputs<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>.</p>
@@ -3215,67 +3284,4 @@
 
 <h2>What I'd do again, and differently</h2>
 <p>Again: shadow mode. It showed where the model asked poor follow-up questions in Swahili before any patient saw them. Differently: build the bilingual evaluation set first, not alongside the gateway. It was the slowest part to get right and it drove most design choices. Related: <a href="https://asksumanta.com/case-studies/ambient-clinical-documentation-private-ai/">private AI for clinical documentation</a>, <a href="https://asksumanta.com/insights/private-llm-on-prem/">private LLMs</a>, <a href="https://asksumanta.com/insights/llm-evaluation-sets-that-predict-production/">evaluation sets</a>, <a href="https://asksumanta.com/healthcare-data-architecture/">healthcare data architecture</a> and <a href="https://asksumanta.com/regions/">where I work</a>.</p>
-<p>If you are bringing AI into healthcare in Kenya or elsewhere in Africa, see my <a href="https://asksumanta.com/ai-architect/">AI architecture work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/kenya-telehealth-ai-triage-data-protection/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>New York&#x27;s youth chatbot law: what teams shipping AI assistants need to build, and by when</title><link>https://asksumanta.com/insights/new-york-youth-chatbot-law-ai-assistants/</link><guid isPermaLink="true">https://asksumanta.com/insights/new-york-youth-chatbot-law-ai-assistants/</guid><pubDate>Fri, 30 Oct 2026 12:35:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>ai</category><category>governance</category><category>regulation</category><description>New York has banned unsafe AI chatbot features for minors, and the law may reach general assistants. A CTO&#x27;s take on age assurance, guardrails and evidence.</description><content:encoded><![CDATA[<p><em>On 28 October, New York signed a law that bars AI chatbot features judged unsafe for minors, from pretending to be human to fostering emotional dependency. It follows California&#x27;s own chatbot law by about a month. If your product talks to the public, even as a general assistant, this is now an engineering problem: knowing who might be a minor, controlling what the model does for them, and proving it.</em></p><section class="block">
-<h2>What happened</h2>
-<p>New York's governor signed bill S.9051B/A.10379C on 28 October 2026. It prohibits companies with AI chatbot features from offering features deemed unsafe for minors, including chatbots that pretend to be human, build emotional dependency, encourage self-harm or engage in sexually explicit conversation<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. Press coverage reports that, like earlier state rules, it expects several age verification options, including at least one that does not need government ID<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
-<p>Two points need care. First, scope: Tech Times reads the definition as reaching general-purpose assistants, not only companion apps<sup class="cite"><a href="#ref-3">3</a></sup>. That is one interpretation, but a serious one. Second, timing: reports give different effective dates, from early 2027 to mid-2027. I would plan for the earliest.</p>
-<p>The Future of Privacy Forum notes that New York acted about a month after California enacted its own chatbot law, SB 1119, and that the two states are taking different approaches<sup class="cite"><a href="#ref-5">5</a></sup>. For anyone with US users, that means designing for more than one rulebook.</p>
-</section>
-
-<section class="block">
-<h2>Why this is an architecture problem</h2>
-<p>Most of these duties cannot be met with a line in the terms of service. They need the system to know something about the user, change the model's behaviour based on it, and keep evidence that it did. That cuts across identity, the model layer, the product and observability.</p>
-<figure class="dgm">
-<div class="dgm-stack">
-<div class="dgm-tier"><small>User</small><div class="dgm-nodes"><span>Account or guest<em>age unknown by default</em></span></div></div>
-<div class="dgm-tier"><small>Age assurance</small><div class="dgm-nodes"><span class="hl">Age signal<em>verified, estimated or unknown</em></span><span>Non-ID option<em>for users without ID</em></span></div></div>
-<div class="dgm-tier"><small>Policy</small><div class="dgm-nodes"><span class="hl">Feature policy<em>by age state and jurisdiction</em></span><span>Persona rules<em>always disclose AI</em></span></div></div>
-<div class="dgm-tier"><small>Model layer</small><div class="dgm-nodes"><span>System prompts<em>per policy</em></span><span class="hl">Input and output checks<em>self-harm, sexual content, dependency</em></span><span>Crisis routing<em>human resources</em></span></div></div>
-<div class="dgm-tier"><small>Evidence</small><div class="dgm-nodes"><span>Policy decisions logged<em>no content by default</em></span><span>Evaluation results<em>per release</em></span></div></div>
-</div>
-<figcaption>The policy layer decides what the model may do for this user, in this state, before the model runs.</figcaption>
-</figure>
-</section>
-
-<section class="block">
-<h2>What to build</h2>
-<p><strong>Treat "unknown age" as a state, not a default adult.</strong> Press coverage suggests the rules apply where age has not been established, not only to known minors<sup class="cite"><a href="#ref-4">4</a></sup>. The safe design has three states: verified adult, likely minor, and unknown. Unknown gets the protective feature set until the user chooses to verify.</p>
-<p><strong>Make features switchable by policy.</strong> Persona and memory features, romantic or companion modes, and long-term "relationship" memory are exactly what the law targets. Put them behind a policy service keyed on age state and jurisdiction, rather than scattered flags, so legal changes are configuration, not releases.</p>
-<p><strong>Check inputs and outputs, not just prompts.</strong> System prompts alone are not a control. Add classifiers or rules on both sides for self-harm, sexual content and manipulative engagement patterns, with routing to crisis resources. Test them with an <a href="https://asksumanta.com/insights/llm-evaluation-sets-that-predict-production/">evaluation set built for this</a>, including adversarial attempts, and run it on every model or prompt change.</p>
-<p><strong>Always disclose that it is AI.</strong> A chatbot pretending to be human is on the prohibited list<sup class="cite"><a href="#ref-1">1</a></sup>. Make disclosure part of the persona rules, and test that role-play cannot override it.</p>
-<p><strong>Keep evidence, carefully.</strong> You will need to show which policy applied and what the system did. Capturing full conversation content is the tempting way, and OpenTelemetry's generative AI instrumentation can do it, but it is opt-in for good reason<sup class="cite"><a href="#ref-6">6</a></sup>. For conversations that may involve minors, log policy decisions and check outcomes by default, and capture content only for flagged sessions under strict access and retention rules.</p>
-<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/new-york-youth-chatbot-law-ai-assistants/content-capture.webp" alt="Dashboard dialog showing a captured generative AI message event in JSON with index, finish reason, assistant role and the message content" width="1400" height="486" loading="lazy"></div><figcaption>Content capture shows exactly what the model said. Powerful for evidence, risky for children's data: switch it on deliberately. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2024/otel-generative-ai/" target="_blank" rel="noopener">OpenTelemetry blog, Drew Robbins and Liudmila Molkova</a> · CC BY 4.0</span></figcaption></figure>
-<div class="callout"><p>The defensible position is not "we tried hard". It is "here is the policy that applied to this session, the checks that ran, and the test results for the release that served it".</p></div>
-</section>
-
-<section class="block">
-<h2>Who should act</h2>
-<ul>
-<li><strong>Consumer AI products and apps with chat</strong>: in scope almost certainly, wherever you are based, if New York users can reach you.</li>
-<li><strong>Enterprise copilots</strong>: probably lower risk if access is limited to verified employees, but check any public or customer-facing deployment.</li>
-<li><strong>Education, gaming and health apps</strong>: high priority, because minors are a large part of the audience.</li>
-<li><strong>Teams outside the US</strong>: the same building blocks will help with the UK's and EU's child-safety expectations; see <a href="https://asksumanta.com/fractional-cto-united-kingdom/">UK</a> and <a href="https://asksumanta.com/fractional-cto-europe/">Europe</a>.</li>
-</ul>
-</section>
-
-<section class="block">
-<h2>A plan for the next quarter</h2>
-<figure class="dgm">
-<div class="dgm-phases">
-<div><small>Weeks 1 to 3</small><b>Scope</b><ul><li>Read the enacted text with counsel</li><li>List every chat surface and feature</li><li>Map them to prohibited features</li></ul></div>
-<div><small>Weeks 4 to 8</small><b>Build</b><ul><li>Age states and verification options</li><li>Policy service for features</li><li>Input and output checks</li></ul></div>
-<div><small>Weeks 9 to 12</small><b>Prove</b><ul><li>Evaluation set in CI</li><li>Policy decision logging</li><li>Run a mock regulator request</li></ul></div>
-</div>
-<figcaption>Scope with counsel, build the controls, then rehearse showing your work.</figcaption>
-</figure>
-</section>
-
-<section class="block">
-<h2>CTO take</h2>
-<p>State-level AI rules in the US are no longer abstract. Between California and New York, any public chatbot now needs age-aware behaviour, enforced guardrails and evidence. The cost of building that is far lower now than after an enforcement letter. Build it once, as a policy layer that sits in front of every model you use, so the next state law is a configuration change. For the wider US picture, see the <a href="https://asksumanta.com/insights/colorado-ai-act-2026-reset/">Colorado AI Act reset</a> and the <a href="https://asksumanta.com/fractional-cto-united-states/">US page</a>; for guardrail engineering, <a href="https://asksumanta.com/insights/prompt-injection-defence-for-agents/">prompt-injection defence</a> and <a href="https://asksumanta.com/insights/structured-outputs-reliable-llm-integration/">structured outputs</a>.</p>
-</section>
-
-<section class="block">
-<h2>How I can help</h2>
-<p>I design AI assistant platforms with policy layers, evaluation and evidence built in, and review them before launch or audit. I am based in India, the United States and the UAE, working globally. See <a href="https://asksumanta.com/ai-architect/">AI architecture</a> or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
-</section><p><a href="https://asksumanta.com/insights/new-york-youth-chatbot-law-ai-assistants/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
+<p>If you are bringing AI into healthcare in Kenya or elsewhere in Africa, see my <a href="https://asksumanta.com/ai-architect/">AI architecture work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/kenya-telehealth-ai-triage-data-protection/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>

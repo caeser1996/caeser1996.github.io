@@ -1,6 +1,75 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Daily tech news</title><link>https://asksumanta.com/</link><description>A CTO&#x27;s take on the day&#x27;s releases, deals and rules</description><language>en-gb</language><lastBuildDate>Thu, 12 Nov 2026 08:50:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/insights/news.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Daily tech news</title><link>https://asksumanta.com/</link></image><item><title>Tech news, 12 November 2026: NEAR AI and Fireworks AI breached, a web host entered through its MCP server, Rackspace signs GB300 capacity and Anthropic sets its IPO range</title><link>https://asksumanta.com/insights/tech-news-2026-11-12/</link><guid isPermaLink="true">https://asksumanta.com/insights/tech-news-2026-11-12/</guid><pubDate>Thu, 12 Nov 2026 08:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>security</category><category>ai</category><category>mcp</category><description>A CTO&#x27;s take: NEAR AI and Fireworks AI disclose breaches, a web host is entered through its MCP server, Rackspace signs GB300 capacity and Anthropic sets its IPO range.</description><content:encoded><![CDATA[<p><em>This week&#x27;s theme is the security of AI infrastructure itself. Two inference providers disclosed breaches, one through a flaw in a popular open-source inference engine, and a German web host said an attacker got in through the MCP server that connects customers&#x27; AI assistants. Meanwhile, capacity deals and Anthropic&#x27;s IPO pricing show how much money is flowing into that same infrastructure.</em></p><p>Today's brief covers stories from 9 to 11 November.</p>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Daily tech news</title><link>https://asksumanta.com/</link><description>A CTO&#x27;s take on the day&#x27;s releases, deals and rules</description><language>en-gb</language><lastBuildDate>Thu, 12 Nov 2026 21:20:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/insights/news.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Daily tech news</title><link>https://asksumanta.com/</link></image><item><title>AI inference providers are now supply chain: what the NEAR AI and Fireworks breaches teach buyers</title><link>https://asksumanta.com/insights/ai-inference-provider-breaches-supply-chain/</link><guid isPermaLink="true">https://asksumanta.com/insights/ai-inference-provider-breaches-supply-chain/</guid><pubDate>Thu, 12 Nov 2026 21:20:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>security</category><category>ai</category><category>governance</category><description>Two AI inference providers disclosed breaches in a week. A CTO&#x27;s take on what you hand a provider, what leaked and the questions to ask before trusting one with data.</description><content:encoded><![CDATA[<p><em>Within days of each other, NEAR AI and Fireworks AI disclosed breaches. One came through a flaw in an open-source inference engine running inside a confidential computing enclave; the other through a cloud provider hosting research machines, reaching customers&#x27; secrets, datasets and partial model weights. Most companies now send prompts, documents and fine-tuning data to providers like these. Here is what to learn, and what to ask.</em></p><section class="block">
+<h2>What happened</h2>
+<p><strong>Fireworks AI</strong> reported two October incidents. In the first, internal credentials were used to read environment variables in evaluation jobs for a limited number of customer accounts, which The Register reports included customers' API keys and tokens<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. In the second, an attacker reached Fireworks' development machines through a cloud provider hosting its research machines, accessing billing records and, for a limited set of accounts, stored secrets, datasets and incomplete model weights<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+<p><strong>NEAR AI</strong> disclosed that an attacker used a remote code execution flaw in the open-source SGLang inference engine to run code on one inference server, where in-flight requests, including confidential-mode ones, could be observed; API keys for two customers were exposed through logs<sup class="cite"><a href="#ref-4">4</a></sup><sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+</section>
+
+<section class="block">
+<h2>What you hand an inference provider</h2>
+<p>Using an inference provider feels like calling an API. In practice, you often give them much more than prompts.</p>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Every request</small><div class="dgm-nodes"><span class="hl">Prompts and responses<em>customer data in transit</em></span></div></div>
+<div class="dgm-tier"><small>Often stored</small><div class="dgm-nodes"><span>Logs<em>sometimes with keys or content</em></span><span class="hl">Secrets<em>keys for tools and other APIs</em></span></div></div>
+<div class="dgm-tier"><small>For fine-tuning</small><div class="dgm-nodes"><span class="hl">Datasets<em>often your most sensitive data</em></span><span>Model weights<em>your tuned models</em></span></div></div>
+<div class="dgm-tier"><small>Behind them</small><div class="dgm-nodes"><span>Inference engines<em>open-source, fast-moving</em></span><span>Their cloud providers<em>a further supply chain</em></span></div></div>
+</div>
+<figcaption>Both incidents reached layers below the API: logs, stored secrets, datasets and the providers' own suppliers.</figcaption>
+</figure>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/canada-learning-app-ai-chatbot-online-safety/conversation-review.webp" alt="Aspire dashboard showing an invoke_agent trace with the user message, the assistant output, the number of tool calls, the duration and the token count" width="1464" height="982" loading="lazy"></div><figcaption>A single agent call carries the user's message, the model's answer and tool activity: all of it passes through, and may be logged by, whoever serves the model. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2026/genai-observability/" target="_blank" rel="noopener">OpenTelemetry blog, James Newton-King</a> · CC BY 4.0</span></figcaption></figure>
+</section>
+
+<section class="block">
+<h2>Four lessons</h2>
+<p><strong>1. Do not give providers long-lived keys to other systems.</strong> Both incidents involved secrets stored with the provider: environment variables in evaluation jobs and stored secrets in accounts. If an inference job needs to reach another service, give it a short-lived, narrowly scoped credential, or call that service from your side instead. See the <a href="https://asksumanta.com/case-studies/south-africa-fintech-machine-agent-identity/">machine identity case study</a>.</p>
+<p><strong>2. Send the minimum, keep the rest.</strong> Fine-tuning datasets uploaded months ago often stay with the provider long after the experiment ended. Delete what you no longer need, prefer providers that let you set retention, and remove personal data from training sets where you can.</p>
+<p><strong>3. Confidential computing is a layer, not a guarantee.</strong> The NEAR AI case shows that a flaw in the engine inside the enclave can still expose requests<sup class="cite"><a href="#ref-4">4</a></sup>. Ask providers how quickly they patch inference engines and what egress controls apply inside protected environments.</p>
+<p><strong>4. Your provider has providers.</strong> The second Fireworks intrusion came through a cloud provider hosting research machines<sup class="cite"><a href="#ref-1">1</a></sup>. Ask which third parties host the provider's infrastructure, including research and development environments, not just production.</p>
+</section>
+
+<section class="block">
+<h2>Questions to ask before trusting a provider with data</h2>
+<table class="tbl">
+<thead><tr><th>Ask</th><th>Why it matters</th></tr></thead>
+<tbody>
+<tr><td>What do you store from my requests, and for how long?</td><td>Logs and caches outlive the request</td></tr>
+<tr><td>How are customers isolated from each other?</td><td>One compromised account should not expose others</td></tr>
+<tr><td>How fast do you patch inference engines?</td><td>Engine flaws were the entry point at NEAR AI</td></tr>
+<tr><td>How are secrets I give you stored and who can read them?</td><td>Stored secrets were exposed at Fireworks</td></tr>
+<tr><td>Which third parties host any of your environments?</td><td>Development environments were the route in</td></tr>
+<tr><td>How and when will you notify me of an incident?</td><td>You need time to rotate keys and assess impact</td></tr>
+<tr><td>Can I delete datasets and fine-tuned weights on demand?</td><td>What is gone cannot leak</td></tr>
+</tbody>
+</table>
+<div class="callout"><p>An inference provider is a data processor holding some of your most sensitive information. Choose and manage it the way you would a payments processor, not a developer tool.</p></div>
+</section>
+
+<section class="block">
+<h2>If you use an affected provider</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li class="hl"><b>Rotate</b><span>Rotate any keys or tokens stored with the provider</span></li>
+<li><b>Review</b><span>Check activity on services those keys could reach</span></li>
+<li><b>Inventory</b><span>List datasets and weights you have uploaded</span></li>
+<li><b>Delete</b><span>Remove what you no longer need</span></li>
+<li class="hl"><b>Prepare</b><span>Make sure traffic can move to another provider</span></li>
+<li><b>Record</b><span>Document your assessment for customers and regulators</span></li>
+</ol>
+<figcaption>A short checklist for this week, whichever provider you use.</figcaption>
+</figure>
+</section>
+
+<section class="block">
+<h2>CTO take</h2>
+<p>AI providers have grown faster than their security, and attackers have noticed: LLMjacking gangs want keys, and fine-tuning datasets are valuable in their own right. The answer is not to stop using providers, but to treat them as critical suppliers: minimise what you send, avoid leaving secrets with them, demand clear answers on patching and third parties, and keep the ability to move. Read alongside <a href="https://asksumanta.com/insights/tech-news-2026-11-12/">the 12 November tech news</a>, <a href="https://asksumanta.com/insights/llmjacking-stolen-ai-keys-black-october/">LLMjacking and stolen AI keys</a> and the <a href="https://asksumanta.com/case-studies/korea-fintech-self-hosted-inference-security/">self-hosted inference security case study</a>.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I help companies choose and govern AI providers, design data flows that minimise exposure, and keep the option to self-host or switch. I am based in India, the United States and the UAE, working globally. See <a href="https://asksumanta.com/ai-architect/">AI architecture</a>, <a href="https://asksumanta.com/regions/">where I work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section><p><a href="https://asksumanta.com/insights/ai-inference-provider-breaches-supply-chain/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Tech news, 12 November 2026: NEAR AI and Fireworks AI breached, a web host entered through its MCP server, Rackspace signs GB300 capacity and Anthropic sets its IPO range</title><link>https://asksumanta.com/insights/tech-news-2026-11-12/</link><guid isPermaLink="true">https://asksumanta.com/insights/tech-news-2026-11-12/</guid><pubDate>Thu, 12 Nov 2026 08:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>security</category><category>ai</category><category>mcp</category><description>A CTO&#x27;s take: NEAR AI and Fireworks AI disclose breaches, a web host is entered through its MCP server, Rackspace signs GB300 capacity and Anthropic sets its IPO range.</description><content:encoded><![CDATA[<p><em>This week&#x27;s theme is the security of AI infrastructure itself. Two inference providers disclosed breaches, one through a flaw in a popular open-source inference engine, and a German web host said an attacker got in through the MCP server that connects customers&#x27; AI assistants. Meanwhile, capacity deals and Anthropic&#x27;s IPO pricing show how much money is flowing into that same infrastructure.</em></p><p>Today's brief covers stories from 9 to 11 November.</p>
 
 <figure class="dgm">
 <div class="dgm-stack">
