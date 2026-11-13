@@ -1,6 +1,90 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link><description>Fractional CTO and AI architect: insights, case studies and daily tech news.</description><language>en-gb</language><lastBuildDate>Fri, 13 Nov 2026 08:50:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link></image><item><title>Tech news, 13 November 2026: a long Microsoft 365 outage, EU rules for AI sandboxes, an exploited Xen Orchestra flaw and Nebius&#x27;s spending plans</title><link>https://asksumanta.com/insights/tech-news-2026-11-13/</link><guid isPermaLink="true">https://asksumanta.com/insights/tech-news-2026-11-13/</guid><pubDate>Fri, 13 Nov 2026 08:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>platform</category><category>security</category><category>governance</category><description>A CTO&#x27;s take: a long Microsoft 365 outage, EU rules for AI regulatory sandboxes, an exploited Xen Orchestra flaw and Nebius raising capex as AI cloud costs climb.</description><content:encoded><![CDATA[<p><em>Microsoft 365 was disrupted for much of a working day, a reminder of how much of most companies runs on one supplier. The EU set common rules for AI regulatory sandboxes, a virtualisation management tool was exploited before many users had patched, and Nebius&#x27;s results showed how much capital AI cloud capacity now demands.</em></p><p>Today's brief covers stories from 10 to 12 November.</p>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link><description>Fractional CTO and AI architect: insights, case studies and daily tech news.</description><language>en-gb</language><lastBuildDate>Fri, 13 Nov 2026 15:50:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link></image><item><title>When the suite goes down: keeping a Singapore digital insurer running through a productivity SaaS outage</title><link>https://asksumanta.com/case-studies/singapore-insurer-saas-outage-continuity/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/singapore-insurer-saas-outage-continuity/</guid><pubDate>Fri, 13 Nov 2026 15:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>platform</category><category>governance</category><category>architecture</category><description>How a Singapore digital insurer can keep critical services running when its productivity suite fails: dependency maps, recovery targets and fallback channels.</description><content:encoded><![CDATA[<p><em>A Singapore digital insurer ran its customer-facing platforms on its own cloud estate, with careful failover. Everything around them, email, chat, documents, identity and increasingly AI assistants, ran on one productivity suite. The insurer had planned for its own systems failing, not for that suite failing. A long outage at a major provider made the gap obvious, and Singapore&#x27;s business continuity expectations for financial institutions made it urgent.</em></p><h2>The situation</h2>
+<p>A Singapore digital insurer sold travel, health and home policies online. Its policy administration, claims and payments ran on its own cloud estate across two availability zones, with tested failover. Everything else ran on one productivity suite: email, chat, video calls, shared documents, the identity provider staff used to sign in to every other system, and the AI assistant built into it. Customer notices, incident bridges and even the runbooks for failing over the core platform lived there.</p>
+<p>MAS's business continuity management guidelines expect financial institutions to identify their critical business services and set, for each, a service recovery time objective: how long it can be disrupted before severe impact, with the recovery times of underlying functions and dependencies fitting inside it<sup class="cite"><a href="#ref-2">2</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>. The insurer had done this for its platforms. It had not traced the dependencies through the productivity suite.</p>
+<p><strong>Why now.</strong> On 12 November 2026, a long Microsoft 365 outage disrupted Outlook, Exchange Online and Teams for much of a working day; Microsoft attributed it to servers failing health checks and dropping out of service, with no evidence of an attack<sup class="cite"><a href="#ref-1">1</a></sup>. Staff across the industry found they could not email customers, join incident calls or open runbooks. The insurer's board asked a simple question: what would we have done?</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>Dependencies known</strong>: each critical service mapped to the SaaS it relies on, identity included.</li>
+<li><strong>Targets met</strong>: workarounds that keep each service within its recovery target.</li>
+<li><strong>Coordination possible</strong>: a way to run an incident without email, chat or shared documents.</li>
+<li><strong>Customers reachable</strong>: notices that do not depend on the failed suite.</li>
+<li><strong>Access preserved</strong>: administrators can reach critical systems if the identity provider is down.</li>
+<li><strong>Early warning</strong>: the insurer knows about an outage before staff start complaining.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Critical services</small><div class="dgm-nodes"><span>Sell policies</span><span>Pay claims</span><span>Serve customers</span><span>Meet regulatory duties</span></div></div>
+<div class="dgm-tier"><small>Daily tools</small><div class="dgm-nodes"><span>Productivity suite<em>email, chat, documents, AI</em></span><span class="hl">Identity provider<em>sign-in to everything</em></span></div></div>
+<div class="dgm-tier"><small>Fallbacks</small><div class="dgm-nodes"><span class="hl">Out-of-band messaging<em>separate provider</em></span><span>Paging and SMS</span><span>Independent status page</span></div></div>
+<div class="dgm-tier"><small>Emergency access</small><div class="dgm-nodes"><span class="hl">Break-glass accounts<em>outside the main identity provider</em></span><span>Offline runbooks<em>and contact lists</em></span></div></div>
+<div class="dgm-tier"><small>Detection</small><div class="dgm-nodes"><span>Synthetic checks<em>from outside, several regions</em></span><span>Provider status feeds</span></div></div>
+</div>
+<figcaption>The fallbacks sit on different providers from the daily tools, so one outage cannot take out both.</figcaption>
+</figure>
+<p>The first deliverable was a dependency map for each critical business service, built with the people who run them. It showed that the identity provider was the biggest single point of failure: if staff could not sign in, they could not reach the claims system, the cloud console or the paging tool, even though those were healthy.</p>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Detect</b><span>Synthetic checks from several regions see the suite failing</span></li>
+<li><b>Page</b><span>On-call staff are paged through a separate paging service</span></li>
+<li class="hl"><b>Coordinate</b><span>The incident moves to the out-of-band messaging tool</span></li>
+<li><b>Decide</b><span>Leaders choose workarounds per service, using offline runbooks</span></li>
+<li class="hl"><b>Communicate</b><span>Customers and partners are told via the status page and SMS</span></li>
+<li><b>Recover</b><span>Normal tools return; the incident record feeds the next exercise</span></li>
+</ol>
+<figcaption>Every step uses something that does not depend on the suite that failed.</figcaption>
+</figure>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/singapore-insurer-saas-outage-continuity/synthetic-checks.webp" alt="Chart of httpcheck.duration over time for three HTTP endpoints, with a table showing minimum, maximum and average response times per URL" width="1400" height="763" loading="lazy"></div><figcaption>Synthetic HTTP checks give an independent view of an endpoint's health: the insurer pointed them at the suite's sign-in, mail and chat endpoints. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2023/synthetic-testing/" target="_blank" rel="noopener">OpenTelemetry blog, Carter Socha</a> · CC BY 4.0</span></figcaption></figure>
+<p>Detection used the OpenTelemetry Collector's HTTP check receiver, run from small collectors in more than one region, to probe the suite's sign-in, mail and chat endpoints alongside the insurer's own services<sup class="cite"><a href="#ref-4">4</a></sup>. Results went to the observability platform the insurer already used, which did not depend on the suite.</p>
+
+<h2>The hard part: identity and the fallback nobody uses</h2>
+<p><strong>Break-glass without a back door.</strong> Emergency accounts that bypass the main identity provider are exactly what attackers want. The insurer kept a small number, each tied to a named role, protected with hardware security keys, stored with sealed procedures, monitored for any use and tested on a schedule. Any use outside an exercise raised an immediate alert to security.</p>
+<p><strong>Keeping fallbacks alive.</strong> A fallback channel that nobody opens for months will not work when needed: accounts expire, numbers change, people forget. The insurer used the out-of-band messaging tool for real on-call handovers every week, synchronised its contact lists from the HR system daily, and printed a short card of first steps for on-call staff.</p>
+<p><strong>Regulatory duties without email.</strong> Incident reporting to MAS and notices to customers normally went out by email. The runbook named an alternative route for each, and the compliance team rehearsed it, so a suite outage would not also become a reporting failure.</p>
+<div class="callout"><p>Resilience plans usually cover your systems failing. The outage that hurts is often the supplier your plan quietly depends on: the one hosting the plan itself.</p></div>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Technology</small><ol><li>Dependency maps</li><li class="hl">Synthetic checks and paging</li><li>Break-glass access</li></ol></div>
+<div class="dgm-lane"><small>Operations</small><ol><li>Workarounds per service</li><li class="hl">Offline runbooks</li><li>Weekly use of fallbacks</li></ol></div>
+<div class="dgm-lane"><small>Risk and compliance</small><ol><li>Recovery targets</li><li>Regulatory reporting routes</li><li class="hl">Exercise evidence</li></ol></div>
+<div class="dgm-lane"><small>Customer teams</small><ol><li>Status page</li><li>SMS templates</li><li class="hl">Partner contacts</li></ol></div>
+</div>
+<figcaption>Technology built the alternatives; operations made them habits; risk turned them into evidence.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Map</b><ul><li>Critical services</li><li>SaaS dependencies</li><li>Identity paths</li></ul></div>
+<div><small>Phase 2</small><b>Build</b><ul><li>Out-of-band channel</li><li>Break-glass access</li><li>Synthetic checks</li></ul></div>
+<div><small>Phase 3</small><b>Document</b><ul><li>Offline runbooks</li><li>Customer templates</li><li>Reporting routes</li></ul></div>
+<div><small>Phase 4</small><b>Exercise</b><ul><li>Tabletop</li><li>Live switch to fallbacks</li><li>Lessons into plans</li></ul></div>
+</div>
+<figcaption>Mapping changed the plan: identity, not email, turned out to be the critical dependency.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Fallbacks on different providers</td><td>Backup features of the same suite</td><td>One outage cannot take out both</td></tr>
+<tr><td>Use fallbacks weekly</td><td>Keep them for emergencies only</td><td>Unused tools fail when needed</td></tr>
+<tr><td>Small, monitored break-glass set</td><td>No emergency access, or many accounts</td><td>Access when needed without a standing back door</td></tr>
+<tr><td>Independent synthetic checks</td><td>Rely on the provider's status page</td><td>Earlier warning and your own evidence</td></tr>
+<tr><td>Offline runbooks and printed first steps</td><td>Runbooks only in shared documents</td><td>Available when the suite is not</td></tr>
+<tr><td>Workarounds sized to recovery targets</td><td>Generic "wait for the provider"</td><td>Meets MAS expectations per service</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: map dependencies service by service with the people who run them; it surfaced the identity dependency nobody had written down. Differently: include the AI assistant in the map from the start; some teams had begun relying on it for routine customer replies, and its outage was a gap in its own right. Related: <a href="https://asksumanta.com/insights/tech-news-2026-11-13/">the 13 November tech news</a>, the <a href="https://asksumanta.com/case-studies/ai-provider-resilience-cps-230-insurer/">AI provider resilience case study</a>, <a href="https://asksumanta.com/insights/slos-error-budgets-small-teams/">SLOs and error budgets</a> and the <a href="https://asksumanta.com/fractional-cto-singapore/">Singapore page</a>.</p>
+<p>If a single SaaS outage would stop you coordinating an incident or reaching customers, see my <a href="https://asksumanta.com/fractional-cto/">fractional CTO work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/singapore-insurer-saas-outage-continuity/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Tech news, 13 November 2026: a long Microsoft 365 outage, EU rules for AI sandboxes, an exploited Xen Orchestra flaw and Nebius&#x27;s spending plans</title><link>https://asksumanta.com/insights/tech-news-2026-11-13/</link><guid isPermaLink="true">https://asksumanta.com/insights/tech-news-2026-11-13/</guid><pubDate>Fri, 13 Nov 2026 08:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>platform</category><category>security</category><category>governance</category><description>A CTO&#x27;s take: a long Microsoft 365 outage, EU rules for AI regulatory sandboxes, an exploited Xen Orchestra flaw and Nebius raising capex as AI cloud costs climb.</description><content:encoded><![CDATA[<p><em>Microsoft 365 was disrupted for much of a working day, a reminder of how much of most companies runs on one supplier. The EU set common rules for AI regulatory sandboxes, a virtualisation management tool was exploited before many users had patched, and Nebius&#x27;s results showed how much capital AI cloud capacity now demands.</em></p><p>Today's brief covers stories from 10 to 12 November.</p>
 
 <figure class="dgm">
 <div class="dgm-stack">
@@ -3170,84 +3254,4 @@
 
 <h2>What I'd do again, and differently</h2>
 <p>Again: let housing staff define hazards and vulnerability in their own words, then turn those into rules and test cases. Differently: bring the complaints team in from the start. Their cases were the best test set we had. Related: <a href="https://asksumanta.com/insights/evaluating-ai-agents-reliability/">evaluating AI agents</a>, <a href="https://asksumanta.com/insights/agents-replace-seats-enterprise-saas/">agents as users of enterprise systems</a>, <a href="https://asksumanta.com/case-studies/uk-msp-cyber-resilience-bill-readiness/">UK cyber resilience readiness</a> and the <a href="https://asksumanta.com/fractional-cto-united-kingdom/">UK page</a>.</p>
-<p>If you are bringing AI agents into public-facing services in the UK, see my <a href="https://asksumanta.com/ai-architect/">AI architecture work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/uk-housing-repairs-ai-agents-adm/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Ready before it bites: AI data governance for a Japanese retail chain under the amended APPI</title><link>https://asksumanta.com/case-studies/japan-retail-ai-appi-amendment/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/japan-retail-ai-appi-amendment/</guid><pubDate>Fri, 30 Oct 2026 13:10:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>governance</category><category>data</category><category>ai</category><description>How a Japanese retail chain can prepare its AI and camera analytics for the amended APPI: purpose-tagged data, facial data controls, contractor limits and evidence.</description><content:encoded><![CDATA[<p><em>A Japanese retail chain used loyalty data to forecast demand and store cameras to understand footfall, with several contractors doing the analytics. Japan&#x27;s amended privacy law is now on the books, adding surcharges, rules for facial data and a route for using personal data in statistics and AI development. The duties are not in force yet. The aim was to make the data estate ready before they are.</em></p><h2>The situation</h2>
-<p>A Japanese retail chain with several hundred stores ran a loyalty programme, an app and in-store cameras. Its data team trained demand forecasting and promotion models on loyalty purchases, and two outside contractors analysed camera footage to measure footfall and queue times. The data had grown up over a decade: copies in the warehouse, the contractors' environments and a few notebooks, with no single record of where personal data went or why.</p>
-<p><strong>Why now.</strong> Japan's amended Act on the Protection of Personal Information was promulgated in July 2026 as Act No. 56 of 2026, with most duties starting on dates set later by Cabinet Order<sup class="cite"><a href="#ref-2">2</a></sup>. As reported, it introduces an administrative surcharge, adds rules for facial recognition data, makes contractors' duty not to use data beyond their task explicit, and creates a consent exception for statistical processing and AI development<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>. Commentary expects strengthened penalties from early 2027 and the main reforms by mid-2028<sup class="cite"><a href="#ref-2">2</a></sup>. The Personal Information Protection Commission (PPC) will set the detailed rules<sup class="cite"><a href="#ref-4">4</a></sup>. The chain wanted to use the time to get ready rather than react later.</p>
-
-<h2>What had to be true</h2>
-<ul>
-<li><strong>Every dataset used for AI known</strong>: its source, purpose, legal basis and where copies live.</li>
-<li><strong>Facial data minimised</strong>: kept only where needed, disclosed clearly and never reused quietly.</li>
-<li><strong>Contractors bounded</strong> to the task they were hired for, technically and not just by contract.</li>
-<li><strong>Personal data out of telemetry</strong> by default.</li>
-<li><strong>Evidence on demand</strong>, ready to map to the PPC's rules when they arrive.</li>
-</ul>
-
-<h2>Architecture</h2>
-<figure class="dgm">
-<div class="dgm-stack">
-<div class="dgm-tier"><small>Sources</small><div class="dgm-nodes"><span>Loyalty and app<em>purchases, profiles</em></span><span>Store cameras<em>video at the edge</em></span><span>Stores and supply<em>no personal data</em></span></div></div>
-<div class="dgm-tier"><small>Edge</small><div class="dgm-nodes"><span class="hl">On-premises video processing<em>counts and queues, not faces</em></span></div></div>
-<div class="dgm-tier"><small>Govern</small><div class="dgm-nodes"><span class="hl">Data catalogue<em>source, purpose, basis</em></span><span>Policy as code<em>who may use what, for what</em></span></div></div>
-<div class="dgm-tier"><small>Platform</small><div class="dgm-nodes"><span>Lakehouse<em>row and column policies</em></span><span class="hl">Pseudonymisation<em>keys held centrally</em></span></div></div>
-<div class="dgm-tier"><small>Use</small><div class="dgm-nodes"><span>Forecasting and promotions<em>pseudonymised features</em></span><span class="hl">Contractor workspaces<em>scoped, logged, time-limited</em></span></div></div>
-<div class="dgm-tier"><small>Evidence</small><div class="dgm-nodes"><span>Access and lineage logs<em>per dataset</em></span><span>Masked telemetry<em>OpenTelemetry</em></span></div></div>
-</div>
-<figcaption>Purpose is recorded once in the catalogue and enforced everywhere the data is used.</figcaption>
-</figure>
-
-<h2>The data flow, end to end</h2>
-<figure class="dgm">
-<ol class="dgm-flow g3">
-<li><b>Collect</b><span>Loyalty data arrives with its notice and consent version attached</span></li>
-<li><b>Tag</b><span>The catalogue records source, purpose and legal basis for each dataset</span></li>
-<li class="hl"><b>Pseudonymise</b><span>Direct identifiers are replaced before data reaches analytics</span></li>
-<li><b>Grant</b><span>Policy allows each team or contractor only the datasets for its purpose</span></li>
-<li class="hl"><b>Train</b><span>Models train on permitted features; the run records which datasets it used</span></li>
-<li><b>Prove</b><span>Lineage and access logs answer who used what, for which purpose</span></li>
-</ol>
-<figcaption>Every model can be traced back to the purpose and basis of its data.</figcaption>
-</figure>
-
-<h2>The hard part: cameras and contractors</h2>
-<p>The footfall project was the riskiest part of the estate. Contractors received video clips and ran their own models on them, which meant faces left the stores and their later use was hard to control. With facial data getting specific rules in the amendment<sup class="cite"><a href="#ref-1">1</a></sup>, the team changed the design rather than adding paperwork.</p>
-<p>Video processing moved to on-premises devices in each store. They produce counts, dwell times and queue lengths, and discard frames after processing. Contractors now receive those aggregates, not footage. Where a use case truly needed identification, such as a loss-prevention pilot, it was split out as its own system with its own disclosure, retention and approval. That separation is what makes the purpose clear to customers and to a regulator.</p>
-<p>Contractors moved into scoped workspaces on the chain's own platform, with access to named datasets for a set period, every query logged and no export by default. This turns the duty not to use data beyond the task into a technical control instead of a clause<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
-<p>The last gap was telemetry. Application logs and traces carried customer IDs, emails and auth headers, copied into tools that many people could see. The team set masking as the default in the OpenTelemetry pipeline, keeping useful context such as store or segment and hiding identifiers and credentials<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
-<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/japan-retail-ai-appi-amendment/masked-span.webp" alt="Jaeger span tags for a GET /inventory request where the authorization header value is masked as three asterisks while tenant ID and user segment headers remain visible" width="563" height="317" loading="lazy"></div><figcaption>Masked by default: the credential is hidden while the context needed for troubleshooting stays visible. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2026/obi-http-header-enrichment/" target="_blank" rel="noopener">OpenTelemetry blog, Tyler Yahn and Nimrod Avni</a> · CC BY 4.0</span></figcaption></figure>
-<div class="callout"><p>The cheapest compliance is data you never collect. Change the design so the sensitive data does not leave the store, then govern what remains.</p></div>
-
-<h2>How it ran</h2>
-<figure class="dgm">
-<div class="dgm-lanes">
-<div class="dgm-lane"><small>Legal and privacy</small><ol><li>APPI amendment tracking</li><li class="hl">Purposes and notices</li><li>Contractor terms</li></ol></div>
-<div class="dgm-lane"><small>Data and platform</small><ol><li>Inventory and catalogue</li><li class="hl">Pseudonymisation and policies</li><li>Masked telemetry</li></ol></div>
-<div class="dgm-lane"><small>Stores and analytics</small><ol><li>Edge video devices</li><li class="hl">Contractor workspaces</li><li>Model retraining</li></ol></div>
-</div>
-<figcaption>Privacy owned purposes, platform owned enforcement, the business owned the redesigned use cases.</figcaption>
-</figure>
-<figure class="dgm">
-<div class="dgm-phases">
-<div><small>Phase 1</small><b>Inventory</b><ul><li>Find every copy</li><li>Record purposes</li><li>Rank risks</li></ul></div>
-<div><small>Phase 2</small><b>Redesign</b><ul><li>Edge video</li><li>Contractor workspaces</li><li>Pseudonymisation</li></ul></div>
-<div><small>Phase 3</small><b>Enforce</b><ul><li>Policy as code</li><li>Masked telemetry</li><li>Retire old copies</li></ul></div>
-<div><small>Phase 4</small><b>Evidence</b><ul><li>Lineage reports</li><li>Model data records</li><li>Map to PPC rules</li></ul></div>
-</div>
-<figcaption>Inventory first: you cannot govern copies you do not know about.</figcaption>
-</figure>
-
-<h2>Key decisions and trade-offs</h2>
-<table class="tbl">
-<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
-<tbody>
-<tr><td>Process video at the edge</td><td>Send footage to contractors</td><td>Faces stay in the store; purpose is clear</td></tr>
-<tr><td>Prepare now</td><td>Wait for the PPC rules</td><td>Inventory and redesign take longer than the rules will</td></tr>
-<tr><td>Do not rely on the AI exception yet</td><td>Assume all training is covered</td><td>Its reach depends on rules not yet issued</td></tr>
-<tr><td>Contractor workspaces on our platform</td><td>Data shipped to contractor systems</td><td>Task limits enforced technically and logged</td></tr>
-<tr><td>Mask telemetry by default</td><td>Clean up logs case by case</td><td>Observability tools are a common leak</td></tr>
-</tbody>
-</table>
-
-<h2>What I'd do again, and differently</h2>
-<p>Again: redesign the camera use case instead of documenting it. It removed most of the risk in one move. Differently: put purpose tags on data at ingestion from the start, rather than adding them during the inventory; tagging old data took longer than building the platform. Related: <a href="https://asksumanta.com/insights/iso-42001-vs-nist-ai-rmf/">ISO 42001 and the NIST AI RMF</a>, <a href="https://asksumanta.com/case-studies/korea-ai-basic-act-hiring-platform/">high-impact AI under Korea's AI Basic Act</a> and <a href="https://asksumanta.com/regions/">where I work</a>.</p>
-<p>If you use personal data for AI in Japan or across Asia, see my <a href="https://asksumanta.com/ai-architect/">AI architecture work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/japan-retail-ai-appi-amendment/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
+<p>If you are bringing AI agents into public-facing services in the UK, see my <a href="https://asksumanta.com/ai-architect/">AI architecture work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/uk-housing-repairs-ai-agents-adm/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>

@@ -1,6 +1,90 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link><description>Anonymised engagements with architecture and flow diagrams</description><language>en-gb</language><lastBuildDate>Thu, 12 Nov 2026 15:50:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/case-studies/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link></image><item><title>Inference is a server too: securing self-hosted LLM serving for a South Korean fintech</title><link>https://asksumanta.com/case-studies/korea-fintech-self-hosted-inference-security/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/korea-fintech-self-hosted-inference-security/</guid><pubDate>Thu, 12 Nov 2026 15:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>security</category><category>ai</category><category>kubernetes</category><description>How a South Korean fintech can run open-weight models on its own GPUs safely: patched inference engines, isolated serving, egress limits and trusted models.</description><content:encoded><![CDATA[<p><em>A South Korean fintech moved its AI features from external APIs to open-weight models served on its own GPUs, to keep customer data in-house and control cost. The data science team had made it work. The security team had not yet looked. When inference engines like vLLM and SGLang started appearing in advisories and breach reports, the company treated its model servers as what they are: internet-adjacent services running complex code, with customer data passing through them.</em></p><h2>The situation</h2>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link><description>Anonymised engagements with architecture and flow diagrams</description><language>en-gb</language><lastBuildDate>Fri, 13 Nov 2026 15:50:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/case-studies/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link></image><item><title>When the suite goes down: keeping a Singapore digital insurer running through a productivity SaaS outage</title><link>https://asksumanta.com/case-studies/singapore-insurer-saas-outage-continuity/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/singapore-insurer-saas-outage-continuity/</guid><pubDate>Fri, 13 Nov 2026 15:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>platform</category><category>governance</category><category>architecture</category><description>How a Singapore digital insurer can keep critical services running when its productivity suite fails: dependency maps, recovery targets and fallback channels.</description><content:encoded><![CDATA[<p><em>A Singapore digital insurer ran its customer-facing platforms on its own cloud estate, with careful failover. Everything around them, email, chat, documents, identity and increasingly AI assistants, ran on one productivity suite. The insurer had planned for its own systems failing, not for that suite failing. A long outage at a major provider made the gap obvious, and Singapore&#x27;s business continuity expectations for financial institutions made it urgent.</em></p><h2>The situation</h2>
+<p>A Singapore digital insurer sold travel, health and home policies online. Its policy administration, claims and payments ran on its own cloud estate across two availability zones, with tested failover. Everything else ran on one productivity suite: email, chat, video calls, shared documents, the identity provider staff used to sign in to every other system, and the AI assistant built into it. Customer notices, incident bridges and even the runbooks for failing over the core platform lived there.</p>
+<p>MAS's business continuity management guidelines expect financial institutions to identify their critical business services and set, for each, a service recovery time objective: how long it can be disrupted before severe impact, with the recovery times of underlying functions and dependencies fitting inside it<sup class="cite"><a href="#ref-2">2</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>. The insurer had done this for its platforms. It had not traced the dependencies through the productivity suite.</p>
+<p><strong>Why now.</strong> On 12 November 2026, a long Microsoft 365 outage disrupted Outlook, Exchange Online and Teams for much of a working day; Microsoft attributed it to servers failing health checks and dropping out of service, with no evidence of an attack<sup class="cite"><a href="#ref-1">1</a></sup>. Staff across the industry found they could not email customers, join incident calls or open runbooks. The insurer's board asked a simple question: what would we have done?</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>Dependencies known</strong>: each critical service mapped to the SaaS it relies on, identity included.</li>
+<li><strong>Targets met</strong>: workarounds that keep each service within its recovery target.</li>
+<li><strong>Coordination possible</strong>: a way to run an incident without email, chat or shared documents.</li>
+<li><strong>Customers reachable</strong>: notices that do not depend on the failed suite.</li>
+<li><strong>Access preserved</strong>: administrators can reach critical systems if the identity provider is down.</li>
+<li><strong>Early warning</strong>: the insurer knows about an outage before staff start complaining.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Critical services</small><div class="dgm-nodes"><span>Sell policies</span><span>Pay claims</span><span>Serve customers</span><span>Meet regulatory duties</span></div></div>
+<div class="dgm-tier"><small>Daily tools</small><div class="dgm-nodes"><span>Productivity suite<em>email, chat, documents, AI</em></span><span class="hl">Identity provider<em>sign-in to everything</em></span></div></div>
+<div class="dgm-tier"><small>Fallbacks</small><div class="dgm-nodes"><span class="hl">Out-of-band messaging<em>separate provider</em></span><span>Paging and SMS</span><span>Independent status page</span></div></div>
+<div class="dgm-tier"><small>Emergency access</small><div class="dgm-nodes"><span class="hl">Break-glass accounts<em>outside the main identity provider</em></span><span>Offline runbooks<em>and contact lists</em></span></div></div>
+<div class="dgm-tier"><small>Detection</small><div class="dgm-nodes"><span>Synthetic checks<em>from outside, several regions</em></span><span>Provider status feeds</span></div></div>
+</div>
+<figcaption>The fallbacks sit on different providers from the daily tools, so one outage cannot take out both.</figcaption>
+</figure>
+<p>The first deliverable was a dependency map for each critical business service, built with the people who run them. It showed that the identity provider was the biggest single point of failure: if staff could not sign in, they could not reach the claims system, the cloud console or the paging tool, even though those were healthy.</p>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Detect</b><span>Synthetic checks from several regions see the suite failing</span></li>
+<li><b>Page</b><span>On-call staff are paged through a separate paging service</span></li>
+<li class="hl"><b>Coordinate</b><span>The incident moves to the out-of-band messaging tool</span></li>
+<li><b>Decide</b><span>Leaders choose workarounds per service, using offline runbooks</span></li>
+<li class="hl"><b>Communicate</b><span>Customers and partners are told via the status page and SMS</span></li>
+<li><b>Recover</b><span>Normal tools return; the incident record feeds the next exercise</span></li>
+</ol>
+<figcaption>Every step uses something that does not depend on the suite that failed.</figcaption>
+</figure>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/singapore-insurer-saas-outage-continuity/synthetic-checks.webp" alt="Chart of httpcheck.duration over time for three HTTP endpoints, with a table showing minimum, maximum and average response times per URL" width="1400" height="763" loading="lazy"></div><figcaption>Synthetic HTTP checks give an independent view of an endpoint's health: the insurer pointed them at the suite's sign-in, mail and chat endpoints. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2023/synthetic-testing/" target="_blank" rel="noopener">OpenTelemetry blog, Carter Socha</a> · CC BY 4.0</span></figcaption></figure>
+<p>Detection used the OpenTelemetry Collector's HTTP check receiver, run from small collectors in more than one region, to probe the suite's sign-in, mail and chat endpoints alongside the insurer's own services<sup class="cite"><a href="#ref-4">4</a></sup>. Results went to the observability platform the insurer already used, which did not depend on the suite.</p>
+
+<h2>The hard part: identity and the fallback nobody uses</h2>
+<p><strong>Break-glass without a back door.</strong> Emergency accounts that bypass the main identity provider are exactly what attackers want. The insurer kept a small number, each tied to a named role, protected with hardware security keys, stored with sealed procedures, monitored for any use and tested on a schedule. Any use outside an exercise raised an immediate alert to security.</p>
+<p><strong>Keeping fallbacks alive.</strong> A fallback channel that nobody opens for months will not work when needed: accounts expire, numbers change, people forget. The insurer used the out-of-band messaging tool for real on-call handovers every week, synchronised its contact lists from the HR system daily, and printed a short card of first steps for on-call staff.</p>
+<p><strong>Regulatory duties without email.</strong> Incident reporting to MAS and notices to customers normally went out by email. The runbook named an alternative route for each, and the compliance team rehearsed it, so a suite outage would not also become a reporting failure.</p>
+<div class="callout"><p>Resilience plans usually cover your systems failing. The outage that hurts is often the supplier your plan quietly depends on: the one hosting the plan itself.</p></div>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Technology</small><ol><li>Dependency maps</li><li class="hl">Synthetic checks and paging</li><li>Break-glass access</li></ol></div>
+<div class="dgm-lane"><small>Operations</small><ol><li>Workarounds per service</li><li class="hl">Offline runbooks</li><li>Weekly use of fallbacks</li></ol></div>
+<div class="dgm-lane"><small>Risk and compliance</small><ol><li>Recovery targets</li><li>Regulatory reporting routes</li><li class="hl">Exercise evidence</li></ol></div>
+<div class="dgm-lane"><small>Customer teams</small><ol><li>Status page</li><li>SMS templates</li><li class="hl">Partner contacts</li></ol></div>
+</div>
+<figcaption>Technology built the alternatives; operations made them habits; risk turned them into evidence.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Map</b><ul><li>Critical services</li><li>SaaS dependencies</li><li>Identity paths</li></ul></div>
+<div><small>Phase 2</small><b>Build</b><ul><li>Out-of-band channel</li><li>Break-glass access</li><li>Synthetic checks</li></ul></div>
+<div><small>Phase 3</small><b>Document</b><ul><li>Offline runbooks</li><li>Customer templates</li><li>Reporting routes</li></ul></div>
+<div><small>Phase 4</small><b>Exercise</b><ul><li>Tabletop</li><li>Live switch to fallbacks</li><li>Lessons into plans</li></ul></div>
+</div>
+<figcaption>Mapping changed the plan: identity, not email, turned out to be the critical dependency.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Fallbacks on different providers</td><td>Backup features of the same suite</td><td>One outage cannot take out both</td></tr>
+<tr><td>Use fallbacks weekly</td><td>Keep them for emergencies only</td><td>Unused tools fail when needed</td></tr>
+<tr><td>Small, monitored break-glass set</td><td>No emergency access, or many accounts</td><td>Access when needed without a standing back door</td></tr>
+<tr><td>Independent synthetic checks</td><td>Rely on the provider's status page</td><td>Earlier warning and your own evidence</td></tr>
+<tr><td>Offline runbooks and printed first steps</td><td>Runbooks only in shared documents</td><td>Available when the suite is not</td></tr>
+<tr><td>Workarounds sized to recovery targets</td><td>Generic "wait for the provider"</td><td>Meets MAS expectations per service</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: map dependencies service by service with the people who run them; it surfaced the identity dependency nobody had written down. Differently: include the AI assistant in the map from the start; some teams had begun relying on it for routine customer replies, and its outage was a gap in its own right. Related: <a href="https://asksumanta.com/insights/tech-news-2026-11-13/">the 13 November tech news</a>, the <a href="https://asksumanta.com/case-studies/ai-provider-resilience-cps-230-insurer/">AI provider resilience case study</a>, <a href="https://asksumanta.com/insights/slos-error-budgets-small-teams/">SLOs and error budgets</a> and the <a href="https://asksumanta.com/fractional-cto-singapore/">Singapore page</a>.</p>
+<p>If a single SaaS outage would stop you coordinating an incident or reaching customers, see my <a href="https://asksumanta.com/fractional-cto/">fractional CTO work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/singapore-insurer-saas-outage-continuity/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Inference is a server too: securing self-hosted LLM serving for a South Korean fintech</title><link>https://asksumanta.com/case-studies/korea-fintech-self-hosted-inference-security/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/korea-fintech-self-hosted-inference-security/</guid><pubDate>Thu, 12 Nov 2026 15:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>security</category><category>ai</category><category>kubernetes</category><description>How a South Korean fintech can run open-weight models on its own GPUs safely: patched inference engines, isolated serving, egress limits and trusted models.</description><content:encoded><![CDATA[<p><em>A South Korean fintech moved its AI features from external APIs to open-weight models served on its own GPUs, to keep customer data in-house and control cost. The data science team had made it work. The security team had not yet looked. When inference engines like vLLM and SGLang started appearing in advisories and breach reports, the company treated its model servers as what they are: internet-adjacent services running complex code, with customer data passing through them.</em></p><h2>The situation</h2>
 <p>A South Korean fintech offered payments, savings and investment features in a mobile app. Its AI features, a support assistant, transaction categorisation and document reading, had started on external model APIs. To keep customer data in-house and control cost, the company moved them to open-weight models served on its own GPUs, using vLLM for most models and SGLang for a few latency-sensitive ones. The data science team had done it quickly: models pulled from public repositories, servers running in the same Kubernetes cluster as other services, and serving APIs reachable from anything inside that cluster.</p>
 <p>Korea's AI Basic Act, in force from January 2026, adds transparency and risk management expectations for AI systems, particularly high-impact ones<sup class="cite"><a href="#ref-5">5</a></sup>. The more immediate concern for the board was simpler: customer financial data now flowed through software the security team had never reviewed.</p>
 <p><strong>Why now.</strong> Inference engines had become a target. In November 2026, NEAR AI disclosed that an attacker used a remote code execution flaw in SGLang to run code on one of its inference servers and observe in-flight requests, including ones protected by confidential computing<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. vLLM had its own advisories during 2026, including a flaw that let a malicious model repository run code even when remote code was disabled, and a remote code execution path through video inputs<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>.</p>
@@ -3958,90 +4042,4 @@
 
 <h2>What I'd do again, and differently</h2>
 <p>Again: write the tutoring policy with teachers before writing prompts, and let teachers grade the test set. Differently: build the teacher dashboard earlier. Seeing where whole classes got stuck changed the content roadmap as much as the tutor.</p>
-<p>If you're building AI for learners, the <a href="https://asksumanta.com/ai-architect/">AI architect</a> page describes how I run these engagements, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/edtech-curriculum-grounded-tutor/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Helping lawyers review contracts against the playbook without giving up the final word</title><link>https://asksumanta.com/case-studies/legal-contract-review-ai/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/legal-contract-review-ai/</guid><pubDate>Wed, 28 Oct 2026 01:36:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>ai</category><category>llm</category><category>governance</category><category>security</category><category>architecture</category><description>How a legal team moved from manual playbook checks to AI-assisted review: structured clause extraction, playbook comparison and cited suggestions lawyers accept.</description><content:encoded><![CDATA[<p><em>Every incoming contract was compared to the playbook by hand, clause by clause, under deadline. The goal was not to replace that judgement but to prepare it: extract the clauses, compare them to the playbook, and propose cited redlines a lawyer accepts, edits or rejects.</em></p><h2>The situation</h2>
-<p>A legal team handled a steady flow of commercial agreements: supplier contracts, NDAs, services agreements, licences. Each one was checked against an internal playbook that set out preferred positions, acceptable fallbacks and red lines for clauses such as liability caps, indemnities, termination, governing law and data protection. The work was skilled but repetitive, and it bunched up at quarter end when everything was urgent.</p>
-<p>The team had tried generic AI chat tools. The answers sounded plausible, cited nothing, and didn't know the playbook. Nobody trusted them, rightly.</p>
-
-<h2>What had to be true</h2>
-<ul>
-<li><strong>The lawyer decides</strong>. The system prepares and proposes; it never sends a redline on its own.</li>
-<li><strong>Every suggestion is cited</strong> to the exact contract text and the playbook position it relies on.</li>
-<li><strong>Consistent structure</strong>, so outputs can be validated and compared, not just read.</li>
-<li><strong>Measured accuracy</strong> per clause type, on the team's own contracts, before anyone relies on it.</li>
-<li><strong>Confidentiality</strong>: contract text handled under the firm's existing data controls.</li>
-</ul>
-<p>Contract review is a well-studied task: the CUAD dataset, built with legal experts, frames it as finding the clauses a reviewer needs to see across dozens of categories<sup class="cite"><a href="#ref-1">1</a></sup>. That framing, extraction first and judgement second, shaped the design.</p>
-
-<h2>Architecture</h2>
-<figure class="dgm">
-<div class="dgm-stack">
-<div class="dgm-tier"><small>Intake</small><div class="dgm-nodes"><span>Upload<em>Word, PDF</em></span><span>Parsing<em>structure, numbering</em></span><span>Contract type<em>classified, confirmed</em></span></div></div>
-<div class="dgm-tier"><small>Extract</small><div class="dgm-nodes"><span class="hl">Clause extraction<em>JSON Schema output</em></span><span>Location anchors<em>section and span</em></span><span>Validation<em>quotes must match source</em></span></div></div>
-<div class="dgm-tier"><small>Knowledge</small><div class="dgm-nodes"><span>Playbook<em>structured positions</em></span><span>Fallback library<em>approved wording</em></span><span>Precedents<em>retrieved, scoped</em></span></div></div>
-<div class="dgm-tier"><small>Compare</small><div class="dgm-nodes"><span class="hl">Playbook comparison<em>per clause</em></span><span>Suggested redline<em>with citations</em></span><span>Risk flag<em>red line breached</em></span></div></div>
-<div class="dgm-tier"><small>Review</small><div class="dgm-nodes"><span class="hl">Lawyer review UI<em>accept, edit, reject</em></span><span>Audit log<em>who decided what</em></span><span>Evaluation store<em>decisions as labels</em></span></div></div>
-</div>
-<figcaption>Layered architecture: extraction and comparison are separate, validated steps; the lawyer is the last layer, not an optional one.</figcaption>
-</figure>
-<p>Extraction used structured outputs, where the model's response is constrained to a supplied JSON Schema<sup class="cite"><a href="#ref-2">2</a></sup>. Each clause came back with its type, section reference, verbatim quote and confidence. A deterministic check then confirmed that every quote actually appeared in the source document. See <a href="https://asksumanta.com/insights/structured-outputs-reliable-llm-integration/">structured outputs for reliable LLM integration</a>.</p>
-
-<h2>The data flow, end to end</h2>
-<figure class="dgm">
-<ol class="dgm-flow g3">
-<li><b>Upload</b><span>Contract parsed with its numbering and structure preserved</span></li>
-<li class="hl"><b>Extract</b><span>Clauses returned as schema-valid records with verbatim quotes</span></li>
-<li><b>Verify</b><span>Quotes checked against the source; mismatches flagged, not hidden</span></li>
-<li><b>Retrieve</b><span>Relevant playbook positions and fallbacks for each clause type</span></li>
-<li class="hl"><b>Compare</b><span>Clause against playbook; propose redline citing both texts</span></li>
-<li><b>Review</b><span>Lawyer accepts, edits or rejects; decision logged for evaluation</span></li>
-</ol>
-<figcaption>Two kinds of citation travel with every suggestion: where it is in the contract, and which playbook position it applies.</figcaption>
-</figure>
-
-<h2>The hard part: long context versus retrieval</h2>
-<p>A single contract usually fits within a modern model's context window, so the temptation is to put everything in: the contract, the whole playbook, and a pile of precedents. Research on long contexts shows models use information at the start and end of the input more reliably than information in the middle<sup class="cite"><a href="#ref-3">3</a></sup>, which is a poor property when the clause that matters is on page fourteen.</p>
-<p>The design split the jobs:</p>
-<ul>
-<li><strong>The contract is read whole</strong> for extraction, because cross-references and definitions matter.</li>
-<li><strong>The playbook is retrieved per clause</strong>, in the spirit of retrieval-augmented generation<sup class="cite"><a href="#ref-4">4</a></sup>, so each comparison sees only the relevant positions.</li>
-<li><strong>Comparison runs clause by clause</strong>, with small, focused prompts that are easier to evaluate.</li>
-</ul>
-<p>The trade-offs are covered in <a href="https://asksumanta.com/insights/long-context-vs-rag/">long context vs RAG</a>.</p>
-<p>Contracts from counterparties are also untrusted input. Prompt injection tops the OWASP Top 10 for LLM applications<sup class="cite"><a href="#ref-5">5</a></sup>, so contract text was always treated as data, the model had no tools that could act on it, and outputs were constrained by schema. See <a href="https://asksumanta.com/insights/prompt-injection-defence-for-agents/">prompt injection defence</a>.</p>
-<div class="callout"><p>A suggestion a lawyer can verify in ten seconds is worth more than a fluent paragraph they have to check from scratch.</p></div>
-
-<h2>How the engagement ran</h2>
-<figure class="dgm">
-<div class="dgm-lanes">
-<div class="dgm-lane"><small>Lawyers</small><ol><li>Turn the playbook into positions</li><li class="hl">Label a test set</li><li>Review and decide</li></ol></div>
-<div class="dgm-lane"><small>System</small><ol><li>Extract and verify</li><li>Compare and cite</li><li>Log every decision</li></ol></div>
-<div class="dgm-lane"><small>AI lead</small><ol><li>Run evaluations per clause type</li><li class="hl">Gate releases on results</li><li>Tune prompts and schema</li></ol></div>
-</div>
-<figcaption>Lawyers define correctness; the evaluation gate decides what ships.</figcaption>
-</figure>
-<figure class="dgm">
-<div class="dgm-phases">
-<div><small>Phase 1</small><b>Playbook as data</b><ul><li>Clause taxonomy</li><li>Positions and fallbacks</li><li>Red lines</li></ul></div>
-<div><small>Phase 2</small><b>Extraction</b><ul><li>Schema design</li><li>Quote verification</li><li>Labelled test set</li></ul></div>
-<div><small>Phase 3</small><b>Comparison</b><ul><li>Per-clause retrieval</li><li>Cited suggestions</li><li>Review UI</li></ul></div>
-<div><small>Phase 4</small><b>Operate</b><ul><li>Evaluation gate</li><li>Decision feedback</li><li>More contract types</li></ul></div>
-</div>
-<figcaption>Phased delivery: one contract type end to end before broadening.</figcaption>
-</figure>
-
-<h2>Key decisions and trade-offs</h2>
-<table class="tbl">
-<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
-<tbody>
-<tr><td>Structured extraction first</td><td>Free-text review in one prompt</td><td>Validatable, comparable, displayable output</td></tr>
-<tr><td>Verbatim quotes checked in code</td><td>Trust the model's quotes</td><td>Catches fabricated or paraphrased citations</td></tr>
-<tr><td>Playbook as structured positions</td><td>Playbook document in the prompt</td><td>Precise retrieval; easier to maintain</td></tr>
-<tr><td>Evaluation per clause type</td><td>One overall accuracy figure</td><td>Strong clause types ship; weak ones wait</td></tr>
-<tr><td>Lawyer decides every suggestion</td><td>Auto-apply high-confidence redlines</td><td>Accountability stays with the profession</td></tr>
-</tbody>
-</table>
-<p>Building evaluation sets that hold up in production is covered in <a href="https://asksumanta.com/insights/llm-evaluation-sets-that-predict-production/">evaluation sets that predict production</a>.</p>
-
-<h2>What I'd do again, and differently</h2>
-<p>Again: turn the playbook into data before writing a prompt, and treat lawyer decisions as the evaluation signal. Differently: involve lawyers in schema design from the start. The clause taxonomy is a legal decision, and the earlier they own it, the fewer rework cycles follow.</p>
-<p>If you're considering AI for review work like this, the <a href="https://asksumanta.com/ai-architect/">AI architect</a> page describes how I run these engagements, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/legal-contract-review-ai/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
+<p>If you're building AI for learners, the <a href="https://asksumanta.com/ai-architect/">AI architect</a> page describes how I run these engagements, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/edtech-curriculum-grounded-tutor/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
