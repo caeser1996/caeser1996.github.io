@@ -1,6 +1,88 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link><description>Anonymised engagements with architecture and flow diagrams</description><language>en-gb</language><lastBuildDate>Fri, 13 Nov 2026 15:50:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/case-studies/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link></image><item><title>When the suite goes down: keeping a Singapore digital insurer running through a productivity SaaS outage</title><link>https://asksumanta.com/case-studies/singapore-insurer-saas-outage-continuity/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/singapore-insurer-saas-outage-continuity/</guid><pubDate>Fri, 13 Nov 2026 15:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>platform</category><category>governance</category><category>architecture</category><description>How a Singapore digital insurer can keep critical services running when its productivity suite fails: dependency maps, recovery targets and fallback channels.</description><content:encoded><![CDATA[<p><em>A Singapore digital insurer ran its customer-facing platforms on its own cloud estate, with careful failover. Everything around them, email, chat, documents, identity and increasingly AI assistants, ran on one productivity suite. The insurer had planned for its own systems failing, not for that suite failing. A long outage at a major provider made the gap obvious, and Singapore&#x27;s business continuity expectations for financial institutions made it urgent.</em></p><h2>The situation</h2>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link><description>Anonymised engagements with architecture and flow diagrams</description><language>en-gb</language><lastBuildDate>Sat, 14 Nov 2026 15:50:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/case-studies/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link></image><item><title>One login bug away: hardening single sign-on, staff access and integration keys for a UK B2B SaaS company</title><link>https://asksumanta.com/case-studies/uk-saas-sso-staff-access-hardening/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/uk-saas-sso-staff-access-hardening/</guid><pubDate>Sat, 14 Nov 2026 15:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>security</category><category>platform</category><category>governance</category><description>How a UK B2B SaaS company can harden its single sign-on flows, staff support access and integration keys, so one login bug cannot become access to production.</description><content:encoded><![CDATA[<p><em>A UK software company sold a collaboration platform to enterprises, most of whom signed in through their own identity providers. Its engineers had built single sign-on support over years, one customer request at a time. Staff could open customer workspaces for support, and integrations held keys to code hosting and the CDN. When another SaaS company disclosed that a flaw in its SSO flow let an attacker pose as staff and reach production, the board asked whether the same chain existed here.</em></p><h2>The situation</h2>
+<p>A UK software company sold a collaboration and documentation platform to mid-sized and large organisations. Most enterprise customers signed in through their own identity providers using SAML or OIDC, and the company had added support for each provider's quirks over several years, in more than one part of the codebase. Support engineers could open any customer workspace to troubleshoot, using the same login system as customers with an internal flag. Integrations with code hosting, the CDN and DNS used long-lived keys, some readable from internal tools staff could reach.</p>
+<p><strong>Why now.</strong> In November 2026, GitBook disclosed that an attacker used a flaw in its SSO login flow to create sessions as staff, then reached a misconfigured code-hosting integration, internal repositories and a CDN API key that gave production access<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. The same week, Apify confirmed that sign-in tokens and two-factor recovery codes had been accessed in an attack<sup class="cite"><a href="#ref-3">3</a></sup>. The UK's voluntary Software Security Code of Practice, published by the government and NCSC, sets expectations for vendors on secure development and on telling customers about incidents<sup class="cite"><a href="#ref-4">4</a></sup><sup class="cite"><a href="#ref-5">5</a></sup>, and enterprise customers had begun asking about it in security reviews.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>One way in</strong>: a single, well-tested authentication path for all SSO, not several.</li>
+<li><strong>Staff are different</strong>: staff access never shares the customer login path.</li>
+<li><strong>No standing access</strong>: support access is granted per case, time-limited and logged.</li>
+<li><strong>No chains</strong>: a staff session cannot reach keys that reach production.</li>
+<li><strong>Visible</strong>: unusual sessions and token use raise alerts.</li>
+<li><strong>Explainable</strong>: if something happens, customers are told quickly what to rotate.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Customers</small><div class="dgm-nodes"><span>Customer identity providers<em>SAML and OIDC</em></span></div></div>
+<div class="dgm-tier"><small>Authentication</small><div class="dgm-nodes"><span class="hl">Central auth service<em>one strict SSO implementation</em></span><span>Session service<em>short sessions, bound to client</em></span></div></div>
+<div class="dgm-tier"><small>Staff</small><div class="dgm-nodes"><span class="hl">Separate staff identity<em>phishing-resistant MFA</em></span><span>Just-in-time support access<em>approved, time-limited</em></span></div></div>
+<div class="dgm-tier"><small>Integrations</small><div class="dgm-nodes"><span>Code hosting app<em>minimal permissions</em></span><span>CDN and DNS<em>scoped, short-lived tokens</em></span><span>Secrets manager<em>no human read access</em></span></div></div>
+<div class="dgm-tier"><small>Evidence</small><div class="dgm-nodes"><span>Audit log</span><span>Alerts</span><span>Customer notices</span></div></div>
+</div>
+<figcaption>Customers and staff come in through different doors, and neither door leads to the keys.</figcaption>
+</figure>
+<p>All SSO handling moved into one authentication service built on maintained SAML and OIDC libraries, configured strictly: signatures required on assertions, audience and recipient checked, replay prevented and clock skew limited. Provider-specific workarounds became configuration in one place rather than code scattered across the product. Staff signed in through a separate identity provider with hardware security keys; a customer's SSO configuration could never create a staff session.</p>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Sign in</b><span>A customer user signs in through their identity provider</span></li>
+<li class="hl"><b>Validate</b><span>The central auth service strictly validates the assertion or token</span></li>
+<li><b>Session</b><span>A short session is issued for that tenant only</span></li>
+<li><b>Support</b><span>If help is needed, a staff member requests time-limited access to that workspace</span></li>
+<li class="hl"><b>Approve</b><span>A lead approves; the customer is told or consents where required</span></li>
+<li><b>Record</b><span>Every action is logged; access expires automatically</span></li>
+</ol>
+<figcaption>Customer and staff paths never merge, and staff access always has a reason and an end.</figcaption>
+</figure>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/uk-saas-sso-staff-access-hardening/request-checks.webp" alt="Sequence diagram: a user request reaches the Kubernetes API server, which authenticates the user and checks permissions, then runs mutating and validating admission policies and webhooks before allowing or rejecting the request" width="1400" height="995" loading="lazy"></div><figcaption>Authenticate, authorise, then apply policy, on every request: the same layered checks the company applied to staff access to customer data. <span class="credit">Source: <a href="https://github.com/kubernetes/website/blob/main/content/en/docs/reference/access-authn-authz/admission-control-phases.svg" target="_blank" rel="noopener">Kubernetes documentation</a> · CC BY 4.0</span></figcaption></figure>
+
+<h2>The hard part: breaking the chain from login to production</h2>
+<p><strong>Assume the login will be bypassed one day.</strong> SSO protocols are intricate and implementation bugs recur across the industry. The design question was therefore not only "is our SSO correct?" but "what can an attacker do with a forged session?". For customer sessions, the answer became: one tenant's data, nothing else. For staff sessions, it became: nothing, until access to a specific workspace is approved, and never the integration keys. The model borrowed from how Kubernetes treats every API request: authenticate, authorise, then apply policy before anything is allowed<sup class="cite"><a href="#ref-6">6</a></sup>.</p>
+<p><strong>Integrations with too much reach.</strong> The code-hosting integration had been installed with broad permissions years earlier, and CDN and DNS keys could change production routing. Each integration was reinstalled with the minimum permissions it needed, CDN and DNS changes moved to the deployment pipeline with short-lived tokens, and the secrets manager stopped allowing humans to read production secrets at all; only workloads could.</p>
+<p><strong>Rotation customers can actually do.</strong> GitBook's response asked customers to create new API tokens, rotate integration secrets and review recent changes made by its app<sup class="cite"><a href="#ref-1">1</a></sup>. The company wrote its own version of that notice in advance, listing exactly what customers would need to rotate, and built a one-click way for administrators to revoke all tokens for their workspace.</p>
+<div class="callout"><p>Every SaaS login flow will have a bug one day. What matters is that a forged session leads nowhere valuable: one tenant at most, never the staff console, never the keys.</p></div>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Engineering</small><ol><li>Central auth service</li><li class="hl">Strict SSO validation</li><li>Tenant-scoped sessions</li></ol></div>
+<div class="dgm-lane"><small>Security</small><ol><li>Staff identity and keys</li><li class="hl">Integration review</li><li>Alerts and audit</li></ol></div>
+<div class="dgm-lane"><small>Support</small><ol><li>Just-in-time access process</li><li>Customer consent options</li><li class="hl">New tooling adoption</li></ol></div>
+<div class="dgm-lane"><small>Customer success and legal</small><ol><li>Code of Practice mapping</li><li>Incident notice templates</li><li class="hl">Answers for security reviews</li></ol></div>
+</div>
+<figcaption>Support had the biggest habit change: no more opening any workspace at will.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Map</b><ul><li>All login paths</li><li>Staff access routes</li><li>Integration permissions</li></ul></div>
+<div><small>Phase 2</small><b>Separate</b><ul><li>Staff identity</li><li>Just-in-time support</li><li>No human secret reads</li></ul></div>
+<div><small>Phase 3</small><b>Consolidate</b><ul><li>Central auth service</li><li>Strict validation</li><li>Migrate providers</li></ul></div>
+<div><small>Phase 4</small><b>Prove</b><ul><li>External test of SSO</li><li>Incident exercise</li><li>Customer evidence</li></ul></div>
+</div>
+<figcaption>Separating staff access came before consolidating SSO: it broke the most dangerous chain first.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Separate staff identity provider</td><td>Staff flag on customer accounts</td><td>A customer-side flaw cannot create staff sessions</td></tr>
+<tr><td>Just-in-time support access</td><td>Standing access to all workspaces</td><td>Limits what a compromised staff account can see</td></tr>
+<tr><td>One central auth service</td><td>Fix each SSO code path</td><td>One place to test, review and harden</td></tr>
+<tr><td>No human reads of production secrets</td><td>Restrict to senior engineers</td><td>Removes the step from staff session to keys</td></tr>
+<tr><td>Minimal integration permissions</td><td>Keep broad permissions for convenience</td><td>A compromised integration reaches less</td></tr>
+<tr><td>Pre-written customer rotation notice</td><td>Write it during an incident</td><td>Faster, clearer communication when it matters</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: separate staff access first; it removed the worst-case chain within weeks. Differently: commission an external test of the SSO implementation earlier; it found edge cases in provider-specific handling that internal reviews had missed. Related: <a href="https://asksumanta.com/insights/tech-news-2026-11-14/">the 14 November tech news</a>, the <a href="https://asksumanta.com/case-studies/south-africa-fintech-machine-agent-identity/">machine identity case study</a>, the <a href="https://asksumanta.com/case-studies/saas-multi-tenant-re-architecture/">multi-tenant SaaS case study</a> and the <a href="https://asksumanta.com/fractional-cto-united-kingdom/">UK page</a>.</p>
+<p>If one login bug could take an attacker from your sign-in page to production, see my <a href="https://asksumanta.com/fractional-cto/">fractional CTO work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/uk-saas-sso-staff-access-hardening/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>When the suite goes down: keeping a Singapore digital insurer running through a productivity SaaS outage</title><link>https://asksumanta.com/case-studies/singapore-insurer-saas-outage-continuity/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/singapore-insurer-saas-outage-continuity/</guid><pubDate>Fri, 13 Nov 2026 15:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>platform</category><category>governance</category><category>architecture</category><description>How a Singapore digital insurer can keep critical services running when its productivity suite fails: dependency maps, recovery targets and fallback channels.</description><content:encoded><![CDATA[<p><em>A Singapore digital insurer ran its customer-facing platforms on its own cloud estate, with careful failover. Everything around them, email, chat, documents, identity and increasingly AI assistants, ran on one productivity suite. The insurer had planned for its own systems failing, not for that suite failing. A long outage at a major provider made the gap obvious, and Singapore&#x27;s business continuity expectations for financial institutions made it urgent.</em></p><h2>The situation</h2>
 <p>A Singapore digital insurer sold travel, health and home policies online. Its policy administration, claims and payments ran on its own cloud estate across two availability zones, with tested failover. Everything else ran on one productivity suite: email, chat, video calls, shared documents, the identity provider staff used to sign in to every other system, and the AI assistant built into it. Customer notices, incident bridges and even the runbooks for failing over the core platform lived there.</p>
 <p>MAS's business continuity management guidelines expect financial institutions to identify their critical business services and set, for each, a service recovery time objective: how long it can be disrupted before severe impact, with the recovery times of underlying functions and dependencies fitting inside it<sup class="cite"><a href="#ref-2">2</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>. The insurer had done this for its platforms. It had not traced the dependencies through the productivity suite.</p>
 <p><strong>Why now.</strong> On 12 November 2026, a long Microsoft 365 outage disrupted Outlook, Exchange Online and Teams for much of a working day; Microsoft attributed it to servers failing health checks and dropping out of service, with no evidence of an attack<sup class="cite"><a href="#ref-1">1</a></sup>. Staff across the industry found they could not email customers, join incident calls or open runbooks. The insurer's board asked a simple question: what would we have done?</p>
@@ -3959,87 +4041,4 @@
 
 <h2>What I'd do again, and differently</h2>
 <p>Again: put the vocabulary at the centre and make provenance a field, not a log file. Differently: involve the cataloguers in designing the review screen from the first week. The speed and quality of review decided the throughput of the whole system, far more than the model did.</p>
-<p>If you're planning something similar, the <a href="https://asksumanta.com/ontology-knowledge-graph/">ontology and knowledge graph</a> page describes how I run these engagements, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/media-archive-metadata-enrichment/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Building an AI tutor that teaches the syllabus instead of doing the homework</title><link>https://asksumanta.com/case-studies/edtech-curriculum-grounded-tutor/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/edtech-curriculum-grounded-tutor/</guid><pubDate>Wed, 28 Oct 2026 01:38:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>ai</category><category>llm</category><category>governance</category><category>security</category><category>finops</category><description>How an education platform built an AI tutor grounded in its syllabus: curriculum retrieval, guided hints instead of answers, safety filters and teacher dashboards.</description><content:encoded><![CDATA[<p><em>Generic chatbots gave students answers that ignored the syllabus, skipped the reasoning and pitched the language at the wrong age. The goal was a tutor grounded in the curriculum, that guides with hints rather than handing over answers, stays safe for young learners and shows teachers where students are stuck.</em></p><h2>The situation</h2>
-<p>An education platform served structured courses to school-age students, aligned to a defined syllabus. Students were already using general-purpose chatbots for homework help, and teachers could see the result: correct answers with methods the class had never been taught, explanations pitched at university level, and no sign the student had learned anything. The platform wanted its own tutor, built around how its courses actually teach, and one that teachers could see into and trust rather than work around.</p>
-
-<h2>What had to be true</h2>
-<ul>
-<li><strong>Grounded in the syllabus</strong>: the same methods, notation and vocabulary as the lessons.</li>
-<li><strong>Teaches, not tells</strong>: hints and questions first, with solutions only where the teaching design allows.</li>
-<li><strong>Safe for the age range</strong>, on what students type and on what the tutor says.</li>
-<li><strong>Useful to teachers</strong>, as insight into misconceptions rather than transcripts to read.</li>
-<li><strong>Affordable at classroom scale</strong>, when a whole year group logs in at once.</li>
-</ul>
-<p>UNESCO's guidance on generative AI in education calls for data privacy protections, an age limit for independent use and validation of tools for pedagogical and ethical suitability<sup class="cite"><a href="#ref-1">1</a></sup>. Those became design inputs, not an afterthought: the tutor was designed for supervised use within the platform, with schools in control of access.</p>
-
-<h2>Architecture</h2>
-<figure class="dgm">
-<div class="dgm-stack">
-<div class="dgm-tier"><small>Student</small><div class="dgm-nodes"><span>Lesson context<em>course, unit, exercise</em></span><span>Tutor chat<em>in the lesson page</em></span><span>Work shown<em>steps, attempts</em></span></div></div>
-<div class="dgm-tier"><small>Safety</small><div class="dgm-nodes"><span class="hl">Input guardrails<em>age-appropriate, PII</em></span><span>Output guardrails<em>tone, content, level</em></span><span>Escalation<em>flag to teacher</em></span></div></div>
-<div class="dgm-tier"><small>Grounding</small><div class="dgm-nodes"><span class="hl">Curriculum retrieval<em>lessons, worked examples</em></span><span>Level metadata<em>year, unit, objective</em></span><span>Misconception library<em>authored by teachers</em></span></div></div>
-<div class="dgm-tier"><small>Tutoring</small><div class="dgm-nodes"><span class="hl">Tutoring policy<em>hint, question, explain</em></span><span>LLM<em>cached stable prefix</em></span><span>Evaluation<em>policy adherence</em></span></div></div>
-<div class="dgm-tier"><small>Insight</small><div class="dgm-nodes"><span>Learning events<em>attempts, hints used</em></span><span>Teacher dashboard<em>stuck points by objective</em></span><span>Content feedback<em>to curriculum team</em></span></div></div>
-</div>
-<figcaption>Layered architecture: safety wraps everything; the tutoring policy, not the model, decides how to respond.</figcaption>
-</figure>
-<p>Grounding followed the retrieval-augmented generation pattern, combining a model with retrieval from a specific corpus<sup class="cite"><a href="#ref-2">2</a></sup>, here the platform's own lessons and worked examples filtered by the student's course and unit. See the <a href="https://asksumanta.com/insights/rag-to-production-checklist/">RAG to production checklist</a>.</p>
-
-<h2>The data flow, end to end</h2>
-<figure class="dgm">
-<ol class="dgm-flow g3">
-<li><b>Ask</b><span>Student question arrives with lesson, unit and attempt context</span></li>
-<li><b>Screen</b><span>Input guardrails check content and strip personal details</span></li>
-<li class="hl"><b>Ground</b><span>Retrieve lesson content and known misconceptions for this objective</span></li>
-<li class="hl"><b>Guide</b><span>Tutoring policy chooses a hint, a question back or an explanation</span></li>
-<li><b>Check</b><span>Output guardrails confirm tone, level and that no answer is leaked</span></li>
-<li><b>Learn</b><span>Event recorded against the objective for teacher insight</span></li>
-</ol>
-<figcaption>The answer to "what is the student stuck on?" is captured as structured events, not left buried in chat.</figcaption>
-</figure>
-
-<h2>The hard part: hinting without leaking the answer</h2>
-<p>Getting a model to be helpful is easy. Getting it to be helpful in the right way, and to resist a determined student asking for "just the answer" five different ways, is the real work.</p>
-<ul>
-<li>The tutoring policy was explicit and versioned: which exercise types allow worked solutions, how many hints before a fuller explanation, when to ask the student to show their step.</li>
-<li>Teachers authored a misconception library per objective, so hints targeted the likely error rather than repeating the method.</li>
-<li>An output check compared tutor responses against the exercise's answer key to catch leaked final answers.</li>
-<li>Attempts to override the tutor's instructions were treated as expected behaviour, not edge cases; prompt injection is the first entry in the OWASP Top 10 for LLM applications<sup class="cite"><a href="#ref-4">4</a></sup>. See <a href="https://asksumanta.com/insights/prompt-injection-defence-for-agents/">prompt injection defence</a>.</li>
-</ul>
-<div class="callout"><p>The best tutor response is often a question. Evaluate for that explicitly, because a model left alone will optimise for being helpful in the moment.</p></div>
-
-<h2>How the engagement ran</h2>
-<figure class="dgm">
-<div class="dgm-lanes">
-<div class="dgm-lane"><small>Teachers</small><ol><li>Write misconceptions</li><li class="hl">Grade tutor transcripts</li><li>Act on dashboard insight</li></ol></div>
-<div class="dgm-lane"><small>Curriculum team</small><ol><li>Tag content by objective</li><li>Set tutoring policy per exercise</li><li>Fix gaps the tutor exposes</li></ol></div>
-<div class="dgm-lane"><small>Platform</small><ol><li>Retrieval and guardrails</li><li class="hl">Evaluation gate</li><li>Cost and latency monitoring</li></ol></div>
-</div>
-<figcaption>Educators define good tutoring; the platform measures it before release.</figcaption>
-</figure>
-<figure class="dgm">
-<div class="dgm-phases">
-<div><small>Phase 1</small><b>Pedagogy</b><ul><li>Tutoring policy</li><li>Safety requirements</li><li>Success criteria</li></ul></div>
-<div><small>Phase 2</small><b>One subject</b><ul><li>Content tagging</li><li>Retrieval and guardrails</li><li>Teacher-graded test set</li></ul></div>
-<div><small>Phase 3</small><b>Classroom pilot</b><ul><li>Supervised use</li><li>Teacher dashboard</li><li>Cost tuning</li></ul></div>
-<div><small>Phase 4</small><b>Extend</b><ul><li>Further subjects</li><li>Policy refinements</li><li>Content feedback loop</li></ul></div>
-</div>
-<figcaption>Phased delivery: one subject and a supervised pilot before broadening.</figcaption>
-</figure>
-
-<h2>Key decisions and trade-offs</h2>
-<table class="tbl">
-<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
-<tbody>
-<tr><td>Retrieve from own curriculum</td><td>Rely on model knowledge</td><td>Matches taught methods, notation and level</td></tr>
-<tr><td>Explicit tutoring policy</td><td>"Be a good tutor" prompt</td><td>Testable behaviour per exercise type</td></tr>
-<tr><td>Guardrails on input and output</td><td>Output filtering only</td><td>Protects students and the tutor's instructions</td></tr>
-<tr><td>Prompt caching on stable prefix</td><td>Full prompt every turn</td><td>Lower cost and latency at peak load</td></tr>
-<tr><td>Events, not transcripts, for teachers</td><td>Teachers read chats</td><td>Insight at class level; less exposure of student text</td></tr>
-</tbody>
-</table>
-<p>Tutoring prompts share a long, stable prefix of instructions, policy and lesson context. Prompt caching reuses a processed prompt prefix across requests, so only the changing tail is processed fresh, and any change to the prefix is a cache miss<sup class="cite"><a href="#ref-3">3</a></sup>. Structuring prompts so the stable parts come first made caching effective. Details in <a href="https://asksumanta.com/insights/prompt-caching-llm-cost-latency/">prompt caching for cost and latency</a>.</p>
-
-<h2>What I'd do again, and differently</h2>
-<p>Again: write the tutoring policy with teachers before writing prompts, and let teachers grade the test set. Differently: build the teacher dashboard earlier. Seeing where whole classes got stuck changed the content roadmap as much as the tutor.</p>
-<p>If you're building AI for learners, the <a href="https://asksumanta.com/ai-architect/">AI architect</a> page describes how I run these engagements, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/edtech-curriculum-grounded-tutor/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
+<p>If you're planning something similar, the <a href="https://asksumanta.com/ontology-knowledge-graph/">ontology and knowledge graph</a> page describes how I run these engagements, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/media-archive-metadata-enrichment/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>

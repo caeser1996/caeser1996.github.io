@@ -1,6 +1,88 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link><description>Fractional CTO and AI architect: insights, case studies and daily tech news.</description><language>en-gb</language><lastBuildDate>Sat, 14 Nov 2026 08:50:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link></image><item><title>Tech news, 14 November 2026: Nvidia&#x27;s CEO resigns, ChatGPT Wallet lets agents shop, Apify confirms a breach and the FBI recovers Binance funds</title><link>https://asksumanta.com/insights/tech-news-2026-11-14/</link><guid isPermaLink="true">https://asksumanta.com/insights/tech-news-2026-11-14/</guid><pubDate>Sat, 14 Nov 2026 08:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>ai</category><category>security</category><category>agents</category><description>A CTO&#x27;s take: Jensen Huang resigns as Nvidia CEO, ChatGPT Wallet lets agents buy with approval, Apify confirms a breach and the FBI seizes $1.2B of Binance funds.</description><content:encoded><![CDATA[<p><em>Nvidia&#x27;s chief executive resigned, putting a leadership change at the centre of the AI hardware supply chain. OpenAI gave its agents a way to pay for things with approval each time, an automation platform confirmed customer data was accessed in an attack, and US authorities seized part of last month&#x27;s record Binance theft.</em></p><p>Today's brief covers stories from 12 to 13 November.</p>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link><description>Fractional CTO and AI architect: insights, case studies and daily tech news.</description><language>en-gb</language><lastBuildDate>Sat, 14 Nov 2026 15:50:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link></image><item><title>One login bug away: hardening single sign-on, staff access and integration keys for a UK B2B SaaS company</title><link>https://asksumanta.com/case-studies/uk-saas-sso-staff-access-hardening/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/uk-saas-sso-staff-access-hardening/</guid><pubDate>Sat, 14 Nov 2026 15:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>security</category><category>platform</category><category>governance</category><description>How a UK B2B SaaS company can harden its single sign-on flows, staff support access and integration keys, so one login bug cannot become access to production.</description><content:encoded><![CDATA[<p><em>A UK software company sold a collaboration platform to enterprises, most of whom signed in through their own identity providers. Its engineers had built single sign-on support over years, one customer request at a time. Staff could open customer workspaces for support, and integrations held keys to code hosting and the CDN. When another SaaS company disclosed that a flaw in its SSO flow let an attacker pose as staff and reach production, the board asked whether the same chain existed here.</em></p><h2>The situation</h2>
+<p>A UK software company sold a collaboration and documentation platform to mid-sized and large organisations. Most enterprise customers signed in through their own identity providers using SAML or OIDC, and the company had added support for each provider's quirks over several years, in more than one part of the codebase. Support engineers could open any customer workspace to troubleshoot, using the same login system as customers with an internal flag. Integrations with code hosting, the CDN and DNS used long-lived keys, some readable from internal tools staff could reach.</p>
+<p><strong>Why now.</strong> In November 2026, GitBook disclosed that an attacker used a flaw in its SSO login flow to create sessions as staff, then reached a misconfigured code-hosting integration, internal repositories and a CDN API key that gave production access<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. The same week, Apify confirmed that sign-in tokens and two-factor recovery codes had been accessed in an attack<sup class="cite"><a href="#ref-3">3</a></sup>. The UK's voluntary Software Security Code of Practice, published by the government and NCSC, sets expectations for vendors on secure development and on telling customers about incidents<sup class="cite"><a href="#ref-4">4</a></sup><sup class="cite"><a href="#ref-5">5</a></sup>, and enterprise customers had begun asking about it in security reviews.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>One way in</strong>: a single, well-tested authentication path for all SSO, not several.</li>
+<li><strong>Staff are different</strong>: staff access never shares the customer login path.</li>
+<li><strong>No standing access</strong>: support access is granted per case, time-limited and logged.</li>
+<li><strong>No chains</strong>: a staff session cannot reach keys that reach production.</li>
+<li><strong>Visible</strong>: unusual sessions and token use raise alerts.</li>
+<li><strong>Explainable</strong>: if something happens, customers are told quickly what to rotate.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Customers</small><div class="dgm-nodes"><span>Customer identity providers<em>SAML and OIDC</em></span></div></div>
+<div class="dgm-tier"><small>Authentication</small><div class="dgm-nodes"><span class="hl">Central auth service<em>one strict SSO implementation</em></span><span>Session service<em>short sessions, bound to client</em></span></div></div>
+<div class="dgm-tier"><small>Staff</small><div class="dgm-nodes"><span class="hl">Separate staff identity<em>phishing-resistant MFA</em></span><span>Just-in-time support access<em>approved, time-limited</em></span></div></div>
+<div class="dgm-tier"><small>Integrations</small><div class="dgm-nodes"><span>Code hosting app<em>minimal permissions</em></span><span>CDN and DNS<em>scoped, short-lived tokens</em></span><span>Secrets manager<em>no human read access</em></span></div></div>
+<div class="dgm-tier"><small>Evidence</small><div class="dgm-nodes"><span>Audit log</span><span>Alerts</span><span>Customer notices</span></div></div>
+</div>
+<figcaption>Customers and staff come in through different doors, and neither door leads to the keys.</figcaption>
+</figure>
+<p>All SSO handling moved into one authentication service built on maintained SAML and OIDC libraries, configured strictly: signatures required on assertions, audience and recipient checked, replay prevented and clock skew limited. Provider-specific workarounds became configuration in one place rather than code scattered across the product. Staff signed in through a separate identity provider with hardware security keys; a customer's SSO configuration could never create a staff session.</p>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Sign in</b><span>A customer user signs in through their identity provider</span></li>
+<li class="hl"><b>Validate</b><span>The central auth service strictly validates the assertion or token</span></li>
+<li><b>Session</b><span>A short session is issued for that tenant only</span></li>
+<li><b>Support</b><span>If help is needed, a staff member requests time-limited access to that workspace</span></li>
+<li class="hl"><b>Approve</b><span>A lead approves; the customer is told or consents where required</span></li>
+<li><b>Record</b><span>Every action is logged; access expires automatically</span></li>
+</ol>
+<figcaption>Customer and staff paths never merge, and staff access always has a reason and an end.</figcaption>
+</figure>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/uk-saas-sso-staff-access-hardening/request-checks.webp" alt="Sequence diagram: a user request reaches the Kubernetes API server, which authenticates the user and checks permissions, then runs mutating and validating admission policies and webhooks before allowing or rejecting the request" width="1400" height="995" loading="lazy"></div><figcaption>Authenticate, authorise, then apply policy, on every request: the same layered checks the company applied to staff access to customer data. <span class="credit">Source: <a href="https://github.com/kubernetes/website/blob/main/content/en/docs/reference/access-authn-authz/admission-control-phases.svg" target="_blank" rel="noopener">Kubernetes documentation</a> · CC BY 4.0</span></figcaption></figure>
+
+<h2>The hard part: breaking the chain from login to production</h2>
+<p><strong>Assume the login will be bypassed one day.</strong> SSO protocols are intricate and implementation bugs recur across the industry. The design question was therefore not only "is our SSO correct?" but "what can an attacker do with a forged session?". For customer sessions, the answer became: one tenant's data, nothing else. For staff sessions, it became: nothing, until access to a specific workspace is approved, and never the integration keys. The model borrowed from how Kubernetes treats every API request: authenticate, authorise, then apply policy before anything is allowed<sup class="cite"><a href="#ref-6">6</a></sup>.</p>
+<p><strong>Integrations with too much reach.</strong> The code-hosting integration had been installed with broad permissions years earlier, and CDN and DNS keys could change production routing. Each integration was reinstalled with the minimum permissions it needed, CDN and DNS changes moved to the deployment pipeline with short-lived tokens, and the secrets manager stopped allowing humans to read production secrets at all; only workloads could.</p>
+<p><strong>Rotation customers can actually do.</strong> GitBook's response asked customers to create new API tokens, rotate integration secrets and review recent changes made by its app<sup class="cite"><a href="#ref-1">1</a></sup>. The company wrote its own version of that notice in advance, listing exactly what customers would need to rotate, and built a one-click way for administrators to revoke all tokens for their workspace.</p>
+<div class="callout"><p>Every SaaS login flow will have a bug one day. What matters is that a forged session leads nowhere valuable: one tenant at most, never the staff console, never the keys.</p></div>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Engineering</small><ol><li>Central auth service</li><li class="hl">Strict SSO validation</li><li>Tenant-scoped sessions</li></ol></div>
+<div class="dgm-lane"><small>Security</small><ol><li>Staff identity and keys</li><li class="hl">Integration review</li><li>Alerts and audit</li></ol></div>
+<div class="dgm-lane"><small>Support</small><ol><li>Just-in-time access process</li><li>Customer consent options</li><li class="hl">New tooling adoption</li></ol></div>
+<div class="dgm-lane"><small>Customer success and legal</small><ol><li>Code of Practice mapping</li><li>Incident notice templates</li><li class="hl">Answers for security reviews</li></ol></div>
+</div>
+<figcaption>Support had the biggest habit change: no more opening any workspace at will.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Map</b><ul><li>All login paths</li><li>Staff access routes</li><li>Integration permissions</li></ul></div>
+<div><small>Phase 2</small><b>Separate</b><ul><li>Staff identity</li><li>Just-in-time support</li><li>No human secret reads</li></ul></div>
+<div><small>Phase 3</small><b>Consolidate</b><ul><li>Central auth service</li><li>Strict validation</li><li>Migrate providers</li></ul></div>
+<div><small>Phase 4</small><b>Prove</b><ul><li>External test of SSO</li><li>Incident exercise</li><li>Customer evidence</li></ul></div>
+</div>
+<figcaption>Separating staff access came before consolidating SSO: it broke the most dangerous chain first.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Separate staff identity provider</td><td>Staff flag on customer accounts</td><td>A customer-side flaw cannot create staff sessions</td></tr>
+<tr><td>Just-in-time support access</td><td>Standing access to all workspaces</td><td>Limits what a compromised staff account can see</td></tr>
+<tr><td>One central auth service</td><td>Fix each SSO code path</td><td>One place to test, review and harden</td></tr>
+<tr><td>No human reads of production secrets</td><td>Restrict to senior engineers</td><td>Removes the step from staff session to keys</td></tr>
+<tr><td>Minimal integration permissions</td><td>Keep broad permissions for convenience</td><td>A compromised integration reaches less</td></tr>
+<tr><td>Pre-written customer rotation notice</td><td>Write it during an incident</td><td>Faster, clearer communication when it matters</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: separate staff access first; it removed the worst-case chain within weeks. Differently: commission an external test of the SSO implementation earlier; it found edge cases in provider-specific handling that internal reviews had missed. Related: <a href="https://asksumanta.com/insights/tech-news-2026-11-14/">the 14 November tech news</a>, the <a href="https://asksumanta.com/case-studies/south-africa-fintech-machine-agent-identity/">machine identity case study</a>, the <a href="https://asksumanta.com/case-studies/saas-multi-tenant-re-architecture/">multi-tenant SaaS case study</a> and the <a href="https://asksumanta.com/fractional-cto-united-kingdom/">UK page</a>.</p>
+<p>If one login bug could take an attacker from your sign-in page to production, see my <a href="https://asksumanta.com/fractional-cto/">fractional CTO work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/uk-saas-sso-staff-access-hardening/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Tech news, 14 November 2026: Nvidia&#x27;s CEO resigns, ChatGPT Wallet lets agents shop, Apify confirms a breach and the FBI recovers Binance funds</title><link>https://asksumanta.com/insights/tech-news-2026-11-14/</link><guid isPermaLink="true">https://asksumanta.com/insights/tech-news-2026-11-14/</guid><pubDate>Sat, 14 Nov 2026 08:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>ai</category><category>security</category><category>agents</category><description>A CTO&#x27;s take: Jensen Huang resigns as Nvidia CEO, ChatGPT Wallet lets agents buy with approval, Apify confirms a breach and the FBI seizes $1.2B of Binance funds.</description><content:encoded><![CDATA[<p><em>Nvidia&#x27;s chief executive resigned, putting a leadership change at the centre of the AI hardware supply chain. OpenAI gave its agents a way to pay for things with approval each time, an automation platform confirmed customer data was accessed in an attack, and US authorities seized part of last month&#x27;s record Binance theft.</em></p><p>Today's brief covers stories from 12 to 13 November.</p>
 
 <figure class="dgm">
 <div class="dgm-stack">
@@ -3162,82 +3244,4 @@
 
 <h2>What I'd do again, and differently</h2>
 <p>Again: put clinicians in charge of terminology mapping. It was the foundation for everything else. Differently: deal with the identified warehouse copies on day one. They were the largest risk and the easiest to remove. Related: <a href="https://asksumanta.com/case-studies/india-dpdp-consent-platform-lending/">a DPDP-ready consent platform for lending</a>, <a href="https://asksumanta.com/case-studies/health-network-fhir-omop-evidence-platform/">a FHIR and OMOP evidence platform</a>, <a href="https://asksumanta.com/insights/india-frontier-ai-law-what-it-means/">India's proposed frontier AI law</a> and the <a href="https://asksumanta.com/fractional-cto-india/">India page</a>.</p>
-<p>If you hold health data in India, see my <a href="https://asksumanta.com/healthcare-data-architecture/">healthcare data architecture work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/india-diagnostics-consent-data-platform/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Ready for 10 December: automated decision transparency for an Australian energy retailer</title><link>https://asksumanta.com/case-studies/australia-energy-retailer-adm-transparency/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/australia-energy-retailer-adm-transparency/</guid><pubDate>Fri, 30 Oct 2026 17:10:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>governance</category><category>data</category><category>observability</category><description>How an Australian energy retailer can meet the Privacy Act&#x27;s automated decision disclosure duty from 10 December 2026: find every decision, record it and explain it.</description><content:encoded><![CDATA[<p><em>An energy retailer used software to run credit checks, set payment plans, flag hardship and trigger collections, across systems built over twenty years. From 10 December 2026, Australian organisations must explain in their privacy policy when computer programs make or substantially inform decisions that significantly affect people. The retailer first had to find out where that happened.</em></p><h2>The situation</h2>
-<p>An Australian energy retailer served households and small businesses across several states. Software touched many decisions that matter to customers: credit checks at sign-up, security deposits, payment plan offers, hardship flags, collections steps and, at the end of the line, disconnection warnings. The logic lived in a billing platform from the 2000s, a CRM, a collections tool, a credit bureau integration and a newer machine learning model that predicted who might struggle to pay.</p>
-<p><strong>Why now.</strong> From 10 December 2026, APP entities must include information in their privacy policy when they have arranged for a computer program to make, or do something substantially and directly related to making, decisions that significantly affect individuals' rights or interests<sup class="cite"><a href="#ref-1">1</a></sup>. The OAIC published its final guidance on 30 September 2026<sup class="cite"><a href="#ref-4">4</a></sup>. Commentary on that guidance reads it broadly: it reaches rules engines and decision-support tools, not only AI, and human review does not automatically take a decision out of scope<sup class="cite"><a href="#ref-2">2</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>. The retailer's privacy policy said nothing about any of this, and nobody could list where it applied.</p>
-
-<h2>What had to be true</h2>
-<ul>
-<li><strong>A complete list</strong> of significant decisions that software makes or substantially informs.</li>
-<li><strong>Disclosures that match reality</strong>, generated from that list and kept current.</li>
-<li><strong>Evidence for each decision</strong>: which system, which logic version, which data.</li>
-<li><strong>Explanations on request</strong> that customer service can give in plain language.</li>
-<li><strong>No new hidden decisions</strong>: changes to decision logic registered before release.</li>
-</ul>
-
-<h2>Architecture</h2>
-<figure class="dgm">
-<div class="dgm-stack">
-<div class="dgm-tier"><small>Decision sources</small><div class="dgm-nodes"><span>Billing platform<em>deposits, plans</em></span><span>Collections tool<em>reminders, warnings</em></span><span>Credit integration<em>sign-up checks</em></span><span>ML model<em>payment difficulty</em></span></div></div>
-<div class="dgm-tier"><small>Capture</small><div class="dgm-nodes"><span class="hl">OpenTelemetry Collector<em>logs and SQL, no rewrites</em></span><span>Decision events<em>standard schema</em></span></div></div>
-<div class="dgm-tier"><small>Register</small><div class="dgm-nodes"><span class="hl">Decision register<em>purpose, data, logic, owner</em></span><span>Data catalogue<em>personal data used</em></span></div></div>
-<div class="dgm-tier"><small>Outputs</small><div class="dgm-nodes"><span class="hl">Privacy policy section<em>generated from the register</em></span><span>Customer service workbench<em>explain and review</em></span></div></div>
-<div class="dgm-tier"><small>Control</small><div class="dgm-nodes"><span>Release gate<em>no unregistered decision logic</em></span><span>Quarterly review<em>register against reality</em></span></div></div>
-</div>
-<figcaption>The register is the single source of truth; disclosures, explanations and release checks all read from it.</figcaption>
-</figure>
-
-<h2>The data flow, end to end</h2>
-<figure class="dgm">
-<ol class="dgm-flow g3">
-<li><b>Decide</b><span>A system makes or informs a decision about a customer</span></li>
-<li class="hl"><b>Emit</b><span>A decision event is captured with decision type, logic version and inputs used</span></li>
-<li><b>Link</b><span>The event is matched to its register entry and the customer record</span></li>
-<li><b>Disclose</b><span>The privacy policy describes each registered decision type in plain language</span></li>
-<li class="hl"><b>Explain</b><span>Customer service retrieves the event and gives the reasons</span></li>
-<li><b>Review</b><span>A customer can ask for a person to look again; the outcome is recorded</span></li>
-</ol>
-<figcaption>Disclosure covers the decision type; the event covers the individual decision.</figcaption>
-</figure>
-
-<h2>The hard part: finding decisions in twenty-year-old systems</h2>
-<p>Nobody had a list. Decision logic sat in billing configuration tables, stored procedures, collections scripts and a model in a notebook pipeline. Interviews found the obvious decisions; data found the rest. The team traced customer journeys that ended in a significant outcome, such as a deposit request or a disconnection warning, back through the systems that produced them, and recorded every step where software chose or ranked something.</p>
-<p>Capturing evidence without rewriting the billing platform was the second problem. The OpenTelemetry Collector can read existing log files and query databases through receivers, then forward everything in one format, which is how the OpenTelemetry community recommends bringing older systems into modern observability<sup class="cite"><a href="#ref-5">5</a></sup>. The team used it to turn existing logs and table changes into structured decision events, with no change to the legacy code.</p>
-<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/australia-energy-retailer-adm-transparency/legacy-telemetry.webp" alt="Diagram of an OpenTelemetry Collector receiving data from a legacy application's log server through a filelog receiver, from SQL Server databases through SQL receivers, from Windows machines over OTLP and from production line devices through an MQTT bridge, and forwarding to a backend" width="1400" height="761" loading="lazy"></div><figcaption>One collector gathering logs and database data from older systems: the pattern used to capture decision events without rewrites. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2026/demystifying-opentelemetry/" target="_blank" rel="noopener">OpenTelemetry blog, Lukasz Ciukaj</a> · CC BY 4.0</span></figcaption></figure>
-<p>The scope calls were made with counsel. Following the guidance's broad reading, the team treated borderline cases as in scope, including the payment difficulty model, even though a person made the final hardship decision<sup class="cite"><a href="#ref-2">2</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>. The hardship model was also a reason for care: it informed help for vulnerable customers, so its explanations were written with the hardship team. See <a href="https://asksumanta.com/case-studies/brazil-credit-ai-lgpd-explainability/">explainable credit decisions in Brazil</a> for the reason-code pattern.</p>
-<div class="callout"><p>You cannot disclose what you have not found. The privacy policy paragraph is the last step; the inventory is the work.</p></div>
-
-<h2>How it ran</h2>
-<figure class="dgm">
-<div class="dgm-lanes">
-<div class="dgm-lane"><small>Privacy and legal</small><ol><li>Scope rules</li><li class="hl">Policy wording</li><li>Review process</li></ol></div>
-<div class="dgm-lane"><small>Engineering and data</small><ol><li>Journey tracing</li><li class="hl">Decision events and register</li><li>Release gate</li></ol></div>
-<div class="dgm-lane"><small>Customer operations</small><ol><li>Hardship input</li><li>Explanation scripts</li><li class="hl">Workbench and reviews</li></ol></div>
-</div>
-<figcaption>Legal set the scope, engineering produced the evidence, customer operations made it usable.</figcaption>
-</figure>
-<figure class="dgm">
-<div class="dgm-phases">
-<div><small>Phase 1</small><b>Find</b><ul><li>Journey tracing</li><li>Interviews</li><li>Draft register</li></ul></div>
-<div><small>Phase 2</small><b>Decide scope</b><ul><li>Significance tests</li><li>Borderline calls</li><li>Owners named</li></ul></div>
-<div><small>Phase 3</small><b>Evidence</b><ul><li>Collector on legacy systems</li><li>Decision events</li><li>Workbench view</li></ul></div>
-<div><small>Phase 4</small><b>Disclose</b><ul><li>Policy generated from register</li><li>Release gate</li><li>Quarterly review</li></ul></div>
-</div>
-<figcaption>Find, scope, evidence, disclose: in that order, with the 10 December date as the hard stop.</figcaption>
-</figure>
-
-<h2>Key decisions and trade-offs</h2>
-<table class="tbl">
-<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
-<tbody>
-<tr><td>Treat borderline cases as in scope</td><td>Narrow reading to limit disclosure</td><td>Matches the guidance and avoids later corrections</td></tr>
-<tr><td>Generate disclosures from the register</td><td>Write the policy section by hand</td><td>Policy stays true as systems change</td></tr>
-<tr><td>Capture events from logs and databases</td><td>Modify legacy code</td><td>Faster, lower risk before the deadline</td></tr>
-<tr><td>Release gate on decision logic</td><td>Periodic audits only</td><td>New decisions cannot appear unnoticed</td></tr>
-<tr><td>Write explanations with hardship staff</td><td>Engineering-written reasons</td><td>Clear and appropriate for vulnerable customers</td></tr>
-</tbody>
-</table>
-
-<h2>What I'd do again, and differently</h2>
-<p>Again: trace from outcomes backwards. It found decisions no interview would have surfaced, such as a deposit rule hidden in a billing configuration table. Differently: start the release gate first. Two new rules went live during the inventory and had to be found again. Related: <a href="https://asksumanta.com/insights/new-york-youth-chatbot-law-ai-assistants/">policy layers for AI assistants</a>, <a href="https://asksumanta.com/insights/iso-42001-vs-nist-ai-rmf/">ISO 42001 and the NIST AI RMF</a>, <a href="https://asksumanta.com/case-studies/ai-provider-resilience-cps-230-insurer/">AI provider resilience under CPS 230</a> and the <a href="https://asksumanta.com/fractional-cto-australia/">Australia page</a>.</p>
-<p>If you need to be ready for 10 December in Australia, see my <a href="https://asksumanta.com/fractional-cto/">fractional CTO work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/australia-energy-retailer-adm-transparency/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
+<p>If you hold health data in India, see my <a href="https://asksumanta.com/healthcare-data-architecture/">healthcare data architecture work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/india-diagnostics-consent-data-platform/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>

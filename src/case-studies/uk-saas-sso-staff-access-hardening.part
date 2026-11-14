@@ -1,0 +1,84 @@
+<!--{"title": "Case study: hardening SSO and staff access for a UK B2B SaaS", "description": "How a UK B2B SaaS company can harden its single sign-on flows, staff support access and integration keys, so one login bug cannot become access to production.", "short": "SSO and staff access for UK SaaS", "h1": "One login bug away: hardening single sign-on, staff access and integration keys for a UK B2B SaaS company", "kicker": "Case study · Product security", "lede": "A UK software company sold a collaboration platform to enterprises, most of whom signed in through their own identity providers. Its engineers had built single sign-on support over years, one customer request at a time. Staff could open customer workspaces for support, and integrations held keys to code hosting and the CDN. When another SaaS company disclosed that a flaw in its SSO flow let an attacker pose as staff and reach production, the board asked whether the same chain existed here.", "date": "2026-11-14", "datetime": "2026-11-14T15:50:00+04:00", "readtime": "9 min read", "sector": "B2B software · United Kingdom", "role": "Fractional CTO and security architect", "engagement": "Assessment, architecture and delivery leadership", "scope": "SSO and SAML/OIDC flows, staff and support access, session handling, integration credentials, secrets, detection, customer communication", "stack": ["Central authentication service", "Strict SAML and OIDC validation", "Separate staff identity", "Just-in-time support access", "Short-lived integration tokens", "Secrets manager", "Audit logging and alerts", "Incident communication templates"], "outcomes": ["One audited authentication service instead of several SSO code paths", "Staff access separated from customer sign-in, with approval and expiry", "Integration credentials narrowed and short-lived, removing direct routes to production", "Alerts on unusual staff sessions and token use", "A clear way to tell customers what to rotate if an incident happens"], "tags": ["security", "platform", "governance"], "keywords": ["SSO security SaaS", "SAML vulnerability", "staff impersonation SaaS", "support access controls", "GitBook breach SSO", "integration token security", "UK Software Security Code of Practice", "B2B SaaS security UK", "session security", "fractional CTO United Kingdom"], "faq": [["Why is a SaaS company's SSO flow a high-value target?", "Because a flaw there can let an attacker create sessions as any user, including staff with broad access. If staff sessions can reach integrations and keys, one login bug can lead to production, as GitBook's November 2026 incident showed."], ["How should support staff access customer accounts?", "Through a separate staff identity with phishing-resistant MFA, using just-in-time access that is approved, time-limited, logged and, where customers require it, consented to, rather than standing access to every workspace."], ["What is the UK Software Security Code of Practice?", "A voluntary code published by the UK government and NCSC in May 2025 setting baseline security principles for software vendors, including secure development, secure build environments and communicating with customers about incidents."]], "related": ["/fractional-cto-united-kingdom/", "/fractional-cto/", "/ai-architect/"], "citations": [{"title": "GitBook security incident, November 2026", "url": "https://gitbook.com/status/security-incident-2026-11-03", "publisher": "GitBook", "date": "Nov 2026"}, {"title": "This Week In Security: Four-Digit Patch Tuesday, SSH Exploited, GitBook Breach, Android GhostMap", "url": "https://hackaday.com/2026/11/13/this-week-in-security-four-digit-patch-tuesday-ssh-exploited-gitbook-breach-android-ghostmap/", "publisher": "Hackaday", "date": "13 Nov 2026"}, {"title": "Apify Confirms Customer Data Accessed in Cyberattack", "url": "https://www.securityweek.com/apify-confirms-customer-data-accessed-in-cyberattack/", "publisher": "SecurityWeek", "date": "13 Nov 2026"}, {"title": "Software Security Code of Practice", "url": "https://www.gov.uk/government/publications/software-security-code-of-practice", "publisher": "UK Government", "date": "May 2025"}, {"title": "Software Security Code of Practice: overview", "url": "https://www.ncsc.gov.uk/section/software-security-code-of-practice/overview", "publisher": "NCSC", "date": "2025"}, {"title": "admission-control-phases.svg (Kubernetes documentation images)", "url": "https://github.com/kubernetes/website/blob/main/content/en/docs/reference/access-authn-authz/admission-control-phases.svg", "publisher": "Kubernetes", "date": "2026"}]}-->
+<h2>The situation</h2>
+<p>A UK software company sold a collaboration and documentation platform to mid-sized and large organisations. Most enterprise customers signed in through their own identity providers using SAML or OIDC, and the company had added support for each provider's quirks over several years, in more than one part of the codebase. Support engineers could open any customer workspace to troubleshoot, using the same login system as customers with an internal flag. Integrations with code hosting, the CDN and DNS used long-lived keys, some readable from internal tools staff could reach.</p>
+<p><strong>Why now.</strong> In November 2026, GitBook disclosed that an attacker used a flaw in its SSO login flow to create sessions as staff, then reached a misconfigured code-hosting integration, internal repositories and a CDN API key that gave production access<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. The same week, Apify confirmed that sign-in tokens and two-factor recovery codes had been accessed in an attack<sup class="cite"><a href="#ref-3">3</a></sup>. The UK's voluntary Software Security Code of Practice, published by the government and NCSC, sets expectations for vendors on secure development and on telling customers about incidents<sup class="cite"><a href="#ref-4">4</a></sup><sup class="cite"><a href="#ref-5">5</a></sup>, and enterprise customers had begun asking about it in security reviews.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>One way in</strong>: a single, well-tested authentication path for all SSO, not several.</li>
+<li><strong>Staff are different</strong>: staff access never shares the customer login path.</li>
+<li><strong>No standing access</strong>: support access is granted per case, time-limited and logged.</li>
+<li><strong>No chains</strong>: a staff session cannot reach keys that reach production.</li>
+<li><strong>Visible</strong>: unusual sessions and token use raise alerts.</li>
+<li><strong>Explainable</strong>: if something happens, customers are told quickly what to rotate.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Customers</small><div class="dgm-nodes"><span>Customer identity providers<em>SAML and OIDC</em></span></div></div>
+<div class="dgm-tier"><small>Authentication</small><div class="dgm-nodes"><span class="hl">Central auth service<em>one strict SSO implementation</em></span><span>Session service<em>short sessions, bound to client</em></span></div></div>
+<div class="dgm-tier"><small>Staff</small><div class="dgm-nodes"><span class="hl">Separate staff identity<em>phishing-resistant MFA</em></span><span>Just-in-time support access<em>approved, time-limited</em></span></div></div>
+<div class="dgm-tier"><small>Integrations</small><div class="dgm-nodes"><span>Code hosting app<em>minimal permissions</em></span><span>CDN and DNS<em>scoped, short-lived tokens</em></span><span>Secrets manager<em>no human read access</em></span></div></div>
+<div class="dgm-tier"><small>Evidence</small><div class="dgm-nodes"><span>Audit log</span><span>Alerts</span><span>Customer notices</span></div></div>
+</div>
+<figcaption>Customers and staff come in through different doors, and neither door leads to the keys.</figcaption>
+</figure>
+<p>All SSO handling moved into one authentication service built on maintained SAML and OIDC libraries, configured strictly: signatures required on assertions, audience and recipient checked, replay prevented and clock skew limited. Provider-specific workarounds became configuration in one place rather than code scattered across the product. Staff signed in through a separate identity provider with hardware security keys; a customer's SSO configuration could never create a staff session.</p>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Sign in</b><span>A customer user signs in through their identity provider</span></li>
+<li class="hl"><b>Validate</b><span>The central auth service strictly validates the assertion or token</span></li>
+<li><b>Session</b><span>A short session is issued for that tenant only</span></li>
+<li><b>Support</b><span>If help is needed, a staff member requests time-limited access to that workspace</span></li>
+<li class="hl"><b>Approve</b><span>A lead approves; the customer is told or consents where required</span></li>
+<li><b>Record</b><span>Every action is logged; access expires automatically</span></li>
+</ol>
+<figcaption>Customer and staff paths never merge, and staff access always has a reason and an end.</figcaption>
+</figure>
+<figure class="fig"><div class="im"><img src="/assets/img/uk-saas-sso-staff-access-hardening/request-checks.webp" alt="Sequence diagram: a user request reaches the Kubernetes API server, which authenticates the user and checks permissions, then runs mutating and validating admission policies and webhooks before allowing or rejecting the request" width="1400" height="995" loading="lazy"></div><figcaption>Authenticate, authorise, then apply policy, on every request: the same layered checks the company applied to staff access to customer data. <span class="credit">Source: <a href="https://github.com/kubernetes/website/blob/main/content/en/docs/reference/access-authn-authz/admission-control-phases.svg" target="_blank" rel="noopener">Kubernetes documentation</a> · CC BY 4.0</span></figcaption></figure>
+
+<h2>The hard part: breaking the chain from login to production</h2>
+<p><strong>Assume the login will be bypassed one day.</strong> SSO protocols are intricate and implementation bugs recur across the industry. The design question was therefore not only "is our SSO correct?" but "what can an attacker do with a forged session?". For customer sessions, the answer became: one tenant's data, nothing else. For staff sessions, it became: nothing, until access to a specific workspace is approved, and never the integration keys. The model borrowed from how Kubernetes treats every API request: authenticate, authorise, then apply policy before anything is allowed<sup class="cite"><a href="#ref-6">6</a></sup>.</p>
+<p><strong>Integrations with too much reach.</strong> The code-hosting integration had been installed with broad permissions years earlier, and CDN and DNS keys could change production routing. Each integration was reinstalled with the minimum permissions it needed, CDN and DNS changes moved to the deployment pipeline with short-lived tokens, and the secrets manager stopped allowing humans to read production secrets at all; only workloads could.</p>
+<p><strong>Rotation customers can actually do.</strong> GitBook's response asked customers to create new API tokens, rotate integration secrets and review recent changes made by its app<sup class="cite"><a href="#ref-1">1</a></sup>. The company wrote its own version of that notice in advance, listing exactly what customers would need to rotate, and built a one-click way for administrators to revoke all tokens for their workspace.</p>
+<div class="callout"><p>Every SaaS login flow will have a bug one day. What matters is that a forged session leads nowhere valuable: one tenant at most, never the staff console, never the keys.</p></div>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Engineering</small><ol><li>Central auth service</li><li class="hl">Strict SSO validation</li><li>Tenant-scoped sessions</li></ol></div>
+<div class="dgm-lane"><small>Security</small><ol><li>Staff identity and keys</li><li class="hl">Integration review</li><li>Alerts and audit</li></ol></div>
+<div class="dgm-lane"><small>Support</small><ol><li>Just-in-time access process</li><li>Customer consent options</li><li class="hl">New tooling adoption</li></ol></div>
+<div class="dgm-lane"><small>Customer success and legal</small><ol><li>Code of Practice mapping</li><li>Incident notice templates</li><li class="hl">Answers for security reviews</li></ol></div>
+</div>
+<figcaption>Support had the biggest habit change: no more opening any workspace at will.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Map</b><ul><li>All login paths</li><li>Staff access routes</li><li>Integration permissions</li></ul></div>
+<div><small>Phase 2</small><b>Separate</b><ul><li>Staff identity</li><li>Just-in-time support</li><li>No human secret reads</li></ul></div>
+<div><small>Phase 3</small><b>Consolidate</b><ul><li>Central auth service</li><li>Strict validation</li><li>Migrate providers</li></ul></div>
+<div><small>Phase 4</small><b>Prove</b><ul><li>External test of SSO</li><li>Incident exercise</li><li>Customer evidence</li></ul></div>
+</div>
+<figcaption>Separating staff access came before consolidating SSO: it broke the most dangerous chain first.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Separate staff identity provider</td><td>Staff flag on customer accounts</td><td>A customer-side flaw cannot create staff sessions</td></tr>
+<tr><td>Just-in-time support access</td><td>Standing access to all workspaces</td><td>Limits what a compromised staff account can see</td></tr>
+<tr><td>One central auth service</td><td>Fix each SSO code path</td><td>One place to test, review and harden</td></tr>
+<tr><td>No human reads of production secrets</td><td>Restrict to senior engineers</td><td>Removes the step from staff session to keys</td></tr>
+<tr><td>Minimal integration permissions</td><td>Keep broad permissions for convenience</td><td>A compromised integration reaches less</td></tr>
+<tr><td>Pre-written customer rotation notice</td><td>Write it during an incident</td><td>Faster, clearer communication when it matters</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: separate staff access first; it removed the worst-case chain within weeks. Differently: commission an external test of the SSO implementation earlier; it found edge cases in provider-specific handling that internal reviews had missed. Related: <a href="/insights/tech-news-2026-11-14/">the 14 November tech news</a>, the <a href="/case-studies/south-africa-fintech-machine-agent-identity/">machine identity case study</a>, the <a href="/case-studies/saas-multi-tenant-re-architecture/">multi-tenant SaaS case study</a> and the <a href="/fractional-cto-united-kingdom/">UK page</a>.</p>
+<p>If one login bug could take an attacker from your sign-in page to production, see my <a href="/fractional-cto/">fractional CTO work</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
