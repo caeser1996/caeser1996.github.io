@@ -1,6 +1,88 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link><description>Anonymised engagements with architecture and flow diagrams</description><language>en-gb</language><lastBuildDate>Sat, 14 Nov 2026 15:50:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/case-studies/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link></image><item><title>One login bug away: hardening single sign-on, staff access and integration keys for a UK B2B SaaS company</title><link>https://asksumanta.com/case-studies/uk-saas-sso-staff-access-hardening/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/uk-saas-sso-staff-access-hardening/</guid><pubDate>Sat, 14 Nov 2026 15:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>security</category><category>platform</category><category>governance</category><description>How a UK B2B SaaS company can harden its single sign-on flows, staff support access and integration keys, so one login bug cannot become access to production.</description><content:encoded><![CDATA[<p><em>A UK software company sold a collaboration platform to enterprises, most of whom signed in through their own identity providers. Its engineers had built single sign-on support over years, one customer request at a time. Staff could open customer workspaces for support, and integrations held keys to code hosting and the CDN. When another SaaS company disclosed that a flaw in its SSO flow let an attacker pose as staff and reach production, the board asked whether the same chain existed here.</em></p><h2>The situation</h2>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link><description>Anonymised engagements with architecture and flow diagrams</description><language>en-gb</language><lastBuildDate>Sun, 15 Nov 2026 15:50:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/case-studies/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link></image><item><title>Testing with the regulator in the room: an EU medtech start-up&#x27;s hospital early-warning model in an AI regulatory sandbox</title><link>https://asksumanta.com/case-studies/eu-medtech-ai-regulatory-sandbox/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/eu-medtech-ai-regulatory-sandbox/</guid><pubDate>Sun, 15 Nov 2026 15:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>healthcare</category><category>ai</category><category>governance</category><description>How an EU medtech start-up can use the new AI regulatory sandbox rules for a hospital early-warning model: a clear test plan, real-world evidence and no false comfort.</description><content:encoded><![CDATA[<p><em>A European medtech start-up had built a model that warns hospital ward staff when a patient is likely to deteriorate. It worked on historical data. The questions that mattered next were harder: would it hold up on live wards, how should nurses act on it, and what would regulators expect as evidence? When the EU set common rules for AI regulatory sandboxes, the start-up decided to answer those questions in one, with a supervisor watching, without mistaking the sandbox for approval.</em></p><h2>The situation</h2>
+<p>A European medtech start-up had developed a model that estimates the risk that a patient on a general hospital ward will deteriorate in the next day, using vital signs, laboratory results and nursing observations. On historical data from two partner hospitals it performed well. The founders knew that was the easy part. Clinical AI often fails in the move from historical data to live wards: data arrives late or differently, staff respond to alerts in ways nobody predicted, and performance varies between sites and patient groups.</p>
+<p>As software intended to support clinical decisions, the product was likely to be regulated as a medical device and treated as high-risk under the EU AI Act. The team needed evidence that would satisfy both regimes, and had no experience of what supervisors would expect.</p>
+<p><strong>Why now.</strong> On 11 November 2026, the Commission published Implementing Regulation (EU) 2026/2487, setting common rules for establishing and running AI regulatory sandboxes under the AI Act<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. Commentary was quick to point out the limits: sandbox participation produces documentation and an exit report, not compliance clearance, and liability stays with the provider<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>. That suited the start-up: it wanted structured supervision and early feedback, not a shortcut.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>Clear questions</strong>: the sandbox plan states exactly what will be tested and what success looks like.</li>
+<li><strong>Patient safety first</strong>: no clinician acts on the model until it has been validated on live data.</li>
+<li><strong>Evidence that travels</strong>: results usable later for the AI Act and medical device assessments.</li>
+<li><strong>Performance by group</strong>: results reported by site, ward type and patient group.</li>
+<li><strong>Reproducible</strong>: any result can be regenerated from versioned data, features and model.</li>
+<li><strong>No false comfort</strong>: everyone understands what the sandbox does and does not provide.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Hospitals</small><div class="dgm-nodes"><span>EHR and observations<em>FHIR feeds</em></span><span>Laboratory results</span></div></div>
+<div class="dgm-tier"><small>Data</small><div class="dgm-nodes"><span class="hl">Feature pipeline<em>versioned definitions</em></span><span>Data quality checks<em>late and missing values</em></span></div></div>
+<div class="dgm-tier"><small>Model</small><div class="dgm-nodes"><span>Model registry<em>versioned releases</em></span><span class="hl">Scoring service<em>silent mode or live</em></span></div></div>
+<div class="dgm-tier"><small>Clinical use</small><div class="dgm-nodes"><span>Alert interface<em>reason and recommended review</em></span><span>Clinician feedback</span></div></div>
+<div class="dgm-tier"><small>Evidence</small><div class="dgm-nodes"><span class="hl">Monitoring<em>discrimination, calibration, drift</em></span><span>Evidence repository<em>for supervisors and assessment</em></span></div></div>
+</div>
+<figcaption>The same pipeline runs in silent and live mode, so evidence from one phase carries into the next.</figcaption>
+</figure>
+<p>Hospital data arrived through FHIR feeds into a feature pipeline where every feature had a versioned definition, so a result could always be traced to the exact data and code that produced it. The scoring service ran in two modes: silent, where scores were stored but not shown, and live, where alerts reached ward staff. See <a href="https://asksumanta.com/healthcare-data-architecture/">healthcare data architecture</a>.</p>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Ingest</b><span>Observations and results arrive from the hospital in near real time</span></li>
+<li><b>Check</b><span>Data quality rules flag late, missing or implausible values</span></li>
+<li class="hl"><b>Score</b><span>The model estimates deterioration risk for each patient</span></li>
+<li><b>Alert</b><span>In live mode, high-risk patients prompt a structured clinical review</span></li>
+<li class="hl"><b>Compare</b><span>Scores are compared with actual outcomes, by site and patient group</span></li>
+<li><b>Report</b><span>Monthly evidence packs go to the supervisor and clinical leads</span></li>
+</ol>
+<figcaption>Outcomes, not alerts, are the measure: did flagged patients actually deteriorate, and did reviews help?</figcaption>
+</figure>
+
+<h2>The hard part: evidence a supervisor can trust</h2>
+<p><strong>Designing the sandbox plan.</strong> The start-up's first draft asked to "test the model in hospitals". The final plan, agreed with the supervising authority, asked specific questions: does performance on live data match historical results at each site; is the model well calibrated for older patients and patients with chronic conditions; do nurses act on alerts within the expected time; and does alert volume stay manageable on busy wards. Each question had a success criterion and an agreed response if it failed.</p>
+<p><strong>Making results reproducible and generalisable.</strong> Supervisors and later assessors would ask whether results could be repeated and whether they would hold elsewhere. The team borrowed the vocabulary of the observational research community: a result should be repeatable on the same data, reproducible by someone else, and generalisable to different data<sup class="cite"><a href="#ref-5">5</a></sup>. Versioned data and features handled the first two; adding a third hospital partway through tested the last.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/eu-medtech-ai-regulatory-sandbox/evidence-attributes.webp" alt="Table of desired evidence attributes: repeatable, reproducible, replicable, generalisable, robust and calibrated, showing which of question, researcher, data and analysis stay identical or change and the expected result" width="1600" height="556" loading="lazy"></div><figcaption>Attributes of reliable evidence: the sandbox plan aimed for results that were repeatable, reproducible and generalisable across hospitals. <span class="credit">Source: <a href="https://ohdsi.github.io/TheBookOfOhdsi/EvidenceQuality.html" target="_blank" rel="noopener">The Book of OHDSI</a> · CC0 1.0</span></figcaption></figure>
+<p><strong>Silent mode before live mode.</strong> For the first phase the model scored real patients but showed nothing to clinicians. That exposed data timing problems at one site that would have made live alerts arrive too late to help, and a calibration gap in one patient group that was fixed before any nurse saw a score.</p>
+<div class="callout"><p>A sandbox is valuable for what you learn with the supervisor watching, not for the badge. Go in with sharp questions, and come out with evidence you would have needed anyway.</p></div>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Start-up</small><ol><li>Sandbox plan</li><li class="hl">Pipeline and monitoring</li><li>Evidence packs</li></ol></div>
+<div class="dgm-lane"><small>Hospitals</small><ol><li>Data access and governance</li><li class="hl">Clinical review process</li><li>Nurse feedback</li></ol></div>
+<div class="dgm-lane"><small>Supervising authority</small><ol><li>Agree questions</li><li>Review progress</li><li class="hl">Exit report</li></ol></div>
+</div>
+<figcaption>The supervisor shaped the questions; hospitals shaped how alerts were used; the start-up produced the evidence.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Plan</b><ul><li>Specific questions</li><li>Success criteria</li><li>Exit conditions</li></ul></div>
+<div><small>Phase 2</small><b>Silent</b><ul><li>Live scoring, no alerts</li><li>Data timing fixes</li><li>Calibration by group</li></ul></div>
+<div><small>Phase 3</small><b>Live</b><ul><li>Alerts on selected wards</li><li>Structured reviews</li><li>Alert volume tracking</li></ul></div>
+<div><small>Phase 4</small><b>Exit</b><ul><li>Evidence pack</li><li>Exit report</li><li>Assessment plan</li></ul></div>
+</div>
+<figcaption>Silent mode came first and did the most to protect patients.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Enter a sandbox with specific questions</td><td>Treat it as a general pilot</td><td>Clear questions make supervisor feedback useful</td></tr>
+<tr><td>Silent mode before live alerts</td><td>Go live on validated history</td><td>Live data behaves differently; patients stay safe</td></tr>
+<tr><td>Report by site and patient group</td><td>One overall score</td><td>Averages hide where the model fails</td></tr>
+<tr><td>Versioned features and data</td><td>Ad hoc extracts</td><td>Results can be reproduced for assessors</td></tr>
+<tr><td>Add a third hospital mid-sandbox</td><td>Stay with two partners</td><td>Tests whether results generalise</td></tr>
+<tr><td>Plan conformity assessment in parallel</td><td>Rely on the exit report</td><td>The sandbox does not grant compliance</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: write the sandbox questions with clinicians first, then take them to the supervisor; it made every later conversation concrete. Differently: plan alert workflow with nursing leads earlier; the hardest live-mode issues were about who responds and when, not about the model. Related: <a href="https://asksumanta.com/insights/llm-evaluation-sets-that-predict-production/">evaluation that predicts production</a>, the <a href="https://asksumanta.com/case-studies/health-network-fhir-omop-evidence-platform/">FHIR and OMOP evidence platform case study</a>, <a href="https://asksumanta.com/insights/tech-news-2026-11-13/">the 13 November tech news</a> and the <a href="https://asksumanta.com/fractional-cto-europe/">Europe page</a>.</p>
+<p>If you are building clinical or other high-risk AI for Europe and want evidence that stands up, see my <a href="https://asksumanta.com/ai-architect/">AI architecture work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/eu-medtech-ai-regulatory-sandbox/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>One login bug away: hardening single sign-on, staff access and integration keys for a UK B2B SaaS company</title><link>https://asksumanta.com/case-studies/uk-saas-sso-staff-access-hardening/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/uk-saas-sso-staff-access-hardening/</guid><pubDate>Sat, 14 Nov 2026 15:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>security</category><category>platform</category><category>governance</category><description>How a UK B2B SaaS company can harden its single sign-on flows, staff support access and integration keys, so one login bug cannot become access to production.</description><content:encoded><![CDATA[<p><em>A UK software company sold a collaboration platform to enterprises, most of whom signed in through their own identity providers. Its engineers had built single sign-on support over years, one customer request at a time. Staff could open customer workspaces for support, and integrations held keys to code hosting and the CDN. When another SaaS company disclosed that a flaw in its SSO flow let an attacker pose as staff and reach production, the board asked whether the same chain existed here.</em></p><h2>The situation</h2>
 <p>A UK software company sold a collaboration and documentation platform to mid-sized and large organisations. Most enterprise customers signed in through their own identity providers using SAML or OIDC, and the company had added support for each provider's quirks over several years, in more than one part of the codebase. Support engineers could open any customer workspace to troubleshoot, using the same login system as customers with an internal flag. Integrations with code hosting, the CDN and DNS used long-lived keys, some readable from internal tools staff could reach.</p>
 <p><strong>Why now.</strong> In November 2026, GitBook disclosed that an attacker used a flaw in its SSO login flow to create sessions as staff, then reached a misconfigured code-hosting integration, internal repositories and a CDN API key that gave production access<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. The same week, Apify confirmed that sign-in tokens and two-factor recovery codes had been accessed in an attack<sup class="cite"><a href="#ref-3">3</a></sup>. The UK's voluntary Software Security Code of Practice, published by the government and NCSC, sets expectations for vendors on secure development and on telling customers about incidents<sup class="cite"><a href="#ref-4">4</a></sup><sup class="cite"><a href="#ref-5">5</a></sup>, and enterprise customers had begun asking about it in security reviews.</p>
 
@@ -3956,89 +4038,4 @@
 
 <h2>What I'd do again, and differently</h2>
 <p>Again: keep the model away from credentials and let validation, not the model, decide what is posted. Differently: build the labelled sample before the pipeline. Every threshold discussion went faster once there was a shared set of real documents to measure against.</p>
-<p>If you're planning something similar, the <a href="https://asksumanta.com/ai-architect/">AI architect</a> page describes how I run these engagements, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/real-estate-document-intake-automation/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Making a decades-old media archive findable with model enrichment and a controlled vocabulary</title><link>https://asksumanta.com/case-studies/media-archive-metadata-enrichment/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/media-archive-metadata-enrichment/</guid><pubDate>Wed, 28 Oct 2026 01:40:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>ai</category><category>llm</category><category>ontology</category><category>knowledge-graph</category><category>data</category><description>How a media archive made decades of content findable: batch model enrichment mapped to a SKOS vocabulary, human review queues and semantic search with provenance.</description><content:encoded><![CDATA[<p><em>A large archive of video, audio and photographs, catalogued under decades of changing conventions, with most items described by little more than a title and a date. The goal was consistent, searchable metadata at archive scale, without letting a model invent the catalogue.</em></p><h2>The situation</h2>
-<p>A media organisation held decades of video, audio and photography. The material was valuable for new programmes, licensing and research, but most of it was hard to find. Cataloguing conventions had changed several times, many items carried only a title and a broadcast date, and the same subject was described in a dozen ways. Search worked if you already knew the exact words a cataloguer had used years earlier, and otherwise depended on a few long-serving people who remembered where things were.</p>
-<p>The organisation wanted to use AI to describe the backlog. The concern, rightly, was that a model left to itself would produce confident, inconsistent tags at a scale nobody could review.</p>
-
-<h2>What had to be true</h2>
-<ul>
-<li><strong>One controlled vocabulary</strong>, so a subject, place or person is described the same way across the archive.</li>
-<li><strong>Machine suggestions, human authority</strong>: models propose, people decide where confidence is low or the subject is sensitive.</li>
-<li><strong>Provenance on every field</strong>, so anyone can see whether a label came from a cataloguer, a model or a reviewer.</li>
-<li><strong>Search by meaning and by exact term</strong>, for editors who know what they want and for those who are exploring.</li>
-<li><strong>A taxonomy the archive team owns</strong>, not one hidden inside prompts or code.</li>
-</ul>
-
-<h2>Architecture</h2>
-<p>The vocabulary was modelled as a SKOS concept scheme, which gives each concept a preferred label, alternative labels and broader or narrower relationships<sup class="cite"><a href="#ref-1">1</a></sup>. Descriptive fields such as creator, date, subject and rights were aligned with DCMI Metadata Terms so that records stayed portable between systems<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
-<figure class="dgm">
-<div class="dgm-stack">
-<div class="dgm-tier"><small>Sources</small><div class="dgm-nodes"><span>Media asset store<em>video, audio, images</em></span><span>Legacy catalogue<em>sparse records</em></span><span>Rights records<em>licensing terms</em></span></div></div>
-<div class="dgm-tier"><small>Derive</small><div class="dgm-nodes"><span>Speech-to-text<em>transcripts</em></span><span>Keyframes and OCR<em>on-screen text</em></span><span>Existing metadata<em>normalised</em></span></div></div>
-<div class="dgm-tier"><small>Enrich</small><div class="dgm-nodes"><span class="hl">Batch model enrichment<em>structured suggestions</em></span><span class="hl">Vocabulary mapping<em>labels → SKOS concepts</em></span><span>Confidence scoring<em>per field</em></span></div></div>
-<div class="dgm-tier"><small>Assure</small><div class="dgm-nodes"><span class="hl">Review queue<em>low confidence, sensitive</em></span><span>Provenance log<em>model, prompt, reviewer</em></span><span>Taxonomy owner<em>new concept requests</em></span></div></div>
-<div class="dgm-tier"><small>Use</small><div class="dgm-nodes"><span>Catalogue search<em>filters, exact terms</em></span><span>Semantic search<em>embeddings</em></span><span>Reuse and licensing<em>rights-aware</em></span></div></div>
-</div>
-<figcaption>Layered architecture: models suggest, the vocabulary constrains, and people review before anything is published to search.</figcaption>
-</figure>
-
-<h2>The data flow, end to end</h2>
-<figure class="dgm">
-<ol class="dgm-flow g3">
-<li><b>Select</b><span>Pick a collection batch, prioritised by editorial and licensing demand</span></li>
-<li><b>Derive</b><span>Generate transcripts, keyframes and on-screen text; keep them as versioned artefacts</span></li>
-<li><b>Enrich</b><span>Run batch inference that returns structured candidate subjects, places, people and a summary</span></li>
-<li class="hl"><b>Map</b><span>Resolve candidates to concepts in the scheme; unmatched terms become proposals, not tags</span></li>
-<li class="hl"><b>Review</b><span>Route low-confidence and sensitive items to cataloguers; record every decision</span></li>
-<li><b>Publish</b><span>Write approved metadata to the catalogue and refresh keyword and vector indexes</span></li>
-</ol>
-<figcaption>Each batch is versioned, so any published label can be traced back to the inputs, model and reviewer that produced it.</figcaption>
-</figure>
-<p>For semantic search, transcripts and summaries were embedded with a sentence-embedding model, which produces vectors that can be compared with cosine similarity<sup class="cite"><a href="#ref-3">3</a></sup>. Nearest-neighbour lookup used an HNSW index, a graph-based approximate search method that scales well to large collections<sup class="cite"><a href="#ref-4">4</a></sup>. Model choice and storage trade-offs are covered in <a href="https://asksumanta.com/insights/choosing-embedding-models-rag/">choosing embedding models</a> and <a href="https://asksumanta.com/insights/pgvector-or-vector-database/">pgvector or a vector database</a>.</p>
-
-<h2>The hard part: a vocabulary people agree on</h2>
-<p>Running models over the archive was the easy part. Agreeing what the labels should be took far longer. The approach that worked:</p>
-<ul>
-<li>Seed the concept scheme from the terms cataloguers already used most, then merge duplicates as alternative labels rather than deleting them, so old records still match.</li>
-<li>Use SKOS mapping properties to link local concepts to external vocabularies where they existed, instead of copying those vocabularies wholesale<sup class="cite"><a href="#ref-1">1</a></sup>.</li>
-<li>Never let the pipeline create a concept. A model suggestion with no match becomes a proposal for the taxonomy owner, with example items attached.</li>
-<li>Treat people and sensitive topics as always-reviewed fields, whatever the model's confidence.</li>
-</ul>
-<p>The taxonomy design choices are discussed further in <a href="https://asksumanta.com/insights/skos-vs-owl-enterprise-taxonomies/">SKOS vs OWL for enterprise taxonomies</a>.</p>
-<div class="callout"><p>A controlled vocabulary turns a model from an author into an assistant. The model can only choose from concepts people have agreed, and everything else becomes a question for a person.</p></div>
-
-<h2>How the engagement ran</h2>
-<figure class="dgm">
-<div class="dgm-lanes">
-<div class="dgm-lane"><small>Pipeline</small><ol><li>Derive and enrich a batch</li><li class="hl">Map to concepts and score</li><li>Publish approved records</li></ol></div>
-<div class="dgm-lane"><small>Cataloguer</small><ol><li>Work the review queue</li><li class="hl">Accept, correct or reject</li><li>Flag missing concepts</li></ol></div>
-<div class="dgm-lane"><small>Taxonomy owner</small><ol><li>Review concept proposals</li><li>Version the scheme</li><li>Trigger re-mapping</li></ol></div>
-</div>
-<figcaption>Three roles, one loop: reviewer corrections and new concepts flow back into the next batch.</figcaption>
-</figure>
-<figure class="dgm">
-<div class="dgm-phases">
-<div><small>Phase 1</small><b>Discover</b><ul><li>Collection and rights inventory</li><li>Search pain points</li><li>Seed vocabulary</li></ul></div>
-<div><small>Phase 2</small><b>Pilot collection</b><ul><li>End-to-end pipeline</li><li>Review queue design</li><li>Evaluation set</li></ul></div>
-<div><small>Phase 3</small><b>Harden</b><ul><li>Confidence thresholds</li><li>Provenance and versioning</li><li>Hybrid search</li></ul></div>
-<div><small>Phase 4</small><b>Scale and hand off</b><ul><li>Further collections</li><li>Taxonomy governance</li><li>Runbooks and training</li></ul></div>
-</div>
-<figcaption>Phased delivery: one collection end to end before widening the backlog.</figcaption>
-</figure>
-<p>Thresholds were set against a hand-labelled evaluation set drawn from the pilot collection, not against the model's own sense of certainty. The method is in <a href="https://asksumanta.com/insights/llm-evaluation-sets-that-predict-production/">LLM evaluation sets that predict production</a>.</p>
-
-<h2>Key decisions and trade-offs</h2>
-<table class="tbl">
-<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
-<tbody>
-<tr><td>SKOS concept scheme</td><td>Free-text model tags</td><td>Consistent labels, synonyms and hierarchy; reusable outside the pipeline</td></tr>
-<tr><td>Batch enrichment</td><td>Real-time tagging on view</td><td>Predictable cost, reproducible runs and reviewable outputs</td></tr>
-<tr><td>Structured model outputs</td><td>Prose descriptions parsed later</td><td>Fields validate on arrival; failures are visible, not silent</td></tr>
-<tr><td>Review by confidence and sensitivity</td><td>Review everything, or nothing</td><td>People spend time where the model is weakest or the risk is highest</td></tr>
-<tr><td>Hybrid keyword and vector search</td><td>Vector search only</td><td>Editors still need exact names, dates and identifiers</td></tr>
-</tbody>
-</table>
-
-<h2>What I'd do again, and differently</h2>
-<p>Again: put the vocabulary at the centre and make provenance a field, not a log file. Differently: involve the cataloguers in designing the review screen from the first week. The speed and quality of review decided the throughput of the whole system, far more than the model did.</p>
-<p>If you're planning something similar, the <a href="https://asksumanta.com/ontology-knowledge-graph/">ontology and knowledge graph</a> page describes how I run these engagements, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/media-archive-metadata-enrichment/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
+<p>If you're planning something similar, the <a href="https://asksumanta.com/ai-architect/">AI architect</a> page describes how I run these engagements, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/real-estate-document-intake-automation/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
