@@ -1,6 +1,61 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link><description>Fractional CTO and AI architect: insights, case studies and daily tech news.</description><language>en-gb</language><lastBuildDate>Mon, 16 Nov 2026 15:50:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link></image><item><title>Change without fear: progressive rollouts and fast rollback for a Brazilian payments platform</title><link>https://asksumanta.com/case-studies/brazil-payments-safe-change-rollouts/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/brazil-payments-safe-change-rollouts/</guid><pubDate>Mon, 16 Nov 2026 15:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>platform</category><category>kubernetes</category><category>observability</category><description>How a Brazilian payments platform can change safely at 1M+ transactions a day: progressive rollouts, canaries judged on payment signals and fast rollback.</description><content:encoded><![CDATA[<p><em>A Brazilian payment institution processed more than a million transactions a day, most of them instant payments that customers expect to complete in seconds. Most of its incidents were not caused by attackers or hardware, but by its own changes: a configuration tweak, a library upgrade, a network adjustment. After a major provider&#x27;s long outage was traced to a routine network change exposing a latent bug, the company decided to make every change small, observable and reversible.</em></p><h2>The situation</h2>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link><description>Fractional CTO and AI architect: insights, case studies and daily tech news.</description><language>en-gb</language><lastBuildDate>Mon, 16 Nov 2026 21:20:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link></image><item><title>Meta&#x27;s €805 million fine: what on-device data, consent and AI features mean for product teams in Europe</title><link>https://asksumanta.com/insights/meta-fine-on-device-data-consent-ai/</link><guid isPermaLink="true">https://asksumanta.com/insights/meta-fine-on-device-data-consent-ai/</guid><pubDate>Mon, 16 Nov 2026 21:20:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>governance</category><category>ai</category><category>architecture</category><description>Italy fined Meta €805M for reading phone galleries without specific consent. A CTO&#x27;s take on device access rules in the EU and how to design AI features around them.</description><content:encoded><![CDATA[<p><em>Italy&#x27;s data protection authority fined Meta €805 million because a Facebook feature, on by default, read photos, videos and metadata from Android phones without specific consent. The striking part is not the size of the fine but the principle: in the EU, reading data on a user&#x27;s device needs consent even if nothing leaves the phone. As AI features look for more on-device context, that principle reaches far beyond Meta.</em></p><section class="block">
+<h2>What the Garante decided</h2>
+<p>Italy's data protection authority fined Meta €805 million over the Facebook Android app's gallery suggestions feature, which was on by default and proposed photos and videos from users' phones to post; the authority found it accessed photos, videos and metadata without specific, informed consent<sup class="cite"><a href="#ref-1">1</a></sup>. Meta must ask for consent through a separate, specific prompt, keep the feature off by default and report back to the regulator; Meta said it strongly disagrees and will appeal<sup class="cite"><a href="#ref-2">2</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+<p>The legal basis matters more than the number. The decision rests on the rule, from the EU ePrivacy Directive, that storing or accessing information on a user's device requires consent unless it is strictly necessary for a service the user asked for<sup class="cite"><a href="#ref-4">4</a></sup>. Reporting notes the authority treated that requirement as applying whether or not data left the phone<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+</section>
+
+<section class="block">
+<h2>Why this matters beyond Meta</h2>
+<p>Many product teams assume that processing data locally is automatically privacy-friendly and needs no special permission. The European Data Protection Board's guidelines on the technical scope of the device access rule take a broader view: the rule turns on gaining access to information on the device, and the guidelines discuss local processing among their use cases<sup class="cite"><a href="#ref-5">5</a></sup>. On-device processing is often good privacy engineering; it is not, by itself, a consent exemption.</p>
+<p>AI features make this sharper. Assistants that read photos to suggest posts, scan messages to draft replies, index files to answer questions or use sensors for context all reach into the device. The more context a feature uses, the more it looks like the gallery suggestions feature the Garante fined.</p>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Higher sensitivity</small><div class="dgm-nodes"><span class="hl">Photos, messages, files<em>personal content</em></span><span>Contacts and calendar</span></div></div>
+<div class="dgm-tier"><small>Medium</small><div class="dgm-nodes"><span>Location and sensors</span><span>Installed apps and usage</span></div></div>
+<div class="dgm-tier"><small>Lower</small><div class="dgm-nodes"><span>Device settings<em>language, screen size</em></span></div></div>
+<div class="dgm-tier"><small>Rule of thumb</small><div class="dgm-nodes"><span class="hl">If a feature reads it, ask<em>unless strictly necessary for what the user requested</em></span></div></div>
+</div>
+<figcaption>A rough map of device data AI features tend to use. The higher up, the more care consent needs.</figcaption>
+</figure>
+</section>
+
+<section class="block">
+<h2>Designing AI features that use device data</h2>
+<p><strong>Off by default.</strong> If a feature reads personal content from the device and is not strictly necessary for something the user explicitly asked for, ship it off and let users turn it on.</p>
+<p><strong>A specific, honest prompt.</strong> Ask at the moment the feature is first useful, in plain words: what will be read, why, whether anything leaves the device, and how to turn it off. The operating system's permission dialog is not enough on its own; it says what the app can access, not what your feature does with it. The same pattern works inside AI assistants: an in-context confirmation that says exactly what will happen before it does<sup class="cite"><a href="#ref-6">6</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/ai-agents-can-pay-agentic-commerce/in-chat-confirmation.webp" alt="Chat interface where an agent shows an interactive card summarising an action, listing what it will change and offering a Confirm button for the user" width="1060" height="740" loading="lazy"></div><figcaption>An in-context confirmation that explains exactly what will happen before it does: the pattern consent prompts for device data should follow. <span class="credit">Source: <a href="https://blog.modelcontextprotocol.io/posts/2025-11-21-mcp-apps/" target="_blank" rel="noopener">Model Context Protocol Blog, MCP Apps</a> · CC BY 4.0</span></figcaption></figure>
+<p><strong>Minimum access.</strong> Ask for the narrowest access that works: selected photos rather than the whole gallery, one folder rather than all files, approximate rather than precise location.</p>
+<p><strong>Records.</strong> Keep a record of what each user agreed to, when and in which version of the prompt, so you can show it later and re-ask when the feature changes.</p>
+<p><strong>Same rules for models.</strong> If device content is sent to a server or a third-party model, say so, minimise it and apply your normal data protection controls. If it is used to train models, that is a separate purpose needing its own basis.</p>
+<div class="callout"><p>On-device processing is good engineering, not a legal shortcut. In the EU, if your feature reaches into the phone, ask first, ask specifically and start switched off.</p></div>
+</section>
+
+<section class="block">
+<h2>A quick review for existing features</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>List</b><span>Every feature that reads data from users' devices</span></li>
+<li><b>Classify</b><span>What it reads and whether it is strictly necessary for a user request</span></li>
+<li class="hl"><b>Check defaults</b><span>Anything not strictly necessary should start off</span></li>
+<li><b>Check prompts</b><span>Is consent specific, honest and separate?</span></li>
+<li class="hl"><b>Minimise</b><span>Narrow access to what the feature needs</span></li>
+<li><b>Record</b><span>Store consent with prompt version and date</span></li>
+</ol>
+<figcaption>A review most teams can complete in a short sprint, with legal advice on the edge cases.</figcaption>
+</figure>
+</section>
+
+<section class="block">
+<h2>CTO take</h2>
+<p>This fine is about consent and defaults, not about whether the feature was useful. As products add AI that looks for more context, the easiest way to stay on the right side of EU rules is to treat device content as something users lend you deliberately, not something you collect because the permission dialog allowed it. Product, engineering and legal should review device-reading features together, and new AI features should come with a consent design from day one. Meta has said it will appeal, so the decision may change; the design principles will not. Read alongside <a href="https://asksumanta.com/insights/tech-news-2026-11-16/">the 16 November tech news</a>, the <a href="https://asksumanta.com/case-studies/chile-retailer-data-protection-law-21719/">data protection programme case study</a> and the <a href="https://asksumanta.com/fractional-cto-europe/">Europe page</a>.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I help product and engineering teams design AI features that respect privacy rules by default, from consent flows to data minimisation. I am based in India, the United States and the UAE, working globally. See <a href="https://asksumanta.com/ai-architect/">AI architecture</a>, <a href="https://asksumanta.com/regions/">where I work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section><p><a href="https://asksumanta.com/insights/meta-fine-on-device-data-consent-ai/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Change without fear: progressive rollouts and fast rollback for a Brazilian payments platform</title><link>https://asksumanta.com/case-studies/brazil-payments-safe-change-rollouts/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/brazil-payments-safe-change-rollouts/</guid><pubDate>Mon, 16 Nov 2026 15:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>platform</category><category>kubernetes</category><category>observability</category><description>How a Brazilian payments platform can change safely at 1M+ transactions a day: progressive rollouts, canaries judged on payment signals and fast rollback.</description><content:encoded><![CDATA[<p><em>A Brazilian payment institution processed more than a million transactions a day, most of them instant payments that customers expect to complete in seconds. Most of its incidents were not caused by attackers or hardware, but by its own changes: a configuration tweak, a library upgrade, a network adjustment. After a major provider&#x27;s long outage was traced to a routine network change exposing a latent bug, the company decided to make every change small, observable and reversible.</em></p><h2>The situation</h2>
 <p>A Brazilian payment institution offered accounts, cards and instant payments to consumers and small businesses, processing more than a million transactions a day. Customers expected instant payments to complete in seconds at any hour, and partners expected the same. The platform ran on Kubernetes across two cloud regions, with dozens of services owned by several teams.</p>
 <p>Its post-incident reviews told a consistent story. The serious incidents rarely came from attacks or hardware. They came from the company's own changes: a configuration value changed everywhere at once, a library upgrade that behaved differently under peak load, a network rule adjusted during maintenance. Code deployments had some safeguards; configuration and network changes had almost none.</p>
 <p>Brazil's National Monetary Council requires regulated institutions to maintain a cybersecurity policy with incident response and to manage risks in data processing and cloud services<sup class="cite"><a href="#ref-5">5</a></sup>. The company's resilience depended as much on how it changed its own systems as on any external threat.</p>
@@ -3123,83 +3178,4 @@
 <section class="block">
 <h2>How I can help</h2>
 <p>I help teams set up model governance: prompt and policy design, evaluation suites and upgrade routines across vendors. I am based in India, the United States and the UAE, working globally. See <a href="https://asksumanta.com/ai-architect/">AI architecture</a> or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
-</section><p><a href="https://asksumanta.com/insights/openai-model-spec-update-what-builders-should-do/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Answering in under a breath: voice AI agents for a Mexican e-commerce marketplace</title><link>https://asksumanta.com/case-studies/mexico-ecommerce-voice-ai-agents/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/mexico-ecommerce-voice-ai-agents/</guid><pubDate>Sat, 31 Oct 2026 15:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>ai</category><category>agents</category><category>architecture</category><description>How a Mexican marketplace can run Spanish voice AI agents for order calls on an open framework, with latency budgets, human handover and data rights built in.</description><content:encoded><![CDATA[<p><em>A Mexican marketplace took most of its customer calls about one thing: where is my order. Wait times grew every sales season. Voice AI agents could answer those calls, but only if they sounded natural in Mexican Spanish, responded fast enough to feel like a conversation, handed over to people gracefully and respected callers&#x27; data rights. The architecture had to make all four true at once.</em></p><h2>The situation</h2>
-<p>A marketplace in Mexico sold electronics, home goods and fashion from thousands of sellers, with deliveries handled by several carriers. Its contact centre took calls in Spanish, and most of them were about the same few things: where an order was, when it would arrive, how to change the address, how to start a return. During sales seasons, queues grew long enough that callers hung up and tried again, which made the queues longer.</p>
-<p><strong>Why now.</strong> On 29 October 2026, Deepgram announced it is acquiring Daily, the company behind Pipecat, a widely used open-source framework for real-time voice agents<sup class="cite"><a href="#ref-1">1</a></sup>. Both companies said Pipecat will stay under its BSD licence and move to an independent foundation whose steering committee includes Deepgram's competitors<sup class="cite"><a href="#ref-2">2</a></sup>. For a team choosing a voice agent stack, that settled the main worry about building on an open framework. On the legal side, Mexico's new personal data protection law took effect in March 2025<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>, and legal commentary notes a right to object to automated processing that significantly affects people without human involvement<sup class="cite"><a href="#ref-3">3</a></sup>. Callers would always need a route to a person.</p>
-
-<h2>What had to be true</h2>
-<ul>
-<li><strong>Natural Mexican Spanish</strong>, including regional accents, background noise and code-switching with English product names.</li>
-<li><strong>Conversational speed</strong>: replies quick enough that silence never feels like a dropped call.</li>
-<li><strong>Grounded answers only</strong>: order status from the systems, never from the model's imagination.</li>
-<li><strong>A person on request</strong>, with the conversation so far passed across.</li>
-<li><strong>Clear data rules</strong> for recordings and transcripts, and no lock-in to one speech vendor.</li>
-</ul>
-
-<h2>Architecture</h2>
-<figure class="dgm">
-<div class="dgm-stack">
-<div class="dgm-tier"><small>Caller</small><div class="dgm-nodes"><span>Phone<em>SIP trunk</em></span><span>App call button<em>WebRTC</em></span></div></div>
-<div class="dgm-tier"><small>Voice pipeline</small><div class="dgm-nodes"><span class="hl">Pipecat<em>streaming orchestration</em></span><span>Speech-to-text<em>streaming, Spanish models</em></span><span>Text-to-speech<em>streaming, Mexican voice</em></span></div></div>
-<div class="dgm-tier"><small>Reasoning</small><div class="dgm-nodes"><span class="hl">LLM with tool calls<em>structured, narrow tools</em></span><span>Turn-taking<em>interruptions, silence</em></span></div></div>
-<div class="dgm-tier"><small>Tools</small><div class="dgm-nodes"><span>Order lookup<em>verified caller only</em></span><span>Carrier tracking<em>live status</em></span><span>Address change and returns<em>rules first</em></span></div></div>
-<div class="dgm-tier"><small>People</small><div class="dgm-nodes"><span class="hl">Handover to agents<em>summary and transcript</em></span></div></div>
-<div class="dgm-tier"><small>Assure</small><div class="dgm-nodes"><span>Per-stage tracing<em>OpenTelemetry</em></span><span>Evaluations<em>real call samples</em></span><span>Retention rules<em>recordings and transcripts</em></span></div></div>
-</div>
-<figcaption>The framework streams every stage; tools ground every answer; people are one sentence away.</figcaption>
-</figure>
-
-<h2>The data flow, end to end</h2>
-<figure class="dgm">
-<ol class="dgm-flow g3">
-<li><b>Answer</b><span>The call connects; the agent says it is an automated assistant and offers a person</span></li>
-<li><b>Verify</b><span>The caller is matched to an order with phone number and a light check</span></li>
-<li class="hl"><b>Understand</b><span>Streaming speech recognition feeds the model as the caller speaks</span></li>
-<li><b>Look up</b><span>The model calls order and carrier tools; it never guesses a status</span></li>
-<li class="hl"><b>Reply</b><span>Speech starts streaming as soon as the first words are ready</span></li>
-<li><b>Hand over</b><span>On request or low confidence, a person takes over with the summary</span></li>
-</ol>
-<figcaption>Streaming at every stage is what makes the pause short enough to feel human.</figcaption>
-</figure>
-
-<h2>The hard part: latency you can feel</h2>
-<p>In text chat, a two-second delay is fine. On a phone call it feels like the line has dropped. The delay a caller hears is the sum of several stages: detecting that they stopped speaking, finishing speech recognition, the model's first tokens, any tool calls, and the first audio from speech synthesis. Each stage looked acceptable alone; together they were too slow.</p>
-<p>The team set a latency budget per stage and traced every call end to end, so each turn showed exactly where the time went, in the same way distributed tracing shows which service in a request is slow<sup class="cite"><a href="#ref-5">5</a></sup>. That made the fixes obvious: stream everything instead of waiting for whole sentences; prefetch the caller's recent orders as soon as they are verified, so the first tool call is usually instant; use a smaller, faster model for routine turns; and play a short natural acknowledgement while a slow carrier API responds.</p>
-<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/mexico-ecommerce-voice-ai-agents/trace-latency.webp" alt="Trace view showing a request's entity map across frontend, cart, product catalogue, currency and feature flag services, with a span timeline below listing each call and its duration" width="1400" height="760" loading="lazy"></div><figcaption>A trace shows where every millisecond of a request goes; the same view, applied to each conversational turn, made latency fixable. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2024/demo-skyscanner/" target="_blank" rel="noopener">OpenTelemetry blog, Jordi Bisbal Ansaldo</a> · CC BY 4.0</span></figcaption></figure>
-<p>Turn-taking was the other half. Callers interrupt, pause mid-sentence and talk over the agent. The framework's interruption handling let the agent stop speaking when the caller started, and tuning silence detection for Spanish speech patterns cut the most awkward moments. See <a href="https://asksumanta.com/insights/llm-model-routing/">model routing</a> and <a href="https://asksumanta.com/insights/prompt-caching-llm-cost-latency/">prompt caching for latency</a>.</p>
-<div class="callout"><p>Voice agents are judged in hundreds of milliseconds. Budget latency per stage, trace every turn, and stream everything that can be streamed.</p></div>
-
-<h2>How it ran</h2>
-<figure class="dgm">
-<div class="dgm-lanes">
-<div class="dgm-lane"><small>Customer operations</small><ol><li>Top call reasons</li><li class="hl">Handover rules</li><li>Agent coaching</li></ol></div>
-<div class="dgm-lane"><small>Engineering</small><ol><li>Voice pipeline</li><li class="hl">Latency budget and tracing</li><li>Order and carrier tools</li></ol></div>
-<div class="dgm-lane"><small>Legal and privacy</small><ol><li>Disclosure script</li><li>Recording retention</li><li class="hl">Objection and access requests</li></ol></div>
-</div>
-<figcaption>Operations defined what the agent should handle; engineering made it fast; legal made it fair.</figcaption>
-</figure>
-<figure class="dgm">
-<div class="dgm-phases">
-<div><small>Phase 1</small><b>Listen</b><ul><li>Call reason analysis</li><li>Evaluation set from real calls</li><li>Provider tests in Spanish</li></ul></div>
-<div><small>Phase 2</small><b>Build</b><ul><li>Pipecat pipeline</li><li>Order and carrier tools</li><li>Handover</li></ul></div>
-<div><small>Phase 3</small><b>Tune</b><ul><li>Latency budget</li><li>Turn-taking</li><li>Shadow calls</li></ul></div>
-<div><small>Phase 4</small><b>Expand</b><ul><li>Off-peak first</li><li>Sales-season readiness</li><li>Returns flow</li></ul></div>
-</div>
-<figcaption>Off-peak hours first, then sales seasons once the latency budget held.</figcaption>
-</figure>
-
-<h2>Key decisions and trade-offs</h2>
-<table class="tbl">
-<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
-<tbody>
-<tr><td>Open-source framework</td><td>A closed voice agent platform</td><td>Swap speech and model providers; no lock-in</td></tr>
-<tr><td>Stream every stage</td><td>Sentence-by-sentence processing</td><td>The only way to stay inside the latency budget</td></tr>
-<tr><td>Narrow tools for order data</td><td>Give the model raw order records</td><td>Grounded answers and less personal data exposed</td></tr>
-<tr><td>Disclose AI and offer a person upfront</td><td>Only hand over on failure</td><td>Trust, and respects the right to object</td></tr>
-<tr><td>Off-peak rollout first</td><td>Launch for a sales season</td><td>Learn under low risk before peak load</td></tr>
-</tbody>
-</table>
-
-<h2>What I'd do again, and differently</h2>
-<p>Again: build the evaluation set from real call recordings before choosing providers. Speech models that tested well on clean audio struggled with real calls. Differently: trace latency per stage from the first prototype, not after the first complaints. Related: <a href="https://asksumanta.com/insights/evaluating-ai-agents-reliability/">evaluating AI agents</a>, <a href="https://asksumanta.com/case-studies/agent-ready-travel-marketplace-sea/">an agent-ready travel marketplace</a>, today's <a href="https://asksumanta.com/insights/tech-news-2026-10-31/">tech news</a> and <a href="https://asksumanta.com/regions/">where I work</a>.</p>
-<p>If you are building voice AI for customers in Mexico or elsewhere in Latin America, see my <a href="https://asksumanta.com/ai-architect/">AI architecture work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/mexico-ecommerce-voice-ai-agents/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
+</section><p><a href="https://asksumanta.com/insights/openai-model-spec-update-what-builders-should-do/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
