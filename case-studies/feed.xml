@@ -1,6 +1,91 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link><description>Anonymised engagements with architecture and flow diagrams</description><language>en-gb</language><lastBuildDate>Sun, 15 Nov 2026 15:50:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/case-studies/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link></image><item><title>Testing with the regulator in the room: an EU medtech start-up&#x27;s hospital early-warning model in an AI regulatory sandbox</title><link>https://asksumanta.com/case-studies/eu-medtech-ai-regulatory-sandbox/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/eu-medtech-ai-regulatory-sandbox/</guid><pubDate>Sun, 15 Nov 2026 15:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>healthcare</category><category>ai</category><category>governance</category><description>How an EU medtech start-up can use the new AI regulatory sandbox rules for a hospital early-warning model: a clear test plan, real-world evidence and no false comfort.</description><content:encoded><![CDATA[<p><em>A European medtech start-up had built a model that warns hospital ward staff when a patient is likely to deteriorate. It worked on historical data. The questions that mattered next were harder: would it hold up on live wards, how should nurses act on it, and what would regulators expect as evidence? When the EU set common rules for AI regulatory sandboxes, the start-up decided to answer those questions in one, with a supervisor watching, without mistaking the sandbox for approval.</em></p><h2>The situation</h2>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link><description>Anonymised engagements with architecture and flow diagrams</description><language>en-gb</language><lastBuildDate>Mon, 16 Nov 2026 15:50:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/case-studies/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link></image><item><title>Change without fear: progressive rollouts and fast rollback for a Brazilian payments platform</title><link>https://asksumanta.com/case-studies/brazil-payments-safe-change-rollouts/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/brazil-payments-safe-change-rollouts/</guid><pubDate>Mon, 16 Nov 2026 15:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>platform</category><category>kubernetes</category><category>observability</category><description>How a Brazilian payments platform can change safely at 1M+ transactions a day: progressive rollouts, canaries judged on payment signals and fast rollback.</description><content:encoded><![CDATA[<p><em>A Brazilian payment institution processed more than a million transactions a day, most of them instant payments that customers expect to complete in seconds. Most of its incidents were not caused by attackers or hardware, but by its own changes: a configuration tweak, a library upgrade, a network adjustment. After a major provider&#x27;s long outage was traced to a routine network change exposing a latent bug, the company decided to make every change small, observable and reversible.</em></p><h2>The situation</h2>
+<p>A Brazilian payment institution offered accounts, cards and instant payments to consumers and small businesses, processing more than a million transactions a day. Customers expected instant payments to complete in seconds at any hour, and partners expected the same. The platform ran on Kubernetes across two cloud regions, with dozens of services owned by several teams.</p>
+<p>Its post-incident reviews told a consistent story. The serious incidents rarely came from attacks or hardware. They came from the company's own changes: a configuration value changed everywhere at once, a library upgrade that behaved differently under peak load, a network rule adjusted during maintenance. Code deployments had some safeguards; configuration and network changes had almost none.</p>
+<p>Brazil's National Monetary Council requires regulated institutions to maintain a cybersecurity policy with incident response and to manage risks in data processing and cloud services<sup class="cite"><a href="#ref-5">5</a></sup>. The company's resilience depended as much on how it changed its own systems as on any external threat.</p>
+<p><strong>Why now.</strong> In November 2026, Microsoft attributed a long Microsoft 365 outage to traffic shifts during routine network maintenance exposing a latent bug from an earlier capacity upgrade<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. If one of the world's largest operators could be caught by a routine network change, the board asked, what protected a payments platform from the same pattern?</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>Every change counted</strong>: code, configuration, infrastructure and network changes all go through a controlled path.</li>
+<li><strong>Small first</strong>: changes reach a small slice of traffic before everyone.</li>
+<li><strong>Judged by customers</strong>: health measured by payment success and latency, not server metrics alone.</li>
+<li><strong>Reversible</strong>: rollback is fast, rehearsed and the default when in doubt.</li>
+<li><strong>Visible</strong>: anyone can see what changed, where and when, during an incident.</li>
+<li><strong>Still fast</strong>: teams ship often; safety comes from smaller changes, not fewer.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Changes</small><div class="dgm-nodes"><span>Code</span><span>Configuration</span><span>Infrastructure</span><span class="hl">Network<em>previously ungoverned</em></span></div></div>
+<div class="dgm-tier"><small>Pipeline</small><div class="dgm-nodes"><span>Change record<em>who, what, why</em></span><span class="hl">Staged rollout<em>canary, then waves</em></span><span>Feature flags<em>decouple deploy from release</em></span></div></div>
+<div class="dgm-tier"><small>Judgement</small><div class="dgm-nodes"><span class="hl">Canary analysis<em>payment success, latency, errors</em></span><span>Automatic halt<em>on regression</em></span></div></div>
+<div class="dgm-tier"><small>Recovery</small><div class="dgm-nodes"><span>Automated rollback</span><span>Kill switches<em>per feature</em></span></div></div>
+<div class="dgm-tier"><small>Evidence</small><div class="dgm-nodes"><span>Change timeline<em>overlaid on dashboards</em></span><span>Incident reviews</span></div></div>
+</div>
+<figcaption>All change types share one path: record, stage, judge, and roll back if needed.</figcaption>
+</figure>
+<p>Code deployments moved to progressive rollouts on Kubernetes: a new version first replaced a small number of pods while the rest kept serving, and only continued if it stayed healthy. Google's SRE guidance describes canarying in exactly these terms: test each change on a small slice of traffic so defects are caught early with limited impact<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/brazil-payments-safe-change-rollouts/rolling-update.webp" alt="Kubernetes rolling update diagram: one pod has been replaced by the updated app with a new IP address while the other pods behind the same Service still run the previous version" width="1200" height="1007" loading="lazy"></div><figcaption>A rolling update replaces one pod at a time while the Service keeps routing to healthy pods: the starting point for safe change. <span class="credit">Source: <a href="https://github.com/kubernetes/website/blob/main/content/en/docs/tutorials/kubernetes-basics/public/images/module_06_rollingupdates2.svg" target="_blank" rel="noopener">Kubernetes documentation</a> · CC BY 4.0</span></figcaption></figure>
+<p>The bigger change was bringing configuration and network changes into the same discipline<sup class="cite"><a href="#ref-6">6</a></sup>. Configuration moved into version control and rolled out by region and by service in stages, with the same health checks as code. Network changes, such as firewall rules, load balancer settings and routing, went through a pipeline that applied them to one zone first and watched payment signals before continuing.</p>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Propose</b><span>A change is recorded with its owner, purpose and rollback plan</span></li>
+<li><b>Canary</b><span>It reaches a small slice of traffic or one zone</span></li>
+<li class="hl"><b>Judge</b><span>Payment success, latency and errors are compared with the baseline</span></li>
+<li><b>Expand</b><span>If healthy, it proceeds in waves across services and regions</span></li>
+<li class="hl"><b>Halt</b><span>If a signal regresses, rollout stops and rolls back automatically</span></li>
+<li><b>Learn</b><span>Halts and incidents feed back into checks and tests</span></li>
+</ol>
+<figcaption>The same flow for code, configuration and network changes.</figcaption>
+</figure>
+
+<h2>The hard part: judging health in a payments system</h2>
+<p><strong>Choosing signals that reflect customers.</strong> Server metrics often looked fine while customers suffered. Canary analysis used signals that matched customer experience: payment success rate by payment type and partner, end-to-end latency, error codes returned to apps and depth of downstream queues. The SRE workbook stresses choosing metrics that genuinely indicate problems and comparing the canary against a control rather than a fixed threshold<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+<p><strong>Low-volume paths and latent bugs.</strong> A canary on a small slice of traffic can miss problems in rare paths, such as an unusual partner or a refund flow, and latent bugs may only appear under peak load. The team added synthetic transactions for rare paths, kept each wave long enough to cover a busy period for critical changes, and avoided large changes during known peaks such as month-end and holidays.</p>
+<p><strong>Rollback as the default.</strong> Engineers used to try to fix forward during incidents. The new rule: if a recent change might be involved, roll it back first and investigate afterwards. Rollback was rehearsed regularly, and the change timeline appeared on every dashboard so responders could see what had just changed. Google's release engineering guidance treats reliable, repeatable releases and rollbacks as foundations of reliability<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+<div class="callout"><p>Most outages are self-inflicted. Make every change small, watched and reversible, including the configuration and network changes nobody thinks of as releases.</p></div>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Platform</small><ol><li>Progressive rollout tooling</li><li class="hl">Config and network pipelines</li><li>Automated rollback</li></ol></div>
+<div class="dgm-lane"><small>Service teams</small><ol><li>Feature flags</li><li class="hl">Health signals per service</li><li>Rollback rehearsals</li></ol></div>
+<div class="dgm-lane"><small>Network and operations</small><ol><li>Change records</li><li class="hl">Zone-by-zone changes</li><li>Peak calendar</li></ol></div>
+<div class="dgm-lane"><small>Risk and compliance</small><ol><li>Change policy</li><li>Incident evidence</li><li class="hl">Regulatory reporting support</li></ol></div>
+</div>
+<figcaption>Network operations adopting staged changes was the biggest cultural shift.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>See</b><ul><li>Change timeline</li><li>Customer signals</li><li>Incident review of causes</li></ul></div>
+<div><small>Phase 2</small><b>Stage code</b><ul><li>Canary rollouts</li><li>Automatic halt</li><li>Feature flags</li></ul></div>
+<div><small>Phase 3</small><b>Stage config and network</b><ul><li>Config as code</li><li>Zone-first network changes</li><li>Same health checks</li></ul></div>
+<div><small>Phase 4</small><b>Habit</b><ul><li>Rollback rehearsals</li><li>Peak calendar</li><li>Learning from halts</li></ul></div>
+</div>
+<figcaption>Seeing every change on one timeline came first; it made the case for everything else.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Stage configuration and network changes</td><td>Stage code only</td><td>Many serious incidents start outside code</td></tr>
+<tr><td>Judge canaries on payment signals</td><td>CPU and memory thresholds</td><td>Customers feel payments, not servers</td></tr>
+<tr><td>Compare canary with control</td><td>Fixed thresholds</td><td>Handles daily traffic patterns</td></tr>
+<tr><td>Rollback first, investigate later</td><td>Fix forward</td><td>Shorter incidents, calmer responders</td></tr>
+<tr><td>Synthetic checks for rare paths</td><td>Rely on live canary traffic</td><td>Low-volume flows still get tested</td></tr>
+<tr><td>Peak calendar for large changes</td><td>Ship anytime</td><td>Reduces risk when impact would be highest</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: put every change, of every type, on one timeline overlaid on dashboards; it shortened incidents before any automation existed. Differently: bring network engineering in from the start rather than after the code pipeline was done; network changes turned out to carry the most risk and the least tooling. Related: <a href="https://asksumanta.com/insights/microsoft-365-outage-impact-playbook/">the Microsoft 365 outage playbook</a>, <a href="https://asksumanta.com/insights/slos-error-budgets-small-teams/">SLOs and error budgets</a>, the <a href="https://asksumanta.com/case-studies/payments-platform-1m-transactions-a-day/">payments platform case study</a> and <a href="https://asksumanta.com/regions/">where I work</a>.</p>
+<p>If your changes still go out to everyone at once, see my <a href="https://asksumanta.com/fractional-cto/">fractional CTO work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/brazil-payments-safe-change-rollouts/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Testing with the regulator in the room: an EU medtech start-up&#x27;s hospital early-warning model in an AI regulatory sandbox</title><link>https://asksumanta.com/case-studies/eu-medtech-ai-regulatory-sandbox/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/eu-medtech-ai-regulatory-sandbox/</guid><pubDate>Sun, 15 Nov 2026 15:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>healthcare</category><category>ai</category><category>governance</category><description>How an EU medtech start-up can use the new AI regulatory sandbox rules for a hospital early-warning model: a clear test plan, real-world evidence and no false comfort.</description><content:encoded><![CDATA[<p><em>A European medtech start-up had built a model that warns hospital ward staff when a patient is likely to deteriorate. It worked on historical data. The questions that mattered next were harder: would it hold up on live wards, how should nurses act on it, and what would regulators expect as evidence? When the EU set common rules for AI regulatory sandboxes, the start-up decided to answer those questions in one, with a supervisor watching, without mistaking the sandbox for approval.</em></p><h2>The situation</h2>
 <p>A European medtech start-up had developed a model that estimates the risk that a patient on a general hospital ward will deteriorate in the next day, using vital signs, laboratory results and nursing observations. On historical data from two partner hospitals it performed well. The founders knew that was the easy part. Clinical AI often fails in the move from historical data to live wards: data arrives late or differently, staff respond to alerts in ways nobody predicted, and performance varies between sites and patient groups.</p>
 <p>As software intended to support clinical decisions, the product was likely to be regulated as a medical device and treated as high-risk under the EU AI Act. The team needed evidence that would satisfy both regimes, and had no experience of what supervisors would expect.</p>
 <p><strong>Why now.</strong> On 11 November 2026, the Commission published Implementing Regulation (EU) 2026/2487, setting common rules for establishing and running AI regulatory sandboxes under the AI Act<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. Commentary was quick to point out the limits: sandbox participation produces documentation and an exit report, not compliance clearance, and liability stays with the provider<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>. That suited the start-up: it wanted structured supervision and early feedback, not a shortcut.</p>
@@ -3953,89 +4038,4 @@
 
 <h2>What I'd do again, and differently</h2>
 <p>Again: trace one journey end to end before instrumenting everything, and make product owners co-own the targets. Differently: set attribute naming and cardinality rules before the first service onboards. Cleaning up inconsistent labels later cost more than agreeing them early.</p>
-<p>If you're planning something similar, the <a href="https://asksumanta.com/fractional-cto/">fractional CTO</a> page describes how I lead platform and reliability work, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/telecom-observability-slos/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Automating lease, ID and invoice intake without letting a model write to the ledger</title><link>https://asksumanta.com/case-studies/real-estate-document-intake-automation/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/real-estate-document-intake-automation/</guid><pubDate>Wed, 28 Oct 2026 01:42:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>ai</category><category>llm</category><category>data</category><category>security</category><category>architecture</category><description>How a property operator replaced manual keying of leases, IDs and invoices with schema-validated AI extraction, confidence thresholds and exception queues.</description><content:encoded><![CDATA[<p><em>Leases, identity documents and supplier invoices arrived as scans, photos and PDFs, and every one was keyed in by hand before a tenant could be onboarded or a bill paid. The goal was to automate the routine documents and make the rest faster to check, while keeping the core system&#x27;s data trustworthy.</em></p><h2>The situation</h2>
-<p>A property operator onboarded tenants and paid suppliers through a core property management system. Everything that fed it arrived as documents: signed leases, identity documents, proof of address, supplier invoices and service contracts. Each was opened, read and keyed by hand. Onboarding waited on the queue, keying errors surfaced later as billing disputes, and the team spent its time transcribing rather than checking.</p>
-<p>Earlier attempts with template-based OCR had struggled because the documents varied too much: different lease templates, scanned and photographed IDs, and invoices in every layout a supplier could invent.</p>
-
-<h2>What had to be true</h2>
-<ul>
-<li><strong>Every value validated before it reaches the core system</strong>, by rules the business can read.</li>
-<li><strong>The model never writes</strong>: it proposes a record, and deterministic code decides what is posted.</li>
-<li><strong>Uncertain documents go to people</strong>, with the reason and the source region visible.</li>
-<li><strong>Personal data handled deliberately</strong>: limited access, defined retention and no identity documents in logs or prompts beyond what extraction needs.</li>
-<li><strong>Traceability</strong> from any posted value back to the page it came from.</li>
-</ul>
-
-<h2>Architecture</h2>
-<p>Each document type had a versioned JSON Schema describing its fields, types, formats and required properties<sup class="cite"><a href="#ref-1">1</a></sup>. The model was asked to return output conforming to that schema, and the same schema validated the response, so a malformed answer failed loudly instead of slipping through. More on the pattern in <a href="https://asksumanta.com/insights/structured-outputs-reliable-llm-integration/">structured outputs for reliable LLM integration</a>.</p>
-<figure class="dgm">
-<div class="dgm-stack">
-<div class="dgm-tier"><small>Capture</small><div class="dgm-nodes"><span>Tenant portal<em>uploads</em></span><span>Shared mailbox<em>invoices</em></span><span>Branch scanning<em>signed leases</em></span></div></div>
-<div class="dgm-tier"><small>Classify</small><div class="dgm-nodes"><span>Document classifier<em>type and pages</em></span><span>Object storage<em>original, immutable</em></span><span>PII controls<em>access and retention</em></span></div></div>
-<div class="dgm-tier"><small>Extract</small><div class="dgm-nodes"><span class="hl">Vision LLM<em>schema-constrained output</em></span><span>Schema registry<em>versioned per type</em></span><span>Source regions<em>page and box per field</em></span></div></div>
-<div class="dgm-tier"><small>Validate</small><div class="dgm-nodes"><span class="hl">Rules and cross-checks<em>totals, dates, references</em></span><span>Confidence scoring<em>per field</em></span><span class="hl">Exception queue<em>reason-coded</em></span></div></div>
-<div class="dgm-tier"><small>Post</small><div class="dgm-nodes"><span>Workflow engine<em>idempotent steps</em></span><span>Core system API<em>service account</em></span><span>Audit store<em>Postgres</em></span></div></div>
-</div>
-<figcaption>Layered architecture: the model extracts, rules decide, and only deterministic code holds the credentials to post.</figcaption>
-</figure>
-
-<h2>The data flow, end to end</h2>
-<figure class="dgm">
-<ol class="dgm-flow g3">
-<li><b>Receive</b><span>Store the original unchanged; record channel, uploader and checksum</span></li>
-<li><b>Classify</b><span>Identify document type and split multi-document uploads</span></li>
-<li class="hl"><b>Extract</b><span>Vision model returns a schema-shaped record with a source region for each field</span></li>
-<li class="hl"><b>Validate</b><span>Schema check, business rules, and cross-checks against tenant, unit and supplier data</span></li>
-<li><b>Route</b><span>Auto-post when every field passes thresholds; otherwise queue with reason codes</span></li>
-<li><b>Post</b><span>Workflow engine writes to the core system once, with an idempotency key, and logs lineage</span></li>
-</ol>
-<figcaption>Each step is recorded, so a disputed value can be traced to the document, model version and reviewer.</figcaption>
-</figure>
-<p>The audit and staging tables in Postgres carried their own check, not-null and foreign key constraints, so invalid states were rejected by the database as well as by the application<sup class="cite"><a href="#ref-3">3</a></sup>. Retries were safe because posting was idempotent, the same discipline described in <a href="https://asksumanta.com/insights/idempotent-payments-order-pipelines/">idempotent payment and order pipelines</a>.</p>
-
-<h2>The hard part: confidence you can act on</h2>
-<p>Extraction quality was rarely the blocker. Deciding when to trust it was. A model's own statement of certainty is not a reliable signal, so confidence was built from evidence instead:</p>
-<ul>
-<li><strong>Arithmetic and consistency checks</strong>: invoice lines must sum to totals, lease dates must be in order, rent schedules must match the term.</li>
-<li><strong>Reference checks</strong>: the unit, tenant or supplier must exist and match what the document claims.</li>
-<li><strong>Field-level thresholds</strong> set per document type from a labelled sample, with stricter rules on fields that move money or identify people.</li>
-<li><strong>Reason codes</strong> on every exception, so the team could see which rule or field caused most reviews and fix the cause.</li>
-</ul>
-<p>Documents are also untrusted input. Text inside an uploaded file can carry instructions aimed at the model, a form of indirect prompt injection<sup class="cite"><a href="#ref-2">2</a></sup>. The defence was architectural: the extraction model had no tools and no credentials, its output was confined to the schema, and posting was done by code that ignored anything outside defined fields. See <a href="https://asksumanta.com/insights/prompt-injection-defence-for-agents/">prompt injection defence</a>.</p>
-<div class="callout"><p>The model is the least trusted component in the pipeline. Design so that the worst it can do is produce a record that fails validation.</p></div>
-
-<h2>How the engagement ran</h2>
-<figure class="dgm">
-<div class="dgm-lanes">
-<div class="dgm-lane"><small>Pipeline</small><ol><li>Classify and extract</li><li class="hl">Validate and score</li><li>Auto-post or queue</li></ol></div>
-<div class="dgm-lane"><small>Operations reviewer</small><ol><li>Open queued document</li><li class="hl">Correct highlighted fields</li><li>Approve for posting</li></ol></div>
-<div class="dgm-lane"><small>Process owner</small><ol><li>Review reason-code trends</li><li>Adjust rules and thresholds</li><li>Approve schema changes</li></ol></div>
-</div>
-<figcaption>Corrections feed the evaluation set; reason-code trends feed the rules.</figcaption>
-</figure>
-<figure class="dgm">
-<div class="dgm-phases">
-<div><small>Phase 1</small><b>Discover</b><ul><li>Document inventory</li><li>Field and rule catalogue</li><li>Data protection review</li></ul></div>
-<div><small>Phase 2</small><b>One document type</b><ul><li>Schema and extraction</li><li>Labelled sample</li><li>Review UI</li></ul></div>
-<div><small>Phase 3</small><b>Harden</b><ul><li>Cross-checks and thresholds</li><li>Idempotent posting</li><li>Monitoring</li></ul></div>
-<div><small>Phase 4</small><b>Extend and hand off</b><ul><li>Further document types</li><li>Runbooks</li><li>Change process for schemas</li></ul></div>
-</div>
-<figcaption>Phased delivery: start with one high-volume document type and add others on the same rails.</figcaption>
-</figure>
-<p>Ongoing monitoring of exception rates, corrections and drift by document type followed the measure-and-manage approach of the NIST AI Risk Management Framework<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
-
-<h2>Key decisions and trade-offs</h2>
-<table class="tbl">
-<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
-<tbody>
-<tr><td>Vision LLM with schemas</td><td>Template OCR per layout</td><td>Handles layout variety without a template for every supplier</td></tr>
-<tr><td>Deterministic posting</td><td>Agent with system access</td><td>Model holds no credentials; injection cannot cause writes</td></tr>
-<tr><td>Evidence-based confidence</td><td>Model self-reported scores</td><td>Thresholds grounded in checks and measured error rates</td></tr>
-<tr><td>Reason-coded exceptions</td><td>Generic review queue</td><td>Shows which rule or field to improve next</td></tr>
-<tr><td>Versioned schemas per type</td><td>One generic document schema</td><td>Clear validation and safe, reviewable change</td></tr>
-</tbody>
-</table>
-
-<h2>What I'd do again, and differently</h2>
-<p>Again: keep the model away from credentials and let validation, not the model, decide what is posted. Differently: build the labelled sample before the pipeline. Every threshold discussion went faster once there was a shared set of real documents to measure against.</p>
-<p>If you're planning something similar, the <a href="https://asksumanta.com/ai-architect/">AI architect</a> page describes how I run these engagements, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/real-estate-document-intake-automation/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
+<p>If you're planning something similar, the <a href="https://asksumanta.com/fractional-cto/">fractional CTO</a> page describes how I lead platform and reliability work, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/telecom-observability-slos/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>

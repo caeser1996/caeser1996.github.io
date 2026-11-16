@@ -1,6 +1,91 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link><description>Fractional CTO and AI architect: insights, case studies and daily tech news.</description><language>en-gb</language><lastBuildDate>Mon, 16 Nov 2026 08:50:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link></image><item><title>Tech news, 16 November 2026: Italy fines Meta €805 million, Microsoft explains its outage, Maileva&#x27;s 22 million-person leak and a new N-able exploit</title><link>https://asksumanta.com/insights/tech-news-2026-11-16/</link><guid isPermaLink="true">https://asksumanta.com/insights/tech-news-2026-11-16/</guid><pubDate>Mon, 16 Nov 2026 08:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>governance</category><category>security</category><category>platform</category><description>A CTO&#x27;s take: Italy fines Meta €805M over Android gallery access, Microsoft explains its outage, a La Poste unit leaks 22M records and N-able is hit again.</description><content:encoded><![CDATA[<p><em>Italy&#x27;s data protection authority fined Meta €805 million for accessing phone galleries without proper consent, a reminder that device permissions are personal data decisions. Microsoft gave a preliminary cause for last week&#x27;s outage, a French mail platform confirmed a leak affecting 22 million people, and attackers exploited a new chain against N-able&#x27;s remote management servers.</em></p><p>Today's brief covers stories from 13 to 15 November.</p>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link><description>Fractional CTO and AI architect: insights, case studies and daily tech news.</description><language>en-gb</language><lastBuildDate>Mon, 16 Nov 2026 15:50:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link></image><item><title>Change without fear: progressive rollouts and fast rollback for a Brazilian payments platform</title><link>https://asksumanta.com/case-studies/brazil-payments-safe-change-rollouts/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/brazil-payments-safe-change-rollouts/</guid><pubDate>Mon, 16 Nov 2026 15:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>platform</category><category>kubernetes</category><category>observability</category><description>How a Brazilian payments platform can change safely at 1M+ transactions a day: progressive rollouts, canaries judged on payment signals and fast rollback.</description><content:encoded><![CDATA[<p><em>A Brazilian payment institution processed more than a million transactions a day, most of them instant payments that customers expect to complete in seconds. Most of its incidents were not caused by attackers or hardware, but by its own changes: a configuration tweak, a library upgrade, a network adjustment. After a major provider&#x27;s long outage was traced to a routine network change exposing a latent bug, the company decided to make every change small, observable and reversible.</em></p><h2>The situation</h2>
+<p>A Brazilian payment institution offered accounts, cards and instant payments to consumers and small businesses, processing more than a million transactions a day. Customers expected instant payments to complete in seconds at any hour, and partners expected the same. The platform ran on Kubernetes across two cloud regions, with dozens of services owned by several teams.</p>
+<p>Its post-incident reviews told a consistent story. The serious incidents rarely came from attacks or hardware. They came from the company's own changes: a configuration value changed everywhere at once, a library upgrade that behaved differently under peak load, a network rule adjusted during maintenance. Code deployments had some safeguards; configuration and network changes had almost none.</p>
+<p>Brazil's National Monetary Council requires regulated institutions to maintain a cybersecurity policy with incident response and to manage risks in data processing and cloud services<sup class="cite"><a href="#ref-5">5</a></sup>. The company's resilience depended as much on how it changed its own systems as on any external threat.</p>
+<p><strong>Why now.</strong> In November 2026, Microsoft attributed a long Microsoft 365 outage to traffic shifts during routine network maintenance exposing a latent bug from an earlier capacity upgrade<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. If one of the world's largest operators could be caught by a routine network change, the board asked, what protected a payments platform from the same pattern?</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>Every change counted</strong>: code, configuration, infrastructure and network changes all go through a controlled path.</li>
+<li><strong>Small first</strong>: changes reach a small slice of traffic before everyone.</li>
+<li><strong>Judged by customers</strong>: health measured by payment success and latency, not server metrics alone.</li>
+<li><strong>Reversible</strong>: rollback is fast, rehearsed and the default when in doubt.</li>
+<li><strong>Visible</strong>: anyone can see what changed, where and when, during an incident.</li>
+<li><strong>Still fast</strong>: teams ship often; safety comes from smaller changes, not fewer.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Changes</small><div class="dgm-nodes"><span>Code</span><span>Configuration</span><span>Infrastructure</span><span class="hl">Network<em>previously ungoverned</em></span></div></div>
+<div class="dgm-tier"><small>Pipeline</small><div class="dgm-nodes"><span>Change record<em>who, what, why</em></span><span class="hl">Staged rollout<em>canary, then waves</em></span><span>Feature flags<em>decouple deploy from release</em></span></div></div>
+<div class="dgm-tier"><small>Judgement</small><div class="dgm-nodes"><span class="hl">Canary analysis<em>payment success, latency, errors</em></span><span>Automatic halt<em>on regression</em></span></div></div>
+<div class="dgm-tier"><small>Recovery</small><div class="dgm-nodes"><span>Automated rollback</span><span>Kill switches<em>per feature</em></span></div></div>
+<div class="dgm-tier"><small>Evidence</small><div class="dgm-nodes"><span>Change timeline<em>overlaid on dashboards</em></span><span>Incident reviews</span></div></div>
+</div>
+<figcaption>All change types share one path: record, stage, judge, and roll back if needed.</figcaption>
+</figure>
+<p>Code deployments moved to progressive rollouts on Kubernetes: a new version first replaced a small number of pods while the rest kept serving, and only continued if it stayed healthy. Google's SRE guidance describes canarying in exactly these terms: test each change on a small slice of traffic so defects are caught early with limited impact<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/brazil-payments-safe-change-rollouts/rolling-update.webp" alt="Kubernetes rolling update diagram: one pod has been replaced by the updated app with a new IP address while the other pods behind the same Service still run the previous version" width="1200" height="1007" loading="lazy"></div><figcaption>A rolling update replaces one pod at a time while the Service keeps routing to healthy pods: the starting point for safe change. <span class="credit">Source: <a href="https://github.com/kubernetes/website/blob/main/content/en/docs/tutorials/kubernetes-basics/public/images/module_06_rollingupdates2.svg" target="_blank" rel="noopener">Kubernetes documentation</a> · CC BY 4.0</span></figcaption></figure>
+<p>The bigger change was bringing configuration and network changes into the same discipline<sup class="cite"><a href="#ref-6">6</a></sup>. Configuration moved into version control and rolled out by region and by service in stages, with the same health checks as code. Network changes, such as firewall rules, load balancer settings and routing, went through a pipeline that applied them to one zone first and watched payment signals before continuing.</p>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Propose</b><span>A change is recorded with its owner, purpose and rollback plan</span></li>
+<li><b>Canary</b><span>It reaches a small slice of traffic or one zone</span></li>
+<li class="hl"><b>Judge</b><span>Payment success, latency and errors are compared with the baseline</span></li>
+<li><b>Expand</b><span>If healthy, it proceeds in waves across services and regions</span></li>
+<li class="hl"><b>Halt</b><span>If a signal regresses, rollout stops and rolls back automatically</span></li>
+<li><b>Learn</b><span>Halts and incidents feed back into checks and tests</span></li>
+</ol>
+<figcaption>The same flow for code, configuration and network changes.</figcaption>
+</figure>
+
+<h2>The hard part: judging health in a payments system</h2>
+<p><strong>Choosing signals that reflect customers.</strong> Server metrics often looked fine while customers suffered. Canary analysis used signals that matched customer experience: payment success rate by payment type and partner, end-to-end latency, error codes returned to apps and depth of downstream queues. The SRE workbook stresses choosing metrics that genuinely indicate problems and comparing the canary against a control rather than a fixed threshold<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+<p><strong>Low-volume paths and latent bugs.</strong> A canary on a small slice of traffic can miss problems in rare paths, such as an unusual partner or a refund flow, and latent bugs may only appear under peak load. The team added synthetic transactions for rare paths, kept each wave long enough to cover a busy period for critical changes, and avoided large changes during known peaks such as month-end and holidays.</p>
+<p><strong>Rollback as the default.</strong> Engineers used to try to fix forward during incidents. The new rule: if a recent change might be involved, roll it back first and investigate afterwards. Rollback was rehearsed regularly, and the change timeline appeared on every dashboard so responders could see what had just changed. Google's release engineering guidance treats reliable, repeatable releases and rollbacks as foundations of reliability<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+<div class="callout"><p>Most outages are self-inflicted. Make every change small, watched and reversible, including the configuration and network changes nobody thinks of as releases.</p></div>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Platform</small><ol><li>Progressive rollout tooling</li><li class="hl">Config and network pipelines</li><li>Automated rollback</li></ol></div>
+<div class="dgm-lane"><small>Service teams</small><ol><li>Feature flags</li><li class="hl">Health signals per service</li><li>Rollback rehearsals</li></ol></div>
+<div class="dgm-lane"><small>Network and operations</small><ol><li>Change records</li><li class="hl">Zone-by-zone changes</li><li>Peak calendar</li></ol></div>
+<div class="dgm-lane"><small>Risk and compliance</small><ol><li>Change policy</li><li>Incident evidence</li><li class="hl">Regulatory reporting support</li></ol></div>
+</div>
+<figcaption>Network operations adopting staged changes was the biggest cultural shift.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>See</b><ul><li>Change timeline</li><li>Customer signals</li><li>Incident review of causes</li></ul></div>
+<div><small>Phase 2</small><b>Stage code</b><ul><li>Canary rollouts</li><li>Automatic halt</li><li>Feature flags</li></ul></div>
+<div><small>Phase 3</small><b>Stage config and network</b><ul><li>Config as code</li><li>Zone-first network changes</li><li>Same health checks</li></ul></div>
+<div><small>Phase 4</small><b>Habit</b><ul><li>Rollback rehearsals</li><li>Peak calendar</li><li>Learning from halts</li></ul></div>
+</div>
+<figcaption>Seeing every change on one timeline came first; it made the case for everything else.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Stage configuration and network changes</td><td>Stage code only</td><td>Many serious incidents start outside code</td></tr>
+<tr><td>Judge canaries on payment signals</td><td>CPU and memory thresholds</td><td>Customers feel payments, not servers</td></tr>
+<tr><td>Compare canary with control</td><td>Fixed thresholds</td><td>Handles daily traffic patterns</td></tr>
+<tr><td>Rollback first, investigate later</td><td>Fix forward</td><td>Shorter incidents, calmer responders</td></tr>
+<tr><td>Synthetic checks for rare paths</td><td>Rely on live canary traffic</td><td>Low-volume flows still get tested</td></tr>
+<tr><td>Peak calendar for large changes</td><td>Ship anytime</td><td>Reduces risk when impact would be highest</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: put every change, of every type, on one timeline overlaid on dashboards; it shortened incidents before any automation existed. Differently: bring network engineering in from the start rather than after the code pipeline was done; network changes turned out to carry the most risk and the least tooling. Related: <a href="https://asksumanta.com/insights/microsoft-365-outage-impact-playbook/">the Microsoft 365 outage playbook</a>, <a href="https://asksumanta.com/insights/slos-error-budgets-small-teams/">SLOs and error budgets</a>, the <a href="https://asksumanta.com/case-studies/payments-platform-1m-transactions-a-day/">payments platform case study</a> and <a href="https://asksumanta.com/regions/">where I work</a>.</p>
+<p>If your changes still go out to everyone at once, see my <a href="https://asksumanta.com/fractional-cto/">fractional CTO work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/brazil-payments-safe-change-rollouts/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Tech news, 16 November 2026: Italy fines Meta €805 million, Microsoft explains its outage, Maileva&#x27;s 22 million-person leak and a new N-able exploit</title><link>https://asksumanta.com/insights/tech-news-2026-11-16/</link><guid isPermaLink="true">https://asksumanta.com/insights/tech-news-2026-11-16/</guid><pubDate>Mon, 16 Nov 2026 08:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>governance</category><category>security</category><category>platform</category><description>A CTO&#x27;s take: Italy fines Meta €805M over Android gallery access, Microsoft explains its outage, a La Poste unit leaks 22M records and N-able is hit again.</description><content:encoded><![CDATA[<p><em>Italy&#x27;s data protection authority fined Meta €805 million for accessing phone galleries without proper consent, a reminder that device permissions are personal data decisions. Microsoft gave a preliminary cause for last week&#x27;s outage, a French mail platform confirmed a leak affecting 22 million people, and attackers exploited a new chain against N-able&#x27;s remote management servers.</em></p><p>Today's brief covers stories from 13 to 15 November.</p>
 
 <figure class="dgm">
 <div class="dgm-stack">
@@ -3117,62 +3202,4 @@
 
 <h2>What I'd do again, and differently</h2>
 <p>Again: build the evaluation set from real call recordings before choosing providers. Speech models that tested well on clean audio struggled with real calls. Differently: trace latency per stage from the first prototype, not after the first complaints. Related: <a href="https://asksumanta.com/insights/evaluating-ai-agents-reliability/">evaluating AI agents</a>, <a href="https://asksumanta.com/case-studies/agent-ready-travel-marketplace-sea/">an agent-ready travel marketplace</a>, today's <a href="https://asksumanta.com/insights/tech-news-2026-10-31/">tech news</a> and <a href="https://asksumanta.com/regions/">where I work</a>.</p>
-<p>If you are building voice AI for customers in Mexico or elsewhere in Latin America, see my <a href="https://asksumanta.com/ai-architect/">AI architecture work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/mexico-ecommerce-voice-ai-agents/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Tech news, 31 October 2026: Binance&#x27;s record hack, Intel&#x27;s guidance shock, open weights at the top end, OpenAI&#x27;s new Model Spec, voice AI consolidation and New York&#x27;s chatbot law</title><link>https://asksumanta.com/insights/tech-news-2026-10-31/</link><guid isPermaLink="true">https://asksumanta.com/insights/tech-news-2026-10-31/</guid><pubDate>Sat, 31 Oct 2026 08:55:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>security</category><category>ai</category><category>governance</category><description>A CTO&#x27;s take: Binance&#x27;s record hack, Intel&#x27;s weak outlook, Mistral&#x27;s open 1T model, OpenAI&#x27;s new Model Spec, Deepgram buying Daily and New York&#x27;s chatbot law.</description><content:encoded><![CDATA[<p><em>The biggest story is a security one: Binance says a compromised laptop led to the largest crypto theft on record. Around it, Intel&#x27;s outlook rattled chip stocks, frontier-scale open weights arrived from Mistral, OpenAI rewrote the rules its models are meant to follow, a voice AI deal promised to keep a key open-source framework open, and New York moved to regulate chatbots for minors.</em></p><p>Today's brief covers stories from 28 to 30 October that earlier briefs did not include. Several have deeper analyses linked below.</p>
-
-<figure class="dgm">
-<div class="dgm-stack">
-<div class="dgm-tier"><small>Rules</small><div class="dgm-nodes"><span>OpenAI Model Spec<em>how models should behave</em></span><span>New York chatbot law<em>minors and AI companions</em></span></div></div>
-<div class="dgm-tier"><small>Applications</small><div class="dgm-nodes"><span>Deepgram and Daily<em>voice agent stack</em></span></div></div>
-<div class="dgm-tier"><small>Models</small><div class="dgm-nodes"><span class="hl">Mistral Large 4<em>open weights at the top end</em></span><span>Cohere<em>state-backed sovereign AI</em></span></div></div>
-<div class="dgm-tier"><small>Silicon</small><div class="dgm-nodes"><span>Intel<em>weak outlook, PC slowdown</em></span></div></div>
-<div class="dgm-tier"><small>Security</small><div class="dgm-nodes"><span class="hl">Binance<em>laptop to withdrawal</em></span></div></div>
-</div>
-<figcaption>Where today's stories land. The security and open-model stories are the ones to act on.</figcaption>
-</figure>
-
-<section class="block">
-<h2>1. Binance reports a $6.3 billion theft, the largest on record</h2>
-<p>Binance said on 29 October that attackers had stolen crypto assets it estimated at about $6.3 billion, suspended deposits and withdrawals, and said it would cover losses<sup class="cite"><a href="#ref-2">2</a></sup>. Its early account is that a compromised laptop gave the attacker access to a service container, from which unauthorised withdrawals were submitted; markets fell and stablecoin issuers froze part of the funds<sup class="cite"><a href="#ref-1">1</a></sup>. Figures were still moving at the time of writing.</p>
-<p><strong>CTO take:</strong> the pattern applies to any platform that moves money: one compromised internal service should never be enough to release funds. Check that services can only request payments, that an independent policy layer approves them, and that limits cap what can move in an hour. The full analysis is in <a href="https://asksumanta.com/insights/binance-hack-custody-architecture-lessons/">the Binance hack: architecture lessons</a>.</p>
-</section>
-
-<section class="block">
-<h2>2. Intel's weak outlook sends its shares down sharply</h2>
-<p>Intel's third-quarter results beat estimates, but its fourth-quarter revenue guidance fell well short, and CNBC reported a drop of about 21% in the shares as the company pointed to a PC slowdown lasting into next year<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
-<p><strong>CTO take:</strong> for buyers, this is a reminder that chip supply chains are under strain from several directions at once. If your hardware roadmap depends on a single vendor's next node or product, keep an alternative in the plan, especially for edge and on-premises AI.</p>
-</section>
-
-<section class="block">
-<h2>3. Mistral opens its trillion-parameter model; Canada backs Cohere</h2>
-<p>Mistral released the weights of Mistral Large 4, a one-trillion-parameter mixture-of-experts model aimed at security teams who want to run it themselves; the benchmarks quoted are Mistral's own<sup class="cite"><a href="#ref-4">4</a></sup>. The same day, Canada announced an equity investment of up to C$1.6 billion in Cohere, tied to building compute capacity in Canada<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
-<p><strong>CTO take:</strong> sovereign and self-hosted options at the top end are real now, but holding a trillion parameters in memory is expensive. Test through an API first and keep the stack portable. See <a href="https://asksumanta.com/insights/mistral-large-4-open-weights-self-hosting/">should you run a 1T model yourself?</a> and <a href="https://asksumanta.com/case-studies/eu-telecom-sovereign-llm-platform/">a sovereign LLM platform for a European telecom</a>.</p>
-</section>
-
-<section class="block">
-<h2>4. OpenAI rewrites its Model Spec</h2>
-<p>OpenAI published an updated Model Spec on 29 October, organised around five core values and an explicit order of authority between system, developer and user instructions; it describes the document as a target its models do not yet fully meet<sup class="cite"><a href="#ref-6">6</a></sup>.</p>
-<p><strong>CTO take:</strong> if you build on OpenAI models, the instruction hierarchy is the part to read: it affects how your system prompts interact with user input and tool output. Re-run your evaluation and prompt-injection tests after model updates rather than assuming behaviour holds; see <a href="https://asksumanta.com/insights/prompt-injection-defence-for-agents/">prompt-injection defence for agents</a>.</p>
-</section>
-
-<section class="block">
-<h2>5. Deepgram buys Daily and sets up a Pipecat Foundation</h2>
-<p>Deepgram announced it is acquiring Daily, the company behind the open-source Pipecat voice agent framework<sup class="cite"><a href="#ref-7">7</a></sup>. Both companies say Pipecat stays under its existing BSD licence and will be governed by a new independent foundation with a steering committee that includes Deepgram's competitors<sup class="cite"><a href="#ref-8">8</a></sup>.</p>
-<p><strong>CTO take:</strong> voice agents are consolidating around a few stacks. If you depend on Pipecat, the foundation is good news, but track its governance and keep your speech-to-text and text-to-speech providers swappable behind your own interfaces.</p>
-</section>
-
-<section class="block">
-<h2>6. New York signs a youth chatbot safety law</h2>
-<p>New York's governor signed a law on 28 October barring a set of AI chatbot features judged unsafe for minors, including chatbots that pretend to be human or encourage self-harm<sup class="cite"><a href="#ref-9">9</a></sup>.</p>
-<p><strong>CTO take:</strong> any public chatbot that New York users can reach should plan for age-aware behaviour, enforced guardrails and evidence. See <a href="https://asksumanta.com/insights/new-york-youth-chatbot-law-ai-assistants/">what AI product teams must build</a> and the <a href="https://asksumanta.com/fractional-cto-united-states/">US page</a>.</p>
-</section>
-
-<section class="block">
-<h2>What I'd do this week</h2>
-<ul>
-<li>Run an assume-breach review of every path from an internal service to an action that moves money.</li>
-<li>Re-run evaluations and prompt-injection tests on any model that changed this month.</li>
-<li>Check which open-source frameworks in your AI stack have changed owners, and who governs them now.</li>
-<li>If you serve consumers in New York, map every chat surface against the new law.</li>
-</ul>
-<p>Working across these markets? See <a href="https://asksumanta.com/regions/">where I work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
-</section><p><a href="https://asksumanta.com/insights/tech-news-2026-10-31/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
+<p>If you are building voice AI for customers in Mexico or elsewhere in Latin America, see my <a href="https://asksumanta.com/ai-architect/">AI architecture work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/mexico-ecommerce-voice-ai-agents/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>

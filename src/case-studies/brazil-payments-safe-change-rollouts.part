@@ -1,0 +1,87 @@
+<!--{"title": "Case study: safe change for a Brazilian payments platform", "description": "How a Brazilian payments platform can change safely at 1M+ transactions a day: progressive rollouts, canaries judged on payment signals and fast rollback.", "short": "Safe change for Brazilian payments", "h1": "Change without fear: progressive rollouts and fast rollback for a Brazilian payments platform", "kicker": "Case study · Reliability and release engineering", "lede": "A Brazilian payment institution processed more than a million transactions a day, most of them instant payments that customers expect to complete in seconds. Most of its incidents were not caused by attackers or hardware, but by its own changes: a configuration tweak, a library upgrade, a network adjustment. After a major provider's long outage was traced to a routine network change exposing a latent bug, the company decided to make every change small, observable and reversible.", "date": "2026-11-16", "datetime": "2026-11-16T15:50:00+04:00", "readtime": "9 min read", "sector": "Payments · Brazil", "role": "Fractional CTO and platform architect", "engagement": "Assessment, architecture and delivery leadership", "scope": "Change inventory, progressive delivery, canary analysis, feature flags, configuration and network change control, rollback, incident learning", "stack": ["Kubernetes with progressive rollouts", "Canary analysis on service level indicators", "Feature flags", "Configuration as code with staged rollout", "Network change pipeline", "OpenTelemetry metrics and traces", "Automated rollback", "Change calendar and freeze rules"], "outcomes": ["Every kind of change, code, configuration and network, goes through a staged rollout", "Canaries judged by customer-facing signals such as payment success and latency", "Rollback treated as the default response, rehearsed and fast", "Fewer large changes; more small, reversible ones", "Change records that support regulators' expectations on resilience and incident handling"], "tags": ["platform", "kubernetes", "observability"], "keywords": ["progressive delivery", "canary releases", "automated rollback", "change management payments", "instant payments reliability", "Pix reliability", "Brazil payment institution technology", "configuration change safety", "network change control", "fractional CTO Brazil"], "faq": [["What is a canary release?", "Rolling a change out to a small share of traffic or servers first, comparing its behaviour against the existing version on key signals, and only continuing if it is healthy. Google's SRE guidance describes canarying as a way to catch defects early while limiting impact."], ["Why include configuration and network changes in progressive rollout?", "Because many serious outages come from configuration and network changes rather than code. Microsoft's November 2026 Microsoft 365 outage, for example, was attributed to network maintenance exposing a latent bug from an earlier upgrade."], ["What signals should decide whether a payments canary is healthy?", "Customer-facing signals: payment success rate, end-to-end latency, error rates by payment type and partner, and downstream queue depth, rather than only server CPU or memory."]], "related": ["/fractional-cto/", "/ai-architect/", "/regions/"], "citations": [{"title": "Microsoft says network upgrade caused Microsoft 365 outage", "url": "https://betanews.com/article/microsoft-365-outage-network-upgrade/", "publisher": "BetaNews", "date": "Nov 2026"}, {"title": "Microsoft to publish full review after global M365 outage linked to network upgrade issue", "url": "https://www.arnnet.com.au/article/4248767/microsoft-to-publish-full-review-after-global-m365-outage-linked-to-network-upgrade-issue.html", "publisher": "ARN", "date": "Nov 2026"}, {"title": "Canarying Releases (The Site Reliability Workbook, Chapter 16)", "url": "https://sre.google/workbook/canarying-releases/", "publisher": "Google", "date": "2018"}, {"title": "Release Engineering (Site Reliability Engineering, Chapter 8)", "url": "https://sre.google/sre-book/release-engineering/", "publisher": "Google", "date": "2016"}, {"title": "Resolução CMN nº 4.893, de 26 de fevereiro de 2021", "url": "https://www.ancord.org.br/wp-content/uploads/2021/03/Resolucao-CMN-n-4.893-de-26_2_2021.pdf", "publisher": "Conselho Monetário Nacional (via ANCORD)", "date": "26 Feb 2021"}, {"title": "module_06_rollingupdates2.svg (Kubernetes basics tutorial images)", "url": "https://github.com/kubernetes/website/blob/main/content/en/docs/tutorials/kubernetes-basics/public/images/module_06_rollingupdates2.svg", "publisher": "Kubernetes", "date": "2026"}]}-->
+<h2>The situation</h2>
+<p>A Brazilian payment institution offered accounts, cards and instant payments to consumers and small businesses, processing more than a million transactions a day. Customers expected instant payments to complete in seconds at any hour, and partners expected the same. The platform ran on Kubernetes across two cloud regions, with dozens of services owned by several teams.</p>
+<p>Its post-incident reviews told a consistent story. The serious incidents rarely came from attacks or hardware. They came from the company's own changes: a configuration value changed everywhere at once, a library upgrade that behaved differently under peak load, a network rule adjusted during maintenance. Code deployments had some safeguards; configuration and network changes had almost none.</p>
+<p>Brazil's National Monetary Council requires regulated institutions to maintain a cybersecurity policy with incident response and to manage risks in data processing and cloud services<sup class="cite"><a href="#ref-5">5</a></sup>. The company's resilience depended as much on how it changed its own systems as on any external threat.</p>
+<p><strong>Why now.</strong> In November 2026, Microsoft attributed a long Microsoft 365 outage to traffic shifts during routine network maintenance exposing a latent bug from an earlier capacity upgrade<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. If one of the world's largest operators could be caught by a routine network change, the board asked, what protected a payments platform from the same pattern?</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>Every change counted</strong>: code, configuration, infrastructure and network changes all go through a controlled path.</li>
+<li><strong>Small first</strong>: changes reach a small slice of traffic before everyone.</li>
+<li><strong>Judged by customers</strong>: health measured by payment success and latency, not server metrics alone.</li>
+<li><strong>Reversible</strong>: rollback is fast, rehearsed and the default when in doubt.</li>
+<li><strong>Visible</strong>: anyone can see what changed, where and when, during an incident.</li>
+<li><strong>Still fast</strong>: teams ship often; safety comes from smaller changes, not fewer.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Changes</small><div class="dgm-nodes"><span>Code</span><span>Configuration</span><span>Infrastructure</span><span class="hl">Network<em>previously ungoverned</em></span></div></div>
+<div class="dgm-tier"><small>Pipeline</small><div class="dgm-nodes"><span>Change record<em>who, what, why</em></span><span class="hl">Staged rollout<em>canary, then waves</em></span><span>Feature flags<em>decouple deploy from release</em></span></div></div>
+<div class="dgm-tier"><small>Judgement</small><div class="dgm-nodes"><span class="hl">Canary analysis<em>payment success, latency, errors</em></span><span>Automatic halt<em>on regression</em></span></div></div>
+<div class="dgm-tier"><small>Recovery</small><div class="dgm-nodes"><span>Automated rollback</span><span>Kill switches<em>per feature</em></span></div></div>
+<div class="dgm-tier"><small>Evidence</small><div class="dgm-nodes"><span>Change timeline<em>overlaid on dashboards</em></span><span>Incident reviews</span></div></div>
+</div>
+<figcaption>All change types share one path: record, stage, judge, and roll back if needed.</figcaption>
+</figure>
+<p>Code deployments moved to progressive rollouts on Kubernetes: a new version first replaced a small number of pods while the rest kept serving, and only continued if it stayed healthy. Google's SRE guidance describes canarying in exactly these terms: test each change on a small slice of traffic so defects are caught early with limited impact<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/brazil-payments-safe-change-rollouts/rolling-update.webp" alt="Kubernetes rolling update diagram: one pod has been replaced by the updated app with a new IP address while the other pods behind the same Service still run the previous version" width="1200" height="1007" loading="lazy"></div><figcaption>A rolling update replaces one pod at a time while the Service keeps routing to healthy pods: the starting point for safe change. <span class="credit">Source: <a href="https://github.com/kubernetes/website/blob/main/content/en/docs/tutorials/kubernetes-basics/public/images/module_06_rollingupdates2.svg" target="_blank" rel="noopener">Kubernetes documentation</a> · CC BY 4.0</span></figcaption></figure>
+<p>The bigger change was bringing configuration and network changes into the same discipline<sup class="cite"><a href="#ref-6">6</a></sup>. Configuration moved into version control and rolled out by region and by service in stages, with the same health checks as code. Network changes, such as firewall rules, load balancer settings and routing, went through a pipeline that applied them to one zone first and watched payment signals before continuing.</p>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Propose</b><span>A change is recorded with its owner, purpose and rollback plan</span></li>
+<li><b>Canary</b><span>It reaches a small slice of traffic or one zone</span></li>
+<li class="hl"><b>Judge</b><span>Payment success, latency and errors are compared with the baseline</span></li>
+<li><b>Expand</b><span>If healthy, it proceeds in waves across services and regions</span></li>
+<li class="hl"><b>Halt</b><span>If a signal regresses, rollout stops and rolls back automatically</span></li>
+<li><b>Learn</b><span>Halts and incidents feed back into checks and tests</span></li>
+</ol>
+<figcaption>The same flow for code, configuration and network changes.</figcaption>
+</figure>
+
+<h2>The hard part: judging health in a payments system</h2>
+<p><strong>Choosing signals that reflect customers.</strong> Server metrics often looked fine while customers suffered. Canary analysis used signals that matched customer experience: payment success rate by payment type and partner, end-to-end latency, error codes returned to apps and depth of downstream queues. The SRE workbook stresses choosing metrics that genuinely indicate problems and comparing the canary against a control rather than a fixed threshold<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+<p><strong>Low-volume paths and latent bugs.</strong> A canary on a small slice of traffic can miss problems in rare paths, such as an unusual partner or a refund flow, and latent bugs may only appear under peak load. The team added synthetic transactions for rare paths, kept each wave long enough to cover a busy period for critical changes, and avoided large changes during known peaks such as month-end and holidays.</p>
+<p><strong>Rollback as the default.</strong> Engineers used to try to fix forward during incidents. The new rule: if a recent change might be involved, roll it back first and investigate afterwards. Rollback was rehearsed regularly, and the change timeline appeared on every dashboard so responders could see what had just changed. Google's release engineering guidance treats reliable, repeatable releases and rollbacks as foundations of reliability<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+<div class="callout"><p>Most outages are self-inflicted. Make every change small, watched and reversible, including the configuration and network changes nobody thinks of as releases.</p></div>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Platform</small><ol><li>Progressive rollout tooling</li><li class="hl">Config and network pipelines</li><li>Automated rollback</li></ol></div>
+<div class="dgm-lane"><small>Service teams</small><ol><li>Feature flags</li><li class="hl">Health signals per service</li><li>Rollback rehearsals</li></ol></div>
+<div class="dgm-lane"><small>Network and operations</small><ol><li>Change records</li><li class="hl">Zone-by-zone changes</li><li>Peak calendar</li></ol></div>
+<div class="dgm-lane"><small>Risk and compliance</small><ol><li>Change policy</li><li>Incident evidence</li><li class="hl">Regulatory reporting support</li></ol></div>
+</div>
+<figcaption>Network operations adopting staged changes was the biggest cultural shift.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>See</b><ul><li>Change timeline</li><li>Customer signals</li><li>Incident review of causes</li></ul></div>
+<div><small>Phase 2</small><b>Stage code</b><ul><li>Canary rollouts</li><li>Automatic halt</li><li>Feature flags</li></ul></div>
+<div><small>Phase 3</small><b>Stage config and network</b><ul><li>Config as code</li><li>Zone-first network changes</li><li>Same health checks</li></ul></div>
+<div><small>Phase 4</small><b>Habit</b><ul><li>Rollback rehearsals</li><li>Peak calendar</li><li>Learning from halts</li></ul></div>
+</div>
+<figcaption>Seeing every change on one timeline came first; it made the case for everything else.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Stage configuration and network changes</td><td>Stage code only</td><td>Many serious incidents start outside code</td></tr>
+<tr><td>Judge canaries on payment signals</td><td>CPU and memory thresholds</td><td>Customers feel payments, not servers</td></tr>
+<tr><td>Compare canary with control</td><td>Fixed thresholds</td><td>Handles daily traffic patterns</td></tr>
+<tr><td>Rollback first, investigate later</td><td>Fix forward</td><td>Shorter incidents, calmer responders</td></tr>
+<tr><td>Synthetic checks for rare paths</td><td>Rely on live canary traffic</td><td>Low-volume flows still get tested</td></tr>
+<tr><td>Peak calendar for large changes</td><td>Ship anytime</td><td>Reduces risk when impact would be highest</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: put every change, of every type, on one timeline overlaid on dashboards; it shortened incidents before any automation existed. Differently: bring network engineering in from the start rather than after the code pipeline was done; network changes turned out to carry the most risk and the least tooling. Related: <a href="/insights/microsoft-365-outage-impact-playbook/">the Microsoft 365 outage playbook</a>, <a href="/insights/slos-error-budgets-small-teams/">SLOs and error budgets</a>, the <a href="/case-studies/payments-platform-1m-transactions-a-day/">payments platform case study</a> and <a href="/regions/">where I work</a>.</p>
+<p>If your changes still go out to everyone at once, see my <a href="/fractional-cto/">fractional CTO work</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
