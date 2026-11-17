@@ -1,0 +1,70 @@
+<!--{"title": "Paying down technical debt without a rewrite: a field note", "description": "How a fractional CTO paydown plan works in practice: name the debt by its business cost, fund it like a portfolio and replace systems piece by piece instead of rewriting.", "h1": "Paying down technical debt without a rewrite: what works when the business cannot stop", "kicker": "Field note · Fractional CTO leadership", "lede": "Almost every company I join has a system everyone wants to rewrite. Almost none of those rewrites should happen. Debt is real and expensive, but the cure is usually a steady, funded paydown that the business can see, not a big-bang replacement that freezes product work for a year. This is how I approach it, and how I explain it to founders and boards.", "date": "2026-11-17", "datetime": "2026-11-17T21:20:00+04:00", "readtime": "8 min read", "format": "field-note", "tags": ["leadership", "architecture", "platform"], "keywords": ["technical debt", "paying down technical debt", "avoid big rewrite", "strangler fig pattern", "technical debt quadrant", "engineering investment allocation", "DORA metrics", "toil reduction", "fractional CTO technical debt", "legacy modernisation"], "faq": [["Should we rewrite our legacy system?", "Usually not all at once. Big rewrites tend to take longer than planned, freeze product work and recreate old problems. Replacing a system piece by piece, behind stable interfaces, keeps the business running and shows progress early."], ["How do I explain technical debt to a board?", "In business terms: what it slows down, what it puts at risk and what it costs in people's time. Tie each debt item to a measurable effect, such as release frequency, incident rate or hours of manual work."], ["How much engineering time should go to technical debt?", "There is no universal number. Agree an explicit share of capacity with the business, protect it, and adjust it based on evidence such as delivery speed and incident trends."]], "related": ["/fractional-cto/", "/how-i-work/", "/regions/"], "citations": [{"title": "The WyCash Portfolio Management System (OOPSLA 1992 experience report)", "url": "http://c2.com/doc/oopsla92.html", "publisher": "Ward Cunningham", "date": "1992"}, {"title": "Technical Debt Quadrant", "url": "https://martinfowler.com/bliki/TechnicalDebtQuadrant.html", "publisher": "Martin Fowler", "date": "2009"}, {"title": "Strangler Fig Application", "url": "https://martinfowler.com/bliki/StranglerFigApplication.html", "publisher": "Martin Fowler", "date": "2004"}, {"title": "DORA's software delivery performance metrics", "url": "https://dora.dev/guides/dora-metrics-four-keys/", "publisher": "DORA", "date": "2026"}, {"title": "Eliminating Toil (Site Reliability Engineering, Chapter 5)", "url": "https://sre.google/sre-book/eliminating-toil/", "publisher": "Google", "date": "2016"}, {"title": "Evolving Kubernetes networking with the Gateway API", "url": "https://kubernetes.io/blog/2021/04/22/evolving-kubernetes-networking-with-the-gateway-api/", "publisher": "Kubernetes blog", "date": "22 Apr 2021"}]}-->
+<section class="block">
+<h2>The rewrite that never ships</h2>
+<p>The pattern is familiar. A core system has grown slow to change and fragile to run. Engineers propose a rewrite. Leadership agrees, because it sounds decisive. A year later the new system handles some of the work, the old one still handles the rest, and the team now maintains both. Product work slowed the whole time.</p>
+<p>Ward Cunningham, who coined the term, described debt as the cost of shipping with understanding that later needs to be repaid by refactoring; the danger is not borrowing but never repaying<sup class="cite"><a href="#ref-1">1</a></sup>. Repayment works best in small, regular instalments, not one enormous one.</p>
+</section>
+
+<section class="block">
+<h2>Step 1: name debt by what it costs the business</h2>
+<p>"The code is messy" is not a reason a board can fund. "Every change to pricing takes three teams and a weekend release" is. I start by listing debt items with their business effect: what they slow down, what they put at risk and what manual work they create. Martin Fowler's distinction between deliberate and inadvertent, prudent and reckless debt helps separate conscious trade-offs worth keeping from accidents worth fixing<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Risk</small><div class="dgm-nodes"><span class="hl">Could cause an incident or breach<em>fix first</em></span></div></div>
+<div class="dgm-tier"><small>Speed</small><div class="dgm-nodes"><span>Slows important changes<em>fund steadily</em></span></div></div>
+<div class="dgm-tier"><small>Toil</small><div class="dgm-nodes"><span>Creates repetitive manual work<em>automate</em></span></div></div>
+<div class="dgm-tier"><small>Annoyance</small><div class="dgm-nodes"><span>Ugly but harmless<em>leave it</em></span></div></div>
+</div>
+<figcaption>Rank debt by business effect. The bottom layer is where most rewrite enthusiasm lives, and where it should not.</figcaption>
+</figure>
+<p>Toil deserves special attention. Google's SRE guidance defines it as manual, repetitive work that scales with the service and has no lasting value<sup class="cite"><a href="#ref-5">5</a></sup>; it is often the cheapest debt to pay down and the easiest to show results for.</p>
+</section>
+
+<section class="block">
+<h2>Step 2: fund it like a portfolio</h2>
+<p>Instead of a one-off project, agree an explicit share of engineering capacity for debt and reliability work, and protect it. The exact share depends on the state of the system and the business's appetite; what matters is that it is visible, agreed and not raided every time a deadline looms.</p>
+<p>Then measure whether it is working. The four DORA measures, deployment frequency, lead time for changes, change failure rate and time to restore, are a good, widely understood signal of whether paydown is making delivery faster and safer<sup class="cite"><a href="#ref-4">4</a></sup>. If they do not move, change what you are paying down.</p>
+<div class="callout"><p>Debt paydown that cannot show its effect on delivery or risk will lose its budget. Measure it, report it and connect it to things the business already cares about.</p></div>
+</section>
+
+<section class="block">
+<h2>Step 3: replace piece by piece</h2>
+<p>When part of a system really does need replacing, the strangler fig approach works far better than a rewrite: put a stable interface in front of the old system, build new capability behind it one slice at a time, and gradually route traffic to the new parts until the old system can be retired<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Front</b><span>Put a routing layer or stable API in front of the old system</span></li>
+<li><b>Slice</b><span>Pick one capability with clear boundaries and real value</span></li>
+<li class="hl"><b>Build</b><span>Build it new behind the same interface</span></li>
+<li><b>Shift</b><span>Route a small share of traffic to it, compare, then increase</span></li>
+<li class="hl"><b>Retire</b><span>Remove the old code path once the new one carries everything</span></li>
+<li><b>Repeat</b><span>Choose the next slice based on business value and risk</span></li>
+</ol>
+<figcaption>Each slice delivers value on its own. If priorities change, you stop with something useful, not half a rewrite.</figcaption>
+</figure>
+<p>Modern routing makes the shift step routine. Weighted routing can send a small share of traffic to the new implementation, or route specific requests by header, and roll back instantly if something goes wrong<sup class="cite"><a href="#ref-6">6</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/agent-ready-travel-marketplace-sea/httproute.webp" alt="Diagram of a load balancer sending requests through an HTTPRoute: normal traffic split 90 percent to service v1 and 10 percent to v2, and requests with a canary header sent entirely to v2" width="1200" height="319" loading="lazy"></div><figcaption>Weighted and header-based routing: the mechanism that lets a new slice take traffic gradually while the old system keeps running. <span class="credit">Source: <a href="https://kubernetes.io/blog/2021/04/22/evolving-kubernetes-networking-with-the-gateway-api/" target="_blank" rel="noopener">Kubernetes blog, Gateway API authors</a> · CC BY 4.0</span></figcaption></figure>
+</section>
+
+<section class="block">
+<h2>When a rewrite is actually right</h2>
+<table class="tbl">
+<thead><tr><th>Situation</th><th>Usually better</th></tr></thead>
+<tbody>
+<tr><td>System works but is slow to change</td><td>Refactor and replace slices</td></tr>
+<tr><td>Platform is unsupported or insecure with no upgrade path</td><td>Planned migration, still in slices where possible</td></tr>
+<tr><td>Small system with clear, stable requirements</td><td>A rewrite can be reasonable</td></tr>
+<tr><td>Business model has changed completely</td><td>Build new alongside, retire old</td></tr>
+</tbody>
+</table>
+<p>Even when replacement is justified, I push to run old and new in parallel and move traffic gradually. The goal is never a "big bang" day.</p>
+</section>
+
+<section class="block">
+<h2>Field note: what I tell founders</h2>
+<p>Three things. First, debt is a normal cost of moving fast; the question is whether you are paying the interest knowingly. Second, the team that wants a rewrite is usually right about the pain and wrong about the cure. Third, the best signal of progress is not new architecture diagrams but faster, safer releases and fewer late-night incidents. See <a href="/insights/fractional-cto-first-90-days-playbook/">a fractional CTO's first 90 days</a>, <a href="/insights/architecture-decision-records-fractional-cto/">architecture decision records</a>, the <a href="/case-studies/legacy-php-estate-security-modernisation/">legacy estate modernisation case study</a> and the <a href="/case-studies/brazil-payments-safe-change-rollouts/">safe change case study</a>.</p>
+</section>
+
+<section class="block">
+<h2>How I can help</h2>
+<p>I help leadership teams decide what debt to pay down, fund it sensibly and modernise systems without stopping the business. I am based in India, the United States and the UAE, working globally. See <a href="/fractional-cto/">fractional CTO work</a>, <a href="/how-i-work/">how I work</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
