@@ -1,0 +1,83 @@
+<!--{"title": "Case study: an Australian bank and the Scams Prevention Framework", "description": "How an Australian bank can prepare for the Scams Prevention Framework: scam intelligence, real-time payment friction, fast disruption and evidence of reasonable steps.", "short": "Scam prevention platform for an Australian bank", "h1": "Reasonable steps you can prove: preparing an Australian bank for the Scams Prevention Framework", "kicker": "Case study · Scam prevention", "lede": "A customer-owned Australian bank had fraud controls built for stolen cards and taken-over accounts, not for customers persuaded to send money themselves. The Scams Prevention Framework turns scam prevention into a legal duty with a regulator watching. The goal was a platform that finds scams earlier, acts on intelligence quickly and can show, payment by payment, why it did what it did.", "date": "2026-11-18", "datetime": "2026-11-18T15:50:00+04:00", "readtime": "9 min read", "sector": "Retail banking · Australia", "role": "Fractional CTO and AI architect", "engagement": "Readiness assessment, architecture and delivery leadership", "scope": "Scam intelligence, real-time payment risk, disruption, reporting, complaints and reimbursement, evidence", "stack": ["Payment event stream", "Real-time risk scoring", "Scam entity graph", "Intelligence case store", "Customer friction service", "LLM report triage", "Decision evidence store", "OpenTelemetry tail sampling"], "outcomes": ["Scam signals from payments, devices, customers and partners in one case view", "Higher-risk payments slowed with targeted friction instead of blanket holds", "Intelligence turned into disruption and regulator reports as tracked work", "Every intervention recorded with the signals and rule or model behind it", "Complaints and reimbursement handled from the same evidence"], "tags": ["security", "ai", "data"], "keywords": ["Scams Prevention Framework", "SPF Australia", "actionable scam intelligence", "authorised push payment scams", "scam prevention bank Australia", "real-time payment risk", "ACCC scams", "AFCA scam complaints", "fractional CTO Australia", "scam detection AI"], "faq": [["What is the Scams Prevention Framework?", "An Australian law passed in February 2025 that makes designated businesses, starting with banks, telcos and digital platforms, take reasonable steps to prevent, detect, report, disrupt and respond to scams, under principles overseen by the ACCC and sector codes enforced by sector regulators."], ["What is actionable scam intelligence?", "Information that gives an entity reasonable grounds to suspect that a communication, transaction or other activity connected with its service is a scam. It can come from customers, the entity's own analysis or other organisations, and triggers duties to report it and take reasonable steps to disrupt the activity."], ["Does a bank have to stop every scam?", "No. The framework is built around reasonable steps. That is why the evidence matters: a bank needs to show what it knew, when, and what it did about it, for each case."]], "related": ["/fractional-cto-australia/", "/ai-architect/", "/fractional-cto/"], "citations": [{"title": "Scams Prevention Framework: Protecting Australians from scams", "url": "https://treasury.gov.au/sites/default/files/2025-01/p2025-623966.pdf", "publisher": "The Treasury (Australia)", "date": "Jan 2025"}, {"title": "Explainer: Australia's new Scam Prevention Framework", "url": "https://www.twobirds.com/en/insights/2025/australia/explainer-australias-new-scam-prevention-framework", "publisher": "Bird & Bird", "date": "2025"}, {"title": "Australia: Scams Prevention, draft code and rules released", "url": "https://www.bakermckenzie.com/en/insight/publications/2026/06/australia-scams-prevention-draft-code-and-rules-released", "publisher": "Baker McKenzie", "date": "Jun 2026"}, {"title": "'Click Here': Australia's Scam Prevention Framework takes shape", "url": "https://www.gtlaw.com.au/insights/click-here-australias-scam-prevention-framework-takes-shape", "publisher": "Gilbert + Tobin", "date": "2026"}, {"title": "Tail sampling with OpenTelemetry: why it's useful, how to do it, and what to consider", "url": "https://opentelemetry.io/blog/2022/tail-sampling/", "publisher": "OpenTelemetry blog (Reese Lee)", "date": "26 Sep 2022"}]}-->
+
+<h2>The situation</h2>
+<p>A mid-sized, customer-owned Australian bank had sound fraud controls for the problems of a decade ago: stolen card numbers, compromised passwords, account takeover. Its losses had shifted to a different pattern. Customers were being talked into sending money themselves, through investment, impersonation and romance scams, and the bank's systems saw a properly authenticated customer making a real-time payment. Every control said the payment was legitimate, because technically it was.</p>
+<p>The Scams Prevention Framework changes what a bank is expected to do about that. Passed in February 2025, it sets overarching principles for designated sectors: governance, prevent, detect, report, disrupt and respond<sup class="cite"><a href="#ref-1">1</a></sup>. When a bank has actionable scam intelligence, meaning reasonable grounds to suspect a scam connected with its service, it must report it to the ACCC and take reasonable steps to disrupt it, with a safe harbour for disruption while it investigates, for up to 28 days<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<p><strong>Why now.</strong> Banking, telecommunications and digital platforms have been designated as the first sectors, and the framework is moving from principles to detailed sector codes<sup class="cite"><a href="#ref-4">4</a></sup>. Treasury released draft rules and codes, including a common code and a banking code, for consultation in May 2026<sup class="cite"><a href="#ref-3">3</a></sup>. The obligations are close enough that the platform work had to start now, not after the final text.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>Scams treated as their own problem</strong>, not as a subset of unauthorised fraud.</li>
+<li><strong>One view of a scam</strong> across payments, devices, customer reports and intelligence from other organisations.</li>
+<li><strong>Friction that matches risk</strong>: most payments untouched, the risky few slowed in ways that actually break the scammer's script.</li>
+<li><strong>Intelligence acted on in hours</strong>, with reporting and disruption tracked as work, not emails.</li>
+<li><strong>Evidence for every intervention</strong>, strong enough for a complaint, an external dispute or the regulator.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Signals</small><div class="dgm-nodes"><span>Payments<em>real-time, card, bill</em></span><span>Device and session<em>remote access, new device</em></span><span>Customer reports<em>app, phone, branch</em></span><span>External intelligence<em>banks, telcos, platforms</em></span></div></div>
+<div class="dgm-tier"><small>Detection</small><div class="dgm-nodes"><span class="hl">Real-time risk scoring<em>rules plus model</em></span><span>Scam entity graph<em>payees, mules, numbers, sites</em></span><span>LLM report triage<em>structured, human checked</em></span></div></div>
+<div class="dgm-tier"><small>Action</small><div class="dgm-nodes"><span class="hl">Friction service<em>warn, confirm, hold, call</em></span><span>Disruption<em>block payee, restrict mule</em></span><span>Reporting<em>regulator and sharing</em></span></div></div>
+<div class="dgm-tier"><small>Response</small><div class="dgm-nodes"><span>Intelligence cases<em>owner and clock</em></span><span>Complaints and reimbursement<em>internal disputes</em></span><span>Customer support<em>after a scam</em></span></div></div>
+<div class="dgm-tier"><small>Assurance</small><div class="dgm-nodes"><span class="hl">Decision evidence store<em>immutable</em></span><span>Traces<em>full for flagged payments</em></span><span>Control testing<em>scheduled</em></span></div></div>
+</div>
+<figcaption>Signals feed one detection layer; every action it takes leaves evidence behind.</figcaption>
+</figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Initiate</b><span>A customer starts a payment; payment and session events go on the stream</span></li>
+<li><b>Score</b><span>Rules, model and graph lookups score the payment in the payment path</span></li>
+<li class="hl"><b>Intervene</b><span>Higher risk gets targeted friction: a specific warning, confirmation or hold</span></li>
+<li><b>Learn</b><span>Outcomes and customer reports flow back as intelligence</span></li>
+<li class="hl"><b>Disrupt and report</b><span>Actionable intelligence opens a case to block, restrict and report</span></li>
+<li><b>Evidence</b><span>The decision, signals and actions are stored for complaints and review</span></li>
+</ol>
+<figcaption>Detection in the payment path, disruption and reporting as tracked cases, and evidence at every step.</figcaption>
+</figure>
+
+<h2>The hard part: proving reasonable steps, case by case</h2>
+<p>A framework built on reasonable steps is judged after the event. A customer complains weeks later; the question is what the bank knew at the moment of the payment, and what it did. Fraud systems usually keep a score and an outcome. That is not enough. The design stored an immutable decision record for every payment that was scored above the lowest threshold: the signals present, the rule or model version, the friction shown and the customer's response.</p>
+<p>Traces were the second layer. Keeping a full trace for every payment would be expensive and mostly useless. Tail sampling in the OpenTelemetry Collector makes the keep-or-drop decision after all spans in a trace are complete<sup class="cite"><a href="#ref-5">5</a></sup>, so the team kept every trace for a flagged, held or interrupted payment and a small sample of the rest.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/australia-bank-scams-prevention-framework/keep-the-evidence.webp" alt="Diagram of a tail sampling processor containing a trace with a root span and two child spans, deciding whether to keep the trace only once all spans are done" width="1200" height="686" loading="lazy"></div><figcaption>Decide what to keep once the whole trace is complete: every flagged payment, a sample of the rest. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2022/tail-sampling/" target="_blank" rel="noopener">OpenTelemetry blog, Reese Lee</a> · CC BY 4.0</span></figcaption></figure>
+<div class="callout"><p>Traces cannot be the only record. A scam reported a week later was never flagged at the time, so its trace may be gone. The decision record is the evidence; traces are the detail when you still have them.</p></div>
+<p>The entity graph followed the approach in <a href="/case-studies/fintech-fraud-ring-knowledge-graph/">the fraud ring knowledge graph</a>, using <a href="/insights/entity-resolution-knowledge-graphs/">entity resolution</a> to connect payees, mule accounts, phone numbers and websites across reports. The LLM triage step turned free-text customer reports into structured intelligence, with a person confirming anything that would trigger disruption; it was evaluated on real, de-identified reports first, as in <a href="/insights/llm-evaluation-sets-that-predict-production/">evaluation sets that predict production</a>.</p>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Risk and compliance</small><ol><li>Map principles to controls</li><li class="hl">Define actionable intelligence</li><li>Board and regulator reporting</li></ol></div>
+<div class="dgm-lane"><small>Engineering and data</small><ol><li>Payment event stream</li><li class="hl">Scoring, graph and friction</li><li>Evidence store and traces</li></ol></div>
+<div class="dgm-lane"><small>Operations</small><ol><li>Scam case handling</li><li>Customer friction scripts</li><li class="hl">Complaints and reimbursement</li></ol></div>
+</div>
+<figcaption>Compliance defined the thresholds, engineering built the paths, operations ran the cases.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Assess</b><ul><li>Scam loss patterns</li><li>Gaps against principles</li><li>Draft code review</li></ul></div>
+<div><small>Phase 2</small><b>See</b><ul><li>Event stream</li><li>Entity graph</li><li>Case store</li></ul></div>
+<div><small>Phase 3</small><b>Act</b><ul><li>Risk scoring</li><li>Targeted friction</li><li>Disruption and reports</li></ul></div>
+<div><small>Phase 4</small><b>Prove</b><ul><li>Evidence store</li><li>Control testing</li><li>Track final codes</li></ul></div>
+</div>
+<figcaption>See scams first, act on them second, and make the proof a product, not an afterthought.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Separate scam models from fraud models</td><td>Extend the existing fraud model</td><td>The customer is genuine; the signals and the right response are different</td></tr>
+<tr><td>Targeted friction, such as a scam-specific question</td><td>Generic warnings on every payment</td><td>Customers learn to click past generic warnings</td></tr>
+<tr><td>Intelligence as cases with owners and clocks</td><td>Alerts in a shared inbox</td><td>Reporting and disruption must be timely and provable</td></tr>
+<tr><td>Person confirms LLM-extracted intelligence</td><td>Automatic action on model output</td><td>Wrongly blocking a payee harms a real customer</td></tr>
+<tr><td>Decision records for every scored payment</td><td>Rely on logs and traces</td><td>Logs rotate; complaints arrive weeks later</td></tr>
+<tr><td>Build to the principles, track the codes</td><td>Wait for final codes</td><td>The principles are stable; the detail can be tuned</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: start with the evidence record and the case model, because they shape everything else, and treat the regulator's definition of actionable intelligence as an engineering requirement with a threshold and an owner. Differently: bring operations and the contact centre in on friction design from the first week. The best interventions came from the people who talk to scam victims, not from the risk model. Related patterns are in <a href="/insights/idempotent-payments-order-pipelines/">idempotent payment pipelines</a> and <a href="/case-studies/saudi-bank-deepfake-resistant-onboarding/">deepfake-resistant onboarding</a>.</p>
+<p>If you run a regulated Australian business, my <a href="/fractional-cto-australia/">work with Australian companies</a> explains how I approach it, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
