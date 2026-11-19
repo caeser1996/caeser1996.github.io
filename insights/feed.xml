@@ -1,6 +1,52 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights</title><link>https://asksumanta.com/</link><description>Articles on AI, data, cloud and technology leadership</description><language>en-gb</language><lastBuildDate>Wed, 18 Nov 2026 21:20:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/insights/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights</title><link>https://asksumanta.com/</link></image><item><title>Your vendors&#x27; admin tools are your perimeter: what N-central, ScreenConnect, Qubole and Optimizely have in common</title><link>https://asksumanta.com/insights/vendor-admin-access-rmm-breaches/</link><guid isPermaLink="true">https://asksumanta.com/insights/vendor-admin-access-rmm-breaches/</guid><pubDate>Wed, 18 Nov 2026 21:20:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>security</category><category>governance</category><category>cloud</category><description>Four incidents in a month came through tools vendors use to manage customers. A CTO&#x27;s take on standing vendor access, how to inventory it and how to shrink it.</description><content:encoded><![CDATA[<p><em>In the space of a few weeks, attackers went after a remote management platform, a remote support tool, a data platform&#x27;s cross-account roles and an experimentation tag. Different products, one pattern: each is a channel a vendor uses to act inside many customers at once. Most companies have more of these channels than they know, and none of them shows up on a firewall diagram.</em></p><section class="block">
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights</title><link>https://asksumanta.com/</link><description>Articles on AI, data, cloud and technology leadership</description><language>en-gb</language><lastBuildDate>Thu, 19 Nov 2026 08:55:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/insights/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights</title><link>https://asksumanta.com/</link></image><item><title>Tech news, 19 November 2026: Java4Shell, a poisoned Microsoft agent package, GPT-6.2 Astra and Sol, and Malaysia&#x27;s data centre pipeline</title><link>https://asksumanta.com/insights/tech-news-2026-11-19/</link><guid isPermaLink="true">https://asksumanta.com/insights/tech-news-2026-11-19/</guid><pubDate>Thu, 19 Nov 2026 08:55:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>security</category><category>ai</category><category>cloud</category><description>A CTO&#x27;s take: Java4Shell exposes Java servers to remote code execution, Microsoft&#x27;s agent-framework package is poisoned on PyPI, and OpenAI ships GPT-6.2 Astra and Sol.</description><content:encoded><![CDATA[<p><em>A flaw in OpenJDK&#x27;s Base64 decoder, dubbed Java4Shell, puts widely used Java servers at risk of remote code execution, and fixes are arriving unevenly across Java distributions. Two malicious releases of Microsoft&#x27;s agent-framework package on PyPI stole cloud and CI credentials at Python start-up. OpenAI released GPT-6.2 Astra and Sol, and Malaysia&#x27;s parliament heard how large its approved data centre pipeline has become.</em></p><p>Today's brief covers stories from 17 to 18 November.</p>
+
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Runtime</small><div class="dgm-nodes"><span class="hl">Java4Shell<em>OpenJDK, every Java server</em></span></div></div>
+<div class="dgm-tier"><small>Dependencies and CI</small><div class="dgm-nodes"><span class="hl">agent-framework on PyPI<em>cloud and CI secrets</em></span></div></div>
+<div class="dgm-tier"><small>Models</small><div class="dgm-nodes"><span>GPT-6.2 Astra and Sol<em>ChatGPT, Codex and API</em></span></div></div>
+<div class="dgm-tier"><small>Infrastructure</small><div class="dgm-nodes"><span>Malaysia data centres<em>approved pipeline, policy on jobs</em></span></div></div>
+</div>
+<figcaption>Today's stories by layer: two security items low in the stack need action this week.</figcaption>
+</figure>
+
+<section class="block">
+<h2>1. Java4Shell puts Java servers at risk of remote code execution</h2>
+<p>Researchers at Calif disclosed CVE-2026-114938, dubbed Java4Shell, a flaw in the Base64 decoder of OpenJDK's HotSpot runtime that can write outside its memory when handling malformed input; The Hacker News reports it can enable unauthenticated remote code execution in applications such as Jira, Jenkins and Keycloak<sup class="cite"><a href="#ref-1">1</a></sup>. Updated Java 17, 21, 25 and 27 builds were released on 17 November, and Qualys has published guidance on finding affected runtimes and patching<sup class="cite"><a href="#ref-2">2</a></sup>. Fixes are arriving at different times across Java distributions, and researchers note that turning it into working code execution takes work for each target<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<p><strong>CTO take:</strong> the hard part is not the patch, it is finding every Java runtime: bundled inside vendor appliances, baked into container base images, pinned in old build pipelines. Start with internet-facing Java services and identity systems such as Keycloak, then rebuild images rather than patching running containers. Ask each vendor whose product ships its own Java when their fixed build lands, and track distributions separately, because Oracle's date is not your distribution's date. A software bill of materials that records the runtime, not just libraries, makes the next one of these a query instead of a hunt.</p>
+</section>
+
+<section class="block">
+<h2>2. Microsoft's agent-framework package is poisoned on PyPI</h2>
+<p>Versions 1.26.1 and 1.26.2 of Microsoft's agent-framework package were published to PyPI on 17 November with a credential stealer that targeted Azure, Azure DevOps and GitHub Actions secrets<sup class="cite"><a href="#ref-3">3</a></sup>. The code ran through a .pth start-up hook, so it executed whenever Python started on an affected machine, even if the package was never imported; Wiz says 1.26.0 is the latest safe version<sup class="cite"><a href="#ref-4">4</a></sup>. Both releases have been removed.</p>
+<p><strong>CTO take:</strong> treat any machine or CI runner that installed either version as compromised and rotate every secret it could reach, not only the ones the reports name. The structural fix is the same as for every recent package attack: pin versions with hashes, let new releases age before automatic upgrades pick them up, and give CI jobs short-lived, narrowly scoped cloud credentials rather than long-lived secrets in environment variables. Agent frameworks are now core dependencies with broad access, so they deserve the controls you apply to payment code. See <a href="https://asksumanta.com/insights/ai-model-supply-chain-security/">AI model supply chain security</a> and <a href="https://asksumanta.com/insights/vendor-admin-access-rmm-breaches/">vendor admin access as perimeter</a>.</p>
+</section>
+
+<section class="block">
+<h2>3. OpenAI releases GPT-6.2 Astra and Sol</h2>
+<p>OpenAI announced GPT-6.2 Astra, aimed at demanding professional work, and GPT-6.2 Sol, aimed at everyday and routine multi-step tasks, available in ChatGPT and Codex for paid plans and through the API<sup class="cite"><a href="#ref-5">5</a></sup>. Coverage reports lower API pricing for Astra and tighter safeguards on higher-risk cybersecurity requests<sup class="cite"><a href="#ref-6">6</a></sup>.</p>
+<p><strong>CTO take:</strong> a two-tier release is an invitation to route, not to switch. Run both against your own evaluation set, send routine work to the cheaper tier and keep the larger model for tasks where it measurably wins. If your product relies on security-related prompts, test whether the new safeguards change behaviour before upgrading. See <a href="https://asksumanta.com/insights/llm-model-routing/">LLM model routing</a> and <a href="https://asksumanta.com/insights/llm-evaluation-sets-that-predict-production/">evaluation sets that predict production</a>.</p>
+</section>
+
+<section class="block">
+<h2>4. Malaysia's parliament hears the scale of its data centre pipeline</h2>
+<p>Malaysia's Dewan Rakyat was told on 18 November that the country's Data Centre Task Force had approved 27 projects worth an estimated RM225.97 billion up to last month, with lawmakers pressing for those investments to bring high-skilled jobs and strengthen AI and cybersecurity capability<sup class="cite"><a href="#ref-7">7</a></sup>.</p>
+<p><strong>CTO take:</strong> for companies across Southeast Asia, more local capacity means more choice of region and potentially lower latency, but also more scrutiny of what those facilities deliver locally and who uses their chips. If you plan to host AI workloads in Malaysia, check power and water commitments, export control obligations and local skills expectations alongside price. See the <a href="https://asksumanta.com/case-studies/malaysia-gpu-cloud-export-control-compliance/">Malaysia GPU cloud case study</a> and my <a href="https://asksumanta.com/fractional-cto-singapore/">work in Singapore and Southeast Asia</a>.</p>
+</section>
+
+<section class="block">
+<h2>What I'd do this week</h2>
+<ul>
+<li>Inventory Java runtimes, including those inside vendor products and container images; patch internet-facing services first.</li>
+<li>Search lockfiles and CI logs for agent-framework 1.26.1 or 1.26.2; rotate secrets wherever it appears.</li>
+<li>Add hash pinning and a release cooling-off period to Python and JavaScript dependency updates.</li>
+<li>Evaluate GPT-6.2 Astra and Sol on your own tasks before changing defaults.</li>
+<li>If Southeast Asian hosting is on your roadmap, add local policy and export control checks to provider selection.</li>
+</ul>
+<p>I am a <a href="https://asksumanta.com/fractional-cto/">fractional CTO</a> and <a href="https://asksumanta.com/ai-architect/">AI architect</a> based in India, the United States and the UAE, working globally. If any of these lands on your desk this week, <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section><p><a href="https://asksumanta.com/insights/tech-news-2026-11-19/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Your vendors&#x27; admin tools are your perimeter: what N-central, ScreenConnect, Qubole and Optimizely have in common</title><link>https://asksumanta.com/insights/vendor-admin-access-rmm-breaches/</link><guid isPermaLink="true">https://asksumanta.com/insights/vendor-admin-access-rmm-breaches/</guid><pubDate>Wed, 18 Nov 2026 21:20:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>security</category><category>governance</category><category>cloud</category><description>Four incidents in a month came through tools vendors use to manage customers. A CTO&#x27;s take on standing vendor access, how to inventory it and how to shrink it.</description><content:encoded><![CDATA[<p><em>In the space of a few weeks, attackers went after a remote management platform, a remote support tool, a data platform&#x27;s cross-account roles and an experimentation tag. Different products, one pattern: each is a channel a vendor uses to act inside many customers at once. Most companies have more of these channels than they know, and none of them shows up on a firewall diagram.</em></p><section class="block">
 <h2>Four incidents, one pattern</h2>
 <p>N-able took its hosted N-central remote monitoring and management environments offline on 9 November after proof-of-concept exploits for more than 30 alleged flaws were published, and told on-premises customers to take their servers down<sup class="cite"><a href="#ref-1">1</a></sup>. A week later, attackers were exploiting a new N-central chain within hours of its proof of concept appearing<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
 <p>Meanwhile Huntress reported a campaign against managed service providers' ScreenConnect servers: between 20 October and 16 November, attackers posing as guests made around 688,000 requests across 42 servers to push a malicious file, waiting for a technician to join a session so a flaw in the technician's client would run it<sup class="cite"><a href="#ref-3">3</a></sup>. Wiz reported that an attacker used credentials tied to Qubole's AWS account to assume roles customers had created to trust Qubole, then collected secrets and data<sup class="cite"><a href="#ref-4">4</a></sup>. And attackers used a flaw in Optimizely's sign-up flow to inject malicious JavaScript into customer projects, which then ran on customers' websites<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
@@ -2786,65 +2832,4 @@
 <section class="block">
 <h2>How I can help</h2>
 <p>I help teams plan AI capacity and cost alongside architecture, so launches are not hostage to a shortage. See <a href="https://asksumanta.com/fractional-cto/">fractional CTO</a> and <a href="https://asksumanta.com/ai-architect/">AI architecture</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
-</section><p><a href="https://asksumanta.com/insights/ai-capacity-crunch-cloud-planning/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Defender-first AI models: what Gemini 4 Carbon means for how fast you must patch</title><link>https://asksumanta.com/insights/defender-first-ai-models-vulnerability-management/</link><guid isPermaLink="true">https://asksumanta.com/insights/defender-first-ai-models-vulnerability-management/</guid><pubDate>Thu, 29 Oct 2026 12:25:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>security</category><category>ai</category><category>platform</category><description>Google is releasing Gemini 4 Carbon to cyber defenders first. A CTO&#x27;s take on why AI-speed vulnerability discovery means faster patching and behaviour monitoring.</description><content:encoded><![CDATA[<p><em>Google&#x27;s newest frontier model is going to cyber defenders before anyone else, because it is good at finding and exploiting vulnerabilities. That head start will not last. The practical question for engineering leaders is how short your window from disclosure to patch needs to be when finding bugs gets cheap.</em></p><section class="block">
-<h2>What was announced</h2>
-<p>Google announced Gemini 4 Carbon on 28 October 2026 as its next frontier model, highlighting cybersecurity and long-running engineering work<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. Rather than a general launch, Carbon is going first to a small group of cyber defenders, with trusted partners added gradually and no date yet for developers or businesses; the security benchmark results quoted at launch are Google's own<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
-</section>
-
-<section class="block">
-<h2>Why this changes the patching maths</h2>
-<p>The same week showed how quickly known flaws are used. The PHP2Shell vulnerabilities had fixes released on 21 October, were added to CISA's Known Exploited Vulnerabilities catalog on 26 October, and researchers were already recording successful exploitation<sup class="cite"><a href="#ref-4">4</a></sup><sup class="cite"><a href="#ref-5">5</a></sup>. Models that are good at finding and exploiting vulnerabilities compress that cycle further: more bugs found, and less time between disclosure and working exploits. Defender-first access buys time, but capabilities spread.</p>
-<figure class="dgm">
-<ol class="dgm-flow g3">
-<li><b>Discover</b><span>A flaw is found, increasingly with AI help</span></li>
-<li><b>Disclose</b><span>Advisory and fixed versions published</span></li>
-<li class="hl"><b>Weaponise</b><span>Working exploits appear, sometimes within days</span></li>
-<li class="hl"><b>Your window</b><span>Time between disclosure and your patch</span></li>
-<li><b>Exploit</b><span>Unpatched, exposed systems are hit first</span></li>
-<li><b>Detect</b><span>Behaviour monitoring catches what patching missed</span></li>
-</ol>
-<figcaption>AI shrinks the steps attackers control. The only step you control is your window, so make it short.</figcaption>
-</figure>
-<div class="callout"><p>Assume every service is vulnerable. The goal is not zero vulnerabilities; it is a short window and early detection when the window is missed.</p></div>
-</section>
-
-<section class="block">
-<h2>Assume exploitation, and watch behaviour</h2>
-<p>Patching will sometimes be late. The Kubernetes community has long argued for treating every microservice as vulnerable and monitoring how it behaves, because an exploited service makes irregular requests, returns irregular responses and takes irregular time to respond<sup class="cite"><a href="#ref-6">6</a></sup>. Those signals do not depend on knowing the vulnerability in advance.</p>
-<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/defender-first-ai-models-vulnerability-management/foothold.webp" alt="Diagram of benign clients and a malicious client calling a service and its data store in Kubernetes, with the malicious path showing irregular requests, irregular responses and irregular response times" width="1200" height="637" loading="lazy"></div><figcaption>An attacker gaining a foothold shows up as irregular behaviour between client, service and data store, whatever the vulnerability. <span class="credit">Source: <a href="https://kubernetes.io/blog/2023/01/20/security-behavior-analysis/" target="_blank" rel="noopener">Kubernetes blog, David Hadas</a> · CC BY 4.0</span></figcaption></figure>
-</section>
-
-<section class="block">
-<h2>A vulnerability programme built for AI speed</h2>
-<figure class="dgm">
-<div class="dgm-stack">
-<div class="dgm-tier"><small>Know</small><div class="dgm-nodes"><span class="hl">Live inventory<em>runtimes, images, owners</em></span><span>SBOMs<em>per build</em></span></div></div>
-<div class="dgm-tier"><small>Prioritise</small><div class="dgm-nodes"><span>Known-exploited first<em>KEV-driven SLAs</em></span><span>Exposure<em>internet-facing first</em></span></div></div>
-<div class="dgm-tier"><small>Fix</small><div class="dgm-nodes"><span class="hl">Golden images<em>rebuild, not hand-patch</em></span><span>Automated rollout<em>canary and rollback</em></span></div></div>
-<div class="dgm-tier"><small>Detect</small><div class="dgm-nodes"><span class="hl">Behaviour monitoring<em>irregular requests and timing</em></span><span>Egress controls<em>limit what a foothold reaches</em></span></div></div>
-<div class="dgm-tier"><small>Find first</small><div class="dgm-nodes"><span>AI-assisted review<em>your code, authorised scope</em></span><span>Human triage<em>every finding checked</em></span></div></div>
-</div>
-<figcaption>Inventory and rebuildable images shorten the window; behaviour monitoring covers the gap.</figcaption>
-</figure>
-<table class="tbl">
-<thead><tr><th>Metric</th><th>Why it matters now</th><th>Where to start</th></tr></thead>
-<tbody>
-<tr><td>Time to know</td><td>You cannot patch what you cannot find</td><td>One inventory with owners, refreshed automatically</td></tr>
-<tr><td>Time to patch known-exploited flaws</td><td>Exploits arrive faster</td><td>A days-not-weeks target for internet-facing systems</td></tr>
-<tr><td>Share of fleet on golden images</td><td>Rebuilds beat manual patching</td><td>Start with the most exposed services</td></tr>
-<tr><td>Detection of irregular behaviour</td><td>Some windows will be missed</td><td>Baselines for critical services and data stores</td></tr>
-</tbody>
-</table>
-<p>For a worked example, see <a href="https://asksumanta.com/case-studies/legacy-php-estate-security-modernisation/">securing a legacy PHP estate after PHP2Shell</a>.</p>
-</section>
-
-<section class="block">
-<h2>CTO take</h2>
-<p>Do not wait for access to these models to act on what they imply. Set a short, explicit patch target for known-exploited vulnerabilities on internet-facing systems, make rebuilding from golden images the default fix, and fund behaviour monitoring for the services that hold sensitive data. If your security partners do get early access, agree the rules first: authorised scope, isolated environments and human review of every finding. Resilience rules such as DORA and NIS2 in the EU and CPS 230 in Australia already expect this kind of discipline; see <a href="https://asksumanta.com/regions/">by region</a>.</p>
-<p>Related reading: <a href="https://asksumanta.com/insights/ai-agent-sandboxing-lessons-anthropic-s1/">sandboxing AI agents</a>, <a href="https://asksumanta.com/case-studies/security-operations-ai-copilot/">an AI copilot for the security operations centre</a> and the <a href="https://asksumanta.com/insights/tech-news-2026-10-29-2/">tech news update for 29 October</a>.</p>
-</section>
-
-<section class="block">
-<h2>How I can help</h2>
-<p>I help leadership teams turn security from a scramble into a platform: inventory, rebuildable infrastructure and monitoring that hold up when the next advisory lands. See <a href="https://asksumanta.com/technical-due-diligence/">technical due diligence</a> and <a href="https://asksumanta.com/fractional-cto/">fractional CTO</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
-</section><p><a href="https://asksumanta.com/insights/defender-first-ai-models-vulnerability-management/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
+</section><p><a href="https://asksumanta.com/insights/ai-capacity-crunch-cloud-planning/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
