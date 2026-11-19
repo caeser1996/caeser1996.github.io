@@ -1,0 +1,82 @@
+<!--{"title": "Case study: finding every Java runtime at an Indian stockbroker", "description": "How an Indian stockbroker can turn SEBI's SBOM requirement into a live runtime inventory, so the next Java4Shell is a query and a rebuild, not a week-long hunt.", "short": "Java runtime inventory for an Indian broker", "h1": "A query, not a hunt: building a live software inventory for an Indian stockbroker after Java4Shell", "kicker": "Case study · Software supply chain", "lede": "An Indian stockbroker ran its trading, identity and back-office systems on Java, some built in-house and some bought. When Java4Shell was disclosed, nobody could say quickly where every Java runtime was or which version it ran. The SBOMs produced for SEBI's cyber framework listed libraries, not runtimes. The goal was an inventory that answers that question in minutes, and a patch path that rebuilds rather than repairs.", "date": "2026-11-19", "datetime": "2026-11-19T15:50:00+04:00", "readtime": "9 min read", "sector": "Capital markets · India", "role": "Fractional CTO and principal engineer", "engagement": "Incident-driven assessment, architecture and delivery leadership", "scope": "SBOM and runtime inventory, vendor software, container rebuilds, drift control, regulatory evidence", "stack": ["SBOM generation in CI", "Runtime discovery on hosts", "Container image scanning", "Inventory and graph store", "Vendor SBOM intake", "Kubernetes admission control", "Golden base images", "Vulnerability matching"], "outcomes": ["One inventory covering in-house, vendor and open-source software, including runtimes", "Exposure questions answered by query instead of manual surveys", "Patches shipped as rebuilt images, with drift from deployed state detected", "Vendor products tracked with their own bundled components and fix dates", "SBOM evidence for SEBI's framework generated from the same data"], "tags": ["security", "cloud", "governance"], "keywords": ["Java4Shell", "CVE-2026-114938", "SEBI CSCRF SBOM", "CERT-In SBOM guidelines", "software bill of materials India", "runtime inventory", "container drift", "stockbroker cybersecurity India", "fractional CTO India", "vulnerability response"], "faq": [["Does SEBI require SBOMs?", "Yes. SEBI's Cybersecurity and Cyber Resilience Framework expects regulated entities to maintain software bills of materials for software supporting core business operations, covering in-house, third-party, off-the-shelf, open-source and SaaS software."], ["Why did the existing SBOMs not answer the Java4Shell question?", "They were generated from application build files, so they listed libraries the code declared. The Java runtime itself came from base images, host packages or vendor installers, and was not in them."], ["Why rebuild images instead of patching running containers?", "A patched running container no longer matches its image, so the next restart brings the flaw back and nobody can prove what is running. Rebuilding the image keeps what is deployed, what is scanned and what is recorded the same thing."]], "related": ["/fractional-cto-india/", "/fractional-cto/", "/technical-due-diligence/"], "citations": [{"title": "How to Find, Mitigate, and Patch the Critical Java4Shell Flaw (CVE-2026-114938) Now", "url": "https://blog.qualys.com/vulnerabilities-threat-research/2026/11/17/how-to-find-mitigate-and-patch-the-critical-java4shell-flaw-cve-2026-114938-now", "publisher": "Qualys", "date": "17 Nov 2026"}, {"title": "Java4Shell Flaw (CVE-2026-114938) Enables Pre-Auth RCE in Jira, Jenkins, Keycloak and More", "url": "https://thehackernews.com/2026/11/java4shell-cve-2026-114938-enables-pre.html", "publisher": "The Hacker News", "date": "Nov 2026"}, {"title": "Complying with SEBI SBOM requirements", "url": "https://fossa.com/blog/complying-sebi-sbom-requirements/", "publisher": "FOSSA"}, {"title": "CERT-In's technical guidelines on SBOM, QBOM and CBOM, AIBOM and HBOM", "url": "https://www.azbpartners.com/bank/cert-ins-technical-guidelines-on-sbom-qbom-and-cbom-aibom-and-hbom/", "publisher": "AZB & Partners", "date": "2025"}, {"title": "Using Admission Controllers to Detect Container Drift at Runtime", "url": "https://kubernetes.io/blog/2021/12/21/admission-controllers-for-container-drift/", "publisher": "Kubernetes blog (Saifuding Diliyaer)", "date": "21 Dec 2021"}]}-->
+
+<h2>The situation</h2>
+<p>A mid-sized Indian stockbroker ran most of its estate on Java: an in-house order management service, a customer portal, Keycloak for identity, Jenkins for builds, and several bought products for exchange connectivity, risk and back office, each shipping with its own Java. Some ran in Kubernetes, some on virtual machines, and a few on servers that only the vendor touched.</p>
+<p>Under SEBI's Cybersecurity and Cyber Resilience Framework, the firm already produced software bills of materials for software supporting core operations, as regulated entities are expected to, covering in-house, third-party, open-source and SaaS software<sup class="cite"><a href="#ref-3">3</a></sup>. CERT-In's guidelines set out what those SBOMs should contain and have since been extended to other kinds of bill of materials<sup class="cite"><a href="#ref-4">4</a></sup>. On paper, the firm was well placed.</p>
+<p><strong>Why now.</strong> Java4Shell, a flaw in the Base64 decoder of OpenJDK's runtime, was disclosed in November 2026, with reports that it can enable unauthenticated remote code execution in applications such as Jira, Jenkins and Keycloak<sup class="cite"><a href="#ref-2">2</a></sup>. Updated Java builds arrived on 17 November, with other distributions following on their own schedules<sup class="cite"><a href="#ref-1">1</a></sup>. The first question from the board was simple: where are we exposed? The SBOMs could not answer it, because they listed the libraries each application declared, not the Java runtime underneath.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>Runtimes in the inventory</strong>, not only application libraries: Java, Python, Node and the operating system packages beneath them.</li>
+<li><strong>Vendor software included</strong>, with the components it bundles and the vendor's fix status.</li>
+<li><strong>Answers by query</strong>: which systems run an affected version, who owns them, and are they internet-facing.</li>
+<li><strong>One patch path</strong>: rebuild and redeploy, so what runs matches what was scanned.</li>
+<li><strong>Regulatory evidence as a by-product</strong>, not a separate spreadsheet.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Sources</small><div class="dgm-nodes"><span>CI builds<em>SBOM per artefact</em></span><span class="hl">Image scans<em>base image and runtime</em></span><span class="hl">Host discovery<em>runtimes on VMs</em></span><span>Vendor SBOMs<em>requested at procurement</em></span></div></div>
+<div class="dgm-tier"><small>Inventory</small><div class="dgm-nodes"><span class="hl">Component graph<em>artefact, image, host, owner</em></span><span>Deployment map<em>what runs where</em></span><span>Exposure tags<em>internet-facing, critical</em></span></div></div>
+<div class="dgm-tier"><small>Matching</small><div class="dgm-nodes"><span>Advisory feeds<em>CVE and vendor</em></span><span>Version rules<em>per distribution</em></span><span>Exceptions<em>owner, expiry, mitigation</em></span></div></div>
+<div class="dgm-tier"><small>Remediation</small><div class="dgm-nodes"><span class="hl">Golden base images<em>one place to patch Java</em></span><span>Rebuild pipeline<em>all dependants</em></span><span>Admission control<em>block old images, detect drift</em></span></div></div>
+<div class="dgm-tier"><small>Evidence</small><div class="dgm-nodes"><span>SBOM exports<em>for audits</em></span><span>Response timeline<em>per advisory</em></span><span>Exception register<em>board visible</em></span></div></div>
+</div>
+<figcaption>SBOMs became one input to a live inventory, not the inventory itself.</figcaption>
+</figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Build</b><span>CI produces an SBOM and records the base image for every artefact</span></li>
+<li><b>Discover</b><span>Scans of images and hosts add runtimes the build never declared</span></li>
+<li class="hl"><b>Map</b><span>Each component is linked to where it runs, its owner and its exposure</span></li>
+<li class="hl"><b>Match</b><span>A new advisory is matched by version and distribution in minutes</span></li>
+<li><b>Rebuild</b><span>Golden images are patched and every dependent image rebuilt and redeployed</span></li>
+<li><b>Prove</b><span>The inventory shows the old version gone, or an approved exception</span></li>
+</ol>
+<figcaption>Advisory in, query, rebuild, proof out: the same path for every runtime flaw.</figcaption>
+</figure>
+
+<h2>The hard part: making the running estate match the inventory</h2>
+<p>An inventory is only as good as its link to what is actually running. Two things broke that link. First, Java arrived through many doors: base images from different teams, host packages, and vendor installers each bringing their own runtime. The fix was a small set of golden base images owned by the platform team, so patching Java meant changing one place and rebuilding everything that depended on it. Vendor products were tracked separately, with their bundled runtimes and the vendor's promised fix date recorded against them.</p>
+<p>Second, people patched running systems by hand under pressure, which left containers that no longer matched their images. Kubernetes admission control can catch this: the Kubernetes blog describes a validating webhook that tags pods someone has run interactive commands in, and evicts them after a set interval so they are replaced from their declared state<sup class="cite"><a href="#ref-5">5</a></sup>. The team used the same idea, alongside a policy that only admits images built from current golden bases.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/india-broker-java-runtime-sbom-cscrf/drift-control.webp" alt="Sequence diagram: a developer runs kubectl exec, the API server calls a validating admission webhook that tags the pod as interacted, allows the request, and later evicts tagged pods after a set interval" width="1200" height="848" loading="lazy"></div><figcaption>Detecting drift: pods changed by hand are tagged and replaced from their declared state. <span class="credit">Source: <a href="https://kubernetes.io/blog/2021/12/21/admission-controllers-for-container-drift/" target="_blank" rel="noopener">Kubernetes blog, Saifuding Diliyaer</a> · CC BY 4.0</span></figcaption></figure>
+<div class="callout"><p>An SBOM tells you what you built. A runtime inventory tells you what you are running. For vulnerability response, only the second one matters.</p></div>
+<p>Virtual machines and vendor-managed servers could not use admission control, so host discovery ran on a schedule and any runtime it found that was not in the inventory became a ticket with an owner. The approach builds on the <a href="/case-studies/legacy-php-estate-security-modernisation/">legacy estate modernisation</a> and <a href="/case-studies/germany-industrial-software-cra-vulnerability-handling/">vulnerability handling</a> case studies, and on <a href="/insights/ai-model-supply-chain-security/">supply chain security</a> patterns.</p>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Security and compliance</small><ol><li>Exposure triage for Java4Shell</li><li class="hl">Exception register</li><li>SBOM evidence for audits</li></ol></div>
+<div class="dgm-lane"><small>Platform engineering</small><ol><li>Golden base images</li><li class="hl">Rebuild pipeline and admission policy</li><li>Host discovery</li></ol></div>
+<div class="dgm-lane"><small>Vendor management</small><ol><li>Vendor runtime survey</li><li>Fix dates in contracts</li><li class="hl">SBOMs at procurement</li></ol></div>
+</div>
+<figcaption>Security asked the questions, platform made them answerable, vendor management closed the gaps outside the firm's control.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Respond</b><ul><li>Find internet-facing Java</li><li>Patch or isolate</li><li>Track vendor fixes</li></ul></div>
+<div><small>Phase 2</small><b>Inventory</b><ul><li>Image and host scans</li><li>Component graph</li><li>Owners and exposure</li></ul></div>
+<div><small>Phase 3</small><b>Standardise</b><ul><li>Golden base images</li><li>Rebuild pipeline</li><li>Drift detection</li></ul></div>
+<div><small>Phase 4</small><b>Sustain</b><ul><li>Advisory matching</li><li>Vendor SBOM intake</li><li>Regulatory evidence</li></ul></div>
+</div>
+<figcaption>Fix the incident first, then make the next one cheap.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Scan images and hosts as well as builds</td><td>Rely on build-time SBOMs</td><td>Runtimes rarely appear in application manifests</td></tr>
+<tr><td>A few golden base images</td><td>Each team picks its own base</td><td>One place to patch the runtime for everyone</td></tr>
+<tr><td>Rebuild and redeploy</td><td>Patch running containers</td><td>What runs stays identical to what was scanned</td></tr>
+<tr><td>Vendor runtimes tracked with fix dates</td><td>Treat vendor products as black boxes</td><td>Bundled Java is often the slowest part to fix</td></tr>
+<tr><td>Time-limited exceptions with owners</td><td>Open-ended risk acceptance</td><td>Exceptions get reviewed instead of forgotten</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: treat the inventory as a product with an owner, and make regulatory SBOMs an export from it rather than a parallel effort. Differently: ask vendors for their bundled components and patch commitments at contract renewal, not during an incident. That was the slowest part of the response, and the only part the firm could not engineer its way out of. See <a href="/insights/vendor-admin-access-rmm-breaches/">vendor admin access as perimeter</a> and the <a href="/insights/tech-news-2026-11-19/">tech news for 19 November</a>.</p>
+<p>If you run a regulated business in India, my <a href="/fractional-cto-india/">work with Indian companies</a> explains how I approach it, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>

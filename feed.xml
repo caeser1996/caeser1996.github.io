@@ -1,6 +1,85 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link><description>Fractional CTO and AI architect: insights, case studies and daily tech news.</description><language>en-gb</language><lastBuildDate>Thu, 19 Nov 2026 08:55:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link></image><item><title>Tech news, 19 November 2026: Java4Shell, a poisoned Microsoft agent package, GPT-6.2 Astra and Sol, and Malaysia&#x27;s data centre pipeline</title><link>https://asksumanta.com/insights/tech-news-2026-11-19/</link><guid isPermaLink="true">https://asksumanta.com/insights/tech-news-2026-11-19/</guid><pubDate>Thu, 19 Nov 2026 08:55:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>security</category><category>ai</category><category>cloud</category><description>A CTO&#x27;s take: Java4Shell exposes Java servers to remote code execution, Microsoft&#x27;s agent-framework package is poisoned on PyPI, and OpenAI ships GPT-6.2 Astra and Sol.</description><content:encoded><![CDATA[<p><em>A flaw in OpenJDK&#x27;s Base64 decoder, dubbed Java4Shell, puts widely used Java servers at risk of remote code execution, and fixes are arriving unevenly across Java distributions. Two malicious releases of Microsoft&#x27;s agent-framework package on PyPI stole cloud and CI credentials at Python start-up. OpenAI released GPT-6.2 Astra and Sol, and Malaysia&#x27;s parliament heard how large its approved data centre pipeline has become.</em></p><p>Today's brief covers stories from 17 to 18 November.</p>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link><description>Fractional CTO and AI architect: insights, case studies and daily tech news.</description><language>en-gb</language><lastBuildDate>Thu, 19 Nov 2026 15:50:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link></image><item><title>A query, not a hunt: building a live software inventory for an Indian stockbroker after Java4Shell</title><link>https://asksumanta.com/case-studies/india-broker-java-runtime-sbom-cscrf/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/india-broker-java-runtime-sbom-cscrf/</guid><pubDate>Thu, 19 Nov 2026 15:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>security</category><category>cloud</category><category>governance</category><description>How an Indian stockbroker can turn SEBI&#x27;s SBOM requirement into a live runtime inventory, so the next Java4Shell is a query and a rebuild, not a week-long hunt.</description><content:encoded><![CDATA[<p><em>An Indian stockbroker ran its trading, identity and back-office systems on Java, some built in-house and some bought. When Java4Shell was disclosed, nobody could say quickly where every Java runtime was or which version it ran. The SBOMs produced for SEBI&#x27;s cyber framework listed libraries, not runtimes. The goal was an inventory that answers that question in minutes, and a patch path that rebuilds rather than repairs.</em></p><h2>The situation</h2>
+<p>A mid-sized Indian stockbroker ran most of its estate on Java: an in-house order management service, a customer portal, Keycloak for identity, Jenkins for builds, and several bought products for exchange connectivity, risk and back office, each shipping with its own Java. Some ran in Kubernetes, some on virtual machines, and a few on servers that only the vendor touched.</p>
+<p>Under SEBI's Cybersecurity and Cyber Resilience Framework, the firm already produced software bills of materials for software supporting core operations, as regulated entities are expected to, covering in-house, third-party, open-source and SaaS software<sup class="cite"><a href="#ref-3">3</a></sup>. CERT-In's guidelines set out what those SBOMs should contain and have since been extended to other kinds of bill of materials<sup class="cite"><a href="#ref-4">4</a></sup>. On paper, the firm was well placed.</p>
+<p><strong>Why now.</strong> Java4Shell, a flaw in the Base64 decoder of OpenJDK's runtime, was disclosed in November 2026, with reports that it can enable unauthenticated remote code execution in applications such as Jira, Jenkins and Keycloak<sup class="cite"><a href="#ref-2">2</a></sup>. Updated Java builds arrived on 17 November, with other distributions following on their own schedules<sup class="cite"><a href="#ref-1">1</a></sup>. The first question from the board was simple: where are we exposed? The SBOMs could not answer it, because they listed the libraries each application declared, not the Java runtime underneath.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>Runtimes in the inventory</strong>, not only application libraries: Java, Python, Node and the operating system packages beneath them.</li>
+<li><strong>Vendor software included</strong>, with the components it bundles and the vendor's fix status.</li>
+<li><strong>Answers by query</strong>: which systems run an affected version, who owns them, and are they internet-facing.</li>
+<li><strong>One patch path</strong>: rebuild and redeploy, so what runs matches what was scanned.</li>
+<li><strong>Regulatory evidence as a by-product</strong>, not a separate spreadsheet.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Sources</small><div class="dgm-nodes"><span>CI builds<em>SBOM per artefact</em></span><span class="hl">Image scans<em>base image and runtime</em></span><span class="hl">Host discovery<em>runtimes on VMs</em></span><span>Vendor SBOMs<em>requested at procurement</em></span></div></div>
+<div class="dgm-tier"><small>Inventory</small><div class="dgm-nodes"><span class="hl">Component graph<em>artefact, image, host, owner</em></span><span>Deployment map<em>what runs where</em></span><span>Exposure tags<em>internet-facing, critical</em></span></div></div>
+<div class="dgm-tier"><small>Matching</small><div class="dgm-nodes"><span>Advisory feeds<em>CVE and vendor</em></span><span>Version rules<em>per distribution</em></span><span>Exceptions<em>owner, expiry, mitigation</em></span></div></div>
+<div class="dgm-tier"><small>Remediation</small><div class="dgm-nodes"><span class="hl">Golden base images<em>one place to patch Java</em></span><span>Rebuild pipeline<em>all dependants</em></span><span>Admission control<em>block old images, detect drift</em></span></div></div>
+<div class="dgm-tier"><small>Evidence</small><div class="dgm-nodes"><span>SBOM exports<em>for audits</em></span><span>Response timeline<em>per advisory</em></span><span>Exception register<em>board visible</em></span></div></div>
+</div>
+<figcaption>SBOMs became one input to a live inventory, not the inventory itself.</figcaption>
+</figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Build</b><span>CI produces an SBOM and records the base image for every artefact</span></li>
+<li><b>Discover</b><span>Scans of images and hosts add runtimes the build never declared</span></li>
+<li class="hl"><b>Map</b><span>Each component is linked to where it runs, its owner and its exposure</span></li>
+<li class="hl"><b>Match</b><span>A new advisory is matched by version and distribution in minutes</span></li>
+<li><b>Rebuild</b><span>Golden images are patched and every dependent image rebuilt and redeployed</span></li>
+<li><b>Prove</b><span>The inventory shows the old version gone, or an approved exception</span></li>
+</ol>
+<figcaption>Advisory in, query, rebuild, proof out: the same path for every runtime flaw.</figcaption>
+</figure>
+
+<h2>The hard part: making the running estate match the inventory</h2>
+<p>An inventory is only as good as its link to what is actually running. Two things broke that link. First, Java arrived through many doors: base images from different teams, host packages, and vendor installers each bringing their own runtime. The fix was a small set of golden base images owned by the platform team, so patching Java meant changing one place and rebuilding everything that depended on it. Vendor products were tracked separately, with their bundled runtimes and the vendor's promised fix date recorded against them.</p>
+<p>Second, people patched running systems by hand under pressure, which left containers that no longer matched their images. Kubernetes admission control can catch this: the Kubernetes blog describes a validating webhook that tags pods someone has run interactive commands in, and evicts them after a set interval so they are replaced from their declared state<sup class="cite"><a href="#ref-5">5</a></sup>. The team used the same idea, alongside a policy that only admits images built from current golden bases.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/india-broker-java-runtime-sbom-cscrf/drift-control.webp" alt="Sequence diagram: a developer runs kubectl exec, the API server calls a validating admission webhook that tags the pod as interacted, allows the request, and later evicts tagged pods after a set interval" width="1200" height="848" loading="lazy"></div><figcaption>Detecting drift: pods changed by hand are tagged and replaced from their declared state. <span class="credit">Source: <a href="https://kubernetes.io/blog/2021/12/21/admission-controllers-for-container-drift/" target="_blank" rel="noopener">Kubernetes blog, Saifuding Diliyaer</a> · CC BY 4.0</span></figcaption></figure>
+<div class="callout"><p>An SBOM tells you what you built. A runtime inventory tells you what you are running. For vulnerability response, only the second one matters.</p></div>
+<p>Virtual machines and vendor-managed servers could not use admission control, so host discovery ran on a schedule and any runtime it found that was not in the inventory became a ticket with an owner. The approach builds on the <a href="https://asksumanta.com/case-studies/legacy-php-estate-security-modernisation/">legacy estate modernisation</a> and <a href="https://asksumanta.com/case-studies/germany-industrial-software-cra-vulnerability-handling/">vulnerability handling</a> case studies, and on <a href="https://asksumanta.com/insights/ai-model-supply-chain-security/">supply chain security</a> patterns.</p>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Security and compliance</small><ol><li>Exposure triage for Java4Shell</li><li class="hl">Exception register</li><li>SBOM evidence for audits</li></ol></div>
+<div class="dgm-lane"><small>Platform engineering</small><ol><li>Golden base images</li><li class="hl">Rebuild pipeline and admission policy</li><li>Host discovery</li></ol></div>
+<div class="dgm-lane"><small>Vendor management</small><ol><li>Vendor runtime survey</li><li>Fix dates in contracts</li><li class="hl">SBOMs at procurement</li></ol></div>
+</div>
+<figcaption>Security asked the questions, platform made them answerable, vendor management closed the gaps outside the firm's control.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Respond</b><ul><li>Find internet-facing Java</li><li>Patch or isolate</li><li>Track vendor fixes</li></ul></div>
+<div><small>Phase 2</small><b>Inventory</b><ul><li>Image and host scans</li><li>Component graph</li><li>Owners and exposure</li></ul></div>
+<div><small>Phase 3</small><b>Standardise</b><ul><li>Golden base images</li><li>Rebuild pipeline</li><li>Drift detection</li></ul></div>
+<div><small>Phase 4</small><b>Sustain</b><ul><li>Advisory matching</li><li>Vendor SBOM intake</li><li>Regulatory evidence</li></ul></div>
+</div>
+<figcaption>Fix the incident first, then make the next one cheap.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Scan images and hosts as well as builds</td><td>Rely on build-time SBOMs</td><td>Runtimes rarely appear in application manifests</td></tr>
+<tr><td>A few golden base images</td><td>Each team picks its own base</td><td>One place to patch the runtime for everyone</td></tr>
+<tr><td>Rebuild and redeploy</td><td>Patch running containers</td><td>What runs stays identical to what was scanned</td></tr>
+<tr><td>Vendor runtimes tracked with fix dates</td><td>Treat vendor products as black boxes</td><td>Bundled Java is often the slowest part to fix</td></tr>
+<tr><td>Time-limited exceptions with owners</td><td>Open-ended risk acceptance</td><td>Exceptions get reviewed instead of forgotten</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: treat the inventory as a product with an owner, and make regulatory SBOMs an export from it rather than a parallel effort. Differently: ask vendors for their bundled components and patch commitments at contract renewal, not during an incident. That was the slowest part of the response, and the only part the firm could not engineer its way out of. See <a href="https://asksumanta.com/insights/vendor-admin-access-rmm-breaches/">vendor admin access as perimeter</a> and the <a href="https://asksumanta.com/insights/tech-news-2026-11-19/">tech news for 19 November</a>.</p>
+<p>If you run a regulated business in India, my <a href="https://asksumanta.com/fractional-cto-india/">work with Indian companies</a> explains how I approach it, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/india-broker-java-runtime-sbom-cscrf/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Tech news, 19 November 2026: Java4Shell, a poisoned Microsoft agent package, GPT-6.2 Astra and Sol, and Malaysia&#x27;s data centre pipeline</title><link>https://asksumanta.com/insights/tech-news-2026-11-19/</link><guid isPermaLink="true">https://asksumanta.com/insights/tech-news-2026-11-19/</guid><pubDate>Thu, 19 Nov 2026 08:55:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>security</category><category>ai</category><category>cloud</category><description>A CTO&#x27;s take: Java4Shell exposes Java servers to remote code execution, Microsoft&#x27;s agent-framework package is poisoned on PyPI, and OpenAI ships GPT-6.2 Astra and Sol.</description><content:encoded><![CDATA[<p><em>A flaw in OpenJDK&#x27;s Base64 decoder, dubbed Java4Shell, puts widely used Java servers at risk of remote code execution, and fixes are arriving unevenly across Java distributions. Two malicious releases of Microsoft&#x27;s agent-framework package on PyPI stole cloud and CI credentials at Python start-up. OpenAI released GPT-6.2 Astra and Sol, and Malaysia&#x27;s parliament heard how large its approved data centre pipeline has become.</em></p><p>Today's brief covers stories from 17 to 18 November.</p>
 
 <figure class="dgm">
 <div class="dgm-stack">
@@ -3135,47 +3214,4 @@
 
 <h2>What I'd do again, and differently</h2>
 <p>Again: record why engineers rejected or edited recommendations. Those reasons were the best training material for better tools and prompts. Differently: start the asset model with the reliability engineers on day one; naming and relationships were the slowest part to agree. Related: <a href="https://asksumanta.com/case-studies/energy-asset-knowledge-graph/">an energy asset knowledge graph</a>, <a href="https://asksumanta.com/insights/agents-replace-seats-enterprise-saas/">when agents become the user</a>, the <a href="https://asksumanta.com/insights/tech-news-2026-11-03/">3 November tech news</a> and the <a href="https://asksumanta.com/fractional-cto-saudi-arabia/">Saudi Arabia page</a>.</p>
-<p>If you are bringing AI agents into industrial operations in Saudi Arabia or the wider Gulf, see my <a href="https://asksumanta.com/ontology-knowledge-graph/">knowledge graph work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/saudi-industrial-ai-agents-maintenance/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Tech news, 3 November 2026: Anthropic&#x27;s compute commitments, ADNOC&#x27;s AI agents, and exploited Ivanti and Drupal Commerce flaws</title><link>https://asksumanta.com/insights/tech-news-2026-11-03/</link><guid isPermaLink="true">https://asksumanta.com/insights/tech-news-2026-11-03/</guid><pubDate>Tue, 03 Nov 2026 08:55:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>ai</category><category>security</category><category>platform</category><description>A CTO&#x27;s take: Anthropic&#x27;s amended S-1 shows $895B in commitments, ADNOC deploys OpenAI&#x27;s agent platform, and Ivanti and Drupal Commerce flaws are exploited.</description><content:encoded><![CDATA[<p><em>Anthropic&#x27;s amended IPO filing put a number on the cost of frontier AI: hundreds of billions of dollars in commitments, mostly for compute. In Abu Dhabi, the national oil company signed up to run fleets of AI agents across its operations. And two actively exploited flaws, in Ivanti&#x27;s VPN gateway and in Drupal&#x27;s e-commerce module, need patching this week.</em></p><p>Today's brief covers stories from 30 October to 2 November that earlier briefs did not include.</p>
-
-<figure class="dgm">
-<div class="dgm-stack">
-<div class="dgm-tier"><small>Business use</small><div class="dgm-nodes"><span class="hl">ADNOC<em>agents across operations</em></span></div></div>
-<div class="dgm-tier"><small>Model providers</small><div class="dgm-nodes"><span class="hl">Anthropic<em>compute commitments disclosed</em></span></div></div>
-<div class="dgm-tier"><small>Edge and web apps</small><div class="dgm-nodes"><span>Ivanti Connect Secure<em>VPN gateway flaws</em></span><span>Drupal Commerce<em>store access bypass</em></span></div></div>
-</div>
-<figcaption>AI spend and adoption at the top; the same old patching discipline at the edge.</figcaption>
-</figure>
-
-<section class="block">
-<h2>1. Anthropic's amended S-1 shows the scale of AI compute commitments</h2>
-<p>Anthropic filed an amended IPO registration on 2 November adding third-quarter results, with revenue of about $17 billion for the quarter, and disclosed about $895.4 billion of purchase commitments and lease agreements<sup class="cite"><a href="#ref-1">1</a></sup>. Coverage reports nine-month revenue of $33.2 billion and says substantially all of the commitments relate to compute and infrastructure<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
-<p><strong>CTO take:</strong> the model providers you build on are making very long, very large bets on compute. That is good for capacity, but it also means pricing, contracts and capacity allocation will be shaped by their need to fill those commitments. Keep your stack portable across providers and know your cost per task; see <a href="https://asksumanta.com/insights/ai-capacity-crunch-cloud-planning/">planning around the AI capacity crunch</a> and <a href="https://asksumanta.com/insights/llm-model-routing/">model routing</a>.</p>
-</section>
-
-<section class="block">
-<h2>2. ADNOC signs up to run AI agents with OpenAI and G42</h2>
-<p>ADNOC announced a multi-year agreement with OpenAI and G42 on 2 November to build and run AI agents on OpenAI's Frontier platform across its operations, including forecasting crude supply, demand, prices and margins<sup class="cite"><a href="#ref-3">3</a></sup>. The systems will run on G42's UAE-based infrastructure, with human experts keeping oversight of consequential decisions; financial terms were not disclosed<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
-<p><strong>CTO take:</strong> agent platforms are moving from pilots into core operations at large industrial firms, with in-country hosting and human sign-off built into the deal. If you sell into Gulf enterprises, expect buyers to ask for exactly that combination. See <a href="https://asksumanta.com/insights/agents-replace-seats-enterprise-saas/">when agents become the user</a> and the <a href="https://asksumanta.com/uae/">UAE page</a>.</p>
-</section>
-
-<section class="block">
-<h2>3. CISA adds two more Ivanti Connect Secure flaws to its exploited list</h2>
-<p>CISA added two Ivanti Connect Secure vulnerabilities to its Known Exploited Vulnerabilities catalogue on 30 October, with federal patch deadlines in early and mid-November<sup class="cite"><a href="#ref-5">5</a></sup>. The Hacker News reports attackers chaining Connect Secure flaws to gain unauthenticated root access<sup class="cite"><a href="#ref-6">6</a></sup>.</p>
-<p><strong>CTO take:</strong> VPN gateways remain the front door attackers try first. Patch now, check for signs of compromise rather than assuming the patch is enough, and keep the management interface off the internet. The pattern is covered in <a href="https://asksumanta.com/case-studies/us-utility-management-plane-hardening/">hardening a utility's management plane</a>.</p>
-</section>
-
-<section class="block">
-<h2>4. A highly critical Drupal Commerce flaw is being exploited</h2>
-<p>Drupal says an access bypass in the Commerce Core module, CVE-2026-118539, is being actively exploited, and asks store owners to update and audit their orders for inconsistencies<sup class="cite"><a href="#ref-7">7</a></sup><sup class="cite"><a href="#ref-8">8</a></sup>. Commerce Core is a contributed module, not Drupal core itself.</p>
-<p><strong>CTO take:</strong> if you run Drupal Commerce, update to the fixed release named in Drupal's advisory today and review recent orders and payments. For older stores, this is a good moment to inventory which contributed modules handle money and who maintains them.</p>
-</section>
-
-<section class="block">
-<h2>What I'd do this week</h2>
-<ul>
-<li>Patch Ivanti Connect Secure and Drupal Commerce if you run them, then check for compromise.</li>
-<li>Review your AI provider contracts for pricing and capacity terms that could change.</li>
-<li>If you sell into Gulf enterprises, prepare an answer on in-country hosting and human oversight for agents.</li>
-</ul>
-<p>See <a href="https://asksumanta.com/regions/">where I work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
-</section><p><a href="https://asksumanta.com/insights/tech-news-2026-11-03/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
+<p>If you are bringing AI agents into industrial operations in Saudi Arabia or the wider Gulf, see my <a href="https://asksumanta.com/ontology-knowledge-graph/">knowledge graph work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/saudi-industrial-ai-agents-maintenance/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>

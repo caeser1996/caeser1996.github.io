@@ -1,6 +1,85 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link><description>Anonymised engagements with architecture and flow diagrams</description><language>en-gb</language><lastBuildDate>Wed, 18 Nov 2026 15:50:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/case-studies/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link></image><item><title>Reasonable steps you can prove: preparing an Australian bank for the Scams Prevention Framework</title><link>https://asksumanta.com/case-studies/australia-bank-scams-prevention-framework/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/australia-bank-scams-prevention-framework/</guid><pubDate>Wed, 18 Nov 2026 15:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>security</category><category>ai</category><category>data</category><description>How an Australian bank can prepare for the Scams Prevention Framework: scam intelligence, real-time payment friction, fast disruption and evidence of reasonable steps.</description><content:encoded><![CDATA[<p><em>A customer-owned Australian bank had fraud controls built for stolen cards and taken-over accounts, not for customers persuaded to send money themselves. The Scams Prevention Framework turns scam prevention into a legal duty with a regulator watching. The goal was a platform that finds scams earlier, acts on intelligence quickly and can show, payment by payment, why it did what it did.</em></p><h2>The situation</h2>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link><description>Anonymised engagements with architecture and flow diagrams</description><language>en-gb</language><lastBuildDate>Thu, 19 Nov 2026 15:50:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/case-studies/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link></image><item><title>A query, not a hunt: building a live software inventory for an Indian stockbroker after Java4Shell</title><link>https://asksumanta.com/case-studies/india-broker-java-runtime-sbom-cscrf/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/india-broker-java-runtime-sbom-cscrf/</guid><pubDate>Thu, 19 Nov 2026 15:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>security</category><category>cloud</category><category>governance</category><description>How an Indian stockbroker can turn SEBI&#x27;s SBOM requirement into a live runtime inventory, so the next Java4Shell is a query and a rebuild, not a week-long hunt.</description><content:encoded><![CDATA[<p><em>An Indian stockbroker ran its trading, identity and back-office systems on Java, some built in-house and some bought. When Java4Shell was disclosed, nobody could say quickly where every Java runtime was or which version it ran. The SBOMs produced for SEBI&#x27;s cyber framework listed libraries, not runtimes. The goal was an inventory that answers that question in minutes, and a patch path that rebuilds rather than repairs.</em></p><h2>The situation</h2>
+<p>A mid-sized Indian stockbroker ran most of its estate on Java: an in-house order management service, a customer portal, Keycloak for identity, Jenkins for builds, and several bought products for exchange connectivity, risk and back office, each shipping with its own Java. Some ran in Kubernetes, some on virtual machines, and a few on servers that only the vendor touched.</p>
+<p>Under SEBI's Cybersecurity and Cyber Resilience Framework, the firm already produced software bills of materials for software supporting core operations, as regulated entities are expected to, covering in-house, third-party, open-source and SaaS software<sup class="cite"><a href="#ref-3">3</a></sup>. CERT-In's guidelines set out what those SBOMs should contain and have since been extended to other kinds of bill of materials<sup class="cite"><a href="#ref-4">4</a></sup>. On paper, the firm was well placed.</p>
+<p><strong>Why now.</strong> Java4Shell, a flaw in the Base64 decoder of OpenJDK's runtime, was disclosed in November 2026, with reports that it can enable unauthenticated remote code execution in applications such as Jira, Jenkins and Keycloak<sup class="cite"><a href="#ref-2">2</a></sup>. Updated Java builds arrived on 17 November, with other distributions following on their own schedules<sup class="cite"><a href="#ref-1">1</a></sup>. The first question from the board was simple: where are we exposed? The SBOMs could not answer it, because they listed the libraries each application declared, not the Java runtime underneath.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>Runtimes in the inventory</strong>, not only application libraries: Java, Python, Node and the operating system packages beneath them.</li>
+<li><strong>Vendor software included</strong>, with the components it bundles and the vendor's fix status.</li>
+<li><strong>Answers by query</strong>: which systems run an affected version, who owns them, and are they internet-facing.</li>
+<li><strong>One patch path</strong>: rebuild and redeploy, so what runs matches what was scanned.</li>
+<li><strong>Regulatory evidence as a by-product</strong>, not a separate spreadsheet.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Sources</small><div class="dgm-nodes"><span>CI builds<em>SBOM per artefact</em></span><span class="hl">Image scans<em>base image and runtime</em></span><span class="hl">Host discovery<em>runtimes on VMs</em></span><span>Vendor SBOMs<em>requested at procurement</em></span></div></div>
+<div class="dgm-tier"><small>Inventory</small><div class="dgm-nodes"><span class="hl">Component graph<em>artefact, image, host, owner</em></span><span>Deployment map<em>what runs where</em></span><span>Exposure tags<em>internet-facing, critical</em></span></div></div>
+<div class="dgm-tier"><small>Matching</small><div class="dgm-nodes"><span>Advisory feeds<em>CVE and vendor</em></span><span>Version rules<em>per distribution</em></span><span>Exceptions<em>owner, expiry, mitigation</em></span></div></div>
+<div class="dgm-tier"><small>Remediation</small><div class="dgm-nodes"><span class="hl">Golden base images<em>one place to patch Java</em></span><span>Rebuild pipeline<em>all dependants</em></span><span>Admission control<em>block old images, detect drift</em></span></div></div>
+<div class="dgm-tier"><small>Evidence</small><div class="dgm-nodes"><span>SBOM exports<em>for audits</em></span><span>Response timeline<em>per advisory</em></span><span>Exception register<em>board visible</em></span></div></div>
+</div>
+<figcaption>SBOMs became one input to a live inventory, not the inventory itself.</figcaption>
+</figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Build</b><span>CI produces an SBOM and records the base image for every artefact</span></li>
+<li><b>Discover</b><span>Scans of images and hosts add runtimes the build never declared</span></li>
+<li class="hl"><b>Map</b><span>Each component is linked to where it runs, its owner and its exposure</span></li>
+<li class="hl"><b>Match</b><span>A new advisory is matched by version and distribution in minutes</span></li>
+<li><b>Rebuild</b><span>Golden images are patched and every dependent image rebuilt and redeployed</span></li>
+<li><b>Prove</b><span>The inventory shows the old version gone, or an approved exception</span></li>
+</ol>
+<figcaption>Advisory in, query, rebuild, proof out: the same path for every runtime flaw.</figcaption>
+</figure>
+
+<h2>The hard part: making the running estate match the inventory</h2>
+<p>An inventory is only as good as its link to what is actually running. Two things broke that link. First, Java arrived through many doors: base images from different teams, host packages, and vendor installers each bringing their own runtime. The fix was a small set of golden base images owned by the platform team, so patching Java meant changing one place and rebuilding everything that depended on it. Vendor products were tracked separately, with their bundled runtimes and the vendor's promised fix date recorded against them.</p>
+<p>Second, people patched running systems by hand under pressure, which left containers that no longer matched their images. Kubernetes admission control can catch this: the Kubernetes blog describes a validating webhook that tags pods someone has run interactive commands in, and evicts them after a set interval so they are replaced from their declared state<sup class="cite"><a href="#ref-5">5</a></sup>. The team used the same idea, alongside a policy that only admits images built from current golden bases.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/india-broker-java-runtime-sbom-cscrf/drift-control.webp" alt="Sequence diagram: a developer runs kubectl exec, the API server calls a validating admission webhook that tags the pod as interacted, allows the request, and later evicts tagged pods after a set interval" width="1200" height="848" loading="lazy"></div><figcaption>Detecting drift: pods changed by hand are tagged and replaced from their declared state. <span class="credit">Source: <a href="https://kubernetes.io/blog/2021/12/21/admission-controllers-for-container-drift/" target="_blank" rel="noopener">Kubernetes blog, Saifuding Diliyaer</a> · CC BY 4.0</span></figcaption></figure>
+<div class="callout"><p>An SBOM tells you what you built. A runtime inventory tells you what you are running. For vulnerability response, only the second one matters.</p></div>
+<p>Virtual machines and vendor-managed servers could not use admission control, so host discovery ran on a schedule and any runtime it found that was not in the inventory became a ticket with an owner. The approach builds on the <a href="https://asksumanta.com/case-studies/legacy-php-estate-security-modernisation/">legacy estate modernisation</a> and <a href="https://asksumanta.com/case-studies/germany-industrial-software-cra-vulnerability-handling/">vulnerability handling</a> case studies, and on <a href="https://asksumanta.com/insights/ai-model-supply-chain-security/">supply chain security</a> patterns.</p>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Security and compliance</small><ol><li>Exposure triage for Java4Shell</li><li class="hl">Exception register</li><li>SBOM evidence for audits</li></ol></div>
+<div class="dgm-lane"><small>Platform engineering</small><ol><li>Golden base images</li><li class="hl">Rebuild pipeline and admission policy</li><li>Host discovery</li></ol></div>
+<div class="dgm-lane"><small>Vendor management</small><ol><li>Vendor runtime survey</li><li>Fix dates in contracts</li><li class="hl">SBOMs at procurement</li></ol></div>
+</div>
+<figcaption>Security asked the questions, platform made them answerable, vendor management closed the gaps outside the firm's control.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Respond</b><ul><li>Find internet-facing Java</li><li>Patch or isolate</li><li>Track vendor fixes</li></ul></div>
+<div><small>Phase 2</small><b>Inventory</b><ul><li>Image and host scans</li><li>Component graph</li><li>Owners and exposure</li></ul></div>
+<div><small>Phase 3</small><b>Standardise</b><ul><li>Golden base images</li><li>Rebuild pipeline</li><li>Drift detection</li></ul></div>
+<div><small>Phase 4</small><b>Sustain</b><ul><li>Advisory matching</li><li>Vendor SBOM intake</li><li>Regulatory evidence</li></ul></div>
+</div>
+<figcaption>Fix the incident first, then make the next one cheap.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Scan images and hosts as well as builds</td><td>Rely on build-time SBOMs</td><td>Runtimes rarely appear in application manifests</td></tr>
+<tr><td>A few golden base images</td><td>Each team picks its own base</td><td>One place to patch the runtime for everyone</td></tr>
+<tr><td>Rebuild and redeploy</td><td>Patch running containers</td><td>What runs stays identical to what was scanned</td></tr>
+<tr><td>Vendor runtimes tracked with fix dates</td><td>Treat vendor products as black boxes</td><td>Bundled Java is often the slowest part to fix</td></tr>
+<tr><td>Time-limited exceptions with owners</td><td>Open-ended risk acceptance</td><td>Exceptions get reviewed instead of forgotten</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: treat the inventory as a product with an owner, and make regulatory SBOMs an export from it rather than a parallel effort. Differently: ask vendors for their bundled components and patch commitments at contract renewal, not during an incident. That was the slowest part of the response, and the only part the firm could not engineer its way out of. See <a href="https://asksumanta.com/insights/vendor-admin-access-rmm-breaches/">vendor admin access as perimeter</a> and the <a href="https://asksumanta.com/insights/tech-news-2026-11-19/">tech news for 19 November</a>.</p>
+<p>If you run a regulated business in India, my <a href="https://asksumanta.com/fractional-cto-india/">work with Indian companies</a> explains how I approach it, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/india-broker-java-runtime-sbom-cscrf/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Reasonable steps you can prove: preparing an Australian bank for the Scams Prevention Framework</title><link>https://asksumanta.com/case-studies/australia-bank-scams-prevention-framework/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/australia-bank-scams-prevention-framework/</guid><pubDate>Wed, 18 Nov 2026 15:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>security</category><category>ai</category><category>data</category><description>How an Australian bank can prepare for the Scams Prevention Framework: scam intelligence, real-time payment friction, fast disruption and evidence of reasonable steps.</description><content:encoded><![CDATA[<p><em>A customer-owned Australian bank had fraud controls built for stolen cards and taken-over accounts, not for customers persuaded to send money themselves. The Scams Prevention Framework turns scam prevention into a legal duty with a regulator watching. The goal was a platform that finds scams earlier, acts on intelligence quickly and can show, payment by payment, why it did what it did.</em></p><h2>The situation</h2>
 <p>A mid-sized, customer-owned Australian bank had sound fraud controls for the problems of a decade ago: stolen card numbers, compromised passwords, account takeover. Its losses had shifted to a different pattern. Customers were being talked into sending money themselves, through investment, impersonation and romance scams, and the bank's systems saw a properly authenticated customer making a real-time payment. Every control said the payment was legitimate, because technically it was.</p>
 <p>The Scams Prevention Framework changes what a bank is expected to do about that. Passed in February 2025, it sets overarching principles for designated sectors: governance, prevent, detect, report, disrupt and respond<sup class="cite"><a href="#ref-1">1</a></sup>. When a bank has actionable scam intelligence, meaning reasonable grounds to suspect a scam connected with its service, it must report it to the ACCC and take reasonable steps to disrupt it, with a safe harbour for disruption while it investigates, for up to 28 days<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
 <p><strong>Why now.</strong> Banking, telecommunications and digital platforms have been designated as the first sectors, and the framework is moving from principles to detailed sector codes<sup class="cite"><a href="#ref-4">4</a></sup>. Treasury released draft rules and codes, including a common code and a banking code, for consultation in May 2026<sup class="cite"><a href="#ref-3">3</a></sup>. The obligations are close enough that the platform work had to start now, not after the final text.</p>
@@ -3947,89 +4026,4 @@
 
 <h2>What I'd do again, and differently</h2>
 <p>Again: write the AI programme and the evaluation set before writing the first prompt, and run in shadow mode. Differently: involve the special investigations team in designing fraud signals from the first week. Their sense of what makes a signal actionable shaped the design more than any model choice.</p>
-<p>If you're bringing AI into claims, underwriting or service, my <a href="https://asksumanta.com/ai-architect/">AI architecture work</a> covers how I approach it, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/insurance-claims-triage-ai/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Giving a fast-moving seed team the technical leadership investors expect at Series A</title><link>https://asksumanta.com/case-studies/startup-fractional-cto-seed-to-series-a/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/startup-fractional-cto-seed-to-series-a/</guid><pubDate>Wed, 28 Oct 2026 01:48:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>leadership</category><category>architecture</category><category>security</category><category>platform</category><description>How a part-time CTO helped a seed-stage team set a technical roadmap, decision records, delivery metrics, SLOs, security foundations and its first senior hires.</description><content:encoded><![CDATA[<p><em>Founders shipping quickly, customers arriving, and a Series A process ahead. Architecture decisions lived in chat threads, security questionnaires were piling up and nobody owned hiring for senior engineers. The goal was technical leadership that fitted the stage: enough structure to scale and pass scrutiny, without slowing the team down.</em></p><h2>The situation</h2>
-<p>A seed-stage B2B software company had found traction. The founders were strong builders and the small engineering team shipped quickly, but the things that matter at the next stage were falling behind. Architecture choices were made in chat and forgotten, the release process depended on one person, there was no shared view of reliability, and enterprise prospects were sending security questionnaires nobody had time to answer well. A Series A process was on the horizon, and technical diligence would follow.</p>
-<p>The company did not yet need, or want to pay for, a full-time CTO. It needed senior technical leadership for part of each week, with a clear plan for handing over.</p>
-
-<h2>What had to be true</h2>
-<ul>
-<li><strong>A roadmap the team believed</strong>, connecting product goals to platform work and technical debt.</li>
-<li><strong>Decisions written down</strong>, so they can be reviewed, challenged and learned by new hires.</li>
-<li><strong>Delivery and reliability measured</strong>, as signals for improvement rather than targets to game.</li>
-<li><strong>Security that stands up to scrutiny</strong>, with controls and evidence rather than promises.</li>
-<li><strong>A team that outlasts the engagement</strong>: senior hires and habits that keep working after hand-off.</li>
-</ul>
-
-<h2>Architecture</h2>
-<p>Here the architecture was as much the operating model as the system. The technical work rested on a light set of leadership practices, each producing an artefact the team and investors could see.</p>
-<figure class="dgm">
-<div class="dgm-stack">
-<div class="dgm-tier"><small>Direction</small><div class="dgm-nodes"><span class="hl">Technical roadmap<em>tied to company plan</em></span><span>Investor narrative<em>technology story</em></span><span>Build vs buy<em>explicit choices</em></span></div></div>
-<div class="dgm-tier"><small>Decisions</small><div class="dgm-nodes"><span class="hl">ADRs<em>in the repository</em></span><span>Architecture review<em>regular, short</em></span><span>Tech debt register<em>ranked by risk</em></span></div></div>
-<div class="dgm-tier"><small>Delivery</small><div class="dgm-nodes"><span>CI/CD<em>automated releases</em></span><span>Infrastructure as code<em>reviewable environments</em></span><span>DORA metrics<em>throughput and stability</em></span></div></div>
-<div class="dgm-tier"><small>Reliability and security</small><div class="dgm-nodes"><span>SLOs<em>key customer journeys</em></span><span class="hl">Security controls<em>SOC 2 readiness</em></span><span>Incident reviews<em>blameless</em></span></div></div>
-<div class="dgm-tier"><small>People</small><div class="dgm-nodes"><span>Hiring plan<em>senior roles first</em></span><span>Career framework<em>simple levels</em></span><span>Successor<em>full-time leader</em></span></div></div>
-</div>
-<figcaption>Operating model: each layer produces something written and reviewable, from roadmap to hiring plan.</figcaption>
-</figure>
-<p>Architecture decision records followed the lightweight format Michael Nygard described: context, decision and consequences, kept with the code<sup class="cite"><a href="#ref-1">1</a></sup>. How I use them in a fractional role is in <a href="https://asksumanta.com/insights/architecture-decision-records-fractional-cto/">architecture decision records for fractional CTOs</a>.</p>
-
-<h2>The data flow, end to end</h2>
-<p>The cadence mattered more than any single document. Each cycle followed the same loop:</p>
-<figure class="dgm">
-<ol class="dgm-flow g3">
-<li><b>Assess</b><span>Review the stack, delivery pipeline, incidents and open risks</span></li>
-<li class="hl"><b>Decide</b><span>Write ADRs for significant choices; review with the engineers affected</span></li>
-<li><b>Plan</b><span>Update the roadmap and debt register against company priorities</span></li>
-<li><b>Deliver</b><span>Team ships; pipeline produces delivery and reliability data automatically</span></li>
-<li class="hl"><b>Measure</b><span>Discuss DORA metrics and SLO error budgets as improvement signals</span></li>
-<li><b>Report</b><span>Short update for founders and board on progress, risks and hiring</span></li>
-</ol>
-<figcaption>A repeating leadership loop: decisions and measurements feed the next plan.</figcaption>
-</figure>
-<p>Delivery was tracked with DORA's software delivery metrics, which cover throughput and instability. DORA itself warns against turning them into blanket targets, so they were used per service and only to find bottlenecks<sup class="cite"><a href="#ref-2">2</a></sup>. See <a href="https://asksumanta.com/insights/dora-metrics-ai-assisted-engineering/">DORA metrics for AI-assisted engineering</a>. Reliability used a small number of SLOs on the journeys customers cared about, with an agreed policy for what happens when an error budget is spent<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
-
-<h2>The hard part: adding structure without slowing the team</h2>
-<p>A fast seed team is right to be suspicious of process. Every practice had to earn its place by saving more time than it cost. That meant:</p>
-<ul>
-<li>ADRs only for decisions that are expensive to reverse, written in under an hour, not for every library choice.</li>
-<li>Automating the evidence: delivery metrics from the pipeline, access reviews from the identity provider, change history from pull requests.</li>
-<li>Sequencing security work against real demand. The SOC 2 trust services criteria (security, availability, processing integrity, confidentiality and privacy) gave the structure<sup class="cite"><a href="#ref-4">4</a></sup>, with security controls first because every enterprise questionnaire asked about them. More in <a href="https://asksumanta.com/insights/soc2-for-ai-startups/">SOC 2 for AI startups</a>.</li>
-<li>Hiring senior engineers who could own areas, not just add capacity, so leadership could be handed over rather than borrowed.</li>
-</ul>
-<div class="callout"><p>A fractional CTO succeeds when the role becomes unnecessary. The test is whether decisions, metrics and hiring keep happening well in the weeks you are not there.</p></div>
-
-<h2>How the engagement ran</h2>
-<figure class="dgm">
-<div class="dgm-lanes">
-<div class="dgm-lane"><small>Founders</small><ol><li>Set company priorities</li><li>Approve hiring plan</li><li class="hl">Own investor narrative</li></ol></div>
-<div class="dgm-lane"><small>Fractional CTO</small><ol><li>Run architecture reviews</li><li class="hl">Write and coach ADRs</li><li>Lead senior hiring</li></ol></div>
-<div class="dgm-lane"><small>Engineering team</small><ol><li>Propose and record decisions</li><li>Own delivery and on-call</li><li>Join interview loops</li></ol></div>
-</div>
-<figcaption>Clear ownership: founders set direction, the CTO sets technical standards, the team owns delivery.</figcaption>
-</figure>
-<figure class="dgm">
-<div class="dgm-phases">
-<div><small>Phase 1</small><b>Assess</b><ul><li>Stack and pipeline review</li><li>Risk and debt register</li><li>Quick wins</li></ul></div>
-<div><small>Phase 2</small><b>Foundations</b><ul><li>Roadmap and ADRs</li><li>CI/CD and infrastructure as code</li><li>Core security controls</li></ul></div>
-<div><small>Phase 3</small><b>Scale</b><ul><li>DORA metrics and SLOs</li><li>SOC 2 readiness</li><li>Senior hires</li></ul></div>
-<div><small>Phase 4</small><b>Hand off</b><ul><li>Diligence pack</li><li>Full-time leader onboarding</li><li>Advisory follow-up</li></ul></div>
-</div>
-<figcaption>Phased leadership: assess, lay foundations, scale, then hand over to a permanent leader.</figcaption>
-</figure>
-
-<h2>Key decisions and trade-offs</h2>
-<table class="tbl">
-<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
-<tbody>
-<tr><td>Fractional CTO first</td><td>Hire full-time CTO immediately</td><td>Senior judgement now, while the company learns what role it needs</td></tr>
-<tr><td>ADRs in the repository</td><td>Wiki pages or chat threads</td><td>Versioned with code, reviewed like code, found by new hires</td></tr>
-<tr><td>Metrics as signals</td><td>Metrics as targets</td><td>Avoids gaming; focuses on bottlenecks</td></tr>
-<tr><td>Security controls before certification</td><td>Rush to an audit</td><td>Real controls and evidence first; audit when customers require it</td></tr>
-<tr><td>Senior owners before headcount</td><td>Hire for capacity</td><td>Creates leaders who can take over from the fractional role</td></tr>
-</tbody>
-</table>
-
-<h2>What I'd do again, and differently</h2>
-<p>Again: write decisions down from the first week and keep the cadence predictable, even when the week is busy. Differently: start the search for the permanent engineering leader earlier. Good senior hires take longer than any technical workstream, and the hand-off is only as strong as the person receiving it.</p>
-<p>If your team is at a similar stage, the <a href="https://asksumanta.com/fractional-cto/">fractional CTO</a> page describes how I work, <a href="https://asksumanta.com/insights/when-do-you-need-a-fractional-cto/">when you need one</a> covers the signals, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/startup-fractional-cto-seed-to-series-a/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
+<p>If you're bringing AI into claims, underwriting or service, my <a href="https://asksumanta.com/ai-architect/">AI architecture work</a> covers how I approach it, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/insurance-claims-triage-ai/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
