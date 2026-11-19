@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) with Consent Mode v2 -->
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('consent', 'default', {ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied', analytics_storage: 'granted'});
+  gtag('consent', 'default', {analytics_storage: 'denied', region: ['AT','BE','BG','HR','CY','CZ','DK','EE','FI','FR','DE','GR','HU','IS','IE','IT','LV','LI','LT','LU','MT','NL','NO','PL','PT','RO','SK','SI','ES','SE','GB','CH'], wait_for_update: 500});
+  try { var c = localStorage.getItem('consent'); if (c === 'granted' || c === 'denied') gtag('consent', 'update', {analytics_storage: c}); } catch (e) {}
+</script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-8TKBV1S98Q"></script>
+<script>
+  gtag('js', new Date());
+
+  gtag('config', 'G-8TKBV1S98Q', {content_group: (function(p){return p==='/'?'Home':p.indexOf('/insights/')===0?'Insights':p.indexOf('/case-studies/')===0?'Case studies':'Services';})(location.pathname)});
+</script>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>The agent-framework hack: when installing a package is enough</title>
+<meta name="description" content="Poisoned agent-framework releases stole cloud and CI secrets at Python start-up. A CTO&#x27;s take on .pth hooks, why agent tooling is a prime target and what to change in CI." />
+<meta name="keywords" content="agent-framework PyPI compromise, Python pth file attack, PyPI supply chain attack, CI credential theft, GitHub Actions secrets, Azure DevOps credentials, dependency pinning hashes, trusted publishing, AI agent framework security, CTO software supply chain" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://asksumanta.com/insights/agent-framework-pypi-pth-compromise/" />
+<meta name="theme-color" content="#fafafa" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<link rel="alternate" type="application/rss+xml" title="Sumanta Mukhopadhyay: insights and case studies" href="/feed.xml" />
+<link rel="alternate" type="application/rss+xml" title="Sumanta Mukhopadhyay: daily tech news" href="/insights/news.xml" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="The agent-framework hack: when installing a package is enough" />
+<meta property="og:description" content="Poisoned agent-framework releases stole cloud and CI secrets at Python start-up. A CTO&#x27;s take on .pth hooks, why agent tooling is a prime target and what to change in CI." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://asksumanta.com/insights/agent-framework-pypi-pth-compromise/" />
+<meta property="og:image" content="https://asksumanta.com/assets/og/agent-framework-pypi-pth-compromise.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="The agent-framework hack: when installing a package is enough" />
+<meta name="twitter:description" content="Poisoned agent-framework releases stole cloud and CI secrets at Python start-up. A CTO&#x27;s take on .pth hooks, why agent tooling is a prime target and what to change in CI." />
+<meta name="twitter:image" content="https://asksumanta.com/assets/og/agent-framework-pypi-pth-compromise.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "BlogPosting", "headline": "The agent-framework hack: why installing a package was enough to lose your cloud secrets", "description": "Poisoned agent-framework releases stole cloud and CI secrets at Python start-up. A CTO's take on .pth hooks, why agent tooling is a prime target and what to change in CI.", "datePublished": "2026-11-19T21:15:00+04:00", "dateModified": "2026-11-19T21:15:00+04:00", "articleSection": "Analysis · Software supply chain", "genre": "Analysis", "citation": [{"@type": "CreativeWork", "name": "Microsoft Agent Framework Releases Poisoned With Credential Stealer", "url": "https://www.securityweek.com/microsoft-agent-framework-releases-poisoned-with-credential-stealer/"}, {"@type": "CreativeWork", "name": "Microsoft's agent-framework PyPI package compromised to steal credentials", "url": "https://www.bleepingcomputer.com/news/security/microsofts-agent-framework-pypi-package-compromised-to-steal-credentials/"}, {"@type": "CreativeWork", "name": "Microsoft agent-framework compromised: credential stealer targets Azure and CI pipelines", "url": "https://www.wiz.io/blog/malicious-version-of-microsofts-agent-framework-published-to-pypi"}, {"@type": "CreativeWork", "name": "Microsoft's agent-framework hijacked on PyPI via silent .pth startup hook", "url": "https://research.jfrog.com/post/agent-framework-hijack/"}, {"@type": "CreativeWork", "name": "Two malicious agent-framework releases hit PyPI in 33 minutes", "url": "https://www.aikido.dev/blog/two-malicious-agent-framework-releases-hit-pypi-in-33-minutes"}, {"@type": "CreativeWork", "name": "site: Site-specific configuration hook", "url": "https://docs.python.org/3/library/site.html"}, {"@type": "CreativeWork", "name": "Software Supply Chain Best Practices", "url": "https://github.com/cncf/tag-security/blob/main/community/working-groups/supply-chain-security/supply-chain-security-paper/sscsp.md"}], "author": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "publisher": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "mainEntityOfPage": "https://asksumanta.com/insights/agent-framework-pypi-pth-compromise/", "image": "https://asksumanta.com/assets/og/agent-framework-pypi-pth-compromise.png", "keywords": "agent-framework PyPI compromise, Python pth file attack, PyPI supply chain attack, CI credential theft, GitHub Actions secrets, Azure DevOps credentials, dependency pinning hashes, trusted publishing, AI agent framework security, CTO software supply chain", "wordCount": 927}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://asksumanta.com/"}, {"@type": "ListItem", "position": 2, "name": "Insights", "item": "https://asksumanta.com/insights/"}, {"@type": "ListItem", "position": 3, "name": "The agent-framework hack: why installing a package was enough to lose your cloud secrets", "item": "https://asksumanta.com/insights/agent-framework-pypi-pth-compromise/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What is a .pth file?", "acceptedAnswer": {"@type": "Answer", "text": "A path configuration file that Python's site module processes at start-up. Lines that begin with import are executed, which is meant for setting up paths but means any installed package can run code whenever Python starts."}}, {"@type": "Question", "name": "Was Microsoft's build pipeline compromised?", "acceptedAnswer": {"@type": "Answer", "text": "Reports differ in detail. JFrog reports the attacker repacked the clean release locally rather than compromising the build, and the malicious versions appeared under the legitimate publisher, which points to stolen publishing credentials. Microsoft has said it is investigating."}}, {"@type": "Question", "name": "What should we do if we installed 1.26.1 or 1.26.2?", "acceptedAnswer": {"@type": "Answer", "text": "Treat the machine as compromised: rotate every credential it could reach, including cloud, CI, registry and API keys, review cloud and CI logs for use of those credentials, rebuild the environment, and pin agent-framework to 1.26.0 or a later verified release."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css?v=cc95c21754" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='light';try{t=localStorage.getItem('theme')||'light';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+  try{if(!sessionStorage.getItem('booted')&&!/bot|crawl|spider|slurp|lighthouse|headless/i.test(navigator.userAgent)&&!matchMedia('(prefers-reduced-motion: reduce)').matches){document.documentElement.classList.add('boot');sessionStorage.setItem('booted','1');}}catch(e){}
+</script>
+</head>
+<body class="sub is-post">
+<div class="progress" id="progress"></div>
+<nav class="topnav">
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links" id="navLinks">
+      <div class="nd"><button type="button" class="nd-b" aria-expanded="false" aria-controls="nd-services">Services<svg class="chev" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 3.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button><div class="nd-p" id="nd-services"><div class="nd-grid"><a class="nd-i" href="/fractional-cto/"><b>Fractional CTO</b><span>Part-time technology leadership for startups and scale-ups</span></a><a class="nd-i" href="/ai-architect/"><b>AI &amp; LLM architecture</b><span>RAG, agents and private LLMs that make it to production</span></a><a class="nd-i" href="/ontology-knowledge-graph/"><b>Ontology &amp; knowledge graphs</b><span>Shared meaning for your data, analytics and AI</span></a><a class="nd-i" href="/healthcare-data-architecture/"><b>Healthcare data architecture</b><span>FHIR, OMOP and HIPAA-aligned data platforms</span></a><a class="nd-i" href="/technical-due-diligence/"><b>Technical due diligence</b><span>Independent technology assessment for investors</span></a><a class="nd-i" href="/regions/"><b>Fractional CTO worldwide</b><span>US, UK, Europe, Middle East, India, Singapore and Australia</span></a></div><div class="nd-side"><small>Not sure where to start?</small><p>Answer four questions and get a first diagnosis of your challenge.</p><a class="lnk" href="/#assess">Analyse your challenge →</a></div></div></div>
+      <div class="nd"><button type="button" class="nd-b" aria-expanded="false" aria-controls="nd-work">Work<svg class="chev" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 3.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button><div class="nd-p" id="nd-work"><div class="nd-grid"><a class="nd-i" href="/case-studies/"><b>All case studies</b><span>71 anonymised engagements with architecture and flow diagrams</span></a><a class="nd-i" href="/case-studies/#use-cases"><b>Use cases</b><span>Problems I&#x27;m brought in to solve, by sector</span></a><a class="nd-i" href="/case-studies/#snapshots"><b>Engagement snapshots</b><span>Six common problems, the approach and the stack</span></a><a class="nd-i" href="/case-studies/india-broker-java-runtime-sbom-cscrf/"><b>Java runtime inventory for an Indian broker</b><span>Capital markets · India</span></a><a class="nd-i" href="/case-studies/australia-bank-scams-prevention-framework/"><b>Scam prevention platform for an Australian bank</b><span>Retail banking · Australia</span></a><a class="nd-i" href="/case-studies/malaysia-gpu-cloud-export-control-compliance/"><b>GPU cloud export controls in Malaysia</b><span>Cloud infrastructure · Malaysia</span></a></div><div class="nd-side"><small>Confidential by default</small><p>Every case study is an anonymised composite, cited to public sources.</p><a class="lnk" href="/case-studies/">Browse all →</a></div></div></div>
+      <div class="nd"><button type="button" class="nd-b" aria-expanded="false" aria-controls="nd-insights">Insights<svg class="chev" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 3.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button><div class="nd-p" id="nd-insights"><div class="nd-grid"><a class="nd-i" href="/insights/"><b>All insights</b><span>159 articles on AI, data, cloud and leadership</span></a><a class="nd-i" href="/insights/#topic-news"><b>Daily tech news</b><span>A CTO&#x27;s take on the day&#x27;s releases, deals and rules</span></a><a class="nd-i" href="/subscribe/"><b>Subscribe via RSS</b><span>Get every new post in Feedly, Inoreader or any reader</span></a><a class="nd-i" href="/insights/agent-framework-pypi-pth-compromise/"><b>The agent-framework hack: why installing a package was enough to lose your cloud secrets</b></a><a class="nd-i" href="/insights/tech-news-2026-11-19/"><b>Tech news, 19 November 2026: Java4Shell, a poisoned Microsoft agent package, GPT-6.2 Astra and Sol, and Malaysia&#x27;s data centre pipeline</b></a><a class="nd-i" href="/insights/vendor-admin-access-rmm-breaches/"><b>Your vendors&#x27; admin tools are your perimeter: what N-central, ScreenConnect, Qubole and Optimizely have in common</b></a><a class="nd-i" href="/insights/tech-news-2026-11-18/"><b>Tech news, 18 November 2026: the Optimizely supply chain attack, Nvidia&#x27;s first results without Huang, New York&#x27;s AI enforcement unit and Microsoft&#x27;s MAI Code 2</b></a><a class="nd-i" href="/insights/technical-debt-without-a-rewrite/"><b>Paying down technical debt without a rewrite: what works when the business cannot stop</b></a></div><div class="nd-side"><small>New every week</small><p>Explainers, playbooks and analysis of new standards and regulation.</p><a class="lnk" href="/insights/">Read the latest →</a></div></div></div>
+      <div class="nd"><button type="button" class="nd-b" aria-expanded="false" aria-controls="nd-about">About<svg class="chev" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 3.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button><div class="nd-p" id="nd-about"><div class="nd-grid"><a class="nd-i" href="/about/"><b>About</b><span>Background, credentials and open-source work</span></a><a class="nd-i" href="/expertise/"><b>Expertise</b><span>Practice areas, reference architecture and industries</span></a><a class="nd-i" href="/how-i-work/"><b>How I work</b><span>Playbook, principles and engagement models</span></a><a class="nd-i" href="/how-i-work/#faq"><b>FAQ</b><span>Common questions about working together</span></a><a class="nd-i" href="/#contact"><b>Contact</b><span>Book a call or send a message</span></a></div><div class="nd-side"><small>Take a break</small><p>Defend production from incoming incidents in Orbital Ops, a free sci-fi browser game.</p><a class="lnk" href="/play/">Play now →</a></div></div></div>
+      <a class="nd-l" href="/play/">Play <em>new</em></a>
+    </div>
+    <div class="nav-r">
+      <button type="button" class="kbtn" data-search aria-label="Search the site" title="Search (Ctrl K)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><kbd>⌘K</kbd></button>
+      <button type="button" class="snd" aria-pressed="false" aria-label="Turn ambient sound on" title="Ambient sound"><span class="eq"><i></i><i></i><i></i><i></i></span></button>
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/insights/">Insights</a> <span>/</span> <em>The agent-framework hack: why installing a package was enough to lose your cloud secrets</em></div>
+    <div class="kicker">Analysis · Software supply chain</div>
+    <h1>The agent-framework hack: why installing a package was enough to lose your cloud secrets</h1>
+    <p class="sub-lede">Two releases of Microsoft&#x27;s agent-framework package on PyPI carried a credential stealer that ran every time Python started, whether or not anyone imported the package. The mechanism is an old, documented Python feature. The target was the place where agent tooling now lives: developer laptops and CI runners full of cloud credentials. Here is what happened, why it worked, and what to change.</p>
+    <div class="ameta"><span class="fmt">Analysis</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-11-19T21:15:00+04:00">19 Nov 2026 · 21:15 GST</time><span>8 min read</span><span>7 sources</span></div><div class="atags"><span class="tagp">#news</span><span class="tagp">#security</span><span class="tagp">#ai</span><span class="tagp">#cloud</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Analysis cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><polyline points="540,244 596,220 652,240 708,204 764,209 820,167 876,169 932,215 988,180 1044,174 1100,187 1156,229" class="cv-line"/><polyline points="540,128 596,287 652,144 708,171 764,139 820,256 876,165 932,139 988,136 1044,183 1100,188 1156,204" class="cv-line"/><polyline points="540,81 596,169 652,171 708,244 764,190 820,120 876,248 932,88 988,154 1044,200 1100,231 1156,123" class="cv-line hl"/><text x="60" y="90" class="cv-k">ANALYSIS · ANALYSIS · SOFTWARE SUPPLY CHAIN</text><text x="60" y="350" class="cv-n">19 Nov 2026 · 21:15 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <section class="block">
+<h2 id="what-happened">What happened</h2>
+<p>On 17 November, versions 1.26.1 and 1.26.2 of agent-framework, Microsoft's Python package for building AI agents, were published to PyPI with a credential stealer targeting Azure, Azure DevOps and GitHub Actions secrets<sup class="cite"><a href="#ref-1">1</a></sup>. Both have been removed, and Microsoft has said it is investigating<sup class="cite"><a href="#ref-2">2</a></sup>. Wiz identifies 1.26.0 as the latest safe version<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+<p>Two details matter more than the headline. The releases appeared under the legitimate publisher rather than a lookalike name, and JFrog reports the attacker repacked the clean release rather than compromising Microsoft's build, which points to stolen publishing credentials<sup class="cite"><a href="#ref-4">4</a></sup>. And the two malicious versions went out within about half an hour of each other, the second moving the payload to a new file<sup class="cite"><a href="#ref-5">5</a></sup>. Anyone whose tooling upgraded automatically in that window got it.</p>
+</section>
+
+<section class="block">
+<h2 id="why-installing-was-enough">Why installing was enough</h2>
+<p>The payload was delivered through a .pth file. Python's site module processes these path configuration files at start-up, and executes any line that begins with <code>import</code><sup class="cite"><a href="#ref-6">6</a></sup>. It is a documented feature meant for setting up paths. It also means any installed package can run code every time Python starts, in every script, test run and notebook in that environment, without ever being imported<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Publish</b><span>Attacker uploads a repacked release under the real publisher</span></li>
+<li><b>Resolve</b><span>An unpinned or loosely pinned install picks up the new version</span></li>
+<li class="hl"><b>Drop</b><span>Installation writes a .pth file into site-packages</span></li>
+<li class="hl"><b>Run</b><span>Any Python process on that machine executes it at start-up</span></li>
+<li><b>Harvest</b><span>Cloud, CI and token secrets are read from the environment and files</span></li>
+<li><b>Exfiltrate</b><span>Secrets leave before anyone has imported the package</span></li>
+</ol>
+<figcaption>The dangerous step is not using the package. It is having it installed in an environment that holds secrets.</figcaption>
+</figure>
+<p>That changes the usual reasoning about risk. Teams often assume a dependency is only dangerous on the code paths that call it. Start-up hooks, install scripts and build plugins break that assumption: the risk is in the environment, not the call graph.</p>
+</section>
+
+<section class="block">
+<h2 id="why-agent-tooling-is-the-target">Why agent tooling is the target</h2>
+<p>Agent frameworks are installed where the valuable credentials are. Developers run them on laptops signed in to cloud consoles; CI pipelines run their tests with deployment credentials loaded; agents themselves are often given broad tokens so they can call tools. A package that sits in those environments is worth more to an attacker than almost any library in production, where secrets are usually narrower and better managed.</p>
+<p>They are also young, fast-moving and upgraded eagerly. Teams building with agents want the newest release, so loose version ranges and automatic updates are common. That is exactly the window this attack used.</p>
+</section>
+
+<section class="block">
+<h2 id="what-to-change-in-ci-and-developer-environments">What to change in CI and developer environments</h2>
+<p>The CNCF's software supply chain paper treats build infrastructure as needing the same security as the production it builds for, and recommends single-use build workers so a compromise cannot persist or spread across builds<sup class="cite"><a href="#ref-7">7</a></sup>. Most of the fixes here follow from taking that seriously.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/agent-framework-pypi-pth-compromise/software-factory.webp" alt="Illustration of a secure software factory: source repository, pipeline orchestrator and build workers pulling and linking dependencies, then application build, testing, artefact publishing with SBOM and metadata, signing infrastructure, artefact storage and deployment" width="1200" height="724" loading="lazy"></div><figcaption>The software factory: dependencies enter at build workers, which is where a poisoned package meets your secrets. <span class="credit">Source: <a href="https://github.com/cncf/tag-security/blob/main/community/working-groups/supply-chain-security/supply-chain-security-paper/sscsp.md" target="_blank" rel="noopener">CNCF TAG Security, Software Supply Chain Best Practices</a> · CC BY 4.0</span></figcaption></figure>
+<table class="tbl">
+<thead><tr><th>Control</th><th>What it stops</th><th>Cost</th></tr></thead>
+<tbody>
+<tr><td>Lockfiles with hashes for every install</td><td>Silently picking up a new release</td><td>Low; needs a routine for updates</td></tr>
+<tr><td>A cooling-off period before new releases are allowed</td><td>Installing a release in its first hours, when most poisoned versions are caught</td><td>Low; small delay on fixes</td></tr>
+<tr><td>Separate install and secret-holding steps in CI</td><td>Start-up hooks reading deployment credentials during tests</td><td>Medium; pipeline changes</td></tr>
+<tr><td>Short-lived, narrowly scoped CI credentials</td><td>Stolen secrets being useful for long or broadly</td><td>Medium; identity federation work</td></tr>
+<tr><td>Single-use build workers</td><td>A compromise persisting across builds</td><td>Medium; often already available</td></tr>
+<tr><td>Internal package mirror with policy</td><td>Unreviewed packages reaching any environment</td><td>Higher; worth it at scale</td></tr>
+</tbody>
+</table>
+<div class="callout"><p>The most effective single change is keeping deployment credentials out of any step that installs or runs third-party code. Tests do not need the keys to production.</p></div>
+<p>For developers, the equivalent is not running agent experiments in the same environment, or with the same signed-in cloud session, as production administration. A disposable container or virtual environment with no standing credentials costs little and limits what a poisoned package can find.</p>
+</section>
+
+<section class="block">
+<h2 id="if-you-installed-an-affected-version">If you installed an affected version</h2>
+<ul>
+<li>Find it: search lockfiles, CI logs and package caches for agent-framework 1.26.1 or 1.26.2.</li>
+<li>Assume every credential reachable from those machines and runners is exposed, not just Azure and GitHub; reports describe the stealer reading environment variables and local configuration more broadly<sup class="cite"><a href="#ref-2">2</a></sup>.</li>
+<li>Rotate first, then investigate: review cloud audit logs and CI histories for use of those credentials since 17 November.</li>
+<li>Rebuild affected environments rather than cleaning them, and pin to a verified version.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2 id="the-cto-s-take">The CTO's take</h2>
+<p>This is the same lesson as the <a href="/insights/vendor-admin-access-rmm-breaches/">recent vendor access incidents</a>, one layer down: trust granted for convenience becomes access for attackers. Package registries are run by the publishers you depend on, and their credentials can be stolen like anyone's. The defence is to assume a dependency will eventually be poisoned and design so that, when it happens, it finds nothing worth taking. Related reading: <a href="/insights/ai-model-supply-chain-security/">AI model supply chain security</a>, the <a href="/case-studies/india-broker-java-runtime-sbom-cscrf/">runtime inventory case study</a> and the <a href="/insights/tech-news-2026-11-19/">tech news for 19 November</a>.</p>
+<p>If you want a review of how your CI and agent tooling handle secrets, or a <a href="/technical-due-diligence/">technical due diligence</a> view of a team's supply chain, I am a <a href="/fractional-cto/">fractional CTO</a> and <a href="/ai-architect/">AI architect</a> based in India, the United States and the UAE, working globally. You can <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://www.securityweek.com/microsoft-agent-framework-releases-poisoned-with-credential-stealer/" target="_blank" rel="noopener">Microsoft Agent Framework Releases Poisoned With Credential Stealer</a><small>SecurityWeek · Nov 2026</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://www.bleepingcomputer.com/news/security/microsofts-agent-framework-pypi-package-compromised-to-steal-credentials/" target="_blank" rel="noopener">Microsoft&#x27;s agent-framework PyPI package compromised to steal credentials</a><small>BleepingComputer · Nov 2026</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://www.wiz.io/blog/malicious-version-of-microsofts-agent-framework-published-to-pypi" target="_blank" rel="noopener">Microsoft agent-framework compromised: credential stealer targets Azure and CI pipelines</a><small>Wiz · Nov 2026</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://research.jfrog.com/post/agent-framework-hijack/" target="_blank" rel="noopener">Microsoft&#x27;s agent-framework hijacked on PyPI via silent .pth startup hook</a><small>JFrog Security Research · Nov 2026</small></div></li><li id="ref-5"><span class="rn">5</span><div><a href="https://www.aikido.dev/blog/two-malicious-agent-framework-releases-hit-pypi-in-33-minutes" target="_blank" rel="noopener">Two malicious agent-framework releases hit PyPI in 33 minutes</a><small>Aikido · Nov 2026</small></div></li><li id="ref-6"><span class="rn">6</span><div><a href="https://docs.python.org/3/library/site.html" target="_blank" rel="noopener">site: Site-specific configuration hook</a><small>Python documentation</small></div></li><li id="ref-7"><span class="rn">7</span><div><a href="https://github.com/cncf/tag-security/blob/main/community/working-groups/supply-chain-security/supply-chain-security-paper/sscsp.md" target="_blank" rel="noopener">Software Supply Chain Best Practices</a><small>CNCF TAG Security</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fagent-framework-pypi-pth-compromise%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fagent-framework-pypi-pth-compromise%2F&amp;text=The%20agent-framework%20hack%3A%20why%20installing%20a%20package%20was%20enough%20to%20lose%20your%20cloud%20secrets" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=The%20agent-framework%20hack%3A%20why%20installing%20a%20package%20was%20enough%20to%20lose%20your%20cloud%20secrets%20https%3A%2F%2Fasksumanta.com%2Finsights%2Fagent-framework-pypi-pth-compromise%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://asksumanta.com/insights/agent-framework-pypi-pth-compromise/">Copy link</button></div>
+      <aside class="author-box" aria-label="About the author">
+        <div class="ab-av" aria-hidden="true">SM</div>
+        <div><small>About the author</small><b>Sumanta Mukhopadhyay</b>
+        <p>Fractional CTO, principal engineer and AI architect based in India, the United States and the UAE. Works across ontology and knowledge graphs, production AI, healthcare data platforms and cloud infrastructure.</p>
+        <div class="ab-l"><a href="/about/">More about me</a><a href="/how-i-work/">How I work</a><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a call</a></div></div>
+      </aside>
+      <div class="pnav"><a class="pn prev" href="/insights/tech-news-2026-11-19/"><small>← Previous</small><b>Tech news, 19 November 2026: Java4Shell, a poisoned Microsoft agent package, GPT-6.2 Astra and Sol, and Malaysia&#x27;s data centre pipeline</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#what-happened">What happened</a></li><li><a href="#why-installing-was-enough">Why installing was enough</a></li><li><a href="#why-agent-tooling-is-the-target">Why agent tooling is the target</a></li><li><a href="#what-to-change-in-ci-and-developer-environments">What to change in CI and developer environments</a></li><li><a href="#if-you-installed-an-affected-version">If you installed an affected version</a></li><li><a href="#the-cto-s-take">The CTO&#x27;s take</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>What is a .pth file?</summary><p>A path configuration file that Python&#x27;s site module processes at start-up. Lines that begin with import are executed, which is meant for setting up paths but means any installed package can run code whenever Python starts.</p></details><details class="rise"><summary>Was Microsoft&#x27;s build pipeline compromised?</summary><p>Reports differ in detail. JFrog reports the attacker repacked the clean release locally rather than compromising the build, and the malicious versions appeared under the legitimate publisher, which points to stolen publishing credentials. Microsoft has said it is investigating.</p></details><details class="rise"><summary>What should we do if we installed 1.26.1 or 1.26.2?</summary><p>Treat the machine as compromised: rotate every credential it could reach, including cloud, CI, registry and API keys, review cloud and CI logs for use of those credentials, rebuild the environment, and pin agent-framework to 1.26.0 or a later verified release.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/ai-architect/"><small>Service</small><b>AI &amp; LLM architecture</b><span>I design and build AI systems that leadership can trust: grounded in your data, measured by evaluations, governed by your rules and priced so they make sense at scale.</span><i>→</i></a><a class="rcard rise" href="/fractional-cto/"><small>Service</small><b>Fractional CTO</b><span>I work as a part-time CTO for founders, CEOs and boards who need experienced technical judgement now, and a team that can carry it on after I step back.</span><i>→</i></a><a class="rcard rise" href="/technical-due-diligence/"><small>Service</small><b>Technical due diligence</b><span>I give investors an independent, plain-language view of a company&#x27;s technology, team and AI claims, so the risks are priced in before the deal closes, not discovered after.</span><i>→</i></a><a class="rcard rise" href="/insights/tech-news-2026-11-19/"><small>Insight</small><b>Tech news, 19 November 2026: Java4Shell, a poisoned Microsoft agent package, GPT-6.2 Astra and Sol, and Malaysia&#x27;s data centre pipeline</b><span>A flaw in OpenJDK&#x27;s Base64 decoder, dubbed Java4Shell, puts widely used Java servers at risk of remote code execution, and fixes are arriving unevenly across Java distributions. Two malicious releases of Microsoft&#x27;s agent-framework package on PyPI stole cloud and CI credentials at Python start-up. OpenAI released GPT-6.2 Astra and Sol, and Malaysia&#x27;s parliament heard how large its approved data centre pipeline has become.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: The agent-framework hack: why installing a package was enough to lose your cloud secrets">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. Time zones from the Americas and Europe to the Middle East and Asia-Pacific.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
+        <p class="floc">Global, remote-first · based in India, the US &amp; UAE · <a href="/regions/">where I work</a></p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/regions/">Fractional CTO worldwide →</a></li></ul></div>
+      <div class="fc"><h4>Case studies</h4><ul><li><a href="/case-studies/india-broker-java-runtime-sbom-cscrf/">Java runtime inventory for an Indian broker</a></li><li><a href="/case-studies/australia-bank-scams-prevention-framework/">Scam prevention platform for an Australian bank</a></li><li><a href="/case-studies/malaysia-gpu-cloud-export-control-compliance/">GPU cloud export controls in Malaysia</a></li><li><a href="/case-studies/brazil-payments-safe-change-rollouts/">Safe change for Brazilian payments</a></li><li><a href="/case-studies/#snapshots">Engagement snapshots</a></li><li><a href="/case-studies/">All case studies →</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/agent-framework-pypi-pth-compromise/">The agent-framework hack: why installing a package was enough to lose your cloud secrets</a></li><li><a href="/insights/tech-news-2026-11-19/">Tech news, 19 November 2026: Java4Shell, a poisoned Microsoft agent package, GPT-6.2 Astra and Sol, and Malaysia&#x27;s data centre pipeline</a></li><li><a href="/insights/vendor-admin-access-rmm-breaches/">Your vendors&#x27; admin tools are your perimeter: what N-central, ScreenConnect, Qubole and Optimizely have in common</a></li><li><a href="/insights/tech-news-2026-11-18/">Tech news, 18 November 2026: the Optimizely supply chain attack, Nvidia&#x27;s first results without Huang, New York&#x27;s AI enforcement unit and Microsoft&#x27;s MAI Code 2</a></li><li><a href="/insights/technical-debt-without-a-rewrite/">Paying down technical debt without a rewrite: what works when the business cannot stop</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="/how-i-work/">How I work</a></li>
+        <li><a href="/expertise/">Expertise</a></li>
+        <li><a href="/about/">About</a></li>
+        <li><a href="/play/">Play Orbital Ops</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/privacy/">Privacy &amp; cookies</a><button type="button" class="cookie-link" data-cookie-settings>Cookie settings</button><a href="/subscribe/">RSS</a><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js?v=fddb4ea7bf"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>

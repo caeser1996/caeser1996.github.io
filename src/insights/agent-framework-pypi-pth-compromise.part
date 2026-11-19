@@ -1,0 +1,64 @@
+<!--{"title": "The agent-framework hack: when installing a package is enough", "description": "Poisoned agent-framework releases stole cloud and CI secrets at Python start-up. A CTO's take on .pth hooks, why agent tooling is a prime target and what to change in CI.", "h1": "The agent-framework hack: why installing a package was enough to lose your cloud secrets", "kicker": "Analysis · Software supply chain", "lede": "Two releases of Microsoft's agent-framework package on PyPI carried a credential stealer that ran every time Python started, whether or not anyone imported the package. The mechanism is an old, documented Python feature. The target was the place where agent tooling now lives: developer laptops and CI runners full of cloud credentials. Here is what happened, why it worked, and what to change.", "date": "2026-11-19", "datetime": "2026-11-19T21:15:00+04:00", "readtime": "8 min read", "format": "news-analysis", "tags": ["news", "security", "ai", "cloud"], "keywords": ["agent-framework PyPI compromise", "Python pth file attack", "PyPI supply chain attack", "CI credential theft", "GitHub Actions secrets", "Azure DevOps credentials", "dependency pinning hashes", "trusted publishing", "AI agent framework security", "CTO software supply chain"], "faq": [["What is a .pth file?", "A path configuration file that Python's site module processes at start-up. Lines that begin with import are executed, which is meant for setting up paths but means any installed package can run code whenever Python starts."], ["Was Microsoft's build pipeline compromised?", "Reports differ in detail. JFrog reports the attacker repacked the clean release locally rather than compromising the build, and the malicious versions appeared under the legitimate publisher, which points to stolen publishing credentials. Microsoft has said it is investigating."], ["What should we do if we installed 1.26.1 or 1.26.2?", "Treat the machine as compromised: rotate every credential it could reach, including cloud, CI, registry and API keys, review cloud and CI logs for use of those credentials, rebuild the environment, and pin agent-framework to 1.26.0 or a later verified release."]], "related": ["/ai-architect/", "/fractional-cto/", "/technical-due-diligence/"], "citations": [{"title": "Microsoft Agent Framework Releases Poisoned With Credential Stealer", "url": "https://www.securityweek.com/microsoft-agent-framework-releases-poisoned-with-credential-stealer/", "publisher": "SecurityWeek", "date": "Nov 2026"}, {"title": "Microsoft's agent-framework PyPI package compromised to steal credentials", "url": "https://www.bleepingcomputer.com/news/security/microsofts-agent-framework-pypi-package-compromised-to-steal-credentials/", "publisher": "BleepingComputer", "date": "Nov 2026"}, {"title": "Microsoft agent-framework compromised: credential stealer targets Azure and CI pipelines", "url": "https://www.wiz.io/blog/malicious-version-of-microsofts-agent-framework-published-to-pypi", "publisher": "Wiz", "date": "Nov 2026"}, {"title": "Microsoft's agent-framework hijacked on PyPI via silent .pth startup hook", "url": "https://research.jfrog.com/post/agent-framework-hijack/", "publisher": "JFrog Security Research", "date": "Nov 2026"}, {"title": "Two malicious agent-framework releases hit PyPI in 33 minutes", "url": "https://www.aikido.dev/blog/two-malicious-agent-framework-releases-hit-pypi-in-33-minutes", "publisher": "Aikido", "date": "Nov 2026"}, {"title": "site: Site-specific configuration hook", "url": "https://docs.python.org/3/library/site.html", "publisher": "Python documentation"}, {"title": "Software Supply Chain Best Practices", "url": "https://github.com/cncf/tag-security/blob/main/community/working-groups/supply-chain-security/supply-chain-security-paper/sscsp.md", "publisher": "CNCF TAG Security"}]}-->
+<section class="block">
+<h2>What happened</h2>
+<p>On 17 November, versions 1.26.1 and 1.26.2 of agent-framework, Microsoft's Python package for building AI agents, were published to PyPI with a credential stealer targeting Azure, Azure DevOps and GitHub Actions secrets<sup class="cite"><a href="#ref-1">1</a></sup>. Both have been removed, and Microsoft has said it is investigating<sup class="cite"><a href="#ref-2">2</a></sup>. Wiz identifies 1.26.0 as the latest safe version<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+<p>Two details matter more than the headline. The releases appeared under the legitimate publisher rather than a lookalike name, and JFrog reports the attacker repacked the clean release rather than compromising Microsoft's build, which points to stolen publishing credentials<sup class="cite"><a href="#ref-4">4</a></sup>. And the two malicious versions went out within about half an hour of each other, the second moving the payload to a new file<sup class="cite"><a href="#ref-5">5</a></sup>. Anyone whose tooling upgraded automatically in that window got it.</p>
+</section>
+
+<section class="block">
+<h2>Why installing was enough</h2>
+<p>The payload was delivered through a .pth file. Python's site module processes these path configuration files at start-up, and executes any line that begins with <code>import</code><sup class="cite"><a href="#ref-6">6</a></sup>. It is a documented feature meant for setting up paths. It also means any installed package can run code every time Python starts, in every script, test run and notebook in that environment, without ever being imported<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Publish</b><span>Attacker uploads a repacked release under the real publisher</span></li>
+<li><b>Resolve</b><span>An unpinned or loosely pinned install picks up the new version</span></li>
+<li class="hl"><b>Drop</b><span>Installation writes a .pth file into site-packages</span></li>
+<li class="hl"><b>Run</b><span>Any Python process on that machine executes it at start-up</span></li>
+<li><b>Harvest</b><span>Cloud, CI and token secrets are read from the environment and files</span></li>
+<li><b>Exfiltrate</b><span>Secrets leave before anyone has imported the package</span></li>
+</ol>
+<figcaption>The dangerous step is not using the package. It is having it installed in an environment that holds secrets.</figcaption>
+</figure>
+<p>That changes the usual reasoning about risk. Teams often assume a dependency is only dangerous on the code paths that call it. Start-up hooks, install scripts and build plugins break that assumption: the risk is in the environment, not the call graph.</p>
+</section>
+
+<section class="block">
+<h2>Why agent tooling is the target</h2>
+<p>Agent frameworks are installed where the valuable credentials are. Developers run them on laptops signed in to cloud consoles; CI pipelines run their tests with deployment credentials loaded; agents themselves are often given broad tokens so they can call tools. A package that sits in those environments is worth more to an attacker than almost any library in production, where secrets are usually narrower and better managed.</p>
+<p>They are also young, fast-moving and upgraded eagerly. Teams building with agents want the newest release, so loose version ranges and automatic updates are common. That is exactly the window this attack used.</p>
+</section>
+
+<section class="block">
+<h2>What to change in CI and developer environments</h2>
+<p>The CNCF's software supply chain paper treats build infrastructure as needing the same security as the production it builds for, and recommends single-use build workers so a compromise cannot persist or spread across builds<sup class="cite"><a href="#ref-7">7</a></sup>. Most of the fixes here follow from taking that seriously.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/agent-framework-pypi-pth-compromise/software-factory.webp" alt="Illustration of a secure software factory: source repository, pipeline orchestrator and build workers pulling and linking dependencies, then application build, testing, artefact publishing with SBOM and metadata, signing infrastructure, artefact storage and deployment" width="1200" height="724" loading="lazy"></div><figcaption>The software factory: dependencies enter at build workers, which is where a poisoned package meets your secrets. <span class="credit">Source: <a href="https://github.com/cncf/tag-security/blob/main/community/working-groups/supply-chain-security/supply-chain-security-paper/sscsp.md" target="_blank" rel="noopener">CNCF TAG Security, Software Supply Chain Best Practices</a> · CC BY 4.0</span></figcaption></figure>
+<table class="tbl">
+<thead><tr><th>Control</th><th>What it stops</th><th>Cost</th></tr></thead>
+<tbody>
+<tr><td>Lockfiles with hashes for every install</td><td>Silently picking up a new release</td><td>Low; needs a routine for updates</td></tr>
+<tr><td>A cooling-off period before new releases are allowed</td><td>Installing a release in its first hours, when most poisoned versions are caught</td><td>Low; small delay on fixes</td></tr>
+<tr><td>Separate install and secret-holding steps in CI</td><td>Start-up hooks reading deployment credentials during tests</td><td>Medium; pipeline changes</td></tr>
+<tr><td>Short-lived, narrowly scoped CI credentials</td><td>Stolen secrets being useful for long or broadly</td><td>Medium; identity federation work</td></tr>
+<tr><td>Single-use build workers</td><td>A compromise persisting across builds</td><td>Medium; often already available</td></tr>
+<tr><td>Internal package mirror with policy</td><td>Unreviewed packages reaching any environment</td><td>Higher; worth it at scale</td></tr>
+</tbody>
+</table>
+<div class="callout"><p>The most effective single change is keeping deployment credentials out of any step that installs or runs third-party code. Tests do not need the keys to production.</p></div>
+<p>For developers, the equivalent is not running agent experiments in the same environment, or with the same signed-in cloud session, as production administration. A disposable container or virtual environment with no standing credentials costs little and limits what a poisoned package can find.</p>
+</section>
+
+<section class="block">
+<h2>If you installed an affected version</h2>
+<ul>
+<li>Find it: search lockfiles, CI logs and package caches for agent-framework 1.26.1 or 1.26.2.</li>
+<li>Assume every credential reachable from those machines and runners is exposed, not just Azure and GitHub; reports describe the stealer reading environment variables and local configuration more broadly<sup class="cite"><a href="#ref-2">2</a></sup>.</li>
+<li>Rotate first, then investigate: review cloud audit logs and CI histories for use of those credentials since 17 November.</li>
+<li>Rebuild affected environments rather than cleaning them, and pin to a verified version.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>The CTO's take</h2>
+<p>This is the same lesson as the <a href="/insights/vendor-admin-access-rmm-breaches/">recent vendor access incidents</a>, one layer down: trust granted for convenience becomes access for attackers. Package registries are run by the publishers you depend on, and their credentials can be stolen like anyone's. The defence is to assume a dependency will eventually be poisoned and design so that, when it happens, it finds nothing worth taking. Related reading: <a href="/insights/ai-model-supply-chain-security/">AI model supply chain security</a>, the <a href="/case-studies/india-broker-java-runtime-sbom-cscrf/">runtime inventory case study</a> and the <a href="/insights/tech-news-2026-11-19/">tech news for 19 November</a>.</p>
+<p>If you want a review of how your CI and agent tooling handle secrets, or a <a href="/technical-due-diligence/">technical due diligence</a> view of a team's supply chain, I am a <a href="/fractional-cto/">fractional CTO</a> and <a href="/ai-architect/">AI architect</a> based in India, the United States and the UAE, working globally. You can <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>

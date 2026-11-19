@@ -1,6 +1,68 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link><description>Fractional CTO and AI architect: insights, case studies and daily tech news.</description><language>en-gb</language><lastBuildDate>Thu, 19 Nov 2026 15:50:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link></image><item><title>A query, not a hunt: building a live software inventory for an Indian stockbroker after Java4Shell</title><link>https://asksumanta.com/case-studies/india-broker-java-runtime-sbom-cscrf/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/india-broker-java-runtime-sbom-cscrf/</guid><pubDate>Thu, 19 Nov 2026 15:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>security</category><category>cloud</category><category>governance</category><description>How an Indian stockbroker can turn SEBI&#x27;s SBOM requirement into a live runtime inventory, so the next Java4Shell is a query and a rebuild, not a week-long hunt.</description><content:encoded><![CDATA[<p><em>An Indian stockbroker ran its trading, identity and back-office systems on Java, some built in-house and some bought. When Java4Shell was disclosed, nobody could say quickly where every Java runtime was or which version it ran. The SBOMs produced for SEBI&#x27;s cyber framework listed libraries, not runtimes. The goal was an inventory that answers that question in minutes, and a patch path that rebuilds rather than repairs.</em></p><h2>The situation</h2>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link><description>Fractional CTO and AI architect: insights, case studies and daily tech news.</description><language>en-gb</language><lastBuildDate>Thu, 19 Nov 2026 21:15:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link></image><item><title>The agent-framework hack: why installing a package was enough to lose your cloud secrets</title><link>https://asksumanta.com/insights/agent-framework-pypi-pth-compromise/</link><guid isPermaLink="true">https://asksumanta.com/insights/agent-framework-pypi-pth-compromise/</guid><pubDate>Thu, 19 Nov 2026 21:15:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>security</category><category>ai</category><category>cloud</category><description>Poisoned agent-framework releases stole cloud and CI secrets at Python start-up. A CTO&#x27;s take on .pth hooks, why agent tooling is a prime target and what to change in CI.</description><content:encoded><![CDATA[<p><em>Two releases of Microsoft&#x27;s agent-framework package on PyPI carried a credential stealer that ran every time Python started, whether or not anyone imported the package. The mechanism is an old, documented Python feature. The target was the place where agent tooling now lives: developer laptops and CI runners full of cloud credentials. Here is what happened, why it worked, and what to change.</em></p><section class="block">
+<h2>What happened</h2>
+<p>On 17 November, versions 1.26.1 and 1.26.2 of agent-framework, Microsoft's Python package for building AI agents, were published to PyPI with a credential stealer targeting Azure, Azure DevOps and GitHub Actions secrets<sup class="cite"><a href="#ref-1">1</a></sup>. Both have been removed, and Microsoft has said it is investigating<sup class="cite"><a href="#ref-2">2</a></sup>. Wiz identifies 1.26.0 as the latest safe version<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+<p>Two details matter more than the headline. The releases appeared under the legitimate publisher rather than a lookalike name, and JFrog reports the attacker repacked the clean release rather than compromising Microsoft's build, which points to stolen publishing credentials<sup class="cite"><a href="#ref-4">4</a></sup>. And the two malicious versions went out within about half an hour of each other, the second moving the payload to a new file<sup class="cite"><a href="#ref-5">5</a></sup>. Anyone whose tooling upgraded automatically in that window got it.</p>
+</section>
+
+<section class="block">
+<h2>Why installing was enough</h2>
+<p>The payload was delivered through a .pth file. Python's site module processes these path configuration files at start-up, and executes any line that begins with <code>import</code><sup class="cite"><a href="#ref-6">6</a></sup>. It is a documented feature meant for setting up paths. It also means any installed package can run code every time Python starts, in every script, test run and notebook in that environment, without ever being imported<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Publish</b><span>Attacker uploads a repacked release under the real publisher</span></li>
+<li><b>Resolve</b><span>An unpinned or loosely pinned install picks up the new version</span></li>
+<li class="hl"><b>Drop</b><span>Installation writes a .pth file into site-packages</span></li>
+<li class="hl"><b>Run</b><span>Any Python process on that machine executes it at start-up</span></li>
+<li><b>Harvest</b><span>Cloud, CI and token secrets are read from the environment and files</span></li>
+<li><b>Exfiltrate</b><span>Secrets leave before anyone has imported the package</span></li>
+</ol>
+<figcaption>The dangerous step is not using the package. It is having it installed in an environment that holds secrets.</figcaption>
+</figure>
+<p>That changes the usual reasoning about risk. Teams often assume a dependency is only dangerous on the code paths that call it. Start-up hooks, install scripts and build plugins break that assumption: the risk is in the environment, not the call graph.</p>
+</section>
+
+<section class="block">
+<h2>Why agent tooling is the target</h2>
+<p>Agent frameworks are installed where the valuable credentials are. Developers run them on laptops signed in to cloud consoles; CI pipelines run their tests with deployment credentials loaded; agents themselves are often given broad tokens so they can call tools. A package that sits in those environments is worth more to an attacker than almost any library in production, where secrets are usually narrower and better managed.</p>
+<p>They are also young, fast-moving and upgraded eagerly. Teams building with agents want the newest release, so loose version ranges and automatic updates are common. That is exactly the window this attack used.</p>
+</section>
+
+<section class="block">
+<h2>What to change in CI and developer environments</h2>
+<p>The CNCF's software supply chain paper treats build infrastructure as needing the same security as the production it builds for, and recommends single-use build workers so a compromise cannot persist or spread across builds<sup class="cite"><a href="#ref-7">7</a></sup>. Most of the fixes here follow from taking that seriously.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/agent-framework-pypi-pth-compromise/software-factory.webp" alt="Illustration of a secure software factory: source repository, pipeline orchestrator and build workers pulling and linking dependencies, then application build, testing, artefact publishing with SBOM and metadata, signing infrastructure, artefact storage and deployment" width="1200" height="724" loading="lazy"></div><figcaption>The software factory: dependencies enter at build workers, which is where a poisoned package meets your secrets. <span class="credit">Source: <a href="https://github.com/cncf/tag-security/blob/main/community/working-groups/supply-chain-security/supply-chain-security-paper/sscsp.md" target="_blank" rel="noopener">CNCF TAG Security, Software Supply Chain Best Practices</a> · CC BY 4.0</span></figcaption></figure>
+<table class="tbl">
+<thead><tr><th>Control</th><th>What it stops</th><th>Cost</th></tr></thead>
+<tbody>
+<tr><td>Lockfiles with hashes for every install</td><td>Silently picking up a new release</td><td>Low; needs a routine for updates</td></tr>
+<tr><td>A cooling-off period before new releases are allowed</td><td>Installing a release in its first hours, when most poisoned versions are caught</td><td>Low; small delay on fixes</td></tr>
+<tr><td>Separate install and secret-holding steps in CI</td><td>Start-up hooks reading deployment credentials during tests</td><td>Medium; pipeline changes</td></tr>
+<tr><td>Short-lived, narrowly scoped CI credentials</td><td>Stolen secrets being useful for long or broadly</td><td>Medium; identity federation work</td></tr>
+<tr><td>Single-use build workers</td><td>A compromise persisting across builds</td><td>Medium; often already available</td></tr>
+<tr><td>Internal package mirror with policy</td><td>Unreviewed packages reaching any environment</td><td>Higher; worth it at scale</td></tr>
+</tbody>
+</table>
+<div class="callout"><p>The most effective single change is keeping deployment credentials out of any step that installs or runs third-party code. Tests do not need the keys to production.</p></div>
+<p>For developers, the equivalent is not running agent experiments in the same environment, or with the same signed-in cloud session, as production administration. A disposable container or virtual environment with no standing credentials costs little and limits what a poisoned package can find.</p>
+</section>
+
+<section class="block">
+<h2>If you installed an affected version</h2>
+<ul>
+<li>Find it: search lockfiles, CI logs and package caches for agent-framework 1.26.1 or 1.26.2.</li>
+<li>Assume every credential reachable from those machines and runners is exposed, not just Azure and GitHub; reports describe the stealer reading environment variables and local configuration more broadly<sup class="cite"><a href="#ref-2">2</a></sup>.</li>
+<li>Rotate first, then investigate: review cloud audit logs and CI histories for use of those credentials since 17 November.</li>
+<li>Rebuild affected environments rather than cleaning them, and pin to a verified version.</li>
+</ul>
+</section>
+
+<section class="block">
+<h2>The CTO's take</h2>
+<p>This is the same lesson as the <a href="https://asksumanta.com/insights/vendor-admin-access-rmm-breaches/">recent vendor access incidents</a>, one layer down: trust granted for convenience becomes access for attackers. Package registries are run by the publishers you depend on, and their credentials can be stolen like anyone's. The defence is to assume a dependency will eventually be poisoned and design so that, when it happens, it finds nothing worth taking. Related reading: <a href="https://asksumanta.com/insights/ai-model-supply-chain-security/">AI model supply chain security</a>, the <a href="https://asksumanta.com/case-studies/india-broker-java-runtime-sbom-cscrf/">runtime inventory case study</a> and the <a href="https://asksumanta.com/insights/tech-news-2026-11-19/">tech news for 19 November</a>.</p>
+<p>If you want a review of how your CI and agent tooling handle secrets, or a <a href="https://asksumanta.com/technical-due-diligence/">technical due diligence</a> view of a team's supply chain, I am a <a href="https://asksumanta.com/fractional-cto/">fractional CTO</a> and <a href="https://asksumanta.com/ai-architect/">AI architect</a> based in India, the United States and the UAE, working globally. You can <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section><p><a href="https://asksumanta.com/insights/agent-framework-pypi-pth-compromise/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>A query, not a hunt: building a live software inventory for an Indian stockbroker after Java4Shell</title><link>https://asksumanta.com/case-studies/india-broker-java-runtime-sbom-cscrf/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/india-broker-java-runtime-sbom-cscrf/</guid><pubDate>Thu, 19 Nov 2026 15:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>security</category><category>cloud</category><category>governance</category><description>How an Indian stockbroker can turn SEBI&#x27;s SBOM requirement into a live runtime inventory, so the next Java4Shell is a query and a rebuild, not a week-long hunt.</description><content:encoded><![CDATA[<p><em>An Indian stockbroker ran its trading, identity and back-office systems on Java, some built in-house and some bought. When Java4Shell was disclosed, nobody could say quickly where every Java runtime was or which version it ran. The SBOMs produced for SEBI&#x27;s cyber framework listed libraries, not runtimes. The goal was an inventory that answers that question in minutes, and a patch path that rebuilds rather than repairs.</em></p><h2>The situation</h2>
 <p>A mid-sized Indian stockbroker ran most of its estate on Java: an in-house order management service, a customer portal, Keycloak for identity, Jenkins for builds, and several bought products for exchange connectivity, risk and back office, each shipping with its own Java. Some ran in Kubernetes, some on virtual machines, and a few on servers that only the vendor touched.</p>
 <p>Under SEBI's Cybersecurity and Cyber Resilience Framework, the firm already produced software bills of materials for software supporting core operations, as regulated entities are expected to, covering in-house, third-party, open-source and SaaS software<sup class="cite"><a href="#ref-3">3</a></sup>. CERT-In's guidelines set out what those SBOMs should contain and have since been extended to other kinds of bill of materials<sup class="cite"><a href="#ref-4">4</a></sup>. On paper, the firm was well placed.</p>
 <p><strong>Why now.</strong> Java4Shell, a flaw in the Base64 decoder of OpenJDK's runtime, was disclosed in November 2026, with reports that it can enable unauthenticated remote code execution in applications such as Jira, Jenkins and Keycloak<sup class="cite"><a href="#ref-2">2</a></sup>. Updated Java builds arrived on 17 November, with other distributions following on their own schedules<sup class="cite"><a href="#ref-1">1</a></sup>. The first question from the board was simple: where are we exposed? The SBOMs could not answer it, because they listed the libraries each application declared, not the Java runtime underneath.</p>
@@ -3137,81 +3199,4 @@
 <section class="block">
 <h2>How I can help</h2>
 <p>I help health tech teams build model documentation, validation pipelines and FHIR and OMOP foundations that satisfy buyers and regulators. I am based in India, the United States and the UAE, working globally. See <a href="https://asksumanta.com/healthcare-data-architecture/">healthcare data architecture</a> or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
-</section><p><a href="https://asksumanta.com/insights/health-ai-rules-hti-5-patient-ai-act/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Agents that advise, engineers who decide: AI for maintenance planning at a Saudi industrial operator</title><link>https://asksumanta.com/case-studies/saudi-industrial-ai-agents-maintenance/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/saudi-industrial-ai-agents-maintenance/</guid><pubDate>Tue, 03 Nov 2026 15:55:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>ai</category><category>agents</category><category>knowledge-graph</category><description>How a Saudi industrial operator can use AI agents to plan maintenance from equipment data, hosted in-Kingdom, with an asset graph, read-only tools and engineer sign-off.</description><content:encoded><![CDATA[<p><em>A Saudi industrial operator had decades of equipment history, a work-order system, sensor data from its plants and a backlog of maintenance decisions waiting on scarce senior engineers. AI agents could read all of it faster than any team. The challenge was to let them help without letting them touch the plant, and to keep the data in the Kingdom.</em></p><h2>The situation</h2>
-<p>An industrial operator in Saudi Arabia ran several processing plants. Maintenance planning depended on a small group of senior engineers who knew the equipment's history, read sensor trends, checked past work orders and decided what to fix, when and with which spares. Their backlog grew every quarter. Data was everywhere: plant historians, a work-order system, inspection reports and spreadsheets of spares, but connecting it for one decision took days.</p>
-<p><strong>Why now.</strong> Large Gulf industrial companies are moving AI agents into core operations. On 1 November 2026, Aramco and the Public Investment Fund closed a deal giving Aramco 49% of HUMAIN, with Aramco planning to use HUMAIN's AI infrastructure for industrial applications<sup class="cite"><a href="#ref-1">1</a></sup>. A day later, ADNOC announced it would run AI agents on OpenAI's Frontier platform across its operations, hosted on UAE-based infrastructure with human oversight of consequential decisions<sup class="cite"><a href="#ref-2">2</a></sup>. The operator's board wanted the same benefits, with clear limits on what agents could do and where data would live, under Saudi Arabia's Personal Data Protection Law<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>.</p>
-
-<h2>What had to be true</h2>
-<ul>
-<li><strong>Agents never touch the plant.</strong> No connection to control systems; read-only access to copies of data.</li>
-<li><strong>One connected view of assets</strong>: equipment, relationships, history and spares, current and as at any past date.</li>
-<li><strong>Every recommendation carries its evidence</strong>, so an engineer can check it quickly.</li>
-<li><strong>Engineers decide.</strong> Agents draft; approved changes become normal work orders.</li>
-<li><strong>Data in the Kingdom</strong>, including the personal data in work orders and shift logs.</li>
-</ul>
-
-<h2>Architecture</h2>
-<figure class="dgm">
-<div class="dgm-stack">
-<div class="dgm-tier"><small>Plant (OT)</small><div class="dgm-nodes"><span>Control systems<em>no AI access</em></span><span>Historians<em>sensor time series</em></span></div></div>
-<div class="dgm-tier"><small>Boundary</small><div class="dgm-nodes"><span class="hl">One-way data export<em>OT to IT, never back</em></span></div></div>
-<div class="dgm-tier"><small>Data (IT)</small><div class="dgm-nodes"><span>Durable event log<em>equipment and work events</em></span><span class="hl">Asset knowledge graph<em>relationships and history</em></span><span>Work orders and spares<em>replicated</em></span></div></div>
-<div class="dgm-tier"><small>Agents</small><div class="dgm-nodes"><span class="hl">MCP servers<em>read-only tools</em></span><span>LLM agents<em>hosted in-Kingdom</em></span></div></div>
-<div class="dgm-tier"><small>People</small><div class="dgm-nodes"><span class="hl">Review workbench<em>approve, edit, reject</em></span><span>Work-order system<em>the only path to action</em></span></div></div>
-</div>
-<figcaption>Data flows one way out of the plant; recommendations flow to people; only people create work orders.</figcaption>
-</figure>
-
-<h2>The data flow, end to end</h2>
-<figure class="dgm">
-<ol class="dgm-flow g3">
-<li><b>Export</b><span>Historian data and equipment events leave the plant through a one-way export</span></li>
-<li><b>Record</b><span>Events land in a durable log, so history can be replayed</span></li>
-<li class="hl"><b>Connect</b><span>The asset graph links equipment, failures, work orders and spares</span></li>
-<li><b>Analyse</b><span>Agents query the graph through read-only tools and draft recommendations</span></li>
-<li class="hl"><b>Decide</b><span>An engineer reviews the recommendation and its evidence, then approves, edits or rejects</span></li>
-<li><b>Act</b><span>Approved items become work orders through the normal system</span></li>
-</ol>
-<figcaption>The agent shortens the analysis; the engineer still owns the decision and the action.</figcaption>
-</figure>
-
-<h2>The hard part: giving agents the plant's context, safely</h2>
-<p>A maintenance recommendation is only as good as its context: what this pump is connected to, how it has behaved, what failed last time and whether the spare is on site. That context was spread across systems that did not agree on names. The team built an asset knowledge graph from an event log rather than from periodic copies. The OpenTelemetry community describes the same pattern for infrastructure: producers emit entity events into a durable, event-sourced log, a live graph is rebuilt from it with full history, and both people and AI assistants query it, the latter through an MCP server<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
-<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/saudi-industrial-ai-agents-maintenance/entity-graph-pipeline.webp" alt="Pipeline diagram: OpenTelemetry producers send entity events to a durable event-sourced log, which is replayed into a live bi-temporal entity graph, queried through a GraphQL API by humans and dashboards and through an MCP server by an AI assistant" width="1400" height="325" loading="lazy"></div><figcaption>Events into a durable log, a live graph with history, and an MCP server for AI assistants: the same shape the asset graph followed. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2026/consuming-opentelemetry-entity-events/" target="_blank" rel="noopener">OpenTelemetry blog, Matthieu Noirbusson</a> · CC BY 4.0</span></figcaption></figure>
-<p>Because the graph records when facts were true, an agent can ask what the plant looked like before a past failure, not only what it looks like now. And because agents reach the graph only through read-only MCP tools, with no route back into the plant, the worst a misbehaving agent can do is draft a poor recommendation that an engineer rejects. See <a href="https://asksumanta.com/insights/entity-resolution-knowledge-graphs/">entity resolution for knowledge graphs</a> and <a href="https://asksumanta.com/insights/securing-mcp-servers-checklist/">securing MCP servers</a>.</p>
-<div class="callout"><p>In industrial settings, the safest agent is one that cannot act. Give it rich context and no levers; let engineers pull the levers.</p></div>
-
-<h2>How it ran</h2>
-<figure class="dgm">
-<div class="dgm-lanes">
-<div class="dgm-lane"><small>Reliability engineering</small><ol><li>Asset model</li><li class="hl">Recommendation review</li><li>Feedback on quality</li></ol></div>
-<div class="dgm-lane"><small>OT and security</small><ol><li>One-way export</li><li>Boundary testing</li><li class="hl">No-write guarantees</li></ol></div>
-<div class="dgm-lane"><small>Data and AI</small><ol><li>Event log and graph</li><li class="hl">MCP tools and agents</li><li>Evaluations</li></ol></div>
-</div>
-<figcaption>Engineers defined good recommendations; OT security defined the boundary; the AI team worked inside both.</figcaption>
-</figure>
-<figure class="dgm">
-<div class="dgm-phases">
-<div><small>Phase 1</small><b>Boundary</b><ul><li>One-way export</li><li>In-Kingdom hosting</li><li>Data classification</li></ul></div>
-<div><small>Phase 2</small><b>Graph</b><ul><li>Event log</li><li>Asset model</li><li>History back-filled</li></ul></div>
-<div><small>Phase 3</small><b>Shadow</b><ul><li>Agents draft silently</li><li>Compare with engineers</li><li>Refine tools</li></ul></div>
-<div><small>Phase 4</small><b>Assist</b><ul><li>Recommendations in workbench</li><li>Reasons recorded</li><li>More asset classes</li></ul></div>
-</div>
-<figcaption>Shadow mode first: agents' drafts were compared with engineers' own decisions before anyone relied on them.</figcaption>
-</figure>
-
-<h2>Key decisions and trade-offs</h2>
-<table class="tbl">
-<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
-<tbody>
-<tr><td>One-way export from OT</td><td>Agents query plant systems directly</td><td>No path from AI back into control systems</td></tr>
-<tr><td>Event log feeding a graph</td><td>Nightly copies into a warehouse</td><td>Current state and full history in one model</td></tr>
-<tr><td>Read-only MCP tools</td><td>Agents with write access</td><td>Bad drafts get rejected; no bad actions happen</td></tr>
-<tr><td>Recommendations, not actions</td><td>Agents raise work orders</td><td>Engineers stay accountable for the plant</td></tr>
-<tr><td>In-Kingdom hosting</td><td>Overseas model endpoints</td><td>Simpler PDPL position and board comfort</td></tr>
-</tbody>
-</table>
-
-<h2>What I'd do again, and differently</h2>
-<p>Again: record why engineers rejected or edited recommendations. Those reasons were the best training material for better tools and prompts. Differently: start the asset model with the reliability engineers on day one; naming and relationships were the slowest part to agree. Related: <a href="https://asksumanta.com/case-studies/energy-asset-knowledge-graph/">an energy asset knowledge graph</a>, <a href="https://asksumanta.com/insights/agents-replace-seats-enterprise-saas/">when agents become the user</a>, the <a href="https://asksumanta.com/insights/tech-news-2026-11-03/">3 November tech news</a> and the <a href="https://asksumanta.com/fractional-cto-saudi-arabia/">Saudi Arabia page</a>.</p>
-<p>If you are bringing AI agents into industrial operations in Saudi Arabia or the wider Gulf, see my <a href="https://asksumanta.com/ontology-knowledge-graph/">knowledge graph work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/saudi-industrial-ai-agents-maintenance/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
+</section><p><a href="https://asksumanta.com/insights/health-ai-rules-hti-5-patient-ai-act/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
