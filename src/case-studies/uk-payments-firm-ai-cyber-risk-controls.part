@@ -1,0 +1,81 @@
+<!--{"title": "Case study: AI cyber risk controls for a UK payments firm", "description": "How a UK payments firm can govern its own AI agents and defend against AI-enabled attacks, in line with new Bank of England, PRA and FCA practices on AI cyber risk.", "short": "AI cyber risk controls for UK payments", "h1": "Agents inside, attackers outside: AI cyber risk controls for a UK payments firm", "kicker": "Case study · AI security", "lede": "A UK payments firm had AI agents in customer support, fraud operations and engineering, each built differently and each with its own access. At the same time, attacks on it were getting faster and more convincing. The goal was one way to build and govern agents, and controls that assume attackers use AI too, in a form the firm could show its regulators.", "date": "2026-11-20", "datetime": "2026-11-20T15:50:00+04:00", "readtime": "9 min read", "sector": "Payments · United Kingdom", "role": "Fractional CTO and AI architect", "engagement": "Assessment, architecture and delivery leadership", "scope": "AI agent inventory, agent platform, identity and tool access, monitoring, AI-enabled attack defences, operational resilience", "stack": ["Shared agent framework", "Tool gateway", "Workload identity", "Policy engine", "OpenTelemetry GenAI telemetry", "Security event pipeline", "Phishing-resistant authentication", "Out-of-band verification"], "outcomes": ["Every AI agent inventoried with an owner, purpose and access", "Agents built on one framework with shared controls", "Agent tool access scoped, logged and revocable", "Payment and access changes protected against impersonation", "AI risk mapped to important business services and impact tolerances"], "tags": ["ai", "security", "governance"], "keywords": ["PRA FCA AI cyber risk", "Bank of England effective practices AI", "CP17/26 GC26/9", "AI agent security", "AI-enabled attacks", "operational resilience UK payments", "impact tolerances", "NCSC Cyber Assessment Framework", "fractional CTO UK", "agent governance"], "faq": [["What did UK regulators publish on AI cyber risk?", "In November 2026 the Bank of England, PRA and FCA published a consultation on cyber risk and resilience management, CP17/26 and GC26/9, and separate effective practices describing how firms are managing AI-related cyber risk, including reducing their attack surface against AI-enabled attacks."], ["Are effective practices mandatory?", "No. They describe practices regulators consider effective. In practice they become a reference point in supervisory discussions, so firms should know how their own controls compare."], ["Why standardise on one agent framework?", "Controls such as identity, tool access, logging and kill switches can then be built once and applied to every agent, instead of being re-implemented, or forgotten, in each team's own build."]], "related": ["/fractional-cto-united-kingdom/", "/ai-architect/", "/fractional-cto/"], "citations": [{"title": "Effective practices: Cyber risk and resilience management relating to artificial intelligence (AI)", "url": "https://www.bankofengland.co.uk/prudential-regulation/publication/2026/november/effective-practices-cyber-risk-and-resilience-management-relating-to-artificial-intelligence", "publisher": "Bank of England", "date": "Nov 2026"}, {"title": "CP17/26 and GC26/9: Cyber risk and resilience management", "url": "https://www.bankofengland.co.uk/prudential-regulation/publication/2026/november/cyber-risk-and-resilience-management-consultation-paper", "publisher": "Bank of England", "date": "Nov 2026"}, {"title": "PS21/3: Building operational resilience", "url": "https://www.fca.org.uk/publication/policy/ps21-3-operational-resilience.pdf", "publisher": "Financial Conduct Authority", "date": "Mar 2021"}, {"title": "Cyber Assessment Framework", "url": "https://www.ncsc.gov.uk/collection/cyber-assessment-framework", "publisher": "National Cyber Security Centre"}, {"title": "AI Agent Observability: Evolving Standards and Best Practices", "url": "https://opentelemetry.io/blog/2025/ai-agent-observability/", "publisher": "OpenTelemetry blog (Guangya Liu, Sujay Solomon)", "date": "2025"}]}-->
+
+<h2>The situation</h2>
+<p>A UK payments and e-money firm had adopted AI quickly and unevenly. Customer support used an agent that could look up transactions and raise refunds. Fraud operations used one that summarised alerts and suggested account restrictions. Engineering used coding agents with access to repositories and deployment pipelines. Each was built by a different team, on a different framework, with its own service accounts and its own idea of logging.</p>
+<p>At the same time, the attacks the firm saw were changing: more convincing phishing, impersonation of executives in calls and messages asking for urgent payment changes, and faster exploitation of newly published flaws. The firm already worked to the FCA's operational resilience rules, which require important business services to be identified and kept within impact tolerances<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+<p><strong>Why now.</strong> In November 2026 the Bank of England, PRA and FCA published a consultation on cyber risk and resilience management, CP17/26 and GC26/9, clarifying how firms should meet existing requirements, with responses due by 26 February 2027<sup class="cite"><a href="#ref-2">2</a></sup>. Alongside it they published effective practices on AI-related cyber risk, which treat AI as creating new risks, amplifying existing ones and helping defenders, and which include reducing the attack surface against AI-enabled attacks<sup class="cite"><a href="#ref-1">1</a></sup>. The board wanted to know how the firm compared, before a supervisor asked.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>Every agent known</strong>: owner, purpose, model, tools and data it can reach.</li>
+<li><strong>One way to build agents</strong>, so controls are written once.</li>
+<li><strong>Agent actions as accountable as staff actions</strong>: identity, least privilege, logs and a way to stop them.</li>
+<li><strong>Defences that assume attackers use AI</strong>, especially for payments and access changes.</li>
+<li><strong>Everything tied to important business services</strong>, so AI risk fits the resilience framework the firm already runs.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Agents</small><div class="dgm-nodes"><span>Support agent<em>lookups, refunds</em></span><span>Fraud agent<em>summaries, suggested restrictions</em></span><span>Engineering agents<em>code, pipelines</em></span></div></div>
+<div class="dgm-tier"><small>Agent platform</small><div class="dgm-nodes"><span class="hl">Shared framework<em>one runtime, one config model</em></span><span>Model gateway<em>approved models only</em></span><span>Prompt and output filters<em>injection, data leakage</em></span></div></div>
+<div class="dgm-tier"><small>Access</small><div class="dgm-nodes"><span class="hl">Tool gateway<em>scoped, logged, revocable</em></span><span>Workload identity<em>per agent, short-lived</em></span><span>Policy engine<em>limits, approvals</em></span></div></div>
+<div class="dgm-tier"><small>Defence</small><div class="dgm-nodes"><span>Phishing-resistant sign-in<em>staff and admins</em></span><span class="hl">Out-of-band verification<em>payments and access changes</em></span><span>Fast patching<em>exposed services first</em></span></div></div>
+<div class="dgm-tier"><small>Assurance</small><div class="dgm-nodes"><span>Agent telemetry<em>GenAI conventions</em></span><span>Security monitoring<em>agent and human activity</em></span><span>Service mapping<em>impact tolerances</em></span></div></div>
+</div>
+<figcaption>Agents go through one platform and one access layer; defences assume the attacker has AI too.</figcaption>
+</figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Request</b><span>A user or event triggers an agent through the shared framework</span></li>
+<li><b>Identify</b><span>The agent runs with its own short-lived identity, not a shared account</span></li>
+<li class="hl"><b>Call tools</b><span>Every tool call goes through the gateway and is checked against policy</span></li>
+<li class="hl"><b>Approve</b><span>Money movement and access changes need a person, verified out of band</span></li>
+<li><b>Record</b><span>Prompts, tool calls and outcomes are captured as telemetry</span></li>
+<li><b>Detect</b><span>Security monitoring flags unusual agent behaviour alongside human activity</span></li>
+</ol>
+<figcaption>The tool gateway and the approval step carry most of the risk reduction.</figcaption>
+</figure>
+
+<h2>The hard part: controlling agents the firm did not build the same way</h2>
+<p>The three agent estates could not be governed one by one; there was no shared place to put a control. The answer was to move them onto one framework over time, so identity, tool access, logging and a kill switch were properties of the platform rather than of each team's code. OpenTelemetry's work on agent observability draws the same distinction between agent applications and the frameworks they are built on, and argues for standard telemetry at the framework level so every application inherits it<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/uk-payments-firm-ai-cyber-risk-controls/one-framework.webp" alt="Diagram of one AI agent framework at the top with arrows to several AI agent applications, each containing its own model and tools" width="564" height="231" loading="lazy"></div><figcaption>One framework, many agent applications: put controls and telemetry in the framework and every agent inherits them. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2025/ai-agent-observability/" target="_blank" rel="noopener">OpenTelemetry blog, Guangya Liu and Sujay Solomon</a> · CC BY 4.0</span></figcaption></figure>
+<div class="callout"><p>The fastest risk reduction came before any migration: an inventory, then removing tools agents did not need. Some had write access they had never used.</p></div>
+<p>The second half of the hard part was outside the firm. Impersonation attacks target the same processes agents touch: refunds, payee changes, admin access. Those changes now need a person to approve them through a separate, verified channel, never on the strength of a message, call or agent request alone. The pattern follows the <a href="/case-studies/saudi-bank-deepfake-resistant-onboarding/">deepfake-resistant onboarding</a> and <a href="/case-studies/uk-saas-sso-staff-access-hardening/">staff access hardening</a> case studies, and the agent platform builds on <a href="/case-studies/enterprise-mcp-agent-platform/">the enterprise MCP agent platform</a>.</p>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Risk and compliance</small><ol><li>Map AI to important business services</li><li class="hl">Compare against effective practices</li><li>Consultation response</li></ol></div>
+<div class="dgm-lane"><small>Platform and security</small><ol><li>Agent inventory</li><li class="hl">Tool gateway and identities</li><li>Telemetry and monitoring</li></ol></div>
+<div class="dgm-lane"><small>Operations</small><ol><li>Approval steps for payments and access</li><li>Staff training on impersonation</li><li class="hl">Agent incident playbooks</li></ol></div>
+</div>
+<figcaption>Risk framed it, platform and security built it, operations made the human checks work.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Inventory</b><ul><li>Find every agent</li><li>Owners and access</li><li>Remove unused tools</li></ul></div>
+<div><small>Phase 2</small><b>Contain</b><ul><li>Tool gateway</li><li>Per-agent identity</li><li>Out-of-band approvals</li></ul></div>
+<div><small>Phase 3</small><b>Standardise</b><ul><li>Shared framework</li><li>Telemetry</li><li>Kill switches</li></ul></div>
+<div><small>Phase 4</small><b>Evidence</b><ul><li>Service mapping</li><li>Scenario tests</li><li>Board and regulator view</li></ul></div>
+</div>
+<figcaption>Know what you have, contain it, standardise it, then prove it.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>One agent framework for the firm</td><td>Each team chooses its own</td><td>Controls built once and applied everywhere</td></tr>
+<tr><td>All tool calls through a gateway</td><td>Agents call APIs directly</td><td>One place to scope, log and revoke access</td></tr>
+<tr><td>Per-agent, short-lived identities</td><td>Shared service accounts</td><td>Actions traceable to an agent; stolen tokens expire</td></tr>
+<tr><td>Human approval for money and access changes</td><td>Trust agent or message alone</td><td>Impersonation and injection target exactly these steps</td></tr>
+<tr><td>Map to existing resilience framework</td><td>A separate AI risk register</td><td>AI risk sits where the board already looks</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: start with the inventory and the tool gateway, which reduced risk before any larger change, and treat the regulators' effective practices as a checklist rather than waiting for final guidance. Differently: involve the contact centre and finance teams from day one. The impersonation attempts reached them first, and their ideas made the approval steps practical. The NCSC's Cyber Assessment Framework, which the consultation aligns with<sup class="cite"><a href="#ref-4">4</a></sup>, was a useful common language between engineering and risk. See <a href="/insights/vendor-admin-access-rmm-breaches/">vendor admin access as perimeter</a> and the <a href="/insights/tech-news-2026-11-20/">tech news for 20 November</a>.</p>
+<p>If you run a regulated UK business, my <a href="/fractional-cto-united-kingdom/">work with UK companies</a> explains how I approach it, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
