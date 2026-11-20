@@ -1,6 +1,70 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link><description>Fractional CTO and AI architect: insights, case studies and daily tech news.</description><language>en-gb</language><lastBuildDate>Fri, 20 Nov 2026 15:50:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link></image><item><title>Agents inside, attackers outside: AI cyber risk controls for a UK payments firm</title><link>https://asksumanta.com/case-studies/uk-payments-firm-ai-cyber-risk-controls/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/uk-payments-firm-ai-cyber-risk-controls/</guid><pubDate>Fri, 20 Nov 2026 15:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>ai</category><category>security</category><category>governance</category><description>How a UK payments firm can govern its own AI agents and defend against AI-enabled attacks, in line with new Bank of England, PRA and FCA practices on AI cyber risk.</description><content:encoded><![CDATA[<p><em>A UK payments firm had AI agents in customer support, fraud operations and engineering, each built differently and each with its own access. At the same time, attacks on it were getting faster and more convincing. The goal was one way to build and govern agents, and controls that assume attackers use AI too, in a form the firm could show its regulators.</em></p><h2>The situation</h2>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link><description>Fractional CTO and AI architect: insights, case studies and daily tech news.</description><language>en-gb</language><lastBuildDate>Fri, 20 Nov 2026 21:20:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link></image><item><title>Cluster Autoscaler or Karpenter: how to choose a Kubernetes node autoscaler</title><link>https://asksumanta.com/insights/cluster-autoscaler-vs-karpenter/</link><guid isPermaLink="true">https://asksumanta.com/insights/cluster-autoscaler-vs-karpenter/</guid><pubDate>Fri, 20 Nov 2026 21:20:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>kubernetes</category><category>platform</category><category>finops</category><description>Cluster Autoscaler scales node groups; Karpenter provisions nodes to fit pods. A comparison of how each works, what managed versions change and how to choose.</description><content:encoded><![CDATA[<p><em>Node autoscaling decides how much you pay for Kubernetes and how fast new work starts. Kubernetes now sponsors two autoscalers with different models: Cluster Autoscaler, which grows and shrinks node groups you define, and Karpenter, which picks and launches nodes to fit the pods waiting. Cloud providers increasingly run Karpenter for you. Here is how they differ, and how I decide.</em></p><section class="block">
+<h2>Two models of node autoscaling</h2>
+<p>The Kubernetes documentation describes node autoscaling as provisioning nodes when pods cannot be scheduled and consolidating them when they are underused, and lists two autoscalers sponsored by SIG Autoscaling: Cluster Autoscaler and Karpenter<sup class="cite"><a href="#ref-1">1</a></sup>. They solve the same problem from opposite ends.</p>
+<p><strong>Cluster Autoscaler</strong> works with node groups you define in advance: a group of one machine type, another for GPUs, perhaps a Spot group. When pods are pending, it grows the group whose nodes would fit them; when nodes are underused, it shrinks groups. Your choices about machine types are made up front, in the groups.</p>
+<p><strong>Karpenter</strong> starts from the pods. It reads what pending pods need, chooses machines to fit them within the limits you set in NodePools, launches them directly and manages their whole lifecycle, including replacing and consolidating them later<sup class="cite"><a href="#ref-1">1</a></sup>. Your choices are expressed as constraints rather than fixed groups.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/cluster-autoscaler-vs-karpenter/resource-map.webp" alt="Resource map showing an EC2NodeClass named default linked to a NodePool named default, linked to a NodeClaim, linked to a Node" width="1157" height="175" loading="lazy"></div><figcaption>Karpenter's chain: a node class (cloud settings) and a NodePool (constraints) produce NodeClaims, which become nodes. <span class="credit">Source: <a href="https://kubernetes.io/blog/2025/10/06/introducing-headlamp-plugin-for-karpenter/" target="_blank" rel="noopener">Kubernetes blog, René Dudfield and Anirban Singha</a> · CC BY 4.0</span></figcaption></figure>
+</section>
+
+<section class="block">
+<h2>How a scale-up differs</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Cluster Autoscaler</small><ol><li>Pods pending</li><li>Simulate which node group would fit</li><li class="hl">Increase that group's size</li><li>Cloud group launches its fixed machine type</li></ol></div>
+<div class="dgm-lane"><small>Karpenter</small><ol><li>Pods pending</li><li>Batch and read their requirements</li><li class="hl">Choose machine types within NodePool limits</li><li>Launch nodes directly as NodeClaims</li></ol></div>
+</div>
+<figcaption>Cluster Autoscaler chooses a group; Karpenter chooses a machine.</figcaption>
+</figure>
+<p>The practical consequence is flexibility. With Cluster Autoscaler, a workload that needs an unusual shape needs a node group that already offers it. With Karpenter, it needs a NodePool whose constraints allow it. That is why Karpenter tends to suit mixed and changing workloads, and why it needs firmer guard rails: a loose NodePool can launch machine types you never tested.</p>
+</section>
+
+<section class="block">
+<h2>Scale-down is where the real difference is</h2>
+<p>Scale-up gets the attention, but cost is decided on the way down. Karpenter's disruption controls cover consolidation, which removes or replaces underused nodes with cheaper ones, as well as drift, when a node no longer matches its configuration, and expiry after a set lifetime<sup class="cite"><a href="#ref-2">2</a></sup>. Disruption budgets limit how many nodes can be disrupted at once and can be scheduled, so you can, for example, allow consolidation only outside business hours<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+<p>That power has a cost: pods get moved more often. Workloads without pod disruption budgets, with long start-up times or with local state will feel it. The Headlamp plugin for Karpenter surfaces these scaling and disruption decisions in a UI<sup class="cite"><a href="#ref-6">6</a></sup>, and the view below shows the other side: a node whose disruption was blocked, which is what you want for a protected workload and what you need to notice when it stops consolidation entirely.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/cluster-autoscaler-vs-karpenter/node-decisions.webp" alt="Table of Karpenter node decisions showing a DisruptionBlocked event because a node is not initialised and a Ready event when the kubelet reports ready" width="1521" height="280" loading="lazy"></div><figcaption>Node decisions, including a blocked disruption: visibility into why Karpenter did or did not act is part of running it. <span class="credit">Source: <a href="https://kubernetes.io/blog/2025/10/06/introducing-headlamp-plugin-for-karpenter/" target="_blank" rel="noopener">Kubernetes blog, René Dudfield and Anirban Singha</a> · CC BY 4.0</span></figcaption></figure>
+</section>
+
+<section class="block">
+<h2>Managed options change the question</h2>
+<p>You may not have to run either yourself. AKS node auto-provisioning provisions and manages virtual machines in response to pending pods using Karpenter, configured through NodePools and AKS-specific node classes<sup class="cite"><a href="#ref-3">3</a></sup>. EKS Auto Mode manages compute for you and replaces nodes after a maximum lifetime of 21 days, which you can shorten<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<p>Managed versions remove the work of running the autoscaler, but they also make choices for you: node images, lifetimes and which settings you can change. Read the limitations pages before committing, especially if you need particular operating systems, network modes or access to nodes.</p>
+</section>
+
+<section class="block">
+<h2>Side by side</h2>
+<table class="tbl">
+<thead><tr><th>Question</th><th>Cluster Autoscaler</th><th>Karpenter</th></tr></thead>
+<tbody>
+<tr><td>What you define</td><td>Node groups with fixed machine types</td><td>NodePools with constraints and limits</td></tr>
+<tr><td>Scale-up decision</td><td>Which group to grow</td><td>Which machines to launch</td></tr>
+<tr><td>Scale-down</td><td>Remove underused nodes from groups</td><td>Consolidate, replace, handle drift and expiry</td></tr>
+<tr><td>Predictability</td><td>High: only the shapes you listed</td><td>Depends on how tight your constraints are</td></tr>
+<tr><td>Workload churn</td><td>Lower</td><td>Higher unless budgets are tuned</td></tr>
+<tr><td>Best fit</td><td>Stable fleets, pinned GPU pools, platforms without a Karpenter provider</td><td>Mixed or bursty workloads, Spot, cost-sensitive fleets</td></tr>
+</tbody>
+</table>
+</section>
+
+<section class="block">
+<h2>How I decide</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Provider</b><span>Is there a supported Karpenter provider or a managed option on your cloud?</span></li>
+<li><b>Workloads</b><span>Are they varied and bursty, or a few stable shapes?</span></li>
+<li class="hl"><b>Tolerance</b><span>Can they be moved: PDBs, fast start-up, no local state?</span></li>
+<li><b>Accelerators</b><span>Do GPU pools need to stay pinned and warm?</span></li>
+<li class="hl"><b>Operations</b><span>Who will own NodePools, budgets and upgrades?</span></li>
+<li><b>Pilot</b><span>Move one non-critical workload class first and compare cost and disruption</span></li>
+</ol>
+<figcaption>The deciding questions are about workloads and ownership, not the tools.</figcaption>
+</figure>
+<div class="callout"><p>If your workloads cannot tolerate being moved, Karpenter's main advantage turns into a source of incidents. Fix disruption tolerance first, then change autoscaler.</p></div>
+<p>For AI workloads, I often run both patterns: Karpenter for general and bursty services, and pinned, separately managed GPU capacity where warm nodes and scarce accelerators matter more than consolidation. See <a href="https://asksumanta.com/insights/kubernetes-dra-gpu-scheduling/">GPU scheduling with DRA</a>, <a href="https://asksumanta.com/insights/kubernetes-finops-scale-to-zero/">scale to zero</a>, <a href="https://asksumanta.com/insights/focus-finops-ai-cost-allocation/">AI cost allocation</a> and the <a href="https://asksumanta.com/case-studies/kubernetes-finops-platform-engineering/">Kubernetes FinOps case study</a>.</p>
+<p>If you are deciding how to run Kubernetes capacity for AI and product workloads, I am a <a href="https://asksumanta.com/fractional-cto/">fractional CTO</a> and <a href="https://asksumanta.com/ai-architect/">AI architect</a> based in India, the United States and the UAE, working globally. You can <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section><p><a href="https://asksumanta.com/insights/cluster-autoscaler-vs-karpenter/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Agents inside, attackers outside: AI cyber risk controls for a UK payments firm</title><link>https://asksumanta.com/case-studies/uk-payments-firm-ai-cyber-risk-controls/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/uk-payments-firm-ai-cyber-risk-controls/</guid><pubDate>Fri, 20 Nov 2026 15:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>ai</category><category>security</category><category>governance</category><description>How a UK payments firm can govern its own AI agents and defend against AI-enabled attacks, in line with new Bank of England, PRA and FCA practices on AI cyber risk.</description><content:encoded><![CDATA[<p><em>A UK payments firm had AI agents in customer support, fraud operations and engineering, each built differently and each with its own access. At the same time, attacks on it were getting faster and more convincing. The goal was one way to build and govern agents, and controls that assume attackers use AI too, in a form the firm could show its regulators.</em></p><h2>The situation</h2>
 <p>A UK payments and e-money firm had adopted AI quickly and unevenly. Customer support used an agent that could look up transactions and raise refunds. Fraud operations used one that summarised alerts and suggested account restrictions. Engineering used coding agents with access to repositories and deployment pipelines. Each was built by a different team, on a different framework, with its own service accounts and its own idea of logging.</p>
 <p>At the same time, the attacks the firm saw were changing: more convincing phishing, impersonation of executives in calls and messages asking for urgent payment changes, and faster exploitation of newly published flaws. The firm already worked to the FCA's operational resilience rules, which require important business services to be identified and kept within impact tolerances<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
 <p><strong>Why now.</strong> In November 2026 the Bank of England, PRA and FCA published a consultation on cyber risk and resilience management, CP17/26 and GC26/9, clarifying how firms should meet existing requirements, with responses due by 26 February 2027<sup class="cite"><a href="#ref-2">2</a></sup>. Alongside it they published effective practices on AI-related cyber risk, which treat AI as creating new risks, amplifying existing ones and helping defenders, and which include reducing the attack surface against AI-enabled attacks<sup class="cite"><a href="#ref-1">1</a></sup>. The board wanted to know how the firm compared, before a supervisor asked.</p>
@@ -3145,82 +3209,4 @@
 <section class="block">
 <h2>How I work</h2>
 <p>This is the shape of most of my engagements, whether the company is a start-up preparing for due diligence, a scale-up whose systems are straining, or a regulated business adopting AI. I am based in India, the United States and the UAE, working globally. See <a href="https://asksumanta.com/how-i-work/">how I work</a> and <a href="https://asksumanta.com/fractional-cto/">fractional CTO services</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
-</section><p><a href="https://asksumanta.com/insights/fractional-cto-first-90-days-playbook/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Same assistant, different model: launching an AI shopping assistant in China for a foreign consumer brand</title><link>https://asksumanta.com/case-studies/china-ai-shopping-assistant-foreign-brand/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/china-ai-shopping-assistant-foreign-brand/</guid><pubDate>Wed, 04 Nov 2026 15:55:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>ai</category><category>architecture</category><category>regulation</category><description>How a foreign consumer brand can launch an AI shopping assistant in China: a locally filed model, in-country data, PIPL transfer rules and one shared codebase.</description><content:encoded><![CDATA[<p><em>A European consumer brand had an AI shopping assistant that answered product questions and built routines for customers in Europe and the US. China was its fastest-growing market, and the global assistant could not simply be switched on there. The task was to launch a Chinese edition that met local rules, ran on a locally permitted model and kept customer data in China, without forking the product.</em></p><h2>The situation</h2>
-<p>A European skincare and personal care brand sold online and through partners in Europe, the US and China. Its AI shopping assistant answered questions about ingredients and products, built routines from a short questionnaire and handed off to customer service when needed. It ran on a global model provider, with logs and customer profiles in the brand's European cloud. China had its own app, mini-programme and marketplace stores, but no assistant.</p>
-<p><strong>Why now.</strong> On 31 October 2026, Apple and Alibaba said Alibaba's Qwen will power the China edition of Apple Intelligence, a clear signal that even global platforms ship a different model in China to meet local rules<sup class="cite"><a href="#ref-1">1</a></sup>. China's Interim Measures for generative AI services require qualifying public-facing services to go through filing with the Cyberspace Administration of China<sup class="cite"><a href="#ref-2">2</a></sup>, which publishes lists of filed services in batches<sup class="cite"><a href="#ref-3">3</a></sup>. And the Personal Information Protection Law governs any transfer of Chinese customers' data abroad, with certification measures in effect from 1 January 2026 alongside the standard contract and security assessment routes<sup class="cite"><a href="#ref-4">4</a></sup>. The brand's leadership wanted a Chinese edition for the next sales season, built the right way.</p>
-
-<h2>What had to be true</h2>
-<ul>
-<li><strong>A locally permitted model</strong> for Chinese users, with the application registered where required.</li>
-<li><strong>Personal data stays in China</strong>: prompts, answers, profiles and logs.</li>
-<li><strong>One product, not two</strong>: shared code and features, with market-specific configuration.</li>
-<li><strong>Chinese-language quality proven</strong> on a local evaluation set before launch.</li>
-<li><strong>Documentation that follows the design</strong>: filing, impact assessment and transfer analysis drawn from the architecture.</li>
-</ul>
-
-<h2>Architecture</h2>
-<figure class="dgm">
-<div class="dgm-stack">
-<div class="dgm-tier"><small>Channels</small><div class="dgm-nodes"><span>Global web and app<em>Europe and US</em></span><span>China app and mini-programme<em>separate front ends</em></span></div></div>
-<div class="dgm-tier"><small>Shared product</small><div class="dgm-nodes"><span class="hl">Task-level AI interface<em>answer, recommend, hand off</em></span><span>Market-aware router<em>by user's market</em></span></div></div>
-<div class="dgm-tier"><small>Global region</small><div class="dgm-nodes"><span>Global model provider<em>existing</em></span><span>Profiles and logs<em>European cloud</em></span></div></div>
-<div class="dgm-tier"><small>China region</small><div class="dgm-nodes"><span class="hl">Locally filed model<em>via a Chinese cloud provider</em></span><span class="hl">Profiles, logs, telemetry<em>in-country only</em></span></div></div>
-<div class="dgm-tier"><small>Shared content</small><div class="dgm-nodes"><span>Product catalogue<em>non-personal, synced in</em></span><span>Prompts and safety rules<em>localised per market</em></span></div></div>
-</div>
-<figcaption>Shared code and catalogue, separate models and data per market. Nothing personal crosses the boundary.</figcaption>
-</figure>
-
-<h2>The data flow, end to end</h2>
-<figure class="dgm">
-<ol class="dgm-flow g3">
-<li><b>Ask</b><span>A customer in the China app asks about a product or a routine</span></li>
-<li><b>Route</b><span>The router sees the market and sends the task to the China region</span></li>
-<li class="hl"><b>Ground</b><span>The answer is grounded in the locally synced catalogue and the customer's in-country profile</span></li>
-<li><b>Generate</b><span>The locally filed model drafts the answer under localised safety rules</span></li>
-<li class="hl"><b>Record</b><span>Prompts, answers and telemetry are stored in China only</span></li>
-<li><b>Hand off</b><span>If needed, the conversation passes to the China customer service team</span></li>
-</ol>
-<figcaption>Catalogue data flows in; personal data never flows out.</figcaption>
-</figure>
-
-<h2>The hard part: one product, two data worlds</h2>
-<p>The tempting path was a separate Chinese build: copy the code, swap the model, deploy in China. That would have doubled every future feature and fix. Instead the team moved the product to a task-level AI interface. The application asks for "answer a product question" or "build a routine", and a router decides which model serves it, based on the user's market. Prompts and safety rules became configuration per market, so Chinese prompts could reflect local language, product names and expectations without forking code. See <a href="https://asksumanta.com/insights/per-market-ai-models-apple-qwen-china/">designing AI products with a model per market</a>.</p>
-<p>Data was the second half. Product catalogue data is not personal, so it is synced into China. Customer profiles, conversations and logs are created and stored in China and never leave. Telemetry was the easiest thing to get wrong: the global observability stack would have pulled Chinese traces out of the country by default. The team ran a separate telemetry pipeline inside the China environment, using a shared collector with separate pipelines per channel to keep operations simple<sup class="cite"><a href="#ref-5">5</a></sup>, and only aggregated, non-personal metrics are reported to the global dashboard.</p>
-<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/china-ai-shopping-assistant-foreign-brand/shared-collector.webp" alt="Diagram of a shared OpenTelemetry Collector with static pipelines per tenant: tenants A, B and C in a product send data through separate pipelines in one collector to separate backends, with notes on resource efficiency and limited per-tenant customisation" width="1200" height="800" loading="lazy"></div><figcaption>One collector, separate pipelines: inside China, each channel's telemetry kept apart without running a collector per channel. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2026/otel-native-by-design/" target="_blank" rel="noopener">OpenTelemetry blog, Nityananda Gohain and Dhruv Ahuja</a> · CC BY 4.0</span></figcaption></figure>
-<p>Keeping personal data in China also simplified the legal work. With nothing personal designed to leave the country, the assistant did not rely on any of PIPL's transfer mechanisms, a position counsel reviewed, and the impact assessment could describe a clean boundary rather than a set of exceptions<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
-<div class="callout"><p>Design the boundary first and the paperwork follows. Bolt on compliance after launch and the paperwork becomes the design.</p></div>
-
-<h2>How it ran</h2>
-<figure class="dgm">
-<div class="dgm-lanes">
-<div class="dgm-lane"><small>China team</small><ol><li>Channels and use cases</li><li class="hl">Chinese evaluation set</li><li>Customer service handover</li></ol></div>
-<div class="dgm-lane"><small>Platform and AI</small><ol><li>Task interface and router</li><li class="hl">China region deployment</li><li>In-country telemetry</li></ol></div>
-<div class="dgm-lane"><small>Legal and compliance</small><ol><li>Filing route with provider</li><li>Impact assessment</li><li class="hl">Data boundary sign-off</li></ol></div>
-</div>
-<figcaption>The China team owned quality, the platform team owned the boundary, legal owned the filing and assessment.</figcaption>
-</figure>
-<figure class="dgm">
-<div class="dgm-phases">
-<div><small>Phase 1</small><b>Refactor</b><ul><li>Task-level interface</li><li>Market-aware router</li><li>Prompts as configuration</li></ul></div>
-<div><small>Phase 2</small><b>Build China region</b><ul><li>Local model and cloud</li><li>Catalogue sync</li><li>In-country telemetry</li></ul></div>
-<div><small>Phase 3</small><b>Prove</b><ul><li>Chinese evaluation set</li><li>Safety rule tuning</li><li>Filing documentation</li></ul></div>
-<div><small>Phase 4</small><b>Launch</b><ul><li>App first, then mini-programme</li><li>Customer service handover</li><li>Monitoring</li></ul></div>
-</div>
-<figcaption>The refactor came first; it is what made the China region a configuration rather than a fork.</figcaption>
-</figure>
-
-<h2>Key decisions and trade-offs</h2>
-<table class="tbl">
-<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
-<tbody>
-<tr><td>Task-level interface and router</td><td>Fork the product for China</td><td>One codebase, features ship to both</td></tr>
-<tr><td>Locally filed model via a Chinese provider</td><td>Use the global model in China</td><td>Fits the filing regime and local expectations</td></tr>
-<tr><td>Personal data stays in China</td><td>Central profiles with transfer paperwork</td><td>Simpler legal position and lower risk</td></tr>
-<tr><td>Separate in-country telemetry</td><td>Global observability stack</td><td>Traces carry personal data; they stay local</td></tr>
-<tr><td>Chinese evaluation set before launch</td><td>Translate the English tests</td><td>Quality depends on local language and products</td></tr>
-</tbody>
-</table>
-
-<h2>What I'd do again, and differently</h2>
-<p>Again: refactor to a task-level interface before building the China region. It turned a risky fork into configuration. Differently: build the Chinese evaluation set with the China customer service team from day one; their real questions were the best test material. Related: <a href="https://asksumanta.com/insights/llm-model-routing/">model routing</a>, <a href="https://asksumanta.com/insights/llm-evaluation-sets-that-predict-production/">evaluation sets that predict production</a>, <a href="https://asksumanta.com/case-studies/india-diagnostics-consent-data-platform/">consent-aware data in India</a> and <a href="https://asksumanta.com/regions/">where I work</a>.</p>
-<p>If you are taking an AI product into China or other markets with their own AI rules, see my <a href="https://asksumanta.com/ai-architect/">AI architecture work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/china-ai-shopping-assistant-foreign-brand/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
+</section><p><a href="https://asksumanta.com/insights/fractional-cto-first-90-days-playbook/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>

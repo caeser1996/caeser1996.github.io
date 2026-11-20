@@ -1,0 +1,66 @@
+<!--{"title": "Cluster Autoscaler or Karpenter: choosing a node autoscaler", "description": "Cluster Autoscaler scales node groups; Karpenter provisions nodes to fit pods. A comparison of how each works, what managed versions change and how to choose.", "h1": "Cluster Autoscaler or Karpenter: how to choose a Kubernetes node autoscaler", "kicker": "Cloud and platform · Comparison", "lede": "Node autoscaling decides how much you pay for Kubernetes and how fast new work starts. Kubernetes now sponsors two autoscalers with different models: Cluster Autoscaler, which grows and shrinks node groups you define, and Karpenter, which picks and launches nodes to fit the pods waiting. Cloud providers increasingly run Karpenter for you. Here is how they differ, and how I decide.", "date": "2026-11-20", "datetime": "2026-11-20T21:20:00+04:00", "readtime": "8 min read", "format": "comparison", "tags": ["kubernetes", "platform", "finops"], "keywords": ["Cluster Autoscaler vs Karpenter", "Kubernetes node autoscaling", "Karpenter consolidation", "disruption budgets", "AKS node auto-provisioning", "EKS Auto Mode", "NodePool", "Kubernetes cost optimisation", "GPU node autoscaling", "platform engineering"], "faq": [["What is the main difference between Cluster Autoscaler and Karpenter?", "Cluster Autoscaler changes the size of node groups that you define in advance. Karpenter looks at pending pods and launches nodes chosen to fit them, within limits you set in NodePools, and manages their lifecycle including consolidation and replacement."], ["Do I have to run Karpenter myself?", "Not always. AKS offers node auto-provisioning, which runs Karpenter as a managed component, and EKS Auto Mode uses Karpenter-based node management operated by AWS. Self-hosting gives more control in exchange for more operational work."], ["Is Karpenter always cheaper?", "Not automatically. Its consolidation and instance flexibility can reduce waste, but only if workloads tolerate being moved, disruption budgets are set sensibly and instance choices are constrained to types you have tested."]], "related": ["/fractional-cto/", "/ai-architect/", "/regions/"], "citations": [{"title": "Node Autoscaling", "url": "https://kubernetes.io/docs/concepts/cluster-administration/node-autoscaling/", "publisher": "Kubernetes documentation"}, {"title": "Disruption", "url": "https://karpenter.sh/docs/concepts/disruption/", "publisher": "Karpenter documentation"}, {"title": "Node auto-provisioning overview", "url": "https://learn.microsoft.com/azure/aks/node-autoprovision", "publisher": "Microsoft Learn"}, {"title": "Node auto-provisioning disruption policies", "url": "https://learn.microsoft.com/azure/aks/node-autoprovision-disruption", "publisher": "Microsoft Learn"}, {"title": "Automate cluster infrastructure with EKS Auto Mode", "url": "https://docs.aws.amazon.com/eks/latest/userguide/automode.html", "publisher": "Amazon EKS User Guide"}, {"title": "Introducing Headlamp Plugin for Karpenter: Scaling and Visibility", "url": "https://kubernetes.io/blog/2025/10/06/introducing-headlamp-plugin-for-karpenter/", "publisher": "Kubernetes blog (René Dudfield, Anirban Singha)", "date": "6 Oct 2025"}]}-->
+<section class="block">
+<h2>Two models of node autoscaling</h2>
+<p>The Kubernetes documentation describes node autoscaling as provisioning nodes when pods cannot be scheduled and consolidating them when they are underused, and lists two autoscalers sponsored by SIG Autoscaling: Cluster Autoscaler and Karpenter<sup class="cite"><a href="#ref-1">1</a></sup>. They solve the same problem from opposite ends.</p>
+<p><strong>Cluster Autoscaler</strong> works with node groups you define in advance: a group of one machine type, another for GPUs, perhaps a Spot group. When pods are pending, it grows the group whose nodes would fit them; when nodes are underused, it shrinks groups. Your choices about machine types are made up front, in the groups.</p>
+<p><strong>Karpenter</strong> starts from the pods. It reads what pending pods need, chooses machines to fit them within the limits you set in NodePools, launches them directly and manages their whole lifecycle, including replacing and consolidating them later<sup class="cite"><a href="#ref-1">1</a></sup>. Your choices are expressed as constraints rather than fixed groups.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/cluster-autoscaler-vs-karpenter/resource-map.webp" alt="Resource map showing an EC2NodeClass named default linked to a NodePool named default, linked to a NodeClaim, linked to a Node" width="1157" height="175" loading="lazy"></div><figcaption>Karpenter's chain: a node class (cloud settings) and a NodePool (constraints) produce NodeClaims, which become nodes. <span class="credit">Source: <a href="https://kubernetes.io/blog/2025/10/06/introducing-headlamp-plugin-for-karpenter/" target="_blank" rel="noopener">Kubernetes blog, René Dudfield and Anirban Singha</a> · CC BY 4.0</span></figcaption></figure>
+</section>
+
+<section class="block">
+<h2>How a scale-up differs</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Cluster Autoscaler</small><ol><li>Pods pending</li><li>Simulate which node group would fit</li><li class="hl">Increase that group's size</li><li>Cloud group launches its fixed machine type</li></ol></div>
+<div class="dgm-lane"><small>Karpenter</small><ol><li>Pods pending</li><li>Batch and read their requirements</li><li class="hl">Choose machine types within NodePool limits</li><li>Launch nodes directly as NodeClaims</li></ol></div>
+</div>
+<figcaption>Cluster Autoscaler chooses a group; Karpenter chooses a machine.</figcaption>
+</figure>
+<p>The practical consequence is flexibility. With Cluster Autoscaler, a workload that needs an unusual shape needs a node group that already offers it. With Karpenter, it needs a NodePool whose constraints allow it. That is why Karpenter tends to suit mixed and changing workloads, and why it needs firmer guard rails: a loose NodePool can launch machine types you never tested.</p>
+</section>
+
+<section class="block">
+<h2>Scale-down is where the real difference is</h2>
+<p>Scale-up gets the attention, but cost is decided on the way down. Karpenter's disruption controls cover consolidation, which removes or replaces underused nodes with cheaper ones, as well as drift, when a node no longer matches its configuration, and expiry after a set lifetime<sup class="cite"><a href="#ref-2">2</a></sup>. Disruption budgets limit how many nodes can be disrupted at once and can be scheduled, so you can, for example, allow consolidation only outside business hours<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+<p>That power has a cost: pods get moved more often. Workloads without pod disruption budgets, with long start-up times or with local state will feel it. The Headlamp plugin for Karpenter surfaces these scaling and disruption decisions in a UI<sup class="cite"><a href="#ref-6">6</a></sup>, and the view below shows the other side: a node whose disruption was blocked, which is what you want for a protected workload and what you need to notice when it stops consolidation entirely.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/cluster-autoscaler-vs-karpenter/node-decisions.webp" alt="Table of Karpenter node decisions showing a DisruptionBlocked event because a node is not initialised and a Ready event when the kubelet reports ready" width="1521" height="280" loading="lazy"></div><figcaption>Node decisions, including a blocked disruption: visibility into why Karpenter did or did not act is part of running it. <span class="credit">Source: <a href="https://kubernetes.io/blog/2025/10/06/introducing-headlamp-plugin-for-karpenter/" target="_blank" rel="noopener">Kubernetes blog, René Dudfield and Anirban Singha</a> · CC BY 4.0</span></figcaption></figure>
+</section>
+
+<section class="block">
+<h2>Managed options change the question</h2>
+<p>You may not have to run either yourself. AKS node auto-provisioning provisions and manages virtual machines in response to pending pods using Karpenter, configured through NodePools and AKS-specific node classes<sup class="cite"><a href="#ref-3">3</a></sup>. EKS Auto Mode manages compute for you and replaces nodes after a maximum lifetime of 21 days, which you can shorten<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<p>Managed versions remove the work of running the autoscaler, but they also make choices for you: node images, lifetimes and which settings you can change. Read the limitations pages before committing, especially if you need particular operating systems, network modes or access to nodes.</p>
+</section>
+
+<section class="block">
+<h2>Side by side</h2>
+<table class="tbl">
+<thead><tr><th>Question</th><th>Cluster Autoscaler</th><th>Karpenter</th></tr></thead>
+<tbody>
+<tr><td>What you define</td><td>Node groups with fixed machine types</td><td>NodePools with constraints and limits</td></tr>
+<tr><td>Scale-up decision</td><td>Which group to grow</td><td>Which machines to launch</td></tr>
+<tr><td>Scale-down</td><td>Remove underused nodes from groups</td><td>Consolidate, replace, handle drift and expiry</td></tr>
+<tr><td>Predictability</td><td>High: only the shapes you listed</td><td>Depends on how tight your constraints are</td></tr>
+<tr><td>Workload churn</td><td>Lower</td><td>Higher unless budgets are tuned</td></tr>
+<tr><td>Best fit</td><td>Stable fleets, pinned GPU pools, platforms without a Karpenter provider</td><td>Mixed or bursty workloads, Spot, cost-sensitive fleets</td></tr>
+</tbody>
+</table>
+</section>
+
+<section class="block">
+<h2>How I decide</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Provider</b><span>Is there a supported Karpenter provider or a managed option on your cloud?</span></li>
+<li><b>Workloads</b><span>Are they varied and bursty, or a few stable shapes?</span></li>
+<li class="hl"><b>Tolerance</b><span>Can they be moved: PDBs, fast start-up, no local state?</span></li>
+<li><b>Accelerators</b><span>Do GPU pools need to stay pinned and warm?</span></li>
+<li class="hl"><b>Operations</b><span>Who will own NodePools, budgets and upgrades?</span></li>
+<li><b>Pilot</b><span>Move one non-critical workload class first and compare cost and disruption</span></li>
+</ol>
+<figcaption>The deciding questions are about workloads and ownership, not the tools.</figcaption>
+</figure>
+<div class="callout"><p>If your workloads cannot tolerate being moved, Karpenter's main advantage turns into a source of incidents. Fix disruption tolerance first, then change autoscaler.</p></div>
+<p>For AI workloads, I often run both patterns: Karpenter for general and bursty services, and pinned, separately managed GPU capacity where warm nodes and scarce accelerators matter more than consolidation. See <a href="/insights/kubernetes-dra-gpu-scheduling/">GPU scheduling with DRA</a>, <a href="/insights/kubernetes-finops-scale-to-zero/">scale to zero</a>, <a href="/insights/focus-finops-ai-cost-allocation/">AI cost allocation</a> and the <a href="/case-studies/kubernetes-finops-platform-engineering/">Kubernetes FinOps case study</a>.</p>
+<p>If you are deciding how to run Kubernetes capacity for AI and product workloads, I am a <a href="/fractional-cto/">fractional CTO</a> and <a href="/ai-architect/">AI architect</a> based in India, the United States and the UAE, working globally. You can <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>

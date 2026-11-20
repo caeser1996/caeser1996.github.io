@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) with Consent Mode v2 -->
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('consent', 'default', {ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied', analytics_storage: 'granted'});
+  gtag('consent', 'default', {analytics_storage: 'denied', region: ['AT','BE','BG','HR','CY','CZ','DK','EE','FI','FR','DE','GR','HU','IS','IE','IT','LV','LI','LT','LU','MT','NL','NO','PL','PT','RO','SK','SI','ES','SE','GB','CH'], wait_for_update: 500});
+  try { var c = localStorage.getItem('consent'); if (c === 'granted' || c === 'denied') gtag('consent', 'update', {analytics_storage: c}); } catch (e) {}
+</script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-8TKBV1S98Q"></script>
+<script>
+  gtag('js', new Date());
+
+  gtag('config', 'G-8TKBV1S98Q', {content_group: (function(p){return p==='/'?'Home':p.indexOf('/insights/')===0?'Insights':p.indexOf('/case-studies/')===0?'Case studies':'Services';})(location.pathname)});
+</script>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Cluster Autoscaler or Karpenter: choosing a node autoscaler</title>
+<meta name="description" content="Cluster Autoscaler scales node groups; Karpenter provisions nodes to fit pods. A comparison of how each works, what managed versions change and how to choose." />
+<meta name="keywords" content="Cluster Autoscaler vs Karpenter, Kubernetes node autoscaling, Karpenter consolidation, disruption budgets, AKS node auto-provisioning, EKS Auto Mode, NodePool, Kubernetes cost optimisation, GPU node autoscaling, platform engineering" />
+<meta name="author" content="Sumanta Mukhopadhyay" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://asksumanta.com/insights/cluster-autoscaler-vs-karpenter/" />
+<meta name="theme-color" content="#fafafa" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<link rel="alternate" type="application/rss+xml" title="Sumanta Mukhopadhyay: insights and case studies" href="/feed.xml" />
+<link rel="alternate" type="application/rss+xml" title="Sumanta Mukhopadhyay: daily tech news" href="/insights/news.xml" />
+<meta property="og:site_name" content="Sumanta Mukhopadhyay" />
+<meta property="og:title" content="Cluster Autoscaler or Karpenter: choosing a node autoscaler" />
+<meta property="og:description" content="Cluster Autoscaler scales node groups; Karpenter provisions nodes to fit pods. A comparison of how each works, what managed versions change and how to choose." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://asksumanta.com/insights/cluster-autoscaler-vs-karpenter/" />
+<meta property="og:image" content="https://asksumanta.com/assets/og/cluster-autoscaler-vs-karpenter.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Cluster Autoscaler or Karpenter: choosing a node autoscaler" />
+<meta name="twitter:description" content="Cluster Autoscaler scales node groups; Karpenter provisions nodes to fit pods. A comparison of how each works, what managed versions change and how to choose." />
+<meta name="twitter:image" content="https://asksumanta.com/assets/og/cluster-autoscaler-vs-karpenter.png" />
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "BlogPosting", "headline": "Cluster Autoscaler or Karpenter: how to choose a Kubernetes node autoscaler", "description": "Cluster Autoscaler scales node groups; Karpenter provisions nodes to fit pods. A comparison of how each works, what managed versions change and how to choose.", "datePublished": "2026-11-20T21:20:00+04:00", "dateModified": "2026-11-20T21:20:00+04:00", "articleSection": "Cloud and platform · Comparison", "genre": "Comparison", "citation": [{"@type": "CreativeWork", "name": "Node Autoscaling", "url": "https://kubernetes.io/docs/concepts/cluster-administration/node-autoscaling/"}, {"@type": "CreativeWork", "name": "Disruption", "url": "https://karpenter.sh/docs/concepts/disruption/"}, {"@type": "CreativeWork", "name": "Node auto-provisioning overview", "url": "https://learn.microsoft.com/azure/aks/node-autoprovision"}, {"@type": "CreativeWork", "name": "Node auto-provisioning disruption policies", "url": "https://learn.microsoft.com/azure/aks/node-autoprovision-disruption"}, {"@type": "CreativeWork", "name": "Automate cluster infrastructure with EKS Auto Mode", "url": "https://docs.aws.amazon.com/eks/latest/userguide/automode.html"}, {"@type": "CreativeWork", "name": "Introducing Headlamp Plugin for Karpenter: Scaling and Visibility", "url": "https://kubernetes.io/blog/2025/10/06/introducing-headlamp-plugin-for-karpenter/"}], "author": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "publisher": {"@type": "Person", "@id": "https://asksumanta.com/#person", "name": "Sumanta Mukhopadhyay", "url": "https://asksumanta.com/"}, "mainEntityOfPage": "https://asksumanta.com/insights/cluster-autoscaler-vs-karpenter/", "image": "https://asksumanta.com/assets/og/cluster-autoscaler-vs-karpenter.png", "keywords": "Cluster Autoscaler vs Karpenter, Kubernetes node autoscaling, Karpenter consolidation, disruption budgets, AKS node auto-provisioning, EKS Auto Mode, NodePool, Kubernetes cost optimisation, GPU node autoscaling, platform engineering", "wordCount": 869}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://asksumanta.com/"}, {"@type": "ListItem", "position": 2, "name": "Insights", "item": "https://asksumanta.com/insights/"}, {"@type": "ListItem", "position": 3, "name": "Cluster Autoscaler or Karpenter: how to choose a Kubernetes node autoscaler", "item": "https://asksumanta.com/insights/cluster-autoscaler-vs-karpenter/"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What is the main difference between Cluster Autoscaler and Karpenter?", "acceptedAnswer": {"@type": "Answer", "text": "Cluster Autoscaler changes the size of node groups that you define in advance. Karpenter looks at pending pods and launches nodes chosen to fit them, within limits you set in NodePools, and manages their lifecycle including consolidation and replacement."}}, {"@type": "Question", "name": "Do I have to run Karpenter myself?", "acceptedAnswer": {"@type": "Answer", "text": "Not always. AKS offers node auto-provisioning, which runs Karpenter as a managed component, and EKS Auto Mode uses Karpenter-based node management operated by AWS. Self-hosting gives more control in exchange for more operational work."}}, {"@type": "Question", "name": "Is Karpenter always cheaper?", "acceptedAnswer": {"@type": "Answer", "text": "Not automatically. Its consolidation and instance flexibility can reduce waste, but only if workloads tolerate being moved, disruption budgets are set sensibly and instance choices are constrained to types you have tested."}}]}]}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/site.css?v=cc95c21754" />
+<script>
+  document.documentElement.classList.add('js');
+  var t='light';try{t=localStorage.getItem('theme')||'light';}catch(e){}
+  document.documentElement.setAttribute('data-theme',t);
+  try{if(!sessionStorage.getItem('booted')&&!/bot|crawl|spider|slurp|lighthouse|headless/i.test(navigator.userAgent)&&!matchMedia('(prefers-reduced-motion: reduce)').matches){document.documentElement.classList.add('boot');sessionStorage.setItem('booted','1');}}catch(e){}
+</script>
+</head>
+<body class="sub is-post">
+<div class="progress" id="progress"></div>
+<nav class="topnav">
+  <div class="nav-in">
+    <a href="/" class="brand">Sumanta<span>.</span></a>
+    <div class="nav-links" id="navLinks">
+      <div class="nd"><button type="button" class="nd-b" aria-expanded="false" aria-controls="nd-services">Services<svg class="chev" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 3.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button><div class="nd-p" id="nd-services"><div class="nd-grid"><a class="nd-i" href="/fractional-cto/"><b>Fractional CTO</b><span>Part-time technology leadership for startups and scale-ups</span></a><a class="nd-i" href="/ai-architect/"><b>AI &amp; LLM architecture</b><span>RAG, agents and private LLMs that make it to production</span></a><a class="nd-i" href="/ontology-knowledge-graph/"><b>Ontology &amp; knowledge graphs</b><span>Shared meaning for your data, analytics and AI</span></a><a class="nd-i" href="/healthcare-data-architecture/"><b>Healthcare data architecture</b><span>FHIR, OMOP and HIPAA-aligned data platforms</span></a><a class="nd-i" href="/technical-due-diligence/"><b>Technical due diligence</b><span>Independent technology assessment for investors</span></a><a class="nd-i" href="/regions/"><b>Fractional CTO worldwide</b><span>US, UK, Europe, Middle East, India, Singapore and Australia</span></a></div><div class="nd-side"><small>Not sure where to start?</small><p>Answer four questions and get a first diagnosis of your challenge.</p><a class="lnk" href="/#assess">Analyse your challenge →</a></div></div></div>
+      <div class="nd"><button type="button" class="nd-b" aria-expanded="false" aria-controls="nd-work">Work<svg class="chev" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 3.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button><div class="nd-p" id="nd-work"><div class="nd-grid"><a class="nd-i" href="/case-studies/"><b>All case studies</b><span>72 anonymised engagements with architecture and flow diagrams</span></a><a class="nd-i" href="/case-studies/#use-cases"><b>Use cases</b><span>Problems I&#x27;m brought in to solve, by sector</span></a><a class="nd-i" href="/case-studies/#snapshots"><b>Engagement snapshots</b><span>Six common problems, the approach and the stack</span></a><a class="nd-i" href="/case-studies/uk-payments-firm-ai-cyber-risk-controls/"><b>AI cyber risk controls for UK payments</b><span>Payments · United Kingdom</span></a><a class="nd-i" href="/case-studies/india-broker-java-runtime-sbom-cscrf/"><b>Java runtime inventory for an Indian broker</b><span>Capital markets · India</span></a><a class="nd-i" href="/case-studies/australia-bank-scams-prevention-framework/"><b>Scam prevention platform for an Australian bank</b><span>Retail banking · Australia</span></a></div><div class="nd-side"><small>Confidential by default</small><p>Every case study is an anonymised composite, cited to public sources.</p><a class="lnk" href="/case-studies/">Browse all →</a></div></div></div>
+      <div class="nd"><button type="button" class="nd-b" aria-expanded="false" aria-controls="nd-insights">Insights<svg class="chev" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 3.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button><div class="nd-p" id="nd-insights"><div class="nd-grid"><a class="nd-i" href="/insights/"><b>All insights</b><span>161 articles on AI, data, cloud and leadership</span></a><a class="nd-i" href="/insights/#topic-news"><b>Daily tech news</b><span>A CTO&#x27;s take on the day&#x27;s releases, deals and rules</span></a><a class="nd-i" href="/subscribe/"><b>Subscribe via RSS</b><span>Get every new post in Feedly, Inoreader or any reader</span></a><a class="nd-i" href="/insights/cluster-autoscaler-vs-karpenter/"><b>Cluster Autoscaler or Karpenter: how to choose a Kubernetes node autoscaler</b></a><a class="nd-i" href="/insights/tech-news-2026-11-20/"><b>Tech news, 20 November 2026: a critical vCenter bypass, Malaysia and US chip rules, UK AI cyber practices and Anthropic&#x27;s market debut</b></a><a class="nd-i" href="/insights/agent-framework-pypi-pth-compromise/"><b>The agent-framework hack: why installing a package was enough to lose your cloud secrets</b></a><a class="nd-i" href="/insights/tech-news-2026-11-19/"><b>Tech news, 19 November 2026: Java4Shell, a poisoned Microsoft agent package, GPT-6.2 Astra and Sol, and Malaysia&#x27;s data centre pipeline</b></a><a class="nd-i" href="/insights/vendor-admin-access-rmm-breaches/"><b>Your vendors&#x27; admin tools are your perimeter: what N-central, ScreenConnect, Qubole and Optimizely have in common</b></a></div><div class="nd-side"><small>New every week</small><p>Explainers, playbooks and analysis of new standards and regulation.</p><a class="lnk" href="/insights/">Read the latest →</a></div></div></div>
+      <div class="nd"><button type="button" class="nd-b" aria-expanded="false" aria-controls="nd-about">About<svg class="chev" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 3.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button><div class="nd-p" id="nd-about"><div class="nd-grid"><a class="nd-i" href="/about/"><b>About</b><span>Background, credentials and open-source work</span></a><a class="nd-i" href="/expertise/"><b>Expertise</b><span>Practice areas, reference architecture and industries</span></a><a class="nd-i" href="/how-i-work/"><b>How I work</b><span>Playbook, principles and engagement models</span></a><a class="nd-i" href="/how-i-work/#faq"><b>FAQ</b><span>Common questions about working together</span></a><a class="nd-i" href="/#contact"><b>Contact</b><span>Book a call or send a message</span></a></div><div class="nd-side"><small>Take a break</small><p>Defend production from incoming incidents in Orbital Ops, a free sci-fi browser game.</p><a class="lnk" href="/play/">Play now →</a></div></div></div>
+      <a class="nd-l" href="/play/">Play <em>new</em></a>
+    </div>
+    <div class="nav-r">
+      <button type="button" class="kbtn" data-search aria-label="Search the site" title="Search (Ctrl K)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><kbd>⌘K</kbd></button>
+      <button type="button" class="snd" aria-pressed="false" aria-label="Turn ambient sound on" title="Ambient sound"><span class="eq"><i></i><i></i><i></i><i></i></span></button>
+      <button class="theme" id="themeBtn" aria-label="Toggle colour theme"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><span></span><span></span></button>
+      <a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener" class="btn sm mag">Book a call</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="sub-hero">
+    <canvas class="sub-graph" aria-hidden="true"></canvas>
+    <div class="crumbs" role="navigation" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/insights/">Insights</a> <span>/</span> <em>Cluster Autoscaler or Karpenter: how to choose a Kubernetes node autoscaler</em></div>
+    <div class="kicker">Cloud and platform · Comparison</div>
+    <h1>Cluster Autoscaler or Karpenter: how to choose a Kubernetes node autoscaler</h1>
+    <p class="sub-lede">Node autoscaling decides how much you pay for Kubernetes and how fast new work starts. Kubernetes now sponsors two autoscalers with different models: Cluster Autoscaler, which grows and shrinks node groups you define, and Karpenter, which picks and launches nodes to fit the pods waiting. Cloud providers increasingly run Karpenter for you. Here is how they differ, and how I decide.</p>
+    <div class="ameta"><span class="fmt">Comparison</span><span>Sumanta Mukhopadhyay</span><time datetime="2026-11-20T21:20:00+04:00">20 Nov 2026 · 21:20 GST</time><span>8 min read</span><span>6 sources</span></div><div class="atags"><span class="tagp">#kubernetes</span><span class="tagp">#platform</span><span class="tagp">#finops</span></div>
+    <div class="cta-row">
+      <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+      <a class="btn ghost mag" href="/#assess">Analyse your challenge</a>
+    </div>
+  </header>
+
+  <figure class="cover rise"><svg class="cover-svg" viewBox="0 0 1200 420" role="img" aria-label="Comparison cover art"><line x1="100" y1="0" x2="100" y2="420" class="cv-grid"/><line x1="200" y1="0" x2="200" y2="420" class="cv-grid"/><line x1="300" y1="0" x2="300" y2="420" class="cv-grid"/><line x1="400" y1="0" x2="400" y2="420" class="cv-grid"/><line x1="500" y1="0" x2="500" y2="420" class="cv-grid"/><line x1="600" y1="0" x2="600" y2="420" class="cv-grid"/><line x1="700" y1="0" x2="700" y2="420" class="cv-grid"/><line x1="800" y1="0" x2="800" y2="420" class="cv-grid"/><line x1="900" y1="0" x2="900" y2="420" class="cv-grid"/><line x1="1000" y1="0" x2="1000" y2="420" class="cv-grid"/><line x1="1100" y1="0" x2="1100" y2="420" class="cv-grid"/><line x1="0" y1="84" x2="1200" y2="84" class="cv-grid"/><line x1="0" y1="168" x2="1200" y2="168" class="cv-grid"/><line x1="0" y1="252" x2="1200" y2="252" class="cv-grid"/><line x1="0" y1="336" x2="1200" y2="336" class="cv-grid"/><polyline points="540,169 596,173 652,180 708,245 764,171 820,191 876,234 932,210 988,167 1044,172 1100,239 1156,233" class="cv-line"/><polyline points="540,155 596,205 652,291 708,219 764,266 820,128 876,224 932,179 988,186 1044,244 1100,187 1156,191" class="cv-line"/><polyline points="540,159 596,180 652,217 708,296 764,284 820,129 876,258 932,338 988,286 1044,155 1100,189 1156,277" class="cv-line hl"/><text x="60" y="90" class="cv-k">COMPARISON · CLOUD AND PLATFORM · COMPARISON</text><text x="60" y="350" class="cv-n">20 Nov 2026 · 21:20 GST</text></svg></figure>
+  <div class="post-wrap">
+    <article class="prose article">
+      <section class="block">
+<h2 id="two-models-of-node-autoscaling">Two models of node autoscaling</h2>
+<p>The Kubernetes documentation describes node autoscaling as provisioning nodes when pods cannot be scheduled and consolidating them when they are underused, and lists two autoscalers sponsored by SIG Autoscaling: Cluster Autoscaler and Karpenter<sup class="cite"><a href="#ref-1">1</a></sup>. They solve the same problem from opposite ends.</p>
+<p><strong>Cluster Autoscaler</strong> works with node groups you define in advance: a group of one machine type, another for GPUs, perhaps a Spot group. When pods are pending, it grows the group whose nodes would fit them; when nodes are underused, it shrinks groups. Your choices about machine types are made up front, in the groups.</p>
+<p><strong>Karpenter</strong> starts from the pods. It reads what pending pods need, chooses machines to fit them within the limits you set in NodePools, launches them directly and manages their whole lifecycle, including replacing and consolidating them later<sup class="cite"><a href="#ref-1">1</a></sup>. Your choices are expressed as constraints rather than fixed groups.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/cluster-autoscaler-vs-karpenter/resource-map.webp" alt="Resource map showing an EC2NodeClass named default linked to a NodePool named default, linked to a NodeClaim, linked to a Node" width="1157" height="175" loading="lazy"></div><figcaption>Karpenter's chain: a node class (cloud settings) and a NodePool (constraints) produce NodeClaims, which become nodes. <span class="credit">Source: <a href="https://kubernetes.io/blog/2025/10/06/introducing-headlamp-plugin-for-karpenter/" target="_blank" rel="noopener">Kubernetes blog, René Dudfield and Anirban Singha</a> · CC BY 4.0</span></figcaption></figure>
+</section>
+
+<section class="block">
+<h2 id="how-a-scale-up-differs">How a scale-up differs</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Cluster Autoscaler</small><ol><li>Pods pending</li><li>Simulate which node group would fit</li><li class="hl">Increase that group's size</li><li>Cloud group launches its fixed machine type</li></ol></div>
+<div class="dgm-lane"><small>Karpenter</small><ol><li>Pods pending</li><li>Batch and read their requirements</li><li class="hl">Choose machine types within NodePool limits</li><li>Launch nodes directly as NodeClaims</li></ol></div>
+</div>
+<figcaption>Cluster Autoscaler chooses a group; Karpenter chooses a machine.</figcaption>
+</figure>
+<p>The practical consequence is flexibility. With Cluster Autoscaler, a workload that needs an unusual shape needs a node group that already offers it. With Karpenter, it needs a NodePool whose constraints allow it. That is why Karpenter tends to suit mixed and changing workloads, and why it needs firmer guard rails: a loose NodePool can launch machine types you never tested.</p>
+</section>
+
+<section class="block">
+<h2 id="scale-down-is-where-the-real-difference-is">Scale-down is where the real difference is</h2>
+<p>Scale-up gets the attention, but cost is decided on the way down. Karpenter's disruption controls cover consolidation, which removes or replaces underused nodes with cheaper ones, as well as drift, when a node no longer matches its configuration, and expiry after a set lifetime<sup class="cite"><a href="#ref-2">2</a></sup>. Disruption budgets limit how many nodes can be disrupted at once and can be scheduled, so you can, for example, allow consolidation only outside business hours<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+<p>That power has a cost: pods get moved more often. Workloads without pod disruption budgets, with long start-up times or with local state will feel it. The Headlamp plugin for Karpenter surfaces these scaling and disruption decisions in a UI<sup class="cite"><a href="#ref-6">6</a></sup>, and the view below shows the other side: a node whose disruption was blocked, which is what you want for a protected workload and what you need to notice when it stops consolidation entirely.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/cluster-autoscaler-vs-karpenter/node-decisions.webp" alt="Table of Karpenter node decisions showing a DisruptionBlocked event because a node is not initialised and a Ready event when the kubelet reports ready" width="1521" height="280" loading="lazy"></div><figcaption>Node decisions, including a blocked disruption: visibility into why Karpenter did or did not act is part of running it. <span class="credit">Source: <a href="https://kubernetes.io/blog/2025/10/06/introducing-headlamp-plugin-for-karpenter/" target="_blank" rel="noopener">Kubernetes blog, René Dudfield and Anirban Singha</a> · CC BY 4.0</span></figcaption></figure>
+</section>
+
+<section class="block">
+<h2 id="managed-options-change-the-question">Managed options change the question</h2>
+<p>You may not have to run either yourself. AKS node auto-provisioning provisions and manages virtual machines in response to pending pods using Karpenter, configured through NodePools and AKS-specific node classes<sup class="cite"><a href="#ref-3">3</a></sup>. EKS Auto Mode manages compute for you and replaces nodes after a maximum lifetime of 21 days, which you can shorten<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<p>Managed versions remove the work of running the autoscaler, but they also make choices for you: node images, lifetimes and which settings you can change. Read the limitations pages before committing, especially if you need particular operating systems, network modes or access to nodes.</p>
+</section>
+
+<section class="block">
+<h2 id="side-by-side">Side by side</h2>
+<table class="tbl">
+<thead><tr><th>Question</th><th>Cluster Autoscaler</th><th>Karpenter</th></tr></thead>
+<tbody>
+<tr><td>What you define</td><td>Node groups with fixed machine types</td><td>NodePools with constraints and limits</td></tr>
+<tr><td>Scale-up decision</td><td>Which group to grow</td><td>Which machines to launch</td></tr>
+<tr><td>Scale-down</td><td>Remove underused nodes from groups</td><td>Consolidate, replace, handle drift and expiry</td></tr>
+<tr><td>Predictability</td><td>High: only the shapes you listed</td><td>Depends on how tight your constraints are</td></tr>
+<tr><td>Workload churn</td><td>Lower</td><td>Higher unless budgets are tuned</td></tr>
+<tr><td>Best fit</td><td>Stable fleets, pinned GPU pools, platforms without a Karpenter provider</td><td>Mixed or bursty workloads, Spot, cost-sensitive fleets</td></tr>
+</tbody>
+</table>
+</section>
+
+<section class="block">
+<h2 id="how-i-decide">How I decide</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Provider</b><span>Is there a supported Karpenter provider or a managed option on your cloud?</span></li>
+<li><b>Workloads</b><span>Are they varied and bursty, or a few stable shapes?</span></li>
+<li class="hl"><b>Tolerance</b><span>Can they be moved: PDBs, fast start-up, no local state?</span></li>
+<li><b>Accelerators</b><span>Do GPU pools need to stay pinned and warm?</span></li>
+<li class="hl"><b>Operations</b><span>Who will own NodePools, budgets and upgrades?</span></li>
+<li><b>Pilot</b><span>Move one non-critical workload class first and compare cost and disruption</span></li>
+</ol>
+<figcaption>The deciding questions are about workloads and ownership, not the tools.</figcaption>
+</figure>
+<div class="callout"><p>If your workloads cannot tolerate being moved, Karpenter's main advantage turns into a source of incidents. Fix disruption tolerance first, then change autoscaler.</p></div>
+<p>For AI workloads, I often run both patterns: Karpenter for general and bursty services, and pinned, separately managed GPU capacity where warm nodes and scarce accelerators matter more than consolidation. See <a href="/insights/kubernetes-dra-gpu-scheduling/">GPU scheduling with DRA</a>, <a href="/insights/kubernetes-finops-scale-to-zero/">scale to zero</a>, <a href="/insights/focus-finops-ai-cost-allocation/">AI cost allocation</a> and the <a href="/case-studies/kubernetes-finops-platform-engineering/">Kubernetes FinOps case study</a>.</p>
+<p>If you are deciding how to run Kubernetes capacity for AI and product workloads, I am a <a href="/fractional-cto/">fractional CTO</a> and <a href="/ai-architect/">AI architect</a> based in India, the United States and the UAE, working globally. You can <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
+      <section class="refs" id="references"><div class="kicker">References</div><ol><li id="ref-1"><span class="rn">1</span><div><a href="https://kubernetes.io/docs/concepts/cluster-administration/node-autoscaling/" target="_blank" rel="noopener">Node Autoscaling</a><small>Kubernetes documentation</small></div></li><li id="ref-2"><span class="rn">2</span><div><a href="https://karpenter.sh/docs/concepts/disruption/" target="_blank" rel="noopener">Disruption</a><small>Karpenter documentation</small></div></li><li id="ref-3"><span class="rn">3</span><div><a href="https://learn.microsoft.com/azure/aks/node-autoprovision" target="_blank" rel="noopener">Node auto-provisioning overview</a><small>Microsoft Learn</small></div></li><li id="ref-4"><span class="rn">4</span><div><a href="https://learn.microsoft.com/azure/aks/node-autoprovision-disruption" target="_blank" rel="noopener">Node auto-provisioning disruption policies</a><small>Microsoft Learn</small></div></li><li id="ref-5"><span class="rn">5</span><div><a href="https://docs.aws.amazon.com/eks/latest/userguide/automode.html" target="_blank" rel="noopener">Automate cluster infrastructure with EKS Auto Mode</a><small>Amazon EKS User Guide</small></div></li><li id="ref-6"><span class="rn">6</span><div><a href="https://kubernetes.io/blog/2025/10/06/introducing-headlamp-plugin-for-karpenter/" target="_blank" rel="noopener">Introducing Headlamp Plugin for Karpenter: Scaling and Visibility</a><small>Kubernetes blog (René Dudfield, Anirban Singha) · 6 Oct 2025</small></div></li></ol></section>
+      <div class="share"><span>Share</span><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fcluster-autoscaler-vs-karpenter%2F" target="_blank" rel="noopener">LinkedIn</a><a href="https://x.com/intent/post?url=https%3A%2F%2Fasksumanta.com%2Finsights%2Fcluster-autoscaler-vs-karpenter%2F&amp;text=Cluster%20Autoscaler%20or%20Karpenter%3A%20how%20to%20choose%20a%20Kubernetes%20node%20autoscaler" target="_blank" rel="noopener">X</a><a href="https://wa.me/?text=Cluster%20Autoscaler%20or%20Karpenter%3A%20how%20to%20choose%20a%20Kubernetes%20node%20autoscaler%20https%3A%2F%2Fasksumanta.com%2Finsights%2Fcluster-autoscaler-vs-karpenter%2F" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="copy-link" data-url="https://asksumanta.com/insights/cluster-autoscaler-vs-karpenter/">Copy link</button></div>
+      <aside class="author-box" aria-label="About the author">
+        <div class="ab-av" aria-hidden="true">SM</div>
+        <div><small>About the author</small><b>Sumanta Mukhopadhyay</b>
+        <p>Fractional CTO, principal engineer and AI architect based in India, the United States and the UAE. Works across ontology and knowledge graphs, production AI, healthcare data platforms and cloud infrastructure.</p>
+        <div class="ab-l"><a href="/about/">More about me</a><a href="/how-i-work/">How I work</a><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a call</a></div></div>
+      </aside>
+      <div class="pnav"><a class="pn prev" href="/insights/tech-news-2026-11-20/"><small>← Previous</small><b>Tech news, 20 November 2026: a critical vCenter bypass, Malaysia and US chip rules, UK AI cyber practices and Anthropic&#x27;s market debut</b></a></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><div class="kicker">On this page</div><ol><li><a href="#two-models-of-node-autoscaling">Two models of node autoscaling</a></li><li><a href="#how-a-scale-up-differs">How a scale-up differs</a></li><li><a href="#scale-down-is-where-the-real-difference-is">Scale-down is where the real difference is</a></li><li><a href="#managed-options-change-the-question">Managed options change the question</a></li><li><a href="#side-by-side">Side by side</a></li><li><a href="#how-i-decide">How I decide</a></li></ol>
+      <a class="toc-cta" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a></aside>
+  </div>
+
+  <section class="sub-sec" id="faq">
+      <div class="kicker">FAQ</div>
+      <h2>Common questions</h2>
+      <div class="faq"><details class="rise"><summary>What is the main difference between Cluster Autoscaler and Karpenter?</summary><p>Cluster Autoscaler changes the size of node groups that you define in advance. Karpenter looks at pending pods and launches nodes chosen to fit them, within limits you set in NodePools, and manages their lifecycle including consolidation and replacement.</p></details><details class="rise"><summary>Do I have to run Karpenter myself?</summary><p>Not always. AKS offers node auto-provisioning, which runs Karpenter as a managed component, and EKS Auto Mode uses Karpenter-based node management operated by AWS. Self-hosting gives more control in exchange for more operational work.</p></details><details class="rise"><summary>Is Karpenter always cheaper?</summary><p>Not automatically. Its consolidation and instance flexibility can reduce waste, but only if workloads tolerate being moved, disruption budgets are set sensibly and instance choices are constrained to types you have tested.</p></details></div>
+    </section>
+  <section class="sub-sec">
+      <div class="kicker">Keep reading</div>
+      <h2>Related</h2>
+      <div class="rgrid"><a class="rcard rise" href="/fractional-cto/"><small>Service</small><b>Fractional CTO</b><span>I work as a part-time CTO for founders, CEOs and boards who need experienced technical judgement now, and a team that can carry it on after I step back.</span><i>→</i></a><a class="rcard rise" href="/ai-architect/"><small>Service</small><b>AI &amp; LLM architecture</b><span>I design and build AI systems that leadership can trust: grounded in your data, measured by evaluations, governed by your rules and priced so they make sense at scale.</span><i>→</i></a><a class="rcard rise" href="/insights/kubernetes-in-place-pod-resize/"><small>Insight</small><b>In-place Pod resize on Kubernetes: field notes for right-sizing without restarts</b><span>For years, changing a Pod&#x27;s CPU or memory meant replacing the Pod. That made right-sizing disruptive, so most teams over-provisioned and left it there. With in-place resize stable since Kubernetes 1.35, the excuse is gone. The operational details still matter.</span><i>→</i></a><a class="rcard rise" href="/insights/kubernetes-multi-tenancy/"><small>Insight</small><b>Kubernetes multi-tenancy: namespaces, virtual control planes or dedicated clusters?</b><span>Every growing platform faces the same question: one cluster per team or customer, or shared clusters with careful isolation? Kubernetes has no built-in concept of a tenant, so the answer is a set of design choices. Here is how I make them.</span><i>→</i></a></div>
+    </section>
+  <section class="sub-cta rise">
+      <div class="tagline"><i></i>Open to advisory, fractional CTO &amp; select builds</div>
+      <h2>Let's talk about what you're building.</h2>
+      <p>The fastest route is a free 30-minute call. Prefer to write? Send a message and I'll reply personally within two business days.</p>
+      <div class="cta-row">
+        <a class="btn mag" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call →</a>
+        <a class="btn ghost mag" href="mailto:sumantamukhopadhyaywork@gmail.com" data-contact="Re: Cluster Autoscaler or Karpenter: how to choose a Kubernetes node autoscaler">Send a message</a>
+        <a class="lnk" href="/#assess" style="align-self:center">or analyse your challenge first →</a>
+      </div>
+    </section>
+</main>
+
+<dialog id="contactModal" class="cm" aria-labelledby="cmTitle" data-lenis-prevent>
+  <form method="dialog" class="cm-x"><button aria-label="Close">×</button></form>
+  <div class="kicker">Start a conversation</div>
+  <h3 id="cmTitle">How would you like to reach me?</h3>
+  <div class="cm-opts">
+    <a class="cm-o pri" href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener"><b>Book a 30-min call</b><span>Fastest. Pick any open slot on my calendar.</span><i>→</i></a>
+    <a class="cm-o" id="cmGmail" href="#" target="_blank" rel="noopener"><b>Write in Gmail</b><span>Opens a pre-filled draft in your browser.</span><i>→</i></a>
+    <a class="cm-o" id="cmMailto" href="mailto:sumantamukhopadhyaywork@gmail.com"><b>Use my email app</b><span>Outlook, Apple Mail or your default client.</span><i>→</i></a>
+    <button type="button" class="cm-o" id="cmCopy"><b>Copy email address</b><span>sumantamukhopadhyaywork@gmail.com</span><i>⧉</i></button>
+  </div>
+  <p class="cm-foot">I reply personally within two business days. Time zones from the Americas and Europe to the Middle East and Asia-Pacific.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fc fbrand">
+        <a href="/" class="brand">Sumanta<span>.</span></a>
+        <p>Fractional CTO, principal engineer and AI architect. Ontology, AI, data platforms and cloud infrastructure across healthcare, fintech, SaaS, e-commerce and AI startups.</p>
+        <p class="floc">Global, remote-first · based in India, the US &amp; UAE · <a href="/regions/">where I work</a></p>
+      </div>
+      <div class="fc"><h4>Services</h4><ul><li><a href="/fractional-cto/">Fractional CTO</a></li><li><a href="/ai-architect/">AI &amp; LLM architecture</a></li><li><a href="/ontology-knowledge-graph/">Ontology &amp; knowledge graphs</a></li><li><a href="/healthcare-data-architecture/">Healthcare data architecture</a></li><li><a href="/technical-due-diligence/">Technical due diligence</a></li><li><a href="/regions/">Fractional CTO worldwide →</a></li></ul></div>
+      <div class="fc"><h4>Case studies</h4><ul><li><a href="/case-studies/uk-payments-firm-ai-cyber-risk-controls/">AI cyber risk controls for UK payments</a></li><li><a href="/case-studies/india-broker-java-runtime-sbom-cscrf/">Java runtime inventory for an Indian broker</a></li><li><a href="/case-studies/australia-bank-scams-prevention-framework/">Scam prevention platform for an Australian bank</a></li><li><a href="/case-studies/malaysia-gpu-cloud-export-control-compliance/">GPU cloud export controls in Malaysia</a></li><li><a href="/case-studies/#snapshots">Engagement snapshots</a></li><li><a href="/case-studies/">All case studies →</a></li></ul></div>
+      <div class="fc"><h4>Insights</h4><ul><li><a href="/insights/cluster-autoscaler-vs-karpenter/">Cluster Autoscaler or Karpenter: how to choose a Kubernetes node autoscaler</a></li><li><a href="/insights/tech-news-2026-11-20/">Tech news, 20 November 2026: a critical vCenter bypass, Malaysia and US chip rules, UK AI cyber practices and Anthropic&#x27;s market debut</a></li><li><a href="/insights/agent-framework-pypi-pth-compromise/">The agent-framework hack: why installing a package was enough to lose your cloud secrets</a></li><li><a href="/insights/tech-news-2026-11-19/">Tech news, 19 November 2026: Java4Shell, a poisoned Microsoft agent package, GPT-6.2 Astra and Sol, and Malaysia&#x27;s data centre pipeline</a></li><li><a href="/insights/vendor-admin-access-rmm-breaches/">Your vendors&#x27; admin tools are your perimeter: what N-central, ScreenConnect, Qubole and Optimizely have in common</a></li><li><a href="/insights/">All articles →</a></li></ul></div>
+      <div class="fc"><h4>Connect</h4><ul>
+        <li><a href="https://calendar.app.google/fpARv4QHsYCLMo3a8" target="_blank" rel="noopener">Book a 30-min call</a></li>
+        <li><a href="mailto:sumantamukhopadhyaywork@gmail.com?subject=Engagement%20enquiry" data-contact="Engagement enquiry">Send a message</a></li>
+        <li><a href="/#assess">Analyse your challenge</a></li>
+        <li><a href="/how-i-work/">How I work</a></li>
+        <li><a href="/expertise/">Expertise</a></li>
+        <li><a href="/about/">About</a></li>
+        <li><a href="/play/">Play Orbital Ops</a></li>
+        <li><a href="https://github.com/caeser1996" target="_blank" rel="noopener">GitHub</a></li>
+      </ul></div>
+    </div>
+    <div class="fbot"><span>© <span id="yr">2026</span> Sumanta Mukhopadhyay</span><span class="sp"></span><a href="/privacy/">Privacy &amp; cookies</a><button type="button" class="cookie-link" data-cookie-settings>Cookie settings</button><a href="/subscribe/">RSS</a><a href="/sitemap.xml">Sitemap</a></div>
+  </div>
+</footer>
+<script src="/assets/site.js?v=fddb4ea7bf"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+</body>
+</html>

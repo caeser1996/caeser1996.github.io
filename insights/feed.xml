@@ -1,6 +1,70 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights</title><link>https://asksumanta.com/</link><description>Articles on AI, data, cloud and technology leadership</description><language>en-gb</language><lastBuildDate>Fri, 20 Nov 2026 08:55:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/insights/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights</title><link>https://asksumanta.com/</link></image><item><title>Tech news, 20 November 2026: a critical vCenter bypass, Malaysia and US chip rules, UK AI cyber practices and Anthropic&#x27;s market debut</title><link>https://asksumanta.com/insights/tech-news-2026-11-20/</link><guid isPermaLink="true">https://asksumanta.com/insights/tech-news-2026-11-20/</guid><pubDate>Fri, 20 Nov 2026 08:55:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>security</category><category>cloud</category><category>governance</category><description>A CTO&#x27;s take: a critical vCenter authentication bypass, Malaysia tells data centres to follow US chip rules, UK regulators set AI cyber practices, Anthropic lists.</description><content:encoded><![CDATA[<p><em>Broadcom patched a critical authentication bypass in VMware vCenter, with reports that it was exploited before the fix. Malaysia told its data centre operators to comply with the new US rules on advanced chips as Washington offered support for a Malaysian sovereign AI cloud. UK financial regulators published effective practices for AI-related cyber risk, and Anthropic&#x27;s shares began trading on Nasdaq.</em></p><p>Today's brief covers stories from 18 to 19 November.</p>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights</title><link>https://asksumanta.com/</link><description>Articles on AI, data, cloud and technology leadership</description><language>en-gb</language><lastBuildDate>Fri, 20 Nov 2026 21:20:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/insights/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights</title><link>https://asksumanta.com/</link></image><item><title>Cluster Autoscaler or Karpenter: how to choose a Kubernetes node autoscaler</title><link>https://asksumanta.com/insights/cluster-autoscaler-vs-karpenter/</link><guid isPermaLink="true">https://asksumanta.com/insights/cluster-autoscaler-vs-karpenter/</guid><pubDate>Fri, 20 Nov 2026 21:20:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>kubernetes</category><category>platform</category><category>finops</category><description>Cluster Autoscaler scales node groups; Karpenter provisions nodes to fit pods. A comparison of how each works, what managed versions change and how to choose.</description><content:encoded><![CDATA[<p><em>Node autoscaling decides how much you pay for Kubernetes and how fast new work starts. Kubernetes now sponsors two autoscalers with different models: Cluster Autoscaler, which grows and shrinks node groups you define, and Karpenter, which picks and launches nodes to fit the pods waiting. Cloud providers increasingly run Karpenter for you. Here is how they differ, and how I decide.</em></p><section class="block">
+<h2>Two models of node autoscaling</h2>
+<p>The Kubernetes documentation describes node autoscaling as provisioning nodes when pods cannot be scheduled and consolidating them when they are underused, and lists two autoscalers sponsored by SIG Autoscaling: Cluster Autoscaler and Karpenter<sup class="cite"><a href="#ref-1">1</a></sup>. They solve the same problem from opposite ends.</p>
+<p><strong>Cluster Autoscaler</strong> works with node groups you define in advance: a group of one machine type, another for GPUs, perhaps a Spot group. When pods are pending, it grows the group whose nodes would fit them; when nodes are underused, it shrinks groups. Your choices about machine types are made up front, in the groups.</p>
+<p><strong>Karpenter</strong> starts from the pods. It reads what pending pods need, chooses machines to fit them within the limits you set in NodePools, launches them directly and manages their whole lifecycle, including replacing and consolidating them later<sup class="cite"><a href="#ref-1">1</a></sup>. Your choices are expressed as constraints rather than fixed groups.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/cluster-autoscaler-vs-karpenter/resource-map.webp" alt="Resource map showing an EC2NodeClass named default linked to a NodePool named default, linked to a NodeClaim, linked to a Node" width="1157" height="175" loading="lazy"></div><figcaption>Karpenter's chain: a node class (cloud settings) and a NodePool (constraints) produce NodeClaims, which become nodes. <span class="credit">Source: <a href="https://kubernetes.io/blog/2025/10/06/introducing-headlamp-plugin-for-karpenter/" target="_blank" rel="noopener">Kubernetes blog, René Dudfield and Anirban Singha</a> · CC BY 4.0</span></figcaption></figure>
+</section>
+
+<section class="block">
+<h2>How a scale-up differs</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Cluster Autoscaler</small><ol><li>Pods pending</li><li>Simulate which node group would fit</li><li class="hl">Increase that group's size</li><li>Cloud group launches its fixed machine type</li></ol></div>
+<div class="dgm-lane"><small>Karpenter</small><ol><li>Pods pending</li><li>Batch and read their requirements</li><li class="hl">Choose machine types within NodePool limits</li><li>Launch nodes directly as NodeClaims</li></ol></div>
+</div>
+<figcaption>Cluster Autoscaler chooses a group; Karpenter chooses a machine.</figcaption>
+</figure>
+<p>The practical consequence is flexibility. With Cluster Autoscaler, a workload that needs an unusual shape needs a node group that already offers it. With Karpenter, it needs a NodePool whose constraints allow it. That is why Karpenter tends to suit mixed and changing workloads, and why it needs firmer guard rails: a loose NodePool can launch machine types you never tested.</p>
+</section>
+
+<section class="block">
+<h2>Scale-down is where the real difference is</h2>
+<p>Scale-up gets the attention, but cost is decided on the way down. Karpenter's disruption controls cover consolidation, which removes or replaces underused nodes with cheaper ones, as well as drift, when a node no longer matches its configuration, and expiry after a set lifetime<sup class="cite"><a href="#ref-2">2</a></sup>. Disruption budgets limit how many nodes can be disrupted at once and can be scheduled, so you can, for example, allow consolidation only outside business hours<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+<p>That power has a cost: pods get moved more often. Workloads without pod disruption budgets, with long start-up times or with local state will feel it. The Headlamp plugin for Karpenter surfaces these scaling and disruption decisions in a UI<sup class="cite"><a href="#ref-6">6</a></sup>, and the view below shows the other side: a node whose disruption was blocked, which is what you want for a protected workload and what you need to notice when it stops consolidation entirely.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/cluster-autoscaler-vs-karpenter/node-decisions.webp" alt="Table of Karpenter node decisions showing a DisruptionBlocked event because a node is not initialised and a Ready event when the kubelet reports ready" width="1521" height="280" loading="lazy"></div><figcaption>Node decisions, including a blocked disruption: visibility into why Karpenter did or did not act is part of running it. <span class="credit">Source: <a href="https://kubernetes.io/blog/2025/10/06/introducing-headlamp-plugin-for-karpenter/" target="_blank" rel="noopener">Kubernetes blog, René Dudfield and Anirban Singha</a> · CC BY 4.0</span></figcaption></figure>
+</section>
+
+<section class="block">
+<h2>Managed options change the question</h2>
+<p>You may not have to run either yourself. AKS node auto-provisioning provisions and manages virtual machines in response to pending pods using Karpenter, configured through NodePools and AKS-specific node classes<sup class="cite"><a href="#ref-3">3</a></sup>. EKS Auto Mode manages compute for you and replaces nodes after a maximum lifetime of 21 days, which you can shorten<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<p>Managed versions remove the work of running the autoscaler, but they also make choices for you: node images, lifetimes and which settings you can change. Read the limitations pages before committing, especially if you need particular operating systems, network modes or access to nodes.</p>
+</section>
+
+<section class="block">
+<h2>Side by side</h2>
+<table class="tbl">
+<thead><tr><th>Question</th><th>Cluster Autoscaler</th><th>Karpenter</th></tr></thead>
+<tbody>
+<tr><td>What you define</td><td>Node groups with fixed machine types</td><td>NodePools with constraints and limits</td></tr>
+<tr><td>Scale-up decision</td><td>Which group to grow</td><td>Which machines to launch</td></tr>
+<tr><td>Scale-down</td><td>Remove underused nodes from groups</td><td>Consolidate, replace, handle drift and expiry</td></tr>
+<tr><td>Predictability</td><td>High: only the shapes you listed</td><td>Depends on how tight your constraints are</td></tr>
+<tr><td>Workload churn</td><td>Lower</td><td>Higher unless budgets are tuned</td></tr>
+<tr><td>Best fit</td><td>Stable fleets, pinned GPU pools, platforms without a Karpenter provider</td><td>Mixed or bursty workloads, Spot, cost-sensitive fleets</td></tr>
+</tbody>
+</table>
+</section>
+
+<section class="block">
+<h2>How I decide</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Provider</b><span>Is there a supported Karpenter provider or a managed option on your cloud?</span></li>
+<li><b>Workloads</b><span>Are they varied and bursty, or a few stable shapes?</span></li>
+<li class="hl"><b>Tolerance</b><span>Can they be moved: PDBs, fast start-up, no local state?</span></li>
+<li><b>Accelerators</b><span>Do GPU pools need to stay pinned and warm?</span></li>
+<li class="hl"><b>Operations</b><span>Who will own NodePools, budgets and upgrades?</span></li>
+<li><b>Pilot</b><span>Move one non-critical workload class first and compare cost and disruption</span></li>
+</ol>
+<figcaption>The deciding questions are about workloads and ownership, not the tools.</figcaption>
+</figure>
+<div class="callout"><p>If your workloads cannot tolerate being moved, Karpenter's main advantage turns into a source of incidents. Fix disruption tolerance first, then change autoscaler.</p></div>
+<p>For AI workloads, I often run both patterns: Karpenter for general and bursty services, and pinned, separately managed GPU capacity where warm nodes and scarce accelerators matter more than consolidation. See <a href="https://asksumanta.com/insights/kubernetes-dra-gpu-scheduling/">GPU scheduling with DRA</a>, <a href="https://asksumanta.com/insights/kubernetes-finops-scale-to-zero/">scale to zero</a>, <a href="https://asksumanta.com/insights/focus-finops-ai-cost-allocation/">AI cost allocation</a> and the <a href="https://asksumanta.com/case-studies/kubernetes-finops-platform-engineering/">Kubernetes FinOps case study</a>.</p>
+<p>If you are deciding how to run Kubernetes capacity for AI and product workloads, I am a <a href="https://asksumanta.com/fractional-cto/">fractional CTO</a> and <a href="https://asksumanta.com/ai-architect/">AI architect</a> based in India, the United States and the UAE, working globally. You can <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section><p><a href="https://asksumanta.com/insights/cluster-autoscaler-vs-karpenter/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Tech news, 20 November 2026: a critical vCenter bypass, Malaysia and US chip rules, UK AI cyber practices and Anthropic&#x27;s market debut</title><link>https://asksumanta.com/insights/tech-news-2026-11-20/</link><guid isPermaLink="true">https://asksumanta.com/insights/tech-news-2026-11-20/</guid><pubDate>Fri, 20 Nov 2026 08:55:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>security</category><category>cloud</category><category>governance</category><description>A CTO&#x27;s take: a critical vCenter authentication bypass, Malaysia tells data centres to follow US chip rules, UK regulators set AI cyber practices, Anthropic lists.</description><content:encoded><![CDATA[<p><em>Broadcom patched a critical authentication bypass in VMware vCenter, with reports that it was exploited before the fix. Malaysia told its data centre operators to comply with the new US rules on advanced chips as Washington offered support for a Malaysian sovereign AI cloud. UK financial regulators published effective practices for AI-related cyber risk, and Anthropic&#x27;s shares began trading on Nasdaq.</em></p><p>Today's brief covers stories from 18 to 19 November.</p>
 
 <figure class="dgm">
 <div class="dgm-stack">
@@ -2770,56 +2834,4 @@
 <li>Ask SaaS vendors how agent-based pricing will work before your next renewal.</li>
 </ul>
 <p>Building in Korea, the US or anywhere else? See <a href="https://asksumanta.com/regions/">where I work</a>, the <a href="https://asksumanta.com/fractional-cto-united-states/">US page</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
-</section><p><a href="https://asksumanta.com/insights/tech-news-2026-10-30/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>India&#x27;s proposed frontier AI law: what it could mean for companies building on AI in India</title><link>https://asksumanta.com/insights/india-frontier-ai-law-what-it-means/</link><guid isPermaLink="true">https://asksumanta.com/insights/india-frontier-ai-law-what-it-means/</guid><pubDate>Fri, 30 Oct 2026 00:30:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>ai</category><category>governance</category><description>India is weighing pre-release safety checks for the most powerful AI models. A CTO&#x27;s take on who it may affect, what to prepare now and how it fits with the DPDP Rules.</description><content:encoded><![CDATA[<p><em>Reports this week say India is considering a law with a separate safety framework for the most powerful AI models, possibly including testing before release. Nothing is final. Most companies will be deployers rather than frontier developers, but the direction of travel is worth preparing for now.</em></p><section class="block">
-<h2>What is reported</h2>
-<p>Reports on 28 October 2026 say India is considering a new AI law that could create a separate safety framework for the most powerful AI models, requiring developers to show adequate safeguards before public release<sup class="cite"><a href="#ref-2">2</a></sup>. Options reportedly under discussion include pre-release evaluation, testing in controlled environments and sandbox requirements, with a consultation paper expected soon<sup class="cite"><a href="#ref-1">1</a></sup>. Earlier in October, the IT Minister was reported as saying a regulation blueprint would follow within a month<sup class="cite"><a href="#ref-4">4</a></sup>, and coverage has also described proposals for safeguards on high-risk AI systems<sup class="cite"><a href="#ref-3">3</a></sup>. None of this is final.</p>
-</section>
-
-<section class="block">
-<h2>Who it could affect</h2>
-<p>Frontier rules target the companies that build the most capable models. Most organisations in India build applications on top of models: they choose a model, add tools and data, and ship an agent or feature. That layering matters, because obligations tend to follow the layer you control.</p>
-<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/india-frontier-ai-law-what-it-means/agent-layers.webp" alt="Diagram of an AI agent framework above several AI agent applications, each built from a model and tools" width="564" height="231" loading="lazy"></div><figcaption>Applications combine a model with tools; frontier rules aim at the model layer, while deployer duties attach to the application. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2025/ai-agent-observability/" target="_blank" rel="noopener">OpenTelemetry blog, Guangya Liu and Sujay Solomon</a> · CC BY 4.0</span></figcaption></figure>
-<figure class="dgm">
-<div class="dgm-stack">
-<div class="dgm-tier"><small>Frontier developers</small><div class="dgm-nodes"><span class="hl">Pre-release testing<em>reported focus</em></span><span>Sandbox requirements<em>under discussion</em></span></div></div>
-<div class="dgm-tier"><small>Application builders</small><div class="dgm-nodes"><span>Model choice and evidence<em>what you rely on</em></span><span class="hl">Deepfake and fraud controls<em>expected topics</em></span></div></div>
-<div class="dgm-tier"><small>All data fiduciaries</small><div class="dgm-nodes"><span class="hl">DPDP Rules<em>firm timelines already</em></span><span>Consent and retention<em>for AI uses too</em></span></div></div>
-</div>
-<figcaption>The proposed law is uncertain; DPDP obligations are not. Plan for both layers.</figcaption>
-</figure>
-</section>
-
-<section class="block">
-<h2>What to prepare now</h2>
-<p>Whatever the final shape, the evidence regulators ask for tends to be the same: what AI you run, how you tested it, how you watch it in production, and how people can challenge it. Building that evidence is useful whether or not the law passes.</p>
-<figure class="dgm">
-<ol class="dgm-flow g3">
-<li><b>Inventory</b><span>Every AI system, the model behind it and its owner</span></li>
-<li><b>Classify</b><span>Which uses could be high-risk: credit, hiring, health, identity</span></li>
-<li class="hl"><b>Test</b><span>Evaluation sets and red-teaming before each release</span></li>
-<li class="hl"><b>Monitor</b><span>Production tracing, incidents and drift</span></li>
-<li><b>Label</b><span>Disclose AI-generated content and guard against impersonation</span></li>
-<li><b>Engage</b><span>Read the consultation and respond with your evidence</span></li>
-</ol>
-<figcaption>Evidence you build for safety is the evidence any regulator will ask for.</figcaption>
-</figure>
-<table class="tbl">
-<thead><tr><th>Area</th><th>Status</th><th>Action now</th></tr></thead>
-<tbody>
-<tr><td>Frontier model safety framework</td><td>Under consideration<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup></td><td>Track the consultation; check your model providers' testing evidence</td></tr>
-<tr><td>Deepfakes, fraud and impersonation</td><td>Expected in consultation<sup class="cite"><a href="#ref-1">1</a></sup></td><td>Content labelling, identity checks and abuse monitoring</td></tr>
-<tr><td>DPDP Rules</td><td>Notified November 2025, phasing in over 18 months<sup class="cite"><a href="#ref-5">5</a></sup></td><td>Consent, retention and breach handling, including for AI uses</td></tr>
-</tbody>
-</table>
-<div class="callout"><p>Do not wait for the final text to build an AI inventory and evaluation evidence. Those are the first things any version of the law will ask for.</p></div>
-</section>
-
-<section class="block">
-<h2>CTO take</h2>
-<p>For most companies in India this is a watch-and-prepare item, not a fire drill. The firm deadline is the DPDP Rules, so put effort there first, and make sure AI uses are inside that programme rather than beside it. In parallel, build the inventory, evaluation and monitoring that any AI regime will expect, and ask your model providers what testing evidence they can share. Global teams will recognise the pattern from the <a href="https://asksumanta.com/insights/eu-ai-act-digital-omnibus-roadmap/">EU AI Act</a> and <a href="https://asksumanta.com/case-studies/korea-ai-basic-act-hiring-platform/">Korea's AI Basic Act</a>. Related: <a href="https://asksumanta.com/case-studies/india-dpdp-consent-platform-lending/">a DPDP-ready consent platform</a>, <a href="https://asksumanta.com/insights/llm-evaluation-sets-that-predict-production/">evaluation sets that predict production</a> and <a href="https://asksumanta.com/insights/tech-news-2026-10-29/">tech news for 29 October</a>.</p>
-</section>
-
-<section class="block">
-<h2>How I can help</h2>
-<p>I am based in India, the United States and the UAE, and help teams build AI governance that satisfies regulators without slowing delivery. See <a href="https://asksumanta.com/fractional-cto-india/">fractional CTO in India</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
-</section><p><a href="https://asksumanta.com/insights/india-frontier-ai-law-what-it-means/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
+</section><p><a href="https://asksumanta.com/insights/tech-news-2026-10-30/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
