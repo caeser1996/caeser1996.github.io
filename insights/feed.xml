@@ -1,6 +1,54 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights</title><link>https://asksumanta.com/</link><description>Articles on AI, data, cloud and technology leadership</description><language>en-gb</language><lastBuildDate>Fri, 20 Nov 2026 21:20:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/insights/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights</title><link>https://asksumanta.com/</link></image><item><title>Cluster Autoscaler or Karpenter: how to choose a Kubernetes node autoscaler</title><link>https://asksumanta.com/insights/cluster-autoscaler-vs-karpenter/</link><guid isPermaLink="true">https://asksumanta.com/insights/cluster-autoscaler-vs-karpenter/</guid><pubDate>Fri, 20 Nov 2026 21:20:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>kubernetes</category><category>platform</category><category>finops</category><description>Cluster Autoscaler scales node groups; Karpenter provisions nodes to fit pods. A comparison of how each works, what managed versions change and how to choose.</description><content:encoded><![CDATA[<p><em>Node autoscaling decides how much you pay for Kubernetes and how fast new work starts. Kubernetes now sponsors two autoscalers with different models: Cluster Autoscaler, which grows and shrinks node groups you define, and Karpenter, which picks and launches nodes to fit the pods waiting. Cloud providers increasingly run Karpenter for you. Here is how they differ, and how I decide.</em></p><section class="block">
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights</title><link>https://asksumanta.com/</link><description>Articles on AI, data, cloud and technology leadership</description><language>en-gb</language><lastBuildDate>Sat, 21 Nov 2026 08:55:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/insights/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights</title><link>https://asksumanta.com/</link></image><item><title>Tech news, 21 November 2026: the European Commission&#x27;s AI-assisted attack, how the vCenter campaign began, a TfL breach and Anthropic&#x27;s Texas data centre</title><link>https://asksumanta.com/insights/tech-news-2026-11-21/</link><guid isPermaLink="true">https://asksumanta.com/insights/tech-news-2026-11-21/</guid><pubDate>Sat, 21 Nov 2026 08:55:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>security</category><category>ai</category><category>cloud</category><description>A CTO&#x27;s take: the European Commission confirms an AI-assisted cyberattack, vCenter attacks are traced to a BeyondTrust zero-day, TfL is breached, Anthropic&#x27;s Texas lease.</description><content:encoded><![CDATA[<p><em>The European Commission confirmed that an AI-assisted cyberattack disrupted staff services for days. Google&#x27;s researchers traced the vCenter zero-day campaign to a China-linked group that first broke in through a BeyondTrust remote support flaw. Transport for London disclosed a breach of Oyster photocard accounts, and a filing named Anthropic as the tenant of a large Texas data centre lease.</em></p><p>Today's brief covers stories from 19 to 20 November.</p>
+
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Edge</b><span>A remote support appliance is compromised through a zero-day</span></li>
+<li><b>Foothold</b><span>Attackers move to an internal appliance and gain root</span></li>
+<li class="hl"><b>Control plane</b><span>The vCenter authentication bypass gives access to virtualisation</span></li>
+<li><b>Persist</b><span>Malware hijacks tokens and creates administrator accounts</span></li>
+<li class="hl"><b>Exfiltrate</b><span>Databases and virtual machine data are taken</span></li>
+<li><b>Fix</b><span>Patches arrive more than two months after exploitation began</span></li>
+</ol>
+<figcaption>The vCenter campaign as described by Google's researchers: edge tool first, control plane second.</figcaption>
+</figure>
+
+<section class="block">
+<h2>1. The European Commission confirms an AI-assisted cyberattack</h2>
+<p>The European Commission confirmed that an AI-assisted cyberattack, detected on 22 October, disrupted staff services including its HR platform Sysper, the MyPMO medical reimbursement system and translation services, with some outages lasting more than ten days<sup class="cite"><a href="#ref-1">1</a></sup>. The Commission says it has found no evidence of a data breach so far and that the investigation continues; press reports link the campaign to a publicly available AI penetration testing framework, which the Commission has not confirmed<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<p><strong>CTO take:</strong> the practical change from AI-assisted attacks is speed and persistence, not new techniques. Attackers can try more paths, faster, against everything you expose. That makes the basics more urgent: phishing-resistant sign-in, quick patching of internet-facing systems, segmentation so one compromised service does not reach the rest, and detection tuned to spot rapid, automated reconnaissance. European public bodies and their suppliers should expect questions on exactly these controls. See the <a href="https://asksumanta.com/case-studies/uk-payments-firm-ai-cyber-risk-controls/">AI cyber risk controls case study</a> and my <a href="https://asksumanta.com/fractional-cto-europe/">Europe page</a>.</p>
+</section>
+
+<section class="block">
+<h2>2. The vCenter zero-day campaign began with a BeyondTrust flaw</h2>
+<p>Google's Mandiant and Threat Intelligence Group attribute exploitation of the vCenter authentication bypass to Armory Castle, a suspected China-nexus espionage group, which first compromised BeyondTrust Remote Support instances through a separate zero-day in late August, then moved to an internal appliance and on to vCenter from early September<sup class="cite"><a href="#ref-3">3</a></sup>. Google says a small number of organisations are confirmed compromised and others are likely affected<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+<p><strong>CTO take:</strong> this is the pattern from this month's <a href="https://asksumanta.com/insights/vendor-admin-access-rmm-breaches/">vendor admin access analysis</a> playing out: a remote access tool at the edge, then the virtualisation control plane. If you run BeyondTrust Remote Support or vCenter, patch both, then hunt rather than assume: look for new administrator and single sign-on accounts, unusual vCenter logins and unexpected outbound traffic from management appliances since late August. Keep management interfaces on networks that remote support tools cannot reach directly.</p>
+</section>
+
+<section class="block">
+<h2>3. Transport for London discloses an Oyster photocard breach</h2>
+<p>Transport for London said about 265,000 Oyster photocard customers were affected after it detected suspicious activity on 16 November and took the photocard system offline; reported exposed data includes names, contact details, addresses and security questions and answers<sup class="cite"><a href="#ref-5">5</a></sup>. TfL says passwords and payment card details were not compromised, and customers will be asked to reset passwords and security answers when the portal returns<sup class="cite"><a href="#ref-6">6</a></sup>.</p>
+<p><strong>CTO take:</strong> security questions are the weak point here. Once their answers leak, they are useful to attackers on every other service that uses the same questions, and customers cannot change their mother's maiden name. If your product still uses knowledge-based questions for recovery, replace them with stronger recovery factors. UK organisations should also note how quickly the regulator was informed. See the <a href="https://asksumanta.com/case-studies/uk-saas-sso-staff-access-hardening/">access hardening case study</a> and my <a href="https://asksumanta.com/fractional-cto-united-kingdom/">UK page</a>.</p>
+</section>
+
+<section class="block">
+<h2>4. A filing names Anthropic as tenant of a $28 billion Texas lease</h2>
+<p>Riot Platforms had disclosed a 15-year lease of its Corsicana, Texas campus to a frontier AI lab, with total contract value of about $28 billion<sup class="cite"><a href="#ref-7">7</a></sup>. Its latest quarterly filing names Anthropic as the tenant<sup class="cite"><a href="#ref-8">8</a></sup>.</p>
+<p><strong>CTO take:</strong> long leases like this are how AI providers secure future capacity, and they are a useful signal for customers. A provider that has locked in power and space is better placed to honour capacity commitments, but also carries fixed costs that shape its pricing. When negotiating, ask providers about capacity guarantees and regions, not just per-token prices. See <a href="https://asksumanta.com/insights/microsoft-oracle-gpu-capacity-contracts/">AI capacity contracts</a> and the <a href="https://asksumanta.com/case-studies/us-saas-multi-region-ai-capacity/">multi-region AI capacity case study</a>.</p>
+</section>
+
+<section class="block">
+<h2>What I'd do this week</h2>
+<ul>
+<li>Patch BeyondTrust Remote Support and vCenter, then hunt for new admin and SSO accounts since late August.</li>
+<li>Check that management interfaces are unreachable from remote support and user networks.</li>
+<li>Replace security questions in account recovery with stronger factors.</li>
+<li>Review detection for fast, automated reconnaissance against internet-facing services.</li>
+<li>Ask AI providers about capacity guarantees in your regions at the next renewal.</li>
+</ul>
+<p>I am a <a href="https://asksumanta.com/fractional-cto/">fractional CTO</a> and <a href="https://asksumanta.com/ai-architect/">AI architect</a> based in India, the United States and the UAE, working globally. If any of these lands on your desk this week, <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section><p><a href="https://asksumanta.com/insights/tech-news-2026-11-21/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Cluster Autoscaler or Karpenter: how to choose a Kubernetes node autoscaler</title><link>https://asksumanta.com/insights/cluster-autoscaler-vs-karpenter/</link><guid isPermaLink="true">https://asksumanta.com/insights/cluster-autoscaler-vs-karpenter/</guid><pubDate>Fri, 20 Nov 2026 21:20:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>kubernetes</category><category>platform</category><category>finops</category><description>Cluster Autoscaler scales node groups; Karpenter provisions nodes to fit pods. A comparison of how each works, what managed versions change and how to choose.</description><content:encoded><![CDATA[<p><em>Node autoscaling decides how much you pay for Kubernetes and how fast new work starts. Kubernetes now sponsors two autoscalers with different models: Cluster Autoscaler, which grows and shrinks node groups you define, and Karpenter, which picks and launches nodes to fit the pods waiting. Cloud providers increasingly run Karpenter for you. Here is how they differ, and how I decide.</em></p><section class="block">
 <h2>Two models of node autoscaling</h2>
 <p>The Kubernetes documentation describes node autoscaling as provisioning nodes when pods cannot be scheduled and consolidating them when they are underused, and lists two autoscalers sponsored by SIG Autoscaling: Cluster Autoscaler and Karpenter<sup class="cite"><a href="#ref-1">1</a></sup>. They solve the same problem from opposite ends.</p>
 <p><strong>Cluster Autoscaler</strong> works with node groups you define in advance: a group of one machine type, another for GPUs, perhaps a Spot group. When pods are pending, it grows the group whose nodes would fit them; when nodes are underused, it shrinks groups. Your choices about machine types are made up front, in the groups.</p>
@@ -2777,61 +2825,4 @@
 <section class="block">
 <h2>How I can help</h2>
 <p>I help teams design agent platforms with proper identity, tracing and cost controls, and review SaaS and AI contracts before renewal. I am based in India, the United States and the UAE, working globally. See <a href="https://asksumanta.com/ai-architect/">AI architecture</a> or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
-</section><p><a href="https://asksumanta.com/insights/agents-replace-seats-enterprise-saas/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Tech news, 30 October 2026: the AI capex bill arrives, Samsung&#x27;s HBM record, FuriosaAI, ServiceNow and an ESX zero-day</title><link>https://asksumanta.com/insights/tech-news-2026-10-30/</link><guid isPermaLink="true">https://asksumanta.com/insights/tech-news-2026-10-30/</guid><pubDate>Fri, 30 Oct 2026 09:45:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>ai</category><category>platform</category><category>security</category><description>A CTO&#x27;s take: Alphabet and Amazon burn cash on AI capex, Samsung&#x27;s HBM record, FuriosaAI&#x27;s $620M round, ServiceNow&#x27;s slide and an ESX zero-day chain.</description><content:encoded><![CDATA[<p><em>Big Tech&#x27;s AI spending showed up in the cash flow statements this week: Google Cloud doubled and AWS beat estimates, but both companies spent more than they brought in. Memory makers are the clear winners, Korea is backing a GPU alternative, investors are questioning SaaS, and attackers are chaining old and new flaws to get root.</em></p><p>Today's brief covers stories published on 28 and 29 October that yesterday's <a href="https://asksumanta.com/insights/tech-news-2026-10-29/">morning brief</a> and <a href="https://asksumanta.com/insights/tech-news-2026-10-29-2/">update</a> did not include.</p>
-
-<figure class="dgm">
-<div class="dgm-stack">
-<div class="dgm-tier"><small>Applications</small><div class="dgm-nodes"><span>ServiceNow<em>AI targets up, shares down</em></span></div></div>
-<div class="dgm-tier"><small>Cloud</small><div class="dgm-nodes"><span class="hl">Google Cloud<em>revenue doubled</em></span><span class="hl">AWS<em>beat, cash flow negative</em></span></div></div>
-<div class="dgm-tier"><small>Silicon</small><div class="dgm-nodes"><span class="hl">Samsung HBM<em>record profit</em></span><span>FuriosaAI RNGD<em>inference chips</em></span></div></div>
-<div class="dgm-tier"><small>Infrastructure security</small><div class="dgm-nodes"><span class="hl">ESX zero-day<em>hypervisor logging</em></span><span>PHP2Shell + Fragnesia<em>chained to root</em></span></div></div>
-</div>
-<figcaption>Where today's stories land. Money is flowing down the stack to memory and chips, while attackers work at the hypervisor and kernel layer.</figcaption>
-</figure>
-
-<section class="block">
-<h2>1. Google Cloud doubles, but Alphabet's cash flow turns negative</h2>
-<p>Alphabet reported Google Cloud revenue of about $31 billion for the quarter, roughly double a year earlier, while free cash flow was negative as capital spending on AI infrastructure rose<sup class="cite"><a href="#ref-1">1</a></sup>. CNBC reported the shares were heading for a record post-earnings loss on 29 October<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
-<p><strong>CTO take:</strong> demand for cloud AI is real, and so is the bill for building it. Providers carrying that much capex will push for long commitments and premium AI services. Before signing multi-year deals, know which workloads truly need a specific provider's models or TPUs and which could move. Our note on <a href="https://asksumanta.com/insights/ai-capacity-crunch-cloud-planning/">planning around the AI capacity crunch</a> covers how to keep that leverage.</p>
-</section>
-
-<section class="block">
-<h2>2. AWS beats estimates as Amazon's free cash flow hits minus $42.4 billion</h2>
-<p>Amazon's third-quarter results showed AWS revenue ahead of estimates, but trailing free cash flow of negative $42.4 billion; the company held its 2026 capital spending forecast unchanged and shares fell in extended trading<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
-<p><strong>CTO take:</strong> two of the three largest clouds are now spending more cash than they make to build AI capacity. That does not threaten service, but it does shape commercial behaviour. Expect committed-spend discounts to be tied to AI products, and make sure your <a href="https://asksumanta.com/insights/focus-finops-ai-cost-allocation/">AI cost allocation</a> is good enough to tell which teams are driving the spend before renewal season.</p>
-</section>
-
-<section class="block">
-<h2>3. Samsung posts a record quarter on AI memory</h2>
-<p>Samsung Electronics confirmed record third-quarter operating profit of about 107.4 trillion won on 29 October, driven by its chip business and high-bandwidth memory for AI servers<sup class="cite"><a href="#ref-4">4</a></sup>. The Next Web reports the memory unit set records for both sales and profit on server demand and higher prices<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
-<p><strong>CTO take:</strong> memory, not only GPUs, is now a cost driver for AI hardware, and server memory prices have risen sharply this year. If you are buying on-premises inference kit, as in <a href="https://asksumanta.com/insights/private-llm-on-prem/">private LLMs on-premises</a>, get quotes early and size models to the memory you can actually buy. Techniques such as <a href="https://asksumanta.com/insights/speculative-decoding-private-llms/">speculative decoding</a> and quantisation get more valuable when memory is the expensive part.</p>
-</section>
-
-<section class="block">
-<h2>4. Korea backs FuriosaAI's inference chips with a $620 million round</h2>
-<p>FuriosaAI closed a $620 million Series D to scale its RNGD inference chip, which it says is in mass production, and to fund a third-generation chip; Korea's National Growth Fund is the largest investor<sup class="cite"><a href="#ref-6">6</a></sup>. Jon Peddie Research notes the company's performance claims come without published test conditions<sup class="cite"><a href="#ref-7">7</a></sup>.</p>
-<p><strong>CTO take:</strong> alternatives to Nvidia for inference are maturing, and governments are funding them for sovereignty reasons. Keep your serving stack portable, for example behind <a href="https://asksumanta.com/insights/llm-inference-serving-vllm/">vLLM</a> and an <a href="https://asksumanta.com/insights/kubernetes-inference-gateway/">inference gateway</a>, so you can benchmark a new accelerator on your own workloads rather than trusting vendor numbers.</p>
-</section>
-
-<section class="block">
-<h2>5. ServiceNow raises its AI target and suffers a record share fall</h2>
-<p>ServiceNow reported third-quarter subscription revenue up 21% and raised its 2026 target for AI annual contract value to $1.7 billion<sup class="cite"><a href="#ref-8">8</a></sup>. The shares still fell about 19% in trading on 29 October, which Yahoo Finance links to investor fears that AI agents will erode traditional software seats<sup class="cite"><a href="#ref-9">9</a></sup>.</p>
-<p><strong>CTO take:</strong> the market is betting that agents will change how enterprise software is priced and bought. For buyers, that means more leverage on per-seat renewals and more vendors bundling agents. Ask vendors how pricing works when an agent does the work of a seat, and test their agents against your own <a href="https://asksumanta.com/insights/evaluating-ai-agents-reliability/">reliability evaluations</a> before paying for them.</p>
-</section>
-
-<section class="block">
-<h2>6. Attackers chain an ESX zero-day and PHP2Shell to get root</h2>
-<p>Help Net Security reports that a China-nexus group used a VMware ESX logging flaw, fixed by Broadcom in July 2026, as a zero-day to hide its activity, and separately that attackers chained the PHP2Shell flaws with a Linux kernel bug called Fragnesia to gain root on servers and firewalls<sup class="cite"><a href="#ref-10">10</a></sup>.</p>
-<p><strong>CTO take:</strong> PHP2Shell is no longer just a web-tier problem once it is chained to a kernel flaw. If you have not finished patching after <a href="https://asksumanta.com/insights/tech-news-2026-10-29/">Tuesday's warning</a>, do it now, patch kernels too, and check that hypervisor logs are shipped somewhere an attacker on the host cannot edit. Our <a href="https://asksumanta.com/case-studies/legacy-php-estate-security-modernisation/">legacy PHP estate case study</a> shows how to triage an older estate quickly.</p>
-</section>
-
-<section class="block">
-<h2>What I'd do this week</h2>
-<ul>
-<li>Confirm ESX hosts, PHP runtimes and Linux kernels are on patched versions, and ship hypervisor logs off-host.</li>
-<li>List cloud commitments due for renewal in the next year and identify which workloads could move.</li>
-<li>Get updated quotes for any planned GPU or memory purchases; prices are moving.</li>
-<li>Ask SaaS vendors how agent-based pricing will work before your next renewal.</li>
-</ul>
-<p>Building in Korea, the US or anywhere else? See <a href="https://asksumanta.com/regions/">where I work</a>, the <a href="https://asksumanta.com/fractional-cto-united-states/">US page</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
-</section><p><a href="https://asksumanta.com/insights/tech-news-2026-10-30/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
+</section><p><a href="https://asksumanta.com/insights/agents-replace-seats-enterprise-saas/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>

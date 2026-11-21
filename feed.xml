@@ -1,6 +1,54 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link><description>Fractional CTO and AI architect: insights, case studies and daily tech news.</description><language>en-gb</language><lastBuildDate>Fri, 20 Nov 2026 21:20:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link></image><item><title>Cluster Autoscaler or Karpenter: how to choose a Kubernetes node autoscaler</title><link>https://asksumanta.com/insights/cluster-autoscaler-vs-karpenter/</link><guid isPermaLink="true">https://asksumanta.com/insights/cluster-autoscaler-vs-karpenter/</guid><pubDate>Fri, 20 Nov 2026 21:20:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>kubernetes</category><category>platform</category><category>finops</category><description>Cluster Autoscaler scales node groups; Karpenter provisions nodes to fit pods. A comparison of how each works, what managed versions change and how to choose.</description><content:encoded><![CDATA[<p><em>Node autoscaling decides how much you pay for Kubernetes and how fast new work starts. Kubernetes now sponsors two autoscalers with different models: Cluster Autoscaler, which grows and shrinks node groups you define, and Karpenter, which picks and launches nodes to fit the pods waiting. Cloud providers increasingly run Karpenter for you. Here is how they differ, and how I decide.</em></p><section class="block">
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link><description>Fractional CTO and AI architect: insights, case studies and daily tech news.</description><language>en-gb</language><lastBuildDate>Sat, 21 Nov 2026 08:55:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link></image><item><title>Tech news, 21 November 2026: the European Commission&#x27;s AI-assisted attack, how the vCenter campaign began, a TfL breach and Anthropic&#x27;s Texas data centre</title><link>https://asksumanta.com/insights/tech-news-2026-11-21/</link><guid isPermaLink="true">https://asksumanta.com/insights/tech-news-2026-11-21/</guid><pubDate>Sat, 21 Nov 2026 08:55:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>security</category><category>ai</category><category>cloud</category><description>A CTO&#x27;s take: the European Commission confirms an AI-assisted cyberattack, vCenter attacks are traced to a BeyondTrust zero-day, TfL is breached, Anthropic&#x27;s Texas lease.</description><content:encoded><![CDATA[<p><em>The European Commission confirmed that an AI-assisted cyberattack disrupted staff services for days. Google&#x27;s researchers traced the vCenter zero-day campaign to a China-linked group that first broke in through a BeyondTrust remote support flaw. Transport for London disclosed a breach of Oyster photocard accounts, and a filing named Anthropic as the tenant of a large Texas data centre lease.</em></p><p>Today's brief covers stories from 19 to 20 November.</p>
+
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Edge</b><span>A remote support appliance is compromised through a zero-day</span></li>
+<li><b>Foothold</b><span>Attackers move to an internal appliance and gain root</span></li>
+<li class="hl"><b>Control plane</b><span>The vCenter authentication bypass gives access to virtualisation</span></li>
+<li><b>Persist</b><span>Malware hijacks tokens and creates administrator accounts</span></li>
+<li class="hl"><b>Exfiltrate</b><span>Databases and virtual machine data are taken</span></li>
+<li><b>Fix</b><span>Patches arrive more than two months after exploitation began</span></li>
+</ol>
+<figcaption>The vCenter campaign as described by Google's researchers: edge tool first, control plane second.</figcaption>
+</figure>
+
+<section class="block">
+<h2>1. The European Commission confirms an AI-assisted cyberattack</h2>
+<p>The European Commission confirmed that an AI-assisted cyberattack, detected on 22 October, disrupted staff services including its HR platform Sysper, the MyPMO medical reimbursement system and translation services, with some outages lasting more than ten days<sup class="cite"><a href="#ref-1">1</a></sup>. The Commission says it has found no evidence of a data breach so far and that the investigation continues; press reports link the campaign to a publicly available AI penetration testing framework, which the Commission has not confirmed<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<p><strong>CTO take:</strong> the practical change from AI-assisted attacks is speed and persistence, not new techniques. Attackers can try more paths, faster, against everything you expose. That makes the basics more urgent: phishing-resistant sign-in, quick patching of internet-facing systems, segmentation so one compromised service does not reach the rest, and detection tuned to spot rapid, automated reconnaissance. European public bodies and their suppliers should expect questions on exactly these controls. See the <a href="https://asksumanta.com/case-studies/uk-payments-firm-ai-cyber-risk-controls/">AI cyber risk controls case study</a> and my <a href="https://asksumanta.com/fractional-cto-europe/">Europe page</a>.</p>
+</section>
+
+<section class="block">
+<h2>2. The vCenter zero-day campaign began with a BeyondTrust flaw</h2>
+<p>Google's Mandiant and Threat Intelligence Group attribute exploitation of the vCenter authentication bypass to Armory Castle, a suspected China-nexus espionage group, which first compromised BeyondTrust Remote Support instances through a separate zero-day in late August, then moved to an internal appliance and on to vCenter from early September<sup class="cite"><a href="#ref-3">3</a></sup>. Google says a small number of organisations are confirmed compromised and others are likely affected<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+<p><strong>CTO take:</strong> this is the pattern from this month's <a href="https://asksumanta.com/insights/vendor-admin-access-rmm-breaches/">vendor admin access analysis</a> playing out: a remote access tool at the edge, then the virtualisation control plane. If you run BeyondTrust Remote Support or vCenter, patch both, then hunt rather than assume: look for new administrator and single sign-on accounts, unusual vCenter logins and unexpected outbound traffic from management appliances since late August. Keep management interfaces on networks that remote support tools cannot reach directly.</p>
+</section>
+
+<section class="block">
+<h2>3. Transport for London discloses an Oyster photocard breach</h2>
+<p>Transport for London said about 265,000 Oyster photocard customers were affected after it detected suspicious activity on 16 November and took the photocard system offline; reported exposed data includes names, contact details, addresses and security questions and answers<sup class="cite"><a href="#ref-5">5</a></sup>. TfL says passwords and payment card details were not compromised, and customers will be asked to reset passwords and security answers when the portal returns<sup class="cite"><a href="#ref-6">6</a></sup>.</p>
+<p><strong>CTO take:</strong> security questions are the weak point here. Once their answers leak, they are useful to attackers on every other service that uses the same questions, and customers cannot change their mother's maiden name. If your product still uses knowledge-based questions for recovery, replace them with stronger recovery factors. UK organisations should also note how quickly the regulator was informed. See the <a href="https://asksumanta.com/case-studies/uk-saas-sso-staff-access-hardening/">access hardening case study</a> and my <a href="https://asksumanta.com/fractional-cto-united-kingdom/">UK page</a>.</p>
+</section>
+
+<section class="block">
+<h2>4. A filing names Anthropic as tenant of a $28 billion Texas lease</h2>
+<p>Riot Platforms had disclosed a 15-year lease of its Corsicana, Texas campus to a frontier AI lab, with total contract value of about $28 billion<sup class="cite"><a href="#ref-7">7</a></sup>. Its latest quarterly filing names Anthropic as the tenant<sup class="cite"><a href="#ref-8">8</a></sup>.</p>
+<p><strong>CTO take:</strong> long leases like this are how AI providers secure future capacity, and they are a useful signal for customers. A provider that has locked in power and space is better placed to honour capacity commitments, but also carries fixed costs that shape its pricing. When negotiating, ask providers about capacity guarantees and regions, not just per-token prices. See <a href="https://asksumanta.com/insights/microsoft-oracle-gpu-capacity-contracts/">AI capacity contracts</a> and the <a href="https://asksumanta.com/case-studies/us-saas-multi-region-ai-capacity/">multi-region AI capacity case study</a>.</p>
+</section>
+
+<section class="block">
+<h2>What I'd do this week</h2>
+<ul>
+<li>Patch BeyondTrust Remote Support and vCenter, then hunt for new admin and SSO accounts since late August.</li>
+<li>Check that management interfaces are unreachable from remote support and user networks.</li>
+<li>Replace security questions in account recovery with stronger factors.</li>
+<li>Review detection for fast, automated reconnaissance against internet-facing services.</li>
+<li>Ask AI providers about capacity guarantees in your regions at the next renewal.</li>
+</ul>
+<p>I am a <a href="https://asksumanta.com/fractional-cto/">fractional CTO</a> and <a href="https://asksumanta.com/ai-architect/">AI architect</a> based in India, the United States and the UAE, working globally. If any of these lands on your desk this week, <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section><p><a href="https://asksumanta.com/insights/tech-news-2026-11-21/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Cluster Autoscaler or Karpenter: how to choose a Kubernetes node autoscaler</title><link>https://asksumanta.com/insights/cluster-autoscaler-vs-karpenter/</link><guid isPermaLink="true">https://asksumanta.com/insights/cluster-autoscaler-vs-karpenter/</guid><pubDate>Fri, 20 Nov 2026 21:20:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>kubernetes</category><category>platform</category><category>finops</category><description>Cluster Autoscaler scales node groups; Karpenter provisions nodes to fit pods. A comparison of how each works, what managed versions change and how to choose.</description><content:encoded><![CDATA[<p><em>Node autoscaling decides how much you pay for Kubernetes and how fast new work starts. Kubernetes now sponsors two autoscalers with different models: Cluster Autoscaler, which grows and shrinks node groups you define, and Karpenter, which picks and launches nodes to fit the pods waiting. Cloud providers increasingly run Karpenter for you. Here is how they differ, and how I decide.</em></p><section class="block">
 <h2>Two models of node autoscaling</h2>
 <p>The Kubernetes documentation describes node autoscaling as provisioning nodes when pods cannot be scheduled and consolidating them when they are underused, and lists two autoscalers sponsored by SIG Autoscaling: Cluster Autoscaler and Karpenter<sup class="cite"><a href="#ref-1">1</a></sup>. They solve the same problem from opposite ends.</p>
 <p><strong>Cluster Autoscaler</strong> works with node groups you define in advance: a group of one machine type, another for GPUs, perhaps a Spot group. When pods are pending, it grows the group whose nodes would fit them; when nodes are underused, it shrinks groups. Your choices about machine types are made up front, in the groups.</p>
@@ -3145,68 +3193,4 @@
 <li>List the small vendors in your AI coding toolchain and what you would do if one disappeared.</li>
 </ul>
 <p>See <a href="https://asksumanta.com/regions/">where I work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
-</section><p><a href="https://asksumanta.com/insights/tech-news-2026-11-05/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>A fractional CTO&#x27;s first 90 days: listen, map, measure, then change the few things that matter</title><link>https://asksumanta.com/insights/fractional-cto-first-90-days-playbook/</link><guid isPermaLink="true">https://asksumanta.com/insights/fractional-cto-first-90-days-playbook/</guid><pubDate>Wed, 04 Nov 2026 21:15:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>leadership</category><category>fractional-cto</category><category>strategy</category><description>What a fractional CTO should do in the first 90 days: listen, map the system, measure delivery, fix the riskiest gaps, and leave decisions and a plan the team owns.</description><content:encoded><![CDATA[<p><em>A fractional CTO has fewer hours than a full-time one and the same expectations. The first 90 days decide whether the engagement creates lasting change or a slide deck. This is the playbook I use: what to look at, what to measure, what to change first, and what to leave behind so the team can carry on without me.</em></p><section class="block">
-<h2>Why the first 90 days matter more for a fractional CTO</h2>
-<p>A full-time CTO can take six months to find their feet. A fractional CTO typically works a few days a month, often alongside a founder, a head of engineering or a small team. That changes the job. There is no room for long discovery, and no point in decisions that only live in the CTO's head, because the CTO is not there most of the week. The first 90 days have to produce three things: an honest picture of where the technology stands, a small number of changes that reduce real risk, and a way of working the team can run without you. If you are still deciding whether you need one, start with <a href="https://asksumanta.com/insights/when-do-you-need-a-fractional-cto/">when do you need a fractional CTO</a>.</p>
-<figure class="dgm">
-<div class="dgm-phases">
-<div><small>Days 1 to 30</small><b>Listen and map</b><ul><li>Interviews</li><li>System and risk map</li><li>Baseline measures</li></ul></div>
-<div><small>Days 31 to 60</small><b>Fix and decide</b><ul><li>Close the riskiest gaps</li><li>Write key decisions down</li><li>Agree team shape</li></ul></div>
-<div><small>Days 61 to 90</small><b>Plan and hand over</b><ul><li>Short roadmap</li><li>Operating rhythm</li><li>What the team owns</li></ul></div>
-</div>
-<figcaption>Three phases, each ending in something written that the team can use without you.</figcaption>
-</figure>
-</section>
-
-<section class="block">
-<h2>Days 1 to 30: listen and map</h2>
-<p><strong>Listen first.</strong> Talk to the founders, every engineer, product, support and a few customers if possible. Ask the same questions each time: what slows you down, what breaks, what worries you, and what you would change first. Patterns appear quickly, and the team learns you are there to help rather than to judge.</p>
-<p><strong>Map the system.</strong> Draw what actually runs: services, data stores, third parties, how code reaches production and who can change what. Mark the risks: single points of failure, unpatched edges, secrets in the wrong places, data with no owner. A one-page map beats a perfect one.</p>
-<p><strong>Get basic visibility.</strong> If there is little monitoring, start small. The OpenTelemetry community's account of how Skyscanner runs its collectors makes the same point: start with a simple setup and evolve it gradually<sup class="cite"><a href="#ref-5">5</a></sup>. A gateway collector for application telemetry and an agent for infrastructure metrics is often enough to begin with; see <a href="https://asksumanta.com/insights/opentelemetry-collector-deployment-patterns/">OpenTelemetry collector patterns</a>.</p>
-<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/fractional-cto-first-90-days-playbook/start-simple-observability.webp" alt="Diagram of a gateway collector sending application metrics, traces and span metrics, and an agent collector sending infrastructure metrics, both to an observability backend" width="1200" height="485" loading="lazy"></div><figcaption>Start simple: two collectors and one backend give enough visibility to make the first decisions. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2026/devex-skyscanner/" target="_blank" rel="noopener">OpenTelemetry blog, Johanna Öjeling and co-authors</a> · CC BY 4.0</span></figcaption></figure>
-<p><strong>Take a baseline.</strong> Measure delivery with the four DORA measures, which track how often you deploy, how long changes take to reach production, how often changes fail and how quickly you recover<sup class="cite"><a href="#ref-1">1</a></sup>. Add one or two reliability measures tied to what customers feel. Do not set targets yet; just record where you are. See <a href="https://asksumanta.com/insights/dora-metrics-ai-assisted-engineering/">DORA metrics with AI-assisted engineering</a>.</p>
-</section>
-
-<section class="block">
-<h2>Days 31 to 60: fix and decide</h2>
-<p><strong>Close the riskiest gaps.</strong> Pick the few risks that could hurt the business most this year, usually security exposure, a fragile deployment process or missing backups, and fix them. Resist the urge to start a rewrite. Small, visible fixes build trust and buy room for bigger changes later.</p>
-<p><strong>Write decisions down.</strong> Every significant decision gets a short architecture decision record: the context, the decision and its consequences, in the format Michael Nygard described<sup class="cite"><a href="#ref-3">3</a></sup>. For a fractional CTO this is not paperwork; it is how decisions survive the days you are not there. See <a href="https://asksumanta.com/insights/architecture-decision-records-fractional-cto/">architecture decision records for fractional CTOs</a>.</p>
-<p><strong>Agree reliability expectations.</strong> Decide with the founders how much unreliability is acceptable and what happens when it is exceeded. Google's SRE guidance frames this as an error budget: a shared, explicit amount of risk that balances shipping features against stability<sup class="cite"><a href="#ref-2">2</a></sup>. See <a href="https://asksumanta.com/insights/slos-error-budgets-small-teams/">SLOs and error budgets for small teams</a>.</p>
-<p><strong>Shape the team.</strong> Look at how work flows between people. Team Topologies offers a useful vocabulary: stream-aligned teams that own a flow of change end to end, supported by platform and enabling teams, with clear interaction modes between them<sup class="cite"><a href="#ref-4">4</a></sup>. Small companies rarely need the full model, but the question of who owns what end to end matters at any size; see <a href="https://asksumanta.com/insights/team-topologies-for-ai-teams/">Team Topologies for AI teams</a>.</p>
-<div class="callout"><p>A fractional CTO's best output is not code or slides. It is decisions the team understands, written down, and a team that can keep making good ones.</p></div>
-</section>
-
-<section class="block">
-<h2>Days 61 to 90: plan and hand over</h2>
-<p><strong>Write a short roadmap.</strong> One page: the next two or three quarters, the few big bets, what you will not do and why, and how progress will be measured against the baseline. Build it with the team, so it is theirs.</p>
-<p><strong>Set an operating rhythm.</strong> Agree what happens without you: weekly delivery review, monthly look at the measures, a regular architecture review where new decision records are discussed. Then agree what happens when you are there: the decisions and reviews that need your time.</p>
-<p><strong>Be explicit about ownership.</strong> List the areas the team owns fully, the ones you co-own, and the ones that still need you. The goal is for the last list to shrink every quarter.</p>
-</section>
-
-<section class="block">
-<h2>Who does what</h2>
-<figure class="dgm">
-<div class="dgm-lanes">
-<div class="dgm-lane"><small>Fractional CTO</small><ol><li>Interviews and map</li><li class="hl">Risk priorities and decisions</li><li>Roadmap and rhythm</li></ol></div>
-<div class="dgm-lane"><small>Founders</small><ol><li>Business goals</li><li class="hl">Risk appetite</li><li>Roadmap sign-off</li></ol></div>
-<div class="dgm-lane"><small>Engineering team</small><ol><li>System knowledge</li><li class="hl">Fixes and measures</li><li>Ownership of the plan</li></ol></div>
-</div>
-<figcaption>The CTO frames and decides with the founders; the team does and increasingly decides.</figcaption>
-</figure>
-</section>
-
-<section class="block">
-<h2>Common mistakes</h2>
-<ul>
-<li><strong>Starting with a rewrite.</strong> It consumes the engagement and rarely finishes. Fix the riskiest gaps first.</li>
-<li><strong>Keeping decisions in your head.</strong> If it is not written down, it will be reopened the week you are away.</li>
-<li><strong>Measuring everything.</strong> Four delivery measures and one or two reliability ones are enough to steer by.</li>
-<li><strong>Becoming the bottleneck.</strong> If every decision waits for your next visit, you have made the company slower.</li>
-<li><strong>Ignoring the business.</strong> Technology priorities that do not connect to revenue, risk or customers will not survive the next budget conversation.</li>
-</ul>
-</section>
-
-<section class="block">
-<h2>How I work</h2>
-<p>This is the shape of most of my engagements, whether the company is a start-up preparing for due diligence, a scale-up whose systems are straining, or a regulated business adopting AI. I am based in India, the United States and the UAE, working globally. See <a href="https://asksumanta.com/how-i-work/">how I work</a> and <a href="https://asksumanta.com/fractional-cto/">fractional CTO services</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
-</section><p><a href="https://asksumanta.com/insights/fractional-cto-first-90-days-playbook/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
+</section><p><a href="https://asksumanta.com/insights/tech-news-2026-11-05/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
