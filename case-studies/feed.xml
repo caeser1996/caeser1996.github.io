@@ -1,6 +1,86 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link><description>Anonymised engagements with architecture and flow diagrams</description><language>en-gb</language><lastBuildDate>Fri, 20 Nov 2026 15:50:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/case-studies/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link></image><item><title>Agents inside, attackers outside: AI cyber risk controls for a UK payments firm</title><link>https://asksumanta.com/case-studies/uk-payments-firm-ai-cyber-risk-controls/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/uk-payments-firm-ai-cyber-risk-controls/</guid><pubDate>Fri, 20 Nov 2026 15:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>ai</category><category>security</category><category>governance</category><description>How a UK payments firm can govern its own AI agents and defend against AI-enabled attacks, in line with new Bank of England, PRA and FCA practices on AI cyber risk.</description><content:encoded><![CDATA[<p><em>A UK payments firm had AI agents in customer support, fraud operations and engineering, each built differently and each with its own access. At the same time, attacks on it were getting faster and more convincing. The goal was one way to build and govern agents, and controls that assume attackers use AI too, in a form the firm could show its regulators.</em></p><h2>The situation</h2>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link><description>Anonymised engagements with architecture and flow diagrams</description><language>en-gb</language><lastBuildDate>Sat, 21 Nov 2026 15:50:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/case-studies/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link></image><item><title>Fast, lawful and reviewable: creditworthiness assessment at checkout for an EU buy now, pay later provider</title><link>https://asksumanta.com/case-studies/eu-bnpl-creditworthiness-ccd2/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/eu-bnpl-creditworthiness-ccd2/</guid><pubDate>Sat, 21 Nov 2026 15:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>ai</category><category>data</category><category>governance</category><description>How an EU buy now, pay later provider can meet the revised Consumer Credit Directive: checkout-speed creditworthiness assessment, permitted data only and human review.</description><content:encoded><![CDATA[<p><em>A buy now, pay later provider operating in several EU countries approved purchases at checkout with a light-touch risk check. The revised Consumer Credit Directive brings that kind of credit into scope from 20 November 2026, with a proper creditworthiness assessment, limits on the data that may be used and a right to human review of automated decisions. The goal was to meet all three without making checkout slow.</em></p><h2>The situation</h2>
+<p>A buy now, pay later provider operated in several EU countries, approving split payments at online checkouts. Its risk check was built for speed and fraud: device signals, basket details, repayment history with the provider and a fraud model. It was not designed as a creditworthiness assessment, and it used whatever data improved the model.</p>
+<p>The revised Consumer Credit Directive changes that. Member States had to apply it from 20 November 2026<sup class="cite"><a href="#ref-1">1</a></sup>, and it brings much buy now, pay later lending into scope as regulated consumer credit<sup class="cite"><a href="#ref-2">2</a></sup>. That means a creditworthiness assessment based on relevant information, limits on what personal data may be used, and, where the assessment involves automated processing, a right for the consumer to obtain human intervention, an explanation and a review<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+<p><strong>Why now.</strong> The rules applied from 20 November 2026, while several large markets were still finishing their national laws<sup class="cite"><a href="#ref-2">2</a></sup>. The provider needed one platform that met the directive everywhere it operated and could absorb national differences as each country's law settled<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>A real creditworthiness assessment</strong> for every in-scope agreement, not a relabelled fraud score.</li>
+<li><strong>Only permitted data in decisions</strong>, enforced by the platform, not by convention.</li>
+<li><strong>Checkout stays fast</strong>: the decision has to fit inside the merchant's payment flow.</li>
+<li><strong>Every automated decision reviewable</strong>: what was used, which rules and model, and why.</li>
+<li><strong>National differences as configuration</strong>, because each country's law arrived on its own timetable.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Checkout</small><div class="dgm-nodes"><span>Merchant integration<em>payment flow</em></span><span>Applicant details<em>income and commitments where needed</em></span><span>Consent and notices<em>per country</em></span></div></div>
+<div class="dgm-tier"><small>Decision</small><div class="dgm-nodes"><span class="hl">Decision service<em>fraud, then creditworthiness</em></span><span>Affordability rules<em>per country</em></span><span>Risk models<em>registered versions</em></span></div></div>
+<div class="dgm-tier"><small>Data</small><div class="dgm-nodes"><span class="hl">Feature store with permissions<em>each feature tagged allowed or not</em></span><span>Credit bureau and open banking<em>where used</em></span><span>Internal history<em>repayments</em></span></div></div>
+<div class="dgm-tier"><small>Accountability</small><div class="dgm-nodes"><span class="hl">Decision records<em>immutable</em></span><span>Review workbench<em>human intervention</em></span><span>Explanations<em>reason codes</em></span></div></div>
+<div class="dgm-tier"><small>Operations</small><div class="dgm-nodes"><span>Country configuration<em>versioned</em></span><span>Telemetry<em>filtered by default</em></span><span>Model monitoring<em>drift and fairness</em></span></div></div>
+</div>
+<figcaption>Permissions live in the data layer; accountability lives in decision records; country rules live in configuration.</figcaption>
+</figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Checkout</b><span>The merchant passes the order; the provider identifies the country and product</span></li>
+<li><b>Fraud</b><span>Fraud checks run first, using fraud-specific signals kept apart from credit</span></li>
+<li class="hl"><b>Assess</b><span>Creditworthiness uses only features tagged as permitted for that country</span></li>
+<li class="hl"><b>Record</b><span>Inputs, rules, model version and outcome are written before the response</span></li>
+<li><b>Respond</b><span>Approve, decline or ask for more information within checkout limits</span></li>
+<li><b>Review</b><span>A customer can request human review, with the full decision record in front of the reviewer</span></li>
+</ol>
+<figcaption>Fraud and credit are separate steps with separate data, and the record is written before the answer.</figcaption>
+</figure>
+
+<h2>The hard part: keeping prohibited data out of decisions, and out of logs</h2>
+<p>The old model had learned from everything available. Some of those signals were reasonable for fraud but inappropriate for creditworthiness, and some could stand in for categories of data the rules exclude. The fix was to tag every feature in the feature store with where it may be used: fraud only, credit permitted, or not used, per country. The decision service could only request credit features from the permitted set, so a model trained on something else simply could not be deployed for credit.</p>
+<p>Logs were the second leak. Request headers and payloads carried details that should never reach a credit decision or a debugging tool. The team set telemetry to exclude by default and include only what was needed, masking sensitive values. OpenTelemetry's eBPF instrumentation shows the pattern, with a default exclude policy and an obfuscation value for headers that must be visible but not readable<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/eu-bnpl-creditworthiness-ccd2/masked-telemetry.webp" alt="Trace view of a GET request showing span tags where the authorization header is masked with asterisks while tenant and user segment headers remain visible" width="563" height="317" loading="lazy"></div><figcaption>Exclude by default, mask what you must keep: the same rule applies to every field that touches a credit decision. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2026/obi-http-header-enrichment/" target="_blank" rel="noopener">OpenTelemetry blog</a> · CC BY 4.0</span></figcaption></figure>
+<div class="callout"><p>Data restrictions only work if they are enforced where features are served. A policy document cannot stop a data scientist from adding a column; a permission on the feature can.</p></div>
+<p>The decision record and review workbench reused the approach from the <a href="https://asksumanta.com/case-studies/brazil-credit-ai-lgpd-explainability/">explainable credit decisions case study</a>, with one difference: here the record had to be written within the checkout budget, so it was designed as a single append to a fast store with asynchronous enrichment afterwards. Idempotency followed <a href="https://asksumanta.com/insights/idempotent-payments-order-pipelines/">idempotent payment pipelines</a>, so retries from merchants never produced two decisions.</p>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Legal and credit risk</small><ol><li>Interpret the directive and national laws</li><li class="hl">Permitted data list per country</li><li>Affordability policy</li></ol></div>
+<div class="dgm-lane"><small>Engineering and data</small><ol><li>Feature permissions</li><li class="hl">Decision records and workbench</li><li>Country configuration</li></ol></div>
+<div class="dgm-lane"><small>Operations</small><ol><li>Review team and procedures</li><li>Customer explanations</li><li class="hl">Monitoring and complaints</li></ol></div>
+</div>
+<figcaption>Legal set the boundaries, engineering enforced them, operations made human review real.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Separate</b><ul><li>Split fraud and credit</li><li>Tag every feature</li><li>Remove disallowed data</li></ul></div>
+<div><small>Phase 2</small><b>Assess</b><ul><li>Affordability rules</li><li>Retrain on permitted data</li><li>Latency budget</li></ul></div>
+<div><small>Phase 3</small><b>Account</b><ul><li>Decision records</li><li>Review workbench</li><li>Explanations</li></ul></div>
+<div><small>Phase 4</small><b>Localise</b><ul><li>Country configuration</li><li>Track national laws</li><li>Monitoring</li></ul></div>
+</div>
+<figcaption>Separate the data first; everything else depends on it.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Separate fraud and credit steps</td><td>One combined risk score</td><td>Different purposes justify different data</td></tr>
+<tr><td>Permissions on features</td><td>Data policy documents</td><td>Enforced at the point of use</td></tr>
+<tr><td>Retrain on permitted data only</td><td>Keep the old model and filter inputs</td><td>A model can rely on proxies for removed data</td></tr>
+<tr><td>Write the record before responding</td><td>Log asynchronously</td><td>No decision exists without its evidence</td></tr>
+<tr><td>Countries as configuration</td><td>Code branches per market</td><td>National laws arrived at different times</td></tr>
+<tr><td>Telemetry excludes by default</td><td>Capture everything, redact later</td><td>Sensitive data never lands in tools</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: treat the permitted data list as a product owned jointly by credit risk and engineering, enforced in the feature store. Differently: involve the review team before building the workbench. They knew which context they needed to decide quickly and fairly, and the first version showed too much detail in the wrong order. See <a href="https://asksumanta.com/insights/structured-outputs-reliable-llm-integration/">structured outputs</a> for how explanations were generated consistently and <a href="https://asksumanta.com/insights/eu-ai-act-digital-omnibus-roadmap/">the EU AI Act roadmap</a> for the high-risk credit scoring rules that come later.</p>
+<p>If you run a regulated business in Europe, my <a href="https://asksumanta.com/fractional-cto-europe/">work with European companies</a> explains how I approach it, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/eu-bnpl-creditworthiness-ccd2/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Agents inside, attackers outside: AI cyber risk controls for a UK payments firm</title><link>https://asksumanta.com/case-studies/uk-payments-firm-ai-cyber-risk-controls/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/uk-payments-firm-ai-cyber-risk-controls/</guid><pubDate>Fri, 20 Nov 2026 15:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>ai</category><category>security</category><category>governance</category><description>How a UK payments firm can govern its own AI agents and defend against AI-enabled attacks, in line with new Bank of England, PRA and FCA practices on AI cyber risk.</description><content:encoded><![CDATA[<p><em>A UK payments firm had AI agents in customer support, fraud operations and engineering, each built differently and each with its own access. At the same time, attacks on it were getting faster and more convincing. The goal was one way to build and govern agents, and controls that assume attackers use AI too, in a form the firm could show its regulators.</em></p><h2>The situation</h2>
 <p>A UK payments and e-money firm had adopted AI quickly and unevenly. Customer support used an agent that could look up transactions and raise refunds. Fraud operations used one that summarised alerts and suggested account restrictions. Engineering used coding agents with access to repositories and deployment pipelines. Each was built by a different team, on a different framework, with its own service accounts and its own idea of logging.</p>
 <p>At the same time, the attacks the firm saw were changing: more convincing phishing, impersonation of executives in calls and messages asking for urgent payment changes, and faster exploitation of newly published flaws. The firm already worked to the FCA's operational resilience rules, which require important business services to be identified and kept within impact tolerances<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
 <p><strong>Why now.</strong> In November 2026 the Bank of England, PRA and FCA published a consultation on cyber risk and resilience management, CP17/26 and GC26/9, clarifying how firms should meet existing requirements, with responses due by 26 February 2027<sup class="cite"><a href="#ref-2">2</a></sup>. Alongside it they published effective practices on AI-related cyber risk, which treat AI as creating new risks, amplifying existing ones and helping defenders, and which include reducing the attack surface against AI-enabled attacks<sup class="cite"><a href="#ref-1">1</a></sup>. The board wanted to know how the firm compared, before a supervisor asked.</p>
@@ -3936,88 +4016,4 @@
 
 <h2>What I'd do again, and differently</h2>
 <p>Again: start with ownership and allocation, and put every improvement into the templates so it spreads automatically. Differently: agree unit cost metrics with product leaders earlier. Cost per team tells you who spends; cost per customer action tells you whether the spend is worth it.</p>
-<p>If cloud costs are outgrowing the business, my <a href="https://asksumanta.com/fractional-cto/">fractional CTO</a> work covers platform and FinOps programmes like this, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/kubernetes-finops-platform-engineering/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>From MCP servers on laptops to a governed enterprise agent platform</title><link>https://asksumanta.com/case-studies/enterprise-mcp-agent-platform/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/enterprise-mcp-agent-platform/</guid><pubDate>Wed, 28 Oct 2026 05:20:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>ai</category><category>agents</category><category>mcp</category><category>security</category><category>platform</category><description>How an enterprise can move from ad hoc MCP servers on laptops to a governed agent platform: a private registry, central identity, scoped tokens, gateways and audit.</description><content:encoded><![CDATA[<p><em>Engineers had connected assistants to dozens of MCP servers, some internal, some from the internet, most with broad tokens. Security wanted to stop it; product teams wanted more of it. The goal was a platform that made the approved path the easiest one.</em></p><h2>The situation</h2>
-<p>An organisation had embraced AI assistants faster than it had governed them. Developers connected IDE assistants to MCP servers for the code host, the ticketing system and the data warehouse. Some servers were built internally in an afternoon; others were installed from public repositories. Many used personal access tokens with wide permissions, stored in local configuration files. Nobody could say which servers were in use, who had approved them, or what they had done.</p>
-<p>Security's first instinct was to block MCP outright. Leadership's instinct was the opposite: agents were becoming central to engineering and operations, and a ban would simply push usage further out of sight.</p>
-
-<h2>What had to be true</h2>
-<ul>
-<li><strong>One place to find approved servers</strong>, discoverable by the clients people already use.</li>
-<li><strong>No long-lived shared tokens.</strong> Access flows through the identity provider, per user, with the narrowest scopes that work.</li>
-<li><strong>Every tool call is attributable</strong> to a person, an agent, a server and a version.</li>
-<li><strong>Writes and destructive actions need explicit, visible consent.</strong></li>
-<li><strong>Publishing a new internal server is easy</strong> if it follows the standard; exceptions are rare and visible.</li>
-</ul>
-
-<h2>Architecture</h2>
-<figure class="dgm">
-<div class="dgm-stack">
-<div class="dgm-tier"><small>Clients</small><div class="dgm-nodes"><span>IDE assistants<em>developer tools</em></span><span>Chat assistants<em>knowledge work</em></span><span>Agent runtime<em>background jobs</em></span></div></div>
-<div class="dgm-tier"><small>Discover</small><div class="dgm-nodes"><span class="hl">Private MCP registry<em>approved, pinned versions</em></span><span>Server metadata<em>owner, data class, scopes</em></span></div></div>
-<div class="dgm-tier"><small>Control</small><div class="dgm-nodes"><span class="hl">MCP gateway<em>authn, policy, rate limits</em></span><span>Identity provider<em>SSO, scoped tokens</em></span><span>Policy as code<em>who, which tools, which data</em></span></div></div>
-<div class="dgm-tier"><small>Servers</small><div class="dgm-nodes"><span>Code and tickets<em>internal servers</em></span><span>Data warehouse<em>read-only views</em></span><span>Docs and search<em>permission-aware</em></span><span>Vetted public servers<em>mirrored, pinned</em></span></div></div>
-<div class="dgm-tier"><small>Observe</small><div class="dgm-nodes"><span class="hl">Audit log<em>user, agent, tool, args hash</em></span><span>Traces and metrics<em>OpenTelemetry</em></span><span>Usage reports<em>prune unused servers</em></span></div></div>
-</div>
-<figcaption>The registry decides what exists; the gateway decides who can use it; the audit trail shows what happened.</figcaption>
-</figure>
-<p>The design followed the ecosystem's own shape: the official MCP Registry is intended as an upstream that organisations build private subregistries on, adding internal servers that should never appear publicly<sup class="cite"><a href="#ref-3">3</a></sup>. The approach is described in more depth in <a href="https://asksumanta.com/insights/mcp-registry-enterprise-subregistry/">running an enterprise MCP registry</a>.</p>
-
-<h2>The data flow, end to end</h2>
-<figure class="dgm">
-<ol class="dgm-flow g3">
-<li><b>Discover</b><span>Client lists servers from the private registry, filtered by the user's groups</span></li>
-<li class="hl"><b>Authorise</b><span>User signs in through the identity provider; token issued for that server only</span></li>
-<li><b>Connect</b><span>Client reaches the server through the gateway, which checks token audience and policy</span></li>
-<li><b>Call a tool</b><span>Read tools run directly; write tools trigger a consent prompt</span></li>
-<li class="hl"><b>Act downstream</b><span>Server uses its own credentials or a token exchange, never the client's token</span></li>
-<li><b>Record</b><span>Call, result status and versions logged and traced</span></li>
-</ol>
-<figcaption>Each hop has one job, so a failure at any step is easy to see and explain.</figcaption>
-</figure>
-<p>Step five matters most. The MCP security guidance names token passthrough, where a server forwards a token it received from the client to a downstream API, as an anti-pattern that breaks OAuth security boundaries, and the authorisation specification forbids it<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. Every server on the platform validates that tokens were issued for it, and calls downstream systems with its own, separately scoped credentials.</p>
-
-<h2>The hard part: scopes people would actually accept</h2>
-<p>The technical controls were well understood. The difficult part was scope design. The MCP guidance warns that over-broad scopes granted up front expand the blast radius of a stolen token, make revocation disruptive and create consent dialogs that users abandon; it recommends a progressive, least-privilege model starting with a minimal read-only set<sup class="cite"><a href="#ref-1">1</a></sup>. In practice that meant:</p>
-<ul>
-<li>A small, named set of scopes per server, starting with read-only discovery.</li>
-<li>Write and admin scopes requested only when a user first invokes a tool that needs them.</li>
-<li>Central control through the identity provider using the authorisation extensions, so administrators can grant and revoke access in one place<sup class="cite"><a href="#ref-4">4</a></sup>.</li>
-<li>Metrics on which scopes are requested and used, so creep is visible.</li>
-</ul>
-<div class="callout"><p>Least privilege only works if the least-privilege path is also the least-friction path. Otherwise people find a personal token and work around it.</p></div>
-
-<h2>How it ran</h2>
-<figure class="dgm">
-<div class="dgm-lanes">
-<div class="dgm-lane"><small>Platform</small><ol><li>Registry and gateway</li><li class="hl">Server template and CI checks</li><li>Usage and audit reporting</li></ol></div>
-<div class="dgm-lane"><small>Security</small><ol><li>Review criteria</li><li>Scope and policy design</li><li class="hl">Approve and pin versions</li></ol></div>
-<div class="dgm-lane"><small>Server teams</small><ol><li>Build from the template</li><li>Declare scopes and data class</li><li>Own and patch their server</li></ol></div>
-</div>
-<figcaption>Platform builds the road, security sets the rules, teams own what they publish.</figcaption>
-</figure>
-<figure class="dgm">
-<div class="dgm-phases">
-<div><small>Phase 1</small><b>Inventory</b><ul><li>Find servers in use</li><li>Classify by data and risk</li><li>Agree review criteria</li></ul></div>
-<div><small>Phase 2</small><b>Paved road</b><ul><li>Private registry</li><li>Gateway and SSO</li><li>Server template</li></ul></div>
-<div><small>Phase 3</small><b>Migrate</b><ul><li>Top servers first</li><li>Retire personal tokens</li><li>Point clients at registry</li></ul></div>
-<div><small>Phase 4</small><b>Enforce</b><ul><li>Block unregistered sources</li><li>Usage-based pruning</li><li>Regular re-review</li></ul></div>
-</div>
-<figcaption>Enforcement came last, once the approved path was already the convenient one.</figcaption>
-</figure>
-
-<h2>Key decisions and trade-offs</h2>
-<table class="tbl">
-<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
-<tbody>
-<tr><td>Private registry mirroring the public one</td><td>Allow-list in a wiki</td><td>Clients can discover from it, and versions can be pinned</td></tr>
-<tr><td>Gateway in front of remote servers</td><td>Each server enforces policy alone</td><td>One place for authentication, policy, rate limits and audit</td></tr>
-<tr><td>Servers use their own downstream credentials</td><td>Pass client tokens through</td><td>Token passthrough is forbidden and breaks audit and audience checks</td></tr>
-<tr><td>Progressive scopes</td><td>Grant everything at first login</td><td>Smaller blast radius and consent people actually read</td></tr>
-<tr><td>Enforce after migration</td><td>Block first, build later</td><td>Avoids pushing usage underground</td></tr>
-</tbody>
-</table>
-<p>The prompt injection and excessive agency risks in the OWASP Top 10 for LLM applications shaped the server template, with tool descriptions treated as untrusted and write tools gated by consent<sup class="cite"><a href="#ref-5">5</a></sup>. The detailed controls are in <a href="https://asksumanta.com/insights/securing-mcp-servers-checklist/">securing MCP servers</a>, <a href="https://asksumanta.com/insights/prompt-injection-defence-for-agents/">prompt injection defence for agents</a> and <a href="https://asksumanta.com/insights/mcp-extensions-enterprise-strategy/">MCP extensions strategy</a>.</p>
-
-<h2>What I'd do again, and differently</h2>
-<p>Again: start with an inventory and make the approved path faster than the unapproved one before enforcing anything. Differently: publish the server template and its CI checks in the first phase. Teams wanted to build compliant servers early, and every week without a template produced another one-off that later needed migrating.</p>
-<p>If agents are spreading faster than your controls, my <a href="https://asksumanta.com/ai-architect/">AI architecture work</a> describes how I approach agent platforms, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/enterprise-mcp-agent-platform/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
+<p>If cloud costs are outgrowing the business, my <a href="https://asksumanta.com/fractional-cto/">fractional CTO</a> work covers platform and FinOps programmes like this, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/kubernetes-finops-platform-engineering/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>

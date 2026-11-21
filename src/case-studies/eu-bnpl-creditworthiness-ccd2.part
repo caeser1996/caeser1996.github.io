@@ -1,0 +1,83 @@
+<!--{"title": "Case study: creditworthiness checks for an EU BNPL provider", "description": "How an EU buy now, pay later provider can meet the revised Consumer Credit Directive: checkout-speed creditworthiness assessment, permitted data only and human review.", "short": "CCD2-ready BNPL credit checks in the EU", "h1": "Fast, lawful and reviewable: creditworthiness assessment at checkout for an EU buy now, pay later provider", "kicker": "Case study · Credit decisioning", "lede": "A buy now, pay later provider operating in several EU countries approved purchases at checkout with a light-touch risk check. The revised Consumer Credit Directive brings that kind of credit into scope from 20 November 2026, with a proper creditworthiness assessment, limits on the data that may be used and a right to human review of automated decisions. The goal was to meet all three without making checkout slow.", "date": "2026-11-21", "datetime": "2026-11-21T15:50:00+04:00", "readtime": "9 min read", "sector": "Consumer credit · European Union", "role": "Fractional CTO and AI architect", "engagement": "Regulatory readiness, architecture and delivery leadership", "scope": "Creditworthiness assessment, data permissions, decision records, human review, national variations, telemetry hygiene", "stack": ["Decision service at checkout", "Feature store with data permissions", "Affordability rules engine", "Risk model registry", "Decision record store", "Review workbench", "Country configuration", "OpenTelemetry with header filtering"], "outcomes": ["Creditworthiness assessed for every in-scope agreement within checkout time limits", "Only permitted data reaching decisions, enforced in the feature layer", "Every automated decision recorded with inputs, rules and model version", "Customers able to request human review, with full context for reviewers", "Country differences handled by configuration, not code branches"], "tags": ["ai", "data", "governance"], "keywords": ["Consumer Credit Directive 2023/2225", "CCD2", "buy now pay later regulation EU", "creditworthiness assessment", "automated credit decisions human review", "BNPL compliance", "special categories of data credit", "credit decisioning architecture", "fractional CTO Europe", "responsible lending AI"], "faq": [["When does the revised Consumer Credit Directive apply?", "Member States had to transpose Directive (EU) 2023/2225 by 20 November 2025 and apply it from 20 November 2026. Agreements already in place on that date generally stay under the old rules, and national laws differ in detail."], ["Does it cover buy now, pay later?", "Yes, much of it. Deferred payment arrangements where a third party provides the credit are brought into scope, which means a creditworthiness assessment and the directive's other consumer protections apply."], ["What does it say about automated decisions?", "Where a creditworthiness assessment involves automated processing, the consumer can request human intervention, an explanation of the assessment and a review of the decision, and can express their point of view."]], "related": ["/fractional-cto-europe/", "/ai-architect/", "/fractional-cto/"], "citations": [{"title": "Directive (EU) 2023/2225 on credit agreements for consumers", "url": "https://eur-lex.europa.eu/eli/dir/2023/2225/oj/eng", "publisher": "EUR-Lex"}, {"title": "Europe's BNPL rules apply from Friday. Several big markets are still finishing the law.", "url": "https://www.fintechweekly.com/magazine/articles/ccd2-bnpl-consumer-credit-directive-transposition-november-2026", "publisher": "FinTech Weekly", "date": "Nov 2026"}, {"title": "Directive (EU) 2023/2225 applies from 20 November 2026: Article 18's right to human review of automated credit scoring", "url": "https://www.quentir.ai/blog/2026/consumer-credit-directive-2023-2225-human-review-automated-credit-decisions-20-november-2026", "publisher": "Quentir", "date": "2026"}, {"title": "EU Consumer Credit Directive II: scope, key changes, BNPL and implementation timetable", "url": "https://www.lexisnexis.com/en-gb/legal/guidance/eu-consumer-credit-directive-ii-essentials", "publisher": "LexisNexis"}, {"title": "OBI HTTP header enrichment", "url": "https://opentelemetry.io/blog/2026/obi-http-header-enrichment/", "publisher": "OpenTelemetry blog", "date": "2026"}]}-->
+
+<h2>The situation</h2>
+<p>A buy now, pay later provider operated in several EU countries, approving split payments at online checkouts. Its risk check was built for speed and fraud: device signals, basket details, repayment history with the provider and a fraud model. It was not designed as a creditworthiness assessment, and it used whatever data improved the model.</p>
+<p>The revised Consumer Credit Directive changes that. Member States had to apply it from 20 November 2026<sup class="cite"><a href="#ref-1">1</a></sup>, and it brings much buy now, pay later lending into scope as regulated consumer credit<sup class="cite"><a href="#ref-2">2</a></sup>. That means a creditworthiness assessment based on relevant information, limits on what personal data may be used, and, where the assessment involves automated processing, a right for the consumer to obtain human intervention, an explanation and a review<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+<p><strong>Why now.</strong> The rules applied from 20 November 2026, while several large markets were still finishing their national laws<sup class="cite"><a href="#ref-2">2</a></sup>. The provider needed one platform that met the directive everywhere it operated and could absorb national differences as each country's law settled<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>A real creditworthiness assessment</strong> for every in-scope agreement, not a relabelled fraud score.</li>
+<li><strong>Only permitted data in decisions</strong>, enforced by the platform, not by convention.</li>
+<li><strong>Checkout stays fast</strong>: the decision has to fit inside the merchant's payment flow.</li>
+<li><strong>Every automated decision reviewable</strong>: what was used, which rules and model, and why.</li>
+<li><strong>National differences as configuration</strong>, because each country's law arrived on its own timetable.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Checkout</small><div class="dgm-nodes"><span>Merchant integration<em>payment flow</em></span><span>Applicant details<em>income and commitments where needed</em></span><span>Consent and notices<em>per country</em></span></div></div>
+<div class="dgm-tier"><small>Decision</small><div class="dgm-nodes"><span class="hl">Decision service<em>fraud, then creditworthiness</em></span><span>Affordability rules<em>per country</em></span><span>Risk models<em>registered versions</em></span></div></div>
+<div class="dgm-tier"><small>Data</small><div class="dgm-nodes"><span class="hl">Feature store with permissions<em>each feature tagged allowed or not</em></span><span>Credit bureau and open banking<em>where used</em></span><span>Internal history<em>repayments</em></span></div></div>
+<div class="dgm-tier"><small>Accountability</small><div class="dgm-nodes"><span class="hl">Decision records<em>immutable</em></span><span>Review workbench<em>human intervention</em></span><span>Explanations<em>reason codes</em></span></div></div>
+<div class="dgm-tier"><small>Operations</small><div class="dgm-nodes"><span>Country configuration<em>versioned</em></span><span>Telemetry<em>filtered by default</em></span><span>Model monitoring<em>drift and fairness</em></span></div></div>
+</div>
+<figcaption>Permissions live in the data layer; accountability lives in decision records; country rules live in configuration.</figcaption>
+</figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Checkout</b><span>The merchant passes the order; the provider identifies the country and product</span></li>
+<li><b>Fraud</b><span>Fraud checks run first, using fraud-specific signals kept apart from credit</span></li>
+<li class="hl"><b>Assess</b><span>Creditworthiness uses only features tagged as permitted for that country</span></li>
+<li class="hl"><b>Record</b><span>Inputs, rules, model version and outcome are written before the response</span></li>
+<li><b>Respond</b><span>Approve, decline or ask for more information within checkout limits</span></li>
+<li><b>Review</b><span>A customer can request human review, with the full decision record in front of the reviewer</span></li>
+</ol>
+<figcaption>Fraud and credit are separate steps with separate data, and the record is written before the answer.</figcaption>
+</figure>
+
+<h2>The hard part: keeping prohibited data out of decisions, and out of logs</h2>
+<p>The old model had learned from everything available. Some of those signals were reasonable for fraud but inappropriate for creditworthiness, and some could stand in for categories of data the rules exclude. The fix was to tag every feature in the feature store with where it may be used: fraud only, credit permitted, or not used, per country. The decision service could only request credit features from the permitted set, so a model trained on something else simply could not be deployed for credit.</p>
+<p>Logs were the second leak. Request headers and payloads carried details that should never reach a credit decision or a debugging tool. The team set telemetry to exclude by default and include only what was needed, masking sensitive values. OpenTelemetry's eBPF instrumentation shows the pattern, with a default exclude policy and an obfuscation value for headers that must be visible but not readable<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/eu-bnpl-creditworthiness-ccd2/masked-telemetry.webp" alt="Trace view of a GET request showing span tags where the authorization header is masked with asterisks while tenant and user segment headers remain visible" width="563" height="317" loading="lazy"></div><figcaption>Exclude by default, mask what you must keep: the same rule applies to every field that touches a credit decision. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2026/obi-http-header-enrichment/" target="_blank" rel="noopener">OpenTelemetry blog</a> · CC BY 4.0</span></figcaption></figure>
+<div class="callout"><p>Data restrictions only work if they are enforced where features are served. A policy document cannot stop a data scientist from adding a column; a permission on the feature can.</p></div>
+<p>The decision record and review workbench reused the approach from the <a href="/case-studies/brazil-credit-ai-lgpd-explainability/">explainable credit decisions case study</a>, with one difference: here the record had to be written within the checkout budget, so it was designed as a single append to a fast store with asynchronous enrichment afterwards. Idempotency followed <a href="/insights/idempotent-payments-order-pipelines/">idempotent payment pipelines</a>, so retries from merchants never produced two decisions.</p>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Legal and credit risk</small><ol><li>Interpret the directive and national laws</li><li class="hl">Permitted data list per country</li><li>Affordability policy</li></ol></div>
+<div class="dgm-lane"><small>Engineering and data</small><ol><li>Feature permissions</li><li class="hl">Decision records and workbench</li><li>Country configuration</li></ol></div>
+<div class="dgm-lane"><small>Operations</small><ol><li>Review team and procedures</li><li>Customer explanations</li><li class="hl">Monitoring and complaints</li></ol></div>
+</div>
+<figcaption>Legal set the boundaries, engineering enforced them, operations made human review real.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Separate</b><ul><li>Split fraud and credit</li><li>Tag every feature</li><li>Remove disallowed data</li></ul></div>
+<div><small>Phase 2</small><b>Assess</b><ul><li>Affordability rules</li><li>Retrain on permitted data</li><li>Latency budget</li></ul></div>
+<div><small>Phase 3</small><b>Account</b><ul><li>Decision records</li><li>Review workbench</li><li>Explanations</li></ul></div>
+<div><small>Phase 4</small><b>Localise</b><ul><li>Country configuration</li><li>Track national laws</li><li>Monitoring</li></ul></div>
+</div>
+<figcaption>Separate the data first; everything else depends on it.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Separate fraud and credit steps</td><td>One combined risk score</td><td>Different purposes justify different data</td></tr>
+<tr><td>Permissions on features</td><td>Data policy documents</td><td>Enforced at the point of use</td></tr>
+<tr><td>Retrain on permitted data only</td><td>Keep the old model and filter inputs</td><td>A model can rely on proxies for removed data</td></tr>
+<tr><td>Write the record before responding</td><td>Log asynchronously</td><td>No decision exists without its evidence</td></tr>
+<tr><td>Countries as configuration</td><td>Code branches per market</td><td>National laws arrived at different times</td></tr>
+<tr><td>Telemetry excludes by default</td><td>Capture everything, redact later</td><td>Sensitive data never lands in tools</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: treat the permitted data list as a product owned jointly by credit risk and engineering, enforced in the feature store. Differently: involve the review team before building the workbench. They knew which context they needed to decide quickly and fairly, and the first version showed too much detail in the wrong order. See <a href="/insights/structured-outputs-reliable-llm-integration/">structured outputs</a> for how explanations were generated consistently and <a href="/insights/eu-ai-act-digital-omnibus-roadmap/">the EU AI Act roadmap</a> for the high-risk credit scoring rules that come later.</p>
+<p>If you run a regulated business in Europe, my <a href="/fractional-cto-europe/">work with European companies</a> explains how I approach it, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
