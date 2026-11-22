@@ -1,6 +1,63 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights</title><link>https://asksumanta.com/</link><description>Articles on AI, data, cloud and technology leadership</description><language>en-gb</language><lastBuildDate>Sun, 22 Nov 2026 08:55:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/insights/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights</title><link>https://asksumanta.com/</link></image><item><title>Tech news, 22 November 2026: AI agents exploit a MONAI Label zero-day, an Entra flaw, a House report on Chinese open-weight models and Signal versus OS assistants</title><link>https://asksumanta.com/insights/tech-news-2026-11-22/</link><guid isPermaLink="true">https://asksumanta.com/insights/tech-news-2026-11-22/</guid><pubDate>Sun, 22 Nov 2026 08:55:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>security</category><category>ai</category><category>governance</category><description>A CTO&#x27;s take: AI agents found and exploited a medical imaging zero-day, an Entra Connect Health flaw exposed tenant data, a House report on Chinese models, Signal vs AI.</description><content:encoded><![CDATA[<p><em>Amazon reported that a China-linked operator&#x27;s autonomous AI agents found and exploited a zero-day in an open-source medical imaging tool. Microsoft disclosed that a flaw in Entra Connect Health let attackers read tenant metadata including administrator emails. Two House committees recommended limits on Chinese open-weight models, and Signal began blocking operating system AI assistants from reading chats.</em></p><p>Today's brief covers stories from 20 to 21 November.</p>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights</title><link>https://asksumanta.com/</link><description>Articles on AI, data, cloud and technology leadership</description><language>en-gb</language><lastBuildDate>Sun, 22 Nov 2026 21:20:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/insights/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights</title><link>https://asksumanta.com/</link></image><item><title>Do you know where your models come from? Model provenance after the House report on Chinese open-weight models</title><link>https://asksumanta.com/insights/model-provenance-open-weight-models/</link><guid isPermaLink="true">https://asksumanta.com/insights/model-provenance-open-weight-models/</guid><pubDate>Sun, 22 Nov 2026 21:20:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>ai</category><category>governance</category><category>llm</category><description>A House report targets Chinese open-weight models and Cursor weighs dropping them. A CTO&#x27;s take on model provenance: inventory, derivatives and the right to switch.</description><content:encoded><![CDATA[<p><em>Two House committees have recommended limiting Chinese open-weight models in federal work and creating a model provenance standard, and Cursor told them it would explore phasing such models out. Whatever you think of the politics, the question behind it is practical and global: can you say which models, and which models underneath them, power your products? Most companies cannot.</em></p><section class="block">
+<h2>What happened</h2>
+<p>The House Select Committee on China and the House Homeland Security Committee published a joint report on Chinese open-weight models such as DeepSeek, Qwen and Kimi. It found that cost, customisation and near-frontier performance drive their adoption, and recommended restricting them in federal agencies and contract work, a national American open-weight model initiative and a model provenance standard<sup class="cite"><a href="#ref-1">1</a></sup>. Cursor told the committees it would explore phasing out Chinese-developed open-weight models because of geopolitical risk; CNBC reports its Composer coding model was built on a Moonshot Kimi model<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<p>The same week, India's Sarvam began offering hosted access to Chinese models including DeepSeek alongside its own, The Next Web reports, and the report itself warns that forcing companies off these models before trusted alternatives exist would raise costs<sup class="cite"><a href="#ref-3">3</a></sup>. The recommendations are not law. They are, however, a clear signal of the questions customers and regulators will start asking.</p>
+</section>
+
+<section class="block">
+<h2>The real problem is hidden lineage</h2>
+<p>Cursor's case shows why this is harder than it looks. A product can be marketed under its own model name while being built on someone else's base model. Fine-tunes, distillations, merged models and hosted APIs all hide where the underlying weights came from. Software teams learned this with libraries: you depend not just on what you import but on everything it imports.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/model-provenance-open-weight-models/dependency-tree.webp" alt="Illustration of an application depending on dependencies A, B and C, where A depends on D and E, and C depends on D and F" width="1200" height="652" loading="lazy"></div><figcaption>Transitive dependencies: models work the same way, with fine-tunes and distillations hiding their base. <span class="credit">Source: <a href="https://github.com/cncf/tag-security/blob/main/community/working-groups/supply-chain-security/supply-chain-security-paper/sscsp.md" target="_blank" rel="noopener">CNCF TAG Security, Software Supply Chain Best Practices</a> · CC BY 4.0</span></figcaption></figure>
+<p>The CNCF's supply chain guidance describes exactly this structure for software, with direct and transitive dependencies each needing to be known and verified<sup class="cite"><a href="#ref-6">6</a></sup>. For models, the chain runs from base model to fine-tune to the hosted endpoint your product calls, and sometimes through a vendor that does not tell you.</p>
+</section>
+
+<section class="block">
+<h2>What a useful model inventory records</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Where used</small><div class="dgm-nodes"><span>Product features<em>customer-facing</em></span><span>Internal tools<em>coding, support, analytics</em></span><span>Vendor products<em>models inside SaaS you buy</em></span></div></div>
+<div class="dgm-tier"><small>The model</small><div class="dgm-nodes"><span class="hl">Name and version<em>as called</em></span><span>Host<em>self-hosted, cloud, API</em></span><span>Licence<em>and its restrictions</em></span></div></div>
+<div class="dgm-tier"><small>Lineage</small><div class="dgm-nodes"><span class="hl">Base model and developer<em>and country of origin</em></span><span>Modifications<em>fine-tune, distil, merge</em></span><span>Training data notes<em>where known</em></span></div></div>
+<div class="dgm-tier"><small>Controls</small><div class="dgm-nodes"><span>Evaluation results<em>your tasks</em></span><span>Approved alternatives<em>tested fallbacks</em></span><span>Owner<em>who decides</em></span></div></div>
+</div>
+<figcaption>Lineage is the layer most inventories miss, and the one customers now ask about.</figcaption>
+</figure>
+<p>Standards are starting to catch up. India's CERT-In expanded its bill of materials guidelines in 2025 to cover AI bills of materials alongside software, cryptographic and hardware ones<sup class="cite"><a href="#ref-4">4</a></sup>, and research such as AIBoMGen generates AI bills of materials during training, recording datasets, base model and configuration with signed attestations<sup class="cite"><a href="#ref-5">5</a></sup>. You do not need to wait for a final standard to keep a spreadsheet with the fields above.</p>
+</section>
+
+<section class="block">
+<h2>Keep the right to switch</h2>
+<p>Provenance only helps if you can act on it. The architecture that makes switching cheap is the same one I recommend for cost and resilience: a model gateway between applications and models, evaluation sets for every important task, and at least one tested alternative for each.</p>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Inventory</b><span>List every model and vendor model, with lineage where known</span></li>
+<li><b>Ask</b><span>Request base model and origin from each AI vendor</span></li>
+<li class="hl"><b>Classify</b><span>Flag uses where origin matters to customers or rules</span></li>
+<li class="hl"><b>Prepare</b><span>Put those uses behind a gateway with a tested alternative</span></li>
+<li><b>Decide</b><span>Choose per use case, with cost and quality evidence</span></li>
+<li><b>Record</b><span>Keep the decision and its reasons for customers and auditors</span></li>
+</ol>
+<figcaption>Know, prepare, then decide: switching is a configuration change, not a rewrite.</figcaption>
+</figure>
+<table class="tbl">
+<thead><tr><th>Situation</th><th>Sensible stance</th></tr></thead>
+<tbody>
+<tr><td>Selling to US federal agencies or their contractors</td><td>Expect origin questions now; prepare alternatives for affected uses</td></tr>
+<tr><td>Regulated sectors such as finance and health</td><td>Document lineage and evaluation; be ready to explain choices</td></tr>
+<tr><td>Internal tools and experiments</td><td>Record lineage; choose on quality, cost and data handling</td></tr>
+<tr><td>Self-hosted open weights</td><td>Origin matters less for data flow, more for licence and customer perception</td></tr>
+</tbody>
+</table>
+<div class="callout"><p>Self-hosting an open-weight model keeps your data in your environment, whatever its origin. That is a different risk from sending data to a foreign API, and it deserves a different answer.</p></div>
+</section>
+
+<section class="block">
+<h2>The CTO's take</h2>
+<p>This is not only an American question. Indian, European and Gulf customers ask their own versions, about sovereignty, data residency or licensing. The companies that handle it well will be the ones that already know what is inside their products and have kept the freedom to change it. That is an engineering discipline, not a political position. Related reading: <a href="https://asksumanta.com/insights/per-market-ai-models-apple-qwen-china/">per-market AI models</a>, <a href="https://asksumanta.com/insights/llm-model-routing/">model routing</a>, <a href="https://asksumanta.com/insights/mistral-large-4-open-weights-self-hosting/">self-hosting open weights</a> and <a href="https://asksumanta.com/insights/llm-evaluation-sets-that-predict-production/">evaluation sets</a>.</p>
+<p>If you need a clear view of the models inside your products and a plan to keep your options open, I am a <a href="https://asksumanta.com/fractional-cto/">fractional CTO</a> and <a href="https://asksumanta.com/ai-architect/">AI architect</a> based in India, the United States and the UAE, working globally. You can <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section><p><a href="https://asksumanta.com/insights/model-provenance-open-weight-models/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Tech news, 22 November 2026: AI agents exploit a MONAI Label zero-day, an Entra flaw, a House report on Chinese open-weight models and Signal versus OS assistants</title><link>https://asksumanta.com/insights/tech-news-2026-11-22/</link><guid isPermaLink="true">https://asksumanta.com/insights/tech-news-2026-11-22/</guid><pubDate>Sun, 22 Nov 2026 08:55:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>security</category><category>ai</category><category>governance</category><description>A CTO&#x27;s take: AI agents found and exploited a medical imaging zero-day, an Entra Connect Health flaw exposed tenant data, a House report on Chinese models, Signal vs AI.</description><content:encoded><![CDATA[<p><em>Amazon reported that a China-linked operator&#x27;s autonomous AI agents found and exploited a zero-day in an open-source medical imaging tool. Microsoft disclosed that a flaw in Entra Connect Health let attackers read tenant metadata including administrator emails. Two House committees recommended limits on Chinese open-weight models, and Signal began blocking operating system AI assistants from reading chats.</em></p><p>Today's brief covers stories from 20 to 21 November.</p>
 
 <figure class="dgm">
 <ol class="dgm-flow g3">
@@ -2716,67 +2773,4 @@
 <section class="block">
 <h2>How I can help</h2>
 <p>I help teams decide between hosted and self-hosted models, and design portable inference platforms that keep that choice open. I am based in India, the United States and the UAE, working globally. See <a href="https://asksumanta.com/ai-architect/">AI architecture</a> or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
-</section><p><a href="https://asksumanta.com/insights/mistral-large-4-open-weights-self-hosting/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>New York&#x27;s youth chatbot law: what teams shipping AI assistants need to build, and by when</title><link>https://asksumanta.com/insights/new-york-youth-chatbot-law-ai-assistants/</link><guid isPermaLink="true">https://asksumanta.com/insights/new-york-youth-chatbot-law-ai-assistants/</guid><pubDate>Fri, 30 Oct 2026 12:35:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>ai</category><category>governance</category><category>regulation</category><description>New York has banned unsafe AI chatbot features for minors, and the law may reach general assistants. A CTO&#x27;s take on age assurance, guardrails and evidence.</description><content:encoded><![CDATA[<p><em>On 28 October, New York signed a law that bars AI chatbot features judged unsafe for minors, from pretending to be human to fostering emotional dependency. It follows California&#x27;s own chatbot law by about a month. If your product talks to the public, even as a general assistant, this is now an engineering problem: knowing who might be a minor, controlling what the model does for them, and proving it.</em></p><section class="block">
-<h2>What happened</h2>
-<p>New York's governor signed bill S.9051B/A.10379C on 28 October 2026. It prohibits companies with AI chatbot features from offering features deemed unsafe for minors, including chatbots that pretend to be human, build emotional dependency, encourage self-harm or engage in sexually explicit conversation<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. Press coverage reports that, like earlier state rules, it expects several age verification options, including at least one that does not need government ID<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
-<p>Two points need care. First, scope: Tech Times reads the definition as reaching general-purpose assistants, not only companion apps<sup class="cite"><a href="#ref-3">3</a></sup>. That is one interpretation, but a serious one. Second, timing: reports give different effective dates, from early 2027 to mid-2027. I would plan for the earliest.</p>
-<p>The Future of Privacy Forum notes that New York acted about a month after California enacted its own chatbot law, SB 1119, and that the two states are taking different approaches<sup class="cite"><a href="#ref-5">5</a></sup>. For anyone with US users, that means designing for more than one rulebook.</p>
-</section>
-
-<section class="block">
-<h2>Why this is an architecture problem</h2>
-<p>Most of these duties cannot be met with a line in the terms of service. They need the system to know something about the user, change the model's behaviour based on it, and keep evidence that it did. That cuts across identity, the model layer, the product and observability.</p>
-<figure class="dgm">
-<div class="dgm-stack">
-<div class="dgm-tier"><small>User</small><div class="dgm-nodes"><span>Account or guest<em>age unknown by default</em></span></div></div>
-<div class="dgm-tier"><small>Age assurance</small><div class="dgm-nodes"><span class="hl">Age signal<em>verified, estimated or unknown</em></span><span>Non-ID option<em>for users without ID</em></span></div></div>
-<div class="dgm-tier"><small>Policy</small><div class="dgm-nodes"><span class="hl">Feature policy<em>by age state and jurisdiction</em></span><span>Persona rules<em>always disclose AI</em></span></div></div>
-<div class="dgm-tier"><small>Model layer</small><div class="dgm-nodes"><span>System prompts<em>per policy</em></span><span class="hl">Input and output checks<em>self-harm, sexual content, dependency</em></span><span>Crisis routing<em>human resources</em></span></div></div>
-<div class="dgm-tier"><small>Evidence</small><div class="dgm-nodes"><span>Policy decisions logged<em>no content by default</em></span><span>Evaluation results<em>per release</em></span></div></div>
-</div>
-<figcaption>The policy layer decides what the model may do for this user, in this state, before the model runs.</figcaption>
-</figure>
-</section>
-
-<section class="block">
-<h2>What to build</h2>
-<p><strong>Treat "unknown age" as a state, not a default adult.</strong> Press coverage suggests the rules apply where age has not been established, not only to known minors<sup class="cite"><a href="#ref-4">4</a></sup>. The safe design has three states: verified adult, likely minor, and unknown. Unknown gets the protective feature set until the user chooses to verify.</p>
-<p><strong>Make features switchable by policy.</strong> Persona and memory features, romantic or companion modes, and long-term "relationship" memory are exactly what the law targets. Put them behind a policy service keyed on age state and jurisdiction, rather than scattered flags, so legal changes are configuration, not releases.</p>
-<p><strong>Check inputs and outputs, not just prompts.</strong> System prompts alone are not a control. Add classifiers or rules on both sides for self-harm, sexual content and manipulative engagement patterns, with routing to crisis resources. Test them with an <a href="https://asksumanta.com/insights/llm-evaluation-sets-that-predict-production/">evaluation set built for this</a>, including adversarial attempts, and run it on every model or prompt change.</p>
-<p><strong>Always disclose that it is AI.</strong> A chatbot pretending to be human is on the prohibited list<sup class="cite"><a href="#ref-1">1</a></sup>. Make disclosure part of the persona rules, and test that role-play cannot override it.</p>
-<p><strong>Keep evidence, carefully.</strong> You will need to show which policy applied and what the system did. Capturing full conversation content is the tempting way, and OpenTelemetry's generative AI instrumentation can do it, but it is opt-in for good reason<sup class="cite"><a href="#ref-6">6</a></sup>. For conversations that may involve minors, log policy decisions and check outcomes by default, and capture content only for flagged sessions under strict access and retention rules.</p>
-<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/new-york-youth-chatbot-law-ai-assistants/content-capture.webp" alt="Dashboard dialog showing a captured generative AI message event in JSON with index, finish reason, assistant role and the message content" width="1400" height="486" loading="lazy"></div><figcaption>Content capture shows exactly what the model said. Powerful for evidence, risky for children's data: switch it on deliberately. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2024/otel-generative-ai/" target="_blank" rel="noopener">OpenTelemetry blog, Drew Robbins and Liudmila Molkova</a> · CC BY 4.0</span></figcaption></figure>
-<div class="callout"><p>The defensible position is not "we tried hard". It is "here is the policy that applied to this session, the checks that ran, and the test results for the release that served it".</p></div>
-</section>
-
-<section class="block">
-<h2>Who should act</h2>
-<ul>
-<li><strong>Consumer AI products and apps with chat</strong>: in scope almost certainly, wherever you are based, if New York users can reach you.</li>
-<li><strong>Enterprise copilots</strong>: probably lower risk if access is limited to verified employees, but check any public or customer-facing deployment.</li>
-<li><strong>Education, gaming and health apps</strong>: high priority, because minors are a large part of the audience.</li>
-<li><strong>Teams outside the US</strong>: the same building blocks will help with the UK's and EU's child-safety expectations; see <a href="https://asksumanta.com/fractional-cto-united-kingdom/">UK</a> and <a href="https://asksumanta.com/fractional-cto-europe/">Europe</a>.</li>
-</ul>
-</section>
-
-<section class="block">
-<h2>A plan for the next quarter</h2>
-<figure class="dgm">
-<div class="dgm-phases">
-<div><small>Weeks 1 to 3</small><b>Scope</b><ul><li>Read the enacted text with counsel</li><li>List every chat surface and feature</li><li>Map them to prohibited features</li></ul></div>
-<div><small>Weeks 4 to 8</small><b>Build</b><ul><li>Age states and verification options</li><li>Policy service for features</li><li>Input and output checks</li></ul></div>
-<div><small>Weeks 9 to 12</small><b>Prove</b><ul><li>Evaluation set in CI</li><li>Policy decision logging</li><li>Run a mock regulator request</li></ul></div>
-</div>
-<figcaption>Scope with counsel, build the controls, then rehearse showing your work.</figcaption>
-</figure>
-</section>
-
-<section class="block">
-<h2>CTO take</h2>
-<p>State-level AI rules in the US are no longer abstract. Between California and New York, any public chatbot now needs age-aware behaviour, enforced guardrails and evidence. The cost of building that is far lower now than after an enforcement letter. Build it once, as a policy layer that sits in front of every model you use, so the next state law is a configuration change. For the wider US picture, see the <a href="https://asksumanta.com/insights/colorado-ai-act-2026-reset/">Colorado AI Act reset</a> and the <a href="https://asksumanta.com/fractional-cto-united-states/">US page</a>; for guardrail engineering, <a href="https://asksumanta.com/insights/prompt-injection-defence-for-agents/">prompt-injection defence</a> and <a href="https://asksumanta.com/insights/structured-outputs-reliable-llm-integration/">structured outputs</a>.</p>
-</section>
-
-<section class="block">
-<h2>How I can help</h2>
-<p>I design AI assistant platforms with policy layers, evaluation and evidence built in, and review them before launch or audit. I am based in India, the United States and the UAE, working globally. See <a href="https://asksumanta.com/ai-architect/">AI architecture</a> or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
-</section><p><a href="https://asksumanta.com/insights/new-york-youth-chatbot-law-ai-assistants/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
+</section><p><a href="https://asksumanta.com/insights/mistral-large-4-open-weights-self-hosting/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>

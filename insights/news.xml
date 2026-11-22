@@ -1,6 +1,63 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Daily tech news</title><link>https://asksumanta.com/</link><description>A CTO&#x27;s take on the day&#x27;s releases, deals and rules</description><language>en-gb</language><lastBuildDate>Sun, 22 Nov 2026 08:55:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/insights/news.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Daily tech news</title><link>https://asksumanta.com/</link></image><item><title>Tech news, 22 November 2026: AI agents exploit a MONAI Label zero-day, an Entra flaw, a House report on Chinese open-weight models and Signal versus OS assistants</title><link>https://asksumanta.com/insights/tech-news-2026-11-22/</link><guid isPermaLink="true">https://asksumanta.com/insights/tech-news-2026-11-22/</guid><pubDate>Sun, 22 Nov 2026 08:55:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>security</category><category>ai</category><category>governance</category><description>A CTO&#x27;s take: AI agents found and exploited a medical imaging zero-day, an Entra Connect Health flaw exposed tenant data, a House report on Chinese models, Signal vs AI.</description><content:encoded><![CDATA[<p><em>Amazon reported that a China-linked operator&#x27;s autonomous AI agents found and exploited a zero-day in an open-source medical imaging tool. Microsoft disclosed that a flaw in Entra Connect Health let attackers read tenant metadata including administrator emails. Two House committees recommended limits on Chinese open-weight models, and Signal began blocking operating system AI assistants from reading chats.</em></p><p>Today's brief covers stories from 20 to 21 November.</p>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Daily tech news</title><link>https://asksumanta.com/</link><description>A CTO&#x27;s take on the day&#x27;s releases, deals and rules</description><language>en-gb</language><lastBuildDate>Sun, 22 Nov 2026 21:20:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/insights/news.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Daily tech news</title><link>https://asksumanta.com/</link></image><item><title>Do you know where your models come from? Model provenance after the House report on Chinese open-weight models</title><link>https://asksumanta.com/insights/model-provenance-open-weight-models/</link><guid isPermaLink="true">https://asksumanta.com/insights/model-provenance-open-weight-models/</guid><pubDate>Sun, 22 Nov 2026 21:20:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>ai</category><category>governance</category><category>llm</category><description>A House report targets Chinese open-weight models and Cursor weighs dropping them. A CTO&#x27;s take on model provenance: inventory, derivatives and the right to switch.</description><content:encoded><![CDATA[<p><em>Two House committees have recommended limiting Chinese open-weight models in federal work and creating a model provenance standard, and Cursor told them it would explore phasing such models out. Whatever you think of the politics, the question behind it is practical and global: can you say which models, and which models underneath them, power your products? Most companies cannot.</em></p><section class="block">
+<h2>What happened</h2>
+<p>The House Select Committee on China and the House Homeland Security Committee published a joint report on Chinese open-weight models such as DeepSeek, Qwen and Kimi. It found that cost, customisation and near-frontier performance drive their adoption, and recommended restricting them in federal agencies and contract work, a national American open-weight model initiative and a model provenance standard<sup class="cite"><a href="#ref-1">1</a></sup>. Cursor told the committees it would explore phasing out Chinese-developed open-weight models because of geopolitical risk; CNBC reports its Composer coding model was built on a Moonshot Kimi model<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<p>The same week, India's Sarvam began offering hosted access to Chinese models including DeepSeek alongside its own, The Next Web reports, and the report itself warns that forcing companies off these models before trusted alternatives exist would raise costs<sup class="cite"><a href="#ref-3">3</a></sup>. The recommendations are not law. They are, however, a clear signal of the questions customers and regulators will start asking.</p>
+</section>
+
+<section class="block">
+<h2>The real problem is hidden lineage</h2>
+<p>Cursor's case shows why this is harder than it looks. A product can be marketed under its own model name while being built on someone else's base model. Fine-tunes, distillations, merged models and hosted APIs all hide where the underlying weights came from. Software teams learned this with libraries: you depend not just on what you import but on everything it imports.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/model-provenance-open-weight-models/dependency-tree.webp" alt="Illustration of an application depending on dependencies A, B and C, where A depends on D and E, and C depends on D and F" width="1200" height="652" loading="lazy"></div><figcaption>Transitive dependencies: models work the same way, with fine-tunes and distillations hiding their base. <span class="credit">Source: <a href="https://github.com/cncf/tag-security/blob/main/community/working-groups/supply-chain-security/supply-chain-security-paper/sscsp.md" target="_blank" rel="noopener">CNCF TAG Security, Software Supply Chain Best Practices</a> · CC BY 4.0</span></figcaption></figure>
+<p>The CNCF's supply chain guidance describes exactly this structure for software, with direct and transitive dependencies each needing to be known and verified<sup class="cite"><a href="#ref-6">6</a></sup>. For models, the chain runs from base model to fine-tune to the hosted endpoint your product calls, and sometimes through a vendor that does not tell you.</p>
+</section>
+
+<section class="block">
+<h2>What a useful model inventory records</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Where used</small><div class="dgm-nodes"><span>Product features<em>customer-facing</em></span><span>Internal tools<em>coding, support, analytics</em></span><span>Vendor products<em>models inside SaaS you buy</em></span></div></div>
+<div class="dgm-tier"><small>The model</small><div class="dgm-nodes"><span class="hl">Name and version<em>as called</em></span><span>Host<em>self-hosted, cloud, API</em></span><span>Licence<em>and its restrictions</em></span></div></div>
+<div class="dgm-tier"><small>Lineage</small><div class="dgm-nodes"><span class="hl">Base model and developer<em>and country of origin</em></span><span>Modifications<em>fine-tune, distil, merge</em></span><span>Training data notes<em>where known</em></span></div></div>
+<div class="dgm-tier"><small>Controls</small><div class="dgm-nodes"><span>Evaluation results<em>your tasks</em></span><span>Approved alternatives<em>tested fallbacks</em></span><span>Owner<em>who decides</em></span></div></div>
+</div>
+<figcaption>Lineage is the layer most inventories miss, and the one customers now ask about.</figcaption>
+</figure>
+<p>Standards are starting to catch up. India's CERT-In expanded its bill of materials guidelines in 2025 to cover AI bills of materials alongside software, cryptographic and hardware ones<sup class="cite"><a href="#ref-4">4</a></sup>, and research such as AIBoMGen generates AI bills of materials during training, recording datasets, base model and configuration with signed attestations<sup class="cite"><a href="#ref-5">5</a></sup>. You do not need to wait for a final standard to keep a spreadsheet with the fields above.</p>
+</section>
+
+<section class="block">
+<h2>Keep the right to switch</h2>
+<p>Provenance only helps if you can act on it. The architecture that makes switching cheap is the same one I recommend for cost and resilience: a model gateway between applications and models, evaluation sets for every important task, and at least one tested alternative for each.</p>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Inventory</b><span>List every model and vendor model, with lineage where known</span></li>
+<li><b>Ask</b><span>Request base model and origin from each AI vendor</span></li>
+<li class="hl"><b>Classify</b><span>Flag uses where origin matters to customers or rules</span></li>
+<li class="hl"><b>Prepare</b><span>Put those uses behind a gateway with a tested alternative</span></li>
+<li><b>Decide</b><span>Choose per use case, with cost and quality evidence</span></li>
+<li><b>Record</b><span>Keep the decision and its reasons for customers and auditors</span></li>
+</ol>
+<figcaption>Know, prepare, then decide: switching is a configuration change, not a rewrite.</figcaption>
+</figure>
+<table class="tbl">
+<thead><tr><th>Situation</th><th>Sensible stance</th></tr></thead>
+<tbody>
+<tr><td>Selling to US federal agencies or their contractors</td><td>Expect origin questions now; prepare alternatives for affected uses</td></tr>
+<tr><td>Regulated sectors such as finance and health</td><td>Document lineage and evaluation; be ready to explain choices</td></tr>
+<tr><td>Internal tools and experiments</td><td>Record lineage; choose on quality, cost and data handling</td></tr>
+<tr><td>Self-hosted open weights</td><td>Origin matters less for data flow, more for licence and customer perception</td></tr>
+</tbody>
+</table>
+<div class="callout"><p>Self-hosting an open-weight model keeps your data in your environment, whatever its origin. That is a different risk from sending data to a foreign API, and it deserves a different answer.</p></div>
+</section>
+
+<section class="block">
+<h2>The CTO's take</h2>
+<p>This is not only an American question. Indian, European and Gulf customers ask their own versions, about sovereignty, data residency or licensing. The companies that handle it well will be the ones that already know what is inside their products and have kept the freedom to change it. That is an engineering discipline, not a political position. Related reading: <a href="https://asksumanta.com/insights/per-market-ai-models-apple-qwen-china/">per-market AI models</a>, <a href="https://asksumanta.com/insights/llm-model-routing/">model routing</a>, <a href="https://asksumanta.com/insights/mistral-large-4-open-weights-self-hosting/">self-hosting open weights</a> and <a href="https://asksumanta.com/insights/llm-evaluation-sets-that-predict-production/">evaluation sets</a>.</p>
+<p>If you need a clear view of the models inside your products and a plan to keep your options open, I am a <a href="https://asksumanta.com/fractional-cto/">fractional CTO</a> and <a href="https://asksumanta.com/ai-architect/">AI architect</a> based in India, the United States and the UAE, working globally. You can <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section><p><a href="https://asksumanta.com/insights/model-provenance-open-weight-models/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Tech news, 22 November 2026: AI agents exploit a MONAI Label zero-day, an Entra flaw, a House report on Chinese open-weight models and Signal versus OS assistants</title><link>https://asksumanta.com/insights/tech-news-2026-11-22/</link><guid isPermaLink="true">https://asksumanta.com/insights/tech-news-2026-11-22/</guid><pubDate>Sun, 22 Nov 2026 08:55:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>security</category><category>ai</category><category>governance</category><description>A CTO&#x27;s take: AI agents found and exploited a medical imaging zero-day, an Entra Connect Health flaw exposed tenant data, a House report on Chinese models, Signal vs AI.</description><content:encoded><![CDATA[<p><em>Amazon reported that a China-linked operator&#x27;s autonomous AI agents found and exploited a zero-day in an open-source medical imaging tool. Microsoft disclosed that a flaw in Entra Connect Health let attackers read tenant metadata including administrator emails. Two House committees recommended limits on Chinese open-weight models, and Signal began blocking operating system AI assistants from reading chats.</em></p><p>Today's brief covers stories from 20 to 21 November.</p>
 
 <figure class="dgm">
 <ol class="dgm-flow g3">
@@ -2689,62 +2746,4 @@
 <section class="block">
 <h2>How I can help</h2>
 <p>I help teams design model access so that procurement, compliance and engineering decisions do not get tangled. See <a href="https://asksumanta.com/ai-architect/">AI architecture</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
-</section><p><a href="https://asksumanta.com/insights/claude-google-cloud-anthropic-managed-choice/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>The AI capacity crunch: what Microsoft&#x27;s quarter means for how you plan compute</title><link>https://asksumanta.com/insights/ai-capacity-crunch-cloud-planning/</link><guid isPermaLink="true">https://asksumanta.com/insights/ai-capacity-crunch-cloud-planning/</guid><pubDate>Thu, 29 Oct 2026 16:40:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>platform</category><category>ai</category><category>architecture</category><description>Microsoft says cloud demand still exceeds supply. A CTO&#x27;s take on planning AI capacity: reservations, priorities, portability and degraded modes when GPUs run short.</description><content:encoded><![CDATA[<p><em>Azure grew 48% last quarter and Microsoft still says demand outruns supply. For engineering leaders, that is not a stock story. It means AI capacity is a constrained resource you plan, prioritise and hedge, like any other scarce input.</em></p><section class="block">
-<h2>What was reported</h2>
-<p>Microsoft's results for the quarter to 30 September showed Azure revenue growing 48%, ahead of analyst estimates, with guidance for faster growth in the current quarter<sup class="cite"><a href="#ref-1">1</a></sup>. Capital spending of $45.2 billion came in below the company's own projection, which it attributed to delivery timing rather than a change of plan<sup class="cite"><a href="#ref-1">1</a></sup>, and its finance chief said demand still exceeds supply<sup class="cite"><a href="#ref-2">2</a></sup>. Analysts also noted capital expenditure guidance was held steady<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
-</section>
-
-<section class="block">
-<h2>Why this matters to engineering leaders</h2>
-<p>When the largest providers are still building as fast as they can and demand outruns them, capacity for AI workloads, especially accelerators in specific regions, is not guaranteed on demand. That affects launch dates, data-residency plans and cost. The response is the same discipline used for any scarce resource: know what you need, decide what matters most, reserve for that, and have a fallback.</p>
-<figure class="dgm">
-<div class="dgm-stack">
-<div class="dgm-tier"><small>Critical</small><div class="dgm-nodes"><span class="hl">Customer-facing inference<em>reserved capacity, home region</em></span></div></div>
-<div class="dgm-tier"><small>Important</small><div class="dgm-nodes"><span>Internal assistants<em>on demand, can queue</em></span><span>Evaluation runs<em>scheduled off-peak</em></span></div></div>
-<div class="dgm-tier"><small>Flexible</small><div class="dgm-nodes"><span>Batch enrichment<em>spot or preemptible</em></span><span>Training and fine-tuning<em>any region allowed by data rules</em></span></div></div>
-<div class="dgm-tier"><small>Fallback</small><div class="dgm-nodes"><span class="hl">Second provider or model<em>tested, not theoretical</em></span><span>Smaller private model<em>floor for critical paths</em></span></div></div>
-</div>
-<figcaption>Tier workloads by how much a shortage would hurt, and match each tier to a capacity strategy.</figcaption>
-</figure>
-</section>
-
-<section class="block">
-<h2>Let the scheduler enforce your priorities</h2>
-<p>On Kubernetes, the scheduler decides where each workload runs, and pod priority and preemption decide what happens when resources run out: higher-priority pods are scheduled first, and lower-priority ones can be evicted to make room<sup class="cite"><a href="#ref-4">4</a></sup><sup class="cite"><a href="#ref-5">5</a></sup>. Giving customer-facing inference a higher priority class than batch jobs means a capacity squeeze lands on work that can wait.</p>
-<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/ai-capacity-crunch-cloud-planning/scheduling.webp" alt="Diagram of Kubernetes scheduling: a client creates new pods, the API server stores them in etcd, the kube-scheduler assigns pods without a node to a node, and kubelets on each node launch them" width="1200" height="935" loading="lazy"></div><figcaption>How the scheduler places new workloads; priority classes decide who goes first, and who is evicted, when capacity is short. <span class="credit">Source: <a href="https://kubernetes.io/blog/2023/01/12/protect-mission-critical-pods-priorityclass/" target="_blank" rel="noopener">Kubernetes blog, Sunny Bhambhani</a> · CC BY 4.0</span></figcaption></figure>
-<div class="callout"><p>In a shortage, something will wait. Decide in advance what it is, and encode that decision in the platform rather than in a meeting during the incident.</p></div>
-</section>
-
-<section class="block">
-<h2>A capacity plan in four steps</h2>
-<figure class="dgm">
-<ol class="dgm-flow g3">
-<li><b>Measure</b><span>Accelerator hours, tokens and latency per workload and region</span></li>
-<li><b>Tier</b><span>Critical, important and flexible, agreed with the business</span></li>
-<li class="hl"><b>Reserve</b><span>Committed capacity for critical work where data rules require it</span></li>
-<li><b>Prioritise</b><span>Priority classes and quotas so shortages hit flexible work first</span></li>
-<li class="hl"><b>Hedge</b><span>A second provider, region or model tested with real traffic</span></li>
-<li><b>Review</b><span>Monthly: usage against reservations, cost, and upcoming launches</span></li>
-</ol>
-<figcaption>Capacity planning for AI is FinOps plus resilience.</figcaption>
-</figure>
-<table class="tbl">
-<thead><tr><th>Lever</th><th>Helps with</th><th>Watch out for</th></tr></thead>
-<tbody>
-<tr><td>Reservations and commitments</td><td>Guaranteed capacity for critical work</td><td>Paying for idle capacity if forecasts are wrong</td></tr>
-<tr><td>Priority classes and quotas</td><td>Shortages fall on flexible work</td><td>Needs agreed tiers, not engineering guesses</td></tr>
-<tr><td>Second provider or region</td><td>Availability and negotiating position</td><td>Data residency and quality differences</td></tr>
-<tr><td>Smaller or routed models</td><td>Less capacity needed per task</td><td>Quality must be proven on your evaluation set</td></tr>
-</tbody>
-</table>
-</section>
-
-<section class="block">
-<h2>CTO take</h2>
-<p>Treat AI capacity as a supply chain. Know your demand by workload, reserve for what is critical in the regions your data rules require, and make sure a shortage degrades flexible work first. Regional constraints differ: residency rules in the EU, India, Saudi Arabia and elsewhere can limit where you are allowed to fail over, so check them before you count a region as a fallback (<a href="https://asksumanta.com/regions/">by region</a>). Related reading: <a href="https://asksumanta.com/insights/focus-finops-ai-cost-allocation/">AI cost allocation with FOCUS</a>, <a href="https://asksumanta.com/insights/kubernetes-dra-gpu-scheduling/">GPU scheduling with DRA</a>, <a href="https://asksumanta.com/insights/llm-model-routing/">LLM model routing</a>, <a href="https://asksumanta.com/case-studies/ai-provider-resilience-cps-230-insurer/">AI provider resilience under CPS 230</a> and the <a href="https://asksumanta.com/insights/tech-news-2026-10-29-2/">tech news update for 29 October</a>.</p>
-</section>
-
-<section class="block">
-<h2>How I can help</h2>
-<p>I help teams plan AI capacity and cost alongside architecture, so launches are not hostage to a shortage. See <a href="https://asksumanta.com/fractional-cto/">fractional CTO</a> and <a href="https://asksumanta.com/ai-architect/">AI architecture</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
-</section><p><a href="https://asksumanta.com/insights/ai-capacity-crunch-cloud-planning/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
+</section><p><a href="https://asksumanta.com/insights/claude-google-cloud-anthropic-managed-choice/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>

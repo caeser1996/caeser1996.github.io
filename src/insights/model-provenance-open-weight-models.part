@@ -1,0 +1,59 @@
+<!--{"title": "Do you know where your models come from? Model provenance in 2026", "description": "A House report targets Chinese open-weight models and Cursor weighs dropping them. A CTO's take on model provenance: inventory, derivatives and the right to switch.", "h1": "Do you know where your models come from? Model provenance after the House report on Chinese open-weight models", "kicker": "Analysis · AI architecture and governance", "lede": "Two House committees have recommended limiting Chinese open-weight models in federal work and creating a model provenance standard, and Cursor told them it would explore phasing such models out. Whatever you think of the politics, the question behind it is practical and global: can you say which models, and which models underneath them, power your products? Most companies cannot.", "date": "2026-11-22", "datetime": "2026-11-22T21:20:00+04:00", "readtime": "8 min read", "format": "news-analysis", "tags": ["news", "ai", "governance", "llm"], "keywords": ["model provenance", "AI bill of materials", "AIBOM", "Chinese open-weight models", "House report DeepSeek Qwen Kimi", "Cursor Kimi", "fine-tune derivative lineage", "model inventory", "LLM vendor risk", "AI governance CTO"], "faq": [["What is model provenance?", "A record of where a model came from: who trained it, which base model it was derived from, how it was modified, where its weights are hosted and under what licence, so you can answer questions about origin, risk and obligations."], ["Why do derivatives matter?", "Many products use models fine-tuned or distilled from a base model built by someone else. A product can depend on a model origin without naming it anywhere, in the same way software depends on transitive libraries."], ["Should companies stop using Chinese open-weight models?", "That depends on customers, sector and jurisdiction. The House report's recommendations are not law. What every company should do is know where its models come from and be able to switch if customers or rules require it."]], "related": ["/ai-architect/", "/fractional-cto-united-states/", "/fractional-cto-india/"], "citations": [{"title": "House Lawmakers Push US AI Models to Counter China", "url": "https://www.bankinfosecurity.com/house-lawmakers-push-us-ai-models-to-counter-china-a-33482", "publisher": "BankInfoSecurity", "date": "Nov 2026"}, {"title": "Cursor weighs phasing out Chinese AI models: House report", "url": "https://www.cnbc.com/2026/11/20/cursor-chinese-ai-models-geopolitical-risk.html", "publisher": "CNBC", "date": "20 Nov 2026"}, {"title": "Cursor may drop Chinese AI models as India's Sarvam starts selling them", "url": "https://thenextweb.com/news/cursor-chinese-ai-models-house-report-sarvam-deepseek", "publisher": "The Next Web", "date": "Nov 2026"}, {"title": "CERT-In's technical guidelines on SBOM, QBOM and CBOM, AIBOM and HBOM", "url": "https://www.azbpartners.com/bank/cert-ins-technical-guidelines-on-sbom-qbom-and-cbom-aibom-and-hbom/", "publisher": "AZB & Partners", "date": "2025"}, {"title": "AIBoMGen: Generating an AI Bill of Materials for Secure, Transparent, and Compliant Model Training", "url": "https://arxiv.org/abs/2601.05703", "publisher": "arXiv", "date": "Jan 2026"}, {"title": "Software Supply Chain Best Practices", "url": "https://github.com/cncf/tag-security/blob/main/community/working-groups/supply-chain-security/supply-chain-security-paper/sscsp.md", "publisher": "CNCF TAG Security"}]}-->
+<section class="block">
+<h2>What happened</h2>
+<p>The House Select Committee on China and the House Homeland Security Committee published a joint report on Chinese open-weight models such as DeepSeek, Qwen and Kimi. It found that cost, customisation and near-frontier performance drive their adoption, and recommended restricting them in federal agencies and contract work, a national American open-weight model initiative and a model provenance standard<sup class="cite"><a href="#ref-1">1</a></sup>. Cursor told the committees it would explore phasing out Chinese-developed open-weight models because of geopolitical risk; CNBC reports its Composer coding model was built on a Moonshot Kimi model<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<p>The same week, India's Sarvam began offering hosted access to Chinese models including DeepSeek alongside its own, The Next Web reports, and the report itself warns that forcing companies off these models before trusted alternatives exist would raise costs<sup class="cite"><a href="#ref-3">3</a></sup>. The recommendations are not law. They are, however, a clear signal of the questions customers and regulators will start asking.</p>
+</section>
+
+<section class="block">
+<h2>The real problem is hidden lineage</h2>
+<p>Cursor's case shows why this is harder than it looks. A product can be marketed under its own model name while being built on someone else's base model. Fine-tunes, distillations, merged models and hosted APIs all hide where the underlying weights came from. Software teams learned this with libraries: you depend not just on what you import but on everything it imports.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/model-provenance-open-weight-models/dependency-tree.webp" alt="Illustration of an application depending on dependencies A, B and C, where A depends on D and E, and C depends on D and F" width="1200" height="652" loading="lazy"></div><figcaption>Transitive dependencies: models work the same way, with fine-tunes and distillations hiding their base. <span class="credit">Source: <a href="https://github.com/cncf/tag-security/blob/main/community/working-groups/supply-chain-security/supply-chain-security-paper/sscsp.md" target="_blank" rel="noopener">CNCF TAG Security, Software Supply Chain Best Practices</a> · CC BY 4.0</span></figcaption></figure>
+<p>The CNCF's supply chain guidance describes exactly this structure for software, with direct and transitive dependencies each needing to be known and verified<sup class="cite"><a href="#ref-6">6</a></sup>. For models, the chain runs from base model to fine-tune to the hosted endpoint your product calls, and sometimes through a vendor that does not tell you.</p>
+</section>
+
+<section class="block">
+<h2>What a useful model inventory records</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Where used</small><div class="dgm-nodes"><span>Product features<em>customer-facing</em></span><span>Internal tools<em>coding, support, analytics</em></span><span>Vendor products<em>models inside SaaS you buy</em></span></div></div>
+<div class="dgm-tier"><small>The model</small><div class="dgm-nodes"><span class="hl">Name and version<em>as called</em></span><span>Host<em>self-hosted, cloud, API</em></span><span>Licence<em>and its restrictions</em></span></div></div>
+<div class="dgm-tier"><small>Lineage</small><div class="dgm-nodes"><span class="hl">Base model and developer<em>and country of origin</em></span><span>Modifications<em>fine-tune, distil, merge</em></span><span>Training data notes<em>where known</em></span></div></div>
+<div class="dgm-tier"><small>Controls</small><div class="dgm-nodes"><span>Evaluation results<em>your tasks</em></span><span>Approved alternatives<em>tested fallbacks</em></span><span>Owner<em>who decides</em></span></div></div>
+</div>
+<figcaption>Lineage is the layer most inventories miss, and the one customers now ask about.</figcaption>
+</figure>
+<p>Standards are starting to catch up. India's CERT-In expanded its bill of materials guidelines in 2025 to cover AI bills of materials alongside software, cryptographic and hardware ones<sup class="cite"><a href="#ref-4">4</a></sup>, and research such as AIBoMGen generates AI bills of materials during training, recording datasets, base model and configuration with signed attestations<sup class="cite"><a href="#ref-5">5</a></sup>. You do not need to wait for a final standard to keep a spreadsheet with the fields above.</p>
+</section>
+
+<section class="block">
+<h2>Keep the right to switch</h2>
+<p>Provenance only helps if you can act on it. The architecture that makes switching cheap is the same one I recommend for cost and resilience: a model gateway between applications and models, evaluation sets for every important task, and at least one tested alternative for each.</p>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Inventory</b><span>List every model and vendor model, with lineage where known</span></li>
+<li><b>Ask</b><span>Request base model and origin from each AI vendor</span></li>
+<li class="hl"><b>Classify</b><span>Flag uses where origin matters to customers or rules</span></li>
+<li class="hl"><b>Prepare</b><span>Put those uses behind a gateway with a tested alternative</span></li>
+<li><b>Decide</b><span>Choose per use case, with cost and quality evidence</span></li>
+<li><b>Record</b><span>Keep the decision and its reasons for customers and auditors</span></li>
+</ol>
+<figcaption>Know, prepare, then decide: switching is a configuration change, not a rewrite.</figcaption>
+</figure>
+<table class="tbl">
+<thead><tr><th>Situation</th><th>Sensible stance</th></tr></thead>
+<tbody>
+<tr><td>Selling to US federal agencies or their contractors</td><td>Expect origin questions now; prepare alternatives for affected uses</td></tr>
+<tr><td>Regulated sectors such as finance and health</td><td>Document lineage and evaluation; be ready to explain choices</td></tr>
+<tr><td>Internal tools and experiments</td><td>Record lineage; choose on quality, cost and data handling</td></tr>
+<tr><td>Self-hosted open weights</td><td>Origin matters less for data flow, more for licence and customer perception</td></tr>
+</tbody>
+</table>
+<div class="callout"><p>Self-hosting an open-weight model keeps your data in your environment, whatever its origin. That is a different risk from sending data to a foreign API, and it deserves a different answer.</p></div>
+</section>
+
+<section class="block">
+<h2>The CTO's take</h2>
+<p>This is not only an American question. Indian, European and Gulf customers ask their own versions, about sovereignty, data residency or licensing. The companies that handle it well will be the ones that already know what is inside their products and have kept the freedom to change it. That is an engineering discipline, not a political position. Related reading: <a href="/insights/per-market-ai-models-apple-qwen-china/">per-market AI models</a>, <a href="/insights/llm-model-routing/">model routing</a>, <a href="/insights/mistral-large-4-open-weights-self-hosting/">self-hosting open weights</a> and <a href="/insights/llm-evaluation-sets-that-predict-production/">evaluation sets</a>.</p>
+<p>If you need a clear view of the models inside your products and a plan to keep your options open, I am a <a href="/fractional-cto/">fractional CTO</a> and <a href="/ai-architect/">AI architect</a> based in India, the United States and the UAE, working globally. You can <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>
