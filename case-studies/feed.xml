@@ -1,6 +1,85 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link><description>Anonymised engagements with architecture and flow diagrams</description><language>en-gb</language><lastBuildDate>Sat, 21 Nov 2026 15:50:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/case-studies/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link></image><item><title>Fast, lawful and reviewable: creditworthiness assessment at checkout for an EU buy now, pay later provider</title><link>https://asksumanta.com/case-studies/eu-bnpl-creditworthiness-ccd2/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/eu-bnpl-creditworthiness-ccd2/</guid><pubDate>Sat, 21 Nov 2026 15:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>ai</category><category>data</category><category>governance</category><description>How an EU buy now, pay later provider can meet the revised Consumer Credit Directive: checkout-speed creditworthiness assessment, permitted data only and human review.</description><content:encoded><![CDATA[<p><em>A buy now, pay later provider operating in several EU countries approved purchases at checkout with a light-touch risk check. The revised Consumer Credit Directive brings that kind of credit into scope from 20 November 2026, with a proper creditworthiness assessment, limits on the data that may be used and a right to human review of automated decisions. The goal was to meet all three without making checkout slow.</em></p><h2>The situation</h2>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link><description>Anonymised engagements with architecture and flow diagrams</description><language>en-gb</language><lastBuildDate>Sun, 22 Nov 2026 15:50:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/case-studies/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link></image><item><title>One front door for research: securing lab-deployed AI tools at a Japanese university hospital</title><link>https://asksumanta.com/case-studies/japan-hospital-research-ai-exposure-hardening/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/japan-hospital-research-ai-exposure-hardening/</guid><pubDate>Sun, 22 Nov 2026 15:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>healthcare</category><category>security</category><category>kubernetes</category><description>How a Japanese university hospital can find and secure lab-deployed AI research tools, after AI agents exploited a medical imaging zero-day on an exposed server.</description><content:encoded><![CDATA[<p><em>A Japanese university hospital ran research AI tools that individual labs had installed themselves: imaging annotation servers, notebook servers, model demos. Some were reachable from the internet, outside the hospital&#x27;s security operations. When AI agents were reported to have found and exploited a zero-day in a medical imaging tool on exactly that kind of server, the goal became clear: find every research service, put it behind one front door, and do it without stopping the research.</em></p><h2>The situation</h2>
+<p>A Japanese university hospital had a strong central IT function for clinical systems and a very different world in its research labs. Radiology, pathology and informatics groups ran their own AI tools: imaging annotation servers for labelling studies, notebook servers for model development, demo applications for collaborators. Some sat on lab machines, some on cloud accounts paid from research grants, and some were reachable from the internet so partners at other institutions could log in.</p>
+<p>The hospital followed the Ministry of Health, Labour and Welfare's guidelines on the safety management of medical information systems, whose version 6.0 was restructured to respond to cyberattacks and wider cloud use, with separate volumes for governance, management and system operations<sup class="cite"><a href="#ref-3">3</a></sup>. Those controls were well applied to clinical systems. Research services were largely outside them.</p>
+<p><strong>Why now.</strong> In November 2026, Amazon reported that a suspected China-nexus operator used autonomous AI agents to map the API of MONAI Label, an open-source medical imaging annotation tool, find a path traversal flaw and exploit it on university servers in East Asia<sup class="cite"><a href="#ref-1">1</a></sup>. The Register reported the agents went on to gain root<sup class="cite"><a href="#ref-2">2</a></sup>. The hospital's research groups used tools of exactly this kind. The board asked how many such servers were exposed. Nobody could answer.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>Every research service known</strong>, with an owner, purpose and the data it can reach.</li>
+<li><strong>Nothing research-related directly reachable from the internet</strong>; one authenticated front door instead.</li>
+<li><strong>External collaborators still able to work</strong>, with their own identities, not shared passwords.</li>
+<li><strong>Patient data separated from experimental tools</strong>, with only de-identified data in research zones by default.</li>
+<li><strong>Research not stopped</strong>: labs keep the freedom to deploy, inside guard rails.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Users</small><div class="dgm-nodes"><span>Hospital researchers<em>hospital identity</em></span><span>External collaborators<em>federated or guest identities</em></span></div></div>
+<div class="dgm-tier"><small>Front door</small><div class="dgm-nodes"><span class="hl">Identity-aware gateway<em>single public entry point</em></span><span>Per-route access policy<em>which group sees which tool</em></span></div></div>
+<div class="dgm-tier"><small>Research platform</small><div class="dgm-nodes"><span class="hl">Kubernetes namespaces per lab<em>labs own their routes</em></span><span>Annotation and notebook services<em>approved images</em></span><span>GPU pool<em>shared, scheduled</em></span></div></div>
+<div class="dgm-tier"><small>Data</small><div class="dgm-nodes"><span>De-identified research zone<em>default</em></span><span class="hl">Identifiable data<em>separate, approval required</em></span><span>Imaging archive<em>clinical, read-only exports</em></span></div></div>
+<div class="dgm-tier"><small>Assurance</small><div class="dgm-nodes"><span>External scanning<em>continuous</em></span><span>Security monitoring<em>gateway and platform logs</em></span><span>Service register<em>owners and reviews</em></span></div></div>
+</div>
+<figcaption>One public entry point, labs owning their own routes behind it, and data zones that keep experiments away from identifiable records.</figcaption>
+</figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Discover</b><span>External scans and cloud account reviews find research services</span></li>
+<li><b>Register</b><span>Each one gets an owner, a purpose and a data classification</span></li>
+<li class="hl"><b>Move</b><span>Services move onto the research platform or are retired</span></li>
+<li class="hl"><b>Publish</b><span>Access only through the gateway, with authentication per route</span></li>
+<li><b>Feed</b><span>Data reaches tools from the de-identified zone by default</span></li>
+<li><b>Watch</b><span>Gateway and platform logs go to the hospital's monitoring</span></li>
+</ol>
+<figcaption>Find, register, move, publish safely, then watch: the same path for every research tool.</figcaption>
+</figure>
+
+<h2>The hard part: central control without central bottlenecks</h2>
+<p>The easy answer, making central IT deploy every research tool, would have stopped research and pushed labs back to their own servers. The design had to separate who controls the front door from who controls each service. Kubernetes Gateway API is built around exactly that split: infrastructure providers define gateway classes, cluster operators run gateways, and application developers attach their own routes<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/japan-hospital-research-ai-exposure-hardening/role-oriented-gateway.webp" alt="Diagram of Gateway API roles: an infrastructure provider manages the GatewayClass, a cluster operator manages the Gateway, and application developers manage HTTPRoutes that point to Services" width="1200" height="705" loading="lazy"></div><figcaption>Role-oriented routing: the platform team owns the gateway, each lab owns its routes. <span class="credit">Source: <a href="https://kubernetes.io/blog/2023/10/25/introducing-ingress2gateway/" target="_blank" rel="noopener">Kubernetes blog, Lior Lieberman and Kobi Levi</a> · CC BY 4.0</span></figcaption></figure>
+<p>In practice, the hospital's platform team ran the gateway and its authentication; each lab had a namespace and could publish routes to its own tools, which the gateway only accepted with an access policy attached. A new annotation server took the same steps for a lab as before, but could no longer appear on the internet without login.</p>
+<div class="callout"><p>The fastest win came before any platform work: an external scan of the hospital's address ranges and research cloud accounts. It turned an unknown into a list with owners.</p></div>
+<p>Data was the second half. The ministry also publishes cyber security measures for medical institutions alongside the guidelines<sup class="cite"><a href="#ref-4">4</a></sup>, and the hospital extended the same thinking to research. Research tools received de-identified exports by default; identifiable data stayed in a separate zone that required approval and was never reachable from tools exposed to external collaborators. The pattern follows the <a href="https://asksumanta.com/case-studies/health-network-fhir-omop-evidence-platform/">health evidence platform</a> and <a href="https://asksumanta.com/insights/federated-health-analytics-ohdsi/">federated health analytics</a>, and the gateway approach builds on <a href="https://asksumanta.com/insights/ingress-nginx-to-gateway-api/">moving to Gateway API</a>.</p>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Information security</small><ol><li>External scans</li><li class="hl">Service register and reviews</li><li>Monitoring</li></ol></div>
+<div class="dgm-lane"><small>Research platform team</small><ol><li>Gateway and identity</li><li class="hl">Lab namespaces and approved images</li><li>GPU scheduling</li></ol></div>
+<div class="dgm-lane"><small>Research labs</small><ol><li>Confirm owners and purpose</li><li>Move or retire services</li><li class="hl">Publish routes with access policies</li></ol></div>
+</div>
+<figcaption>Security found the services, the platform team built the front door, labs moved their own tools.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Find</b><ul><li>External and cloud scans</li><li>Owners for every service</li><li>Close the worst exposures</li></ul></div>
+<div><small>Phase 2</small><b>Front door</b><ul><li>Identity-aware gateway</li><li>Collaborator identities</li><li>Route policies</li></ul></div>
+<div><small>Phase 3</small><b>Platform</b><ul><li>Lab namespaces</li><li>Approved images</li><li>Data zones</li></ul></div>
+<div><small>Phase 4</small><b>Sustain</b><ul><li>Continuous scanning</li><li>Monitoring</li><li>Periodic reviews</li></ul></div>
+</div>
+<figcaption>Close exposures first, then give labs a better way to deploy than the one they had.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>One authenticated gateway for all research tools</td><td>Secure each tool individually</td><td>Tools vary too much; the front door is the control point</td></tr>
+<tr><td>Labs own their routes</td><td>Central IT deploys everything</td><td>Keeps research moving; avoids new shadow servers</td></tr>
+<tr><td>Federated identities for collaborators</td><td>Shared accounts and passwords</td><td>Access tied to a person and revocable</td></tr>
+<tr><td>De-identified data by default</td><td>Identifiable data where convenient</td><td>Limits harm if a research tool is compromised</td></tr>
+<tr><td>Retire what has no owner</td><td>Leave running until someone complains</td><td>Unowned services are never patched</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: start with an external scan and a service register; it changed the conversation from fear to a list. Differently: bring lab leads in as co-designers of the platform from the first week. Researchers adopted it fastest where they had shaped the deployment templates. See <a href="https://asksumanta.com/insights/ai-assisted-intrusions-artex-defenders/">AI-assisted intrusions</a> and the <a href="https://asksumanta.com/insights/tech-news-2026-11-22/">tech news for 22 November</a>.</p>
+<p>If you run healthcare or research technology in Japan or across Asia, see my <a href="https://asksumanta.com/regions/">regional work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/japan-hospital-research-ai-exposure-hardening/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Fast, lawful and reviewable: creditworthiness assessment at checkout for an EU buy now, pay later provider</title><link>https://asksumanta.com/case-studies/eu-bnpl-creditworthiness-ccd2/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/eu-bnpl-creditworthiness-ccd2/</guid><pubDate>Sat, 21 Nov 2026 15:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>ai</category><category>data</category><category>governance</category><description>How an EU buy now, pay later provider can meet the revised Consumer Credit Directive: checkout-speed creditworthiness assessment, permitted data only and human review.</description><content:encoded><![CDATA[<p><em>A buy now, pay later provider operating in several EU countries approved purchases at checkout with a light-touch risk check. The revised Consumer Credit Directive brings that kind of credit into scope from 20 November 2026, with a proper creditworthiness assessment, limits on the data that may be used and a right to human review of automated decisions. The goal was to meet all three without making checkout slow.</em></p><h2>The situation</h2>
 <p>A buy now, pay later provider operated in several EU countries, approving split payments at online checkouts. Its risk check was built for speed and fraud: device signals, basket details, repayment history with the provider and a fraud model. It was not designed as a creditworthiness assessment, and it used whatever data improved the model.</p>
 <p>The revised Consumer Credit Directive changes that. Member States had to apply it from 20 November 2026<sup class="cite"><a href="#ref-1">1</a></sup>, and it brings much buy now, pay later lending into scope as regulated consumer credit<sup class="cite"><a href="#ref-2">2</a></sup>. That means a creditworthiness assessment based on relevant information, limits on what personal data may be used, and, where the assessment involves automated processing, a right for the consumer to obtain human intervention, an explanation and a review<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>.</p>
 <p><strong>Why now.</strong> The rules applied from 20 November 2026, while several large markets were still finishing their national laws<sup class="cite"><a href="#ref-2">2</a></sup>. The provider needed one platform that met the directive everywhere it operated and could absorb national differences as each country's law settled<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
@@ -3935,85 +4014,4 @@
 
 <h2>What I'd do again, and differently</h2>
 <p>Again: start with tracing and cost per feature, because visibility creates demand for evaluation. Differently: write a model upgrade playbook in the first phase. Provider version changes arrive on their schedule, not yours, and a rehearsed path from new model to gated rollout takes the drama out of them.</p>
-<p>If your AI features are multiplying faster than your confidence in them, my <a href="https://asksumanta.com/ai-architect/">AI architecture work</a> covers evaluation and observability platforms, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/llm-evaluation-observability-platform/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Making Kubernetes spend visible, owned and controllable, without slowing teams down</title><link>https://asksumanta.com/case-studies/kubernetes-finops-platform-engineering/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/kubernetes-finops-platform-engineering/</guid><pubDate>Wed, 28 Oct 2026 07:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>kubernetes</category><category>finops</category><category>platform</category><category>cloud</category><description>How a scale-up can make Kubernetes spend visible and controllable per team: cost allocation, right-sizing without restarts, scale to zero, quotas and a paved road.</description><content:encoded><![CDATA[<p><em>Cloud bills were growing faster than the business, and nobody could say which team or product drove the increase. The goal was a platform where every workload has an owner, a cost, sensible defaults and a cheap way to shrink, so cost becomes a product decision rather than a quarterly panic.</em></p><h2>The situation</h2>
-<p>A fast-growing technology company ran most of its products on a handful of shared Kubernetes clusters. Teams shipped quickly, which was the point. But cloud spend had become one of the largest lines in the budget, and the monthly review was a guessing game: the bill showed compute, storage and network by account, while the organisation thought in teams and products. Requests and limits had been copied between services for years. Some workloads ran around the clock for jobs that happened once a day.</p>
-<p>A previous clean-up project had cut costs for a quarter, then spend crept back. The leadership question was simple: how do we make this stay fixed?</p>
-
-<h2>What had to be true</h2>
-<ul>
-<li><strong>Every workload has an owner</strong>: a team and a product, enforced, not hoped for.</li>
-<li><strong>Cost is visible where decisions are made</strong>: per team, per product, in a format finance accepts.</li>
-<li><strong>Efficiency is the default</strong>: new services start right-sized and autoscaled without teams becoming Kubernetes experts.</li>
-<li><strong>Shrinking is cheap and safe</strong>, so teams actually do it.</li>
-<li><strong>No slowdown in delivery</strong>; controls live in the paved road, not in tickets.</li>
-</ul>
-
-<h2>Architecture</h2>
-<figure class="dgm">
-<div class="dgm-stack">
-<div class="dgm-tier"><small>Golden path</small><div class="dgm-nodes"><span>Service templates<em>requests, limits, autoscaling</em></span><span class="hl">Ownership labels<em>team, product, environment</em></span><span>Terraform modules<em>namespaces, quotas</em></span></div></div>
-<div class="dgm-tier"><small>Guardrails</small><div class="dgm-nodes"><span>Admission policies<em>labels required</em></span><span>ResourceQuota<em>per namespace</em></span><span>LimitRange<em>sane defaults</em></span></div></div>
-<div class="dgm-tier"><small>Elasticity</small><div class="dgm-nodes"><span>HPA<em>traffic and queues</em></span><span class="hl">VPA in-place<em>right-size running pods</em></span><span>Scale to zero<em>queue-driven workers</em></span><span>Node autoscaling<em>bin packing</em></span></div></div>
-<div class="dgm-tier"><small>Measure</small><div class="dgm-nodes"><span class="hl">OpenCost<em>allocation per workload</em></span><span>Cloud billing in FOCUS<em>one schema</em></span><span>Usage telemetry<em>OpenTelemetry</em></span></div></div>
-<div class="dgm-tier"><small>Decide</small><div class="dgm-nodes"><span>Team cost reports<em>weekly</em></span><span>Product unit costs<em>cost per customer action</em></span><span>Budget alerts<em>per team</em></span></div></div>
-</div>
-<figcaption>Ownership at the top, measurement at the bottom; elasticity in the middle turns insight into savings automatically.</figcaption>
-</figure>
-
-<h2>The data flow, end to end</h2>
-<figure class="dgm">
-<ol class="dgm-flow g3">
-<li><b>Deploy</b><span>Service created from a template with owner labels and default autoscaling</span></li>
-<li><b>Admit</b><span>Policies reject workloads without labels; quotas cap each namespace</span></li>
-<li class="hl"><b>Allocate</b><span>OpenCost apportions node, storage and shared costs to each workload</span></li>
-<li><b>Join</b><span>Allocations joined with cloud billing in a common FOCUS format</span></li>
-<li class="hl"><b>Report</b><span>Cost per team and product, with recommendations, sent to owners</span></li>
-<li><b>Act</b><span>Right-sizing and scaling changes applied through the same templates</span></li>
-</ol>
-<figcaption>The loop closes in the template: improvements land once and every service inherits them.</figcaption>
-</figure>
-<p>OpenCost provides workload-level cost allocation for Kubernetes, attributing cluster costs to namespaces, labels and workloads<sup class="cite"><a href="#ref-1">1</a></sup>. Joining those allocations with billing data in the FinOps Foundation's FOCUS format gave finance and engineering one view of the same numbers<sup class="cite"><a href="#ref-2">2</a></sup>; the reasoning is in <a href="https://asksumanta.com/insights/focus-finops-ai-cost-allocation/">FOCUS and AI spend</a>.</p>
-
-<h2>The hard part: making shrinking safe</h2>
-<p>Visibility alone rarely changes behaviour. Teams knew some services were over-provisioned; they left them because changing requests meant restarts, and restarts meant risk. Two Kubernetes changes removed most of that friction:</p>
-<ul>
-<li><strong>In-place Pod resize</strong>, stable since Kubernetes 1.35, lets CPU and memory change on running Pods, and the Vertical Pod Autoscaler's in-place mode uses it<sup class="cite"><a href="#ref-3">3</a></sup>. Recommendations could finally be applied continuously, starting with CPU on stateless services. Details in <a href="https://asksumanta.com/insights/kubernetes-in-place-pod-resize/">in-place Pod resize</a>.</li>
-<li><strong>Scale to zero with the HorizontalPodAutoscaler</strong>, available from Kubernetes 1.37 for workloads driven by suitable object or external metrics such as queue length<sup class="cite"><a href="#ref-4">4</a></sup>. Workers that waited idle most of the day stopped costing anything while idle. See <a href="https://asksumanta.com/insights/kubernetes-finops-scale-to-zero/">Kubernetes FinOps and scale to zero</a>.</li>
-</ul>
-<p>Namespace quotas then capped the total each team could request, which turned capacity into a visible, negotiable budget rather than an unlimited pool<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
-<div class="callout"><p>Cost programmes fail when saving money is risky and spending it is free. Flip both: make shrinking safe and automatic, and make every request visible to its owner.</p></div>
-
-<h2>How it ran</h2>
-<figure class="dgm">
-<div class="dgm-lanes">
-<div class="dgm-lane"><small>Platform team</small><ol><li>Templates and policies</li><li class="hl">Allocation and reporting</li><li>Autoscaling defaults</li></ol></div>
-<div class="dgm-lane"><small>Product teams</small><ol><li>Adopt templates</li><li>Review weekly cost report</li><li class="hl">Accept right-sizing</li></ol></div>
-<div class="dgm-lane"><small>Finance</small><ol><li>Agree allocation rules</li><li>Set team budgets</li><li>Track unit costs</li></ol></div>
-</div>
-<figcaption>Platform provides the tools, teams own their spend, finance owns the budget conversation.</figcaption>
-</figure>
-<figure class="dgm">
-<div class="dgm-phases">
-<div><small>Phase 1</small><b>See</b><ul><li>Ownership labels</li><li>Allocation running</li><li>First team reports</li></ul></div>
-<div><small>Phase 2</small><b>Default</b><ul><li>Service templates</li><li>Admission policies</li><li>Quotas per namespace</li></ul></div>
-<div><small>Phase 3</small><b>Automate</b><ul><li>VPA in-place for CPU</li><li>Queue-driven scale to zero</li><li>Node bin packing</li></ul></div>
-<div><small>Phase 4</small><b>Sustain</b><ul><li>Unit cost metrics</li><li>Budget alerts</li><li>Quarterly review</li></ul></div>
-</div>
-<figcaption>Visibility first, then defaults, then automation, then a rhythm that keeps it working.</figcaption>
-</figure>
-
-<h2>Key decisions and trade-offs</h2>
-<table class="tbl">
-<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
-<tbody>
-<tr><td>Enforce ownership labels at admission</td><td>Tag clean-up campaigns</td><td>Unowned workloads can't appear in the first place</td></tr>
-<tr><td>Open-source allocation plus FOCUS</td><td>A separate cost tool per cloud</td><td>One allocation model and one billing schema across providers</td></tr>
-<tr><td>Right-size in place, CPU first</td><td>Rolling restarts for every change</td><td>Lower risk, so recommendations actually get applied</td></tr>
-<tr><td>Scale to zero only for queue-backed work</td><td>Scale everything to zero</td><td>User-facing services need warm capacity</td></tr>
-<tr><td>Quotas as team budgets</td><td>Unlimited shared pool</td><td>Makes capacity a visible, negotiated decision</td></tr>
-</tbody>
-</table>
-
-<h2>What I'd do again, and differently</h2>
-<p>Again: start with ownership and allocation, and put every improvement into the templates so it spreads automatically. Differently: agree unit cost metrics with product leaders earlier. Cost per team tells you who spends; cost per customer action tells you whether the spend is worth it.</p>
-<p>If cloud costs are outgrowing the business, my <a href="https://asksumanta.com/fractional-cto/">fractional CTO</a> work covers platform and FinOps programmes like this, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/kubernetes-finops-platform-engineering/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
+<p>If your AI features are multiplying faster than your confidence in them, my <a href="https://asksumanta.com/ai-architect/">AI architecture work</a> covers evaluation and observability platforms, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/llm-evaluation-observability-platform/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>

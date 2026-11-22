@@ -1,0 +1,82 @@
+<!--{"title": "Case study: securing research AI tools at a Japanese hospital", "description": "How a Japanese university hospital can find and secure lab-deployed AI research tools, after AI agents exploited a medical imaging zero-day on an exposed server.", "short": "Research AI exposure at a Japanese hospital", "h1": "One front door for research: securing lab-deployed AI tools at a Japanese university hospital", "kicker": "Case study · Healthcare security", "lede": "A Japanese university hospital ran research AI tools that individual labs had installed themselves: imaging annotation servers, notebook servers, model demos. Some were reachable from the internet, outside the hospital's security operations. When AI agents were reported to have found and exploited a zero-day in a medical imaging tool on exactly that kind of server, the goal became clear: find every research service, put it behind one front door, and do it without stopping the research.", "date": "2026-11-22", "datetime": "2026-11-22T15:50:00+04:00", "readtime": "9 min read", "sector": "Healthcare and research · Japan", "role": "Fractional CTO and security architect", "engagement": "Rapid assessment, architecture and delivery leadership", "scope": "Research service discovery, central gateway, identity, network segmentation, research data handling, monitoring", "stack": ["External attack surface scanning", "Kubernetes research platform", "Gateway API", "Identity-aware access", "Hospital identity provider", "Network segmentation", "De-identified research data zone", "Security monitoring"], "outcomes": ["Every internet-reachable research service found and assigned an owner", "Research tools published only through one authenticated gateway", "Labs able to deploy their own tools within platform guard rails", "Patient data kept in a separate zone from experimental tools", "Security monitoring covering research services for the first time"], "tags": ["healthcare", "security", "kubernetes"], "keywords": ["MONAI Label vulnerability", "AI agents zero-day", "hospital research security", "medical imaging AI security", "MHLW medical information security guidelines", "Gateway API", "identity-aware proxy", "shadow IT research", "Japan healthcare cybersecurity", "attack surface management"], "faq": [["What happened with MONAI Label?", "Amazon reported that a suspected China-nexus operator's autonomous AI agents mapped the API of MONAI Label, an open-source medical imaging annotation tool, found a path traversal flaw and exploited it against university servers in East Asia."], ["Why are research tools a particular risk in hospitals?", "They are often installed by individual labs, outside central IT, on servers that are reachable for collaborators, and they can sit near imaging or clinical data. They are rarely patched or monitored like clinical systems."], ["Does this mean banning lab-deployed tools?", "No. The aim is a platform where labs can still deploy what they need, but only behind central authentication, on a segmented network, with monitoring and an owner for every service."]], "related": ["/regions/", "/ai-architect/", "/fractional-cto/"], "citations": [{"title": "Amazon: China-Linked Hackers' AI Agents Exploited Medical Software Zero-Day", "url": "https://www.securityweek.com/amazon-china-linked-hackers-ai-agents-exploited-medical-software-zero-day/", "publisher": "SecurityWeek", "date": "Nov 2026"}, {"title": "China attackers deployed AI agents that autonomously found and exploited a 0-day to take over a university server", "url": "https://www.theregister.com/security/2026/11/20/china-attackers-deployed-ai-agents-that-autonomously-found-and-exploited-a-0-day-to-take-over-a-university-server/5311382", "publisher": "The Register", "date": "20 Nov 2026"}, {"title": "Guidelines on Safety Management of Healthcare Information Systems Ver. 6.0: outline and major points amended", "url": "https://www.mhlw.go.jp/english/policy/health-medical/healthcare-dx/dl/Guidelines-on-Safety-Management-of-Healthcare-Information-Systems-Ver.-6.0_Outline-and-Major-Points-Amended.pdf", "publisher": "Ministry of Health, Labour and Welfare (Japan)"}, {"title": "Cyber security measures", "url": "https://www.mhlw.go.jp/english/policy/health-medical/healthcare-dx/dl/Cyber-security-measures.pdf", "publisher": "Ministry of Health, Labour and Welfare (Japan)"}, {"title": "Introducing ingress2gateway: Simplifying Upgrades to Gateway API", "url": "https://kubernetes.io/blog/2023/10/25/introducing-ingress2gateway/", "publisher": "Kubernetes blog (Lior Lieberman, Kobi Levi)", "date": "25 Oct 2023"}]}-->
+
+<h2>The situation</h2>
+<p>A Japanese university hospital had a strong central IT function for clinical systems and a very different world in its research labs. Radiology, pathology and informatics groups ran their own AI tools: imaging annotation servers for labelling studies, notebook servers for model development, demo applications for collaborators. Some sat on lab machines, some on cloud accounts paid from research grants, and some were reachable from the internet so partners at other institutions could log in.</p>
+<p>The hospital followed the Ministry of Health, Labour and Welfare's guidelines on the safety management of medical information systems, whose version 6.0 was restructured to respond to cyberattacks and wider cloud use, with separate volumes for governance, management and system operations<sup class="cite"><a href="#ref-3">3</a></sup>. Those controls were well applied to clinical systems. Research services were largely outside them.</p>
+<p><strong>Why now.</strong> In November 2026, Amazon reported that a suspected China-nexus operator used autonomous AI agents to map the API of MONAI Label, an open-source medical imaging annotation tool, find a path traversal flaw and exploit it on university servers in East Asia<sup class="cite"><a href="#ref-1">1</a></sup>. The Register reported the agents went on to gain root<sup class="cite"><a href="#ref-2">2</a></sup>. The hospital's research groups used tools of exactly this kind. The board asked how many such servers were exposed. Nobody could answer.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>Every research service known</strong>, with an owner, purpose and the data it can reach.</li>
+<li><strong>Nothing research-related directly reachable from the internet</strong>; one authenticated front door instead.</li>
+<li><strong>External collaborators still able to work</strong>, with their own identities, not shared passwords.</li>
+<li><strong>Patient data separated from experimental tools</strong>, with only de-identified data in research zones by default.</li>
+<li><strong>Research not stopped</strong>: labs keep the freedom to deploy, inside guard rails.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Users</small><div class="dgm-nodes"><span>Hospital researchers<em>hospital identity</em></span><span>External collaborators<em>federated or guest identities</em></span></div></div>
+<div class="dgm-tier"><small>Front door</small><div class="dgm-nodes"><span class="hl">Identity-aware gateway<em>single public entry point</em></span><span>Per-route access policy<em>which group sees which tool</em></span></div></div>
+<div class="dgm-tier"><small>Research platform</small><div class="dgm-nodes"><span class="hl">Kubernetes namespaces per lab<em>labs own their routes</em></span><span>Annotation and notebook services<em>approved images</em></span><span>GPU pool<em>shared, scheduled</em></span></div></div>
+<div class="dgm-tier"><small>Data</small><div class="dgm-nodes"><span>De-identified research zone<em>default</em></span><span class="hl">Identifiable data<em>separate, approval required</em></span><span>Imaging archive<em>clinical, read-only exports</em></span></div></div>
+<div class="dgm-tier"><small>Assurance</small><div class="dgm-nodes"><span>External scanning<em>continuous</em></span><span>Security monitoring<em>gateway and platform logs</em></span><span>Service register<em>owners and reviews</em></span></div></div>
+</div>
+<figcaption>One public entry point, labs owning their own routes behind it, and data zones that keep experiments away from identifiable records.</figcaption>
+</figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Discover</b><span>External scans and cloud account reviews find research services</span></li>
+<li><b>Register</b><span>Each one gets an owner, a purpose and a data classification</span></li>
+<li class="hl"><b>Move</b><span>Services move onto the research platform or are retired</span></li>
+<li class="hl"><b>Publish</b><span>Access only through the gateway, with authentication per route</span></li>
+<li><b>Feed</b><span>Data reaches tools from the de-identified zone by default</span></li>
+<li><b>Watch</b><span>Gateway and platform logs go to the hospital's monitoring</span></li>
+</ol>
+<figcaption>Find, register, move, publish safely, then watch: the same path for every research tool.</figcaption>
+</figure>
+
+<h2>The hard part: central control without central bottlenecks</h2>
+<p>The easy answer, making central IT deploy every research tool, would have stopped research and pushed labs back to their own servers. The design had to separate who controls the front door from who controls each service. Kubernetes Gateway API is built around exactly that split: infrastructure providers define gateway classes, cluster operators run gateways, and application developers attach their own routes<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/japan-hospital-research-ai-exposure-hardening/role-oriented-gateway.webp" alt="Diagram of Gateway API roles: an infrastructure provider manages the GatewayClass, a cluster operator manages the Gateway, and application developers manage HTTPRoutes that point to Services" width="1200" height="705" loading="lazy"></div><figcaption>Role-oriented routing: the platform team owns the gateway, each lab owns its routes. <span class="credit">Source: <a href="https://kubernetes.io/blog/2023/10/25/introducing-ingress2gateway/" target="_blank" rel="noopener">Kubernetes blog, Lior Lieberman and Kobi Levi</a> · CC BY 4.0</span></figcaption></figure>
+<p>In practice, the hospital's platform team ran the gateway and its authentication; each lab had a namespace and could publish routes to its own tools, which the gateway only accepted with an access policy attached. A new annotation server took the same steps for a lab as before, but could no longer appear on the internet without login.</p>
+<div class="callout"><p>The fastest win came before any platform work: an external scan of the hospital's address ranges and research cloud accounts. It turned an unknown into a list with owners.</p></div>
+<p>Data was the second half. The ministry also publishes cyber security measures for medical institutions alongside the guidelines<sup class="cite"><a href="#ref-4">4</a></sup>, and the hospital extended the same thinking to research. Research tools received de-identified exports by default; identifiable data stayed in a separate zone that required approval and was never reachable from tools exposed to external collaborators. The pattern follows the <a href="/case-studies/health-network-fhir-omop-evidence-platform/">health evidence platform</a> and <a href="/insights/federated-health-analytics-ohdsi/">federated health analytics</a>, and the gateway approach builds on <a href="/insights/ingress-nginx-to-gateway-api/">moving to Gateway API</a>.</p>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Information security</small><ol><li>External scans</li><li class="hl">Service register and reviews</li><li>Monitoring</li></ol></div>
+<div class="dgm-lane"><small>Research platform team</small><ol><li>Gateway and identity</li><li class="hl">Lab namespaces and approved images</li><li>GPU scheduling</li></ol></div>
+<div class="dgm-lane"><small>Research labs</small><ol><li>Confirm owners and purpose</li><li>Move or retire services</li><li class="hl">Publish routes with access policies</li></ol></div>
+</div>
+<figcaption>Security found the services, the platform team built the front door, labs moved their own tools.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Find</b><ul><li>External and cloud scans</li><li>Owners for every service</li><li>Close the worst exposures</li></ul></div>
+<div><small>Phase 2</small><b>Front door</b><ul><li>Identity-aware gateway</li><li>Collaborator identities</li><li>Route policies</li></ul></div>
+<div><small>Phase 3</small><b>Platform</b><ul><li>Lab namespaces</li><li>Approved images</li><li>Data zones</li></ul></div>
+<div><small>Phase 4</small><b>Sustain</b><ul><li>Continuous scanning</li><li>Monitoring</li><li>Periodic reviews</li></ul></div>
+</div>
+<figcaption>Close exposures first, then give labs a better way to deploy than the one they had.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>One authenticated gateway for all research tools</td><td>Secure each tool individually</td><td>Tools vary too much; the front door is the control point</td></tr>
+<tr><td>Labs own their routes</td><td>Central IT deploys everything</td><td>Keeps research moving; avoids new shadow servers</td></tr>
+<tr><td>Federated identities for collaborators</td><td>Shared accounts and passwords</td><td>Access tied to a person and revocable</td></tr>
+<tr><td>De-identified data by default</td><td>Identifiable data where convenient</td><td>Limits harm if a research tool is compromised</td></tr>
+<tr><td>Retire what has no owner</td><td>Leave running until someone complains</td><td>Unowned services are never patched</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: start with an external scan and a service register; it changed the conversation from fear to a list. Differently: bring lab leads in as co-designers of the platform from the first week. Researchers adopted it fastest where they had shaped the deployment templates. See <a href="/insights/ai-assisted-intrusions-artex-defenders/">AI-assisted intrusions</a> and the <a href="/insights/tech-news-2026-11-22/">tech news for 22 November</a>.</p>
+<p>If you run healthcare or research technology in Japan or across Asia, see my <a href="/regions/">regional work</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
