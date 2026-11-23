@@ -1,0 +1,81 @@
+<!--{"title": "Case study: accelerator-portable inference for a Brazilian AI SaaS", "description": "How a Brazilian AI software company can make model serving portable across GPUs and other accelerators, as US chip licensing and custom silicon reshape capacity.", "short": "Portable AI inference for a Brazilian SaaS", "h1": "Not tied to one chip: accelerator-portable inference for a Brazilian AI software company", "kicker": "Case study · AI infrastructure", "lede": "A Brazilian software company served its own fine-tuned language models to retail and banking customers from GPUs in a São Paulo cloud region. Its stack assumed one GPU family and one provider. New US licensing for advanced chips shipped to Brazil, and growing interest in cloud providers' own accelerators, made that assumption a business risk. The goal was inference that could move between accelerators and providers without a rewrite, and without data leaving Brazil.", "date": "2026-11-23", "datetime": "2026-11-23T15:50:00+04:00", "readtime": "9 min read", "sector": "AI software · Brazil", "role": "Fractional CTO and AI architect", "engagement": "Architecture review, platform design and delivery leadership", "scope": "Model serving abstraction, multi-accelerator images, scheduling, evaluation per accelerator, capacity strategy, data residency", "stack": ["Kubernetes", "Model gateway", "Open model formats", "Serving engines per accelerator", "Node Feature Discovery", "Per-accelerator evaluation suite", "Capacity contracts in-country", "OpenTelemetry"], "outcomes": ["Models served from more than one accelerator type behind one gateway", "Images matched to compatible nodes automatically", "Quality and latency checked per accelerator before traffic moves", "Capacity sourced from more than one provider in Brazil", "Customer data kept in-country on every serving path"], "tags": ["ai", "kubernetes", "platform"], "keywords": ["accelerator portability", "AI inference Brazil", "US AI chip licensing Brazil", "custom AI accelerators", "Trainium inference", "Node Feature Discovery", "model serving abstraction", "LGPD data residency AI", "GPU supply risk", "fractional CTO Latin America"], "faq": [["Why does chip licensing matter to a software company?", "It changes how easily cloud and data centre providers in a country can obtain advanced accelerators, which affects price and availability of the capacity a software company rents."], ["Can the same model run on different accelerators?", "Often yes, but not identically. Serving engines, numerical precision and kernels differ, so outputs, latency and cost must be checked per accelerator before moving production traffic."], ["How does Kubernetes help?", "Node Feature Discovery reports hardware and driver features on each node, so images built for a given accelerator can be scheduled only where they are compatible, and a gateway can route traffic across pools."]], "related": ["/regions/", "/ai-architect/", "/fractional-cto/"], "citations": [{"title": "US Dep't of Commerce issues rule to restrict remote access to advanced AI chips", "url": "https://www.datacenterdynamics.com/en/news/us-dept-of-commerce-issues-rule-to-restrict-remote-access-to-advanced-ai-chips/", "publisher": "DCD", "date": "Nov 2026"}, {"title": "Addressing Remote Access to Advanced Semiconductors", "url": "https://www.federalregister.gov/documents/2026/11/19/2026-23529/addressing-remote-access-to-advanced-semiconductors", "publisher": "Federal Register", "date": "19 Nov 2026"}, {"title": "Amazon Nears $7.5 Billion Deal for AI Startup Decart", "url": "https://www.pymnts.com/news/artificial-intelligence/2026/amazon-nears-7-5-billion-purchase-of-ai-startup-decart/", "publisher": "PYMNTS", "date": "Nov 2026"}, {"title": "Image Compatibility In Cloud Native Environments", "url": "https://kubernetes.io/blog/2025/06/25/image-compatibility-in-cloud-native-environments/", "publisher": "Kubernetes blog (Chaoyi Huang, Marcin Franczyk, Vanessa Sochat)", "date": "25 Jun 2025"}, {"title": "Lei nº 13.709, de 14 de agosto de 2018 (Lei Geral de Proteção de Dados Pessoais)", "url": "http://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/lei/l13709.htm", "publisher": "Presidência da República (Brazil)"}]}-->
+
+<h2>The situation</h2>
+<p>A Brazilian software company sold AI features to retailers and banks: customer service assistants, document extraction and product search, built on open-weight models it had fine-tuned. It served them from GPUs rented in a São Paulo cloud region, because customers expected their data to stay in Brazil under the LGPD's rules on personal data<sup class="cite"><a href="#ref-5">5</a></sup>. Every part of the serving stack, from container images to the serving engine and capacity contracts, assumed one GPU family and one provider.</p>
+<p><strong>Why now.</strong> In November 2026 the US issued a rule requiring licences for exports of advanced AI chips to several countries, including Brazil, and tightening remote access to such chips<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. At the same time, cloud providers were pushing their own accelerators harder; Amazon was reported to be near a deal for Decart, whose software helps models run on AWS's own chips<sup class="cite"><a href="#ref-3">3</a></sup>. For a company whose margins depended on inference cost, being tied to one chip in one region had become a business risk, not just a technical preference.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>Models servable on more than one accelerator type</strong>, with evidence that quality held.</li>
+<li><strong>Applications unaware of the hardware</strong>: one interface, routing decided by the platform.</li>
+<li><strong>No accidental mismatches</strong>: images only scheduled where drivers and hardware fit.</li>
+<li><strong>Capacity from more than one provider</strong>, all inside Brazil.</li>
+<li><strong>Cost visible per model, per accelerator</strong>, so choices were made on numbers, not habit.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Products</small><div class="dgm-nodes"><span>Customer service assistant<em>latency-sensitive</em></span><span>Document extraction<em>batch-friendly</em></span><span>Product search<em>embeddings</em></span></div></div>
+<div class="dgm-tier"><small>Gateway</small><div class="dgm-nodes"><span class="hl">Model gateway<em>one API for all models</em></span><span>Routing policy<em>by model, cost, latency</em></span><span>Tenant and region tags<em>Brazil only</em></span></div></div>
+<div class="dgm-tier"><small>Serving</small><div class="dgm-nodes"><span>GPU pool<em>primary provider</em></span><span class="hl">Alternative accelerator pool<em>second provider</em></span><span>Small-model CPU pool<em>embeddings, fallbacks</em></span></div></div>
+<div class="dgm-tier"><small>Build</small><div class="dgm-nodes"><span>Open model formats<em>one source of weights</em></span><span class="hl">Images per accelerator<em>with declared requirements</em></span><span>Per-accelerator evaluation<em>quality and latency</em></span></div></div>
+<div class="dgm-tier"><small>Operations</small><div class="dgm-nodes"><span>Node feature discovery<em>hardware and drivers</em></span><span>Telemetry<em>cost and latency per pool</em></span><span>Capacity register<em>contracts and limits</em></span></div></div>
+</div>
+<figcaption>One set of weights, several builds, several pools, one gateway: hardware becomes a routing decision.</figcaption>
+</figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Train</b><span>Fine-tuned weights are stored once in an open format</span></li>
+<li><b>Build</b><span>Serving images are built per accelerator, each declaring its requirements</span></li>
+<li class="hl"><b>Evaluate</b><span>Each build runs the same evaluation set for quality, latency and cost</span></li>
+<li class="hl"><b>Schedule</b><span>Images land only on nodes whose features match</span></li>
+<li><b>Route</b><span>The gateway sends traffic by policy, starting small on new pools</span></li>
+<li><b>Measure</b><span>Cost and latency per model and pool feed the next routing decision</span></li>
+</ol>
+<figcaption>Portability is proved per model and per accelerator, then turned into routing policy.</figcaption>
+</figure>
+
+<h2>The hard part: the same model is not quite the same on different chips</h2>
+<p>Moving a model between accelerators sounds like a deployment detail. In practice the serving engine, numerical precision, kernels and memory limits differ, and small differences in outputs show up in exactly the places customers notice: extraction fields, tone, refusals. The team treated every accelerator build as a new release of the model, with the same evaluation set and acceptance thresholds as a retrain, before any production traffic moved.</p>
+<p>The second trap was scheduling. An image built for one accelerator and its drivers must never land on a node that cannot run it. Node Feature Discovery reports hardware and system features of each node, and its image compatibility work lets an image declare requirements such as drivers and kernel features that can be validated against a node before scheduling<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/brazil-ai-saas-accelerator-portable-inference/node-compatibility.webp" alt="Terminal output of nfd compat validate-node showing an image's compatibility sets, listing kernel and device features with expressions and OK or FAIL status for each" width="887" height="635" loading="lazy"></div><figcaption>Validating an image's declared requirements against a node: the guard rail that keeps accelerator-specific builds on compatible hardware. <span class="credit">Source: <a href="https://kubernetes.io/blog/2025/06/25/image-compatibility-in-cloud-native-environments/" target="_blank" rel="noopener">Kubernetes blog, Chaoyi Huang, Marcin Franczyk and Vanessa Sochat</a> · CC BY 4.0</span></figcaption></figure>
+<div class="callout"><p>Portability is not free. Each additional accelerator adds a build, an evaluation run and an operational pool. The team supported two serving accelerator types plus CPU, and stopped there.</p></div>
+<p>The gateway and routing approach follows <a href="/insights/llm-model-routing/">LLM model routing</a> and <a href="/insights/kubernetes-inference-gateway/">Kubernetes inference gateways</a>; serving engine choices are covered in <a href="/insights/llm-inference-serving-vllm/">LLM inference serving</a>, and capacity planning in the <a href="/case-studies/us-saas-multi-region-ai-capacity/">multi-region AI capacity case study</a>.</p>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>ML engineering</small><ol><li>Open weight formats</li><li class="hl">Per-accelerator evaluation</li><li>Acceptance thresholds</li></ol></div>
+<div class="dgm-lane"><small>Platform</small><ol><li>Images with declared requirements</li><li class="hl">Feature-aware scheduling</li><li>Gateway routing and telemetry</li></ol></div>
+<div class="dgm-lane"><small>Commercial and legal</small><ol><li>Second provider in Brazil</li><li>Capacity terms</li><li class="hl">Data residency in contracts</li></ol></div>
+</div>
+<figcaption>ML proved quality, platform made it safe to run, commercial secured the capacity.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Abstract</b><ul><li>Model gateway</li><li>Apps off direct endpoints</li><li>Cost telemetry</li></ul></div>
+<div><small>Phase 2</small><b>Prove</b><ul><li>Second accelerator builds</li><li>Evaluation per build</li><li>Latency and cost data</li></ul></div>
+<div><small>Phase 3</small><b>Run</b><ul><li>Second provider pool</li><li>Feature-aware scheduling</li><li>Small traffic shares</li></ul></div>
+<div><small>Phase 4</small><b>Optimise</b><ul><li>Routing by cost</li><li>Batch work to cheaper pools</li><li>Quarterly capacity review</li></ul></div>
+</div>
+<figcaption>Abstract first, then prove, then run, then optimise on real numbers.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Gateway in front of every model</td><td>Apps call serving endpoints directly</td><td>Moving hardware becomes a routing change</td></tr>
+<tr><td>Treat each accelerator build as a release</td><td>Assume identical behaviour</td><td>Outputs differ in ways customers notice</td></tr>
+<tr><td>Images declare hardware requirements</td><td>Rely on node labels by convention</td><td>Mismatches caught before scheduling</td></tr>
+<tr><td>Two accelerator types plus CPU</td><td>Support everything</td><td>Each target adds builds, tests and operations</td></tr>
+<tr><td>All pools inside Brazil</td><td>Cheapest region anywhere</td><td>Customer contracts and data protection expectations</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: put the gateway in first; it made every later step cheaper and gave the cost data that justified the rest. Differently: write evaluation sets for each product before starting, not during the first migration. The slowest part was agreeing what "good enough" meant for each customer-facing task. See <a href="/insights/llm-evaluation-sets-that-predict-production/">evaluation sets that predict production</a> and the <a href="/insights/tech-news-2026-11-23/">tech news for 23 November</a>.</p>
+<p>If you run AI products in Brazil or across Latin America, see my <a href="/regions/">regional work</a>, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
