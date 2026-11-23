@@ -1,0 +1,58 @@
+<!--{"title": "Empirical calibration: why observational studies need controls", "description": "Most observational health studies report confidence intervals that are too narrow. How negative controls and empirical calibration fix it, and how to build them in.", "h1": "Empirical calibration explained: why observational health studies need negative controls", "kicker": "Healthcare data · Explainer", "lede": "Real-world evidence is moving from research papers into regulatory submissions, payer decisions and product claims. Yet most observational studies report confidence intervals as if their design had no systematic error. OHDSI's work on method validity shows how badly that assumption fails, and offers a practical fix: test the design on questions with known answers, then calibrate. Here is how it works, and what it means for the teams building evidence platforms.", "date": "2026-11-23", "datetime": "2026-11-23T21:20:00+04:00", "readtime": "8 min read", "format": "explainer", "tags": ["healthcare", "omop", "data"], "keywords": ["empirical calibration", "negative controls", "observational study bias", "real-world evidence", "OHDSI method validity", "confidence interval coverage", "positive controls", "OMOP CDM", "EmpiricalCalibration R package", "RWE platform engineering"], "faq": [["What is a negative control?", "An exposure and outcome pair believed to have no causal relationship. If a study design applied to it finds an effect, that apparent effect measures the design's systematic error in that data."], ["What does empirical calibration do?", "It fits the distribution of estimates for negative controls, and positive controls where used, and adjusts the p-values and confidence intervals of the outcomes of interest so they account for the systematic error observed, not only random error."], ["Does calibration make a bad study good?", "No. It makes the uncertainty honest. A design with large systematic error will produce wide calibrated intervals, which is the correct signal that the question cannot be answered well with that design and data."]], "related": ["/ai-architect/", "/fractional-cto/", "/regions/"], "citations": [{"title": "The Book of OHDSI: Method Validity", "url": "https://ohdsi.github.io/TheBookOfOhdsi/MethodValidity.html", "publisher": "OHDSI"}, {"title": "Interpreting observational studies: why empirical calibration is needed to correct p-values", "url": "https://doi.org/10.1002/sim.5925", "publisher": "Statistics in Medicine (Schuemie et al.)", "date": "2014"}, {"title": "Empirical confidence interval calibration for population-level effect estimation studies in observational healthcare data", "url": "https://doi.org/10.1073/pnas.1708282114", "publisher": "PNAS (Schuemie et al.)", "date": "2018"}, {"title": "EmpiricalCalibration R package", "url": "https://ohdsi.github.io/EmpiricalCalibration/", "publisher": "OHDSI"}, {"title": "MethodEvaluation R package", "url": "https://ohdsi.github.io/MethodEvaluation/", "publisher": "OHDSI"}, {"title": "Framework for FDA's Real-World Evidence Program", "url": "https://www.fda.gov/media/120060/download", "publisher": "US Food and Drug Administration", "date": "Dec 2018"}]}-->
+<section class="block">
+<h2>The problem: honest-looking intervals that are not</h2>
+<p>A 95% confidence interval from an observational study accounts for random error: the chance variation from studying a sample. It does not account for systematic error from confounding, selection or measurement problems in the data and design. In observational healthcare data those systematic errors are rarely zero, so the stated 95% interval often contains the true effect far less than 95% of the time.</p>
+<p>The Book of OHDSI makes the point with evidence rather than argument. OHDSI ran the methods in its Methods Library, with various analysis choices, against a benchmark of control questions on four large databases. Several methods separated positive from negative controls well, but most showed high type 1 error and confidence interval coverage well below 95% in most settings<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/empirical-calibration-negative-controls/methods-coverage.webp" alt="Chart of 95 percent confidence interval coverage for case-control, case-crossover, cohort method, self-controlled case series and self-controlled cohort designs across eight outcome categories in four databases, with most points well below the dashed 95 percent line" width="1200" height="1108" loading="lazy"></div><figcaption>Coverage of nominal 95% intervals across designs, outcomes and databases: most fall well short of 95%. <span class="credit">Source: <a href="https://ohdsi.github.io/TheBookOfOhdsi/MethodValidity.html" target="_blank" rel="noopener">The Book of OHDSI, Method Validity</a> · CC0 1.0</span></figcaption></figure>
+<p>The book's conclusion is blunt: without empirical evaluation, which is true for almost all published observational studies, we should assume it is likely that the true effect is not inside the reported 95% interval<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+</section>
+
+<section class="block">
+<h2>The fix: ask questions you already know the answer to</h2>
+<p>The idea, set out by Schuemie and colleagues, is to run the same study design on control questions whose answer is known, and measure how wrong the design is<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<ul>
+<li><strong>Negative controls</strong> are exposure and outcome pairs believed to have no causal relationship. A perfect design would centre their estimates on a relative risk of one. The spread and shift of the actual estimates is the design's systematic error in this data.</li>
+<li><strong>Positive controls</strong> have a known effect. Because real ones are scarce, OHDSI synthesises them by injecting additional outcomes into negative controls, so the true effect size is known<sup class="cite"><a href="#ref-1">1</a></sup>.</li>
+</ul>
+<p>Empirical calibration then fits a model of that systematic error and adjusts the p-values and confidence intervals of the real outcomes accordingly<sup class="cite"><a href="#ref-3">3</a></sup>. In OHDSI's evaluation, calibration restored type 1 error and coverage to close to their nominal values, at the cost of some extra type 2 error and less precision<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/empirical-calibration-negative-controls/p-value-calibration.webp" alt="Funnel plot of relative risk against standard error, with negative control estimates as dots clustered near one, a dashed line marking conventional significance, a shaded calibrated significance region, and two outcomes of interest as diamonds" width="1200" height="900" loading="lazy"></div><figcaption>P-value calibration: dots are negative controls, diamonds are outcomes of interest; the shaded area marks calibrated significance. <span class="credit">Source: <a href="https://ohdsi.github.io/TheBookOfOhdsi/MethodValidity.html" target="_blank" rel="noopener">The Book of OHDSI, Method Validity</a> · CC0 1.0</span></figcaption></figure>
+</section>
+
+<section class="block">
+<h2>How it fits into a study pipeline</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Design</b><span>Pre-specify the study and its analysis choices</span></li>
+<li><b>Controls</b><span>Select negative controls with clinical review; synthesise positive controls</span></li>
+<li class="hl"><b>Run blind</b><span>Execute on controls and outcomes, keeping outcome results hidden</span></li>
+<li class="hl"><b>Diagnose</b><span>Check balance, equipoise and the control distribution</span></li>
+<li><b>Calibrate</b><span>Fit systematic error and calibrate intervals and p-values</span></li>
+<li><b>Unblind</b><span>Report calibrated and uncalibrated results with diagnostics</span></li>
+</ol>
+<figcaption>Controls and calibration are steps in the pipeline, not a statistical afterthought.</figcaption>
+</figure>
+<p>OHDSI provides the pieces as open-source R packages: EmpiricalCalibration fits the systematic error distribution and calibrates estimates<sup class="cite"><a href="#ref-4">4</a></sup>, and MethodEvaluation synthesises positive controls and computes performance metrics<sup class="cite"><a href="#ref-5">5</a></sup>. Because they work on the OMOP Common Data Model, the same study package can run across data partners and calibrate separately in each database.</p>
+</section>
+
+<section class="block">
+<h2>What it means for the people building evidence platforms</h2>
+<p>For engineering and data leaders, the implications are practical rather than statistical.</p>
+<table class="tbl">
+<thead><tr><th>Platform decision</th><th>Why calibration changes it</th></tr></thead>
+<tbody>
+<tr><td>Control lists as versioned assets</td><td>Negative controls need clinical review and reuse; treat them like code, with owners and history</td></tr>
+<tr><td>Blinding built into the workflow</td><td>Results for outcomes of interest stay hidden until diagnostics pass</td></tr>
+<tr><td>Compute budgeted for controls</td><td>Running dozens of controls per outcome multiplies the work; plan capacity for it</td></tr>
+<tr><td>Report both calibrated and uncalibrated</td><td>Reviewers can see how much systematic error the design carried</td></tr>
+<tr><td>Calibrate per database</td><td>Systematic error differs by data source; one calibration does not fit all</td></tr>
+</tbody>
+</table>
+<div class="callout"><p>Wide calibrated intervals are a feature. They tell you, before anyone acts on a result, that this design and this data cannot answer the question well.</p></div>
+<p>Regulators have set out how they think about real-world evidence; the FDA's framework, for example, focuses on whether real-world data are fit for use and whether study designs can provide adequate evidence<sup class="cite"><a href="#ref-6">6</a></sup>. Measured systematic error is one of the strongest answers to the second question an evidence team can give.</p>
+</section>
+
+<section class="block">
+<h2>The CTO's take</h2>
+<p>If your organisation produces or buys real-world evidence, ask one question of every study: what happened on the negative controls? If there is no answer, the confidence intervals are optimistic by an unknown amount. Building controls, blinding and calibration into the platform costs compute and some process, and it is the cheapest credibility you can buy. Related reading: <a href="/insights/real-world-evidence-study-designs-omop/">real-world evidence study designs</a>, <a href="/insights/omop-data-quality-checks/">OMOP data quality checks</a>, <a href="/insights/federated-health-analytics-ohdsi/">federated health analytics</a> and the <a href="/case-studies/life-sciences-real-world-evidence-network/">real-world evidence network case study</a>.</p>
+<p>If you are building or buying an evidence platform, I am a <a href="/fractional-cto/">fractional CTO</a> and data architect based in India, the United States and the UAE, working globally. You can <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>

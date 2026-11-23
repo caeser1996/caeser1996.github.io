@@ -1,6 +1,62 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights</title><link>https://asksumanta.com/</link><description>Articles on AI, data, cloud and technology leadership</description><language>en-gb</language><lastBuildDate>Mon, 23 Nov 2026 08:55:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/insights/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights</title><link>https://asksumanta.com/</link></image><item><title>Tech news, 23 November 2026: Amazon and Decart, an open-weight Inkling 2 Mini, RTX Spark desktops and a ransomware claim against Nvidia</title><link>https://asksumanta.com/insights/tech-news-2026-11-23/</link><guid isPermaLink="true">https://asksumanta.com/insights/tech-news-2026-11-23/</guid><pubDate>Mon, 23 Nov 2026 08:55:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>ai</category><category>cloud</category><category>security</category><description>A CTO&#x27;s take: Amazon reportedly nears a deal for Decart to run AI on its own chips, Inkling 2 Mini ships open weights, RTX Spark desktops go on sale, Nvidia probes claim.</description><content:encoded><![CDATA[<p><em>Amazon is reported to be close to buying Decart, whose software helps AI models run on AWS&#x27;s own chips. Thinking Machines released Inkling 2 Mini with open weights sized for a laptop, and Nvidia&#x27;s RTX Spark compact desktops went on sale for local AI work. Nvidia also said it is investigating a possible incident at a third-party partner after a ransomware group listed it.</em></p><p>Today's brief covers stories from 20 to 22 November.</p>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights</title><link>https://asksumanta.com/</link><description>Articles on AI, data, cloud and technology leadership</description><language>en-gb</language><lastBuildDate>Mon, 23 Nov 2026 21:20:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/insights/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights</title><link>https://asksumanta.com/</link></image><item><title>Empirical calibration explained: why observational health studies need negative controls</title><link>https://asksumanta.com/insights/empirical-calibration-negative-controls/</link><guid isPermaLink="true">https://asksumanta.com/insights/empirical-calibration-negative-controls/</guid><pubDate>Mon, 23 Nov 2026 21:20:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>healthcare</category><category>omop</category><category>data</category><description>Most observational health studies report confidence intervals that are too narrow. How negative controls and empirical calibration fix it, and how to build them in.</description><content:encoded><![CDATA[<p><em>Real-world evidence is moving from research papers into regulatory submissions, payer decisions and product claims. Yet most observational studies report confidence intervals as if their design had no systematic error. OHDSI&#x27;s work on method validity shows how badly that assumption fails, and offers a practical fix: test the design on questions with known answers, then calibrate. Here is how it works, and what it means for the teams building evidence platforms.</em></p><section class="block">
+<h2>The problem: honest-looking intervals that are not</h2>
+<p>A 95% confidence interval from an observational study accounts for random error: the chance variation from studying a sample. It does not account for systematic error from confounding, selection or measurement problems in the data and design. In observational healthcare data those systematic errors are rarely zero, so the stated 95% interval often contains the true effect far less than 95% of the time.</p>
+<p>The Book of OHDSI makes the point with evidence rather than argument. OHDSI ran the methods in its Methods Library, with various analysis choices, against a benchmark of control questions on four large databases. Several methods separated positive from negative controls well, but most showed high type 1 error and confidence interval coverage well below 95% in most settings<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/empirical-calibration-negative-controls/methods-coverage.webp" alt="Chart of 95 percent confidence interval coverage for case-control, case-crossover, cohort method, self-controlled case series and self-controlled cohort designs across eight outcome categories in four databases, with most points well below the dashed 95 percent line" width="1200" height="1108" loading="lazy"></div><figcaption>Coverage of nominal 95% intervals across designs, outcomes and databases: most fall well short of 95%. <span class="credit">Source: <a href="https://ohdsi.github.io/TheBookOfOhdsi/MethodValidity.html" target="_blank" rel="noopener">The Book of OHDSI, Method Validity</a> · CC0 1.0</span></figcaption></figure>
+<p>The book's conclusion is blunt: without empirical evaluation, which is true for almost all published observational studies, we should assume it is likely that the true effect is not inside the reported 95% interval<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+</section>
+
+<section class="block">
+<h2>The fix: ask questions you already know the answer to</h2>
+<p>The idea, set out by Schuemie and colleagues, is to run the same study design on control questions whose answer is known, and measure how wrong the design is<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
+<ul>
+<li><strong>Negative controls</strong> are exposure and outcome pairs believed to have no causal relationship. A perfect design would centre their estimates on a relative risk of one. The spread and shift of the actual estimates is the design's systematic error in this data.</li>
+<li><strong>Positive controls</strong> have a known effect. Because real ones are scarce, OHDSI synthesises them by injecting additional outcomes into negative controls, so the true effect size is known<sup class="cite"><a href="#ref-1">1</a></sup>.</li>
+</ul>
+<p>Empirical calibration then fits a model of that systematic error and adjusts the p-values and confidence intervals of the real outcomes accordingly<sup class="cite"><a href="#ref-3">3</a></sup>. In OHDSI's evaluation, calibration restored type 1 error and coverage to close to their nominal values, at the cost of some extra type 2 error and less precision<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/empirical-calibration-negative-controls/p-value-calibration.webp" alt="Funnel plot of relative risk against standard error, with negative control estimates as dots clustered near one, a dashed line marking conventional significance, a shaded calibrated significance region, and two outcomes of interest as diamonds" width="1200" height="900" loading="lazy"></div><figcaption>P-value calibration: dots are negative controls, diamonds are outcomes of interest; the shaded area marks calibrated significance. <span class="credit">Source: <a href="https://ohdsi.github.io/TheBookOfOhdsi/MethodValidity.html" target="_blank" rel="noopener">The Book of OHDSI, Method Validity</a> · CC0 1.0</span></figcaption></figure>
+</section>
+
+<section class="block">
+<h2>How it fits into a study pipeline</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Design</b><span>Pre-specify the study and its analysis choices</span></li>
+<li><b>Controls</b><span>Select negative controls with clinical review; synthesise positive controls</span></li>
+<li class="hl"><b>Run blind</b><span>Execute on controls and outcomes, keeping outcome results hidden</span></li>
+<li class="hl"><b>Diagnose</b><span>Check balance, equipoise and the control distribution</span></li>
+<li><b>Calibrate</b><span>Fit systematic error and calibrate intervals and p-values</span></li>
+<li><b>Unblind</b><span>Report calibrated and uncalibrated results with diagnostics</span></li>
+</ol>
+<figcaption>Controls and calibration are steps in the pipeline, not a statistical afterthought.</figcaption>
+</figure>
+<p>OHDSI provides the pieces as open-source R packages: EmpiricalCalibration fits the systematic error distribution and calibrates estimates<sup class="cite"><a href="#ref-4">4</a></sup>, and MethodEvaluation synthesises positive controls and computes performance metrics<sup class="cite"><a href="#ref-5">5</a></sup>. Because they work on the OMOP Common Data Model, the same study package can run across data partners and calibrate separately in each database.</p>
+</section>
+
+<section class="block">
+<h2>What it means for the people building evidence platforms</h2>
+<p>For engineering and data leaders, the implications are practical rather than statistical.</p>
+<table class="tbl">
+<thead><tr><th>Platform decision</th><th>Why calibration changes it</th></tr></thead>
+<tbody>
+<tr><td>Control lists as versioned assets</td><td>Negative controls need clinical review and reuse; treat them like code, with owners and history</td></tr>
+<tr><td>Blinding built into the workflow</td><td>Results for outcomes of interest stay hidden until diagnostics pass</td></tr>
+<tr><td>Compute budgeted for controls</td><td>Running dozens of controls per outcome multiplies the work; plan capacity for it</td></tr>
+<tr><td>Report both calibrated and uncalibrated</td><td>Reviewers can see how much systematic error the design carried</td></tr>
+<tr><td>Calibrate per database</td><td>Systematic error differs by data source; one calibration does not fit all</td></tr>
+</tbody>
+</table>
+<div class="callout"><p>Wide calibrated intervals are a feature. They tell you, before anyone acts on a result, that this design and this data cannot answer the question well.</p></div>
+<p>Regulators have set out how they think about real-world evidence; the FDA's framework, for example, focuses on whether real-world data are fit for use and whether study designs can provide adequate evidence<sup class="cite"><a href="#ref-6">6</a></sup>. Measured systematic error is one of the strongest answers to the second question an evidence team can give.</p>
+</section>
+
+<section class="block">
+<h2>The CTO's take</h2>
+<p>If your organisation produces or buys real-world evidence, ask one question of every study: what happened on the negative controls? If there is no answer, the confidence intervals are optimistic by an unknown amount. Building controls, blinding and calibration into the platform costs compute and some process, and it is the cheapest credibility you can buy. Related reading: <a href="https://asksumanta.com/insights/real-world-evidence-study-designs-omop/">real-world evidence study designs</a>, <a href="https://asksumanta.com/insights/omop-data-quality-checks/">OMOP data quality checks</a>, <a href="https://asksumanta.com/insights/federated-health-analytics-ohdsi/">federated health analytics</a> and the <a href="https://asksumanta.com/case-studies/life-sciences-real-world-evidence-network/">real-world evidence network case study</a>.</p>
+<p>If you are building or buying an evidence platform, I am a <a href="https://asksumanta.com/fractional-cto/">fractional CTO</a> and data architect based in India, the United States and the UAE, working globally. You can <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section><p><a href="https://asksumanta.com/insights/empirical-calibration-negative-controls/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Tech news, 23 November 2026: Amazon and Decart, an open-weight Inkling 2 Mini, RTX Spark desktops and a ransomware claim against Nvidia</title><link>https://asksumanta.com/insights/tech-news-2026-11-23/</link><guid isPermaLink="true">https://asksumanta.com/insights/tech-news-2026-11-23/</guid><pubDate>Mon, 23 Nov 2026 08:55:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>ai</category><category>cloud</category><category>security</category><description>A CTO&#x27;s take: Amazon reportedly nears a deal for Decart to run AI on its own chips, Inkling 2 Mini ships open weights, RTX Spark desktops go on sale, Nvidia probes claim.</description><content:encoded><![CDATA[<p><em>Amazon is reported to be close to buying Decart, whose software helps AI models run on AWS&#x27;s own chips. Thinking Machines released Inkling 2 Mini with open weights sized for a laptop, and Nvidia&#x27;s RTX Spark compact desktops went on sale for local AI work. Nvidia also said it is investigating a possible incident at a third-party partner after a ransomware group listed it.</em></p><p>Today's brief covers stories from 20 to 22 November.</p>
 
 <figure class="dgm">
 <div class="dgm-stack">
@@ -2690,68 +2746,4 @@
 <section class="block">
 <h2>How I can help</h2>
 <p>I run assume-breach reviews of payment and custody architectures and help teams design independent controls on the money path. I am based in India, the United States and the UAE, working globally. See <a href="https://asksumanta.com/fractional-cto/">fractional CTO work</a> or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
-</section><p><a href="https://asksumanta.com/insights/binance-hack-custody-architecture-lessons/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Reddit goes logged-in: how to protect and monetise valuable content when AI answers the search</title><link>https://asksumanta.com/insights/reddit-logged-in-ai-scraping-content-access/</link><guid isPermaLink="true">https://asksumanta.com/insights/reddit-logged-in-ai-scraping-content-access/</guid><pubDate>Fri, 30 Oct 2026 21:05:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>ai</category><category>architecture</category><category>platform</category><description>Reddit is moving to a logged-in experience as AI search cuts referrals and scraping grows. A CTO&#x27;s take on access tiers, bot controls and licensed data APIs.</description><content:encoded><![CDATA[<p><em>On 29 October, Reddit said it will move towards a primarily logged-in experience, citing falling search referrals and scraping of its content for AI. It is the clearest sign yet that the open, crawlable web is being rebuilt into tiers. Any business whose content, data or listings have value now faces the same design question: who gets what, how, and on what terms?</em></p><section class="block">
-<h2>What happened</h2>
-<p>Reddit used its third-quarter results on 29 October to announce a shift towards a primarily logged-in experience. It said search referrals had fallen sharply, by more than a million a week in October, and that most scraping of its content happens through logged-out access<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. Testing begins outside the US this quarter, with no date yet for a global rollout, and Reddit says it will keep licensing its data to AI companies<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>.</p>
-<p>The reasons Reddit gives are commercial: logged-in users carry more signals for advertising, and a protected corpus is worth more in licensing talks<sup class="cite"><a href="#ref-2">2</a></sup>. The pattern matters well beyond Reddit.</p>
-</section>
-
-<section class="block">
-<h2>Why it matters to you</h2>
-<p>For two decades, the bargain was simple: let search engines crawl you, get traffic back. AI answers break that bargain. The engine reads your content and answers the question itself, so less traffic comes back, while AI companies also crawl the same pages to train models. If your business publishes reviews, listings, prices, research, community content or documentation, you are being asked the same question as Reddit.</p>
-<p>Standards are lagging. The IETF's AI Preferences working group is building a shared vocabulary for signals such as "allow search, not AI training", carried in robots.txt and HTTP headers, but the work is still in draft, and honouring the signals is voluntary<sup class="cite"><a href="#ref-4">4</a></sup><sup class="cite"><a href="#ref-5">5</a></sup>. In practice, control comes from your own architecture.</p>
-</section>
-
-<section class="block">
-<h2>Design content access in tiers</h2>
-<figure class="dgm">
-<div class="dgm-stack">
-<div class="dgm-tier"><small>Open</small><div class="dgm-nodes"><span>Discovery content<em>summaries, landing pages</em></span><span>Structured data<em>so AI answers cite you</em></span></div></div>
-<div class="dgm-tier"><small>Signed in</small><div class="dgm-nodes"><span class="hl">Full content and history<em>for people with accounts</em></span><span>Personalisation<em>the reason to sign in</em></span></div></div>
-<div class="dgm-tier"><small>Licensed</small><div class="dgm-nodes"><span class="hl">Data API<em>contracts, quotas, audit</em></span><span>Bulk exports<em>for approved partners</em></span></div></div>
-<div class="dgm-tier"><small>Edge controls</small><div class="dgm-nodes"><span class="hl">Gateway<em>routes by tier and client</em></span><span>Bot management<em>verify, rate-limit, block</em></span><span>AI preference signals<em>robots.txt and headers</em></span></div></div>
-</div>
-<figcaption>Decide which content belongs in which tier; enforce it at the edge, not in each application.</figcaption>
-</figure>
-<p><strong>Keep discovery open and structured.</strong> Gating everything trades AI scraping for invisibility. Content that brings people to you should stay crawlable, with structured data that makes it easy for AI answers to cite and link you. See <a href="https://asksumanta.com/insights/structured-data-for-ai-search/">structured data for AI search</a>.</p>
-<p><strong>Gate the asset.</strong> The content that makes you different, such as full threads, complete datasets or detailed reviews, sits behind sign-in, with reasons for people to sign in beyond the gate itself.</p>
-<p><strong>Sell structured access.</strong> If AI companies want your data, an API with contracts, quotas and audit logs is better for both sides than a scraping arms race. It is also the only tier you can price.</p>
-<p><strong>Enforce at the edge.</strong> Put tier rules in a gateway, so public, signed-in and partner traffic follow different routes with different limits, and applications do not each reinvent bot rules. In Kubernetes, the Gateway API lets an infrastructure team own shared gateways while application teams attach their own routes, or gives a dedicated gateway to a partner API<sup class="cite"><a href="#ref-6">6</a></sup>.</p>
-<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/reddit-logged-in-ai-scraping-content-access/route-binding.webp" alt="Diagram of a shared gateway in an infrastructure namespace bound to HTTP routes in two application namespaces, and a dedicated gateway bound to one route in a third namespace" width="1400" height="452" loading="lazy"></div><figcaption>Shared and dedicated gateways: public and signed-in traffic through one, licensed partner traffic through its own. <span class="credit">Source: <a href="https://kubernetes.io/blog/2021/04/22/evolving-kubernetes-networking-with-the-gateway-api/" target="_blank" rel="noopener">Kubernetes blog, Mark Church, Harry Bagdi, Daneyon Hanson, Nick Young and Manuel Zapf</a> · CC BY 4.0</span></figcaption></figure>
-<div class="callout"><p>Treat your content like a product with three prices: free for discovery, an account for depth, and a contract for bulk. Then build the edge that enforces them.</p></div>
-</section>
-
-<section class="block">
-<h2>What to measure first</h2>
-<figure class="dgm">
-<ol class="dgm-flow g3">
-<li><b>Classify traffic</b><span>Separate people, search crawlers, AI crawlers and unknown bots</span></li>
-<li><b>Trace referrals</b><span>Track search and AI-assistant referrals by page type over time</span></li>
-<li class="hl"><b>Value content</b><span>Find which content drives sign-ups, revenue or partner interest</span></li>
-<li><b>Set tiers</b><span>Assign each content type to open, signed in or licensed</span></li>
-<li class="hl"><b>Enforce</b><span>Gateway routes, rate limits and preference signals by tier</span></li>
-<li><b>Review</b><span>Check traffic, sign-ups and licensing quarterly and adjust</span></li>
-</ol>
-<figcaption>Measure before gating; the data usually shows which content is worth protecting.</figcaption>
-</figure>
-</section>
-
-<section class="block">
-<h2>Risks</h2>
-<ul>
-<li><strong>Losing discovery.</strong> Gating too much can cut the very traffic you are trying to protect. Test in one market or section first, as Reddit is doing<sup class="cite"><a href="#ref-1">1</a></sup>.</li>
-<li><strong>Privacy obligations.</strong> More logged-in users means more personal data. In the EU, UK, India and elsewhere that brings consent, minimisation and rights duties; see the <a href="https://asksumanta.com/fractional-cto-europe/">Europe</a> and <a href="https://asksumanta.com/fractional-cto-india/">India</a> pages.</li>
-<li><strong>Arms race costs.</strong> Bot detection never finishes. Budget for it as an ongoing service, not a project.</li>
-<li><strong>Licensing without metering.</strong> A data deal you cannot measure is hard to enforce. Build quotas and audit into the API from day one.</li>
-</ul>
-</section>
-
-<section class="block">
-<h2>CTO take</h2>
-<p>Reddit is large enough to make the move loudly, but the economics apply to any business whose content has value. The answer is rarely "lock everything" or "leave everything open". It is a deliberate split between content that earns discovery, content that earns accounts and content that earns licence fees, enforced consistently at the edge. Make that design decision now, while traffic data is still telling you what each type is worth. For more on how agents and AI change who uses your systems, see <a href="https://asksumanta.com/insights/agents-replace-seats-enterprise-saas/">when agents become the user</a> and today's <a href="https://asksumanta.com/insights/tech-news-2026-10-30/">tech news brief</a>.</p>
-</section>
-
-<section class="block">
-<h2>How I can help</h2>
-<p>I help content and marketplace businesses design access tiers, partner APIs and edge controls for an AI-shaped web. I am based in India, the United States and the UAE, working globally. See <a href="https://asksumanta.com/fractional-cto/">fractional CTO work</a> or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
-</section><p><a href="https://asksumanta.com/insights/reddit-logged-in-ai-scraping-content-access/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
+</section><p><a href="https://asksumanta.com/insights/binance-hack-custody-architecture-lessons/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
