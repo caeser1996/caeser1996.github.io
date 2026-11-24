@@ -1,0 +1,66 @@
+<!--{"title": "Materialise or infer? Handling hierarchies in knowledge graphs", "description": "Should a knowledge graph store every ancestor link, compute them at query time or let a reasoner infer them? A comparison of the three, with a real example from OMOP.", "h1": "Materialise or infer? Three ways to handle hierarchies in a knowledge graph", "kicker": "Knowledge graphs · Comparison", "lede": "Almost every useful knowledge graph has hierarchies: product categories, organisational units, diagnoses, regulations. The moment someone asks for everything under a node, you face a design choice that shapes performance, correctness and cost for years: store every ancestor relationship, walk the hierarchy at query time, or let a reasoner infer it. Here is how the three compare, using one of the largest production examples in healthcare.", "date": "2026-11-24", "datetime": "2026-11-24T21:20:00+04:00", "readtime": "8 min read", "format": "comparison", "tags": ["knowledge-graph", "ontology", "architecture"], "keywords": ["knowledge graph hierarchy", "transitive closure table", "materialised inference", "SPARQL property paths", "OWL 2 RL reasoning", "recursive SQL CTE", "OMOP concept ancestor", "ontology engineering", "graph query performance", "knowledge graph architecture"], "faq": [["What is a transitive closure table?", "A table that stores every ancestor and descendant pair in a hierarchy, not just direct parent links, often with the number of steps between them. Queries for everything under a node become a simple lookup instead of a recursive walk."], ["When should hierarchies be computed at query time?", "When the hierarchy changes often, is small or shallow, or when you rarely need deep traversals. SPARQL property paths and recursive SQL queries make this straightforward, at the cost of slower deep queries."], ["When is a reasoner worth it?", "When inferences come from several rules interacting, such as class hierarchies combined with property characteristics, and you need those rules applied consistently. Use a tractable profile such as OWL 2 RL and materialise its results where performance matters."]], "related": ["/ai-architect/", "/fractional-cto/", "/regions/"], "citations": [{"title": "The Book of OHDSI: Standardized Vocabularies", "url": "https://ohdsi.github.io/TheBookOfOhdsi/StandardizedVocabularies.html", "publisher": "OHDSI"}, {"title": "SPARQL 1.1 Query Language: Property Paths", "url": "https://www.w3.org/TR/sparql11-query/#propertypaths", "publisher": "W3C"}, {"title": "OWL 2 Web Ontology Language Profiles", "url": "https://www.w3.org/TR/owl2-profiles/", "publisher": "W3C"}, {"title": "RDF 1.1 Semantics", "url": "https://www.w3.org/TR/rdf11-mt/", "publisher": "W3C"}, {"title": "WITH Queries (Common Table Expressions)", "url": "https://www.postgresql.org/docs/current/queries-with.html", "publisher": "PostgreSQL documentation"}]}-->
+<section class="block">
+<h2>The question every hierarchy eventually gets</h2>
+<p>"Show me everything under this." Every patient with any form of heart disease. Every product in any subcategory of outdoor equipment. Every control that inherits from a regulation's article. Direct parent links answer "what is immediately above this?". They do not answer "what is anywhere below this?" without walking the tree.</p>
+<p>There are three ways to provide that answer, and real systems usually combine them. The right mix depends on how often the hierarchy changes, how deep it is, how often deep questions are asked and how many kinds of relationship need to combine.</p>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Materialise</small><div class="dgm-nodes"><span class="hl">Closure table<em>every ancestor pair stored</em></span><span>Fast reads<em>one lookup</em></span><span>Costly change<em>recompute on update</em></span></div></div>
+<div class="dgm-tier"><small>Compute at query time</small><div class="dgm-nodes"><span class="hl">Recursive queries<em>property paths, recursive CTEs</em></span><span>Always current<em>no rebuild</em></span><span>Slower deep reads<em>walk each time</em></span></div></div>
+<div class="dgm-tier"><small>Reason</small><div class="dgm-nodes"><span class="hl">Rule-based inference<em>RDFS, OWL 2 RL</em></span><span>Combines rules<em>not just one hierarchy</em></span><span>Needs discipline<em>profiles, testing</em></span></div></div>
+</div>
+<figcaption>Three ways to answer "everything under this", each trading freshness, speed and expressiveness differently.</figcaption>
+</figure>
+</section>
+
+<section class="block">
+<h2>Option 1: materialise the closure</h2>
+<p>The OMOP Standardized Vocabularies are a good production example. Direct hierarchical links between clinical concepts are stored as "Is a" and "Subsumes" relationships, and every higher-degree ancestry is inferred and stored in a separate CONCEPT_ANCESTOR table, with the minimum and maximum number of steps between ancestor and descendant<sup class="cite"><a href="#ref-1">1</a></sup>. Every concept is also stored as its own descendant at zero steps, which makes "this concept or anything below it" a single join.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/materialise-or-infer-knowledge-graph-hierarchies/concept-ancestor.webp" alt="Diagram of the hierarchy above and below atrial fibrillation, from specific types such as persistent and paroxysmal atrial fibrillation up through fibrillation, supraventricular arrhythmia, cardiac arrhythmia and heart disease to disease of the cardiovascular system, with labels for concepts, direct relationships, ancestry relationships and levels of separation" width="1200" height="784" loading="lazy"></div><figcaption>Direct relationships plus a materialised ancestor table with levels of separation: how OMOP answers "everything under this" in one lookup. <span class="credit">Source: <a href="https://ohdsi.github.io/TheBookOfOhdsi/StandardizedVocabularies.html" target="_blank" rel="noopener">The Book of OHDSI, Standardized Vocabularies</a> · CC0 1.0</span></figcaption></figure>
+<p>This works because the vocabulary changes in releases, not continuously, and because cohort definitions query descendants constantly. Rebuilding the closure at release time is cheap compared with walking the hierarchy in every analytical query across many databases. The trade-off is that the closure is only as current as the last rebuild, and its size grows with depth and breadth.</p>
+</section>
+
+<section class="block">
+<h2>Option 2: compute at query time</h2>
+<p>Graph and relational query languages can walk hierarchies directly. SPARQL 1.1 property paths let a query follow a relationship one or more times, such as every subclass of a class at any depth<sup class="cite"><a href="#ref-2">2</a></sup>. In SQL, a recursive common table expression does the same over a parent-child table<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<p>The advantage is that answers always reflect the current data, with nothing to rebuild. The cost is paid on every deep query, and it grows with depth, fan-out and concurrency. For a hierarchy of a few levels that changes daily, such as an organisation chart or a product catalogue under active editing, this is often the right default.</p>
+</section>
+
+<section class="block">
+<h2>Option 3: let a reasoner infer</h2>
+<p>Reasoning goes further than one hierarchy. RDF Schema semantics already define entailments such as subclass transitivity and inheriting types through subclass relationships<sup class="cite"><a href="#ref-4">4</a></sup>. OWL adds property characteristics, equivalences and more, and its profiles exist to keep reasoning tractable: OWL 2 RL, for example, is designed so that inference can be implemented with rule-based technology<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+<p>This earns its keep when several rules interact: a part-of relationship that is transitive, combined with a subclass hierarchy, combined with an equivalence between two vocabularies. Writing those combinations into queries by hand is where errors creep in. The discipline required is real: choose a profile, test inferences against expected results, and watch for unintended conclusions from loosely modelled axioms. See <a href="/insights/skos-vs-owl-enterprise-taxonomies/">SKOS versus OWL</a> and <a href="/insights/shacl-validation-knowledge-graphs/">SHACL validation</a>.</p>
+</section>
+
+<section class="block">
+<h2>Side by side</h2>
+<table class="tbl">
+<thead><tr><th>Question</th><th>Materialise</th><th>Compute at query time</th><th>Reason</th></tr></thead>
+<tbody>
+<tr><td>Read speed for deep queries</td><td>Fastest</td><td>Slows with depth</td><td>Fast if results are materialised</td></tr>
+<tr><td>Freshness</td><td>As of last rebuild</td><td>Always current</td><td>As of last inference run, or live if computed</td></tr>
+<tr><td>Change cost</td><td>Rebuild affected closure</td><td>None</td><td>Re-run inference</td></tr>
+<tr><td>Storage</td><td>Grows with depth and breadth</td><td>Minimal</td><td>Grows with inferred facts</td></tr>
+<tr><td>Expressiveness</td><td>One relationship type at a time</td><td>What you write in the query</td><td>Rules combine across relationships</td></tr>
+<tr><td>Best fit</td><td>Released vocabularies, analytics</td><td>Small or fast-changing hierarchies</td><td>Interacting rules, multiple ontologies</td></tr>
+</tbody>
+</table>
+</section>
+
+<section class="block">
+<h2>How I choose</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Change rate</b><span>Does the hierarchy change in releases or continuously?</span></li>
+<li><b>Query shape</b><span>How often are deep "everything under" questions asked?</span></li>
+<li class="hl"><b>Rule count</b><span>Is it one hierarchy, or several relationships that must combine?</span></li>
+<li><b>Scale</b><span>How large would the closure or inferred graph become?</span></li>
+<li class="hl"><b>Hybrid</b><span>Materialise the hot, stable paths; compute or reason over the rest</span></li>
+<li><b>Test</b><span>Keep expected answers as tests, whichever approach you choose</span></li>
+</ol>
+<figcaption>Most production graphs end up hybrid: materialise what is stable and hot, compute what changes.</figcaption>
+</figure>
+<div class="callout"><p>Whatever you choose, store levels of separation or provenance with inferred links. "Is this a direct child or five steps away?" is a question users ask, and it is expensive to answer after the fact.</p></div>
+<p>The same thinking applies when graphs feed AI systems. A retrieval layer that expands "heart disease" to its descendants before searching documents needs fast, correct closure, which is why materialised hierarchies often sit underneath <a href="/insights/graphrag-when-it-beats-vector-rag/">GraphRAG</a> and <a href="/insights/text-to-sql-semantic-layer/">semantic layers</a>. For background, see <a href="/insights/ontology-vs-knowledge-graph-vs-semantic-layer/">ontology versus knowledge graph versus semantic layer</a> and <a href="/insights/clinical-terminologies-omop-vocabularies/">clinical terminologies in OMOP</a>.</p>
+<p>If you are designing a knowledge graph that has to be both correct and fast, I am a <a href="/fractional-cto/">fractional CTO</a> and <a href="/ai-architect/">AI architect</a> based in India, the United States and the UAE, working globally. You can <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>

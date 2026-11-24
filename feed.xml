@@ -1,6 +1,70 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link><description>Fractional CTO and AI architect: insights, case studies and daily tech news.</description><language>en-gb</language><lastBuildDate>Mon, 23 Nov 2026 21:20:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link></image><item><title>Empirical calibration explained: why observational health studies need negative controls</title><link>https://asksumanta.com/insights/empirical-calibration-negative-controls/</link><guid isPermaLink="true">https://asksumanta.com/insights/empirical-calibration-negative-controls/</guid><pubDate>Mon, 23 Nov 2026 21:20:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>healthcare</category><category>omop</category><category>data</category><description>Most observational health studies report confidence intervals that are too narrow. How negative controls and empirical calibration fix it, and how to build them in.</description><content:encoded><![CDATA[<p><em>Real-world evidence is moving from research papers into regulatory submissions, payer decisions and product claims. Yet most observational studies report confidence intervals as if their design had no systematic error. OHDSI&#x27;s work on method validity shows how badly that assumption fails, and offers a practical fix: test the design on questions with known answers, then calibrate. Here is how it works, and what it means for the teams building evidence platforms.</em></p><section class="block">
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link><description>Fractional CTO and AI architect: insights, case studies and daily tech news.</description><language>en-gb</language><lastBuildDate>Tue, 24 Nov 2026 21:20:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link></image><item><title>Materialise or infer? Three ways to handle hierarchies in a knowledge graph</title><link>https://asksumanta.com/insights/materialise-or-infer-knowledge-graph-hierarchies/</link><guid isPermaLink="true">https://asksumanta.com/insights/materialise-or-infer-knowledge-graph-hierarchies/</guid><pubDate>Tue, 24 Nov 2026 21:20:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>knowledge-graph</category><category>ontology</category><category>architecture</category><description>Should a knowledge graph store every ancestor link, compute them at query time or let a reasoner infer them? A comparison of the three, with a real example from OMOP.</description><content:encoded><![CDATA[<p><em>Almost every useful knowledge graph has hierarchies: product categories, organisational units, diagnoses, regulations. The moment someone asks for everything under a node, you face a design choice that shapes performance, correctness and cost for years: store every ancestor relationship, walk the hierarchy at query time, or let a reasoner infer it. Here is how the three compare, using one of the largest production examples in healthcare.</em></p><section class="block">
+<h2>The question every hierarchy eventually gets</h2>
+<p>"Show me everything under this." Every patient with any form of heart disease. Every product in any subcategory of outdoor equipment. Every control that inherits from a regulation's article. Direct parent links answer "what is immediately above this?". They do not answer "what is anywhere below this?" without walking the tree.</p>
+<p>There are three ways to provide that answer, and real systems usually combine them. The right mix depends on how often the hierarchy changes, how deep it is, how often deep questions are asked and how many kinds of relationship need to combine.</p>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Materialise</small><div class="dgm-nodes"><span class="hl">Closure table<em>every ancestor pair stored</em></span><span>Fast reads<em>one lookup</em></span><span>Costly change<em>recompute on update</em></span></div></div>
+<div class="dgm-tier"><small>Compute at query time</small><div class="dgm-nodes"><span class="hl">Recursive queries<em>property paths, recursive CTEs</em></span><span>Always current<em>no rebuild</em></span><span>Slower deep reads<em>walk each time</em></span></div></div>
+<div class="dgm-tier"><small>Reason</small><div class="dgm-nodes"><span class="hl">Rule-based inference<em>RDFS, OWL 2 RL</em></span><span>Combines rules<em>not just one hierarchy</em></span><span>Needs discipline<em>profiles, testing</em></span></div></div>
+</div>
+<figcaption>Three ways to answer "everything under this", each trading freshness, speed and expressiveness differently.</figcaption>
+</figure>
+</section>
+
+<section class="block">
+<h2>Option 1: materialise the closure</h2>
+<p>The OMOP Standardized Vocabularies are a good production example. Direct hierarchical links between clinical concepts are stored as "Is a" and "Subsumes" relationships, and every higher-degree ancestry is inferred and stored in a separate CONCEPT_ANCESTOR table, with the minimum and maximum number of steps between ancestor and descendant<sup class="cite"><a href="#ref-1">1</a></sup>. Every concept is also stored as its own descendant at zero steps, which makes "this concept or anything below it" a single join.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/materialise-or-infer-knowledge-graph-hierarchies/concept-ancestor.webp" alt="Diagram of the hierarchy above and below atrial fibrillation, from specific types such as persistent and paroxysmal atrial fibrillation up through fibrillation, supraventricular arrhythmia, cardiac arrhythmia and heart disease to disease of the cardiovascular system, with labels for concepts, direct relationships, ancestry relationships and levels of separation" width="1200" height="784" loading="lazy"></div><figcaption>Direct relationships plus a materialised ancestor table with levels of separation: how OMOP answers "everything under this" in one lookup. <span class="credit">Source: <a href="https://ohdsi.github.io/TheBookOfOhdsi/StandardizedVocabularies.html" target="_blank" rel="noopener">The Book of OHDSI, Standardized Vocabularies</a> · CC0 1.0</span></figcaption></figure>
+<p>This works because the vocabulary changes in releases, not continuously, and because cohort definitions query descendants constantly. Rebuilding the closure at release time is cheap compared with walking the hierarchy in every analytical query across many databases. The trade-off is that the closure is only as current as the last rebuild, and its size grows with depth and breadth.</p>
+</section>
+
+<section class="block">
+<h2>Option 2: compute at query time</h2>
+<p>Graph and relational query languages can walk hierarchies directly. SPARQL 1.1 property paths let a query follow a relationship one or more times, such as every subclass of a class at any depth<sup class="cite"><a href="#ref-2">2</a></sup>. In SQL, a recursive common table expression does the same over a parent-child table<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<p>The advantage is that answers always reflect the current data, with nothing to rebuild. The cost is paid on every deep query, and it grows with depth, fan-out and concurrency. For a hierarchy of a few levels that changes daily, such as an organisation chart or a product catalogue under active editing, this is often the right default.</p>
+</section>
+
+<section class="block">
+<h2>Option 3: let a reasoner infer</h2>
+<p>Reasoning goes further than one hierarchy. RDF Schema semantics already define entailments such as subclass transitivity and inheriting types through subclass relationships<sup class="cite"><a href="#ref-4">4</a></sup>. OWL adds property characteristics, equivalences and more, and its profiles exist to keep reasoning tractable: OWL 2 RL, for example, is designed so that inference can be implemented with rule-based technology<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+<p>This earns its keep when several rules interact: a part-of relationship that is transitive, combined with a subclass hierarchy, combined with an equivalence between two vocabularies. Writing those combinations into queries by hand is where errors creep in. The discipline required is real: choose a profile, test inferences against expected results, and watch for unintended conclusions from loosely modelled axioms. See <a href="https://asksumanta.com/insights/skos-vs-owl-enterprise-taxonomies/">SKOS versus OWL</a> and <a href="https://asksumanta.com/insights/shacl-validation-knowledge-graphs/">SHACL validation</a>.</p>
+</section>
+
+<section class="block">
+<h2>Side by side</h2>
+<table class="tbl">
+<thead><tr><th>Question</th><th>Materialise</th><th>Compute at query time</th><th>Reason</th></tr></thead>
+<tbody>
+<tr><td>Read speed for deep queries</td><td>Fastest</td><td>Slows with depth</td><td>Fast if results are materialised</td></tr>
+<tr><td>Freshness</td><td>As of last rebuild</td><td>Always current</td><td>As of last inference run, or live if computed</td></tr>
+<tr><td>Change cost</td><td>Rebuild affected closure</td><td>None</td><td>Re-run inference</td></tr>
+<tr><td>Storage</td><td>Grows with depth and breadth</td><td>Minimal</td><td>Grows with inferred facts</td></tr>
+<tr><td>Expressiveness</td><td>One relationship type at a time</td><td>What you write in the query</td><td>Rules combine across relationships</td></tr>
+<tr><td>Best fit</td><td>Released vocabularies, analytics</td><td>Small or fast-changing hierarchies</td><td>Interacting rules, multiple ontologies</td></tr>
+</tbody>
+</table>
+</section>
+
+<section class="block">
+<h2>How I choose</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Change rate</b><span>Does the hierarchy change in releases or continuously?</span></li>
+<li><b>Query shape</b><span>How often are deep "everything under" questions asked?</span></li>
+<li class="hl"><b>Rule count</b><span>Is it one hierarchy, or several relationships that must combine?</span></li>
+<li><b>Scale</b><span>How large would the closure or inferred graph become?</span></li>
+<li class="hl"><b>Hybrid</b><span>Materialise the hot, stable paths; compute or reason over the rest</span></li>
+<li><b>Test</b><span>Keep expected answers as tests, whichever approach you choose</span></li>
+</ol>
+<figcaption>Most production graphs end up hybrid: materialise what is stable and hot, compute what changes.</figcaption>
+</figure>
+<div class="callout"><p>Whatever you choose, store levels of separation or provenance with inferred links. "Is this a direct child or five steps away?" is a question users ask, and it is expensive to answer after the fact.</p></div>
+<p>The same thinking applies when graphs feed AI systems. A retrieval layer that expands "heart disease" to its descendants before searching documents needs fast, correct closure, which is why materialised hierarchies often sit underneath <a href="https://asksumanta.com/insights/graphrag-when-it-beats-vector-rag/">GraphRAG</a> and <a href="https://asksumanta.com/insights/text-to-sql-semantic-layer/">semantic layers</a>. For background, see <a href="https://asksumanta.com/insights/ontology-vs-knowledge-graph-vs-semantic-layer/">ontology versus knowledge graph versus semantic layer</a> and <a href="https://asksumanta.com/insights/clinical-terminologies-omop-vocabularies/">clinical terminologies in OMOP</a>.</p>
+<p>If you are designing a knowledge graph that has to be both correct and fast, I am a <a href="https://asksumanta.com/fractional-cto/">fractional CTO</a> and <a href="https://asksumanta.com/ai-architect/">AI architect</a> based in India, the United States and the UAE, working globally. You can <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section><p><a href="https://asksumanta.com/insights/materialise-or-infer-knowledge-graph-hierarchies/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Empirical calibration explained: why observational health studies need negative controls</title><link>https://asksumanta.com/insights/empirical-calibration-negative-controls/</link><guid isPermaLink="true">https://asksumanta.com/insights/empirical-calibration-negative-controls/</guid><pubDate>Mon, 23 Nov 2026 21:20:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>healthcare</category><category>omop</category><category>data</category><description>Most observational health studies report confidence intervals that are too narrow. How negative controls and empirical calibration fix it, and how to build them in.</description><content:encoded><![CDATA[<p><em>Real-world evidence is moving from research papers into regulatory submissions, payer decisions and product claims. Yet most observational studies report confidence intervals as if their design had no systematic error. OHDSI&#x27;s work on method validity shows how badly that assumption fails, and offers a practical fix: test the design on questions with known answers, then calibrate. Here is how it works, and what it means for the teams building evidence platforms.</em></p><section class="block">
 <h2>The problem: honest-looking intervals that are not</h2>
 <p>A 95% confidence interval from an observational study accounts for random error: the chance variation from studying a sample. It does not account for systematic error from confounding, selection or measurement problems in the data and design. In observational healthcare data those systematic errors are rarely zero, so the stated 95% interval often contains the true effect far less than 95% of the time.</p>
 <p>The Book of OHDSI makes the point with evidence rather than argument. OHDSI ran the methods in its Methods Library, with various analysis choices, against a benchmark of control questions on four large databases. Several methods separated positive from negative controls well, but most showed high type 1 error and confidence interval coverage well below 95% in most settings<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
@@ -3099,87 +3163,4 @@
 <section class="block">
 <h2>How I can help</h2>
 <p>I help companies plan AI capacity, review GPU and model contracts, and build platforms that move workloads between providers and hardware generations. I am based in India, the United States and the UAE, working globally. See <a href="https://asksumanta.com/ai-architect/">AI architecture</a>, <a href="https://asksumanta.com/regions/">where I work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
-</section><p><a href="https://asksumanta.com/insights/microsoft-oracle-gpu-capacity-contracts/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Safe by design: preparing a Canadian learning app&#x27;s AI study companion for chatbot safety duties</title><link>https://asksumanta.com/case-studies/canada-learning-app-ai-chatbot-online-safety/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/canada-learning-app-ai-chatbot-online-safety/</guid><pubDate>Sat, 07 Nov 2026 15:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>ai</category><category>governance</category><category>llm</category><description>How a Canadian learning app for young people can prepare its AI study chatbot for proposed online safety duties: crisis escalation, no manipulative design, evidence.</description><content:encoded><![CDATA[<p><em>A Canadian learning app gave secondary students and young adults an AI study companion. Students used it for homework, and sometimes for things that had nothing to do with homework. With Canada proposing duties for AI chatbot services, including emergency measures for crisis situations and limits on manipulative engagement, the company wanted its chatbot to be safe by design and able to show it, before any rules took effect.</em></p><h2>The situation</h2>
-<p>A Canadian education company ran a learning app used by secondary school students and young adults. Its most popular feature was an AI study companion: a chatbot that explained concepts, quizzed students and helped plan revision. It had a friendly persona, remembered past sessions and was tied into the app's streaks and reminders. Most conversations were about schoolwork. Some were not: exam stress, trouble at home, and occasionally something more serious. The chatbot answered those with whatever the model produced in the moment.</p>
-<p>In June 2026 the Government of Canada introduced Bill C-34, the Safe Social Media Act, which would create duties for social media and AI chatbot services and a Digital Safety Commission to oversee them<sup class="cite"><a href="#ref-1">1</a></sup>. For chatbots, the proposed duty to act responsibly includes mitigating the risk of harmful content, putting emergency measures in place for crisis situations and mitigating harmful chatbot behaviour<sup class="cite"><a href="#ref-2">2</a></sup>. Osler notes the proposals also address manipulative engagement techniques that encourage emotional attachment<sup class="cite"><a href="#ref-3">3</a></sup>. The bill was not yet law, but the company's school and parent customers were already asking the same questions.</p>
-<p><strong>Why now.</strong> Canada's Budget 2026, released on 5 November, proposed $176.3 million over five years for the new commission, a sign that enforcement would be funded, not just legislated<sup class="cite"><a href="#ref-4">4</a></sup>. Building safety in before the rules settled was cheaper than retrofitting it under a deadline.</p>
-
-<h2>What had to be true</h2>
-<ul>
-<li><strong>Crisis handled every time</strong>: signals detected on every message, with a fixed, tested response and a route to people.</li>
-<li><strong>No manipulative design</strong>: no feature that kept students engaged against their interests.</li>
-<li><strong>Age-appropriate by default</strong>, with stricter settings for younger users.</li>
-<li><strong>Tested continuously</strong>: safety behaviour checked whenever the model, prompts or features change.</li>
-<li><strong>Evidence on hand</strong>: a written safety plan and records that show it works.</li>
-<li><strong>Privacy respected</strong>: conversation data kept only as far as safety needs, under Canada's privacy laws.</li>
-</ul>
-
-<h2>Architecture</h2>
-<figure class="dgm">
-<div class="dgm-stack">
-<div class="dgm-tier"><small>Experience</small><div class="dgm-nodes"><span>Study companion<em>explain, quiz, plan</em></span><span>Persona rules<em>helpful, not attached</em></span></div></div>
-<div class="dgm-tier"><small>Safety layer</small><div class="dgm-nodes"><span class="hl">Crisis detector<em>every message</em></span><span>Input and output checks<em>harmful content</em></span><span>Age policy<em>stricter for younger users</em></span></div></div>
-<div class="dgm-tier"><small>Escalation</small><div class="dgm-nodes"><span class="hl">Fixed crisis response<em>resources, no improvising</em></span><span>Human review queue<em>trained staff</em></span></div></div>
-<div class="dgm-tier"><small>Model</small><div class="dgm-nodes"><span>LLM gateway<em>policy and routing</em></span><span>Safety evaluation sets<em>run on every change</em></span></div></div>
-<div class="dgm-tier"><small>Evidence</small><div class="dgm-nodes"><span>Traces<em>minimised, access logged</em></span><span>Incident register<em>what happened, what changed</em></span><span>Safety plan<em>risks and measures</em></span></div></div>
-</div>
-<figcaption>The safety layer sits outside the model, so it holds when the model or prompt changes.</figcaption>
-</figure>
-<p>All model calls went through a gateway that applied policy before and after the model. A dedicated crisis detector ran on every user message, separate from the general content checks, because the cost of missing a crisis is different from the cost of missing an off-topic question. When it fired, the gateway did not call the study model at all. It returned a fixed response, reviewed by clinicians the company worked with, that acknowledged the student and gave crisis resources, including Canada's 9-8-8 helpline, then offered to continue only if the student wanted to.</p>
-
-<h2>The data flow, end to end</h2>
-<figure class="dgm">
-<ol class="dgm-flow g3">
-<li><b>Message</b><span>A student writes to the study companion</span></li>
-<li class="hl"><b>Screen</b><span>Crisis detector and content checks run before any model call</span></li>
-<li><b>Respond</b><span>If clear, the study model answers within persona and age rules</span></li>
-<li><b>Check</b><span>The output is checked before the student sees it</span></li>
-<li class="hl"><b>Escalate</b><span>Crisis signals switch to the fixed response and queue a human review</span></li>
-<li><b>Learn</b><span>Reviewed cases update evaluation sets and the incident register</span></li>
-</ol>
-<figcaption>The model never decides alone what happens when a student may be at risk.</figcaption>
-</figure>
-
-<h2>The hard part: crisis handling and engagement design</h2>
-<p><strong>Not missing, not over-blocking.</strong> A detector tuned too loosely misses students who need help; tuned too tightly, it interrupts a student revising a history essay about war or a novel about grief. We built evaluation sets from reviewed conversations, written with clinicians and teachers, covering clear crises, ambiguous messages and schoolwork that only looks alarming. Every change to the detector, model or prompts ran against them, and misses were treated as serious defects. See <a href="https://asksumanta.com/insights/llm-evaluation-sets-that-predict-production/">evaluation sets that predict production</a>.</p>
-<p><strong>Reviewing conversations without over-collecting.</strong> Reviewers needed to see what the student said and what the companion replied, as a trace with prompts and outputs, which OpenTelemetry's generative AI conventions make possible to capture as opt-in content<sup class="cite"><a href="#ref-5">5</a></sup>. Conversation content was captured only for flagged cases and samples for evaluation, stored separately with short retention and access logged, rather than logging everything by default; see <a href="https://asksumanta.com/insights/llm-observability-opentelemetry-genai/">LLM observability with OpenTelemetry</a>.</p>
-<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/canada-learning-app-ai-chatbot-online-safety/conversation-review.webp" alt="Aspire dashboard showing an invoke_agent trace with the user message, the assistant output, the number of tool calls, the duration and the token count" width="1464" height="982" loading="lazy"></div><figcaption>A trace with input and output side by side: the view safety reviewers need, applied only to flagged and sampled conversations. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2026/genai-observability/" target="_blank" rel="noopener">OpenTelemetry blog, James Newton-King</a> · CC BY 4.0</span></figcaption></figure>
-<p><strong>Taking manipulation out.</strong> The harder conversation was about engagement. The companion had been tuned to keep sessions going, and some streak reminders used guilt ("your companion misses you"). We reviewed every engagement feature against one question: does this serve the student's learning, or only our retention numbers? Guilt-based messages went, the persona stopped expressing feelings about the student's absence, and late-night nudges were switched off for younger users.</p>
-<div class="callout"><p>A chatbot for young people should be judged by what it does on its worst conversation, not its average one. Design for that conversation first.</p></div>
-
-<h2>How it ran</h2>
-<figure class="dgm">
-<div class="dgm-lanes">
-<div class="dgm-lane"><small>Product</small><ol><li>Engagement review</li><li class="hl">Persona and age rules</li><li>Parent and school comms</li></ol></div>
-<div class="dgm-lane"><small>Engineering and ML</small><ol><li>Gateway and safety layer</li><li class="hl">Evaluation sets</li><li>Minimised tracing</li></ol></div>
-<div class="dgm-lane"><small>Trust and safety</small><ol><li>Crisis response with clinicians</li><li class="hl">Review queue</li><li>Incident register</li></ol></div>
-<div class="dgm-lane"><small>Legal and privacy</small><ol><li>Track Bill C-34</li><li>Data retention rules</li><li class="hl">Safety plan</li></ol></div>
-</div>
-<figcaption>Safety was a product decision first, an engineering build second and a legal record third.</figcaption>
-</figure>
-<figure class="dgm">
-<div class="dgm-phases">
-<div><small>Phase 1</small><b>Assess</b><ul><li>Sample conversations</li><li>Engagement review</li><li>Risk list</li></ul></div>
-<div><small>Phase 2</small><b>Protect</b><ul><li>Crisis detector</li><li>Fixed response</li><li>Review queue</li></ul></div>
-<div><small>Phase 3</small><b>Redesign</b><ul><li>Persona rules</li><li>Engagement changes</li><li>Age settings</li></ul></div>
-<div><small>Phase 4</small><b>Prove</b><ul><li>Evaluation on every change</li><li>Safety plan</li><li>Regular review</li></ul></div>
-</div>
-<figcaption>Protect students first; redesign and documentation follow.</figcaption>
-</figure>
-
-<h2>Key decisions and trade-offs</h2>
-<table class="tbl">
-<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
-<tbody>
-<tr><td>Separate crisis detector before the model</td><td>Rely on the model's own safety behaviour</td><td>Holds when the model or prompt changes</td></tr>
-<tr><td>Fixed, clinician-reviewed crisis response</td><td>Let the model respond with care</td><td>No improvising in the highest-risk moment</td></tr>
-<tr><td>Evaluation sets including schoolwork that looks alarming</td><td>Crisis examples only</td><td>Measures over-blocking as well as misses</td></tr>
-<tr><td>Remove guilt-based engagement</td><td>Keep and soften wording</td><td>Retention is not worth emotional pressure on young users</td></tr>
-<tr><td>Capture content only for flagged and sampled cases</td><td>Log every conversation</td><td>Enough for safety, less exposure for students</td></tr>
-<tr><td>Build before the bill passes</td><td>Wait for final rules</td><td>The core measures make sense under any version</td></tr>
-</tbody>
-</table>
-
-<h2>What I'd do again, and differently</h2>
-<p>Again: put the crisis path outside the model. It meant model upgrades never put the most important behaviour at risk. Differently: involve teachers in building evaluation sets from the start; they knew exactly which schoolwork topics would trip a detector. Related: <a href="https://asksumanta.com/insights/new-york-youth-chatbot-law-ai-assistants/">New York's youth chatbot law</a>, <a href="https://asksumanta.com/insights/prompt-injection-defence-for-agents/">prompt injection defence</a>, the <a href="https://asksumanta.com/case-studies/edtech-curriculum-grounded-tutor/">curriculum-grounded tutor case study</a>, <a href="https://asksumanta.com/insights/tech-news-2026-11-07/">the 7 November tech news</a> and <a href="https://asksumanta.com/regions/">where I work</a>.</p>
-<p>If you run an AI chatbot used by young people, in Canada or elsewhere, see my <a href="https://asksumanta.com/ai-architect/">AI architecture work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/canada-learning-app-ai-chatbot-online-safety/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
+</section><p><a href="https://asksumanta.com/insights/microsoft-oracle-gpu-capacity-contracts/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
