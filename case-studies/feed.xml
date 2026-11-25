@@ -1,6 +1,85 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link><description>Anonymised engagements with architecture and flow diagrams</description><language>en-gb</language><lastBuildDate>Mon, 23 Nov 2026 15:50:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/case-studies/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link></image><item><title>Not tied to one chip: accelerator-portable inference for a Brazilian AI software company</title><link>https://asksumanta.com/case-studies/brazil-ai-saas-accelerator-portable-inference/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/brazil-ai-saas-accelerator-portable-inference/</guid><pubDate>Mon, 23 Nov 2026 15:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>ai</category><category>kubernetes</category><category>platform</category><description>How a Brazilian AI software company can make model serving portable across GPUs and other accelerators, as US chip licensing and custom silicon reshape capacity.</description><content:encoded><![CDATA[<p><em>A Brazilian software company served its own fine-tuned language models to retail and banking customers from GPUs in a São Paulo cloud region. Its stack assumed one GPU family and one provider. New US licensing for advanced chips shipped to Brazil, and growing interest in cloud providers&#x27; own accelerators, made that assumption a business risk. The goal was inference that could move between accelerators and providers without a rewrite, and without data leaving Brazil.</em></p><h2>The situation</h2>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link><description>Anonymised engagements with architecture and flow diagrams</description><language>en-gb</language><lastBuildDate>Wed, 25 Nov 2026 15:50:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/case-studies/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link></image><item><title>Two platforms, one product: integrating an acquired HR and payroll SaaS in Southeast Asia</title><link>https://asksumanta.com/case-studies/singapore-saas-post-acquisition-integration/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/singapore-saas-post-acquisition-integration/</guid><pubDate>Wed, 25 Nov 2026 15:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>platform</category><category>architecture</category><category>leadership</category><description>How a Singapore HR and payroll SaaS company can integrate an acquired Malaysian competitor: one identity, staged migration, shared observability and lawful transfers.</description><content:encoded><![CDATA[<p><em>A Singapore-based HR and payroll software company bought a smaller Malaysian competitor for its customers and local payroll expertise. The deal assumed the two platforms would merge within a year. They had different clouds, identity systems, tenancy models and payroll engines, and both held sensitive employee data under different national laws. The goal was to integrate without losing customers, breaking payroll runs or moving data unlawfully.</em></p><h2>The situation</h2>
+<p>A Singapore-based HR and payroll software company serving employers across Southeast Asia acquired a smaller Malaysian competitor. The buyer wanted the target's customer base and its depth in Malaysian statutory payroll. The investment case assumed one product within a year and savings from running one platform.</p>
+<p>The technology did not line up. The buyer ran a multi-tenant platform on one cloud with its own identity system; the target ran single-tenant deployments on another cloud with a different identity provider. Each had its own payroll engine encoding years of country rules. Both held sensitive employee data: salaries, bank details, identity numbers.</p>
+<p><strong>Why now.</strong> Technology consolidation is accelerating, from CrowdStrike's agreed all-stock deal for Zscaler valued at about $43.9 billion<sup class="cite"><a href="#ref-1">1</a></sup> down to many smaller software acquisitions in the region. Most deal value depends on integration, and integration is where it is most often lost. This engagement started the week after the deal closed.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>No customer feels the merger as an outage</strong>, and no payroll run is wrong.</li>
+<li><strong>One product to customers early</strong>, even while two platforms run behind it.</li>
+<li><strong>Data moves lawfully</strong> between countries, with assessments on file.</li>
+<li><strong>One view of production</strong> across both clouds during the transition.</li>
+<li><strong>One engineering organisation</strong>, with clear ownership, not two teams defending their systems.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Customers</small><div class="dgm-nodes"><span>Employers<em>admins and payroll teams</em></span><span>Employees<em>self-service</em></span></div></div>
+<div class="dgm-tier"><small>Unified front</small><div class="dgm-nodes"><span class="hl">Shared identity<em>one login, both products</em></span><span>Admin console<em>one place for both</em></span><span>API facade<em>routes to either back end</em></span></div></div>
+<div class="dgm-tier"><small>Back ends</small><div class="dgm-nodes"><span>Buyer platform<em>multi-tenant, target state</em></span><span>Acquired platform<em>single-tenant, shrinking</em></span><span class="hl">Payroll engines<em>country rules, compared in parallel</em></span></div></div>
+<div class="dgm-tier"><small>Data</small><div class="dgm-nodes"><span>Tenant migration tooling<em>per customer, reversible</em></span><span>Residency controls<em>per country</em></span><span>Transfer register<em>assessments and contracts</em></span></div></div>
+<div class="dgm-tier"><small>Operations</small><div class="dgm-nodes"><span class="hl">Shared observability<em>gateway collectors in both clouds</em></span><span>Feature flags<em>per tenant</em></span><span>Infrastructure as code<em>one repository</em></span></div></div>
+</div>
+<figcaption>Unify the front first, migrate the back end behind it, and watch both estates in one place.</figcaption>
+</figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Unify</b><span>Customers of both products sign in through one identity provider</span></li>
+<li><b>Facade</b><span>The admin console and API route each tenant to its current back end</span></li>
+<li class="hl"><b>Shadow</b><span>A migrating tenant's payroll runs on both engines and results are compared line by line</span></li>
+<li class="hl"><b>Cut over</b><span>After a clean parallel run, the tenant switches by feature flag</span></li>
+<li><b>Hold</b><span>The old deployment stays read-only for a rollback window</span></li>
+<li><b>Retire</b><span>Data is deleted from the old platform under the retention policy</span></li>
+</ol>
+<figcaption>Each customer moves on evidence from a parallel run, with a way back.</figcaption>
+</figure>
+
+<h2>The hard part: two payroll engines that both claimed to be right</h2>
+<p>Payroll rules look deterministic until two engines disagree. Rounding, the order in which statutory deductions apply, mid-month joiners and arrears all produced differences. The team ran each migrating customer's payroll on both engines for at least one full period and compared every payslip line. Differences became tickets with an owner from the team that knew each engine best; the acquired team's Malaysian rules knowledge decided many of them, which did more for integration of the two teams than any reorganisation.</p>
+<p>Seeing both estates at once was the second problem. The two platforms ran in different clouds and accounts. The team placed OpenTelemetry gateway collectors in each environment and sent telemetry from both into one backend, the same pattern a large travel platform describes for receiving telemetry from multiple accounts through gateway collectors<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/singapore-saas-post-acquisition-integration/telemetry-across-accounts.webp" alt="Architecture diagram showing services with sidecars and ingress gateways in two Kubernetes clusters sending OTLP traces and metrics to gateway collectors, with telemetry from other cloud accounts arriving through a network load balancer" width="1200" height="723" loading="lazy"></div><figcaption>Gateway collectors receiving telemetry across clusters and accounts: how both estates fed one view during the transition. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2026/devex-skyscanner/" target="_blank" rel="noopener">OpenTelemetry blog, Developer Experience SIG</a> · CC BY 4.0</span></figcaption></figure>
+<div class="callout"><p>Integrate identity before data. One login across both products gave customers a single company to deal with months before any data moved, and took the pressure off the riskiest migrations.</p></div>
+<p>Data protection shaped the migration order. Singapore's PDPA restricts transfers of personal data outside Singapore unless the receiving organisation provides comparable protection<sup class="cite"><a href="#ref-2">2</a></sup>, and Malaysia's amended PDPA replaced its whitelist with a test of whether the destination provides substantially similar or equivalent protection<sup class="cite"><a href="#ref-3">3</a></sup>. Each migration wave had a documented assessment and intra-group contract terms before data moved, and Malaysian customers whose contracts required in-country hosting stayed on in-country infrastructure. Patterns from <a href="https://asksumanta.com/insights/mongodb-multi-tenant-saas-patterns/">multi-tenant SaaS design</a> and <a href="https://asksumanta.com/case-studies/saas-multi-tenant-re-architecture/">SaaS re-architecture</a> applied directly.</p>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Product and customer success</small><ol><li>Customer communication plan</li><li class="hl">Migration wave scheduling</li><li>Feedback after each wave</li></ol></div>
+<div class="dgm-lane"><small>Engineering</small><ol><li>Identity and facade</li><li class="hl">Parallel payroll runs</li><li>Tenant migration and retirement</li></ol></div>
+<div class="dgm-lane"><small>Legal and security</small><ol><li>Transfer assessments</li><li>Intra-group contracts</li><li class="hl">Retention and deletion</li></ol></div>
+</div>
+<figcaption>Customer success set the pace, engineering moved tenants, legal cleared each wave.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Stabilise</b><ul><li>Joint on-call and incident process</li><li>Shared observability</li><li>No new divergence</li></ul></div>
+<div><small>Phase 2</small><b>Unify the front</b><ul><li>One identity</li><li>One admin console</li><li>API facade</li></ul></div>
+<div><small>Phase 3</small><b>Migrate</b><ul><li>Waves by segment</li><li>Parallel payroll runs</li><li>Rollback windows</li></ul></div>
+<div><small>Phase 4</small><b>Retire</b><ul><li>Old platform shut down</li><li>Data deleted</li><li>Costs consolidated</li></ul></div>
+</div>
+<figcaption>Stabilise first, unify what customers see, then migrate and retire.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Identity and console first</td><td>Data migration first</td><td>One product to customers early, with low risk</td></tr>
+<tr><td>Migrate in waves with parallel runs</td><td>Big-bang cutover</td><td>Payroll errors are not recoverable after payday</td></tr>
+<tr><td>Keep the acquired payroll rules where better</td><td>Buyer's engine wins by default</td><td>Local expertise was part of the deal value</td></tr>
+<tr><td>Transfer assessment per wave</td><td>One assessment for the whole programme</td><td>Data sets and destinations differed by wave</td></tr>
+<tr><td>Organise by domain, mixed teams</td><td>Keep acquired team separate</td><td>Avoids two camps defending two systems</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: set up joint on-call and shared observability in the first weeks; nothing builds trust between two engineering teams faster than fixing incidents together. Differently: be involved before signing. Several integration costs, such as the single-tenant contracts with in-country hosting commitments, were knowable during <a href="https://asksumanta.com/technical-due-diligence/">technical due diligence</a> and would have changed the plan and the price. See <a href="https://asksumanta.com/insights/team-topologies-for-ai-teams/">team topologies</a> and <a href="https://asksumanta.com/insights/technical-debt-without-a-rewrite/">technical debt without a rewrite</a>.</p>
+<p>If you are integrating an acquisition in Singapore or Southeast Asia, my <a href="https://asksumanta.com/fractional-cto-singapore/">work in the region</a> explains how I approach it, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/singapore-saas-post-acquisition-integration/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Not tied to one chip: accelerator-portable inference for a Brazilian AI software company</title><link>https://asksumanta.com/case-studies/brazil-ai-saas-accelerator-portable-inference/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/brazil-ai-saas-accelerator-portable-inference/</guid><pubDate>Mon, 23 Nov 2026 15:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>ai</category><category>kubernetes</category><category>platform</category><description>How a Brazilian AI software company can make model serving portable across GPUs and other accelerators, as US chip licensing and custom silicon reshape capacity.</description><content:encoded><![CDATA[<p><em>A Brazilian software company served its own fine-tuned language models to retail and banking customers from GPUs in a São Paulo cloud region. Its stack assumed one GPU family and one provider. New US licensing for advanced chips shipped to Brazil, and growing interest in cloud providers&#x27; own accelerators, made that assumption a business risk. The goal was inference that could move between accelerators and providers without a rewrite, and without data leaving Brazil.</em></p><h2>The situation</h2>
 <p>A Brazilian software company sold AI features to retailers and banks: customer service assistants, document extraction and product search, built on open-weight models it had fine-tuned. It served them from GPUs rented in a São Paulo cloud region, because customers expected their data to stay in Brazil under the LGPD's rules on personal data<sup class="cite"><a href="#ref-5">5</a></sup>. Every part of the serving stack, from container images to the serving engine and capacity contracts, assumed one GPU family and one provider.</p>
 <p><strong>Why now.</strong> In November 2026 the US issued a rule requiring licences for exports of advanced AI chips to several countries, including Brazil, and tightening remote access to such chips<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. At the same time, cloud providers were pushing their own accelerators harder; Amazon was reported to be near a deal for Decart, whose software helps models run on AWS's own chips<sup class="cite"><a href="#ref-3">3</a></sup>. For a company whose margins depended on inference cost, being tied to one chip in one region had become a business risk, not just a technical preference.</p>
 
@@ -3926,86 +4005,4 @@
 
 <h2>What I'd do again, and differently</h2>
 <p>Again: one study end to end before building the shared library, and quality at the table from the first week. Differently: negotiate transfer agreements with vendors as part of platform work, not study start-up. Consistent vendor formats are what make shared mappings possible. Related approaches are in <a href="https://asksumanta.com/insights/data-contracts-playbook/">data contracts</a> and <a href="https://asksumanta.com/insights/fhir-to-omop-architecture/">FHIR to OMOP architecture</a>.</p>
-<p>If your clinical data is growing faster than your ability to trace it, the <a href="https://asksumanta.com/healthcare-data-architecture/">healthcare data architecture</a> page describes how I work, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/clinical-trial-data-platform/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>From spreadsheets to an auditable pharmacovigilance signal platform</title><link>https://asksumanta.com/case-studies/pharmacovigilance-signal-detection-platform/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/pharmacovigilance-signal-detection-platform/</guid><pubDate>Wed, 28 Oct 2026 12:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>healthcare</category><category>omop</category><category>data</category><category>governance</category><description>How a pharma safety team can combine spontaneous reports, literature and real-world data on OMOP to detect, prioritise and evaluate safety signals with an audit trail.</description><content:encoded><![CDATA[<p><em>A drug safety team tracked potential signals across spreadsheets, email and slide decks. Each evaluation meant a bespoke data request and weeks of analysis. The goal was one platform that detects candidate signals, keeps the reasoning auditable and lets the team test them quickly against real-world data.</em></p><h2>The situation</h2>
-<p>A pharmaceutical company's drug safety team handled case processing well; their safety database and regulatory reporting were mature. Signal management was not. Potential signals arrived from periodic report reviews, literature, partners and occasional regulator queries, and were tracked in a spreadsheet. Evaluating one meant a custom data request, an analyst working for weeks, and conclusions summarised in slides that did not record which data or method they came from.</p>
-<p>The head of safety wanted three things: consistent screening, faster evaluation and a record any inspector could follow from first observation to final decision.</p>
-
-<h2>What had to be true</h2>
-<ul>
-<li><strong>Every signal has one record</strong>, from source to decision, with who did what and why.</li>
-<li><strong>Screening is consistent</strong>: the same methods on the same schedule, not ad hoc queries.</li>
-<li><strong>Detection is not confused with evidence.</strong> Report counts start investigations; they don't conclude them.</li>
-<li><strong>Evaluation is fast and reproducible</strong>, using standardised real-world data and versioned study code.</li>
-<li><strong>Validated where it matters</strong>, with the computerised system controls a regulated safety function expects.</li>
-</ul>
-<p>The EU's good pharmacovigilance practice guidance on signal management frames the lifecycle the platform needed to support, and EMA presentations on it emphasise that marketing authorisation holders should keep an audit trail of their signal management activities<sup class="cite"><a href="#ref-1">1</a></sup>.</p>
-
-<h2>Architecture</h2>
-<figure class="dgm">
-<div class="dgm-stack">
-<div class="dgm-tier"><small>Sources</small><div class="dgm-nodes"><span>Safety database<em>individual case reports</em></span><span>Public reports<em>e.g. FAERS</em></span><span>Literature<em>screened articles</em></span><span>Real-world data<em>claims and EHR</em></span></div></div>
-<div class="dgm-tier"><small>Standardise</small><div class="dgm-nodes"><span>Coded events<em>MedDRA terms</em></span><span>Product mapping<em>ingredients, brands</em></span><span class="hl">OMOP CDM<em>RWD partners</em></span></div></div>
-<div class="dgm-tier"><small>Detect</small><div class="dgm-nodes"><span class="hl">Disproportionality screen<em>scheduled runs</em></span><span>Change detection<em>new or rising pairs</em></span><span>Literature triage<em>flagged articles</em></span></div></div>
-<div class="dgm-tier"><small>Manage</small><div class="dgm-nodes"><span class="hl">Signal tracker<em>one record per signal</em></span><span>Workflow<em>validate, prioritise, assess</em></span><span>Audit trail<em>every action and version</em></span></div></div>
-<div class="dgm-tier"><small>Evaluate</small><div class="dgm-nodes"><span>Study packages<em>HADES, versioned</em></span><span>Diagnostics<em>negative controls</em></span><span>Assessment report<em>linked to data and code</em></span></div></div>
-</div>
-<figcaption>Detection, management and evaluation are separate layers, so a statistical flag never becomes a conclusion by accident.</figcaption>
-</figure>
-
-<h2>The data flow, end to end</h2>
-<figure class="dgm">
-<ol class="dgm-flow g3">
-<li><b>Ingest</b><span>Case extracts, public reports and literature flags loaded on schedule</span></li>
-<li><b>Screen</b><span>Disproportionality and change detection for product and event pairs</span></li>
-<li class="hl"><b>Validate</b><span>Safety physician reviews cases behind each flag and opens or closes a signal</span></li>
-<li><b>Prioritise</b><span>Seriousness, novelty and public health impact recorded with reasons</span></li>
-<li class="hl"><b>Evaluate</b><span>Study package run on OMOP data with diagnostics</span></li>
-<li><b>Decide</b><span>Assessment and action recorded, linked to the evidence used</span></li>
-</ol>
-<figcaption>Each step leaves a record, so the path from first flag to final decision can be replayed.</figcaption>
-</figure>
-
-<h2>The hard part: not over-reading spontaneous reports</h2>
-<p>Spontaneous reports are the backbone of signal detection and also easy to misuse. The FDA states plainly that a report does not mean the product caused the event, that report counts cannot establish how often an event occurs, and that reports can be duplicated, incomplete or stimulated by publicity<sup class="cite"><a href="#ref-2">2</a></sup>. The platform's design reflected that:</p>
-<ul>
-<li>Disproportionality scores were labelled as screening statistics, never as risk estimates, everywhere they appeared.</li>
-<li>Every flag required case-level review by a safety physician before becoming a validated signal.</li>
-<li>Evaluation used designed studies on population data, not more report counting.</li>
-</ul>
-<p>For evaluation, self-controlled designs suited many acute safety questions because they compare time periods within the same people, removing confounding by stable characteristics<sup class="cite"><a href="#ref-3">3</a></sup>. Negative control outcomes and empirical calibration showed whether residual bias could explain a result<sup class="cite"><a href="#ref-4">4</a></sup>. The designs are compared in <a href="https://asksumanta.com/insights/real-world-evidence-study-designs-omop/">real-world evidence study designs</a>.</p>
-<div class="callout"><p>A signal platform's most important feature is the line it draws between "worth investigating" and "evidence of harm". Blur that line and you get both false alarms and false reassurance.</p></div>
-
-<h2>How it ran</h2>
-<figure class="dgm">
-<div class="dgm-lanes">
-<div class="dgm-lane"><small>Safety physicians</small><ol><li>Define screening scope</li><li class="hl">Validate and assess signals</li><li>Record decisions</li></ol></div>
-<div class="dgm-lane"><small>Epidemiology</small><ol><li>Design study templates</li><li class="hl">Run evaluations on OMOP</li><li>Interpret diagnostics</li></ol></div>
-<div class="dgm-lane"><small>Data platform</small><ol><li>Ingest and standardise</li><li>Scheduled screening</li><li>Validation and audit</li></ol></div>
-</div>
-<figcaption>Clinical judgement stays with safety physicians; the platform makes their work faster and traceable.</figcaption>
-</figure>
-<figure class="dgm">
-<div class="dgm-phases">
-<div><small>Phase 1</small><b>Tracker</b><ul><li>One record per signal</li><li>Workflow and audit</li><li>Migrate open signals</li></ul></div>
-<div><small>Phase 2</small><b>Screening</b><ul><li>Scheduled disproportionality</li><li>Change detection</li><li>Review queues</li></ul></div>
-<div><small>Phase 3</small><b>Evaluation</b><ul><li>OMOP data partners</li><li>Study templates</li><li>Negative controls</li></ul></div>
-<div><small>Phase 4</small><b>Validate</b><ul><li>System validation</li><li>SOP updates</li><li>Inspection readiness</li></ul></div>
-</div>
-<figcaption>The tracker came first because it fixed the audit problem immediately, before any new analytics existed.</figcaption>
-</figure>
-
-<h2>Key decisions and trade-offs</h2>
-<table class="tbl">
-<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
-<tbody>
-<tr><td>Tracker before analytics</td><td>Start with detection algorithms</td><td>Audit trail and consistency were the biggest gaps</td></tr>
-<tr><td>Physician validation of every flag</td><td>Auto-open signals above a threshold</td><td>Screening statistics are not evidence of harm</td></tr>
-<tr><td>OMOP for evaluation data</td><td>Bespoke extracts per question</td><td>Reusable study packages across data partners</td></tr>
-<tr><td>Negative controls by default</td><td>Report estimates alone</td><td>Shows when bias could explain a result</td></tr>
-<tr><td>Separate detection and evaluation layers</td><td>One combined risk score</td><td>Keeps the reasoning legible to inspectors</td></tr>
-</tbody>
-</table>
-
-<h2>What I'd do again, and differently</h2>
-<p>Again: fix the record-keeping first, then add analytics. Differently: agree data access with real-world data partners at the start. Contracts and governance for external data take longer than building the screening pipeline, and evaluations wait on them. The data side is described in <a href="https://asksumanta.com/insights/federated-health-analytics-ohdsi/">federated health analytics</a> and <a href="https://asksumanta.com/insights/omop-data-quality-checks/">OMOP data quality checks</a>.</p>
-<p>If your safety, evidence or medical teams need a platform like this, the <a href="https://asksumanta.com/healthcare-data-architecture/">healthcare data architecture</a> page describes how I approach it, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/pharmacovigilance-signal-detection-platform/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
+<p>If your clinical data is growing faster than your ability to trace it, the <a href="https://asksumanta.com/healthcare-data-architecture/">healthcare data architecture</a> page describes how I work, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/clinical-trial-data-platform/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>

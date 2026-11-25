@@ -1,0 +1,82 @@
+<!--{"title": "Case study: integrating an acquired SaaS platform in Southeast Asia", "description": "How a Singapore HR and payroll SaaS company can integrate an acquired Malaysian competitor: one identity, staged migration, shared observability and lawful transfers.", "short": "Post-acquisition SaaS integration in SEA", "h1": "Two platforms, one product: integrating an acquired HR and payroll SaaS in Southeast Asia", "kicker": "Case study · Post-merger integration", "lede": "A Singapore-based HR and payroll software company bought a smaller Malaysian competitor for its customers and local payroll expertise. The deal assumed the two platforms would merge within a year. They had different clouds, identity systems, tenancy models and payroll engines, and both held sensitive employee data under different national laws. The goal was to integrate without losing customers, breaking payroll runs or moving data unlawfully.", "date": "2026-11-25", "datetime": "2026-11-25T15:50:00+04:00", "readtime": "9 min read", "sector": "HR and payroll software · Singapore and Malaysia", "role": "Fractional CTO", "engagement": "Integration assessment, target architecture and delivery leadership", "scope": "Integration strategy, identity, tenant migration, payroll engines, observability, cross-border data, team structure", "stack": ["Shared identity provider", "API gateway facade", "Tenant migration tooling", "Parallel payroll runs", "OpenTelemetry gateway collectors", "Data residency controls", "Feature flags", "Infrastructure as code"], "outcomes": ["One login and one admin console across both products before any data moved", "Customers migrated in waves, each with a parallel payroll run before cutover", "A single observability view across both clouds during the transition", "Cross-border data flows documented and assessed under both countries' rules", "One engineering organisation with clear ownership of each domain"], "tags": ["platform", "architecture", "leadership"], "keywords": ["post-merger technology integration", "SaaS acquisition integration", "tenant migration", "payroll platform migration", "Singapore PDPA transfer limitation", "Malaysia PDPA cross-border transfer", "identity consolidation", "OpenTelemetry gateway", "fractional CTO Singapore", "technical due diligence follow-through"], "faq": [["What should be integrated first after a SaaS acquisition?", "Usually identity and the customer-facing surface: one login, one admin console and a facade over both back ends. That gives customers a single product early, while the riskier data and engine migrations happen behind it."], ["Why run payroll in parallel before cutover?", "Payroll errors are immediately visible and damaging. Running the same period on both engines and comparing every payslip line before switching catches differences in rules, rounding and statutory deductions before employees see them."], ["Does moving employee data between Singapore and Malaysia need special care?", "Yes. Singapore's PDPA restricts transfers of personal data outside Singapore unless comparable protection is ensured, and Malaysia's amended PDPA replaced its whitelist with a test of whether the destination provides substantially similar or equivalent protection. Both need documented assessments and contractual safeguards."]], "related": ["/fractional-cto-singapore/", "/technical-due-diligence/", "/fractional-cto/"], "citations": [{"title": "CrowdStrike to acquire Zscaler for $44 billion", "url": "https://techcrunch.com/2026/11/23/crowdstrike-to-acquire-zscaler-for-44-billion/", "publisher": "TechCrunch", "date": "23 Nov 2026"}, {"title": "Personal Data Protection Act overview", "url": "https://www.pdpc.gov.sg/overview-of-pdpa/the-legislation/personal-data-protection-act", "publisher": "Personal Data Protection Commission Singapore"}, {"title": "From legislative reform to practical guidance: key amendments to Malaysia's PDPA and the launch of cross-border transfer guidelines", "url": "https://www.mayerbrown.com/en/insights/publications/2025/07/from-legislative-reform-to-practical-guidance-key-amendments-to-malaysias-pdpa-and-the-launch-of-cross-border-transfer-guidelines", "publisher": "Mayer Brown", "date": "Jul 2025"}, {"title": "How Skyscanner scales OpenTelemetry: managing collectors across 24 production clusters", "url": "https://opentelemetry.io/blog/2026/devex-skyscanner/", "publisher": "OpenTelemetry blog (Developer Experience SIG)", "date": "21 Apr 2026"}]}-->
+
+<h2>The situation</h2>
+<p>A Singapore-based HR and payroll software company serving employers across Southeast Asia acquired a smaller Malaysian competitor. The buyer wanted the target's customer base and its depth in Malaysian statutory payroll. The investment case assumed one product within a year and savings from running one platform.</p>
+<p>The technology did not line up. The buyer ran a multi-tenant platform on one cloud with its own identity system; the target ran single-tenant deployments on another cloud with a different identity provider. Each had its own payroll engine encoding years of country rules. Both held sensitive employee data: salaries, bank details, identity numbers.</p>
+<p><strong>Why now.</strong> Technology consolidation is accelerating, from CrowdStrike's agreed all-stock deal for Zscaler valued at about $43.9 billion<sup class="cite"><a href="#ref-1">1</a></sup> down to many smaller software acquisitions in the region. Most deal value depends on integration, and integration is where it is most often lost. This engagement started the week after the deal closed.</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>No customer feels the merger as an outage</strong>, and no payroll run is wrong.</li>
+<li><strong>One product to customers early</strong>, even while two platforms run behind it.</li>
+<li><strong>Data moves lawfully</strong> between countries, with assessments on file.</li>
+<li><strong>One view of production</strong> across both clouds during the transition.</li>
+<li><strong>One engineering organisation</strong>, with clear ownership, not two teams defending their systems.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Customers</small><div class="dgm-nodes"><span>Employers<em>admins and payroll teams</em></span><span>Employees<em>self-service</em></span></div></div>
+<div class="dgm-tier"><small>Unified front</small><div class="dgm-nodes"><span class="hl">Shared identity<em>one login, both products</em></span><span>Admin console<em>one place for both</em></span><span>API facade<em>routes to either back end</em></span></div></div>
+<div class="dgm-tier"><small>Back ends</small><div class="dgm-nodes"><span>Buyer platform<em>multi-tenant, target state</em></span><span>Acquired platform<em>single-tenant, shrinking</em></span><span class="hl">Payroll engines<em>country rules, compared in parallel</em></span></div></div>
+<div class="dgm-tier"><small>Data</small><div class="dgm-nodes"><span>Tenant migration tooling<em>per customer, reversible</em></span><span>Residency controls<em>per country</em></span><span>Transfer register<em>assessments and contracts</em></span></div></div>
+<div class="dgm-tier"><small>Operations</small><div class="dgm-nodes"><span class="hl">Shared observability<em>gateway collectors in both clouds</em></span><span>Feature flags<em>per tenant</em></span><span>Infrastructure as code<em>one repository</em></span></div></div>
+</div>
+<figcaption>Unify the front first, migrate the back end behind it, and watch both estates in one place.</figcaption>
+</figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Unify</b><span>Customers of both products sign in through one identity provider</span></li>
+<li><b>Facade</b><span>The admin console and API route each tenant to its current back end</span></li>
+<li class="hl"><b>Shadow</b><span>A migrating tenant's payroll runs on both engines and results are compared line by line</span></li>
+<li class="hl"><b>Cut over</b><span>After a clean parallel run, the tenant switches by feature flag</span></li>
+<li><b>Hold</b><span>The old deployment stays read-only for a rollback window</span></li>
+<li><b>Retire</b><span>Data is deleted from the old platform under the retention policy</span></li>
+</ol>
+<figcaption>Each customer moves on evidence from a parallel run, with a way back.</figcaption>
+</figure>
+
+<h2>The hard part: two payroll engines that both claimed to be right</h2>
+<p>Payroll rules look deterministic until two engines disagree. Rounding, the order in which statutory deductions apply, mid-month joiners and arrears all produced differences. The team ran each migrating customer's payroll on both engines for at least one full period and compared every payslip line. Differences became tickets with an owner from the team that knew each engine best; the acquired team's Malaysian rules knowledge decided many of them, which did more for integration of the two teams than any reorganisation.</p>
+<p>Seeing both estates at once was the second problem. The two platforms ran in different clouds and accounts. The team placed OpenTelemetry gateway collectors in each environment and sent telemetry from both into one backend, the same pattern a large travel platform describes for receiving telemetry from multiple accounts through gateway collectors<sup class="cite"><a href="#ref-4">4</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/singapore-saas-post-acquisition-integration/telemetry-across-accounts.webp" alt="Architecture diagram showing services with sidecars and ingress gateways in two Kubernetes clusters sending OTLP traces and metrics to gateway collectors, with telemetry from other cloud accounts arriving through a network load balancer" width="1200" height="723" loading="lazy"></div><figcaption>Gateway collectors receiving telemetry across clusters and accounts: how both estates fed one view during the transition. <span class="credit">Source: <a href="https://opentelemetry.io/blog/2026/devex-skyscanner/" target="_blank" rel="noopener">OpenTelemetry blog, Developer Experience SIG</a> · CC BY 4.0</span></figcaption></figure>
+<div class="callout"><p>Integrate identity before data. One login across both products gave customers a single company to deal with months before any data moved, and took the pressure off the riskiest migrations.</p></div>
+<p>Data protection shaped the migration order. Singapore's PDPA restricts transfers of personal data outside Singapore unless the receiving organisation provides comparable protection<sup class="cite"><a href="#ref-2">2</a></sup>, and Malaysia's amended PDPA replaced its whitelist with a test of whether the destination provides substantially similar or equivalent protection<sup class="cite"><a href="#ref-3">3</a></sup>. Each migration wave had a documented assessment and intra-group contract terms before data moved, and Malaysian customers whose contracts required in-country hosting stayed on in-country infrastructure. Patterns from <a href="/insights/mongodb-multi-tenant-saas-patterns/">multi-tenant SaaS design</a> and <a href="/case-studies/saas-multi-tenant-re-architecture/">SaaS re-architecture</a> applied directly.</p>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Product and customer success</small><ol><li>Customer communication plan</li><li class="hl">Migration wave scheduling</li><li>Feedback after each wave</li></ol></div>
+<div class="dgm-lane"><small>Engineering</small><ol><li>Identity and facade</li><li class="hl">Parallel payroll runs</li><li>Tenant migration and retirement</li></ol></div>
+<div class="dgm-lane"><small>Legal and security</small><ol><li>Transfer assessments</li><li>Intra-group contracts</li><li class="hl">Retention and deletion</li></ol></div>
+</div>
+<figcaption>Customer success set the pace, engineering moved tenants, legal cleared each wave.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Stabilise</b><ul><li>Joint on-call and incident process</li><li>Shared observability</li><li>No new divergence</li></ul></div>
+<div><small>Phase 2</small><b>Unify the front</b><ul><li>One identity</li><li>One admin console</li><li>API facade</li></ul></div>
+<div><small>Phase 3</small><b>Migrate</b><ul><li>Waves by segment</li><li>Parallel payroll runs</li><li>Rollback windows</li></ul></div>
+<div><small>Phase 4</small><b>Retire</b><ul><li>Old platform shut down</li><li>Data deleted</li><li>Costs consolidated</li></ul></div>
+</div>
+<figcaption>Stabilise first, unify what customers see, then migrate and retire.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Identity and console first</td><td>Data migration first</td><td>One product to customers early, with low risk</td></tr>
+<tr><td>Migrate in waves with parallel runs</td><td>Big-bang cutover</td><td>Payroll errors are not recoverable after payday</td></tr>
+<tr><td>Keep the acquired payroll rules where better</td><td>Buyer's engine wins by default</td><td>Local expertise was part of the deal value</td></tr>
+<tr><td>Transfer assessment per wave</td><td>One assessment for the whole programme</td><td>Data sets and destinations differed by wave</td></tr>
+<tr><td>Organise by domain, mixed teams</td><td>Keep acquired team separate</td><td>Avoids two camps defending two systems</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: set up joint on-call and shared observability in the first weeks; nothing builds trust between two engineering teams faster than fixing incidents together. Differently: be involved before signing. Several integration costs, such as the single-tenant contracts with in-country hosting commitments, were knowable during <a href="/technical-due-diligence/">technical due diligence</a> and would have changed the plan and the price. See <a href="/insights/team-topologies-for-ai-teams/">team topologies</a> and <a href="/insights/technical-debt-without-a-rewrite/">technical debt without a rewrite</a>.</p>
+<p>If you are integrating an acquisition in Singapore or Southeast Asia, my <a href="/fractional-cto-singapore/">work in the region</a> explains how I approach it, or <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
