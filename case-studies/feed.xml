@@ -1,6 +1,85 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link><description>Anonymised engagements with architecture and flow diagrams</description><language>en-gb</language><lastBuildDate>Wed, 25 Nov 2026 15:50:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/case-studies/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link></image><item><title>Two platforms, one product: integrating an acquired HR and payroll SaaS in Southeast Asia</title><link>https://asksumanta.com/case-studies/singapore-saas-post-acquisition-integration/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/singapore-saas-post-acquisition-integration/</guid><pubDate>Wed, 25 Nov 2026 15:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>platform</category><category>architecture</category><category>leadership</category><description>How a Singapore HR and payroll SaaS company can integrate an acquired Malaysian competitor: one identity, staged migration, shared observability and lawful transfers.</description><content:encoded><![CDATA[<p><em>A Singapore-based HR and payroll software company bought a smaller Malaysian competitor for its customers and local payroll expertise. The deal assumed the two platforms would merge within a year. They had different clouds, identity systems, tenancy models and payroll engines, and both held sensitive employee data under different national laws. The goal was to integrate without losing customers, breaking payroll runs or moving data unlawfully.</em></p><h2>The situation</h2>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link><description>Anonymised engagements with architecture and flow diagrams</description><language>en-gb</language><lastBuildDate>Fri, 27 Nov 2026 15:50:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/case-studies/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Case studies</title><link>https://asksumanta.com/</link></image><item><title>Faster, not looser: adopting AI coding agents and automated review at a Kenyan fintech scale-up</title><link>https://asksumanta.com/case-studies/kenya-fintech-ai-code-review-governance/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/kenya-fintech-ai-code-review-governance/</guid><pubDate>Fri, 27 Nov 2026 15:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>leadership</category><category>ai</category><category>fintech</category><description>How a Kenyan fintech scale-up can adopt AI coding agents and automated code review without losing control of payments code: risk tiers, ownership and evidence.</description><content:encoded><![CDATA[<p><em>A Nairobi fintech scale-up processing mobile money and card payments wanted the speed AI coding tools promised. Engineers were already using them unofficially. Review queues were the bottleneck, and new tools offered agents that review, fix and even approve pull requests. The goal was to adopt them deliberately: more throughput on routine work, tighter control on the code that moves money.</em></p><h2>The situation</h2>
+<p>A Nairobi-based fintech scale-up built payment and lending products on top of mobile money and card rails. Its engineering team had grown quickly, and code review had become the bottleneck: senior engineers spent much of their week reviewing, and simple changes waited days. Engineers were already using AI coding assistants on their own accounts, with no agreed rules on what code or data could be shared with them.</p>
+<p>Leadership wanted the productivity, but the products moved customers' money and handled personal data, and bank and mobile money partners expected evidence of a controlled development process. Unreviewed or poorly reviewed changes to payments code were the risk nobody could accept.</p>
+<p><strong>Why now.</strong> In November 2026 Anthropic launched Claude Ship, a set of agents for GitHub pull requests: code review, an agent that fixes failing checks and conflicts, and an approvals agent that can approve routine changes when a policy file in the repository allows it<sup class="cite"><a href="#ref-1">1</a></sup>. Coverage noted Anthropic's warning that it may miss bugs or security issues<sup class="cite"><a href="#ref-2">2</a></sup>. Tools that can approve code changed the question from "should we use AI to write code?" to "who is allowed to say yes?".</p>
+
+<h2>What had to be true</h2>
+<ul>
+<li><strong>One policy</strong> for AI tools: which tools, which repositories, what data may be shared.</li>
+<li><strong>Review effort matched to risk</strong>: humans on code that moves money, agents on routine change.</li>
+<li><strong>Approval rules in the repository</strong>, versioned and reviewed like code.</li>
+<li><strong>A complete trail</strong> for every merge: reviewer, approver, checks, policy.</li>
+<li><strong>Evidence, not belief</strong>: delivery and stability measured before and after.</li>
+</ul>
+
+<h2>Architecture</h2>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Authoring</small><div class="dgm-nodes"><span>AI coding assistants<em>approved tools, company accounts</em></span><span>Engineers<em>own the change</em></span></div></div>
+<div class="dgm-tier"><small>Review</small><div class="dgm-nodes"><span class="hl">AI review agents<em>every pull request</em></span><span>Fix agent<em>failing checks, conflicts</em></span><span>Human reviewers<em>by risk tier</em></span></div></div>
+<div class="dgm-tier"><small>Policy</small><div class="dgm-nodes"><span class="hl">Risk tiers by path<em>payments, identity, data, routine</em></span><span>Code owners<em>required approvers per path</em></span><span>Approval policy file<em>what agents may approve</em></span></div></div>
+<div class="dgm-tier"><small>Gates</small><div class="dgm-nodes"><span>Repository rulesets<em>required checks and reviews</em></span><span>Security scanning<em>secrets, dependencies, code</em></span><span>Merge queue<em>tested before merge</em></span></div></div>
+<div class="dgm-tier"><small>Evidence</small><div class="dgm-nodes"><span>Audit log export<em>who approved what</em></span><span>Delivery metrics<em>throughput and stability</em></span><span>Trial comparisons<em>agent versus human findings</em></span></div></div>
+</div>
+<figcaption>Agents add review capacity everywhere; policy decides where humans must still say yes.</figcaption>
+</figure>
+
+<h2>The data flow, end to end</h2>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Open</b><span>An engineer opens a pull request, often written with AI help</span></li>
+<li><b>Review</b><span>AI review agents comment; a fix agent resolves failing checks</span></li>
+<li class="hl"><b>Classify</b><span>Changed paths decide the risk tier and required approvers</span></li>
+<li class="hl"><b>Approve</b><span>Routine tier: agent may approve under policy. Other tiers: named human owners</span></li>
+<li><b>Gate</b><span>Rulesets enforce checks, scans and the merge queue</span></li>
+<li><b>Record</b><span>The merge, approvals and policy version go to the audit trail</span></li>
+</ol>
+<figcaption>Every change gets AI review; only routine changes can get AI approval.</figcaption>
+</figure>
+
+<h2>The hard part: deciding who may say yes</h2>
+<p>The team's first instinct was to argue about whether AI review was good enough. The more useful question was where any reviewer's approval should be sufficient. The answer was a risk tier for every path in the main repositories: payments and ledger code, identity and access, personal data handling and infrastructure were high risk; internal tools, documentation, copy and test-only changes were routine.</p>
+<p>Code ownership made the tiers enforceable. GitHub's code owners feature assigns owners to paths, and repository rules can require their review before merging<sup class="cite"><a href="#ref-3">3</a></sup>, with rulesets applying required reviews and status checks consistently across branches<sup class="cite"><a href="#ref-4">4</a></sup>. High-risk paths named human owners; routine paths allowed an agent approval when the approval policy file permitted it, and that policy file was itself owned by the engineering leadership group.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/kenya-fintech-ai-code-review-governance/code-owners.webp" alt="File view showing a tooltip that the file is owned by a named reviewers team, from a specific line of the CODEOWNERS file" width="1200" height="227" loading="lazy"></div><figcaption>Every file knows its owner: code ownership is what turns a risk policy into a merge rule. <span class="credit">Source: <a href="https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners" target="_blank" rel="noopener">GitHub Docs</a> · CC BY 4.0</span></figcaption></figure>
+<div class="callout"><p>The approval policy file is the most important file in the repository. Whoever can edit it decides what agents may merge, so it needs the strictest owners of all.</p></div>
+<p>The rollout followed the team's existing AI coding policy work, set out in <a href="https://asksumanta.com/insights/ai-coding-policy-engineering-teams/">AI coding policy for engineering teams</a>, and agent credentials followed the lessons in <a href="https://asksumanta.com/insights/coding-agent-secrets-dont-ask-again/">coding agents and secrets</a> and <a href="https://asksumanta.com/insights/agent-framework-pypi-pth-compromise/">the agent-framework compromise</a>: agents ran with scoped tokens and never with deployment credentials.</p>
+
+<h2>How it ran</h2>
+<figure class="dgm">
+<div class="dgm-lanes">
+<div class="dgm-lane"><small>Engineering leadership</small><ol><li>AI tool policy</li><li class="hl">Risk tiers and owners</li><li>Approval policy file</li></ol></div>
+<div class="dgm-lane"><small>Platform and security</small><ol><li>Company accounts for tools</li><li class="hl">Rulesets, scans and merge queue</li><li>Audit log export</li></ol></div>
+<div class="dgm-lane"><small>Product teams</small><ol><li>Use agents on every pull request</li><li>Flag false positives and misses</li><li class="hl">Own approvals on their paths</li></ol></div>
+</div>
+<figcaption>Leadership set the rules, platform enforced them, product teams used and challenged them.</figcaption>
+</figure>
+<figure class="dgm">
+<div class="dgm-phases">
+<div><small>Phase 1</small><b>Baseline</b><ul><li>Delivery and stability metrics</li><li>AI tool inventory</li><li>One policy</li></ul></div>
+<div><small>Phase 2</small><b>Review</b><ul><li>AI review on all pull requests</li><li>Fix agent for checks</li><li>Compare with human reviews</li></ul></div>
+<div><small>Phase 3</small><b>Tier</b><ul><li>Risk tiers by path</li><li>Code owners</li><li>Rulesets</li></ul></div>
+<div><small>Phase 4</small><b>Approve</b><ul><li>Agent approvals in observation mode</li><li>Then on routine paths only</li><li>Review the policy regularly</li></ul></div>
+</div>
+<figcaption>Measure first, add review capacity, then carefully hand over routine approvals.</figcaption>
+</figure>
+
+<h2>Key decisions and trade-offs</h2>
+<table class="tbl">
+<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Company accounts for AI tools</td><td>Let engineers use personal tools</td><td>Control over data shared and a record of use</td></tr>
+<tr><td>Risk tiers by path</td><td>Same review rules for all code</td><td>Spends senior attention where losses happen</td></tr>
+<tr><td>Agent approval only on routine paths</td><td>No agent approvals at all</td><td>Captures most of the speed gain with little risk</td></tr>
+<tr><td>Observation mode first</td><td>Turn approvals on immediately</td><td>Evidence of agent judgement before trusting it</td></tr>
+<tr><td>Measure stability alongside throughput</td><td>Measure pull requests merged</td><td>Faster merging that breaks production is not faster</td></tr>
+</tbody>
+</table>
+
+<h2>What I'd do again, and differently</h2>
+<p>Again: start with risk tiers and ownership; once those existed, every tool decision became easier, and it improved human review too. Differently: involve partner banks' and mobile money providers' assurance teams earlier. They cared less about which AI tool was used than about whether approvals on payment code were traceable, and showing them the audit trail early would have saved a round of questions. DORA's research on software delivery performance gave a shared vocabulary for measuring the change<sup class="cite"><a href="#ref-5">5</a></sup>; see <a href="https://asksumanta.com/insights/dora-metrics-ai-assisted-engineering/">DORA metrics for AI-assisted engineering</a>.</p>
+<p>If you lead engineering at a fintech in Africa or beyond, see my <a href="https://asksumanta.com/regions/">regional work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/kenya-fintech-ai-code-review-governance/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Two platforms, one product: integrating an acquired HR and payroll SaaS in Southeast Asia</title><link>https://asksumanta.com/case-studies/singapore-saas-post-acquisition-integration/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/singapore-saas-post-acquisition-integration/</guid><pubDate>Wed, 25 Nov 2026 15:50:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>platform</category><category>architecture</category><category>leadership</category><description>How a Singapore HR and payroll SaaS company can integrate an acquired Malaysian competitor: one identity, staged migration, shared observability and lawful transfers.</description><content:encoded><![CDATA[<p><em>A Singapore-based HR and payroll software company bought a smaller Malaysian competitor for its customers and local payroll expertise. The deal assumed the two platforms would merge within a year. They had different clouds, identity systems, tenancy models and payroll engines, and both held sensitive employee data under different national laws. The goal was to integrate without losing customers, breaking payroll runs or moving data unlawfully.</em></p><h2>The situation</h2>
 <p>A Singapore-based HR and payroll software company serving employers across Southeast Asia acquired a smaller Malaysian competitor. The buyer wanted the target's customer base and its depth in Malaysian statutory payroll. The investment case assumed one product within a year and savings from running one platform.</p>
 <p>The technology did not line up. The buyer ran a multi-tenant platform on one cloud with its own identity system; the target ran single-tenant deployments on another cloud with a different identity provider. Each had its own payroll engine encoding years of country rules. Both held sensitive employee data: salaries, bank details, identity numbers.</p>
 <p><strong>Why now.</strong> Technology consolidation is accelerating, from CrowdStrike's agreed all-stock deal for Zscaler valued at about $43.9 billion<sup class="cite"><a href="#ref-1">1</a></sup> down to many smaller software acquisitions in the region. Most deal value depends on integration, and integration is where it is most often lost. This engagement started the week after the deal closed.</p>
@@ -3921,88 +4000,4 @@
 
 <h2>What I'd do again, and differently</h2>
 <p>Again: start with the inventory and let engineering pipelines produce the evidence. Differently: involve sales engineering from the start. They see every questionnaire, and their list of repeated questions is the fastest way to prioritise which controls and evidence to build first.</p>
-<p>If AI questionnaires are slowing your deals, my <a href="https://asksumanta.com/fractional-cto/">fractional CTO</a> work covers governance programmes like this, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/ai-governance-programme-eu-us-uae/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>One governed clinical trial data platform, from site data to submission datasets</title><link>https://asksumanta.com/case-studies/clinical-trial-data-platform/</link><guid isPermaLink="true">https://asksumanta.com/case-studies/clinical-trial-data-platform/</guid><pubDate>Wed, 28 Oct 2026 14:20:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>healthcare</category><category>data</category><category>governance</category><category>regulation</category><category>architecture</category><description>How a biotech can unify trial data from EDC, labs and devices into one governed platform, with lineage to SDTM submissions and audit trails for GCP and Part 11.</description><content:encoded><![CDATA[<p><em>A growing biotech ran several trials through different vendors: an EDC system, central labs, eCOA, wearables and imaging. Each study rebuilt its data pipelines from scratch, and the path from raw data to submission datasets lived in programmers&#x27; heads. The goal was one platform with lineage, quality and audit trails built in.</em></p><h2>The situation</h2>
-<p>A biotech with several programmes in clinical development worked, like most of its peers, through vendors: one for electronic data capture, others for central labs, patient-reported outcomes, wearable devices and imaging. Each study's data team built its own transfers, mappings and checks. Submission datasets were produced by statistical programmers working from extracts, and the reasoning behind many transformations existed only in their code and memory.</p>
-<p>As the pipeline grew, leadership saw the risk: every new study cost the same effort as the last, and an inspection question about where a value came from could take days to answer.</p>
-
-<h2>What had to be true</h2>
-<ul>
-<li><strong>Traceability</strong> from every submission value back to its source record and every transformation in between.</li>
-<li><strong>Reuse across studies</strong>: shared ingestion, mapping patterns and checks, not bespoke pipelines per protocol.</li>
-<li><strong>Quality visible early</strong>, to data managers during the study, not at database lock.</li>
-<li><strong>Audit trails and access control by design</strong>, suitable for computerised system validation.</li>
-<li><strong>Vendor independence</strong>: changing an EDC or lab vendor should not mean rebuilding the platform.</li>
-</ul>
-<p>The regulatory direction supported this. ICH finalised the revised Good Clinical Practice guideline, E6(R3), in January 2025, and commentary highlights its risk-proportionate approach and a new data governance section that acknowledges digital trial data handling<sup class="cite"><a href="#ref-1">1</a></sup>. In the EU, the principles and Annex 1 applied from 23 July 2025<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
-
-<h2>Architecture</h2>
-<figure class="dgm">
-<div class="dgm-stack">
-<div class="dgm-tier"><small>Sources</small><div class="dgm-nodes"><span>EDC<em>case report forms</em></span><span>Central labs<em>results and ranges</em></span><span>eCOA<em>patient-reported outcomes</em></span><span>Devices and imaging<em>streams and reads</em></span></div></div>
-<div class="dgm-tier"><small>Land</small><div class="dgm-nodes"><span>Raw zone<em>immutable, per transfer</em></span><span>Transfer agreements<em>versioned specs</em></span><span>Access control<em>blinded and unblinded</em></span></div></div>
-<div class="dgm-tier"><small>Standardise</small><div class="dgm-nodes"><span class="hl">Mapping to SDTM<em>versioned, reviewed</em></span><span>Controlled terminology<em>managed centrally</em></span><span>Derivations<em>shared library</em></span></div></div>
-<div class="dgm-tier"><small>Assure</small><div class="dgm-nodes"><span class="hl">Validation rules<em>every load</em></span><span>Data review<em>data managers</em></span><span class="hl">Lineage and audit<em>who, what, when, why</em></span></div></div>
-<div class="dgm-tier"><small>Use</small><div class="dgm-nodes"><span>Statistical computing<em>analysis datasets</em></span><span>Submission package<em>datasets, define, guides</em></span><span>Cross-study analytics<em>governed access</em></span></div></div>
-</div>
-<figcaption>Raw data never changes; every transformation above it is versioned, checked and traceable.</figcaption>
-</figure>
-
-<h2>The data flow, end to end</h2>
-<figure class="dgm">
-<ol class="dgm-flow g3">
-<li><b>Receive</b><span>Vendor transfers land as-is in the raw zone, checked against the transfer agreement</span></li>
-<li><b>Validate</b><span>Structural and content checks; failures returned to the vendor with reasons</span></li>
-<li class="hl"><b>Map</b><span>Versioned mappings produce SDTM domains with controlled terminology</span></li>
-<li><b>Review</b><span>Data managers work issues in a shared review queue during the study</span></li>
-<li class="hl"><b>Trace</b><span>Lineage records each value's source and transformations</span></li>
-<li><b>Deliver</b><span>Analysis and submission datasets built from locked, traceable versions</span></li>
-</ol>
-<figcaption>Quality problems are found while the study runs, when they are cheap to fix at the site.</figcaption>
-</figure>
-<p>Submission requirements anchored the design. The FDA lists the study data standards it supports and requires, including SDTM versions, with dates from which each version is supported and then required<sup class="cite"><a href="#ref-3">3</a></sup>. Building SDTM mappings as versioned, reviewable assets meant a standards update became a controlled change rather than a scramble.</p>
-
-<h2>The hard part: one mapping layer for many protocols</h2>
-<p>Every protocol is different, and the temptation is to treat every study as a special case. The platform separated what genuinely varies by study, such as visit schedules, endpoints and specific forms, from what doesn't, such as demographics, adverse events, concomitant medications and lab structures.</p>
-<ul>
-<li>A shared library of mappings and derivations for common domains, with study-level extensions rather than copies.</li>
-<li>Controlled terminology managed centrally, so the same concept is coded the same way across studies.</li>
-<li>Mapping specifications stored with the code, reviewed like code and versioned with each data cut.</li>
-<li>Blinded and unblinded data separated by access control and environment, not convention.</li>
-</ul>
-<div class="callout"><p>The question an inspector asks is simple: where did this number come from? A platform is ready when anyone on the team can answer it in minutes.</p></div>
-
-<h2>How it ran</h2>
-<figure class="dgm">
-<div class="dgm-lanes">
-<div class="dgm-lane"><small>Data management</small><ol><li>Transfer agreements</li><li class="hl">Ongoing data review</li><li>Database lock</li></ol></div>
-<div class="dgm-lane"><small>Platform</small><ol><li>Ingestion and checks</li><li class="hl">Mapping library and lineage</li><li>Environments and access</li></ol></div>
-<div class="dgm-lane"><small>Quality</small><ol><li>Validation plan</li><li>Audit trail review</li><li>Inspection readiness</li></ol></div>
-</div>
-<figcaption>Quality involved from the start, so validation followed the build rather than chasing it.</figcaption>
-</figure>
-<figure class="dgm">
-<div class="dgm-phases">
-<div><small>Phase 1</small><b>Foundations</b><ul><li>Raw zone and access model</li><li>Transfer agreements</li><li>Validation plan</li></ul></div>
-<div><small>Phase 2</small><b>Pilot study</b><ul><li>Core SDTM domains</li><li>Checks on every load</li><li>Lineage captured</li></ul></div>
-<div><small>Phase 3</small><b>Shared library</b><ul><li>Common mappings</li><li>Central terminology</li><li>Second study onboarded</li></ul></div>
-<div><small>Phase 4</small><b>Validate and scale</b><ul><li>System validation</li><li>SOPs and training</li><li>Portfolio onboarding</li></ul></div>
-</div>
-<figcaption>A single study end to end before generalising, so the shared library was based on real needs.</figcaption>
-</figure>
-
-<h2>Key decisions and trade-offs</h2>
-<table class="tbl">
-<thead><tr><th>Decision</th><th>Alternative</th><th>Why</th></tr></thead>
-<tbody>
-<tr><td>Immutable raw zone per transfer</td><td>Overwrite with latest vendor file</td><td>Any result can be reproduced from the exact data received</td></tr>
-<tr><td>Mappings as versioned code</td><td>Specifications in spreadsheets</td><td>Reviewable, testable and traceable changes</td></tr>
-<tr><td>Shared library with study extensions</td><td>Copy and modify per study</td><td>Fixes and standards updates apply everywhere</td></tr>
-<tr><td>Checks during the study</td><td>Clean-up before lock</td><td>Issues resolved with sites while they are fresh</td></tr>
-<tr><td>Audit trail designed in</td><td>Rely on system logs</td><td>Part 11 expects secure, time-stamped audit trails of record changes</td></tr>
-</tbody>
-</table>
-<p>For systems that create or modify records required by FDA regulations, 21 CFR Part 11 sets expectations for electronic records, including secure, computer-generated, time-stamped audit trails<sup class="cite"><a href="#ref-4">4</a></sup>. Designing those in from the first phase was far cheaper than retrofitting them.</p>
-
-<h2>What I'd do again, and differently</h2>
-<p>Again: one study end to end before building the shared library, and quality at the table from the first week. Differently: negotiate transfer agreements with vendors as part of platform work, not study start-up. Consistent vendor formats are what make shared mappings possible. Related approaches are in <a href="https://asksumanta.com/insights/data-contracts-playbook/">data contracts</a> and <a href="https://asksumanta.com/insights/fhir-to-omop-architecture/">FHIR to OMOP architecture</a>.</p>
-<p>If your clinical data is growing faster than your ability to trace it, the <a href="https://asksumanta.com/healthcare-data-architecture/">healthcare data architecture</a> page describes how I work, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/clinical-trial-data-platform/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
+<p>If AI questionnaires are slowing your deals, my <a href="https://asksumanta.com/fractional-cto/">fractional CTO</a> work covers governance programmes like this, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p><p><a href="https://asksumanta.com/case-studies/ai-governance-programme-eu-us-uae/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
