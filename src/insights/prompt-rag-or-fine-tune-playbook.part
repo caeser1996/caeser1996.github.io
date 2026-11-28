@@ -1,0 +1,72 @@
+<!--{"title": "Prompt, RAG or fine-tune? A playbook for adapting an LLM", "description": "Most teams reach for fine-tuning too early or RAG too late. A practical playbook for choosing between prompting, retrieval and fine-tuning, and combining them well.", "h1": "Prompt, retrieve or fine-tune? A playbook for adapting a language model to your problem", "kicker": "AI architecture · Playbook", "lede": "Every team building with language models hits the same fork: the base model is not quite right. Do you write better prompts, give it your documents through retrieval, or train it further on your data? Each fixes a different problem, costs differently and fails differently. Choosing by fashion rather than by the problem is how projects burn months. Here is how I decide.", "date": "2026-11-28", "datetime": "2026-11-28T21:20:00+04:00", "readtime": "8 min read", "format": "playbook", "tags": ["ai", "llm", "rag", "architecture"], "keywords": ["prompt engineering vs RAG vs fine-tuning", "when to fine-tune an LLM", "retrieval-augmented generation", "LoRA adapters", "QLoRA", "multi-LoRA serving", "LLM adaptation strategy", "evaluation sets", "AI architecture decisions", "fractional CTO AI"], "faq": [["When should you fine-tune instead of using RAG?", "Fine-tune when the problem is behaviour or form, such as a consistent output format, a domain style or a narrow classification task, and prompting with examples has plateaued. Use retrieval when the problem is knowledge that changes or must be cited."], ["Can you combine RAG and fine-tuning?", "Yes, and it is often the best answer: fine-tune for behaviour, such as how to use retrieved passages and what format to answer in, and retrieve for facts that change."], ["What do LoRA adapters change operationally?", "They make fine-tuned variants small and cheap to store, and modern serving engines can load several adapters on one base model, so many task-specific variants do not each need their own servers."]], "related": ["/ai-architect/", "/fractional-cto/", "/regions/"], "citations": [{"title": "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks", "url": "https://arxiv.org/abs/2005.11401", "publisher": "arXiv (Lewis et al.)", "date": "2020"}, {"title": "LoRA: Low-Rank Adaptation of Large Language Models", "url": "https://arxiv.org/abs/2106.09685", "publisher": "arXiv (Hu et al.)", "date": "2021"}, {"title": "QLoRA: Efficient Finetuning of Quantized LLMs", "url": "https://arxiv.org/abs/2305.14314", "publisher": "arXiv (Dettmers et al.)", "date": "2023"}, {"title": "LoRA Adapters", "url": "https://docs.vllm.ai/en/latest/features/lora.html", "publisher": "vLLM documentation"}, {"title": "Introducing Gateway API Inference Extension", "url": "https://kubernetes.io/blog/2025/06/05/introducing-gateway-api-inference-extension/", "publisher": "Kubernetes blog", "date": "5 Jun 2025"}]}-->
+<section class="block">
+<h2>Start by naming the gap</h2>
+<p>"The model is not good enough" is not a diagnosis. Before choosing a technique, write down which of four gaps you actually have, because each points to a different fix.</p>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Instruction gap</small><div class="dgm-nodes"><span class="hl">It does not know what you want<em>fix: prompts, examples, structured outputs</em></span></div></div>
+<div class="dgm-tier"><small>Knowledge gap</small><div class="dgm-nodes"><span class="hl">It does not know your facts<em>fix: retrieval</em></span></div></div>
+<div class="dgm-tier"><small>Behaviour gap</small><div class="dgm-nodes"><span class="hl">It knows, but will not act consistently<em>fix: fine-tuning</em></span></div></div>
+<div class="dgm-tier"><small>Capability gap</small><div class="dgm-nodes"><span>It cannot do the task at all<em>fix: a different model or a different design</em></span></div></div>
+</div>
+<figcaption>Four different gaps, four different fixes. Most failed projects treated one gap as another.</figcaption>
+</figure>
+<p>The order matters too. Prompting is the cheapest change and the fastest to test; retrieval adds a data pipeline; fine-tuning adds a training pipeline and a model to maintain. Climb only as far as the evidence requires.</p>
+</section>
+
+<section class="block">
+<h2>Step 1: exhaust the prompt, honestly</h2>
+<p>A surprising share of "we need fine-tuning" problems are prompt problems: vague instructions, no examples, no output schema. Write a clear task description, add a handful of worked examples covering the hard cases, and constrain the output with a schema. Then measure on an evaluation set built from real inputs. If quality climbs and then plateaus, you have learned where the ceiling is, which is the evidence you need for the next step. See <a href="/insights/structured-outputs-reliable-llm-integration/">structured outputs</a> and <a href="/insights/llm-evaluation-sets-that-predict-production/">evaluation sets that predict production</a>.</p>
+</section>
+
+<section class="block">
+<h2>Step 2: retrieve when the gap is knowledge</h2>
+<p>Retrieval-augmented generation combines a model with a search step over your own documents, so answers draw on current, specific facts that can be cited<sup class="cite"><a href="#ref-1">1</a></sup>. It is the right tool when knowledge changes often, must be attributable, or is too large or sensitive to train into weights. It is the wrong tool for teaching style or format: retrieving more examples of a format is a weak substitute for a model that has learned it.</p>
+<p>The hard work in retrieval is not the model; it is chunking, metadata, access control and evaluation of what gets retrieved. Most retrieval failures are search failures. See <a href="/insights/rag-to-production-checklist/">RAG to production</a>, <a href="/insights/choosing-embedding-models-rag/">choosing embedding models</a> and <a href="/insights/long-context-vs-rag/">long context versus RAG</a>.</p>
+</section>
+
+<section class="block">
+<h2>Step 3: fine-tune when the gap is behaviour</h2>
+<p>Fine-tuning changes how the model behaves: following a house format every time, using domain terms correctly, making a narrow classification reliably, or using retrieved passages the way you want. Parameter-efficient methods have made it far cheaper. LoRA trains small low-rank matrices alongside frozen weights, cutting the number of trainable parameters dramatically<sup class="cite"><a href="#ref-2">2</a></sup>, and QLoRA showed fine-tuning on a quantised base model can preserve quality while fitting large models on far less hardware<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+<p>The cost that remains is operational: a training dataset to curate and refresh, an evaluation gate for every new version, and a model whose behaviour you now own. Fine-tuning on facts is the classic mistake; facts change, and the model will state outdated ones confidently.</p>
+</section>
+
+<section class="block">
+<h2>Combine them, and serve them efficiently</h2>
+<p>The strongest systems often combine all three: a fine-tuned model that has learned the task's format and how to use evidence, fed by retrieval for current facts, guided by a short, stable prompt. LoRA also changes the serving picture. Serving engines such as vLLM can load multiple LoRA adapters on one base model and choose the adapter per request<sup class="cite"><a href="#ref-4">4</a></sup>, and Kubernetes' Gateway API inference extension can route requests to servers that already have the right adapter loaded<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="/assets/img/prompt-rag-or-fine-tune-playbook/adapter-aware-scheduling.webp" alt="Flowchart of an inference scheduling request: critical requests choose from pods with the required LoRA adapter loaded or standard pods, non-critical requests go to pods with capacity, then candidates are filtered by lowest queue and cache use" width="580" height="685" loading="lazy"></div><figcaption>Adapter-aware scheduling: requests go to servers that already have the needed fine-tuned adapter loaded. <span class="credit">Source: <a href="https://kubernetes.io/blog/2025/06/05/introducing-gateway-api-inference-extension/" target="_blank" rel="noopener">Kubernetes blog, Gateway API Inference Extension authors</a> · CC BY 4.0</span></figcaption></figure>
+<p>That makes many small task-specific variants practical: one base model, many adapters, routed per request. See <a href="/insights/llm-inference-serving-vllm/">LLM inference serving</a> and <a href="/insights/kubernetes-inference-gateway/">Kubernetes inference gateways</a>.</p>
+</section>
+
+<section class="block">
+<h2>The decision, side by side</h2>
+<table class="tbl">
+<thead><tr><th>Question</th><th>Prompt</th><th>Retrieve</th><th>Fine-tune</th></tr></thead>
+<tbody>
+<tr><td>Fixes</td><td>Unclear instructions</td><td>Missing or changing facts</td><td>Inconsistent behaviour or format</td></tr>
+<tr><td>Time to first result</td><td>Hours</td><td>Days to weeks</td><td>Weeks</td></tr>
+<tr><td>Ongoing work</td><td>Prompt versions and evals</td><td>Index freshness, access control</td><td>Datasets, retraining, eval gates</td></tr>
+<tr><td>Citations</td><td>No</td><td>Yes</td><td>No</td></tr>
+<tr><td>Provider portability</td><td>High</td><td>High</td><td>Lower: tied to a base model</td></tr>
+<tr><td>Common mistake</td><td>Stopping before adding examples</td><td>Ignoring search quality</td><td>Training on facts</td></tr>
+</tbody>
+</table>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Name</b><span>Which gap: instruction, knowledge, behaviour or capability?</span></li>
+<li><b>Measure</b><span>Build an evaluation set from real inputs first</span></li>
+<li class="hl"><b>Prompt</b><span>Instructions, examples, schema; record the ceiling</span></li>
+<li class="hl"><b>Retrieve or tune</b><span>Retrieval for knowledge, fine-tuning for behaviour</span></li>
+<li><b>Combine</b><span>Fine-tuned behaviour plus retrieved facts where both gaps exist</span></li>
+<li><b>Operate</b><span>Version prompts, indexes and adapters; gate each change on the eval set</span></li>
+</ol>
+<figcaption>The playbook: measure first, climb only as far as the evidence requires.</figcaption>
+</figure>
+<div class="callout"><p>If you cannot say what score on your evaluation set would justify fine-tuning, you are not ready to fine-tune.</p></div>
+</section>
+
+<section class="block">
+<h2>The CTO's take</h2>
+<p>The adaptation choice is a product and operations decision as much as a technical one. Prompting keeps you portable across providers; retrieval makes answers current and auditable; fine-tuning buys consistency at the price of owning a model. Decide based on the gap you measured, not the technique in the news. If you are about to commit budget to fine-tuning, a week spent on an evaluation set and better prompts is the cheapest insurance you can buy.</p>
+<p>If you want a second opinion on how to adapt models for your product, I am a <a href="/fractional-cto/">fractional CTO</a> and <a href="/ai-architect/">AI architect</a> based in India, the United States and the UAE, working globally. You can <a href="/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section>

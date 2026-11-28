@@ -1,6 +1,76 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights</title><link>https://asksumanta.com/</link><description>Articles on AI, data, cloud and technology leadership</description><language>en-gb</language><lastBuildDate>Fri, 27 Nov 2026 21:20:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/insights/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights</title><link>https://asksumanta.com/</link></image><item><title>Engineering metrics for boards: what to show, and what to leave out</title><link>https://asksumanta.com/insights/engineering-metrics-for-boards/</link><guid isPermaLink="true">https://asksumanta.com/insights/engineering-metrics-for-boards/</guid><pubDate>Fri, 27 Nov 2026 21:20:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>leadership</category><category>strategy</category><category>fractional-cto</category><description>Boards ask how engineering is doing and often get commit counts and story points. A CTO&#x27;s essay on the few measures that inform decisions, and the ones that mislead.</description><content:encoded><![CDATA[<p><em>Sooner or later a board asks: how is engineering doing? The answers that are easiest to produce, commits, story points, tickets closed, are the least useful, and some actively mislead. A board needs a handful of measures that connect engineering to outcomes, risk and money, explained the same way every quarter. Here is what I put in front of boards, and what I keep out.</em></p><section class="block">
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights</title><link>https://asksumanta.com/</link><description>Articles on AI, data, cloud and technology leadership</description><language>en-gb</language><lastBuildDate>Sat, 28 Nov 2026 21:20:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/insights/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights</title><link>https://asksumanta.com/</link></image><item><title>Prompt, retrieve or fine-tune? A playbook for adapting a language model to your problem</title><link>https://asksumanta.com/insights/prompt-rag-or-fine-tune-playbook/</link><guid isPermaLink="true">https://asksumanta.com/insights/prompt-rag-or-fine-tune-playbook/</guid><pubDate>Sat, 28 Nov 2026 21:20:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>ai</category><category>llm</category><category>rag</category><category>architecture</category><description>Most teams reach for fine-tuning too early or RAG too late. A practical playbook for choosing between prompting, retrieval and fine-tuning, and combining them well.</description><content:encoded><![CDATA[<p><em>Every team building with language models hits the same fork: the base model is not quite right. Do you write better prompts, give it your documents through retrieval, or train it further on your data? Each fixes a different problem, costs differently and fails differently. Choosing by fashion rather than by the problem is how projects burn months. Here is how I decide.</em></p><section class="block">
+<h2>Start by naming the gap</h2>
+<p>"The model is not good enough" is not a diagnosis. Before choosing a technique, write down which of four gaps you actually have, because each points to a different fix.</p>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Instruction gap</small><div class="dgm-nodes"><span class="hl">It does not know what you want<em>fix: prompts, examples, structured outputs</em></span></div></div>
+<div class="dgm-tier"><small>Knowledge gap</small><div class="dgm-nodes"><span class="hl">It does not know your facts<em>fix: retrieval</em></span></div></div>
+<div class="dgm-tier"><small>Behaviour gap</small><div class="dgm-nodes"><span class="hl">It knows, but will not act consistently<em>fix: fine-tuning</em></span></div></div>
+<div class="dgm-tier"><small>Capability gap</small><div class="dgm-nodes"><span>It cannot do the task at all<em>fix: a different model or a different design</em></span></div></div>
+</div>
+<figcaption>Four different gaps, four different fixes. Most failed projects treated one gap as another.</figcaption>
+</figure>
+<p>The order matters too. Prompting is the cheapest change and the fastest to test; retrieval adds a data pipeline; fine-tuning adds a training pipeline and a model to maintain. Climb only as far as the evidence requires.</p>
+</section>
+
+<section class="block">
+<h2>Step 1: exhaust the prompt, honestly</h2>
+<p>A surprising share of "we need fine-tuning" problems are prompt problems: vague instructions, no examples, no output schema. Write a clear task description, add a handful of worked examples covering the hard cases, and constrain the output with a schema. Then measure on an evaluation set built from real inputs. If quality climbs and then plateaus, you have learned where the ceiling is, which is the evidence you need for the next step. See <a href="https://asksumanta.com/insights/structured-outputs-reliable-llm-integration/">structured outputs</a> and <a href="https://asksumanta.com/insights/llm-evaluation-sets-that-predict-production/">evaluation sets that predict production</a>.</p>
+</section>
+
+<section class="block">
+<h2>Step 2: retrieve when the gap is knowledge</h2>
+<p>Retrieval-augmented generation combines a model with a search step over your own documents, so answers draw on current, specific facts that can be cited<sup class="cite"><a href="#ref-1">1</a></sup>. It is the right tool when knowledge changes often, must be attributable, or is too large or sensitive to train into weights. It is the wrong tool for teaching style or format: retrieving more examples of a format is a weak substitute for a model that has learned it.</p>
+<p>The hard work in retrieval is not the model; it is chunking, metadata, access control and evaluation of what gets retrieved. Most retrieval failures are search failures. See <a href="https://asksumanta.com/insights/rag-to-production-checklist/">RAG to production</a>, <a href="https://asksumanta.com/insights/choosing-embedding-models-rag/">choosing embedding models</a> and <a href="https://asksumanta.com/insights/long-context-vs-rag/">long context versus RAG</a>.</p>
+</section>
+
+<section class="block">
+<h2>Step 3: fine-tune when the gap is behaviour</h2>
+<p>Fine-tuning changes how the model behaves: following a house format every time, using domain terms correctly, making a narrow classification reliably, or using retrieved passages the way you want. Parameter-efficient methods have made it far cheaper. LoRA trains small low-rank matrices alongside frozen weights, cutting the number of trainable parameters dramatically<sup class="cite"><a href="#ref-2">2</a></sup>, and QLoRA showed fine-tuning on a quantised base model can preserve quality while fitting large models on far less hardware<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+<p>The cost that remains is operational: a training dataset to curate and refresh, an evaluation gate for every new version, and a model whose behaviour you now own. Fine-tuning on facts is the classic mistake; facts change, and the model will state outdated ones confidently.</p>
+</section>
+
+<section class="block">
+<h2>Combine them, and serve them efficiently</h2>
+<p>The strongest systems often combine all three: a fine-tuned model that has learned the task's format and how to use evidence, fed by retrieval for current facts, guided by a short, stable prompt. LoRA also changes the serving picture. Serving engines such as vLLM can load multiple LoRA adapters on one base model and choose the adapter per request<sup class="cite"><a href="#ref-4">4</a></sup>, and Kubernetes' Gateway API inference extension can route requests to servers that already have the right adapter loaded<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/prompt-rag-or-fine-tune-playbook/adapter-aware-scheduling.webp" alt="Flowchart of an inference scheduling request: critical requests choose from pods with the required LoRA adapter loaded or standard pods, non-critical requests go to pods with capacity, then candidates are filtered by lowest queue and cache use" width="580" height="685" loading="lazy"></div><figcaption>Adapter-aware scheduling: requests go to servers that already have the needed fine-tuned adapter loaded. <span class="credit">Source: <a href="https://kubernetes.io/blog/2025/06/05/introducing-gateway-api-inference-extension/" target="_blank" rel="noopener">Kubernetes blog, Gateway API Inference Extension authors</a> · CC BY 4.0</span></figcaption></figure>
+<p>That makes many small task-specific variants practical: one base model, many adapters, routed per request. See <a href="https://asksumanta.com/insights/llm-inference-serving-vllm/">LLM inference serving</a> and <a href="https://asksumanta.com/insights/kubernetes-inference-gateway/">Kubernetes inference gateways</a>.</p>
+</section>
+
+<section class="block">
+<h2>The decision, side by side</h2>
+<table class="tbl">
+<thead><tr><th>Question</th><th>Prompt</th><th>Retrieve</th><th>Fine-tune</th></tr></thead>
+<tbody>
+<tr><td>Fixes</td><td>Unclear instructions</td><td>Missing or changing facts</td><td>Inconsistent behaviour or format</td></tr>
+<tr><td>Time to first result</td><td>Hours</td><td>Days to weeks</td><td>Weeks</td></tr>
+<tr><td>Ongoing work</td><td>Prompt versions and evals</td><td>Index freshness, access control</td><td>Datasets, retraining, eval gates</td></tr>
+<tr><td>Citations</td><td>No</td><td>Yes</td><td>No</td></tr>
+<tr><td>Provider portability</td><td>High</td><td>High</td><td>Lower: tied to a base model</td></tr>
+<tr><td>Common mistake</td><td>Stopping before adding examples</td><td>Ignoring search quality</td><td>Training on facts</td></tr>
+</tbody>
+</table>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Name</b><span>Which gap: instruction, knowledge, behaviour or capability?</span></li>
+<li><b>Measure</b><span>Build an evaluation set from real inputs first</span></li>
+<li class="hl"><b>Prompt</b><span>Instructions, examples, schema; record the ceiling</span></li>
+<li class="hl"><b>Retrieve or tune</b><span>Retrieval for knowledge, fine-tuning for behaviour</span></li>
+<li><b>Combine</b><span>Fine-tuned behaviour plus retrieved facts where both gaps exist</span></li>
+<li><b>Operate</b><span>Version prompts, indexes and adapters; gate each change on the eval set</span></li>
+</ol>
+<figcaption>The playbook: measure first, climb only as far as the evidence requires.</figcaption>
+</figure>
+<div class="callout"><p>If you cannot say what score on your evaluation set would justify fine-tuning, you are not ready to fine-tune.</p></div>
+</section>
+
+<section class="block">
+<h2>The CTO's take</h2>
+<p>The adaptation choice is a product and operations decision as much as a technical one. Prompting keeps you portable across providers; retrieval makes answers current and auditable; fine-tuning buys consistency at the price of owning a model. Decide based on the gap you measured, not the technique in the news. If you are about to commit budget to fine-tuning, a week spent on an evaluation set and better prompts is the cheapest insurance you can buy.</p>
+<p>If you want a second opinion on how to adapt models for your product, I am a <a href="https://asksumanta.com/fractional-cto/">fractional CTO</a> and <a href="https://asksumanta.com/ai-architect/">AI architect</a> based in India, the United States and the UAE, working globally. You can <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section><p><a href="https://asksumanta.com/insights/prompt-rag-or-fine-tune-playbook/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Engineering metrics for boards: what to show, and what to leave out</title><link>https://asksumanta.com/insights/engineering-metrics-for-boards/</link><guid isPermaLink="true">https://asksumanta.com/insights/engineering-metrics-for-boards/</guid><pubDate>Fri, 27 Nov 2026 21:20:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>leadership</category><category>strategy</category><category>fractional-cto</category><description>Boards ask how engineering is doing and often get commit counts and story points. A CTO&#x27;s essay on the few measures that inform decisions, and the ones that mislead.</description><content:encoded><![CDATA[<p><em>Sooner or later a board asks: how is engineering doing? The answers that are easiest to produce, commits, story points, tickets closed, are the least useful, and some actively mislead. A board needs a handful of measures that connect engineering to outcomes, risk and money, explained the same way every quarter. Here is what I put in front of boards, and what I keep out.</em></p><section class="block">
 <h2>The question behind the question</h2>
 <p>When a board asks how engineering is doing, it is rarely asking about engineering. It wants to know three things: are we spending this money well, are we exposed to something that could hurt us, and will the plan we approved actually ship? Engineering metrics are only useful in a board pack if they answer one of those.</p>
 <p>The trouble is that the easiest numbers to produce answer none of them. Commit counts, story points, tickets closed and lines of code all measure activity. Repository activity graphs, such as commit activity over time<sup class="cite"><a href="#ref-4">4</a></sup>, are genuinely useful to a team understanding its own rhythm. In a board pack, they invite the wrong conversation: why was a week quiet, why did a spike happen, can we get more of the busy weeks.</p>
@@ -2668,48 +2738,4 @@
 <section class="block">
 <h2>How I can help</h2>
 <p>I help teams design AI platforms that can run different models per market without forking the product. I am based in India, the United States and the UAE, working globally. See <a href="https://asksumanta.com/ai-architect/">AI architecture</a> or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
-</section><p><a href="https://asksumanta.com/insights/per-market-ai-models-apple-qwen-china/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Tech news, 2 November 2026: the FBI names the Binance attacker, a vendor script drains Polymarket traders, a CVSS 10 LXD flaw and Aramco buys into HUMAIN</title><link>https://asksumanta.com/insights/tech-news-2026-11-02/</link><guid isPermaLink="true">https://asksumanta.com/insights/tech-news-2026-11-02/</guid><pubDate>Mon, 02 Nov 2026 08:55:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>security</category><category>platform</category><category>ai</category><description>A CTO&#x27;s take: the FBI ties the Binance theft to North Korea, a hijacked vendor script drains Polymarket traders, a CVSS 10 LXD flaw and Aramco&#x27;s stake in HUMAIN.</description><content:encoded><![CDATA[<p><em>A weekend dominated by follow-through on October&#x27;s security stories: an official attribution for the Binance theft, a reminder that one third-party script can empty user accounts, and a maximum-severity flaw in a widely used container and VM manager. In the Gulf, Saudi Arabia consolidated its national AI champion.</em></p><p>Today's brief covers stories from 30 October to 1 November.</p>
-
-<figure class="dgm">
-<div class="dgm-stack">
-<div class="dgm-tier"><small>Users and browsers</small><div class="dgm-nodes"><span class="hl">Polymarket<em>third-party script abused live sessions</em></span></div></div>
-<div class="dgm-tier"><small>Platforms</small><div class="dgm-nodes"><span class="hl">Binance<em>signing systems, now attributed</em></span><span>HUMAIN<em>Saudi AI infrastructure</em></span></div></div>
-<div class="dgm-tier"><small>Infrastructure</small><div class="dgm-nodes"><span class="hl">LXD and MicroCloud<em>certificate check bypass</em></span></div></div>
-</div>
-<figcaption>Attackers hit every layer this week: the browser, the signing service and the virtualisation layer underneath.</figcaption>
-</figure>
-
-<section class="block">
-<h2>1. The FBI attributes the Binance theft to North Korea</h2>
-<p>The FBI attributed the theft of more than $6 billion from Binance to North Korea's TraderTraitor group, according to BleepingComputer, in line with earlier assessments from blockchain analytics firms; the agency did not publish the evidence behind the finding<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-2">2</a></sup>. Security Affairs reports the FBI expects the stolen assets to be laundered through decentralised finance platforms and instant swap services<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
-<p><strong>CTO take:</strong> a state attribution changes little technically but a lot commercially: boards, insurers and regulators will ask every firm that moves money how its signing and withdrawal paths are protected. Have the answer ready; <a href="https://asksumanta.com/insights/binance-hack-custody-architecture-lessons/">the Binance hack: architecture lessons</a> sets out the controls.</p>
-</section>
-
-<section class="block">
-<h2>2. A hijacked vendor script drains Polymarket traders</h2>
-<p>Malicious code replaced a third-party performance-monitoring script loaded by Polymarket's website on 29 October and used signed-in traders' sessions to withdraw funds; Polymarket puts the loss at about $2.7 million and says it is reimbursing users<sup class="cite"><a href="#ref-3">3</a></sup><sup class="cite"><a href="#ref-4">4</a></sup>. No seed phrases or private keys were needed, because the code acted with the access the open page already had<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
-<p><strong>CTO take:</strong> every third-party script on a page where users can move money runs with their authority. Remove non-essential scripts from those pages, self-host the ones you keep with integrity checks, use a strict Content Security Policy, and require a fresh confirmation for withdrawals. This applies to fintechs, marketplaces and any app with stored balances.</p>
-</section>
-
-<section class="block">
-<h2>3. A maximum-severity flaw in LXD and MicroCloud</h2>
-<p>Canonical rated CVE-2026-112816 at CVSS 10.0: vulnerable LXD versions checked every certificate in a presented chain against the trust store, letting an attacker with network access to the API impersonate a trusted client using only its public certificate<sup class="cite"><a href="#ref-5">5</a></sup>. Fixed releases are available for the supported LXD tracks and MicroCloud, and the Incus project, which reported the issue, has also released a fix<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
-<p><strong>CTO take:</strong> if you run LXD, MicroCloud or Incus, patch now and confirm the installed version, then make sure the management API is not reachable from untrusted networks. It is another reminder to put infrastructure management interfaces behind a dedicated admin path, as in <a href="https://asksumanta.com/case-studies/us-utility-management-plane-hardening/">hardening a utility's management plane</a>.</p>
-</section>
-
-<section class="block">
-<h2>4. Aramco takes 49% of Saudi AI company HUMAIN</h2>
-<p>Aramco and the Public Investment Fund closed a deal giving an Aramco subsidiary 49% of HUMAIN, with PIF keeping 51%; Aramco is contributing about $2.6 billion in cash plus AI and digital assets<sup class="cite"><a href="#ref-6">6</a></sup><sup class="cite"><a href="#ref-7">7</a></sup>.</p>
-<p><strong>CTO take:</strong> Saudi Arabia is concentrating its AI investment in one national platform with an industrial anchor customer. For companies selling AI into the Kingdom, expect more opportunities to build on local infrastructure and more questions about data residency under the PDPL. See <a href="https://asksumanta.com/fractional-cto-saudi-arabia/">fractional CTO in Saudi Arabia</a> and <a href="https://asksumanta.com/insights/saudi-pdpl-cross-border-ai/">Saudi PDPL and cross-border AI</a>.</p>
-</section>
-
-<section class="block">
-<h2>What I'd do this week</h2>
-<ul>
-<li>List every third-party script on pages where users can move money, and remove what you can.</li>
-<li>Patch LXD, MicroCloud or Incus if you run them, and check the management API's exposure.</li>
-<li>Prepare a one-page answer on how your withdrawal and payment paths are protected.</li>
-<li>If you sell into Saudi Arabia, review your hosting and data residency plan.</li>
-</ul>
-<p>See <a href="https://asksumanta.com/regions/">where I work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
-</section><p><a href="https://asksumanta.com/insights/tech-news-2026-11-02/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
+</section><p><a href="https://asksumanta.com/insights/per-market-ai-models-apple-qwen-china/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>

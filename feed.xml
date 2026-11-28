@@ -1,6 +1,76 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="/assets/feed.xsl"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link><description>Fractional CTO and AI architect: insights, case studies and daily tech news.</description><language>en-gb</language><lastBuildDate>Fri, 27 Nov 2026 21:20:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link></image><item><title>Engineering metrics for boards: what to show, and what to leave out</title><link>https://asksumanta.com/insights/engineering-metrics-for-boards/</link><guid isPermaLink="true">https://asksumanta.com/insights/engineering-metrics-for-boards/</guid><pubDate>Fri, 27 Nov 2026 21:20:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>leadership</category><category>strategy</category><category>fractional-cto</category><description>Boards ask how engineering is doing and often get commit counts and story points. A CTO&#x27;s essay on the few measures that inform decisions, and the ones that mislead.</description><content:encoded><![CDATA[<p><em>Sooner or later a board asks: how is engineering doing? The answers that are easiest to produce, commits, story points, tickets closed, are the least useful, and some actively mislead. A board needs a handful of measures that connect engineering to outcomes, risk and money, explained the same way every quarter. Here is what I put in front of boards, and what I keep out.</em></p><section class="block">
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link><description>Fractional CTO and AI architect: insights, case studies and daily tech news.</description><language>en-gb</language><lastBuildDate>Sat, 28 Nov 2026 21:20:00 +0400</lastBuildDate><atom:link href="https://asksumanta.com/feed.xml" rel="self" type="application/rss+xml"/><image><url>https://asksumanta.com/assets/apple-touch-icon.png</url><title>Sumanta Mukhopadhyay: Insights and case studies</title><link>https://asksumanta.com/</link></image><item><title>Prompt, retrieve or fine-tune? A playbook for adapting a language model to your problem</title><link>https://asksumanta.com/insights/prompt-rag-or-fine-tune-playbook/</link><guid isPermaLink="true">https://asksumanta.com/insights/prompt-rag-or-fine-tune-playbook/</guid><pubDate>Sat, 28 Nov 2026 21:20:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>ai</category><category>llm</category><category>rag</category><category>architecture</category><description>Most teams reach for fine-tuning too early or RAG too late. A practical playbook for choosing between prompting, retrieval and fine-tuning, and combining them well.</description><content:encoded><![CDATA[<p><em>Every team building with language models hits the same fork: the base model is not quite right. Do you write better prompts, give it your documents through retrieval, or train it further on your data? Each fixes a different problem, costs differently and fails differently. Choosing by fashion rather than by the problem is how projects burn months. Here is how I decide.</em></p><section class="block">
+<h2>Start by naming the gap</h2>
+<p>"The model is not good enough" is not a diagnosis. Before choosing a technique, write down which of four gaps you actually have, because each points to a different fix.</p>
+<figure class="dgm">
+<div class="dgm-stack">
+<div class="dgm-tier"><small>Instruction gap</small><div class="dgm-nodes"><span class="hl">It does not know what you want<em>fix: prompts, examples, structured outputs</em></span></div></div>
+<div class="dgm-tier"><small>Knowledge gap</small><div class="dgm-nodes"><span class="hl">It does not know your facts<em>fix: retrieval</em></span></div></div>
+<div class="dgm-tier"><small>Behaviour gap</small><div class="dgm-nodes"><span class="hl">It knows, but will not act consistently<em>fix: fine-tuning</em></span></div></div>
+<div class="dgm-tier"><small>Capability gap</small><div class="dgm-nodes"><span>It cannot do the task at all<em>fix: a different model or a different design</em></span></div></div>
+</div>
+<figcaption>Four different gaps, four different fixes. Most failed projects treated one gap as another.</figcaption>
+</figure>
+<p>The order matters too. Prompting is the cheapest change and the fastest to test; retrieval adds a data pipeline; fine-tuning adds a training pipeline and a model to maintain. Climb only as far as the evidence requires.</p>
+</section>
+
+<section class="block">
+<h2>Step 1: exhaust the prompt, honestly</h2>
+<p>A surprising share of "we need fine-tuning" problems are prompt problems: vague instructions, no examples, no output schema. Write a clear task description, add a handful of worked examples covering the hard cases, and constrain the output with a schema. Then measure on an evaluation set built from real inputs. If quality climbs and then plateaus, you have learned where the ceiling is, which is the evidence you need for the next step. See <a href="https://asksumanta.com/insights/structured-outputs-reliable-llm-integration/">structured outputs</a> and <a href="https://asksumanta.com/insights/llm-evaluation-sets-that-predict-production/">evaluation sets that predict production</a>.</p>
+</section>
+
+<section class="block">
+<h2>Step 2: retrieve when the gap is knowledge</h2>
+<p>Retrieval-augmented generation combines a model with a search step over your own documents, so answers draw on current, specific facts that can be cited<sup class="cite"><a href="#ref-1">1</a></sup>. It is the right tool when knowledge changes often, must be attributable, or is too large or sensitive to train into weights. It is the wrong tool for teaching style or format: retrieving more examples of a format is a weak substitute for a model that has learned it.</p>
+<p>The hard work in retrieval is not the model; it is chunking, metadata, access control and evaluation of what gets retrieved. Most retrieval failures are search failures. See <a href="https://asksumanta.com/insights/rag-to-production-checklist/">RAG to production</a>, <a href="https://asksumanta.com/insights/choosing-embedding-models-rag/">choosing embedding models</a> and <a href="https://asksumanta.com/insights/long-context-vs-rag/">long context versus RAG</a>.</p>
+</section>
+
+<section class="block">
+<h2>Step 3: fine-tune when the gap is behaviour</h2>
+<p>Fine-tuning changes how the model behaves: following a house format every time, using domain terms correctly, making a narrow classification reliably, or using retrieved passages the way you want. Parameter-efficient methods have made it far cheaper. LoRA trains small low-rank matrices alongside frozen weights, cutting the number of trainable parameters dramatically<sup class="cite"><a href="#ref-2">2</a></sup>, and QLoRA showed fine-tuning on a quantised base model can preserve quality while fitting large models on far less hardware<sup class="cite"><a href="#ref-3">3</a></sup>.</p>
+<p>The cost that remains is operational: a training dataset to curate and refresh, an evaluation gate for every new version, and a model whose behaviour you now own. Fine-tuning on facts is the classic mistake; facts change, and the model will state outdated ones confidently.</p>
+</section>
+
+<section class="block">
+<h2>Combine them, and serve them efficiently</h2>
+<p>The strongest systems often combine all three: a fine-tuned model that has learned the task's format and how to use evidence, fed by retrieval for current facts, guided by a short, stable prompt. LoRA also changes the serving picture. Serving engines such as vLLM can load multiple LoRA adapters on one base model and choose the adapter per request<sup class="cite"><a href="#ref-4">4</a></sup>, and Kubernetes' Gateway API inference extension can route requests to servers that already have the right adapter loaded<sup class="cite"><a href="#ref-5">5</a></sup>.</p>
+<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/prompt-rag-or-fine-tune-playbook/adapter-aware-scheduling.webp" alt="Flowchart of an inference scheduling request: critical requests choose from pods with the required LoRA adapter loaded or standard pods, non-critical requests go to pods with capacity, then candidates are filtered by lowest queue and cache use" width="580" height="685" loading="lazy"></div><figcaption>Adapter-aware scheduling: requests go to servers that already have the needed fine-tuned adapter loaded. <span class="credit">Source: <a href="https://kubernetes.io/blog/2025/06/05/introducing-gateway-api-inference-extension/" target="_blank" rel="noopener">Kubernetes blog, Gateway API Inference Extension authors</a> · CC BY 4.0</span></figcaption></figure>
+<p>That makes many small task-specific variants practical: one base model, many adapters, routed per request. See <a href="https://asksumanta.com/insights/llm-inference-serving-vllm/">LLM inference serving</a> and <a href="https://asksumanta.com/insights/kubernetes-inference-gateway/">Kubernetes inference gateways</a>.</p>
+</section>
+
+<section class="block">
+<h2>The decision, side by side</h2>
+<table class="tbl">
+<thead><tr><th>Question</th><th>Prompt</th><th>Retrieve</th><th>Fine-tune</th></tr></thead>
+<tbody>
+<tr><td>Fixes</td><td>Unclear instructions</td><td>Missing or changing facts</td><td>Inconsistent behaviour or format</td></tr>
+<tr><td>Time to first result</td><td>Hours</td><td>Days to weeks</td><td>Weeks</td></tr>
+<tr><td>Ongoing work</td><td>Prompt versions and evals</td><td>Index freshness, access control</td><td>Datasets, retraining, eval gates</td></tr>
+<tr><td>Citations</td><td>No</td><td>Yes</td><td>No</td></tr>
+<tr><td>Provider portability</td><td>High</td><td>High</td><td>Lower: tied to a base model</td></tr>
+<tr><td>Common mistake</td><td>Stopping before adding examples</td><td>Ignoring search quality</td><td>Training on facts</td></tr>
+</tbody>
+</table>
+<figure class="dgm">
+<ol class="dgm-flow g3">
+<li><b>Name</b><span>Which gap: instruction, knowledge, behaviour or capability?</span></li>
+<li><b>Measure</b><span>Build an evaluation set from real inputs first</span></li>
+<li class="hl"><b>Prompt</b><span>Instructions, examples, schema; record the ceiling</span></li>
+<li class="hl"><b>Retrieve or tune</b><span>Retrieval for knowledge, fine-tuning for behaviour</span></li>
+<li><b>Combine</b><span>Fine-tuned behaviour plus retrieved facts where both gaps exist</span></li>
+<li><b>Operate</b><span>Version prompts, indexes and adapters; gate each change on the eval set</span></li>
+</ol>
+<figcaption>The playbook: measure first, climb only as far as the evidence requires.</figcaption>
+</figure>
+<div class="callout"><p>If you cannot say what score on your evaluation set would justify fine-tuning, you are not ready to fine-tune.</p></div>
+</section>
+
+<section class="block">
+<h2>The CTO's take</h2>
+<p>The adaptation choice is a product and operations decision as much as a technical one. Prompting keeps you portable across providers; retrieval makes answers current and auditable; fine-tuning buys consistency at the price of owning a model. Decide based on the gap you measured, not the technique in the news. If you are about to commit budget to fine-tuning, a week spent on an evaluation set and better prompts is the cheapest insurance you can buy.</p>
+<p>If you want a second opinion on how to adapt models for your product, I am a <a href="https://asksumanta.com/fractional-cto/">fractional CTO</a> and <a href="https://asksumanta.com/ai-architect/">AI architect</a> based in India, the United States and the UAE, working globally. You can <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
+</section><p><a href="https://asksumanta.com/insights/prompt-rag-or-fine-tune-playbook/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Engineering metrics for boards: what to show, and what to leave out</title><link>https://asksumanta.com/insights/engineering-metrics-for-boards/</link><guid isPermaLink="true">https://asksumanta.com/insights/engineering-metrics-for-boards/</guid><pubDate>Fri, 27 Nov 2026 21:20:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>leadership</category><category>strategy</category><category>fractional-cto</category><description>Boards ask how engineering is doing and often get commit counts and story points. A CTO&#x27;s essay on the few measures that inform decisions, and the ones that mislead.</description><content:encoded><![CDATA[<p><em>Sooner or later a board asks: how is engineering doing? The answers that are easiest to produce, commits, story points, tickets closed, are the least useful, and some actively mislead. A board needs a handful of measures that connect engineering to outcomes, risk and money, explained the same way every quarter. Here is what I put in front of boards, and what I keep out.</em></p><section class="block">
 <h2>The question behind the question</h2>
 <p>When a board asks how engineering is doing, it is rarely asking about engineering. It wants to know three things: are we spending this money well, are we exposed to something that could hurt us, and will the plan we approved actually ship? Engineering metrics are only useful in a board pack if they answer one of those.</p>
 <p>The trouble is that the easiest numbers to produce answer none of them. Commit counts, story points, tickets closed and lines of code all measure activity. Repository activity graphs, such as commit activity over time<sup class="cite"><a href="#ref-4">4</a></sup>, are genuinely useful to a team understanding its own rhythm. In a board pack, they invite the wrong conversation: why was a week quiet, why did a spike happen, can we get more of the busy weeks.</p>
@@ -3084,66 +3154,4 @@
 <li>Check where your future compute capacity is planned and whether it is approved.</li>
 </ul>
 <p>I am based in India, the United States and the UAE, working globally. See <a href="https://asksumanta.com/regions/">where I work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
-</section><p><a href="https://asksumanta.com/insights/tech-news-2026-11-10/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item><item><title>Coding agents and secrets: what Claude Code&#x27;s &#x27;don&#x27;t ask again&#x27; leak teaches engineering teams</title><link>https://asksumanta.com/insights/coding-agent-secrets-dont-ask-again/</link><guid isPermaLink="true">https://asksumanta.com/insights/coding-agent-secrets-dont-ask-again/</guid><pubDate>Mon, 09 Nov 2026 21:20:00 +0400</pubDate><dc:creator>Sumanta Mukhopadhyay</dc:creator><category>news</category><category>security</category><category>ai</category><category>agents</category><description>Credentials approved in Claude Code ended up in public GitHub repositories. A CTO&#x27;s take on agent files as a new place for secrets to leak and the controls that stop it.</description><content:encoded><![CDATA[<p><em>Security firm Apiiro found real passwords and API keys in public copies of a Claude Code settings file, saved there when developers approved commands with &quot;don&#x27;t ask again&quot;. The specific fix is simple. The wider lesson is that coding agents create new files, on every developer&#x27;s machine, that can hold credentials, and most secret controls were not designed with them in mind.</em></p><section class="block">
-<h2>What happened</h2>
-<p>Apiiro reported that when a developer chooses "Yes, and don't ask again" for a command in Claude Code, the tool can save the command, word for word, as an allow rule in <code>.claude/settings.local.json</code> in the project<sup class="cite"><a href="#ref-1">1</a></sup>. If the command contained a password or API key, so does the file. Apiiro found 104,185 public copies of the file on GitHub, and real secrets in 1,122 of them<sup class="cite"><a href="#ref-1">1</a></sup><sup class="cite"><a href="#ref-3">3</a></sup>.</p>
-<p>Claude Code's documentation describes the local settings file as personal and not checked in, and says Claude Code configures git to ignore it<sup class="cite"><a href="#ref-4">4</a></sup>. Reporting notes that this protection lives in a machine's git settings rather than the repository's own .gitignore, so it does not travel with the repository<sup class="cite"><a href="#ref-2">2</a></sup>. Apiiro's advice: search repositories and their history for these files, stop tracking them and add them to each repository's .gitignore<sup class="cite"><a href="#ref-2">2</a></sup>.</p>
-<figure class="dgm">
-<ol class="dgm-flow g3">
-<li><b>Type</b><span>A developer runs a command with a key inline, via the agent</span></li>
-<li><b>Approve</b><span>"Don't ask again" saves the exact command as an allow rule</span></li>
-<li class="hl"><b>Store</b><span>The key now sits in a project file under .claude/</span></li>
-<li><b>Miss</b><span>Ignore rules are per machine, so another setup or a forced add tracks it</span></li>
-<li class="hl"><b>Publish</b><span>The file is pushed; on a public repository the key is exposed</span></li>
-<li><b>Linger</b><span>Deleting the file later leaves it in git history</span></li>
-</ol>
-<figcaption>Each step is ordinary developer behaviour. The leak comes from the combination.</figcaption>
-</figure>
-</section>
-
-<section class="block">
-<h2>The wider lesson: agent files are a new place for secrets</h2>
-<p>This is not unique to one tool. Coding agents keep settings, approval rules, memory notes, session transcripts and tool configuration on disk, often inside the project directory. Any of them can capture a credential a developer typed or an agent read. Most organisations' secret controls were designed for source code and CI configuration, and do not yet treat agent artefacts as a category.</p>
-<p>The underlying habit is also older than AI: pasting a key into a command because it is quicker than setting up proper access. Agents make that habit more expensive, because they record what they are told to do.</p>
-</section>
-
-<section class="block">
-<h2>Controls that work, in layers</h2>
-<figure class="dgm">
-<div class="dgm-stack">
-<div class="dgm-tier"><small>Habit</small><div class="dgm-nodes"><span class="hl">No secrets in commands<em>reference variables or a secrets manager</em></span></div></div>
-<div class="dgm-tier"><small>Repository</small><div class="dgm-nodes"><span>Agent paths ignored<em>in every repository's .gitignore</em></span><span>Shared templates<em>new repositories start safe</em></span></div></div>
-<div class="dgm-tier"><small>Platform</small><div class="dgm-nodes"><span class="hl">Push protection<em>block secrets before they land</em></span><span>History scanning<em>find what already leaked</em></span></div></div>
-<div class="dgm-tier"><small>Credentials</small><div class="dgm-nodes"><span>Short-lived tokens<em>leaks expire quickly</em></span><span>Fast rotation<em>one step, tested</em></span></div></div>
-<div class="dgm-tier"><small>Policy</small><div class="dgm-nodes"><span>Managed agent settings<em>organisation-wide rules</em></span><span>Approval reviews<em>prune "always allow" lists</em></span></div></div>
-</div>
-<figcaption>No single layer is enough; together they make a leaked agent file boring rather than dangerous.</figcaption>
-</figure>
-<p><strong>Keep secrets out of commands.</strong> Teach developers and agents to reference environment variables or a secrets manager rather than pasting values. Approval rules then contain a variable name, not a key.</p>
-<p><strong>Ignore agent paths in the repository.</strong> Add agent configuration directories to every repository's .gitignore and to the templates new repositories start from, rather than relying on each developer's machine.</p>
-<p><strong>Block at push time and scan history.</strong> GitHub's push protection blocks recognised secrets before they are pushed, and organisations can choose which patterns it covers<sup class="cite"><a href="#ref-5">5</a></sup>. Pair it with scanning of existing repositories and their history, including agent directories.</p>
-<p><strong>Make leaked credentials short-lived.</strong> The best defence against any leak is a credential that expires before it is useful. Fetch credentials when needed instead of storing them, the pattern Kubernetes uses for registry access<sup class="cite"><a href="#ref-6">6</a></sup>.</p>
-<figure class="fig"><div class="im"><img src="https://asksumanta.com/assets/img/south-africa-fintech-machine-agent-identity/short-lived-credentials.webp" alt="Diagram of the kubelet calling a credential provider plugin with a CredentialProviderRequest for an image, the plugin authenticating to the registry and returning a CredentialProviderResponse with credentials" width="1218" height="591" loading="lazy"></div><figcaption>Fetch credentials on demand rather than writing them down: the same principle keeps agents from collecting secrets. <span class="credit">Source: <a href="https://kubernetes.io/blog/2022/12/22/kubelet-credential-providers/" target="_blank" rel="noopener">Kubernetes blog, Andrew Sy Kim and Dixita Narang</a> · CC BY 4.0</span></figcaption></figure>
-<p><strong>Govern agent settings centrally.</strong> Where your coding agents support organisation-managed settings, use them to set baseline rules, and periodically review the "always allow" lists developers accumulate. See <a href="https://asksumanta.com/insights/ai-coding-policy-engineering-teams/">AI coding policy for engineering teams</a>.</p>
-<div class="callout"><p>Every new tool on a developer's machine is a new place for secrets to hide. Assume agents will write down what they see, and make sure what they see is never a long-lived key.</p></div>
-</section>
-
-<section class="block">
-<h2>What to do this week</h2>
-<ul>
-<li>Search your organisation's repositories and their history for <code>.claude/</code> and other agent configuration files; rotate any secrets found.</li>
-<li>Add agent paths to repository .gitignore files and templates.</li>
-<li>Turn on push protection and extend secret scanning to agent directories.</li>
-<li>Tell developers, plainly, not to paste credentials into agent prompts or commands.</li>
-</ul>
-</section>
-
-<section class="block">
-<h2>CTO take</h2>
-<p>The Claude Code finding will be fixed and forgotten, but the pattern will recur with other tools. Coding agents are now part of the software supply chain on every developer's machine, and they generate files, memories and logs that sit outside most security reviews. Treat them like any other privileged tool: managed settings, scanning that covers their files and access through short-lived credentials. Read alongside <a href="https://asksumanta.com/insights/tech-news-2026-11-09/">the 9 November tech news</a>, <a href="https://asksumanta.com/insights/agentic-infrastructure-skills-tools-sandboxes/">agentic infrastructure</a> and the <a href="https://asksumanta.com/case-studies/uae-software-house-ai-developer-toolchain-security/">AI developer toolchain security case study</a>.</p>
-</section>
-
-<section class="block">
-<h2>How I can help</h2>
-<p>I help engineering teams adopt AI coding tools safely: policies, managed settings, secret controls and the identity model behind them. I am based in India, the United States and the UAE, working globally. See <a href="https://asksumanta.com/fractional-cto/">fractional CTO work</a>, <a href="https://asksumanta.com/regions/">where I work</a>, or <a href="https://asksumanta.com/#assess">analyse your challenge</a> and bring the result to a call.</p>
-</section><p><a href="https://asksumanta.com/insights/coding-agent-secrets-dont-ask-again/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
+</section><p><a href="https://asksumanta.com/insights/tech-news-2026-11-10/">Read on asksumanta.com</a> for diagrams, references and related reading.</p>]]></content:encoded></item></channel></rss>
